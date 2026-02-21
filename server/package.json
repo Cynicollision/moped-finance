@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "dev": "nodemon"
+    "dev": "nodemon --legacy-watch"
   },
   "dependencies": {
     "express": "^4.18.2"
