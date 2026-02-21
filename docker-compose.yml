@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # --- The Database ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: home_lab_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      # We don't set a default DB here; we'll create specific ones via script/pgAdmin
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  # --- The Backend API (Dev Mode) ---
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: home_lab_api
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres # This is the service name from this file
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - PORT=3000
+    volumes:
+      - ./server:/app             # Syncs your local code changes to container
+      - ./shared:/shared          # Syncs the shared code for ts-node path mapping
+      - /app/node_modules         # Prevents host node_modules from overriding container's
+    command: npm run dev
+    depends_on:
+      - postgres
+
+volumes:
+  db_data:
