@@ -16,7 +16,8 @@ This section details the major database structures for each logical module.
 ### Finance App Entities
 To support value tracking and transaction categorization, the following entities are proposed. A unified `Account` entity is used to represent both assets and liabilities, which simplifies relationships and queries.
 
-- **FinancialInstitution**: Represents a bank, brokerage, or other company where accounts are held.
+- **FinancialProfile**: Represents the user context within the Finance App, owning all financial entities and storing user-specific preferences.
+- **Institution**: Represents a bank, brokerage, or other company where accounts are held.
 - **Account**: A unified entity for any financial account, such as a bank account or credit card, representing both assets and liabilities.
 - **Transaction**: A single financial event, like a purchase or deposit, linked to a specific account.
 - **Category**: A user-defined category for classifying transactions, which can be nested to create hierarchies.
