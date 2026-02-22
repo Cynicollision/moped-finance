@@ -1,4 +1,4 @@
-export interface ApiResponse<T = void> {
+export interface OperationResponse<T = void> {
   success: boolean;
   data?: T;
   
