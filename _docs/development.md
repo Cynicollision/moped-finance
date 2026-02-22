@@ -5,7 +5,7 @@
 2.  **API Consistency:** All API responses must handle errors gracefully (JSON).
 3.  **Environment:** 
     * Development occurs on Windows (WSL2).
-    * Production deployment is via Docker on a Synology NAS.
+    * Production deployment is via Docker on a Synology NAS using `docker-compose.prod.yml`.
 4.  **Backend:** The backend is a Node.js/Express application written in TypeScript, located in the `server/` directory.
 5.  **Database Connection:** The Node.js backend manages a single connection pool to the database. Logical separation is achieved using PostgreSQL schemas.
 
@@ -18,6 +18,14 @@ To manage the development environment, use the following commands from the root 
     *   *Use this after modifying Dockerfiles, environment variables, or when switching architectures.*
 *   **Stop Environment:** `docker-compose down`
 *   **View Logs:** `docker-compose logs -f`
+
+## Docker Usage (Production)
+
+To deploy to the Synology NAS or test the production build locally:
+
+*   **Start Production:** `docker-compose -f docker-compose.prod.yml up -d --build`
+    *   *This builds the optimized image (Stage 3), serves the Angular frontend statically, and removes development volume mounts.*
+*   **Stop Production:** `docker-compose -f docker-compose.prod.yml down`
 
 ### Troubleshooting
 *   **Port 5432 already allocated:** This usually happens if an old container wasn't stopped correctly. Run `docker-compose down --remove-orphans` or manually stop the conflicting container with `docker stop <container_name>`.

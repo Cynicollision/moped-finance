@@ -18,15 +18,17 @@ RUN npm run build --prefix client
 
 
 # STAGE 2: Build the TypeScript Backend
-# This stage builds the Express server. It copies the server and shared source
-# code, installs ALL dependencies (including dev for TypeScript), and compiles.
-FROM node:22-alpine as server-builder
+# 2a: Install dependencies (Target this stage for Development)
+FROM node:22-alpine as server-deps
 
 WORKDIR /app
 
 # Copy dependency definitions and install (leverages Docker cache)
 COPY server/package*.json server/package-lock.json ./server/
 RUN npm ci --prefix server
+
+# 2b: Copy source and build (Target this stage for Production Build)
+FROM server-deps as server-builder
 
 # Copy source code
 COPY server ./server
