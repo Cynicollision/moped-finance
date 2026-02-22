@@ -8,15 +8,15 @@
     <mat-toolbar>HomeLab</mat-toolbar>
     
     <mat-nav-list>
-      <a mat-list-item 
-         *ngFor="let item of navItems" 
-         [routerLink]="item.route" 
-         routerLinkActive="active-link"
-         [routerLinkActiveOptions]="{exact: item.route === '/'}"
-         (click)="drawer.mode === 'over' && drawer.close()">
-        <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-        <span matListItemTitle>{{ item.label }}</span>
-      </a>
+       @if (authService.currentUser()) {
+        <a mat-list-item *ngFor="let item of navItems" 
+          [routerLink]="item.route" routerLinkActive="active-link" 
+          [routerLinkActiveOptions]="{exact: true}" 
+          (click)="drawer.mode === 'over' && drawer.close()">
+          <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
+          <span matListItemTitle>{{item.label}}</span>
+        </a>
+      }
     </mat-nav-list>
   </mat-sidenav>
 
@@ -32,6 +32,10 @@
         <mat-icon>menu</mat-icon>
       </button>
       <span>HomeLab</span>
+      <span class="spacer"></span>
+      <button mat-button *ngIf="authService.currentUser()" (click)="logout()">
+        Logout ({{ authService.currentUser()?.username }})
+      </button>
     </mat-toolbar>
     
     <div class="content-container">

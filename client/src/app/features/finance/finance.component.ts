@@ -1,15 +1,24 @@
 import { Component } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
+import { MatTabsModule } from '@angular/material/tabs';
+import { FinanceSummaryComponent } from './components/summary.component';
+import { FinanceAccountsComponent } from './components/accounts.component';
+import { FinanceTransactionsComponent } from './components/transactions.component';
+import { FinanceReportsComponent } from './components/reports.component';
+import { FinanceSettingsComponent } from './components/settings.component';
 
 @Component({
   selector: 'app-finance',
   standalone: true,
-  imports: [MatCardModule],
-  template: `
-    <mat-card appearance="outlined">
-      <mat-card-header><mat-card-title>Finance</mat-card-title></mat-card-header>
-      <mat-card-content><p>Financial application placeholder.</p></mat-card-content>
-    </mat-card>
-  `
+  imports: [
+    MatCardModule,
+    MatTabsModule,
+    FinanceSummaryComponent,
+    FinanceAccountsComponent,
+    FinanceTransactionsComponent,
+    FinanceReportsComponent,
+    FinanceSettingsComponent
+  ],
+  templateUrl: './finance.component.html'
 })
 export class FinanceComponent {}

@@ -1,15 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { RouterLink } from '@angular/router';
+import { AuthService } from './../core/auth.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [MatCardModule],
-  template: `
-    <mat-card appearance="outlined">
-      <mat-card-header><mat-card-title>Dashboard</mat-card-title></mat-card-header>
-      <mat-card-content><p>Welcome to your Home Lab.</p></mat-card-content>
-    </mat-card>
-  `
+  imports: [MatCardModule, MatButtonModule, RouterLink],
+  templateUrl: './home.component.html'
 })
-export class HomeComponent {}
+export class HomeComponent {
+  authService = inject(AuthService);
+}

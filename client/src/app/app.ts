@@ -4,13 +4,12 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
-
-// Material Imports
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
+import { AuthService } from './core/auth.service';
 
 interface NavItem {
   label: string;
@@ -37,6 +36,7 @@ interface NavItem {
 })
 export class App {
   private breakpointObserver = inject(BreakpointObserver);
+  authService = inject(AuthService);
 
   // Configuration for navigation items
   navItems: NavItem[] = [
@@ -51,4 +51,8 @@ export class App {
       map(result => result.matches),
       shareReplay()
     );
+
+  logout() {
+    this.authService.logout();
+  }
 }
