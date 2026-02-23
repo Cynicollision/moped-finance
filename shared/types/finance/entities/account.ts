@@ -1,4 +1,6 @@
 import { AccountType } from './../enum/account-type';
+import { BalanceHistory } from './balance-history';
+import { Transaction } from './transaction';
 
 export type Account = {
     id: string;
@@ -7,4 +9,7 @@ export type Account = {
     type: AccountType;
     subtype: string;
     hidden: boolean;
+
+    balanceHistory?: BalanceHistory[];
+    transactions?: Transaction[];
 };

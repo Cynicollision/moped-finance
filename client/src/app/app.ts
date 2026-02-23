@@ -10,6 +10,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from './core/auth.service';
+import { LoadingOverlayComponent } from './core/loading-overlay.component';
 
 interface NavItem {
   label: string;
@@ -29,7 +30,8 @@ interface NavItem {
     MatButtonModule,
     MatSidenavModule,
     MatListModule,
-    MatIconModule
+    MatIconModule,
+    LoadingOverlayComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss'

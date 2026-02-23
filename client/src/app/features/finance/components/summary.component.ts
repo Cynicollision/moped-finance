@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { JsonPipe } from '@angular/common';
 import { Institution } from '@shared/types/finance/entities/institution';
 import { FinanceService } from './../finance.service';
+import { FinanceProfile } from '@shared/types/finance/entities/profile';
 
 @Component({
   selector: 'app-finance-summary',
@@ -10,13 +11,11 @@ import { FinanceService } from './../finance.service';
   templateUrl: './summary.component.html'
 })
 export class FinanceSummaryComponent implements OnInit {
-  private financeService = inject(FinanceService);
+  financeService = inject(FinanceService);
 
   institutions = signal<Institution[] | undefined>(undefined);
 
   async ngOnInit() {
-    const debug = this.financeService.getTestInstitutions();
-    console.log(debug);
     this.institutions.set(await this.financeService.getTestInstitutions());
   }
 }
