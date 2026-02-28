@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { createSuccessResponse, createSuccessMessageResponse, createErrorResponse } from '../utility/api-response-util';
+import { User } from '@shared/types/core/entities/user';
+import { createSuccessResponse, createSuccessMessageResponse, createErrorResponse } from './../utility/api-response-util';
 
 const router = Router();
 
@@ -12,13 +13,13 @@ router.post('/login', (req: Request, res: Response) => {
   const { username } = req.body as AuthRequest;
 
   // Hardcoded user for now
-  const user = {
+  const user: User = {
     id: '1',
     username: username,
     name: username
   };
 
-  //req.session.userId = user.id; // TODO: resolve.
+  req.session.user = user;
 
   res.json(createSuccessResponse(user));
 });
@@ -31,6 +32,16 @@ router.post('/logout', (req: Request, res: Response) => {
     res.clearCookie('connect.sid');
     res.json(createSuccessMessageResponse('Logged out successfully'));
   });
+});
+
+router.get('/me', (req: Request, res: Response) => {
+  const user = req.session.user;
+
+  if (!user) {
+    return res.status(401).json(createErrorResponse('UNAUTHORIZED', 'Not authenticated'));
+  }
+
+  res.json(createSuccessResponse(user));
 });
 
 export default router;

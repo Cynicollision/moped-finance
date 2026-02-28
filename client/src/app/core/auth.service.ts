@@ -17,6 +17,18 @@ export class AuthService {
 
   currentUser = signal<User | null>(null);
 
+  async checkSession(): Promise<void> {
+    try {
+      const task = this.api.get<OperationResponse<User>>('auth/me');
+      const response = await this.loader.withLoading(task);
+      this.currentUser.set(response.data || null);
+    } 
+    catch (err) {
+      this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
+      this.currentUser.set(null);
+    }
+  }
+
   async login(username: string): Promise<void> {
     // TODO: sending hardcoded sample data for now
     const credentials = { username: username, password: 'password' };
@@ -28,7 +40,7 @@ export class AuthService {
       this.router.navigate(['/']);
     }
     catch (err) {
-      this.notificationService.error(`Login failed: ${err}`);
+      this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
     }
   }
 
@@ -38,7 +50,7 @@ export class AuthService {
       await this.loader.withLoading(task);
     }
     catch (err) {
-      this.notificationService.error(`Login failed: ${err}`);
+      this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
     }
     finally {
       // Ensure we logout on client side even if server fails

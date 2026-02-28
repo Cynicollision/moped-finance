@@ -1,9 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { ApiService } from './../../core/api.service';
 import { OperationResponse } from '@shared/types/common/operation-response';
-import { Account } from '@shared/types/finance/entities/account';
 import { FinanceProfile } from '@shared/types/finance/entities/profile';
 import { Institution } from '@shared/types/finance/entities/institution';
+import { ApiService } from './../../core/api.service';
 import { LoadingService } from './../../core/loading.service';
 import { NotificationService } from './../../core/notification.service';
 
@@ -26,7 +25,7 @@ export class FinanceService {
       return response.data;
     }
     catch (error) {
-      this.notificationService.error(`Unable to load finance profile: ${error}`);
+      this.notificationService.error(`Unable to load finance profile: ${JSON.stringify(error)}`);
       return undefined;
     }
   }
@@ -35,8 +34,9 @@ export class FinanceService {
     try {
       const response = await this.loader.withLoading(this.api.get<OperationResponse<Institution[]>>('api/finance/data/institution'));
       return response.data;
-    } catch (error) {
-      this.notificationService.error('Unable to load institutions.');
+    }
+    catch (err) {
+      this.notificationService.error(`Unable to load institutions: ${JSON.stringify(err)}`);
       return undefined;
     }
   }
