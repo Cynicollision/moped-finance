@@ -104,8 +104,8 @@ async function seed() {
               type.trim(),
               subtype?.trim() || null,
               parseFloat(balance?.trim() || '0'),
-              hidden?.trim() === 'true',
-              retirement?.trim() === 'true'
+              hidden?.trim().toLowerCase() === 'true',
+              retirement?.trim().toLowerCase() === 'true'
             ]
           );
           count++;
