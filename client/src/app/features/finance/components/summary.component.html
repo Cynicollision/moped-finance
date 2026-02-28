@@ -1,38 +1,33 @@
-<div style="display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem;">
+<div class="summary-container">
   <!-- Net Worth Card -->
-  <mat-card appearance="outlined" style="flex: 1 1 300px;">
+  <mat-card appearance="outlined" class="full-width-card">
     <mat-card-header>
       <mat-card-title>Net Worth</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <div style="font-size: 2.5rem; font-weight: bold; margin: 1rem 0;">{{ summary().netWorth | currency }}</div>
-      <div style="color: gray;">Total Assets - Total Liabilities</div>
+      <div class="large-value">{{ summary().netWorth | currency }}</div>
+      <div class="subtitle">Total Assets - Total Liabilities</div>
     </mat-card-content>
   </mat-card>
 
   <!-- Assets Card -->
-  <mat-card appearance="outlined" style="flex: 1 1 300px;">
+  <mat-card appearance="outlined" class="summary-card">
     <mat-card-header>
       <mat-card-title>Assets</mat-card-title>
       <mat-card-subtitle>Total: {{ summary().totalAssets | currency }}</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+      <div class="row-item">
         <span>Cash</span>
         <span>{{ summary().cash | currency }}</span>
       </div>
       <mat-divider></mat-divider>
-      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+      <div class="row-item">
         <span>Other Investments</span>
         <span>{{ summary().investments | currency }}</span>
       </div>
       <mat-divider></mat-divider>
-      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
-        <span>Retirement</span>
-        <span>{{ summary().retirement | currency }}</span>
-      </div>
-      <mat-divider></mat-divider>
-      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+      <div class="row-item">
         <span>Real Estate</span>
         <span>{{ summary().realEstate | currency }}</span>
       </div>
@@ -40,18 +35,18 @@
   </mat-card>
 
   <!-- Liabilities Card -->
-  <mat-card appearance="outlined" style="flex: 1 1 300px;">
+  <mat-card appearance="outlined" class="summary-card">
     <mat-card-header>
       <mat-card-title>Liabilities</mat-card-title>
       <mat-card-subtitle>Total: {{ summary().totalLiabilities | currency }}</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+      <div class="row-item">
         <span>Credit Cards</span>
         <span>{{ summary().creditCards | currency }}</span>
       </div>
       <mat-divider></mat-divider>
-      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+      <div class="row-item">
         <span>Loans</span>
         <span>{{ summary().loans | currency }}</span>
       </div>
@@ -59,7 +54,98 @@
   </mat-card>
 </div>
 
-<div style="padding: 1rem; opacity: 0.7;">
-  <p>Debug - Profile Data</p>
-  <pre>{{ financeService.profileData() | json }}</pre>
+<h2 class="section-title">Account Details</h2>
+
+<div class="summary-container">
+  <!-- Cash Accounts -->
+  @if (summary().cashAccounts.length > 0) {
+    <mat-card appearance="outlined" class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Cash</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @for (account of summary().cashAccounts; track account) {
+          <div class="row-item">
+            <span>{{ account.name }}</span>
+            <span>{{ account.balance | currency }}</span>
+          </div>
+          @if (!$last) { <mat-divider></mat-divider> }
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Investment Accounts -->
+  @if (summary().investmentAccounts.length > 0) {
+    <mat-card appearance="outlined" class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Investments</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @for (account of summary().investmentAccounts; track account) {
+          <div class="row-item">
+            <span>{{ account.name }}</span>
+            <span>{{ account.balance | currency }}</span>
+          </div>
+          @if (!$last) { <mat-divider></mat-divider> }
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Real Estate Accounts -->
+  @if (summary().realEstateAccounts.length > 0) {
+    <mat-card appearance="outlined" class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Real Estate</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @for (account of summary().realEstateAccounts; track account) {
+          <div class="row-item">
+            <span>{{ account.name }}</span>
+            <span>{{ account.balance | currency }}</span>
+          </div>
+          @if (!$last) { <mat-divider></mat-divider> }
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</div>
+
+<div class="summary-container">
+  <!-- Credit Cards -->
+  @if (summary().creditCardAccounts.length > 0) {
+    <mat-card appearance="outlined" class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Credit Cards</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @for (account of summary().creditCardAccounts; track account) {
+          <div class="row-item">
+            <span>{{ account.name }}</span>
+            <span>{{ account.balance | currency }}</span>
+          </div>
+          @if (!$last) { <mat-divider></mat-divider> }
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Loans -->
+  @if (summary().loanAccounts.length > 0) {
+    <mat-card appearance="outlined" class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Loans</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @for (account of summary().loanAccounts; track account) {
+          <div class="row-item">
+            <span>{{ account.name }}</span>
+            <span>{{ account.balance | currency }}</span>
+          </div>
+          @if (!$last) { <mat-divider></mat-divider> }
+        }
+      </mat-card-content>
+    </mat-card>
+  }
 </div>

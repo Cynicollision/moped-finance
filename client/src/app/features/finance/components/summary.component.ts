@@ -9,7 +9,8 @@ import { FinanceService } from './../finance.service';
   selector: 'app-finance-summary',
   standalone: true,
   imports: [JsonPipe, CurrencyPipe, MatCardModule, MatDividerModule],
-  templateUrl: './summary.component.html'
+  templateUrl: './summary.component.html',
+  styleUrl: './summary.component.scss'
 })
 export class FinanceSummaryComponent {
   financeService = inject(FinanceService);
@@ -19,53 +20,62 @@ export class FinanceSummaryComponent {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const accounts = profile?.accounts || [];
 
-    let cash = 0;
-    let investments = 0;
-    let retirement = 0;
-    let realEstate = 0;
-    let creditCards = 0;
-    let loans = 0;
+    const cashAccounts: any[] = [];
+    const investmentAccounts: any[] = [];
+    const realEstateAccounts: any[] = [];
+    const creditCardAccounts: any[] = [];
+    const loanAccounts: any[] = [];
+
+    let cashTotal = 0;
+    let investmentsTotal = 0;
+    let realEstateTotal = 0;
+    let creditCardsTotal = 0;
+    let loansTotal = 0;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const account of accounts as any[]) {
       const balance = Number(account.balance) || 0;
       const type = (account.type || '');
 
-      console.log(account);
-
       if (type === AccountType.Cash) {
-        cash += balance;
+        cashTotal += balance;
+        cashAccounts.push(account);
       }
       else if (type === AccountType.Investment) {
-        investments += balance;
-        if (account.isRetirement) {
-          retirement += balance;
-        }
+        investmentsTotal += balance;
+        investmentAccounts.push(account);
       }
       else if (type === AccountType.RealEstate) {
-        realEstate += balance;
+        realEstateTotal += balance;
+        realEstateAccounts.push(account);
       }
       else if (type === AccountType.CreditCard) {
-        creditCards += balance;
+        creditCardsTotal += balance;
+        creditCardAccounts.push(account);
       }
       else if (type === AccountType.Loan) {
-        loans += balance;
+        loansTotal += balance;
+        loanAccounts.push(account);
       }
     }
 
-    const totalAssets = cash + investments + realEstate;
-    const totalLiabilities = creditCards + loans;
+    const totalAssets = cashTotal + investmentsTotal + realEstateTotal;
+    const totalLiabilities = creditCardsTotal + loansTotal;
 
     return {
       netWorth: totalAssets - totalLiabilities,
       totalAssets,
       totalLiabilities,
-      cash,
-      investments,
-      retirement,
-      realEstate,
-      creditCards,
-      loans
+      cash: cashTotal,
+      investments: investmentsTotal,
+      realEstate: realEstateTotal,
+      creditCards: creditCardsTotal,
+      loans: loansTotal,
+      cashAccounts,
+      investmentAccounts,
+      realEstateAccounts,
+      creditCardAccounts,
+      loanAccounts
     };
   });
 }

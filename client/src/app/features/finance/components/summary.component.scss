@@ -1,0 +1,35 @@
+.summary-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.full-width-card {
+  flex: 1 1 100%;
+}
+
+.summary-card {
+  flex: 1 1 300px;
+}
+
+.large-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 1rem 0;
+}
+
+.subtitle {
+  color: gray;
+}
+
+.row-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+}
+
+.section-title {
+  padding: 0 1rem;
+  margin-top: 1rem;
+}
