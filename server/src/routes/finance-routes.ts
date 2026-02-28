@@ -4,8 +4,8 @@ import { Institution } from '@shared/types/finance/entities/institution';
 import { createSuccessResponse, createSuccessMessageResponse } from './../utility/api-response-util';
 import { FinanceLogic } from '../features/finance/finance-logic';
 
-const financeLogic = new FinanceLogic();
 const router = Router();
+const financeLogic = new FinanceLogic();
 
 router.get('/data/account', (_req: Request, res: Response) => {
   const response: OperationResponse<string> = createSuccessMessageResponse('Finance -> /data/account OK');

@@ -4,39 +4,39 @@ import { OperationResponse } from '@shared/types/common/operation-response';
 import { Account } from '@shared/types/finance/entities/account';
 import { FinanceProfile } from '@shared/types/finance/entities/profile';
 import { Institution } from '@shared/types/finance/entities/institution';
-import { LoadingService } from '../../core/loading.service';
-import { NotificationService } from '../../core/notification.service';
+import { LoadingService } from './../../core/loading.service';
+import { NotificationService } from './../../core/notification.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FinanceService {
   private api = inject(ApiService);
-  private loading = inject(LoadingService);
-  private notifications = inject(NotificationService);
+  private loader = inject(LoadingService);
+  private notificationService = inject(NotificationService);
 
   profileData = signal<FinanceProfile | undefined>(undefined);
   
 
   async getProfileData(): Promise<FinanceProfile | undefined> {
     try {
-      const response = await this.loading.withLoading(this.api.get<OperationResponse<FinanceProfile>>(`finance/data/profile?related=institutions,accounts`));
+      const task = this.api.get<OperationResponse<FinanceProfile>>(`api/finance/data/profile?related=accounts`);
+      const response = await this.loader.withLoading(task);
       this.profileData.set(response.data);
       return response.data;
     }
     catch (error) {
-      console.error('Error fetching profile data:', error);
-      this.notifications.error('Unable to load finance profile.');
+      this.notificationService.error(`Unable to load finance profile: ${error}`);
       return undefined;
     }
   }
 
   async getTestInstitutions(): Promise<Institution[] | undefined> {
     try {
-      const response = await this.loading.withLoading(this.api.get<OperationResponse<Institution[]>>('finance/data/institution'));
+      const response = await this.loader.withLoading(this.api.get<OperationResponse<Institution[]>>('api/finance/data/institution'));
       return response.data;
     } catch (error) {
-      this.notifications.error('Unable to load institutions.');
+      this.notificationService.error('Unable to load institutions.');
       return undefined;
     }
   }
