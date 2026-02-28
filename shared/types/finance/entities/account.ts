@@ -11,7 +11,7 @@ export enum AccountType {
     CreditCard = 'Credit Card',
     Investment = 'Investment',
     RealEstate = 'Real Estate',
-    Mortgage = 'Home Mortgage'
+    Loan = 'Loan'
 }
 
 export enum AccountSubType {
@@ -21,7 +21,8 @@ export enum AccountSubType {
     PrimaryResidence = 'Primary Residence',
     Retirement_401k = '401k',
     Retirement_IRA = 'IRA',
-    Savings = 'Savings'
+    Savings = 'Savings',
+    Mortgage = 'Home Mortgage'
 }
 
 export type Account = {
