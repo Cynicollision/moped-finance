@@ -1,7 +1,65 @@
-<p>Financial Summary Dashboard</p>
+<div style="display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem;">
+  <!-- Net Worth Card -->
+  <mat-card appearance="outlined" style="flex: 1 1 300px;">
+    <mat-card-header>
+      <mat-card-title>Net Worth</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div style="font-size: 2.5rem; font-weight: bold; margin: 1rem 0;">{{ summary().netWorth | currency }}</div>
+      <div style="color: gray;">Total Assets - Total Liabilities</div>
+    </mat-card-content>
+  </mat-card>
 
-<p>Test - Institutions</p>
-<pre>{{ institutions() | json }}</pre>
+  <!-- Assets Card -->
+  <mat-card appearance="outlined" style="flex: 1 1 300px;">
+    <mat-card-header>
+      <mat-card-title>Assets</mat-card-title>
+      <mat-card-subtitle>Total: {{ summary().totalAssets | currency }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+        <span>Cash</span>
+        <span>{{ summary().cash | currency }}</span>
+      </div>
+      <mat-divider></mat-divider>
+      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+        <span>Other Investments</span>
+        <span>{{ summary().investments | currency }}</span>
+      </div>
+      <mat-divider></mat-divider>
+      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+        <span>Retirement</span>
+        <span>{{ summary().retirement | currency }}</span>
+      </div>
+      <mat-divider></mat-divider>
+      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+        <span>Real Estate</span>
+        <span>{{ summary().realEstate | currency }}</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
 
-<p>Test - Profile Data</p>
-<pre>{{ financeService.profileData() | json }}</pre>
+  <!-- Liabilities Card -->
+  <mat-card appearance="outlined" style="flex: 1 1 300px;">
+    <mat-card-header>
+      <mat-card-title>Liabilities</mat-card-title>
+      <mat-card-subtitle>Total: {{ summary().totalLiabilities | currency }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+        <span>Credit Cards</span>
+        <span>{{ summary().creditCards | currency }}</span>
+      </div>
+      <mat-divider></mat-divider>
+      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+        <span>Loans</span>
+        <span>{{ summary().loans | currency }}</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<div style="padding: 1rem; opacity: 0.7;">
+  <p>Debug - Profile Data</p>
+  <pre>{{ financeService.profileData() | json }}</pre>
+</div>

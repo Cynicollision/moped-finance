@@ -1,21 +1,71 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { JsonPipe } from '@angular/common';
-import { Institution } from '@shared/types/finance/entities/institution';
+import { Component, inject, computed } from '@angular/core';
+import { JsonPipe, CurrencyPipe } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
+import { AccountType } from '@shared/types/finance/entities/account';
 import { FinanceService } from './../finance.service';
-import { FinanceProfile } from '@shared/types/finance/entities/profile';
 
 @Component({
   selector: 'app-finance-summary',
   standalone: true,
-  imports: [JsonPipe],
+  imports: [JsonPipe, CurrencyPipe, MatCardModule, MatDividerModule],
   templateUrl: './summary.component.html'
 })
-export class FinanceSummaryComponent implements OnInit {
+export class FinanceSummaryComponent {
   financeService = inject(FinanceService);
 
-  institutions = signal<Institution[] | undefined>(undefined);
+  summary = computed(() => {
+    const profile = this.financeService.profileData();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const accounts = profile?.accounts || [];
 
-  async ngOnInit() {
-    this.institutions.set(await this.financeService.getTestInstitutions());
-  }
+    let cash = 0;
+    let investments = 0;
+    let retirement = 0;
+    let realEstate = 0;
+    let creditCards = 0;
+    let loans = 0;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const account of accounts as any[]) {
+      const balance = Number(account.balance) || 0;
+      const type = (account.type || '');
+
+      console.log(account);
+
+      if (type === AccountType.Cash) {
+        cash += balance;
+      }
+      else if (type === AccountType.Investment) {
+        investments += balance;
+        if (account.isRetirement) {
+          retirement += balance;
+        }
+      }
+      else if (type === AccountType.RealEstate) {
+        realEstate += balance;
+      }
+      else if (type === AccountType.CreditCard) {
+        creditCards += balance;
+      }
+      else if (type === AccountType.Loan) {
+        loans += balance;
+      }
+    }
+
+    const totalAssets = cash + investments + realEstate;
+    const totalLiabilities = creditCards + loans;
+
+    return {
+      netWorth: totalAssets - totalLiabilities,
+      totalAssets,
+      totalLiabilities,
+      cash,
+      investments,
+      retirement,
+      realEstate,
+      creditCards,
+      loans
+    };
+  });
 }

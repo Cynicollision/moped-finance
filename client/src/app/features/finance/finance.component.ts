@@ -29,6 +29,7 @@ export class FinanceComponent implements OnInit {
   profileData = signal<FinanceProfile | undefined>(undefined);
 
   async ngOnInit() {
-    this.profileData.set(await this.financeService.getProfileData());
+    const data = await this.financeService.fetchProfileData();
+    this.profileData.set(data);
   }
 }

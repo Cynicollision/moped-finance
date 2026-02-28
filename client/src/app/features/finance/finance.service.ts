@@ -17,7 +17,7 @@ export class FinanceService {
   profileData = signal<FinanceProfile | undefined>(undefined);
   
 
-  async getProfileData(): Promise<FinanceProfile | undefined> {
+  async fetchProfileData(): Promise<FinanceProfile | undefined> {
     try {
       const task = this.api.get<OperationResponse<FinanceProfile>>(`api/finance/data/profile?related=accounts`);
       const response = await this.loader.withLoading(task);
@@ -29,16 +29,4 @@ export class FinanceService {
       return undefined;
     }
   }
-
-  async getTestInstitutions(): Promise<Institution[] | undefined> {
-    try {
-      const response = await this.loader.withLoading(this.api.get<OperationResponse<Institution[]>>('api/finance/data/institution'));
-      return response.data;
-    }
-    catch (err) {
-      this.notificationService.error(`Unable to load institutions: ${JSON.stringify(err)}`);
-      return undefined;
-    }
-  }
-
 }
