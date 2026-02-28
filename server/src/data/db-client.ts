@@ -8,5 +8,13 @@ const dbConfig = {
   port: parseInt(process.env.PGPORT || '5432'),
 };
 
+export class DatabaseError extends Error {
+  constructor(message: string = 'Error processing database command') {
+    super(message);
+    this.name = 'DatabaseError';
+    Object.setPrototypeOf(this, DatabaseError.prototype);
+  }
+}
+
 // Export a single pool instance to be shared across the app
 export const databasePool = new Pool(dbConfig);

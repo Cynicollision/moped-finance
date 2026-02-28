@@ -7,6 +7,7 @@ export type Transaction = {
     merchant: string;
     originalStatement: string;
     notes: string;
+    isHidden: boolean;
     isSplit: boolean;
     splitParentId: string;
 };

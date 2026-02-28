@@ -17,7 +17,7 @@ export function createSuccessResponse<T>(data?: T): OperationResponse<T> {
   };
 }
 
-export function createErrorResponse(code: string, message: string, details?: unknown): OperationResponse {
+export function createErrorResponse<T>(code: string, message: string, details?: unknown): OperationResponse<T> {
   return {
     success: false,
     timestamp: getCurrentTimestamp(),

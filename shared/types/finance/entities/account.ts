@@ -33,7 +33,8 @@ export type Account = {
     type: AccountType;
     subtype?: AccountSubType;
     balance: number;
-    hidden: boolean;
+    isHidden: boolean;
+    isRetirement: boolean;
 
     balanceHistory?: BalanceHistory[];
     transactions?: Transaction[];

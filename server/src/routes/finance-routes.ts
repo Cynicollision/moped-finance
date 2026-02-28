@@ -1,27 +1,32 @@
 import { Router, Request, Response } from 'express';
-import { OperationResponse } from '@shared/types/common/operation-response';
-import { Institution } from '@shared/types/finance/entities/institution';
-import { createSuccessResponse, createSuccessMessageResponse } from './../utility/api-response-util';
+import { handleAuthenticatedRequest } from './../utility/auth-request-util';
+import { FinanceData } from './../data/finance-data';
 import { FinanceLogic } from './../logic/finance-logic';
 
 const router = Router();
-const financeLogic = new FinanceLogic();
-
-router.get('/data/account', (_req: Request, res: Response) => {
-  const response: OperationResponse<string> = createSuccessMessageResponse('Finance -> /data/account OK');
-  res.status(200).json(response);
-});
-
-router.get('/data/institution', async (_req: Request, res: Response) => {
-  const response = await financeLogic.getInstitutions('1');
-
-  res.status(200).json(response);
-});
+const financeData = new FinanceData();
+const financeLogic = new FinanceLogic(financeData);
 
 router.get('/data/profile', async (req: Request, res: Response) => {
-  const related = (req.query.related as string)?.split(',') || []; // TODO use or remove
-  const response = await financeLogic.getFinanceProfile('1'); // TODO: get user ID from session/cache  -> finance profile ID
-  res.status(200).json(response);
+  // TODO use or remove
+  //const related = (req.query.related as string)?.split(',') || []; 
+  const full = req.query.full === 'true';
+
+  await handleAuthenticatedRequest(req, res, async (user) => {
+    return await financeLogic.getFinanceProfileByUserId(user.id);
+  });
+});
+
+router.get('/data/account/:accountId/transactions', async (req: Request, res: Response) => {
+  await handleAuthenticatedRequest(req, res, async (user) => {
+    return await financeLogic.getAccountTransactions(req.params.accountId);
+  });
+});
+
+router.get('/data/account/:accountId/balance-history', async (req: Request, res: Response) => {
+  await handleAuthenticatedRequest(req, res, async (user) => {
+    return await financeLogic.getAccountBalanceHistory(req.params.accountId);
+  });
 });
 
 export default router;

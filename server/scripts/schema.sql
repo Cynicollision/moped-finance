@@ -42,8 +42,8 @@ CREATE TABLE IF NOT EXISTS finance.accounts (
   category VARCHAR(50) NOT NULL,
   type VARCHAR(50) NOT NULL,
   subtype VARCHAR(50),
-  hidden BOOLEAN DEFAULT FALSE,
-  retirement BOOLEAN DEFAULT FALSE,
+  is_hidden BOOLEAN DEFAULT FALSE,
+  is_retirement BOOLEAN DEFAULT FALSE,
   balance DECIMAL(12, 2) NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS finance.transactions (
   merchant VARCHAR(255),
   original_statement TEXT,
   notes TEXT,
+  is_hidden BOOLEAN DEFAULT FALSE,
   is_split BOOLEAN DEFAULT FALSE,
   split_parent_id VARCHAR(50) REFERENCES finance.transactions(id) ON DELETE RESTRICT,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
