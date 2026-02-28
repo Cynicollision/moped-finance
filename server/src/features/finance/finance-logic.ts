@@ -1,8 +1,8 @@
 import { OperationResponse } from '@shared/types/common/operation-response';
+import { AccountCategory, AccountType, AccountSubType } from '@shared/types/finance/entities/account';
 import { Institution } from '@shared/types/finance/entities/institution';
 import { FinanceProfile } from '@shared/types/finance/entities/profile';
 import { createSuccessResponse } from './../../utility/api-response-util';
-import { AccountType } from '@shared/types/finance/enum/account-type';
 
 export class FinanceLogic {
 
@@ -22,30 +22,38 @@ export class FinanceLogic {
         profileData.accounts = [
             {
                 id: '1',
+                profileId: '1',
                 institutionId: '1',
                 name: 'Test Account 1',
-                type: AccountType.Asset,
-                subtype: 'Checking',
+                category: AccountCategory.Asset,
+                type: AccountType.Cash,
+                subtype: AccountSubType.Checking,
+                balance: 1000,
                 hidden: false,
                 balanceHistory: [],
                 transactions: [],
             },
             {
                 id: '2',
+                profileId: '1',
                 institutionId: '1',
                 name: 'Test Account 2',
-                type: AccountType.Asset,
-                subtype: 'Savings',
+                category: AccountCategory.Asset,
+                type: AccountType.Cash,
+                subtype: AccountSubType.Savings,
+                balance: 2000,
                 hidden: false,
                 balanceHistory: [],
                 transactions: [],
             },
             {
-                id: '2',
+                id: '3',
+                profileId: '1',
                 institutionId: '1',
                 name: 'Test Account 3',
-                type: AccountType.Asset,
-                subtype: 'Loan',
+                category: AccountCategory.Asset,
+                type: AccountType.Mortgage,
+                balance: 3000,
                 hidden: false,
                 balanceHistory: [],
                 transactions: [],

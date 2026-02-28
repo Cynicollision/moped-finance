@@ -7,8 +7,9 @@ services:
     container_name: home_lab_db
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+      POSTGRES_DB: ${PGDATABASE}
     ports:
       - "5432:5432"
     volumes:
@@ -27,8 +28,8 @@ services:
     environment:
       - NODE_ENV=development
       - DB_HOST=postgres # This is the service name from this file
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
+      - DB_USER=${PGUSER}
+      - DB_PASS=${PGPASSWORD}
       - PORT=3000
     volumes:
       - ./server:/app/server
