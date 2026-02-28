@@ -27,9 +27,10 @@ services:
       - "9229:9229"
     environment:
       - NODE_ENV=development
-      - DB_HOST=postgres # This is the service name from this file
-      - DB_USER=${PGUSER}
-      - DB_PASS=${PGPASSWORD}
+      - PGHOST=postgres
+      - PGUSER=${PGUSER}
+      - PGPASSWORD=${PGPASSWORD}
+      - PGDATABASE=${PGDATABASE}
       - PORT=3000
     volumes:
       - ./server:/app/server
