@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { OperationResponse } from '@shared/types/common/operation-response';
 import { firstValueFrom } from 'rxjs';
+import { OperationResult } from '@shared/types/common/operation-response';
 
 @Injectable({
   providedIn: 'root'
@@ -15,8 +15,8 @@ export class ApiService {
     return firstValueFrom(this.http.get<T>(`${this.baseUrl}/${path}`, { params, withCredentials: true }));
   }
 
-  post<T>(path: string, body: any): Promise<OperationResponse<T>> {
-    return firstValueFrom(this.http.post<OperationResponse<T>>(`${this.baseUrl}/${path}`, body, { withCredentials: true }));
+  post<T>(path: string, body: any): Promise<OperationResult<T>> {
+    return firstValueFrom(this.http.post<OperationResult<T>>(`${this.baseUrl}/${path}`, body, { withCredentials: true }));
   }
 
   put<T>(path: string, body: any): Promise<T> {

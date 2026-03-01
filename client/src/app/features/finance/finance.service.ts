@@ -1,7 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { OperationResponse } from '@shared/types/common/operation-response';
+import { forkJoin, lastValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { OperationResult } from '@shared/types/common/operation-response';
 import { FinanceProfile } from '@shared/types/finance/entities/profile';
 import { Institution } from '@shared/types/finance/entities/institution';
+import { Account } from '@shared/types/finance/entities/account';
+import { Category } from '@shared/types/finance/entities/category';
 import { ApiService } from './../../core/api.service';
 import { LoadingService } from './../../core/loading.service';
 import { NotificationService } from './../../core/notification.service';
@@ -16,13 +20,26 @@ export class FinanceService {
 
   profileData = signal<FinanceProfile | undefined>(undefined);
   
-
   async fetchProfileData(): Promise<FinanceProfile | undefined> {
     try {
-      const task = this.api.get<OperationResponse<FinanceProfile>>(`api/finance/data/profile?related=accounts`);
+      const task = lastValueFrom(forkJoin({
+        profile: this.api.get<OperationResult<FinanceProfile>>('api/finance/data/profile'),
+        accounts: this.api.get<OperationResult<Account[]>>('api/finance/data/accounts'),
+        institutions: this.api.get<OperationResult<Institution[]>>('api/finance/data/institutions'),
+        categories: this.api.get<OperationResult<Category[]>>('api/finance/data/categories')
+      }).pipe(
+        map(({ profile, accounts, institutions, categories }) => {
+          const fullProfile = <FinanceProfile>profile.data;
+          fullProfile.accounts = accounts.data;
+          fullProfile.institutions = institutions.data;
+          fullProfile.categories = categories.data;
+          return fullProfile;
+        })
+      ));
+
       const response = await this.loader.withLoading(task);
-      this.profileData.set(response.data);
-      return response.data;
+      this.profileData.set(response);
+      return response;
     }
     catch (error) {
       this.notificationService.error(`Unable to load finance profile: ${JSON.stringify(error)}`);

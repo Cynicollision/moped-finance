@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { OperationResult } from '@shared/types/common/operation-response';
 import { User } from '@shared/types/core/entities/user';
-import { OperationResponse } from '@shared/types/common/operation-response';
 import { ApiService } from './api.service';
 import { LoadingService } from './loading.service';
 import { NotificationService } from './notification.service';
@@ -19,12 +19,12 @@ export class AuthService {
 
   async checkSession(): Promise<void> {
     try {
-      const task = this.api.get<OperationResponse<User>>('auth/me');
+      const task = this.api.get<OperationResult<User>>('auth/me');
       const response = await this.loader.withLoading(task);
       this.currentUser.set(response.data || null);
     } 
     catch (err) {
-      this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
+      //this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
       this.currentUser.set(null);
     }
   }

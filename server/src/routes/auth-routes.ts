@@ -1,36 +1,28 @@
 import { Router, Request, Response } from 'express';
-import { User } from '@shared/types/core/entities/user';
-import { createSuccessResponse, createSuccessMessageResponse, createErrorResponse } from './../utility/api-response-util';
+import { OperationResultFactory } from '../utility/operation-result-factory';
+import { ApiResponseHandler } from './../utility/api-response-handler';
+import { AuthLogic, AuthRequest } from './../logic/auth-logic';
 
 const router = Router();
+const authLogic = new AuthLogic();
 
-export interface AuthRequest {
-  username: string;
-  password?: string;
-}
-
-router.post('/login', (req: Request, res: Response) => {
+router.post('/login', async (req: Request, res: Response) => {
+  // TODO: cleanup type usage
   const { username } = req.body as AuthRequest;
 
-  // Hardcoded user for now
-  const user: User = {
-    id: '1',
-    username: username,
-    name: username
-  };
+  const result = await authLogic.login(username);
+  req.session.user = result.data;
 
-  req.session.user = user;
-
-  res.json(createSuccessResponse(user));
+  return ApiResponseHandler.succeed(res, result);
 });
 
 router.post('/logout', (req: Request, res: Response) => {
   req.session.destroy((err) => {
     if (err) {
-      return res.status(500).json(createErrorResponse('LOGOUT_ERROR', 'Could not log out.'));
+      return res.status(500).json(OperationResultFactory.error('LOGOUT_ERROR', 'Could not log out.'));
     }
     res.clearCookie('connect.sid');
-    res.json(createSuccessMessageResponse('Logged out successfully'));
+    res.json(OperationResultFactory.success('Logged out successfully'));
   });
 });
 
@@ -38,10 +30,11 @@ router.get('/me', (req: Request, res: Response) => {
   const user = req.session.user;
 
   if (!user) {
-    return res.status(401).json(createErrorResponse('UNAUTHORIZED', 'Not authenticated'));
+    // TODO: is 401 correct here? Or 200 w/ success = false for more graceful handling on client?
+    return res.status(401).json(OperationResultFactory.error('UNAUTHORIZED', 'Not authenticated'));
   }
 
-  res.json(createSuccessResponse(user));
+  res.json(OperationResultFactory.success(user));
 });
 
 export default router;

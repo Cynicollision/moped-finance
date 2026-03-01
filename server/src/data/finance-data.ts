@@ -8,62 +8,48 @@ import { DatabaseError, databasePool } from './db-client';
 
 export class FinanceData {
 
-    public async getProfileByUserId(userId: string): Promise<FinanceProfile | null> {
-        try {
-            const result = await databasePool.query(
-                'SELECT id, user_id as "userId" FROM finance.profiles WHERE user_id = $1',
-                [userId]
-            );
-            return result.rows[0] || null;
-        }
-        catch (err) {
-            throw new DatabaseError();
-        }
-    }
-
-    public async getInstitutions(profileId: string): Promise<Institution[]> {
-        try {
-            const result = await databasePool.query(
-                'SELECT id, profile_id as "profileId", name FROM finance.institutions WHERE profile_id = $1',
-                [profileId]
-            );
-            return result.rows;
-        }
-        catch (err) {
-            throw new DatabaseError();
-        }
-    }
-
-    public async getCategories(profileId: string): Promise<Category[]> {
-        try {
-            const result = await databasePool.query(
-                'SELECT id, profile_id as "profileId", name, group_name as "group" FROM finance.categories WHERE profile_id = $1',
-                [profileId]
-            );
-            return result.rows;
-        }
-        catch (err) {
-            throw new DatabaseError();
-        }
-    }
-
-    public async getAccounts(profileId: string): Promise<Account[]> {
+    // TODO
+    public async getAccountBalanceHistory(accountId: string): Promise<BalanceHistory[]> {
         try {
             const result = await databasePool.query(
                 `SELECT 
                     id, 
-                    profile_id as "profileId", 
-                    institution_id as "institutionId", 
-                    name, 
-                    category, 
-                    type, 
-                    subtype, 
-                    balance, 
-                    is_hidden as "isHidden",
-                    is_retirement as "isRetirement"
-                FROM finance.accounts 
-                WHERE profile_id = $1`,
-                [profileId]
+                    account_id AS "accountId", 
+                    date, 
+                    balance 
+                FROM finance.balance_history 
+                WHERE account_id = $1`,
+                [accountId]
+            );
+
+            return result.rows.map(row => ({
+                ...row,
+                balance: typeof row.balance === 'string' ? parseFloat(row.balance) : row.balance
+            }));
+        }
+        catch (err) {
+            throw new DatabaseError();
+        }
+    }
+
+    public async getAccounts(userId: string): Promise<Account[]> {
+        try {
+            const result = await databasePool.query(
+                `SELECT 
+                    a.id, 
+                    a.profile_id AS "profileId", 
+                    a.institution_id AS "institutionId", 
+                    a.name, 
+                    a.category, 
+                    a.type, 
+                    a.subtype, 
+                    a.balance, 
+                    a.is_hidden AS "isHidden",
+                    a.is_retirement AS "isRetirement"
+                FROM finance.accounts AS a
+                    JOIN finance.profiles AS p ON p.id = a.profile_id
+                WHERE p.user_id = $1`,
+                [userId]
             );
             
             return result.rows.map(row => ({
@@ -77,52 +63,84 @@ export class FinanceData {
         }
     }
 
-    public async getTransactions(accountId: string): Promise<Transaction[]> {
+    public async getCategories(userId: string): Promise<Category[]> {
         try {
             const result = await databasePool.query(
                 `SELECT 
-                    id, 
-                    account_id as "accountId", 
-                    category_id as "categoryId", 
-                    date, 
-                    amount, 
-                    merchant, 
-                    original_statement as "originalStatement", 
-                    notes, 
-                    is_hidden as "isHidden",
-                    is_split as "isSplit", 
-                    split_parent_id as "splitParentId"
-                FROM finance.transactions 
-                WHERE account_id = $1`,
-                [accountId]
+                    c.id, 
+                    c.profile_id as "profileId", 
+                    c.name, 
+                    group_name as "groupName"
+                FROM finance.categories AS c
+                    JOIN finance.profiles AS p ON p.id = c.profile_id
+                WHERE p.user_id = $1`,
+                [userId]
             );
-
-            return result.rows.map(row => ({
-                ...row,
-                amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
-            }));
+            return result.rows;
         }
         catch (err) {
             throw new DatabaseError();
         }
     }
 
-    public async getBalanceHistory(accountId: string): Promise<BalanceHistory[]> {
+    public async getInstitutions(userId: string): Promise<Institution[]> {
         try {
             const result = await databasePool.query(
                 `SELECT 
-                    id, 
-                    account_id as "accountId", 
-                    date, 
-                    balance 
-                FROM finance.balance_history 
-                WHERE account_id = $1`,
-                [accountId]
+                    i.id, 
+                    i.profile_id as "profileId", 
+                    i.name 
+                FROM finance.institutions AS i
+                    JOIN finance.profiles AS p ON i.profile_id = p.id
+                WHERE p.user_id = $1`,
+                [userId]
+            );
+            return result.rows;
+        }
+        catch (err) {
+            throw new DatabaseError();
+        }
+    }
+
+    public async getProfile(userId: string): Promise<FinanceProfile | null> {
+        try {
+            const result = await databasePool.query(
+                'SELECT id, user_id as "userId" FROM finance.profiles WHERE user_id = $1',
+                [userId]
+            );
+            return result.rows[0] || null;
+        }
+        catch (err) {
+            // TODO: something better with this
+            throw new DatabaseError();
+        }
+    }
+
+    public async getTransactions(userId: string): Promise<Transaction[]> {
+        try {
+            const result = await databasePool.query(
+                `SELECT 
+                    t.id, 
+                    t.account_id AS "accountId", 
+                    t.category_id AS "categoryId", 
+                    t.date, 
+                    t.amount, 
+                    t.merchant, 
+                    t.original_statement as "originalStatement", 
+                    t.notes, 
+                    t.is_hidden AS "isHidden",
+                    t.is_split AS "isSplit", 
+                    t.split_parent_id AS "splitParentId"
+                FROM finance.transactions AS t
+                    JOIN finance.accounts AS a ON a.id = t.account_id
+                    JOIN finance.profiles AS p ON p.id = a.profile_id
+                WHERE p.user_id = $1`,
+                [userId]
             );
 
             return result.rows.map(row => ({
                 ...row,
-                balance: typeof row.balance === 'string' ? parseFloat(row.balance) : row.balance
+                amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
             }));
         }
         catch (err) {

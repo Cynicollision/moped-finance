@@ -1,5 +1,5 @@
 import { Component, inject, computed } from '@angular/core';
-import { JsonPipe, CurrencyPipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { AccountType } from '@shared/types/finance/entities/account';
@@ -8,7 +8,7 @@ import { FinanceService } from './../finance.service';
 @Component({
   selector: 'app-finance-summary',
   standalone: true,
-  imports: [JsonPipe, CurrencyPipe, MatCardModule, MatDividerModule],
+  imports: [CurrencyPipe, MatCardModule, MatDividerModule],
   templateUrl: './summary.component.html',
   styleUrl: './summary.component.scss'
 })

@@ -1,4 +1,4 @@
-export interface OperationResponse<T = void> {
+export interface OperationResult<T = void> {
   success: boolean;
   timestamp: string;
   data?: T;
