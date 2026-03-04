@@ -4,8 +4,7 @@ import { Account } from '@shared/types/finance/entities/account';
 import { Category } from '@shared/types/finance/entities/category';
 import { FinanceProfile } from '@shared/types/finance/entities/profile';
 import { Transaction } from '@shared/types/finance/entities/transaction';
-import { OperationResultFactory } from '../utility/operation-result-factory';
-import { FinanceData } from './../data/finance-data';
+import { FinanceData } from './finance-data';
 
 type GetTransactionsOptions = {
     sort: string;
@@ -21,35 +20,37 @@ export class FinanceLogic {
         this.financeData = financeData;
     }
 
-    public async getProfile(userId: string): Promise<OperationResult<FinanceProfile>> {
+    public async getProfile(userId: string): Promise<FinanceProfile> {
         const profile = await this.financeData.getProfile(userId);
 
+        // TODO: Logic class should "throw" a Bad Request
         if (!profile) {
-            return OperationResultFactory.error<FinanceProfile>('NOT_FOUND', `Error: Finance Profile not found for user ID: ${userId}`)
+            throw new Error(`Error: Finance Profile not found for user ID: ${userId}`);
+            //return OperationResultFactory.error<FinanceProfile>('NOT_FOUND', `Error: Finance Profile not found for user ID: ${userId}`)
         }
 
-        return OperationResultFactory.success(profile);
+        return profile;
     }
 
-    public async getInstitutions(userId: string): Promise<OperationResult<Institution[]>> {
+    public async getInstitutions(userId: string): Promise<Institution[]> {
         const data = await this.financeData.getInstitutions(userId);
-        return OperationResultFactory.success<Institution[]>(data);
+        return data;
     }
 
-    public async getAccounts(userId: string): Promise<OperationResult<Account[]>> {
+    public async getAccounts(userId: string): Promise<Account[]> {
         const data = await this.financeData.getAccounts(userId);
-        return OperationResultFactory.success<Account[]>(data);
+        return data;
     }
 
-    public async getCategories(userId: string): Promise<OperationResult<Category[]>> {
+    public async getCategories(userId: string): Promise<Category[]> {
         const data = await this.financeData.getCategories(userId);
-        return OperationResultFactory.success<Category[]>(data);
+        return data;
     }
 
-    public async getTransactions(userId: string, options: GetTransactionsOptions): Promise<OperationResult<Transaction[]>> {
+    public async getTransactions(userId: string, options: GetTransactionsOptions): Promise<Transaction[]> {
         // TODO: use options
         const data = await this.financeData.getTransactions(userId);
-        return OperationResultFactory.success<Transaction[]>(data);
+        return data;
     }
 
     // TODO

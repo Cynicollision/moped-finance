@@ -8,3 +8,4 @@ export interface OperationResult<T = void> {
     details?: unknown;
   };
 }
+// TODO rename file

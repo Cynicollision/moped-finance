@@ -2,8 +2,8 @@ import express, { Request, Response } from 'express';
 import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
-import apiRouter from './src/app-router';
-import authRoutes from './src/routes/auth-routes';
+import appRouter from './src/api-routes';
+import authRoutes from './src/auth/auth-routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,7 +31,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 app.use('/auth', authRoutes);
-app.use('/api', apiRouter);
+app.use('/api', appRouter);
 
 app.use(express.static(path.join(__dirname, './..', 'public')));
 

@@ -1,10 +1,5 @@
-import { Account } from '@shared/types/finance/entities/account';
-import { BalanceHistory } from '@shared/types/finance/entities/balance-history';
-import { Category } from '@shared/types/finance/entities/category';
-import { Institution } from '@shared/types/finance/entities/institution';
-import { FinanceProfile } from '@shared/types/finance/entities/profile';
-import { Transaction } from '@shared/types/finance/entities/transaction';
-import { DatabaseError, databasePool } from './db-client';
+import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction} from '@shared/types/finance';
+import { DatabaseError, databasePool } from './../../utility/db-client';
 
 export class FinanceData {
 
