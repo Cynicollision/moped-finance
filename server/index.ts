@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
-import appRouter from './src/api-routes';
+import apiRoutes from './src/api-routes';
 import authRoutes from './src/auth/auth-routes';
 
 const app = express();
@@ -31,7 +31,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 app.use('/auth', authRoutes);
-app.use('/api', appRouter);
+app.use('/api', apiRoutes);
 
 app.use(express.static(path.join(__dirname, './..', 'public')));
 
