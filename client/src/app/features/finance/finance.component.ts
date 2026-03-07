@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
-import { FinanceProfile } from '@shared/types/entities/finance/profile';
+import { FinanceProfile } from '@shared/finance/types';
 import { FinanceSummaryComponent } from './components/summary.component';
 import { FinanceAccountsComponent } from './components/accounts.component';
 import { FinanceTransactionsComponent } from './components/transactions.component';

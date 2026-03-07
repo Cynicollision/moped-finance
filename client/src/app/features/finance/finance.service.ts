@@ -1,8 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { forkJoin, lastValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin, lastValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { OperationResult } from '@shared/types/operation-result';
-import { FinanceProfile, Institution, Account, Category } from '@shared/types/entities/finance';
+import { OperationResult } from '@shared/core/contracts';
+import { GetTransactionsOptions } from '@shared/finance/contracts';
+import { FinanceProfile, Institution, Account, Category, Transaction } from '@shared/finance/types';
 import { ApiService } from './../../core/api.service';
 import { LoadingService } from './../../core/loading.service';
 import { NotificationService } from './../../core/notification.service';
@@ -37,6 +38,33 @@ export class FinanceService {
             const response = await this.loader.withLoading(task);
             this.profileData.set(response);
             return response;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to load finance profile: ${JSON.stringify(error)}`);
+            return undefined;
+        }
+    }
+
+    async fetchTransactions(options: GetTransactionsOptions): Promise<Transaction[] | undefined> {
+        try {
+            const params = new URLSearchParams();
+            if (options.sortKey) {
+                params.append('sortKey', options.sortKey);
+            }
+            if (options.sortDirection) {
+                params.append('sortDirection', options.sortDirection);
+            }
+            if (options.offset !== undefined) {
+                params.append('offset', options.offset.toString());
+            }
+            if (options.limit !== undefined) {
+                params.append('limit', options.limit.toString());
+            }
+
+            const task = this.api.get<OperationResult<Transaction[]>>(`api/finance/data/transactions?${params.toString()}`);
+            const response = await this.loader.withLoading(task);
+
+            return response.data;
         }
         catch (error) {
             this.notificationService.error(`Unable to load finance profile: ${JSON.stringify(error)}`);

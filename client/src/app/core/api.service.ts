@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { OperationResult } from '@shared/types/operation-result';
+import { OperationResult } from '@shared/core/contracts';
 
 @Injectable({
   providedIn: 'root'

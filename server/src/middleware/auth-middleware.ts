@@ -9,7 +9,7 @@ export const resolveUser = async (req: Request, _res: Response, next: NextFuncti
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.substring(7);
-            const user = await authLogic.getUser(token);
+            const user = await authLogic.getUserByToken(token);
             if (user) {
                 (req as any).user = user;
             }

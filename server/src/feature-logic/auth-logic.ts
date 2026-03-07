@@ -1,8 +1,8 @@
-import { User } from '@shared/types/entities/core/user';
+import { User } from '@shared/core/types/user';
 
 export class AuthLogic {
 
-    async getUser(username: string): Promise<User | undefined> {
+    async loginUser(username: string): Promise<User | undefined> {
         // TODO: validate request and get user from database
         const user = this.getTestUser(username, username);
 

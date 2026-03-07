@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { User } from '@shared/types/entities/core/user';
+import { User } from '@shared/core/types/user';
 import { ApiHandler } from './api-handler';
 import { AuthLogic } from './../feature-logic/auth-logic';
 import { resolveUser } from './../middleware/auth-middleware';
@@ -18,7 +18,7 @@ router.post('/login', async (req: Request, res: Response) => {
     const { username } = req.body as AuthRequest;
 
     // TODO: get user from database
-    const user = await authLogic.getUser(username);
+    const user = await authLogic.loginUser(username);
 
     if (!user) {
         return ApiHandler.failUnauthorized(res);

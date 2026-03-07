@@ -1,4 +1,7 @@
-import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction} from '@shared/types/entities/finance';
+import { SortDirection } from '@shared/core/enum';
+import { GetTransactionsOptions } from '@shared/finance/contracts';
+import { TransactionSortKey } from '@shared/finance/enum';
+import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction } from '@shared/finance/types';
 import { DatabaseError, databasePool } from './db-client';
 
 export class FinanceData {
@@ -113,10 +116,9 @@ export class FinanceData {
         }
     }
 
-    public async getTransactions(userId: string): Promise<Transaction[]> {
+    public async getTransactions(userId: string, options: GetTransactionsOptions, accountId?: string): Promise<Transaction[]> {
         try {
-            const result = await databasePool.query(
-                `SELECT 
+            let query = `SELECT 
                     t.id, 
                     t.account_id AS "accountId", 
                     t.category_id AS "categoryId", 
@@ -131,9 +133,35 @@ export class FinanceData {
                 FROM finance.transactions AS t
                     JOIN finance.accounts AS a ON a.id = t.account_id
                     JOIN finance.profiles AS p ON p.id = a.profile_id
-                WHERE p.user_id = $1`,
-                [userId]
-            );
+                WHERE p.user_id = $1`;
+
+            const params: (string | number)[] = [userId];
+
+            if (accountId) {
+                params.push(accountId);
+                query += ` AND a.id = $${params.length}`;
+            }
+
+            const sort = Object.values(TransactionSortKey).includes(options.sortKey as TransactionSortKey)
+                ? options.sortKey
+                : TransactionSortKey.Date;
+
+            const dirInput = (options.sortDirection || '').toUpperCase();
+            const dir = Object.values(SortDirection).includes(dirInput as SortDirection) ? dirInput : SortDirection.Desc;
+
+            query += ` ORDER BY t.${sort} ${dir}, t.id ASC`;
+
+            if (options.limit !== undefined) {
+                params.push(options.limit);
+                query += ` LIMIT $${params.length}`;
+            }
+
+            if (options.offset !== undefined) {
+                params.push(options.offset);
+                query += ` OFFSET $${params.length}`;
+            }
+
+            const result = await databasePool.query(query, params);
 
             return result.rows.map(row => ({
                 ...row,

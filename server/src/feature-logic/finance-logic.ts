@@ -1,12 +1,6 @@
-import { Account, Category, FinanceProfile, Institution, Transaction } from '@shared/types/entities/finance';
+import { GetTransactionsOptions } from '@shared/finance/contracts';
+import { Account, Category, FinanceProfile, Institution, Transaction } from '@shared/finance/types';
 import { FinanceData } from './../data-access/finance-data';
-
-type GetTransactionsOptions = {
-    sort: string;
-    direction: string;
-    offset: number;
-    limit: number;
-};
 
 export class FinanceLogic {
     private financeData: FinanceData;
@@ -21,10 +15,14 @@ export class FinanceLogic {
         // TODO: Logic class should "throw" a Bad Request
         if (!profile) {
             throw new Error(`Error: Finance Profile not found for user ID: ${userId}`);
-            //return OperationResultFactory.error<FinanceProfile>('NOT_FOUND', `Error: Finance Profile not found for user ID: ${userId}`)
         }
 
         return profile;
+    }
+
+    public async getCategories(userId: string): Promise<Category[]> {
+        const data = await this.financeData.getCategories(userId);
+        return data;
     }
 
     public async getInstitutions(userId: string): Promise<Institution[]> {
@@ -37,23 +35,12 @@ export class FinanceLogic {
         return data;
     }
 
-    public async getCategories(userId: string): Promise<Category[]> {
-        const data = await this.financeData.getCategories(userId);
-        return data;
-    }
-
-    public async getTransactions(userId: string, options: GetTransactionsOptions): Promise<Transaction[]> {
-        // TODO: use options
-        const data = await this.financeData.getTransactions(userId);
+    public async getTransactions(userId: string, options: GetTransactionsOptions, accountId?: string): Promise<Transaction[]> {
+        const data = await this.financeData.getTransactions(userId, options, accountId);
         return data;
     }
 
     // TODO
-    // public async getAccountTransactions(accountId: string): Promise<OperationResponse<Transaction[]>> {
-    //     const data = await this.financeData.getAccountTransactions(accountId);
-    //     return createSuccessResponse<Transaction[]>(data);
-    // }
-
     // public async getAccountBalanceHistory(accountId: string): Promise<OperationResponse<BalanceHistory[]>> {
     //     const data = await this.financeData.getAccountBalanceHistory(accountId);
     //     return createSuccessResponse<BalanceHistory[]>(data);

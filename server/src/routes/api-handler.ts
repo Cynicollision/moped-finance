@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { OperationResult } from '@shared/types/operation-result';
-import { User } from '@shared/types/entities/core/user';
+import { OperationResult } from '@shared/core/contracts/operation-result';
+import { User } from '@shared/core/types/user';
 import { getCurrentTimestamp } from './../utility/date-time-util';
 
 export class ApiHandler {
