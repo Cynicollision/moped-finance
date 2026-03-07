@@ -29,10 +29,17 @@ export class ApiHandler {
         if (req.session?.user) {
             return req.session.user;
         }
+
+        // Check if user was already resolved and attached to request (e.g. by middleware)
+        if ((req as any).user) {
+            return (req as any).user;
+        }
+
+        return undefined;
     }
 
     public static failNotFound(req: Request, res: Response): void {
-        res.status(404).json(`Route ${req.originalUrl} not found.`);
+        res.status(404).json(`${req.originalUrl} not found.`);
     }
 
     public static failUnauthorized(res: Response): void {

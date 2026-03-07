@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { User } from '@shared/types/entities/core/user';
 import { ApiHandler } from './api-handler';
+import { AuthLogic } from './../feature-logic/auth-logic';
+import { resolveUser } from './../middleware/auth-middleware';
 
 const router = Router();
 
@@ -9,16 +11,18 @@ type AuthRequest = {
     password?: string;
 };
 
+const authLogic = new AuthLogic();
+
 router.post('/login', async (req: Request, res: Response) => {
     // TODO: cleanup type usage
     const { username } = req.body as AuthRequest;
 
     // TODO: get user from database
-    const user: User = {
-        id: '1',
-        username: username,
-        name: username
-    };
+    const user = await authLogic.getUser(username);
+
+    if (!user) {
+        return ApiHandler.failUnauthorized(res);
+    }
 
     req.session.user = user;
 
@@ -35,8 +39,8 @@ router.post('/logout', async (req: Request, res: Response) => {
     });
 });
 
-router.get('/me', async (req: Request, res: Response) => {
-    const user = req.session.user;
+router.get('/me', resolveUser, async (req: Request, res: Response) => {
+    const user = ApiHandler.getUser(req);
 
     if (!user) {
         // TODO: is 401 correct here? Or 200 w/ success = false for more graceful handling on client?
