@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { User } from '@shared/types/core/entities/user';
+import { User } from '@shared/types/entities/core/user';
 import { ApiHandler } from './api-handler';
 
 const router = Router();

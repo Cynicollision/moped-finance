@@ -1,4 +1,4 @@
-import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction} from '@shared/types/finance';
+import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction} from '@shared/types/entities/finance';
 import { DatabaseError, databasePool } from './db-client';
 
 export class FinanceData {

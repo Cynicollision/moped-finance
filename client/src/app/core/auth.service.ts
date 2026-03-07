@@ -1,61 +1,61 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { OperationResult } from '@shared/types/common/operation-response';
-import { User } from '@shared/types/core/entities/user';
+import { OperationResult } from '@shared/types/operation-result';
+import { User } from '@shared/types/entities/core/user';
 import { ApiService } from './api.service';
 import { LoadingService } from './loading.service';
 import { NotificationService } from './notification.service';
 
 @Injectable({
-  providedIn: 'root'
+    providedIn: 'root'
 })
 export class AuthService {
-  private api = inject(ApiService);
-  private loader = inject(LoadingService);
-  private notificationService = inject(NotificationService);
-  private router = inject(Router);
+    private api = inject(ApiService);
+    private loader = inject(LoadingService);
+    private notificationService = inject(NotificationService);
+    private router = inject(Router);
 
-  currentUser = signal<User | null>(null);
+    currentUser = signal<User | null>(null);
 
-  async checkSession(): Promise<void> {
-    try {
-      const task = this.api.get<OperationResult<User>>('auth/me');
-      const response = await this.loader.withLoading(task);
-      this.currentUser.set(response.data || null);
-    } 
-    catch (err) {
-      //this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
-      this.currentUser.set(null);
+    async checkSession(): Promise<void> {
+        try {
+            const task = this.api.get<OperationResult<User>>('auth/me');
+            const response = await this.loader.withLoading(task);
+            this.currentUser.set(response.data || null);
+        }
+        catch (err) {
+            //this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
+            this.currentUser.set(null);
+        }
     }
-  }
 
-  async login(username: string): Promise<void> {
-    // TODO: sending hardcoded sample data for now
-    const credentials = { username: username, password: 'password' };
+    async login(username: string): Promise<void> {
+        // TODO: sending hardcoded sample data for now
+        const credentials = { username: username, password: 'password' };
 
-    try {
-      const task = this.api.post<User>('auth/login', credentials);
-      const response = await this.loader.withLoading(task);
-      this.currentUser.set(response.data || null);
-      this.router.navigate(['/']);
+        try {
+            const task = this.api.post<User>('auth/login', credentials);
+            const response = await this.loader.withLoading(task);
+            this.currentUser.set(response.data || null);
+            this.router.navigate(['/']);
+        }
+        catch (err) {
+            this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
+        }
     }
-    catch (err) {
-      this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
-    }
-  }
 
-  async logout(): Promise<void> {
-    try {
-      const task = this.api.post('auth/logout', {});
-      await this.loader.withLoading(task);
+    async logout(): Promise<void> {
+        try {
+            const task = this.api.post('auth/logout', {});
+            await this.loader.withLoading(task);
+        }
+        catch (err) {
+            this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
+        }
+        finally {
+            // Ensure we logout on client side even if server fails
+            this.currentUser.set(null);
+            this.router.navigate(['/login']);
+        }
     }
-    catch (err) {
-      this.notificationService.error(`Login failed: ${JSON.stringify(err)}`);
-    }
-    finally {
-      // Ensure we logout on client side even if server fails
-      this.currentUser.set(null);
-      this.router.navigate(['/login']);
-    }
-  }
 }

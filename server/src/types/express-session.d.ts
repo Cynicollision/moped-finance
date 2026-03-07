@@ -1,5 +1,5 @@
 import 'express-session';
-import { User } from '@shared/types/core/entities/user';
+import { User } from '@shared/types/entities/core/user';
 
 declare module 'express-session' {
   interface SessionData {

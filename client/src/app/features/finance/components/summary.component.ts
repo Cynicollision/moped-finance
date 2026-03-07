@@ -2,7 +2,7 @@ import { Component, inject, computed } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
-import { AccountType } from '@shared/types/finance/entities/account';
+import { AccountType } from '@shared/types/entities/finance/account';
 import { FinanceService } from './../finance.service';
 
 @Component({

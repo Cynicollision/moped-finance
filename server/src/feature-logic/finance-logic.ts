@@ -1,5 +1,4 @@
-import { OperationResult } from '@shared/types/common/operation-response';
-import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction } from '@shared/types/finance';
+import { Account, Category, FinanceProfile, Institution, Transaction } from '@shared/types/entities/finance';
 import { FinanceData } from './../data-access/finance-data';
 
 type GetTransactionsOptions = {
