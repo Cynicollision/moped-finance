@@ -63,9 +63,11 @@ export class FinanceData {
             const result = await databasePool.query(
                 `SELECT 
                     c.id, 
-                    c.profile_id as "profileId", 
-                    c.name, 
-                    group_name as "groupName"
+                    c.profile_id as "profileId",
+                    c.category_type,
+                    c.category_group,
+                    c.icon,
+                    c.name
                 FROM finance.categories AS c
                     JOIN finance.profiles AS p ON p.id = c.profile_id
                 WHERE p.user_id = $1`,

@@ -26,11 +26,14 @@ async function readCsv(fileName: string): Promise<string[]> {
     try {
         console.log('🌱 Seeding finance data...');
 
+        const sampleUserId = '1';
+        const sampleProfileId = '1';
+
         // 1. Create Finance Profile
         console.log(' 1. Inserting finance.profiles: one profile for demo user');
         await client.query(
             'INSERT INTO finance.profiles (id, user_id) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING',
-            ['1', '1']
+            [sampleProfileId, sampleUserId]
         );
         console.log(`✅ Seeded 1 finance.profile.`);
 
@@ -60,15 +63,22 @@ async function readCsv(fileName: string): Promise<string[]> {
         }
 
         // 3. Load Finance Accounts
+        const accountsMap = new Map<string, string>();
+
         console.log(' 3. Reading accounts.csv...');
-        const financeAccountLines = await readCsv('accounts.csv');
-        if (financeAccountLines.length > 0) {
+        const accountsLines = await readCsv('accounts.csv');
+        if (accountsLines.length > 0) {
             let count = 0;
             // Start at 1 to skip header row
-            for (let i = 1; i < financeAccountLines.length; i++) {
-                const line = financeAccountLines[i].trim();
-                if (!line) continue;
+            for (let i = 1; i < accountsLines.length; i++) {
+                const line = accountsLines[i].trim();
+                if (!line) {
+                    continue;
+                }
+                
                 const [id, profileId, institutionId, name, category, type, subtype, balance, hidden, retirement] = line.split(',');
+                accountsMap.set(name.trim(), id.trim());
+
                 if (id && profileId && name) {
                     await client.query(
                         `INSERT INTO finance.accounts (
@@ -93,6 +103,102 @@ async function readCsv(fileName: string): Promise<string[]> {
                 }
             }
             console.log(`✅ Seeded ${count} finance.accounts.`);
+        }
+
+        // 4. Load Categories
+        const categoriesMap = new Map<string, string>();
+        console.log(' 4. Reading categories.csv...');
+        const categoriesLines = await readCsv('categories.csv');
+        if (categoriesLines.length > 0) {
+            let count = 0;
+            // Start at 1 to skip header row
+            for (let i = 1; i < categoriesLines.length; i++) {
+                const line = categoriesLines[i].trim();
+                if (!line) {
+                    continue;
+                }
+
+                const [id, profileId, type, group, icon, name] = line.split(',');
+
+                if (id && profileId && type && group && icon && name) {
+                    categoriesMap.set(name.trim(), id.trim());
+
+                    await client.query(
+                        `INSERT INTO finance.categories (id, profile_id, category_type, category_group, icon, name) 
+                         VALUES ($1, $2, $3, $4, $5, $6)
+                         ON CONFLICT (id) DO NOTHING`,
+                        [
+                            id.trim(),
+                            profileId.trim(),
+                            type.trim(),
+                            group.trim(),
+                            icon.trim(),
+                            name.trim()
+                        ]
+                    );
+                    count++;
+                }
+            }
+            console.log(`✅ Seeded ${count} finance.categories.`);
+        }
+
+        // 5. Load Transactions
+        console.log(' 5. Reading transactions...');
+        const transactionsDir = path.join(DATA_DIR, 'transactions');
+
+        if (fs.existsSync(transactionsDir)) {
+            const transactionFiles = fs.readdirSync(transactionsDir);
+            let transactionCount = 0;
+
+            for (const file of transactionFiles) {
+                if (!file.endsWith('.csv')) {
+                    continue;
+                }
+
+                console.log(`    Processing ${file}...`);
+                const lines = await readCsv(path.join('transactions', file));
+
+                // Start at 1 to skip header row
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) {
+                        continue;
+                    }
+
+                    const [date, merchant, categoryName, accountName, originalStatement, notes, amount] = line.split(',');
+
+                    const accountId = accountsMap.get(accountName?.trim());
+
+                    if (accountId && date && amount) {
+                        const categoryId = categoriesMap.get(categoryName?.trim()) || null;
+                        transactionCount++;
+                        const txnId = `txn_${transactionCount}`;
+
+                        await client.query(
+                            `INSERT INTO finance.transactions (
+                                id, account_id, category_id, date, amount, merchant, 
+                                original_statement, notes, is_hidden, is_split
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                            ON CONFLICT (id) DO NOTHING`,
+                            [
+                                txnId,
+                                accountId,
+                                categoryId,
+                                date.trim(),
+                                parseFloat(amount.trim()),
+                                merchant?.trim() || null,
+                                originalStatement?.trim() || null,
+                                notes?.trim() || null,
+                                false,
+                                false
+                            ]
+                        );
+                    }
+                }
+            }
+            console.log(`✅ Seeded ${transactionCount} finance.transactions.`);
+        } else {
+            console.log('   No transactions directory found, skipping.');
         }
     }
     catch (err) {

@@ -12,8 +12,10 @@ CREATE TABLE IF NOT EXISTS finance.profiles (
 CREATE TABLE IF NOT EXISTS finance.categories (
   id VARCHAR(50) PRIMARY KEY,
   profile_id VARCHAR(50) NOT NULL REFERENCES finance.profiles(id) ON DELETE CASCADE,
+  category_type VARCHAR(50) NOT NULL,
+  category_group VARCHAR(50) NOT NULL,
+  icon VARCHAR(10) NULL,
   name VARCHAR(100) NOT NULL,
-  group_name VARCHAR(50) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
