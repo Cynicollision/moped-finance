@@ -5,19 +5,23 @@
 
 ## Schema Management
 Database schema is managed via raw SQL scripts for simplicity.
-*   **Schema Definition:** `server/sql/schema.sql`
-*   **Initialization:** `server/scripts/init-db.ts`
-*   **Seeding:** Test data is loaded via `server/scripts/seed-db.ts`.
+*   **Schema Definition:**
+    *   `server/scripts/schema_core.sql`
+    *   `server/scripts/schema_finance.sql`
+*   **Initialization:** Managed by individual scripts per schema (e.g., `server/scripts/init-core-db.ts`).
+*   **Seeding:** Managed by individual scripts per schema (e.g., `server/scripts/seed-finance-db.ts`).
 
 ### NPM Scripts
 Common database operations are wrapped in NPM scripts within `server/package.json`. Run these from the `server/` directory.
 
-| Script | Description | Example |
-| :--- | :--- | :--- |
-| `npm run db:init` | Applies the SQL schema to the database. | `npm run db:init` |
-| `npm run db:wipe` | Drops all schemas (Teardown). | `npm run db:wipe` |
-| `npm run db:reset` | Wipes, initializes, and seeds the DB. | `npm run db:reset` |
-| `npm run db:seed` | Runs the seeding script. | `npm run db:seed` |
+Commands can be run for the entire database or targeted to specific schemas (e.g., `core`, `finance`).
+
+| Command | Description | Global Example | Per-Schema Example |
+| :--- | :--- | :--- | :--- |
+| `db:reset` | Drops, initializes, and seeds. | `npm run db:reset` | `npm run db:reset:finance` |
+| `db:init` | Applies the SQL schema. | `npm run db:init` | `npm run db:init:core` |
+| `db:seed` | Runs the seeding script. | `npm run db:seed` | `npm run db:seed:finance` |
+| `db:drop` | Drops schemas (Teardown). | `npm run db:drop` | `npm run db:drop:core` |
 
 ## Logical Separation via Schemas
 
