@@ -3,7 +3,7 @@ import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
 import apiRoutes from './src/api-routes';
-import authRoutes from './src/auth/auth-routes';
+import authRoutes from './src/routes/auth-routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;

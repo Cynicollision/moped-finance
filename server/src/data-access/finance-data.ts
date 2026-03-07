@@ -1,5 +1,5 @@
 import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction} from '@shared/types/finance';
-import { DatabaseError, databasePool } from './../../utility/db-client';
+import { DatabaseError, databasePool } from './db-client';
 
 export class FinanceData {
 
@@ -34,7 +34,7 @@ export class FinanceData {
                     a.id, 
                     a.profile_id AS "profileId", 
                     a.institution_id AS "institutionId", 
-                    a.name, 
+                    a.name,
                     a.category, 
                     a.type, 
                     a.subtype, 

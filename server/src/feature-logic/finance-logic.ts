@@ -1,10 +1,6 @@
 import { OperationResult } from '@shared/types/common/operation-response';
-import { Institution } from '@shared/types/finance/entities/institution';
-import { Account } from '@shared/types/finance/entities/account';
-import { Category } from '@shared/types/finance/entities/category';
-import { FinanceProfile } from '@shared/types/finance/entities/profile';
-import { Transaction } from '@shared/types/finance/entities/transaction';
-import { FinanceData } from './finance-data';
+import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction } from '@shared/types/finance';
+import { FinanceData } from './../data-access/finance-data';
 
 type GetTransactionsOptions = {
     sort: string;
