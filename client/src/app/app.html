@@ -1,47 +1,49 @@
 <mat-sidenav-container class="sidenav-container">
-  <!-- Sidenav: Permanent on Desktop, Modal on Mobile -->
-  <mat-sidenav #drawer class="sidenav" fixedInViewport
-      [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
-      [mode]="(isHandset$ | async) ? 'over' : 'side'"
-      [opened]="(isHandset$ | async) === false">
-    
-    <mat-toolbar>HomeLab</mat-toolbar>
-    
-    <mat-nav-list>
-       @if (authService.currentUser()) {
-        <a mat-list-item *ngFor="let item of navItems" 
-          [routerLink]="item.route" routerLinkActive="active-link" 
-          [routerLinkActiveOptions]="{exact: true}" 
-          (click)="drawer.mode === 'over' && drawer.close()">
-          <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
-          <span matListItemTitle>{{item.label}}</span>
-        </a>
-      }
-    </mat-nav-list>
-  </mat-sidenav>
+    <!-- Sidenav: Permanent on Desktop, Modal on Mobile -->
+    <mat-sidenav #drawer class="sidenav" fixedInViewport [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+        [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false">
 
-  <!-- Main Content Area -->
-  <mat-sidenav-content>
-    <mat-toolbar color="primary">
-      <button
-        type="button"
-        aria-label="Toggle sidenav"
-        mat-icon-button
-        (click)="drawer.toggle()"
-        *ngIf="isHandset$ | async">
-        <mat-icon>menu</mat-icon>
-      </button>
-      <span>HomeLab</span>
-      <span class="spacer"></span>
-      <button mat-button *ngIf="authService.currentUser()" (click)="logout()">
-        Logout ({{ authService.currentUser()?.username }})
-      </button>
-    </mat-toolbar>
-    
-    <div class="content-container">
-      <router-outlet></router-outlet>
-    </div>
-  </mat-sidenav-content>
+        <div style="display: flex; flex-direction: column; height: 100%;">
+            <mat-toolbar>HomeLab</mat-toolbar>
+
+            <mat-nav-list>
+                @if (authService.currentUser()) {
+                <a mat-list-item *ngFor="let item of navItems" [routerLink]="item.route" routerLinkActive="active-link"
+                    [routerLinkActiveOptions]="{exact: true}" (click)="drawer.mode === 'over' && drawer.close()">
+                    <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
+                    <span matListItemTitle>{{item.label}}</span>
+                </a>
+                }
+            </mat-nav-list>
+
+            <span style="flex: 1 1 auto;"></span>
+
+            <mat-nav-list>
+                @if (authService.currentUser()) {
+                <a mat-list-item routerLink="/system" routerLinkActive="active-link"
+                    (click)="drawer.mode === 'over' && drawer.close()">
+                    <mat-icon matListItemIcon>dns</mat-icon>
+                    <span matListItemTitle>System</span>
+                </a>
+                <a mat-list-item (click)="logout()" style="cursor: pointer;">
+                    <mat-icon matListItemIcon>logout</mat-icon>
+                    <span matListItemTitle>Logout ({{ authService.currentUser()?.username }})</span>
+                </a>
+                }
+            </mat-nav-list>
+        </div>
+    </mat-sidenav>
+
+    <!-- Main Content Area -->
+    <mat-sidenav-content>
+        <div class="content-container">
+            <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()"
+                *ngIf="isHandset$ | async">
+                <mat-icon>menu</mat-icon>
+            </button>
+            <router-outlet></router-outlet>
+        </div>
+    </mat-sidenav-content>
 </mat-sidenav-container>
 
 <app-loading-overlay></app-loading-overlay>

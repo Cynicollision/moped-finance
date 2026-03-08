@@ -1,11 +1,22 @@
-import { Component, ViewChild, AfterViewInit, inject } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, ActivatedRoute } from '@angular/router';
+import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatSelectModule } from '@angular/material/select';
+import { SortDirection } from '@shared/core/enum';
 import { GetTransactionsOptions } from '@shared/finance/contracts';
-import { Transaction } from '@shared/finance/types';
+import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { Transaction, Category, Account } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
 
 @Component({
@@ -13,117 +24,173 @@ import { FinanceService } from './../finance.service';
     standalone: true,
     imports: [
         CommonModule,
+        ReactiveFormsModule,
         MatTableModule,
         MatSortModule,
         MatButtonModule,
-        MatIconModule
+        MatIconModule,
+        MatExpansionModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatDatepickerModule,
+        MatNativeDateModule,
+        MatAutocompleteModule,
+        MatSelectModule
     ],
-    template: `
-    <div class="container">
-      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
-        
-        <!-- Date Column -->
-        <ng-container matColumnDef="date">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Date </th>
-          <td mat-cell *matCellDef="let row"> {{row.date | date:'shortDate'}} </td>
-        </ng-container>
-
-        <!-- Merchant Column -->
-        <ng-container matColumnDef="merchant">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Merchant </th>
-          <td mat-cell *matCellDef="let row"> {{row.merchant}} </td>
-        </ng-container>
-
-        <!-- Category Column -->
-        <ng-container matColumnDef="category">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Category </th>
-          <td mat-cell *matCellDef="let row"> {{row.category}} </td>
-        </ng-container>
-
-        <!-- Account Column -->
-        <ng-container matColumnDef="account">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Account </th>
-          <td mat-cell *matCellDef="let row"> {{row.account}} </td>
-        </ng-container>
-
-        <!-- Amount Column -->
-        <ng-container matColumnDef="amount">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Amount </th>
-          <td mat-cell *matCellDef="let row"> {{row.amount | currency}} </td>
-        </ng-container>
-
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef> Actions </th>
-          <td mat-cell *matCellDef="let row">
-            <button mat-icon-button (click)="viewEditTransaction(row)">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
-
-      <div class="footer">
-        <button mat-raised-button color="primary" (click)="loadMore()">Load More</button>
-      </div>
-    </div>
-  `,
-    styles: [`
-    .container { display: flex; flex-direction: column; gap: 16px; }
-    .footer { display: flex; justify-content: center; padding: 16px; }
-    table { width: 100%; }
-  `]
+    templateUrl: './transactions.component.html',
+    styleUrl: './transactions.component.scss'
 })
-export class FinanceTransactionsComponent implements AfterViewInit {
+export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
     private financeService = inject(FinanceService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
 
-    displayedColumns: string[] = ['date', 'merchant', 'category', 'account', 'amount', 'actions'];
+    displayedColumns: string[] = ['date', 'account', 'merchant', 'category', 'amount'];
     dataSource = new MatTableDataSource<Transaction>([]);
     pageSize = 25;
+    hasMoreData = true;
 
     @ViewChild(MatSort) sort!: MatSort;
 
+    filterForm = new FormGroup({
+        minAmount: new FormControl<number | null>(null),
+        maxAmount: new FormControl<number | null>(null),
+        startDate: new FormControl<Date | null>(null),
+        endDate: new FormControl<Date | null>(new Date()),
+        merchant: new FormControl<string>(''),
+        category: new FormControl<string>(''),
+        account: new FormControl<string>('')
+    });
+
+    merchants: string[] = [];
+    categories: Category[] = [];
+    categoryMap = new Map<string, Category>();
+    accounts: Account[] = [];
+    accountMap = new Map<string, Account>();
+
     constructor() {
-        this.loadData();
+    }
+
+    async ngOnInit() {
+        const [merchants, categories, accounts] = await Promise.all([
+            this.financeService.fetchTransactionMerchants(),
+            this.financeService.fetchCategories(false),
+            this.financeService.fetchAccounts()
+        ]);
+
+        this.merchants = merchants || [];
+        this.categories = categories || [];
+        this.categories.forEach(c => this.categoryMap.set(c.id, c));
+        this.accounts = accounts || [];
+        this.accounts.forEach(a => this.accountMap.set(a.id, a));
     }
 
     ngAfterViewInit() {
-        this.dataSource.sort = this.sort;
+        this.sort.sortChange.subscribe(() => this.loadData(true));
+        this.sort.sort({ id: 'date', start: 'desc', disableClear: false });
     }
 
-    async loadData() {
-        // TODO: use options type and add filtering
-        const options: GetTransactionsOptions = {
-            limit: 25,
-            offset: this.dataSource.data.length
-        };
+    async loadData(reset: boolean = false) {
+        if (reset) {
+            this.dataSource.data = [];
+            this.hasMoreData = true;
+        }
 
-        //const currentCount = this.dataSource.data.length;
+        const formValues = this.filterForm.value;
+        const filters = [];
+
+        if (formValues.merchant) {
+            filters.push({ key: TransactionsFilterKey.Merchant, value: formValues.merchant });
+        }
+        if (formValues.category) {
+            filters.push({ key: TransactionsFilterKey.Category, value: formValues.category });
+        }
+        if (formValues.account) {
+            filters.push({ key: TransactionsFilterKey.AccountId, value: formValues.account });
+        }
+
+        let sortKey: string | undefined;
+        let sortDirection: string | undefined;
+
+        if (this.sort) {
+            if (this.sort.direction === 'asc') {
+                sortDirection = SortDirection.Asc;
+            } else if (this.sort.direction === 'desc') {
+                sortDirection = SortDirection.Desc;
+            }
+
+            switch (this.sort.active) {
+                case 'date':
+                    sortKey = TransactionsSortKey.Date;
+                    break;
+                case 'merchant':
+                    sortKey = TransactionsSortKey.Merchant;
+                    break;
+                case 'amount':
+                    sortKey = TransactionsSortKey.Amount;
+                    break;
+                case 'account':
+                    sortKey = TransactionsSortKey.AccountId;
+                    break;
+                case 'category':
+                    sortKey = TransactionsSortKey.CategoryId;
+                    break;
+            }
+        }
+
+        const options: GetTransactionsOptions = {
+            limit: this.pageSize,
+            offset: this.dataSource.data.length,
+            minAmount: formValues.minAmount ?? undefined,
+            maxAmount: formValues.maxAmount ?? undefined,
+            startDate: formValues.startDate?.toISOString(),
+            endDate: formValues.endDate?.toISOString(),
+            filters: filters.length > 0 ? filters : undefined,
+            sortKey,
+            sortDirection
+        };
 
         const newTransactions: Transaction[] = await this.financeService.fetchTransactions(options) || [];
 
-        // Placeholder: Generate mock data
-        
-        // const newTransactions: Transaction[] = Array.from({ length: this.pageSize }).map((_, i) => ({
-        //     id: `${currentCount + i}`,
-        //     merchant: `Merchant ${currentCount + i + 1}`,
-        //     category: 'General',
-        //     account: 'Checking',
-        //     amount: Math.floor(Math.random() * 100)
-        // }));
+        this.hasMoreData = newTransactions.length === this.pageSize;
 
-        this.dataSource.data = [...this.dataSource.data, ...newTransactions];
+        if (reset) {
+            this.dataSource.data = newTransactions;
+        } else {
+            this.dataSource.data = [...this.dataSource.data, ...newTransactions];
+        }
     }
 
     async loadMore() {
         await this.loadData();
     }
 
-    viewEditTransaction(transaction: Transaction) {
-        // STUB: Logic to view or edit the transaction
-        console.log('View/Edit', transaction);
+    onRowClick(row: Transaction) {
+        this.router.navigate([row.id], { relativeTo: this.route });
+    }
+
+    getCategoryName(id: string): string {
+        const category = this.categoryMap.get(id);
+        return category ? `${category.icon} ${category.name}` : id;
+    }
+
+    getAccountName(id: string): string {
+        const account = this.accountMap.get(id);
+        return account ? account.name : id;
+    }
+
+    readonly displayCategory = (id: string): string => this.getCategoryName(id);
+
+    clearFilters() {
+        this.filterForm.reset({
+            minAmount: null,
+            maxAmount: null,
+            startDate: null,
+            endDate: new Date(),
+            merchant: '',
+            category: '',
+            account: ''
+        });
+        this.loadData(true);
     }
 }

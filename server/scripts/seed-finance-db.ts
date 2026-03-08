@@ -32,7 +32,9 @@ async function readCsv(fileName: string): Promise<string[]> {
         // 1. Create Finance Profile
         console.log(' 1. Inserting finance.profiles: one profile for demo user');
         await client.query(
-            'INSERT INTO finance.profiles (id, user_id) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING',
+            `INSERT INTO finance.profiles (id, user_id) 
+             VALUES ($1, $2) 
+             ON CONFLICT (id) DO NOTHING`,
             [sampleProfileId, sampleUserId]
         );
         console.log(`✅ Seeded 1 finance.profile.`);
@@ -53,7 +55,8 @@ async function readCsv(fileName: string): Promise<string[]> {
                 const [id, profileId, name] = line.split(',');
                 if (id && profileId && name) {
                     await client.query(
-                        'INSERT INTO finance.institutions (id, profile_id, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING',
+                        `INSERT INTO finance.institutions (id, profile_id, name) 
+                         VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
                         [id.trim(), profileId.trim(), name.trim()]
                     );
                     count++;
@@ -82,10 +85,9 @@ async function readCsv(fileName: string): Promise<string[]> {
                 if (id && profileId && name) {
                     await client.query(
                         `INSERT INTO finance.accounts (
-              id, profile_id, institution_id, name, category, type, subtype,
-              balance, is_hidden, is_retirement
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            ON CONFLICT (id) DO NOTHING`,
+                            id, profile_id, institution_id, name, category, type, subtype, balance, is_hidden, is_retirement
+                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                         ON CONFLICT (id) DO NOTHING`,
                         [
                             id.trim(),
                             profileId.trim(),
@@ -118,14 +120,15 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                const [id, profileId, type, group, icon, name] = line.split(',');
+                const [id, profileId, type, group, icon, name, isActive] = line.split(',');
 
-                if (id && profileId && type && group && icon && name) {
+                if (id && profileId && type && group && icon && name && isActive) {
                     categoriesMap.set(name.trim(), id.trim());
 
                     await client.query(
-                        `INSERT INTO finance.categories (id, profile_id, category_type, category_group, icon, name) 
-                         VALUES ($1, $2, $3, $4, $5, $6)
+                        `INSERT INTO finance.categories (
+                            id, profile_id, category_type, category_group, icon, name, is_active
+                         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                          ON CONFLICT (id) DO NOTHING`,
                         [
                             id.trim(),
@@ -133,7 +136,8 @@ async function readCsv(fileName: string): Promise<string[]> {
                             type.trim(),
                             group.trim(),
                             icon.trim(),
-                            name.trim()
+                            name.trim(),
+                            isActive?.trim().toLowerCase() === 'true'
                         ]
                     );
                     count++;
@@ -197,8 +201,59 @@ async function readCsv(fileName: string): Promise<string[]> {
                 }
             }
             console.log(`✅ Seeded ${transactionCount} finance.transactions.`);
-        } else {
+        }
+        else {
             console.log('   No transactions directory found, skipping.');
+        }
+
+        // 6. Load Balance History
+        console.log(' 6. Reading balance history...');
+        const balanceHistoryDir = path.join(DATA_DIR, 'balance_history');
+
+        if (fs.existsSync(balanceHistoryDir)) {
+            const balanceFiles = fs.readdirSync(balanceHistoryDir);
+            let balanceCount = 0;
+
+            for (const file of balanceFiles) {
+                if (!file.endsWith('.csv')) {
+                    continue;
+                }
+
+                console.log(`    Processing ${file}...`);
+                const lines = await readCsv(path.join('balance_history', file));
+
+                // Start at 1 to skip header row
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) {
+                        continue;
+                    }
+
+                    const [date, balance, accountName] = line.split(',');
+                    const accountId = accountsMap.get(accountName?.trim());
+
+                    if (accountId && date && balance) {
+                        balanceCount++;
+                        const bhId = `bh_${balanceCount}`;
+
+                        await client.query(
+                            `INSERT INTO finance.balance_history (
+                                id, account_id, date, balance
+                            ) VALUES ($1, $2, $3, $4)
+                            ON CONFLICT (id) DO NOTHING`,
+                            [
+                                bhId,
+                                accountId,
+                                date.trim(),
+                                parseFloat(balance.trim())
+                            ]
+                        );
+                    }
+                }
+            }
+            console.log(`✅ Seeded ${balanceCount} finance.balance_history records.`);
+        } else {
+            console.log('   No balance_history directory found, skipping.');
         }
     }
     catch (err) {

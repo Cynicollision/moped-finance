@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS finance.categories (
   category_group VARCHAR(50) NOT NULL,
   icon VARCHAR(10) NULL,
   name VARCHAR(100) NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
