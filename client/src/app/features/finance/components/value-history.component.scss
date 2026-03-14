@@ -1,0 +1,67 @@
+.full-width-card {
+    width: 100%;
+}
+
+.large-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.chart-header {
+    padding: 16px 16px 0 16px !important;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 1rem;
+}
+
+.chart-title {
+    margin: 0;
+}
+
+.chart-controls {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex: 1 1 auto;
+
+    mat-form-field {
+        width: 160px;
+    }
+}
+
+.change-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 500;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+
+    mat-icon {
+        font-size: 20px;
+        height: 20px;
+        width: 20px;
+    }
+
+    &.good {
+        color: #4caf50; // Green
+    }
+
+    &.bad {
+        color: #f44336; // Red
+    }
+
+    .change-label {
+        color: gray;
+        font-weight: normal;
+        font-size: 0.9em;
+        margin-left: 0.25rem;
+    }
+}

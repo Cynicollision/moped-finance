@@ -1,0 +1,57 @@
+<mat-card appearance="outlined" class="full-width-card">
+    <mat-card-header class="chart-header">
+        <mat-card-title class="chart-title">{{ selectedChartLabel() }}</mat-card-title>
+
+        <div class="chart-controls">
+            <!-- Value Type Selector -->
+            @if (chartTypeOptions.length > 1) {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>View Type</mat-label>
+                <mat-select [value]="selectedChartType" (selectionChange)="onChartTypeChange($event.value)">
+                    @for (option of chartTypeOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+            }
+
+            <!-- Timeframe Selector -->
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Timeframe</mat-label>
+                <mat-select [value]="selectedTimeframe" (selectionChange)="onTimeframeChange($event.value)">
+                    @for (option of timeframeOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        </div>
+    </mat-card-header>
+
+    <mat-card-content>
+        <div class="large-value">
+            {{ currentValue | currency }}
+        </div>
+
+        @if (periodChange()) {
+        <div class="change-indicator" [class.good]="periodChange()?.isGood" [class.bad]="!periodChange()?.isGood">
+            @if (periodChange()?.isPositive) {
+            <mat-icon inline="true">arrow_upward</mat-icon>
+            } @else {
+            <mat-icon inline="true">arrow_downward</mat-icon>
+            }
+            <span class="change-amount">
+                {{ periodChange()?.amount | currency }} ({{ periodChange()?.percentage | number:'1.1-2' }}%)
+            </span>
+            <span class="change-label">
+                - {{ periodChange()?.timeframeLabel }}
+            </span>
+        </div>
+        }
+
+        <div>
+            @if (chartConfig(); as config) {
+            <app-chart [config]="config" height="300px"></app-chart>
+            }
+        </div>
+    </mat-card-content>
+</mat-card>

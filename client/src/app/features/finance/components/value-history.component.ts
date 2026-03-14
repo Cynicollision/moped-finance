@@ -1,0 +1,180 @@
+import { Component, Input, Output, EventEmitter, computed, signal, OnChanges, SimpleChanges } from '@angular/core';
+import { CurrencyPipe, DecimalPipe } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { ChartComponent, ChartConfiguration } from './../../../core/chart.component';
+import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
+import { ProfileValueHistory } from '@shared/finance/contracts';
+
+export interface ChartTypeOption {
+    value: ValueHistoryType;
+    label: string;
+}
+
+@Component({
+    selector: 'app-value-history',
+    standalone: true,
+    imports: [
+        CurrencyPipe,
+        DecimalPipe,
+        MatCardModule,
+        MatFormFieldModule,
+        MatSelectModule,
+        MatIconModule,
+        ChartComponent
+    ],
+    templateUrl: './value-history.component.html',
+    styleUrl: './value-history.component.scss'
+})
+export class ValueHistoryComponent implements OnChanges {
+    // Inputs
+    @Input({ required: true }) historyData: ProfileValueHistory[] = [];
+    @Input() title: string | undefined;
+    @Input() currentValue: number = 0;
+
+    // Configurable Options
+    @Input({ required: true }) chartTypeOptions: ChartTypeOption[] = [];
+    @Input() timeframeOptions = [
+        { value: HistoryTimeframe.PastThirtyDays, label: 'Past 30 Days' },
+        { value: HistoryTimeframe.PastSixtyDays, label: 'Past 60 Days' },
+        { value: HistoryTimeframe.PastNinetyDays, label: 'Past 90 Days' },
+        { value: HistoryTimeframe.PastOneYear, label: 'Past Year' },
+        { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years' },
+        { value: HistoryTimeframe.All, label: 'All Time' }
+    ];
+
+    // Current Selections
+    @Input({ required: true }) selectedChartType!: ValueHistoryType;
+    @Input({ required: true }) selectedTimeframe!: HistoryTimeframe;
+
+    // Outputs
+    @Output() chartTypeChange = new EventEmitter<ValueHistoryType>();
+    @Output() timeframeChange = new EventEmitter<HistoryTimeframe>();
+
+    // Internal Signals mapped from Inputs
+    historyDataSignal = signal<ProfileValueHistory[]>([]);
+    chartTypeOptionsSignal = signal<ChartTypeOption[]>([]);
+    selectedChartTypeSignal = signal<ValueHistoryType | undefined>(undefined);
+    selectedTimeframeSignal = signal<HistoryTimeframe | undefined>(undefined);
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes['historyData']) {
+            this.historyDataSignal.set(this.historyData || []);
+        }
+        if (changes['chartTypeOptions']) {
+            this.chartTypeOptionsSignal.set(this.chartTypeOptions || []);
+        }
+        if (changes['selectedChartType']) {
+            this.selectedChartTypeSignal.set(this.selectedChartType);
+        }
+        if (changes['selectedTimeframe']) {
+            this.selectedTimeframeSignal.set(this.selectedTimeframe);
+        }
+    }
+
+    // Handlers
+    onChartTypeChange(value: ValueHistoryType) {
+        this.chartTypeChange.emit(value);
+    }
+
+    onTimeframeChange(value: HistoryTimeframe) {
+        this.timeframeChange.emit(value);
+    }
+
+    // Computed Properties
+    selectedChartLabel = computed(() => {
+        if (this.title) return this.title;
+        return this.chartTypeOptionsSignal().find(o => o.value === this.selectedChartTypeSignal())?.label || 'History';
+    });
+
+    chartConfig = computed<ChartConfiguration | undefined>(() => {
+        const data = this.historyDataSignal();
+        if (!data || data.length === 0) return undefined;
+
+        // Sort ascending by date for the chart (left to right)
+        const ascendingData = [...data].sort((a, b) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+
+        const type = this.selectedChartTypeSignal();
+        const label = this.selectedChartLabel();
+
+        return {
+            type: 'line',
+            data: {
+                labels: ascendingData.map(d => {
+                    const date = new Date(d.date);
+                    return `${date.getMonth() + 1}/${date.getDate()}`;
+                }),
+                datasets: [
+                    {
+                        label: label,
+                        data: ascendingData.map(d => d.amount),
+                        borderColor: '#4caf50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        fill: true,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        reverse: type === ValueHistoryType.Liabilities,
+                        ticks: {
+                            callback: function (value) {
+                                return '$' + Number(value).toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        };
+    });
+
+    periodChange = computed(() => {
+        const data = this.historyDataSignal();
+        if (!data || data.length < 2) return undefined;
+
+        // historyData comes sorted from the API by default, but double check first/last
+        const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const startValue = sortedData[0].amount;
+        const endValue = sortedData[sortedData.length - 1].amount;
+
+        // Base case: check the raw numeric difference
+        const changeAmount = endValue - startValue;
+        const changePercentage = startValue !== 0 ? (changeAmount / Math.abs(startValue)) * 100 : 0;
+
+        let isPositive = changeAmount >= 0;
+        let isGood = isPositive;
+
+        if (this.selectedChartTypeSignal() === ValueHistoryType.Liabilities) {
+            // Liabilities are stored as negative numbers (or we are evaluating their absolute magnitude).
+            // A decrease towards 0 means the numeric value is technically INCREASING (e.g., -5000 to -1000).
+            // However, the user expects to see:
+            // - Debt shrinking towards $0: DOWN arrow (isPositive = false) AND Green (isGood = true)
+            // - Debt growing away from $0: UP arrow (isPositive = true) AND Red (isGood = false)
+
+            // To achieve this, if the numeric value INCREASES (debt shrinks), the arrow goes DOWN.
+            isPositive = changeAmount < 0;
+            isGood = !isPositive;
+        }
+
+        const timeframeLabel = this.timeframeOptions.find(t => t.value === this.selectedTimeframeSignal())?.label || 'Period';
+
+        return {
+            amount: Math.abs(changeAmount), // Absolute value for display (- is handled by arrow/positivity)
+            percentage: Math.abs(changePercentage),
+            isPositive,
+            isGood,
+            timeframeLabel
+        };
+    });
+}

@@ -1,7 +1,8 @@
-import { GetTransactionsOptions, ProfileValueHistory, ProfileValueHistoryOptions } from '@shared/finance/contracts';
+import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, ProfileValueHistory, ProfileValueHistoryOptions } from '@shared/finance/contracts';
 import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction } from '@shared/finance/types';
 import { FinanceData } from './../data-access/finance-data';
+import { getStartDateForTimeframe } from './../utility/date-time-util';
 
 export class FinanceLogic {
     private financeData: FinanceData;
@@ -22,43 +23,12 @@ export class FinanceLogic {
     }
 
     public async getProfileValueHistory(usedId: string, options: ProfileValueHistoryOptions): Promise<ProfileValueHistory[]> {
-        const endDate = options.asOfDate;
-        let startDate = new Date(endDate);
-
         options.type = options.type || ValueHistoryType.NetWorth;
         options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
 
-        switch (options.timeframe) {
-            case HistoryTimeframe.PastThirtyDays:
-                startDate.setDate(startDate.getDate() - 30);
-                break;
-            case HistoryTimeframe.PastSixtyDays:
-                startDate.setDate(startDate.getDate() - 60);
-                break;
-            case HistoryTimeframe.PastNinetyDays:
-                startDate.setDate(startDate.getDate() - 90);
-                break;
-            case HistoryTimeframe.PastOneYear:
-                startDate.setFullYear(startDate.getFullYear() - 1);
-                break;
-            case HistoryTimeframe.PastTwoYears:
-                startDate.setFullYear(startDate.getFullYear() - 2);
-                break;
-            case HistoryTimeframe.PastFiveYears:
-                startDate.setFullYear(startDate.getFullYear() - 5);
-                break;
-            case HistoryTimeframe.PastTenYears:
-                startDate.setFullYear(startDate.getFullYear() - 10);
-                break;
-            case HistoryTimeframe.All:
-                startDate = new Date(0); // Epoch start to represent "All"
-                break;
-            default:
-                startDate.setDate(startDate.getDate() - 30); // Default to past 30 days
-                break;
-        }
+        const startDate = getStartDateForTimeframe(options.timeframe, options.asOfDate);
+        const data = await this.financeData.getProfileValueHistory(usedId, options.type, startDate, options.asOfDate);
 
-        const data = await this.financeData.getProfileValueHistory(usedId, options.type, startDate, endDate);
         return data;
     }
 
@@ -89,9 +59,9 @@ export class FinanceLogic {
         return data;
     }
 
-    public async getAccountBalanceHistory(userId: string, accountId: string, options: GetTransactionsOptions): Promise<BalanceHistory[]> {
-        // TODO have options use HistoryTimeframe instead of fixed dates from client. pass dates to data layer
-        const data = await this.financeData.getAccountBalanceHistory(userId, accountId, options);
+    public async getAccountBalanceHistory(userId: string, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[]> {
+        const startDate = getStartDateForTimeframe(options.timeframe, options.asOfDate);
+        const data = await this.financeData.getAccountBalanceHistory(userId, accountId, startDate.toISOString(), options.asOfDate.toISOString());
         return data;
     }
 

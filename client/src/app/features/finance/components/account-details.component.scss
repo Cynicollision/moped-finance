@@ -1,0 +1,30 @@
+.details-container {
+    padding: 1rem;
+}
+
+.breadcrumb-nav {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: gray;
+}
+
+.breadcrumb-link {
+    text-decoration: none;
+    color: #1976d2;
+    font-weight: 500;
+    
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.breadcrumb-separator {
+    font-size: 0.9em;
+}
+
+.breadcrumb-current {
+    font-weight: 500;
+}

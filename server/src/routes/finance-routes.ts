@@ -78,9 +78,16 @@ router.get('/data/accounts/:accountId/balance-history', async (req: Request, res
         const user = ApiHandler.getUser(req);
         const accountId = req.params.accountId;
 
+        const timeframe = req.query.timeframe as HistoryTimeframe;
+
+        const asOfDateStr = req.query.asOfDate as string;
+        const asOfDate = asOfDateStr
+            ? new Date(asOfDateStr)
+            : new Date();
+
         const options: GetAccountBalanceHistoryOptions = {
-            startDate: req.query.startDate as string,
-            endDate: req.query.endDate as string
+            asOfDate,
+            timeframe
         };
 
         const result = await financeLogic.getAccountBalanceHistory(user!.id, accountId, options);

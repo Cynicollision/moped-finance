@@ -1,4 +1,6 @@
+import { HistoryTimeframe } from './../enum';
+
 export type GetAccountBalanceHistoryOptions = {
-    startDate?: string;
-    endDate?: string;
+    asOfDate: Date;
+    timeframe: HistoryTimeframe;
 }

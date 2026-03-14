@@ -1,1 +1,15 @@
-<p>Accounts Details</p>
+<div class="summary-container details-container">
+    @if (account()) {
+    <div class="breadcrumb-nav">
+        <a [routerLink]="['/finance']" class="breadcrumb-link">Accounts</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">{{ account()?.name }}</span>
+    </div>
+
+    <app-value-history [historyData]="historyData()" [currentValue]="account()?.balance || 0"
+        [chartTypeOptions]="chartTypeOptions()" [selectedChartType]="derivedChartType()"
+        [selectedTimeframe]="selectedTimeframe()" (timeframeChange)="onTimeframeChange($event)" class="full-width-card"
+        [title]="'Current Balance'">
+    </app-value-history>
+    }
+</div>

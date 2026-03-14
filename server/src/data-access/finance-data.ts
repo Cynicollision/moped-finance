@@ -6,7 +6,7 @@ import { DatabaseError, databasePool } from './db-client';
 
 export class FinanceData {
 
-    public async getAccountBalanceHistory(userId: string, accountId: string, options: GetAccountBalanceHistoryOptions = {}): Promise<BalanceHistory[]> {
+    public async getAccountBalanceHistory(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]> {
         try {
             let query = `SELECT
                     bh.id,
@@ -21,13 +21,13 @@ export class FinanceData {
 
             const params: (string | number)[] = [userId, accountId];
 
-            if (options.startDate) {
-                params.push(options.startDate);
+            if (startDate) {
+                params.push(startDate);
                 query += ` AND bh.date >= $${params.length}`;
             }
 
-            if (options.endDate) {
-                params.push(options.endDate);
+            if (endDate) {
+                params.push(endDate);
                 query += ` AND bh.date <= $${params.length}`;
             }
 

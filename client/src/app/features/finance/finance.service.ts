@@ -41,13 +41,32 @@ export class FinanceService {
 
     async fetchAccountBalanceHistory(accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[] | undefined> {
         try {
-            const url = `api/finance/data/accounts/${accountId}/balance-history?startDate=${options.startDate}&endDate=${options.endDate}`;
+            const url = `api/finance/data/accounts/${accountId}/balance-history?asOfDate=${options.asOfDate}&timeframe=${options.timeframe}`;
             const task = this.api.get<OperationResult<BalanceHistory[]>>(url);
             const response = await this.loader.withLoading(task);
             return response.data;
         }
         catch (error) {
             this.notificationService.error(`Unable to fetch account balance history: ${JSON.stringify(error)}`);
+            return undefined;
+        }
+    }
+
+    async fetchAccountRecentTransactions(accountId: string): Promise<Transaction[] | undefined> {
+        try {
+            const params = this.getTransactionUrlParams({
+                sortKey: 'date',
+                sortDirection: 'desc',
+                limit: 10
+            });
+
+            const url = `api/finance/data/accounts/${accountId}/transactions?${params.toString()}`;
+            const task = this.api.get<OperationResult<Transaction[]>>(url);
+            const response = await this.loader.withLoading(task);
+            return response.data;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to fetch account transactions: ${JSON.stringify(error)}`);
             return undefined;
         }
     }
@@ -93,36 +112,9 @@ export class FinanceService {
 
     async fetchTransactions(options: GetTransactionsOptions): Promise<Transaction[] | undefined> {
         try {
-            const params = new URLSearchParams();
-            if (options.sortKey) {
-                params.append('sortKey', options.sortKey);
-            }
-            if (options.sortDirection) {
-                params.append('sortDirection', options.sortDirection);
-            }
-            if (options.offset !== undefined) {
-                params.append('offset', options.offset.toString());
-            }
-            if (options.limit !== undefined) {
-                params.append('limit', options.limit.toString());
-            }
-            if (options.minAmount !== undefined) {
-                params.append('minAmount', options.minAmount.toString());
-            }
-            if (options.maxAmount !== undefined) {
-                params.append('maxAmount', options.maxAmount.toString());
-            }
-            if (options.startDate) {
-                params.append('startDate', options.startDate);
-            }
-            if (options.endDate) {
-                params.append('endDate', options.endDate);
-            }
-            if (options.filters) {
-                params.append('filters', JSON.stringify(options.filters));
-            }
-
-            const task = this.api.get<OperationResult<Transaction[]>>(`api/finance/data/transactions?${params.toString()}`);
+            const params = this.getTransactionUrlParams(options);
+            const url = `api/finance/data/transactions?${params.toString()}`;
+            const task = this.api.get<OperationResult<Transaction[]>>(url);
             const response = await this.loader.withLoading(task);
             return response.data;
         }
@@ -130,5 +122,39 @@ export class FinanceService {
             this.notificationService.error(`Unable to fetch transactions: ${JSON.stringify(error)}`);
             return undefined;
         }
+    }
+
+    private getTransactionUrlParams(options: GetTransactionsOptions): URLSearchParams {
+        const params = new URLSearchParams();
+
+        if (options.sortKey) {
+            params.append('sortKey', options.sortKey);
+        }
+        if (options.sortDirection) {
+            params.append('sortDirection', options.sortDirection);
+        }
+        if (options.offset !== undefined) {
+            params.append('offset', options.offset.toString());
+        }
+        if (options.limit !== undefined) {
+            params.append('limit', options.limit.toString());
+        }
+        if (options.minAmount !== undefined) {
+            params.append('minAmount', options.minAmount.toString());
+        }
+        if (options.maxAmount !== undefined) {
+            params.append('maxAmount', options.maxAmount.toString());
+        }
+        if (options.startDate) {
+            params.append('startDate', options.startDate);
+        }
+        if (options.endDate) {
+            params.append('endDate', options.endDate);
+        }
+        if (options.filters) {
+            params.append('filters', JSON.stringify(options.filters));
+        }
+
+        return params;
     }
 }
