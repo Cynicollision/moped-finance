@@ -23,8 +23,7 @@ export class FinanceComponent implements OnInit {
     profileData = signal<FinanceProfile | undefined>(undefined);
 
     navLinks = [
-        { path: 'summary', label: 'Summary' },
-        { path: 'accounts', label: 'Accounts' },
+        { path: 'summary', label: 'Dashboard' },
         { path: 'transactions', label: 'Transactions' },
         { path: 'reports', label: 'Reports' },
         { path: 'settings', label: 'Settings' }

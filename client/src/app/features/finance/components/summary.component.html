@@ -66,7 +66,7 @@
       <mat-card-content>
         @for (account of summary().cashAccounts; track account) {
           <div class="row-item">
-            <span>{{ account.name }}</span>
+            <a [routerLink]="['/finance/accounts', account.id]">{{ account.name }}</a>
             <span>{{ account.balance | currency }}</span>
           </div>
           @if (!$last) { <mat-divider></mat-divider> }
@@ -84,7 +84,7 @@
       <mat-card-content>
         @for (account of summary().investmentAccounts; track account) {
           <div class="row-item">
-            <span>{{ account.name }}</span>
+            <a [routerLink]="['/finance/accounts', account.id]">{{ account.name }}</a>
             <span>{{ account.balance | currency }}</span>
           </div>
           @if (!$last) { <mat-divider></mat-divider> }
@@ -102,7 +102,7 @@
       <mat-card-content>
         @for (account of summary().realEstateAccounts; track account) {
           <div class="row-item">
-            <span>{{ account.name }}</span>
+            <a [routerLink]="['/finance/accounts', account.id]">{{ account.name }}</a>
             <span>{{ account.balance | currency }}</span>
           </div>
           @if (!$last) { <mat-divider></mat-divider> }
@@ -122,7 +122,7 @@
       <mat-card-content>
         @for (account of summary().creditCardAccounts; track account) {
           <div class="row-item">
-            <span>{{ account.name }}</span>
+            <a [routerLink]="['/finance/accounts', account.id]">{{ account.name }}</a>
             <span>{{ account.balance | currency }}</span>
           </div>
           @if (!$last) { <mat-divider></mat-divider> }
@@ -140,7 +140,7 @@
       <mat-card-content>
         @for (account of summary().loanAccounts; track account) {
           <div class="row-item">
-            <span>{{ account.name }}</span>
+            <a [routerLink]="['/finance/accounts', account.id]">{{ account.name }}</a>
             <span>{{ account.balance | currency }}</span>
           </div>
           @if (!$last) { <mat-divider></mat-divider> }

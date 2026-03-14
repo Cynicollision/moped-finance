@@ -43,7 +43,7 @@ export class App {
     // Configuration for navigation items
     navItems: NavItem[] = [
         { label: 'Home', route: '/', icon: 'home' },
-        { label: 'Finance', route: '/finance', icon: 'attach_money' },
+        { label: 'Ledger', route: '/finance', icon: 'attach_money' },
         { label: 'Grounds', route: '/grounds', icon: 'landscape' }
     ];
 

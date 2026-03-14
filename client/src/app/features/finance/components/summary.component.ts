@@ -2,13 +2,14 @@ import { Component, inject, computed } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
+import { RouterLink } from '@angular/router';
 import { AccountType } from '@shared/finance/enum';
 import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-summary',
     standalone: true,
-    imports: [CurrencyPipe, MatCardModule, MatDividerModule],
+    imports: [CurrencyPipe, MatCardModule, MatDividerModule, RouterLink],
     templateUrl: './summary.component.html',
     styleUrl: './summary.component.scss'
 })

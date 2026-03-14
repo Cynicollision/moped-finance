@@ -18,6 +18,18 @@ export class FinanceService {
 
     profileData = signal<FinanceProfile | undefined>(undefined);
 
+    async fetchAccount(accountId: string): Promise<Account | undefined> {
+        try {
+            const task = this.api.get<OperationResult<Account>>(`api/finance/data/accounts/${accountId}`);
+            const response = await this.loader.withLoading(task);
+            return response.data;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to fetch account: ${JSON.stringify(error)}`);
+            return undefined;
+        }
+    }
+
     async fetchAccounts(): Promise<Account[] | undefined> {
         try {
             const task = this.api.get<OperationResult<Account[]>>('api/finance/data/accounts');
@@ -32,7 +44,7 @@ export class FinanceService {
 
     async fetchAccountBalanceHistory(accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[] | undefined> {
         try {
-            const url = `api/finance/data/account/${accountId}/balance-history?startDate=${options.startDate}&endDate=${options.endDate}`;
+            const url = `api/finance/data/accounts/${accountId}/balance-history?startDate=${options.startDate}&endDate=${options.endDate}`;
             const task = this.api.get<OperationResult<BalanceHistory[]>>(url);
             const response = await this.loader.withLoading(task);
             return response.data;
@@ -67,7 +79,7 @@ export class FinanceService {
         }
     }
 
-    // TODO: rename or remove.
+    // TODO: remove and have consumer call each endpoint
     async fetchProfileData(): Promise<FinanceProfile | undefined> {
         try {
             const task = lastValueFrom(forkJoin({
