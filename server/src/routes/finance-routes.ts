@@ -21,7 +21,7 @@ router.get('/data/profile', async (req: Request, res: Response) => {
     }
 });
 
-router.get('/data/profile/:profileId/value-history', async (req: Request, res: Response) => {
+router.get('/data/profile/value-history', async (req: Request, res: Response) => {
     try {
         const user = ApiHandler.getUser(req);
 

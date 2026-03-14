@@ -1,8 +1,7 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { firstValueFrom, forkJoin, lastValueFrom } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
 import { OperationResult } from '@shared/core/contracts';
-import { GetAccountBalanceHistoryOptions, GetTransactionsOptions } from '@shared/finance/contracts';
+import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, ProfileValueHistory } from '@shared/finance/contracts';
+import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { FinanceProfile, Institution, Account, Category, Transaction, BalanceHistory } from '@shared/finance/types';
 import { ApiService } from './../../core/api.service';
 import { LoadingService } from './../../core/loading.service';
@@ -15,8 +14,6 @@ export class FinanceService {
     private api = inject(ApiService);
     private loader = inject(LoadingService);
     private notificationService = inject(NotificationService);
-
-    profileData = signal<FinanceProfile | undefined>(undefined);
 
     async fetchAccount(accountId: string): Promise<Account | undefined> {
         try {
@@ -67,6 +64,21 @@ export class FinanceService {
         }
     }
 
+    async fetchProfileValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<ProfileValueHistory[] | undefined> {
+        try {
+            const asOfDate = '2026-02-28'; // TODO: replace with current date
+
+            const url = `api/finance/data/profile/value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
+            const task = this.api.get<OperationResult<ProfileValueHistory[]>>(url);
+            const response = await this.loader.withLoading(task);
+            return response.data;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to fetch profile value history: ${JSON.stringify(error)}`);
+            return undefined;
+        }
+    }
+
     async fetchTransactionMerchants(): Promise<string[] | undefined> {
         try {
             const task = this.api.get<OperationResult<string[]>>(`api/finance/data/transactions/merchants`);
@@ -75,32 +87,6 @@ export class FinanceService {
         }
         catch (error) {
             this.notificationService.error(`Unable to fetch transaction merchants: ${JSON.stringify(error)}`);
-            return undefined;
-        }
-    }
-
-    // TODO: remove and have consumer call each endpoint
-    async fetchProfileData(): Promise<FinanceProfile | undefined> {
-        try {
-            const task = lastValueFrom(forkJoin({
-                profile: this.api.get<OperationResult<FinanceProfile>>('api/finance/data/profile'),
-                accounts: this.api.get<OperationResult<Account[]>>('api/finance/data/accounts'),
-                institutions: this.api.get<OperationResult<Institution[]>>('api/finance/data/institutions')
-            }).pipe(
-                map(({ profile, accounts, institutions }) => {
-                    const fullProfile = <FinanceProfile>profile.data;
-                    fullProfile.accounts = accounts.data;
-                    fullProfile.institutions = institutions.data;
-                    return fullProfile;
-                })
-            ));
-
-            const response = await this.loader.withLoading(task);
-            this.profileData.set(response);
-            return response;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch finance profile: ${JSON.stringify(error)}`);
             return undefined;
         }
     }
