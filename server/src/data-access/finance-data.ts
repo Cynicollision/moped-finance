@@ -1,6 +1,6 @@
 import { SortDirection } from '@shared/core/enum';
-import { GetAccountBalanceHistoryOptions, GetTransactionsOptions } from '@shared/finance/contracts';
-import { TransactionsSortKey, TransactionsFilterKey } from '@shared/finance/enum';
+import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, ProfileValueHistory } from '@shared/finance/contracts';
+import { TransactionsSortKey, TransactionsFilterKey, ValueHistoryType } from '@shared/finance/enum';
 import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction } from '@shared/finance/types';
 import { DatabaseError, databasePool } from './db-client';
 
@@ -43,6 +43,41 @@ export class FinanceData {
         }
     }
 
+    public async getAccount(userId: string, accountId: string): Promise<Account | null> {
+        try {
+            const result = await databasePool.query(
+                `SELECT 
+                    a.id, 
+                    a.profile_id AS "profileId", 
+                    a.institution_id AS "institutionId", 
+                    a.name,
+                    a.category, 
+                    a.type, 
+                    a.subtype, 
+                    a.balance, 
+                    a.is_hidden AS "isHidden",
+                    a.is_retirement AS "isRetirement"
+                FROM finance.accounts AS a
+                    JOIN finance.profiles AS p ON p.id = a.profile_id
+                WHERE p.user_id = $1 AND a.id = $2`,
+                [userId, accountId]
+            );
+
+            if (result.rows.length > 0) {
+                const row = result.rows[0];
+                return {
+                    ...row,
+                    // pg driver returns numeric/bigint as strings to preserve precision
+                    balance: typeof row.balance === 'string' ? parseFloat(row.balance) : row.balance
+                };
+            }
+            return null;
+        }
+        catch (err) {
+            throw new DatabaseError();
+        }
+    }
+
     public async getAccounts(userId: string): Promise<Account[]> {
         try {
             const result = await databasePool.query(
@@ -62,7 +97,7 @@ export class FinanceData {
                 WHERE p.user_id = $1`,
                 [userId]
             );
-            
+
             return result.rows.map(row => ({
                 ...row,
                 // pg driver returns numeric/bigint as strings to preserve precision
@@ -129,6 +164,44 @@ export class FinanceData {
         }
         catch (err) {
             // TODO: something better with this, or capture error + handle in ApiHandler
+            throw new DatabaseError();
+        }
+    }
+
+    public async getProfileValueHistory(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<ProfileValueHistory[]> {
+        try {
+            let query = `SELECT 
+                    bh.date, 
+                    SUM(bh.balance) AS "amount"
+                FROM finance.balance_history AS bh
+                    JOIN finance.accounts AS a ON a.id = bh.account_id
+                    JOIN finance.profiles AS p ON p.id = a.profile_id
+                WHERE p.user_id = $1
+                    AND bh.date >= $2
+                    AND bh.date <= $3`;
+
+            const params: (string | Date)[] = [userId, startDate, endDate];
+
+            if (type === ValueHistoryType.Assets) {
+                query += ` AND a.category = 'Asset'`;
+            }
+            else if (type === ValueHistoryType.Liabilities) {
+                query += ` AND a.category = 'Liability'`;
+            }
+
+            query += `
+                GROUP BY bh.date
+                ORDER BY bh.date DESC`;
+
+            const result = await databasePool.query(query, params);
+
+            return result.rows.map(row => ({
+                ...row,
+                type,
+                amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
+            }));
+        }
+        catch (err) {
             throw new DatabaseError();
         }
     }
@@ -237,7 +310,7 @@ export class FinanceData {
                 GROUP BY t.merchant
                 ORDER BY t.merchant`;
 
-            const params = [ userId ]
+            const params = [userId]
 
             const result = await databasePool.query(query, params);
 

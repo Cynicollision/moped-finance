@@ -1,4 +1,4 @@
-import { TransactionsFilterKey } from './../enum/transactions-filter-key';
+import { TransactionsFilterKey } from '../enum/transactions-filter-key';
 
 export type GetTransactionsFilterItem = {
     key: TransactionsFilterKey;
