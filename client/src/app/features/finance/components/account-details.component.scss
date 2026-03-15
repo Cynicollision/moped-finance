@@ -28,3 +28,65 @@
 .breadcrumb-current {
     font-weight: 500;
 }
+
+.account-summary-card {
+    margin-top: 1rem;
+    border-radius: 8px;
+
+    .summary-row {
+        display: flex;
+        justify-content: space-around;
+        padding: 1.5rem 1rem;
+        gap: 1rem;
+
+        @media (max-width: 600px) {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1.5rem;
+        }
+    }
+
+    .summary-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        .label {
+            font-size: 0.75rem;
+            color: gray;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .value {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #333;
+        }
+    }
+}
+
+.recent-transactions-section {
+    margin-top: 2rem;
+    width: 100%;
+
+    h3 {
+        margin-bottom: 1rem;
+        color: #333;
+    }
+
+    table {
+        width: 100%;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+}
+
+.footer-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+    padding-bottom: 1rem;
+}

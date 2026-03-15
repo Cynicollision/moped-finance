@@ -11,5 +11,61 @@
         [selectedTimeframe]="selectedTimeframe()" (timeframeChange)="onTimeframeChange($event)" class="full-width-card"
         [title]="'Current Balance'">
     </app-value-history>
+
+    <mat-card appearance="outlined" class="account-summary-card">
+        <mat-card-content class="summary-row">
+            <div class="summary-item">
+                <span class="label">Institution</span>
+                <span class="value">{{ institutionNameDisplay() }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Account Type</span>
+                <span class="value">{{ accountTypeDisplay() }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Last Updated</span>
+                <span class="value">{{ '2026-03-15' | date:'mediumDate' }}</span>
+            </div>
+        </mat-card-content>
+    </mat-card>
+
+    <div class="recent-transactions-section">
+        <h3>Recent Transactions</h3>
+        <table mat-table [dataSource]="transactions()" class="mat-elevation-z1">
+            <!-- Date Column -->
+            <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef> Date </th>
+                <td mat-cell *matCellDef="let row"> {{row.date | date:'shortDate'}} </td>
+            </ng-container>
+
+            <!-- Merchant Column -->
+            <ng-container matColumnDef="merchant">
+                <th mat-header-cell *matHeaderCellDef> Merchant </th>
+                <td mat-cell *matCellDef="let row"> {{row.merchant}} </td>
+            </ng-container>
+
+            <!-- Category Column -->
+            <ng-container matColumnDef="category">
+                <th mat-header-cell *matHeaderCellDef> Category </th>
+                <td mat-cell *matCellDef="let row"> {{getCategoryName(row.categoryId)}} </td>
+            </ng-container>
+
+            <!-- Amount Column -->
+            <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef> Amount </th>
+                <td mat-cell *matCellDef="let row"> {{row.amount | currency}} </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div class="footer-actions">
+            <a mat-raised-button color="primary" [routerLink]="['/finance/transactions']"
+                [queryParams]="{ accountId: account()?.id }">
+                Go To Transactions
+            </a>
+        </div>
+    </div>
     }
 </div>

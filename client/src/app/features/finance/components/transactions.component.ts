@@ -86,6 +86,11 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
+        const accountId = this.route.snapshot.queryParamMap.get('accountId');
+        if (accountId) {
+            this.filterForm.patchValue({ account: accountId });
+        }
+
         this.sort.sortChange.subscribe(() => this.loadData(true));
         this.sort.sort({ id: 'date', start: 'desc', disableClear: false });
     }

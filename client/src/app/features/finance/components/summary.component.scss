@@ -23,13 +23,66 @@
   color: gray;
 }
 
-.row-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-}
+// Row item styles are defined below in the consolidated list section
 
 .section-title {
   padding: 0 1rem;
   margin-top: 1rem;
+}
+
+.accounts-list-content {
+  padding: 0 !important;
+}
+
+.account-group {
+  &:not(:last-child) {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.group-header {
+  background-color: #f8f9fa;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+
+  .header-label {
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+  }
+
+  .header-total {
+    font-weight: 600;
+    color: #222;
+  }
+}
+
+.indented {
+  padding-left: 2rem !important;
+  padding-right: 1rem !important;
+  
+  &:hover {
+    background-color: #fafafa;
+  }
+}
+
+.row-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  
+  a {
+    text-decoration: none;
+    color: #3f51b5;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }

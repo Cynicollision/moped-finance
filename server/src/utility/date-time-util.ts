@@ -18,6 +18,11 @@ export function getStartDateForTimeframe(timeframe: HistoryTimeframe, asOfDate: 
         case HistoryTimeframe.PastTwoYears: startDate.setFullYear(startDate.getFullYear() - 2); break;
         case HistoryTimeframe.PastFiveYears: startDate.setFullYear(startDate.getFullYear() - 5); break;
         case HistoryTimeframe.PastTenYears: startDate.setFullYear(startDate.getFullYear() - 10); break;
+        case HistoryTimeframe.YearToDate:
+            startDate.setMonth(0);
+            startDate.setDate(1);
+            startDate.setHours(0, 0, 0, 0);
+            break;
         case HistoryTimeframe.All: startDate.setFullYear(1970); break; // Arbitrary old date
     }
 

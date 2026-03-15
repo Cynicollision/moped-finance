@@ -2,15 +2,18 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { GetAccountBalanceHistoryOptions, ProfileValueHistory } from '@shared/finance/contracts';
-import { Account, BalanceHistory } from '@shared/finance/types';
+import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
 import { HistoryTimeframe, ValueHistoryType, AccountType, AccountCategory } from '@shared/finance/enum';
 import { ValueHistoryComponent } from './value-history.component';
+import { MatTableModule } from '@angular/material/table';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
     selector: 'app-finance-accounts',
     standalone: true,
-    imports: [CommonModule, ValueHistoryComponent, RouterLink],
+    imports: [CommonModule, ValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule],
     templateUrl: './account-details.component.html',
     styleUrl: './account-details.component.scss'
 })
@@ -20,17 +23,32 @@ export class FinanceAccountDetailsComponent implements OnInit {
 
     account = signal<Account | undefined>(undefined);
     balanceHistory = signal<BalanceHistory[]>([]);
+    transactions = signal<Transaction[]>([]);
+    categoryMap = new Map<string, Category>();
+    institutionMap = new Map<string, Institution>();
 
     selectedTimeframe = signal<HistoryTimeframe>(HistoryTimeframe.PastThirtyDays);
+    displayedColumns: string[] = ['date', 'merchant', 'category', 'amount'];
 
     async ngOnInit() {
         const accountId = this.route.snapshot.paramMap.get('accountId');
 
         if (accountId) {
-            const account = await this.financeService.fetchAccount(accountId);
-            this.account.set(account);
+            const [account, categories, institutions, transactions] = await Promise.all([
+                this.financeService.fetchAccount(accountId),
+                this.financeService.fetchCategories(false),
+                this.financeService.fetchInstitutions(),
+                this.financeService.fetchAccountRecentTransactions(accountId)
+            ]);
 
-            const transactions = await this.financeService.fetchAccountRecentTransactions(accountId)
+            this.account.set(account);
+            if (categories) {
+                categories.forEach(c => this.categoryMap.set(c.id, c));
+            }
+            if (institutions) {
+                institutions.forEach(i => this.institutionMap.set(i.id, i));
+            }
+            this.transactions.set(transactions || []);
 
             await this.updateChartData(accountId);
         }
@@ -81,5 +99,22 @@ export class FinanceAccountDetailsComponent implements OnInit {
             value: type,
             label: type === ValueHistoryType.Liabilities ? 'Total Liabilities' : 'Total Assets'
         }];
+    });
+
+    getCategoryName(id: string): string {
+        const category = this.categoryMap.get(id);
+        return category ? `${category.icon} ${category.name}` : id;
+    }
+
+    accountTypeDisplay = computed(() => {
+        const acc = this.account();
+        if (!acc) return '';
+        return acc.subtype || acc.type;
+    });
+
+    institutionNameDisplay = computed(() => {
+        const institutionId = this.account()?.institutionId;
+        if (!institutionId) return '';
+        return this.institutionMap.get(institutionId)?.name || institutionId;
     });
 }

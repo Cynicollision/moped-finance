@@ -6,5 +6,6 @@ export enum HistoryTimeframe {
     PastTwoYears = 'PastTwoYears',
     PastFiveYears = 'PastFiveYears',
     PastTenYears = 'PastTenYears',
+    YearToDate = 'YearToDate',
     All = 'All'
 }

@@ -42,6 +42,7 @@ export class ValueHistoryComponent implements OnChanges {
         { value: HistoryTimeframe.PastNinetyDays, label: 'Past 90 Days' },
         { value: HistoryTimeframe.PastOneYear, label: 'Past Year' },
         { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years' },
+        { value: HistoryTimeframe.YearToDate, label: 'Year To Date' },
         { value: HistoryTimeframe.All, label: 'All Time' }
     ];
 

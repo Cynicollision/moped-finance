@@ -83,6 +83,18 @@ export class FinanceService {
         }
     }
 
+    async fetchInstitutions(): Promise<Institution[] | undefined> {
+        try {
+            const task = this.api.get<OperationResult<Institution[]>>('api/finance/data/institutions');
+            const response = await this.loader.withLoading(task);
+            return response.data;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to fetch institutions: ${JSON.stringify(error)}`);
+            return undefined;
+        }
+    }
+
     async fetchProfileValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<ProfileValueHistory[] | undefined> {
         try {
             const asOfDate = '2026-02-28'; // TODO: replace with current date
