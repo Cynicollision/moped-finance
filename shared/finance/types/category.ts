@@ -1,11 +1,7 @@
-export enum CategoryType {
-    Income = 'Income',
-    Expense = 'Expense',
-    Transfer = 'Transfer'
-}
+import { Entity } from './../../core/types/entity-base';
+import { CategoryType } from './../enum/category-type';
 
-export type Category = {
-    id: string;
+export type Category = Entity & {
     profileId: string;
     type: CategoryType;
     group: string;

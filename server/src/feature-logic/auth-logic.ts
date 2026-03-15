@@ -19,6 +19,8 @@ export class AuthLogic {
     private getTestUser(username: string, name: string): User {
         return {
             id: '1',
+            createdAt: new Date(),
+            updatedAt: new Date(),
             username: username,
             name: name
         };

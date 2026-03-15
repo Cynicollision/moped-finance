@@ -1,5 +1,6 @@
-export type BalanceHistory = {
-    id: string;
+import { Entity } from './../../core/types/entity-base';
+
+export type BalanceHistory = Entity & {
     accountId: string;
     balance: number;
     date: Date;

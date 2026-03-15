@@ -10,6 +10,8 @@ export class FinanceData {
         try {
             let query = `SELECT
                     bh.id,
+                    bh.created_at AS "createdAt",
+                    bh.updated_at AS "updatedAt",
                     bh.account_id AS "accountId",
                     bh.date,
                     bh.balance
@@ -48,6 +50,8 @@ export class FinanceData {
             const result = await databasePool.query(
                 `SELECT 
                     a.id, 
+                    a.created_at AS "createdAt",
+                    a.updated_at AS "updatedAt",
                     a.profile_id AS "profileId", 
                     a.institution_id AS "institutionId", 
                     a.name,
@@ -83,6 +87,8 @@ export class FinanceData {
             const result = await databasePool.query(
                 `SELECT 
                     a.id, 
+                    a.created_at AS "createdAt",
+                    a.updated_at AS "updatedAt",
                     a.profile_id AS "profileId", 
                     a.institution_id AS "institutionId", 
                     a.name,
@@ -113,6 +119,8 @@ export class FinanceData {
         try {
             let query = `SELECT 
                     c.id, 
+                    c.created_at AS "createdAt",
+                    c.updated_at AS "updatedAt",
                     c.profile_id AS "profileId",
                     c.category_type AS "type",
                     c.category_group AS "group",
@@ -140,6 +148,8 @@ export class FinanceData {
             const result = await databasePool.query(
                 `SELECT 
                     i.id, 
+                    i.created_at AS "createdAt",
+                    i.updated_at AS "updatedAt",
                     i.profile_id as "profileId", 
                     i.name 
                 FROM finance.institutions AS i
