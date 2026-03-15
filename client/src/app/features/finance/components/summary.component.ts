@@ -4,7 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterLink } from '@angular/router';
 import { ProfileValueHistory } from '@shared/finance/contracts';
-import { AccountType, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
+import { AccountGroup, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
 import { ValueHistoryComponent } from './value-history.component';
@@ -89,25 +89,25 @@ export class FinanceSummaryComponent implements OnInit {
 
         for (const account of this.accounts()) {
             const balance = Number(account.balance) || 0;
-            const type = (account.type || '');
+            const group = (account.group || '');
 
-            if (type === AccountType.Cash) {
+            if (group === AccountGroup.Cash) {
                 cashTotal += balance;
                 cashAccounts.push(account);
             }
-            else if (type === AccountType.Investment) {
+            else if (group === AccountGroup.Investment) {
                 investmentsTotal += balance;
                 investmentAccounts.push(account);
             }
-            else if (type === AccountType.RealEstate) {
+            else if (group === AccountGroup.RealEstate) {
                 realEstateTotal += balance;
                 realEstateAccounts.push(account);
             }
-            else if (type === AccountType.CreditCard) {
+            else if (group === AccountGroup.CreditCard) {
                 creditCardsTotal += balance;
                 creditCardAccounts.push(account);
             }
-            else if (type === AccountType.Loan) {
+            else if (group === AccountGroup.Loan) {
                 loansTotal += balance;
                 loanAccounts.push(account);
             }

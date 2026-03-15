@@ -109,7 +109,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
     accountTypeDisplay = computed(() => {
         const acc = this.account();
         if (!acc) return '';
-        return acc.subtype || acc.type;
+        return acc.type || acc.group;
     });
 
     institutionNameDisplay = computed(() => {

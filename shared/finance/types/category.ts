@@ -1,9 +1,9 @@
 import { Entity } from './../../core/types/entity-base';
-import { CategoryType } from './../enum/category-type';
+import { CategoryClass } from '../enum/category-class';
 
 export type Category = Entity & {
     profileId: string;
-    type: CategoryType;
+    class: CategoryClass;
     group: string;
     icon: string;
     name: string;

@@ -10,44 +10,6 @@ const router = Router();
 const financeData = new FinanceData();
 const financeLogic = new FinanceLogic(financeData);
 
-router.get('/data/profile', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const result = await financeLogic.getProfile(user!.id);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
-});
-
-router.get('/data/profile/value-history', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-
-        const type = req.query.type as ValueHistoryType;
-        const timeframe = req.query.timeframe as HistoryTimeframe;
-
-        const asOfDateStr = req.query.asOfDate as string;
-        const asOfDate = asOfDateStr
-            ? new Date(asOfDateStr)
-            : new Date();
-
-        const options: ProfileValueHistoryOptions = {
-            asOfDate,
-            type,
-            timeframe
-        };
-
-        const result = await financeLogic.getProfileValueHistory(user!.id, options);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
-});
-
 router.get('/data/accounts', async (req: Request, res: Response) => {
     try {
         const user = ApiHandler.getUser(req);
@@ -113,6 +75,55 @@ router.get('/data/accounts/:accountId/transactions', async (req: Request, res: R
     }
 });
 
+
+router.get('/data/budget-streams', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const result = await financeLogic.getBudgetStreams(user!.id);
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.post('/data/budget-streams', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const stream = req.body;
+        const result = await financeLogic.saveBudgetStream(user!.id, stream);
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.delete('/data/budget-streams/:id', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const id = req.params.id;
+        await financeLogic.deleteBudgetStream(user!.id, id);
+        return ApiHandler.succeed(res);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.get('/data/categories', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const activeOnly = req.query.activeOnly === 'true';
+        const result = await financeLogic.getCategories(user!.id, activeOnly);
+
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
 router.get('/data/institutions', async (req: Request, res: Response) => {
     try {
         const user = ApiHandler.getUser(req);
@@ -125,11 +136,36 @@ router.get('/data/institutions', async (req: Request, res: Response) => {
     }
 });
 
-router.get('/data/categories', async (req: Request, res: Response) => {
+router.get('/data/profile', async (req: Request, res: Response) => {
     try {
         const user = ApiHandler.getUser(req);
-        const activeOnly = req.query.activeOnly === 'true';
-        const result = await financeLogic.getCategories(user!.id, activeOnly);
+        const result = await financeLogic.getProfile(user!.id);
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.get('/data/profile/value-history', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+
+        const type = req.query.type as ValueHistoryType;
+        const timeframe = req.query.timeframe as HistoryTimeframe;
+
+        const asOfDateStr = req.query.asOfDate as string;
+        const asOfDate = asOfDateStr
+            ? new Date(asOfDateStr)
+            : new Date();
+
+        const options: ProfileValueHistoryOptions = {
+            asOfDate,
+            type,
+            timeframe
+        };
+
+        const result = await financeLogic.getProfileValueHistory(user!.id, options);
 
         return ApiHandler.succeed(res, result);
     }
@@ -161,7 +197,6 @@ router.get('/data/transactions/merchants', async (req: Request, res: Response) =
         return ApiHandler.failInternalError(res, error);
     }
 });
-
 
 function getTransactionOptions(req: Request): GetTransactionsOptions {
     const sortKey = req.query.sortKey as TransactionsSortKey;

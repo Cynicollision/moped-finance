@@ -1,6 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { Pool } from 'pg';
+import { generateEntityId } from '../src/utility/id.util';
+import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
+
 
 const dbConfig = {
     user: process.env.PGUSER,
@@ -51,7 +54,7 @@ async function readCsv(fileName: string): Promise<string[]> {
                 if (!line) {
                     continue;
                 }
-                
+
                 const [id, profileId, name] = line.split(',');
                 if (id && profileId && name) {
                     await client.query(
@@ -78,14 +81,14 @@ async function readCsv(fileName: string): Promise<string[]> {
                 if (!line) {
                     continue;
                 }
-                
+
                 const [id, profileId, institutionId, name, category, type, subtype, balance, hidden, retirement] = line.split(',');
                 accountsMap.set(name.trim(), id.trim());
 
                 if (id && profileId && name) {
                     await client.query(
                         `INSERT INTO finance.accounts (
-                            id, profile_id, institution_id, name, category, type, subtype, balance, is_hidden, is_retirement
+                            id, profile_id, institution_id, name, account_category, account_group, account_type, balance, is_hidden, is_retirement
                          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                          ON CONFLICT (id) DO NOTHING`,
                         [
@@ -127,7 +130,7 @@ async function readCsv(fileName: string): Promise<string[]> {
 
                     await client.query(
                         `INSERT INTO finance.categories (
-                            id, profile_id, category_type, category_group, icon, name, is_active
+                            id, profile_id, category_class, category_group, icon, name, is_active
                          ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                          ON CONFLICT (id) DO NOTHING`,
                         [
@@ -176,7 +179,7 @@ async function readCsv(fileName: string): Promise<string[]> {
                     if (accountId && date && amount) {
                         const categoryId = categoriesMap.get(categoryName?.trim()) || null;
                         transactionCount++;
-                        const txnId = `txn_${transactionCount}`;
+                        const txnId = generateEntityId(EntityIdPrefix.FinanceTransaction);
 
                         await client.query(
                             `INSERT INTO finance.transactions (
@@ -234,7 +237,7 @@ async function readCsv(fileName: string): Promise<string[]> {
 
                     if (accountId && date && balance) {
                         balanceCount++;
-                        const bhId = `bh_${balanceCount}`;
+                        const bhId = generateEntityId(EntityIdPrefix.FinanceBalanceHistory);
 
                         await client.query(
                             `INSERT INTO finance.balance_history (

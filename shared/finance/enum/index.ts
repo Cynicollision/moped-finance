@@ -1,6 +1,9 @@
 export { AccountCategory } from './account-category';
+export { AccountGroup } from './account-group';
 export { AccountType } from './account-type';
-export { AccountSubType } from './account-subtype';
+export { BudgetStreamRecurrence } from './budget-stream-recurrence';
+export { BudgetStreamType } from './budget-stream-type';
+export { CategoryClass } from './category-class';
 export { HistoryTimeframe } from './history-timeframe';
 export { TransactionsSortKey } from './transactions-sort-key';
 export { TransactionsFilterKey } from './transactions-filter-key';

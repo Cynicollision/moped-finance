@@ -1,7 +1,10 @@
 export enum AccountType {
-    Cash = 'Cash',
-    CreditCard = 'Credit Card',
-    Investment = 'Investment',
-    RealEstate = 'Real Estate',
-    Loan = 'Loan'
+    Brokerage = 'Brokerage',
+    Checking = 'Checking',
+    HSA = 'HSA',
+    PrimaryResidence = 'Primary Residence',
+    Retirement_401k = '401k',
+    Retirement_IRA = 'IRA',
+    Savings = 'Savings',
+    Mortgage = 'Home Mortgage'
 }

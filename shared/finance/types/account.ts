@@ -1,17 +1,17 @@
+import { Entity } from './../../core/types/entity-base';
 import { BalanceHistory } from './balance-history';
 import { Transaction } from './transaction';
 import { AccountCategory } from './../enum/account-category';
-import { AccountType } from './../enum/account-type';
-import { AccountSubType } from './../enum/account-subtype';
+import { AccountGroup } from '../enum/account-group';
+import { AccountType } from '../enum/account-type';
 
-export type Account = {
-    id: string;
+export type Account = Entity & {
     profileId: string;
     institutionId: string;
     name: string;
     category: AccountCategory;
+    group: AccountGroup;
     type: AccountType;
-    subtype?: AccountSubType;
     balance: number;
     isHidden: boolean;
     isRetirement: boolean;

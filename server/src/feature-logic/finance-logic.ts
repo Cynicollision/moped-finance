@@ -1,6 +1,6 @@
 import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, ProfileValueHistory, ProfileValueHistoryOptions } from '@shared/finance/contracts';
 import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
-import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction } from '@shared/finance/types';
+import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction, BudgetStream } from '@shared/finance/types';
 import { FinanceData } from './../data-access/finance-data';
 import { getStartDateForTimeframe } from './../utility/date-time-util';
 
@@ -22,12 +22,12 @@ export class FinanceLogic {
         return profile;
     }
 
-    public async getProfileValueHistory(usedId: string, options: ProfileValueHistoryOptions): Promise<ProfileValueHistory[]> {
+    public async getProfileValueHistory(userId: string, options: ProfileValueHistoryOptions): Promise<ProfileValueHistory[]> {
         options.type = options.type || ValueHistoryType.NetWorth;
         options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
 
         const startDate = getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        const data = await this.financeData.getProfileValueHistory(usedId, options.type, startDate, options.asOfDate);
+        const data = await this.financeData.getProfileValueHistory(userId, options.type, startDate, options.asOfDate);
 
         return data;
     }
@@ -63,6 +63,19 @@ export class FinanceLogic {
         const startDate = getStartDateForTimeframe(options.timeframe, options.asOfDate);
         const data = await this.financeData.getAccountBalanceHistory(userId, accountId, startDate.toISOString(), options.asOfDate.toISOString());
         return data;
+    }
+
+    public async getBudgetStreams(userId: string): Promise<BudgetStream[]> {
+        const data = await this.financeData.getBudgetStreams(userId).catch(() => []);
+        return data;
+    }
+
+    public async saveBudgetStream(userId: string, stream: BudgetStream): Promise<BudgetStream> {
+        return await this.financeData.saveBudgetStream(userId, stream);
+    }
+
+    public async deleteBudgetStream(userId: string, id: string): Promise<void> {
+        await this.financeData.deleteBudgetStream(userId, id);
     }
 
     public async getTransactions(userId: string, options: GetTransactionsOptions, accountId?: string): Promise<Transaction[]> {

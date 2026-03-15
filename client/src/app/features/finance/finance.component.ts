@@ -19,7 +19,7 @@ export class FinanceComponent {
     navLinks = [
         { path: 'summary', label: 'Dashboard' },
         { path: 'transactions', label: 'Transactions' },
-        { path: 'reports', label: 'Reports' },
-        { path: 'settings', label: 'Settings' }
+        { path: 'budget', label: 'Budget' },
+        { path: 'spending', label: 'Spending' }
     ];
 }

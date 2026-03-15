@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS finance.categories (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   profile_id VARCHAR(50) NOT NULL REFERENCES finance.profiles(id) ON DELETE CASCADE,
-  category_type VARCHAR(50) NOT NULL,
+  category_class VARCHAR(50) NOT NULL,
   category_group VARCHAR(50) NOT NULL,
   icon VARCHAR(10) NULL,
   name VARCHAR(100) NOT NULL,
@@ -39,9 +39,9 @@ CREATE TABLE IF NOT EXISTS finance.accounts (
   profile_id VARCHAR(50) NOT NULL REFERENCES finance.profiles(id) ON DELETE CASCADE,
   institution_id VARCHAR(50) REFERENCES finance.institutions(id) ON DELETE SET NULL,
   name VARCHAR(100) NOT NULL,
-  category VARCHAR(50) NOT NULL,
-  type VARCHAR(50) NOT NULL,
-  subtype VARCHAR(50),
+  account_category VARCHAR(50) NOT NULL,
+  account_group VARCHAR(50) NOT NULL,
+  account_type VARCHAR(50),
   is_hidden BOOLEAN DEFAULT FALSE,
   is_retirement BOOLEAN DEFAULT FALSE,
   balance DECIMAL(12, 2) NOT NULL DEFAULT 0
@@ -72,4 +72,18 @@ CREATE TABLE IF NOT EXISTS finance.transactions (
   is_hidden BOOLEAN DEFAULT FALSE,
   is_split BOOLEAN DEFAULT FALSE,
   split_parent_id VARCHAR(50) REFERENCES finance.transactions(id) ON DELETE RESTRICT
+);
+
+-- Budget Streams
+CREATE TABLE IF NOT EXISTS finance.budget_streams (
+  id VARCHAR(50) PRIMARY KEY,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  profile_id VARCHAR(50) NOT NULL REFERENCES finance.profiles(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  category_id VARCHAR(50) REFERENCES finance.categories(id) ON DELETE SET NULL,
+  type VARCHAR(50) NOT NULL,
+  recurrence VARCHAR(50) NOT NULL,
+  recurrence_multiple INTEGER NOT NULL DEFAULT 1,
+  amount DECIMAL(12, 2) NOT NULL
 );

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { OperationResult } from '@shared/core/contracts';
 import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, ProfileValueHistory } from '@shared/finance/contracts';
 import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
-import { FinanceProfile, Institution, Account, Category, Transaction, BalanceHistory } from '@shared/finance/types';
+import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../../core/api.service';
 import { LoadingService } from './../../core/loading.service';
 import { NotificationService } from './../../core/notification.service';
@@ -49,6 +49,42 @@ export class FinanceService {
         catch (error) {
             this.notificationService.error(`Unable to fetch account balance history: ${JSON.stringify(error)}`);
             return undefined;
+        }
+    }
+
+    async fetchBudgetStreams(): Promise<BudgetStream[] | undefined> {
+        try {
+            const task = this.api.get<OperationResult<BudgetStream[]>>('api/finance/data/budget-streams');
+            const response = await this.loader.withLoading(task);
+            return response.data;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to fetch budget streams: ${JSON.stringify(error)}`);
+            return undefined;
+        }
+    }
+
+    async saveBudgetStream(stream: BudgetStream): Promise<BudgetStream | undefined> {
+        try {
+            const task = this.api.post<BudgetStream>('api/finance/data/budget-streams', stream);
+            const response = await this.loader.withLoading(task);
+            return response.data;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to save budget stream: ${JSON.stringify(error)}`);
+            return undefined;
+        }
+    }
+
+    async deleteBudgetStream(id: string): Promise<boolean> {
+        try {
+            const task = this.api.delete<OperationResult<void>>(`api/finance/data/budget-streams/${id}`);
+            const response = await this.loader.withLoading(task);
+            return response.success;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to delete budget stream: ${JSON.stringify(error)}`);
+            return false;
         }
     }
 

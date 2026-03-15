@@ -1,0 +1,179 @@
+<div class="budget-container">
+
+    <!-- Income Section -->
+    <mat-card class="section-card" appearance="outlined">
+        <div class="card-header">
+            <h2 class="income-title">Income</h2>
+            <button mat-flat-button color="primary" (click)="startAdd(BudgetStreamType.Income)"
+                *ngIf="!isAdding || budgetForm.get('type')?.value !== BudgetStreamType.Income">
+                <mat-icon>add</mat-icon> Add Income
+            </button>
+        </div>
+
+        <mat-card-content>
+            <table mat-table [dataSource]="incomeStreams" class="budget-table">
+                <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef> Name </th>
+                    <td mat-cell *matCellDef="let s"> {{s.name}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="category">
+                    <th mat-header-cell *matHeaderCellDef> Category </th>
+                    <td mat-cell *matCellDef="let s"> {{getCategoryName(s.categoryId)}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="amount">
+                    <th mat-header-cell *matHeaderCellDef> Amount </th>
+                    <td mat-cell *matCellDef="let s"> {{s.amount | currency}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="recurrence">
+                    <th mat-header-cell *matHeaderCellDef> Recurrence </th>
+                    <td mat-cell *matCellDef="let s">
+                        Every {{s.recurrenceMultiple > 1 ? s.recurrenceMultiple : ''}} {{s.recurrence}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let s">
+                        <button mat-icon-button (click)="startEdit(s)" title="Edit">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" (click)="delete(s.id)" title="Delete">
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+
+            <div *ngIf="isAdding && budgetForm.get('type')?.value === BudgetStreamType.Income"
+                class="edit-form-container">
+                <h3>Add New Income</h3>
+                <ng-container *ngTemplateOutlet="formTemplate"></ng-container>
+            </div>
+
+            <div *ngIf="editingStreamId && budgetForm.get('type')?.value === BudgetStreamType.Income"
+                class="edit-form-container">
+                <h3>Edit Income</h3>
+                <ng-container *ngTemplateOutlet="formTemplate"></ng-container>
+            </div>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Expenses Section -->
+    <mat-card class="section-card" appearance="outlined">
+        <div class="card-header">
+            <h2 class="expense-title">Expenses</h2>
+            <button mat-flat-button color="warn" (click)="startAdd(BudgetStreamType.Expense)"
+                *ngIf="!isAdding || budgetForm.get('type')?.value !== BudgetStreamType.Expense">
+                <mat-icon>add</mat-icon> Add Expense
+            </button>
+        </div>
+
+        <mat-card-content>
+            <table mat-table [dataSource]="expenseStreams" class="budget-table">
+                <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef> Name </th>
+                    <td mat-cell *matCellDef="let s"> {{s.name}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="category">
+                    <th mat-header-cell *matHeaderCellDef> Category </th>
+                    <td mat-cell *matCellDef="let s"> {{getCategoryName(s.categoryId)}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="amount">
+                    <th mat-header-cell *matHeaderCellDef> Amount </th>
+                    <td mat-cell *matCellDef="let s"> {{s.amount | currency}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="recurrence">
+                    <th mat-header-cell *matHeaderCellDef> Recurrence </th>
+                    <td mat-cell *matCellDef="let s">
+                        Every {{s.recurrenceMultiple > 1 ? s.recurrenceMultiple : ''}} {{s.recurrence}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let s">
+                        <button mat-icon-button (click)="startEdit(s)" title="Edit">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" (click)="delete(s.id)" title="Delete">
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+
+            <div *ngIf="isAdding && budgetForm.get('type')?.value === BudgetStreamType.Expense"
+                class="edit-form-container">
+                <h3>Add New Expense</h3>
+                <ng-container *ngTemplateOutlet="formTemplate"></ng-container>
+            </div>
+
+            <div *ngIf="editingStreamId && budgetForm.get('type')?.value === BudgetStreamType.Expense"
+                class="edit-form-container">
+                <h3>Edit Expense</h3>
+                <ng-container *ngTemplateOutlet="formTemplate"></ng-container>
+            </div>
+        </mat-card-content>
+    </mat-card>
+
+</div>
+
+<ng-template #formTemplate>
+    <form [formGroup]="budgetForm" (ngSubmit)="save()">
+        <div class="form-row">
+            <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="e.g. Salary, Rent">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Category</mat-label>
+                <mat-select formControlName="categoryId">
+                    <mat-option *ngFor="let cat of getCategoriesByType(budgetForm.get('type')?.value)" [value]="cat.id">
+                        {{cat.icon}} {{cat.name}}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Amount</mat-label>
+                <input matInput type="number" formControlName="amount" prefix="$">
+            </mat-form-field>
+
+            <div class="recurrence-group">
+                <mat-form-field appearance="outline" class="multiple-field">
+                    <mat-label>Every</mat-label>
+                    <input matInput type="number" formControlName="recurrenceMultiple">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="recurrence-field">
+                    <mat-label>Recurrence</mat-label>
+                    <mat-select formControlName="recurrence">
+                        <mat-option *ngFor="let opt of recurrenceOptions" [value]="opt">
+                            {{opt}}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button mat-button type="button" (click)="cancel()">Cancel</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="budgetForm.invalid">
+                Save
+            </button>
+        </div>
+    </form>
+</ng-template>

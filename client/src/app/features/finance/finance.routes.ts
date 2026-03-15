@@ -3,8 +3,8 @@ import { FinanceComponent } from './finance.component';
 import { FinanceSummaryComponent } from './components/summary.component';
 import { FinanceAccountDetailsComponent } from './components/account-details.component';
 import { FinanceTransactionsComponent } from './components/transactions.component';
-import { FinanceReportsComponent } from './components/reports.component';
-import { FinanceSettingsComponent } from './components/settings.component';
+import { FinanceBudgetComponent } from './components/budget.component';
+import { FinanceSpendingComponent } from './components/spending.component';
 import { FinanceTransactionDetailsComponent } from './components/transaction-details.component';
 
 export const FINANCE_ROUTES: Routes = [
@@ -17,8 +17,8 @@ export const FINANCE_ROUTES: Routes = [
             { path: 'accounts/:accountId', component: FinanceAccountDetailsComponent },
             { path: 'transactions', component: FinanceTransactionsComponent },
             { path: 'transactions/:transactionId', component: FinanceTransactionDetailsComponent },
-            { path: 'reports', component: FinanceReportsComponent },
-            { path: 'settings', component: FinanceSettingsComponent }
+            { path: 'budget', component: FinanceBudgetComponent },
+            { path: 'spending', component: FinanceSpendingComponent }
         ]
     }
 ];
