@@ -1,7 +1,7 @@
 export { AccountCategory } from './account-category';
 export { AccountGroup } from './account-group';
 export { AccountType } from './account-type';
-export { BudgetStreamRecurrence } from './budget-stream-recurrence';
+export { BudgetPeriod } from './budget-period';
 export { BudgetStreamType } from './budget-stream-type';
 export { CategoryClass } from './category-class';
 export { HistoryTimeframe } from './history-timeframe';

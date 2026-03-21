@@ -2,12 +2,13 @@ import { EntityIdPrefix, SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
 import { DatabaseError, databasePool } from './../db-client';
 import { generateEntityId } from './../../utility/id-util';
-import { GetTransactionsOptions } from '@shared/finance/contracts';
+import { GetTransactionsOptions, SpendingStream } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 
 export interface IFinanceTransactionsData {
     search(userId: string, options: GetTransactionsOptions, accountId?: string): Promise<Transaction[]>;
     retrieveMerchants(userId: string): Promise<string[]>;
+    retrieveSpendingByCategory(userId: string, startDate: Date, endDate: Date): Promise<SpendingStream[]>;
     retrieveSingle(userId: string, id: string): Promise<Transaction | undefined>;
     update(userId: string, transaction: Transaction): Promise<Transaction>;
     delete(userId: string, id: string): Promise<void>;
@@ -159,6 +160,30 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
                 ...row,
                 amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
             };
+        }
+        catch (err) {
+            throw new DatabaseError();
+        }
+    }
+
+    public async retrieveSpendingByCategory(userId: string, startDate: Date, endDate: Date): Promise<SpendingStream[]> {
+        try {
+            const query = `SELECT 
+                                t.category_id AS "categoryId", 
+                                SUM(t.amount) AS "amount"
+                            FROM finance.transactions AS t
+                                JOIN finance.accounts AS a ON a.id = t.account_id
+                            WHERE a.user_id = $1 AND t.date >= $2 AND t.date <= $3
+                            GROUP BY t.category_id`;
+
+            const params = [userId, startDate, endDate];
+
+            const result = await databasePool.query(query, params);
+
+            return result.rows.map(row => ({
+                ...row,
+                amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
+            }));
         }
         catch (err) {
             throw new DatabaseError();

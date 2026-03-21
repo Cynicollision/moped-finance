@@ -1,8 +1,8 @@
-import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, TotalValueHistory, TotalValueHistoryOptions } from '@shared/finance/contracts';
-import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
+import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, SpendingStream, TotalValueHistory, TotalValueHistoryOptions } from '@shared/finance/contracts';
+import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Account, BalanceHistory, Category, Institution, Transaction, BudgetStream } from '@shared/finance/types';
 import { FinanceData } from './../data-access/finance-data';
-import { getStartDateForTimeframe } from './../utility/date-time-util';
+import { getDatesForPeriod, getStartDateForTimeframe } from './../utility/date-time-util';
 
 export class FinanceLogic {
     private financeData: FinanceData;
@@ -74,6 +74,13 @@ export class FinanceLogic {
 
     public async getTransactionMerchants(userId: string): Promise<string[]> {
         const data = await this.financeData.transactions.retrieveMerchants(userId);
+        return data;
+    }
+
+    public async getTransactionSpendingByCategory(userId: string, period: BudgetPeriod, asOfDate: string): Promise<SpendingStream[]> {
+        const asOf = asOfDate ? new Date(asOfDate) : new Date();
+        const { startDate, endDate } = getDatesForPeriod(period, asOf);
+        const data = await this.financeData.transactions.retrieveSpendingByCategory(userId, startDate, endDate);
         return data;
     }
 

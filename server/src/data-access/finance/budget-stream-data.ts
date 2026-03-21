@@ -22,7 +22,6 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
                                 bs.category_id AS "categoryId",
                                 bs.type,
                                 bs.recurrence,
-                                bs.recurrence_multiple AS "recurrenceMultiple",
                                 bs.amount
                             FROM finance.budget_streams AS bs
                             WHERE bs.user_id = $1`;
@@ -59,15 +58,14 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
 
             const query = `
                     INSERT INTO finance.budget_streams (
-                        id, user_id, name, category_id, type, recurrence, recurrence_multiple, amount
+                        id, user_id, name, category_id, type, recurrence, amount
                     )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
                     ON CONFLICT (id) DO UPDATE SET
                         name = EXCLUDED.name,
                         category_id = EXCLUDED.category_id,
                         type = EXCLUDED.type,
                         recurrence = EXCLUDED.recurrence,
-                        recurrence_multiple = EXCLUDED.recurrence_multiple,
                         amount = EXCLUDED.amount,
                         updated_at = CURRENT_TIMESTAMP
                     RETURNING *`;
@@ -79,7 +77,6 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
                 stream.categoryId,
                 stream.type,
                 stream.recurrence,
-                stream.recurrenceMultiple,
                 stream.amount
             ];
 
@@ -95,7 +92,6 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
                 categoryId: row.category_id,
                 type: row.type,
                 recurrence: row.recurrence,
-                recurrenceMultiple: row.recurrence_multiple,
                 amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
             };
         }

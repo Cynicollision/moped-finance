@@ -18,7 +18,7 @@
                         <div class="mobile-details">
                             <span class="mobile-category">{{getCategoryName(s.categoryId)}}</span>
                             <span class="mobile-meta">
-                                {{s.amount | currency}} • Every {{s.recurrenceMultiple > 1 ? s.recurrenceMultiple : ''}} {{s.recurrence}}
+                                {{s.amount | currency}} • {{s.recurrence}}
                             </span>
                         </div>
                     </td>
@@ -42,7 +42,7 @@
                 <ng-container matColumnDef="recurrence">
                     <th mat-header-cell *matHeaderCellDef> Recurrence </th>
                     <td mat-cell *matCellDef="let s">
-                        Every {{s.recurrenceMultiple > 1 ? s.recurrenceMultiple : ''}} {{s.recurrence}}
+                        {{s.recurrence}}
                     </td>
                 </ng-container>
 
@@ -80,7 +80,7 @@
                         <div class="mobile-details">
                             <span class="mobile-category">{{getCategoryName(s.categoryId)}}</span>
                             <span class="mobile-meta">
-                                {{s.amount | currency}} • Every {{s.recurrenceMultiple > 1 ? s.recurrenceMultiple : ''}} {{s.recurrence}}
+                                {{s.amount | currency}} • {{s.recurrence}}
                             </span>
                         </div>
                     </td>
@@ -104,7 +104,7 @@
                 <ng-container matColumnDef="recurrence">
                     <th mat-header-cell *matHeaderCellDef> Recurrence </th>
                     <td mat-cell *matCellDef="let s">
-                        Every {{s.recurrenceMultiple > 1 ? s.recurrenceMultiple : ''}} {{s.recurrence}}
+                        {{s.recurrence}}
                     </td>
                 </ng-container>
 

@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatMenuModule } from '@angular/material/menu';
 import { Category, BudgetStream } from '@shared/finance/types';
-import { BudgetStreamType, BudgetStreamRecurrence, CategoryClass } from '@shared/finance/enum';
+import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
 import { FinanceService } from '../finance.service';
 import { ModalService } from '../../../core/modal/modal.service';
 import { BudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';
@@ -46,7 +46,7 @@ export class FinanceBudgetComponent implements OnInit {
 
     displayedColumns: string[] = ['name', 'group', 'category', 'amount', 'recurrence', 'actions'];
 
-    constructor() {}
+    constructor() { }
 
     async ngOnInit() {
         await this.loadData();
@@ -71,7 +71,7 @@ export class FinanceBudgetComponent implements OnInit {
         this.incomeStreams = this.budgetStreams
             .filter(s => s.type === BudgetStreamType.Income)
             .sort((a, b) => this.compareStreams(a, b));
-            
+
         this.expenseStreams = this.budgetStreams
             .filter(s => s.type === BudgetStreamType.Expense)
             .sort((a, b) => this.compareStreams(a, b));
@@ -116,7 +116,7 @@ export class FinanceBudgetComponent implements OnInit {
             type,
             categories: this.categories
         });
-        
+
         dialogRef.afterClosed().subscribe(async (result: BudgetStream) => {
             if (result) {
                 await this.save(result);
@@ -130,7 +130,7 @@ export class FinanceBudgetComponent implements OnInit {
             type: stream.type,
             categories: this.categories
         });
-        
+
         dialogRef.afterClosed().subscribe(async (result: BudgetStream) => {
             if (result) {
                 await this.save(result);

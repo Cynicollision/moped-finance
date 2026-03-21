@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { OperationResult } from '@shared/core/contracts';
-import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, TotalValueHistory } from '@shared/finance/contracts';
-import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
+import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, SpendingStream, TotalValueHistory } from '@shared/finance/contracts';
+import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../../core/api.service';
 import { LoadingService } from './../../core/loading/loading.service';
@@ -205,6 +205,19 @@ export class FinanceService {
         catch (error) {
             this.notificationService.error(`Unable to delete transaction: ${JSON.stringify(error)}`);
             return false;
+        }
+    }
+
+    async fetchSpendingStreams(period: BudgetPeriod, asOfDate: string): Promise<SpendingStream[] | undefined> {
+        try {
+            const url = `api/finance/data/transactions/spending?period=${period}&asOfDate=${asOfDate}`;
+            const task = this.api.get<OperationResult<SpendingStream[]>>(url);
+            const response = await this.loader.withLoading(task);
+            return response.data;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to fetch spending streams: ${JSON.stringify(error)}`);
+            return undefined;
         }
     }
 

@@ -76,6 +76,5 @@ CREATE TABLE IF NOT EXISTS finance.budget_streams (
   category_id VARCHAR(50) REFERENCES finance.categories(id) ON DELETE SET NULL,
   type VARCHAR(50) NOT NULL,
   recurrence VARCHAR(50) NOT NULL,
-  recurrence_multiple INTEGER NOT NULL DEFAULT 1,
   amount DECIMAL(12, 2) NOT NULL
 );

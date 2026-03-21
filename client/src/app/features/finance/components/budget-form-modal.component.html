@@ -1,0 +1,40 @@
+<app-modal-layout [title]="isEditing ? 'Edit ' + typeString : 'Add ' + typeString">
+  <form [formGroup]="budgetForm" (ngSubmit)="save()" class="budget-form">
+    <div class="form-row">
+        <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" placeholder="e.g. Salary, Rent">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Category</mat-label>
+            <mat-select formControlName="categoryId">
+                <mat-option *ngFor="let cat of availableCategories" [value]="cat.id">
+                    {{cat.icon}} {{cat.name}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Amount</mat-label>
+            <input matInput type="number" formControlName="amount" prefix="$">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Recurrence</mat-label>
+            <mat-select formControlName="recurrence">
+                <mat-option *ngFor="let opt of recurrenceOptions" [value]="opt">
+                    {{opt}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </div>
+
+    <div modal-actions>
+        <button mat-button type="button" mat-dialog-close>Cancel</button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="budgetForm.invalid">
+            Save
+        </button>
+    </div>
+  </form>
+</app-modal-layout>

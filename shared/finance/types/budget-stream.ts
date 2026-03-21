@@ -1,5 +1,5 @@
 import { Entity } from './../../core/types/entity-base';
-import { BudgetStreamRecurrence } from './../enum/budget-stream-recurrence';
+import { BudgetPeriod } from '../enum/budget-period';
 import { BudgetStreamType } from './../enum/budget-stream-type';
 
 export type BudgetStream = Entity & {
@@ -7,7 +7,6 @@ export type BudgetStream = Entity & {
     type: BudgetStreamType;
     name: string;
     categoryId: string;
-    recurrence: BudgetStreamRecurrence;
-    recurrenceMultiple: number;
-    amount: number; // TODO: gross/net for income, net only for gross
+    recurrence: BudgetPeriod;
+    amount: number;
 };

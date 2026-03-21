@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { SortDirection } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, TotalValueHistoryOptions } from '@shared/finance/contracts';
-import { HistoryTimeframe, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
+import { BudgetPeriod, HistoryTimeframe, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { ApiHandler } from './api-handler';
 import { FinanceData } from './../data-access/finance-data';
 import { FinanceLogic } from './../feature-logic/finance-logic';
@@ -92,7 +92,7 @@ router.get('/data/accounts/:accountId/transactions', async (req: Request, res: R
     try {
         const user = ApiHandler.getUser(req);
         const accountId = req.params.accountId;
-        const options = getTransactionOptions(req);
+        const options = getTransactionSearchOptions(req);
         const result = await financeLogic.getTransactions(user!.id, options, accountId);
 
         return ApiHandler.succeed(res, result);
@@ -166,7 +166,7 @@ router.get('/data/institutions', async (req: Request, res: Response) => {
 router.get('/data/transactions', async (req: Request, res: Response) => {
     try {
         const user = ApiHandler.getUser(req);
-        const options = getTransactionOptions(req);
+        const options = getTransactionSearchOptions(req);
         const result = await financeLogic.getTransactions(user!.id, options);
 
         return ApiHandler.succeed(res, result);
@@ -180,6 +180,20 @@ router.get('/data/transactions/merchants', async (req: Request, res: Response) =
     try {
         const user = ApiHandler.getUser(req);
         const result = await financeLogic.getTransactionMerchants(user!.id);
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.get('/data/transactions/spending', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+
+        const period = req.query.period as BudgetPeriod;
+        const asOfDate = req.query.asOfDate as string;
+        const result = await financeLogic.getTransactionSpendingByCategory(user!.id, period, asOfDate);
         return ApiHandler.succeed(res, result);
     }
     catch (error) {
@@ -224,7 +238,7 @@ router.delete('/data/transactions/:id', async (req: Request, res: Response) => {
     }
 });
 
-function getTransactionOptions(req: Request): GetTransactionsOptions {
+function getTransactionSearchOptions(req: Request): GetTransactionsOptions {
     const sortKey = req.query.sortKey as TransactionsSortKey;
     const sortDirection = req.query.sortDirection as SortDirection;
     const offset = parseInt(req.query.offset as string, 10) || 0;
@@ -254,5 +268,6 @@ function getTransactionOptions(req: Request): GetTransactionsOptions {
         filters
     };
 }
+
 
 export default router;
