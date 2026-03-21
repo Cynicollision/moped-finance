@@ -198,6 +198,43 @@ router.get('/data/transactions/merchants', async (req: Request, res: Response) =
     }
 });
 
+router.get('/data/transactions/:id', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const id = req.params.id;
+        const result = await financeLogic.getTransaction(user!.id, id);
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.put('/data/transactions/:id', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const transaction = req.body;
+        transaction.id = req.params.id; // ensure ID holds
+        const result = await financeLogic.saveTransaction(user!.id, transaction);
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.delete('/data/transactions/:id', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const id = req.params.id;
+        await financeLogic.deleteTransaction(user!.id, id);
+        return ApiHandler.succeed(res);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
 function getTransactionOptions(req: Request): GetTransactionsOptions {
     const sortKey = req.query.sortKey as TransactionsSortKey;
     const sortDirection = req.query.sortDirection as SortDirection;

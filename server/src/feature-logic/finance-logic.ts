@@ -87,4 +87,16 @@ export class FinanceLogic {
         const data = await this.financeData.transactions.retrieveMerchants(userId);
         return data;
     }
+
+    public async getTransaction(userId: string, id: string): Promise<Transaction | undefined> {
+        return await this.financeData.transactions.retrieveSingle(userId, id);
+    }
+
+    public async saveTransaction(userId: string, transaction: Transaction): Promise<Transaction> {
+        return await this.financeData.transactions.update(userId, transaction);
+    }
+
+    public async deleteTransaction(userId: string, id: string): Promise<void> {
+        await this.financeData.transactions.delete(userId, id);
+    }
 }

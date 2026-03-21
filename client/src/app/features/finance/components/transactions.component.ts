@@ -44,6 +44,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
     private financeService = inject(FinanceService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
+    protected readonly Math = Math;
 
     displayedColumns: string[] = ['date', 'account', 'merchant', 'category', 'amount'];
     dataSource = new MatTableDataSource<Transaction>([]);

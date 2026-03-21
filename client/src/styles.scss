@@ -36,3 +36,17 @@ body {
   height: 100%;
 }
 /* You can add global styles to this file, and also import other style files */
+.amount-positive {
+    color: #2e7d32 !important;
+}
+
+.amount-negative {
+    color: #000000 !important;
+}
+
+.clickable-row {
+    cursor: pointer;
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.04) !important;
+    }
+}

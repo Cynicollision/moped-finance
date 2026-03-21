@@ -8,6 +8,9 @@ import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum
 export interface IFinanceTransactionsData {
     search(userId: string, options: GetTransactionsOptions, accountId?: string): Promise<Transaction[]>;
     retrieveMerchants(userId: string): Promise<string[]>;
+    retrieveSingle(userId: string, id: string): Promise<Transaction | undefined>;
+    update(userId: string, transaction: Transaction): Promise<Transaction>;
+    delete(userId: string, id: string): Promise<void>;
 }
 
 export class FinanceTransactionsData implements IFinanceTransactionsData {
@@ -123,6 +126,125 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
             return result.rows.map(row => row.merchant);
         }
         catch {
+            throw new DatabaseError();
+        }
+    }
+
+    public async retrieveSingle(userId: string, id: string): Promise<Transaction | undefined> {
+        try {
+            const query = `SELECT 
+                        t.id, 
+                        t.account_id AS "accountId", 
+                        t.category_id AS "categoryId", 
+                        t.date, 
+                        t.amount, 
+                        t.merchant, 
+                        t.original_statement as "originalStatement", 
+                        t.notes, 
+                        t.is_hidden AS "isHidden",
+                        t.is_split AS "isSplit", 
+                        t.split_parent_id AS "splitParentId"
+                    FROM finance.transactions AS t
+                        JOIN finance.accounts AS a ON a.id = t.account_id
+                        JOIN finance.profiles AS p ON p.id = a.profile_id
+                    WHERE p.user_id = $1 AND t.id = $2`;
+
+            const params = [userId, id];
+
+            const result = await databasePool.query(query, params);
+
+            if (result.rows.length === 0) {
+                return undefined;
+            }
+
+            const row = result.rows[0];
+            return {
+                ...row,
+                amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
+            };
+        }
+        catch (err) {
+            throw new DatabaseError();
+        }
+    }
+
+    public async update(userId: string, transaction: Transaction): Promise<Transaction> {
+        try {
+            const retrieveQuery = `SELECT t.id 
+                    FROM finance.transactions AS t
+                        JOIN finance.accounts AS a ON a.id = t.account_id
+                        JOIN finance.profiles AS p ON p.id = a.profile_id
+                    WHERE p.user_id = $1 AND t.id = $2`;
+            const checkResult = await databasePool.query(retrieveQuery, [userId, transaction.id]);
+            if (checkResult.rows.length === 0) {
+                throw new Error('Transaction not found or does not belong to user.');
+            }
+
+            const query = `UPDATE finance.transactions
+                           SET 
+                               merchant = $1,
+                               category_id = $2,
+                               date = $3,
+                               notes = $4,
+                               is_hidden = $5
+                           WHERE id = $6
+                           RETURNING 
+                                id, 
+                                account_id AS "accountId", 
+                                category_id AS "categoryId", 
+                                date, 
+                                amount, 
+                                merchant, 
+                                original_statement as "originalStatement", 
+                                notes, 
+                                is_hidden AS "isHidden",
+                                is_split AS "isSplit", 
+                                split_parent_id AS "splitParentId"`;
+
+            const params = [
+                transaction.merchant,
+                transaction.categoryId,
+                transaction.date,
+                transaction.notes,
+                transaction.isHidden,
+                transaction.id
+            ];
+
+            const result = await databasePool.query(query, params);
+            
+            const row = result.rows[0];
+            return {
+                ...row,
+                amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
+            };
+        }
+        catch (err) {
+            if (err instanceof Error && err.message === 'Transaction not found or does not belong to user.') {
+                throw err;
+            }
+            throw new DatabaseError();
+        }
+    }
+
+    public async delete(userId: string, id: string): Promise<void> {
+        try {
+            const retrieveQuery = `SELECT t.id 
+                    FROM finance.transactions AS t
+                        JOIN finance.accounts AS a ON a.id = t.account_id
+                        JOIN finance.profiles AS p ON p.id = a.profile_id
+                    WHERE p.user_id = $1 AND t.id = $2`;
+            const checkResult = await databasePool.query(retrieveQuery, [userId, id]);
+            if (checkResult.rows.length === 0) {
+                throw new Error('Transaction not found or does not belong to user.');
+            }
+
+            const deleteQuery = `DELETE FROM finance.transactions WHERE id = $1`;
+            await databasePool.query(deleteQuery, [id]);
+        }
+        catch (err) {
+            if (err instanceof Error && err.message === 'Transaction not found or does not belong to user.') {
+                throw err;
+            }
             throw new DatabaseError();
         }
     }

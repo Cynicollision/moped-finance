@@ -172,6 +172,42 @@ export class FinanceService {
         }
     }
 
+    async fetchTransaction(id: string): Promise<Transaction | undefined> {
+        try {
+            const task = this.api.get<OperationResult<Transaction>>(`api/finance/data/transactions/${id}`);
+            const response = await this.loader.withLoading(task);
+            return response.data;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to fetch transaction: ${JSON.stringify(error)}`);
+            return undefined;
+        }
+    }
+
+    async saveTransaction(transaction: Transaction): Promise<Transaction | undefined> {
+        try {
+            const task = this.api.put<OperationResult<Transaction>>(`api/finance/data/transactions/${transaction.id}`, transaction);
+            const response = await this.loader.withLoading(task);
+            return response.data;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to save transaction: ${JSON.stringify(error)}`);
+            return undefined;
+        }
+    }
+
+    async deleteTransaction(id: string): Promise<boolean> {
+        try {
+            const task = this.api.delete<OperationResult<void>>(`api/finance/data/transactions/${id}`);
+            const response = await this.loader.withLoading(task);
+            return response.success;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to delete transaction: ${JSON.stringify(error)}`);
+            return false;
+        }
+    }
+
     private getTransactionUrlParams(options: GetTransactionsOptions): URLSearchParams {
         const params = new URLSearchParams();
 

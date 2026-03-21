@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { GetAccountBalanceHistoryOptions, ProfileValueHistory } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
@@ -20,6 +20,8 @@ import { MatCardModule } from '@angular/material/card';
 export class FinanceAccountDetailsComponent implements OnInit {
     private financeService = inject(FinanceService);
     private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    protected readonly Math = Math;
 
     account = signal<Account | undefined>(undefined);
     balanceHistory = signal<BalanceHistory[]>([]);
@@ -117,4 +119,8 @@ export class FinanceAccountDetailsComponent implements OnInit {
         if (!institutionId) return '';
         return this.institutionMap.get(institutionId)?.name || institutionId;
     });
+
+    onRowClick(row: Transaction) {
+        this.router.navigate(['/finance/transactions', row.id]);
+    }
 }
