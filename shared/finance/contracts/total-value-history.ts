@@ -1,12 +1,12 @@
-import { HistoryTimeframe, ValueHistoryType } from './../enum';
+import { HistoryTimeframe, ValueHistoryType } from '../enum';
 
-export type ProfileValueHistoryOptions = {
+export type TotalValueHistoryOptions = {
     asOfDate: Date;
     type: ValueHistoryType;
     timeframe: HistoryTimeframe;
 }
 
-export type ProfileValueHistory = {
+export type TotalValueHistory = {
     date: Date;
     amount: number;
     type: ValueHistoryType;

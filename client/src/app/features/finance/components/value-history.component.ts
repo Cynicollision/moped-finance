@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { ChartComponent, ChartConfiguration } from './../../../core/chart.component';
 import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
-import { ProfileValueHistory } from '@shared/finance/contracts';
+import { TotalValueHistory } from '@shared/finance/contracts';
 
 export interface ChartTypeOption {
     value: ValueHistoryType;
@@ -30,7 +30,7 @@ export interface ChartTypeOption {
 })
 export class ValueHistoryComponent implements OnChanges {
     // Inputs
-    @Input({ required: true }) historyData: ProfileValueHistory[] = [];
+    @Input({ required: true }) historyData: TotalValueHistory[] = [];
     @Input() title: string | undefined;
     @Input() currentValue: number = 0;
 
@@ -55,7 +55,7 @@ export class ValueHistoryComponent implements OnChanges {
     @Output() timeframeChange = new EventEmitter<HistoryTimeframe>();
 
     // Internal Signals mapped from Inputs
-    historyDataSignal = signal<ProfileValueHistory[]>([]);
+    historyDataSignal = signal<TotalValueHistory[]>([]);
     chartTypeOptionsSignal = signal<ChartTypeOption[]>([]);
     selectedChartTypeSignal = signal<ValueHistoryType | undefined>(undefined);
     selectedTimeframeSignal = signal<HistoryTimeframe | undefined>(undefined);

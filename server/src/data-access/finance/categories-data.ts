@@ -15,15 +15,14 @@ export class FinanceCategoriesData implements IFinanceCategoriesData {
                         c.id, 
                         c.created_at AS "createdAt",
                         c.updated_at AS "updatedAt",
-                        c.profile_id AS "profileId",
+                        c.user_id AS "userId",
                         c.category_class AS "class",
                         c.category_group AS "group",
                         c.icon,
                         c.name,
                         c.is_active AS "isActive"
                     FROM finance.categories AS c
-                        JOIN finance.profiles AS p ON p.id = c.profile_id
-                    WHERE p.user_id = $1`;
+                    WHERE c.user_id = $1`;
 
             if (activeOnly) {
                 query += ' AND c.is_active = true';

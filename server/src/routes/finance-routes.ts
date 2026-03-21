@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { SortDirection } from '@shared/core/enum';
-import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, ProfileValueHistoryOptions } from '@shared/finance/contracts';
+import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, TotalValueHistoryOptions } from '@shared/finance/contracts';
 import { HistoryTimeframe, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { ApiHandler } from './api-handler';
 import { FinanceData } from './../data-access/finance-data';
@@ -14,6 +14,33 @@ router.get('/data/accounts', async (req: Request, res: Response) => {
     try {
         const user = ApiHandler.getUser(req);
         const result = await financeLogic.getAccounts(user!.id);
+
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.get('/data/accounts/total-value-history', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+
+        const type = req.query.type as ValueHistoryType;
+        const timeframe = req.query.timeframe as HistoryTimeframe;
+
+        const asOfDateStr = req.query.asOfDate as string;
+        const asOfDate = asOfDateStr
+            ? new Date(asOfDateStr)
+            : new Date();
+
+        const options: TotalValueHistoryOptions = {
+            asOfDate,
+            type,
+            timeframe
+        };
+
+        const result = await financeLogic.getTotalValueHistory(user!.id, options);
 
         return ApiHandler.succeed(res, result);
     }
@@ -128,44 +155,6 @@ router.get('/data/institutions', async (req: Request, res: Response) => {
     try {
         const user = ApiHandler.getUser(req);
         const result = await financeLogic.getInstitutions(user!.id);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
-});
-
-router.get('/data/profile', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const result = await financeLogic.getProfile(user!.id);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
-});
-
-router.get('/data/profile/value-history', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-
-        const type = req.query.type as ValueHistoryType;
-        const timeframe = req.query.timeframe as HistoryTimeframe;
-
-        const asOfDateStr = req.query.asOfDate as string;
-        const asOfDate = asOfDateStr
-            ? new Date(asOfDateStr)
-            : new Date();
-
-        const options: ProfileValueHistoryOptions = {
-            asOfDate,
-            type,
-            timeframe
-        };
-
-        const result = await financeLogic.getProfileValueHistory(user!.id, options);
 
         return ApiHandler.succeed(res, result);
     }

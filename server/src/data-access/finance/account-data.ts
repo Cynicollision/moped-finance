@@ -14,21 +14,20 @@ export class FinanceAccountData implements IFinanceAccountData {
         try {
             const result = await databasePool.query(
                 `SELECT 
-                        a.id, 
-                        a.created_at AS "createdAt",
-                        a.updated_at AS "updatedAt",
-                        a.profile_id AS "profileId", 
-                        a.institution_id AS "institutionId", 
-                        a.name,
-                        a.account_category AS "category", 
-                        a.account_group AS "group", 
-                        a.account_type AS "type", 
-                        a.balance, 
-                        a.is_hidden AS "isHidden",
-                        a.is_retirement AS "isRetirement"
-                    FROM finance.accounts AS a
-                        JOIN finance.profiles AS p ON p.id = a.profile_id
-                    WHERE p.user_id = $1`,
+                    a.id, 
+                    a.created_at AS "createdAt",
+                    a.updated_at AS "updatedAt",
+                    a.user_id AS "userId", 
+                    a.institution_id AS "institutionId", 
+                    a.name,
+                    a.account_category AS "category", 
+                    a.account_group AS "group", 
+                    a.account_type AS "type", 
+                    a.balance, 
+                    a.is_hidden AS "isHidden",
+                    a.is_retirement AS "isRetirement"
+                FROM finance.accounts AS a
+                WHERE a.user_id = $1`,
                 [userId]
             );
 
@@ -47,21 +46,20 @@ export class FinanceAccountData implements IFinanceAccountData {
         try {
             const result = await databasePool.query(
                 `SELECT 
-                        a.id, 
-                        a.created_at AS "createdAt",
-                        a.updated_at AS "updatedAt",
-                        a.profile_id AS "profileId", 
-                        a.institution_id AS "institutionId", 
-                        a.name,
-                        a.account_category AS "category", 
-                        a.account_group AS "group",
-                        a.account_type AS "type", 
-                        a.balance, 
-                        a.is_hidden AS "isHidden",
-                        a.is_retirement AS "isRetirement"
-                    FROM finance.accounts AS a
-                        JOIN finance.profiles AS p ON p.id = a.profile_id
-                    WHERE p.user_id = $1 AND a.id = $2`,
+                    a.id, 
+                    a.created_at AS "createdAt",
+                    a.updated_at AS "updatedAt",
+                    a.user_id AS "userId", 
+                    a.institution_id AS "institutionId", 
+                    a.name,
+                    a.account_category AS "category", 
+                    a.account_group AS "group",
+                    a.account_type AS "type", 
+                    a.balance, 
+                    a.is_hidden AS "isHidden",
+                    a.is_retirement AS "isRetirement"
+                FROM finance.accounts AS a
+                WHERE a.user_id = $1 AND a.id = $2`,
                 [userId, accountId]
             );
 

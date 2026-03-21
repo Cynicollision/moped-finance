@@ -3,7 +3,7 @@ import { CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterLink } from '@angular/router';
-import { ProfileValueHistory } from '@shared/finance/contracts';
+import { TotalValueHistory } from '@shared/finance/contracts';
 import { AccountGroup, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
@@ -28,7 +28,7 @@ export class FinanceSummaryComponent implements OnInit {
     accounts = signal<Account[]>([]);
 
     // Chart Data payload provided to the child `<app-value-history>` component
-    historyData = signal<ProfileValueHistory[]>([]);
+    historyData = signal<TotalValueHistory[]>([]);
 
     // View State for Chart Options
     selectedChartType = signal<ValueHistoryType>(ValueHistoryType.NetWorth);
@@ -46,7 +46,7 @@ export class FinanceSummaryComponent implements OnInit {
     }
 
     async updateChartData() {
-        const data = await this.financeService.fetchProfileValueHistory(
+        const data = await this.financeService.fetchTotalValueHistory(
             this.selectedChartType(),
             this.selectedTimeframe()
         );

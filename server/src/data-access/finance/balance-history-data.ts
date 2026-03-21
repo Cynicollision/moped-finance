@@ -1,5 +1,5 @@
 import { EntityIdPrefix } from '@shared/core/enum';
-import { ProfileValueHistory } from '@shared/finance/contracts';
+import { TotalValueHistory } from '@shared/finance/contracts';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
 import { DatabaseError, databasePool } from './../db-client';
@@ -7,7 +7,7 @@ import { generateEntityId } from './../../utility/id-util';
 
 export interface IFinanceBalanceHistoryData {
     retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;
-    retrieveSumByDate(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<ProfileValueHistory[]>;
+    retrieveSumByDate(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]>;
 }
 
 export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
@@ -15,17 +15,16 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
     public async retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]> {
         try {
             let query = `SELECT
-                    bh.id,
-                    bh.created_at AS "createdAt",
-                    bh.updated_at AS "updatedAt",
-                    bh.account_id AS "accountId",
-                    bh.date,
-                    bh.balance
-                FROM finance.balance_history AS bh
-                    JOIN finance.accounts AS a ON a.id = bh.account_id
-                    JOIN finance.profiles AS p ON p.id = a.profile_id
-                WHERE p.user_id = $1
-                    AND bh.account_id = $2`;
+                            bh.id,
+                            bh.created_at AS "createdAt",
+                            bh.updated_at AS "updatedAt",
+                            bh.account_id AS "accountId",
+                            bh.date,
+                            bh.balance
+                        FROM finance.balance_history AS bh
+                            JOIN finance.accounts AS a ON a.id = bh.account_id
+                        WHERE a.user_id = $1
+                            AND bh.account_id = $2`;
 
             const params: (string | number)[] = [userId, accountId];
 
@@ -51,25 +50,24 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         }
     }
 
-    public async retrieveSumByDate(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<ProfileValueHistory[]> {
+    public async retrieveSumByDate(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]> {
         try {
             let query = `SELECT 
-                    bh.date, 
-                    SUM(bh.balance) AS "amount"
-                FROM finance.balance_history AS bh
-                    JOIN finance.accounts AS a ON a.id = bh.account_id
-                    JOIN finance.profiles AS p ON p.id = a.profile_id
-                WHERE p.user_id = $1
-                    AND bh.date >= $2
-                    AND bh.date <= $3`;
+                            bh.date, 
+                            SUM(bh.balance) AS "amount"
+                        FROM finance.balance_history AS bh
+                            JOIN finance.accounts AS a ON a.id = bh.account_id
+                        WHERE a.user_id = $1
+                            AND bh.date >= $2
+                            AND bh.date <= $3`;
 
             const params: (string | Date)[] = [userId, startDate, endDate];
 
             if (type === ValueHistoryType.Assets) {
-                query += ` AND a.category = 'Asset'`;
+                query += ` AND a.account_category = 'Asset'`;
             }
             else if (type === ValueHistoryType.Liabilities) {
-                query += ` AND a.category = 'Liability'`;
+                query += ` AND a.account_category = 'Liability'`;
             }
 
             query += `

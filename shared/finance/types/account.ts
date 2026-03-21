@@ -6,7 +6,7 @@ import { AccountGroup } from '../enum/account-group';
 import { AccountType } from '../enum/account-type';
 
 export type Account = Entity & {
-    profileId: string;
+    userId: string;
     institutionId: string;
     name: string;
     category: AccountCategory;

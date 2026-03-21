@@ -1,6 +1,6 @@
-import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, ProfileValueHistory, ProfileValueHistoryOptions } from '@shared/finance/contracts';
+import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, TotalValueHistory, TotalValueHistoryOptions } from '@shared/finance/contracts';
 import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
-import { Account, BalanceHistory, Category, FinanceProfile, Institution, Transaction, BudgetStream } from '@shared/finance/types';
+import { Account, BalanceHistory, Category, Institution, Transaction, BudgetStream } from '@shared/finance/types';
 import { FinanceData } from './../data-access/finance-data';
 import { getStartDateForTimeframe } from './../utility/date-time-util';
 
@@ -11,18 +11,7 @@ export class FinanceLogic {
         this.financeData = financeData;
     }
 
-    public async getProfile(userId: string): Promise<FinanceProfile> {
-        const profile = await this.financeData.getProfile(userId);
-
-        // TODO: Logic classes should validate and "throw" a Bad Request
-        if (!profile) {
-            throw new Error(`Error: Finance Profile not found for user ID: ${userId}`);
-        }
-
-        return profile;
-    }
-
-    public async getProfileValueHistory(userId: string, options: ProfileValueHistoryOptions): Promise<ProfileValueHistory[]> {
+    public async getTotalValueHistory(userId: string, options: TotalValueHistoryOptions): Promise<TotalValueHistory[]> {
         options.type = options.type || ValueHistoryType.NetWorth;
         options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
 

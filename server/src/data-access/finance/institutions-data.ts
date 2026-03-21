@@ -15,11 +15,10 @@ export class FinanceInstitutionsData implements IFinanceInstitutionsData {
                     i.id, 
                     i.created_at AS "createdAt",
                     i.updated_at AS "updatedAt",
-                    i.profile_id as "profileId", 
+                    i.user_id as "userId", 
                     i.name 
                 FROM finance.institutions AS i
-                    JOIN finance.profiles AS p ON i.profile_id = p.id
-                WHERE p.user_id = $1`,
+                WHERE i.user_id = $1`,
                 [userId]
             );
             return result.rows;

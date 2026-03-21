@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { OperationResult } from '@shared/core/contracts';
-import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, ProfileValueHistory } from '@shared/finance/contracts';
+import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, TotalValueHistory } from '@shared/finance/contracts';
 import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../../core/api.service';
@@ -131,17 +131,17 @@ export class FinanceService {
         }
     }
 
-    async fetchProfileValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<ProfileValueHistory[] | undefined> {
+    async fetchTotalValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<TotalValueHistory[] | undefined> {
         try {
             const asOfDate = '2026-02-28'; // TODO: replace with current date
 
-            const url = `api/finance/data/profile/value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
-            const task = this.api.get<OperationResult<ProfileValueHistory[]>>(url);
+            const url = `api/finance/data/accounts/total-value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
+            const task = this.api.get<OperationResult<TotalValueHistory[]>>(url);
             const response = await this.loader.withLoading(task);
             return response.data;
         }
         catch (error) {
-            this.notificationService.error(`Unable to fetch profile value history: ${JSON.stringify(error)}`);
+            this.notificationService.error(`Unable to fetch total value history: ${JSON.stringify(error)}`);
             return undefined;
         }
     }

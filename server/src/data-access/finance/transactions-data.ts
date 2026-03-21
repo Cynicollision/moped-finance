@@ -31,8 +31,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
                         t.split_parent_id AS "splitParentId"
                     FROM finance.transactions AS t
                         JOIN finance.accounts AS a ON a.id = t.account_id
-                        JOIN finance.profiles AS p ON p.id = a.profile_id
-                    WHERE p.user_id = $1`;
+                    WHERE a.user_id = $1`;
 
             const params: (string | number)[] = [userId];
 
@@ -114,8 +113,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
             const query = `SELECT t.merchant
                     FROM finance.transactions AS t
                         JOIN finance.accounts AS a ON a.id = t.account_id
-                        JOIN finance.profiles AS p ON p.id = a.profile_id
-                    WHERE p.user_id = $1
+                    WHERE a.user_id = $1
                     GROUP BY t.merchant
                     ORDER BY t.merchant`;
 
@@ -146,8 +144,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
                         t.split_parent_id AS "splitParentId"
                     FROM finance.transactions AS t
                         JOIN finance.accounts AS a ON a.id = t.account_id
-                        JOIN finance.profiles AS p ON p.id = a.profile_id
-                    WHERE p.user_id = $1 AND t.id = $2`;
+                    WHERE a.user_id = $1 AND t.id = $2`;
 
             const params = [userId, id];
 
@@ -173,8 +170,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
             const retrieveQuery = `SELECT t.id 
                     FROM finance.transactions AS t
                         JOIN finance.accounts AS a ON a.id = t.account_id
-                        JOIN finance.profiles AS p ON p.id = a.profile_id
-                    WHERE p.user_id = $1 AND t.id = $2`;
+                    WHERE a.user_id = $1 AND t.id = $2`;
             const checkResult = await databasePool.query(retrieveQuery, [userId, transaction.id]);
             if (checkResult.rows.length === 0) {
                 throw new Error('Transaction not found or does not belong to user.');
@@ -211,7 +207,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
             ];
 
             const result = await databasePool.query(query, params);
-            
+
             const row = result.rows[0];
             return {
                 ...row,
@@ -231,8 +227,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
             const retrieveQuery = `SELECT t.id 
                     FROM finance.transactions AS t
                         JOIN finance.accounts AS a ON a.id = t.account_id
-                        JOIN finance.profiles AS p ON p.id = a.profile_id
-                    WHERE p.user_id = $1 AND t.id = $2`;
+                    WHERE a.user_id = $1 AND t.id = $2`;
             const checkResult = await databasePool.query(retrieveQuery, [userId, id]);
             if (checkResult.rows.length === 0) {
                 throw new Error('Transaction not found or does not belong to user.');

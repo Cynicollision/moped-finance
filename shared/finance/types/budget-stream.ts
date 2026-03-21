@@ -3,7 +3,7 @@ import { BudgetStreamRecurrence } from './../enum/budget-stream-recurrence';
 import { BudgetStreamType } from './../enum/budget-stream-type';
 
 export type BudgetStream = Entity & {
-    profileId: string;
+    userId: string;
     type: BudgetStreamType;
     name: string;
     categoryId: string;

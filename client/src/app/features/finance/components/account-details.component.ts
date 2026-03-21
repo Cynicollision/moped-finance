@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { GetAccountBalanceHistoryOptions, ProfileValueHistory } from '@shared/finance/contracts';
+import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
 import { HistoryTimeframe, ValueHistoryType, AccountType, AccountCategory } from '@shared/finance/enum';
@@ -77,8 +77,8 @@ export class FinanceAccountDetailsComponent implements OnInit {
         }
     }
 
-    // Map the raw BalanceHistory to the generic ProfileValueHistory expected by ValueHistoryComponent
-    historyData = computed<ProfileValueHistory[]>(() => {
+    // Map the raw BalanceHistory to the generic TotalValueHistory expected by ValueHistoryComponent
+    historyData = computed<TotalValueHistory[]>(() => {
         return this.balanceHistory().map(b => ({
             date: b.date,
             amount: b.balance,

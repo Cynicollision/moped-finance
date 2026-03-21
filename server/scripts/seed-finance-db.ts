@@ -30,20 +30,9 @@ async function readCsv(fileName: string): Promise<string[]> {
         console.log('🌱 Seeding finance data...');
 
         const sampleUserId = '1';
-        const sampleProfileId = '1';
 
-        // 1. Create Finance Profile
-        console.log(' 1. Inserting finance.profiles: one profile for demo user');
-        await client.query(
-            `INSERT INTO finance.profiles (id, user_id) 
-             VALUES ($1, $2) 
-             ON CONFLICT (id) DO NOTHING`,
-            [sampleProfileId, sampleUserId]
-        );
-        console.log(`✅ Seeded 1 finance.profile.`);
-
-        // 2. Load Institutions
-        console.log(' 2. Reading institutions.csv...');
+        // 1. Load Institutions
+        console.log(' 1. Reading institutions.csv...');
         const institutionLines = await readCsv('institutions.csv');
 
         if (institutionLines.length > 0) {
@@ -55,12 +44,12 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                const [id, profileId, name] = line.split(',');
-                if (id && profileId && name) {
+                const [id, userId, name] = line.split(',');
+                if (id && userId && name) {
                     await client.query(
-                        `INSERT INTO finance.institutions (id, profile_id, name) 
+                        `INSERT INTO finance.institutions (id, user_id, name) 
                          VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
-                        [id.trim(), profileId.trim(), name.trim()]
+                        [id.trim(), userId.trim(), name.trim()]
                     );
                     count++;
                 }
@@ -68,10 +57,10 @@ async function readCsv(fileName: string): Promise<string[]> {
             console.log(`✅ Seeded ${count} finance.institutions.`);
         }
 
-        // 3. Load Finance Accounts
+        // 2. Load Finance Accounts
         const accountsMap = new Map<string, string>();
 
-        console.log(' 3. Reading accounts.csv...');
+        console.log(' 2. Reading accounts.csv...');
         const accountsLines = await readCsv('accounts.csv');
         if (accountsLines.length > 0) {
             let count = 0;
@@ -82,18 +71,18 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                const [id, profileId, institutionId, name, category, type, subtype, balance, hidden, retirement] = line.split(',');
+                const [id, userId, institutionId, name, category, type, subtype, balance, hidden, retirement] = line.split(',');
                 accountsMap.set(name.trim(), id.trim());
 
-                if (id && profileId && name) {
+                if (id && userId && name) {
                     await client.query(
                         `INSERT INTO finance.accounts (
-                            id, profile_id, institution_id, name, account_category, account_group, account_type, balance, is_hidden, is_retirement
+                            id, user_id, institution_id, name, account_category, account_group, account_type, balance, is_hidden, is_retirement
                          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                          ON CONFLICT (id) DO NOTHING`,
                         [
                             id.trim(),
-                            profileId.trim(),
+                            userId.trim(),
                             institutionId?.trim() || null,
                             name.trim(),
                             category.trim(),
@@ -110,9 +99,9 @@ async function readCsv(fileName: string): Promise<string[]> {
             console.log(`✅ Seeded ${count} finance.accounts.`);
         }
 
-        // 4. Load Categories
+        // 3. Load Categories
         const categoriesMap = new Map<string, string>();
-        console.log(' 4. Reading categories.csv...');
+        console.log(' 3. Reading categories.csv...');
         const categoriesLines = await readCsv('categories.csv');
         if (categoriesLines.length > 0) {
             let count = 0;
@@ -123,19 +112,19 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                const [id, profileId, type, group, icon, name, isActive] = line.split(',');
+                const [id, userId, type, group, icon, name, isActive] = line.split(',');
 
-                if (id && profileId && type && group && icon && name && isActive) {
+                if (id && userId && type && group && icon && name && isActive) {
                     categoriesMap.set(name.trim(), id.trim());
 
                     await client.query(
                         `INSERT INTO finance.categories (
-                            id, profile_id, category_class, category_group, icon, name, is_active
+                            id, user_id, category_class, category_group, icon, name, is_active
                          ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                          ON CONFLICT (id) DO NOTHING`,
                         [
                             id.trim(),
-                            profileId.trim(),
+                            userId.trim(),
                             type.trim(),
                             group.trim(),
                             icon.trim(),
@@ -149,8 +138,8 @@ async function readCsv(fileName: string): Promise<string[]> {
             console.log(`✅ Seeded ${count} finance.categories.`);
         }
 
-        // 5. Load Transactions
-        console.log(' 5. Reading transactions...');
+        // 4. Load Transactions
+        console.log(' 4. Reading transactions...');
         const transactionsDir = path.join(DATA_DIR, 'transactions');
 
         if (fs.existsSync(transactionsDir)) {
@@ -209,8 +198,8 @@ async function readCsv(fileName: string): Promise<string[]> {
             console.log('   No transactions directory found, skipping.');
         }
 
-        // 6. Load Balance History
-        console.log(' 6. Reading balance history...');
+        // 5. Load Balance History
+        console.log(' 5. Reading balance history...');
         const balanceHistoryDir = path.join(DATA_DIR, 'balance_history');
 
         if (fs.existsSync(balanceHistoryDir)) {
