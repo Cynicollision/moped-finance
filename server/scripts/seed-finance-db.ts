@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Pool } from 'pg';
-import { generateEntityId } from '../src/utility/id.util';
+import { generateEntityId } from '../src/utility/id-util';
 import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
 
 

@@ -7,7 +7,7 @@ import { FinanceData } from './../data-access/finance-data';
 import { FinanceLogic } from './../feature-logic/finance-logic';
 
 const router = Router();
-const financeData = new FinanceData();
+const financeData = FinanceData.forPgDatabase();
 const financeLogic = new FinanceLogic(financeData);
 
 router.get('/data/accounts', async (req: Request, res: Response) => {
