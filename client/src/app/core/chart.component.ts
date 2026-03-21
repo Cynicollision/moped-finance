@@ -8,11 +8,7 @@ Chart.register(...registerables);
 @Component({
     selector: 'app-chart',
     standalone: true,
-    template: `
-    <div class="chart-container" style="position: relative; width: 100%; height: 100%;">
-      <canvas #chartCanvas></canvas>
-    </div>
-  `
+    templateUrl: './chart.component.html'
 })
 export class ChartComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('chartCanvas', { static: true }) chartCanvas!: ElementRef<HTMLCanvasElement>;
@@ -24,12 +20,6 @@ export class ChartComponent implements OnInit, OnChanges, OnDestroy {
     private chart: Chart | undefined;
 
     ngOnInit(): void {
-        if (this.height) {
-            this.chartCanvas.nativeElement.style.height = this.height;
-        }
-        if (this.width) {
-            this.chartCanvas.nativeElement.style.width = this.width;
-        }
         this.createChart();
     }
 

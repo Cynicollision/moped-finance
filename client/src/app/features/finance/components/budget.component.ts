@@ -8,60 +8,45 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatMenuModule } from '@angular/material/menu';
 import { Category, BudgetStream } from '@shared/finance/types';
 import { BudgetStreamType, BudgetStreamRecurrence, CategoryClass } from '@shared/finance/enum';
 import { FinanceService } from '../finance.service';
+import { ModalService } from '../../../core/modal/modal.service';
+import { BudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';
+import { ConfirmModalComponent, ConfirmModalData } from '../../../core/modal/confirm-modal.component';
 
 @Component({
     selector: 'app-finance-budget',
     standalone: true,
     imports: [
         CommonModule,
-        ReactiveFormsModule,
         MatCardModule,
         MatTableModule,
         MatButtonModule,
         MatIconModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule
+        MatMenuModule
     ],
     templateUrl: './budget.component.html',
     styleUrl: './budget.component.scss'
 })
 export class FinanceBudgetComponent implements OnInit {
     private financeService = inject(FinanceService);
-    private fb = inject(FormBuilder);
     private cdr = inject(ChangeDetectorRef);
+    private modalService = inject(ModalService);
 
     categories: Category[] = [];
     categoryMap = new Map<string, Category>();
     budgetStreams: BudgetStream[] = [];
 
     BudgetStreamType = BudgetStreamType;
-    BudgetStreamRecurrence = BudgetStreamRecurrence;
-    recurrenceOptions = Object.values(BudgetStreamRecurrence);
 
     incomeStreams: BudgetStream[] = [];
     expenseStreams: BudgetStream[] = [];
 
-    displayedColumns: string[] = ['name', 'category', 'amount', 'recurrence', 'actions'];
+    displayedColumns: string[] = ['name', 'group', 'category', 'amount', 'recurrence', 'actions'];
 
-    budgetForm: FormGroup;
-    editingStreamId: string | null = null;
-    isAdding = false;
-
-    constructor() {
-        this.budgetForm = this.fb.group({
-            id: [null],
-            type: [BudgetStreamType.Expense, Validators.required],
-            name: ['', Validators.required],
-            categoryId: ['', Validators.required],
-            amount: [0, [Validators.required, Validators.min(0)]],
-            recurrence: [BudgetStreamRecurrence.Monthly, Validators.required],
-            recurrenceMultiple: [1, [Validators.required, Validators.min(1)]]
-        });
-    }
+    constructor() {}
 
     async ngOnInit() {
         await this.loadData();
@@ -79,11 +64,36 @@ export class FinanceBudgetComponent implements OnInit {
 
         this.budgetStreams = budgetStreams || [];
         this.splitStreams();
+        this.cdr.detectChanges();
     }
 
     private splitStreams() {
-        this.incomeStreams = this.budgetStreams.filter(s => s.type === BudgetStreamType.Income);
-        this.expenseStreams = this.budgetStreams.filter(s => s.type === BudgetStreamType.Expense);
+        this.incomeStreams = this.budgetStreams
+            .filter(s => s.type === BudgetStreamType.Income)
+            .sort((a, b) => this.compareStreams(a, b));
+            
+        this.expenseStreams = this.budgetStreams
+            .filter(s => s.type === BudgetStreamType.Expense)
+            .sort((a, b) => this.compareStreams(a, b));
+    }
+
+    private compareStreams(a: BudgetStream, b: BudgetStream): number {
+        const catA = this.categoryMap.get(a.categoryId);
+        const catB = this.categoryMap.get(b.categoryId);
+
+        const groupA = catA?.group || '';
+        const groupB = catB?.group || '';
+
+        if (groupA < groupB) return -1;
+        if (groupA > groupB) return 1;
+
+        const nameA = catA?.name || '';
+        const nameB = catB?.name || '';
+
+        if (nameA < nameB) return -1;
+        if (nameA > nameB) return 1;
+
+        return 0;
     }
 
     getCategoriesByType(type: BudgetStreamType) {
@@ -96,59 +106,60 @@ export class FinanceBudgetComponent implements OnInit {
         return cat ? `${cat.icon} ${cat.name}` : id;
     }
 
+    getCategoryGroup(id: string) {
+        const cat = this.categoryMap.get(id);
+        return cat ? cat.group : '';
+    }
+
     startAdd(type: BudgetStreamType) {
-        this.isAdding = true;
-        this.editingStreamId = null;
-        this.budgetForm.reset({
+        const dialogRef = this.modalService.open<BudgetFormModalComponent, BudgetFormModalData>(BudgetFormModalComponent, {
             type,
-            name: '',
-            categoryId: '',
-            amount: 0,
-            recurrence: BudgetStreamRecurrence.Monthly,
-            recurrenceMultiple: 1
+            categories: this.categories
+        });
+        
+        dialogRef.afterClosed().subscribe(async (result: BudgetStream) => {
+            if (result) {
+                await this.save(result);
+            }
         });
     }
 
     startEdit(stream: BudgetStream) {
-        this.isAdding = false;
-        this.editingStreamId = stream.id;
-        this.budgetForm.patchValue(stream);
+        const dialogRef = this.modalService.open<BudgetFormModalComponent, BudgetFormModalData>(BudgetFormModalComponent, {
+            stream,
+            type: stream.type,
+            categories: this.categories
+        });
+        
+        dialogRef.afterClosed().subscribe(async (result: BudgetStream) => {
+            if (result) {
+                await this.save(result);
+            }
+        });
     }
 
-    async save() {
-        if (this.budgetForm.invalid) return;
-
-        const stream: BudgetStream = this.budgetForm.value;
+    async save(stream: BudgetStream) {
         const result = await this.financeService.saveBudgetStream(stream);
-
         if (result) {
             await this.loadData();
-            this.cancel();
         }
     }
 
     async delete(id: string) {
-        // TODO: better modal/confirm experience
-        if (confirm('Are you sure you want to delete this budget stream?')) {
-            const success = await this.financeService.deleteBudgetStream(id);
-            if (success) {
-                // Instantly update the list locally
-                this.budgetStreams = [...this.budgetStreams.filter(s => s.id !== id)];
-                this.splitStreams();
-                this.cdr.detectChanges(); // Force UI update
+        const dialogRef = this.modalService.open<ConfirmModalComponent, ConfirmModalData, boolean>(ConfirmModalComponent, {
+            title: 'Delete Budget Stream',
+            message: 'Are you sure you want to delete this budget stream? This action cannot be undone.',
+            confirmLabel: 'Delete',
+            isWarn: true
+        });
 
-                // Then optionally reload from server to stay in sync, 
-                // but use a slight delay or cache buster to ensure DB is ready
-                setTimeout(async () => {
+        dialogRef.afterClosed().subscribe(async (confirmed) => {
+            if (confirmed) {
+                const success = await this.financeService.deleteBudgetStream(id);
+                if (success) {
                     await this.loadData();
-                }, 500);
+                }
             }
-        }
-    }
-
-    cancel() {
-        this.isAdding = false;
-        this.editingStreamId = null;
-        this.budgetForm.reset();
+        });
     }
 }

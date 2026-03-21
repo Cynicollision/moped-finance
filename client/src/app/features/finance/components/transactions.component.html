@@ -76,7 +76,12 @@
         <!-- Merchant Column -->
         <ng-container matColumnDef="merchant">
             <th mat-header-cell *matHeaderCellDef mat-sort-header> Merchant </th>
-            <td mat-cell *matCellDef="let row"> {{row.merchant}} </td>
+            <td mat-cell *matCellDef="let row"> 
+                <div class="merchant-primary">{{row.merchant}}</div>
+                <div class="mobile-details">
+                    <span class="mobile-category">{{getCategoryName(row.categoryId)}}</span>
+                </div>
+            </td>
         </ng-container>
 
         <!-- Category Column -->

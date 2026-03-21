@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { OperationResult } from '@shared/core/contracts';
 import { User } from '@shared/core/types/user';
 import { ApiService } from './api.service';
-import { LoadingService } from './loading.service';
+import { LoadingService } from './loading/loading.service';
 import { NotificationService } from './notification.service';
 
 @Injectable({

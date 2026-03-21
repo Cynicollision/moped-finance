@@ -48,9 +48,9 @@
         </div>
         }
 
-        <div>
+        <div class="chart-wrapper">
             @if (chartConfig(); as config) {
-            <app-chart [config]="config" height="300px"></app-chart>
+            <app-chart [config]="config" height="100%"></app-chart>
             }
         </div>
     </mat-card-content>

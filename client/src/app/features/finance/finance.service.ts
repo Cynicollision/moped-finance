@@ -4,7 +4,7 @@ import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, ProfileValueHi
 import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../../core/api.service';
-import { LoadingService } from './../../core/loading.service';
+import { LoadingService } from './../../core/loading/loading.service';
 import { NotificationService } from './../../core/notification.service';
 
 @Injectable({

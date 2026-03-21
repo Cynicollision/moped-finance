@@ -30,18 +30,65 @@
     margin-bottom: 16px;
 
     .mat-column-name { width: 25%; }
-    .mat-column-category { width: 25%; }
+    .mat-column-group { width: 20%; }
+    .mat-column-category { width: 20%; }
     .mat-column-amount { width: 12%; text-align: right; }
-    .mat-column-recurrence { width: 18%; }
+    .mat-column-recurrence { width: 23%; }
     .mat-column-actions { 
-        width: 120px; 
-        min-width: 120px;
+        width: 48px; 
+        min-width: 48px;
         text-align: right;
         white-space: nowrap;
-        overflow: visible !important; // Ensure icons aren't clipped
+        overflow: visible !important;
         
         button {
             overflow: visible;
+        }
+    }
+
+    .mobile-details {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .mat-column-group,
+        .mat-column-category,
+        .mat-column-amount,
+        .mat-column-recurrence {
+            display: none !important;
+        }
+
+        .mat-column-name {
+            width: auto !important;
+            flex: 1 !important;
+            padding-right: 16px;
+        }
+
+        .mobile-details {
+            display: flex;
+            flex-direction: column;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: rgba(0, 0, 0, 0.6);
+
+            .mobile-category {
+                font-weight: 510;
+                color: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .mobile-meta {
+                margin-top: 2px;
+                opacity: 0.8;
+            }
+        }
+
+        .mat-cell {
+            padding-top: 12px !important;
+            padding-bottom: 12px !important;
         }
     }
 }
