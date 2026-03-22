@@ -1,5 +1,5 @@
 import { Entity } from './../../core/types/entity-base';
-import { CategoryClass } from '../enum/category-class';
+import { CategoryClass } from './../enum/category-class';
 
 export type Category = Entity & {
     userId: string;

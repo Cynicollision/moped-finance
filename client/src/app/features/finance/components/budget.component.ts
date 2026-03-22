@@ -6,10 +6,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Category, BudgetStream } from '@shared/finance/types';
-import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
-import { ModalService } from '../../../core/modal/modal.service';
-import { FinanceService } from '../finance.service';
+import { BudgetStreamType, CategoryClass, BudgetPeriod } from '@shared/finance/enum';
+import { ModalService } from './../../../core/modal/modal.service';
+import { FinanceService } from './../finance.service';
 import { BudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';
+
+export interface BudgetTotals {
+    monthly: number;
+    quarterly: number;
+    yearly: number;
+}
 
 @Component({
     selector: 'app-finance-budget',
@@ -41,6 +47,9 @@ export class FinanceBudgetComponent implements OnInit {
 
     displayedColumns: string[] = ['name', 'group', 'category', 'amount', 'recurrence', 'actions'];
 
+    incomeTotals: BudgetTotals = { monthly: 0, quarterly: 0, yearly: 0 };
+    expenseTotals: BudgetTotals = { monthly: 0, quarterly: 0, yearly: 0 };
+
     constructor() { }
 
     async ngOnInit() {
@@ -59,6 +68,7 @@ export class FinanceBudgetComponent implements OnInit {
 
         this.budgetStreams = budgetStreams || [];
         this.splitStreams();
+        this.calculateTotals();
         this.cdr.detectChanges();
     }
 
@@ -72,12 +82,53 @@ export class FinanceBudgetComponent implements OnInit {
             .sort((a, b) => this.compareStreams(a, b));
     }
 
+    private calculateTotals() {
+        this.incomeTotals = this.getTotals(this.incomeStreams);
+        this.expenseTotals = this.getTotals(this.expenseStreams);
+    }
+
+    private getTotals(streams: BudgetStream[]): BudgetTotals {
+        let totalMonthly = 0;
+
+        streams.forEach(s => {
+            switch (s.recurrence) {
+                case BudgetPeriod.Monthly:
+                    totalMonthly += s.amount;
+                    break;
+                case BudgetPeriod.Quarterly:
+                    totalMonthly += s.amount / 3;
+                    break;
+                case BudgetPeriod.Yearly:
+                    totalMonthly += s.amount / 12;
+                    break;
+            }
+        });
+
+        return {
+            monthly: totalMonthly,
+            quarterly: totalMonthly * 3,
+            yearly: totalMonthly * 12
+        };
+    }
+
     private compareStreams(a: BudgetStream, b: BudgetStream): number {
         const catA = this.categoryMap.get(a.categoryId);
         const catB = this.categoryMap.get(b.categoryId);
 
         const groupA = catA?.group || '';
         const groupB = catB?.group || '';
+
+        // Sort by Reccurence first: Monthly, Quarterly, Yearly
+        const periodOrder = {
+            [BudgetPeriod.Monthly]: 1,
+            [BudgetPeriod.Quarterly]: 2,
+            [BudgetPeriod.Yearly]: 3
+        };
+
+        const orderA = periodOrder[a.recurrence] || 99;
+        const orderB = periodOrder[b.recurrence] || 99;
+
+        if (orderA !== orderB) return orderA - orderB;
 
         if (groupA < groupB) return -1;
         if (groupA > groupB) return 1;

@@ -1,4 +1,4 @@
-import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, SpendingStream, TotalValueHistory, TotalValueHistoryOptions } from '@shared/finance/contracts';
+import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Account, BalanceHistory, Category, Institution, Transaction, BudgetStream } from '@shared/finance/types';
 import { FinanceData } from './../data-access/finance-data';
@@ -11,16 +11,7 @@ export class FinanceLogic {
         this.financeData = financeData;
     }
 
-    public async getTotalValueHistory(userId: string, options: TotalValueHistoryOptions): Promise<TotalValueHistory[]> {
-        options.type = options.type || ValueHistoryType.NetWorth;
-        options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
-
-        const startDate = getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        const data = await this.financeData.balanceHistory.retrieveSumByDate(userId, options.type, startDate, options.asOfDate);
-
-        return data;
-    }
-
+    // Metadata
     public async getCategories(userId: string, activeOnly: boolean = false): Promise<Category[]> {
         const data = await this.financeData.categories.retrieveAll(userId, activeOnly);
         return data;
@@ -31,6 +22,7 @@ export class FinanceLogic {
         return data;
     }
 
+    // Accounts
     public async getAccount(userId: string, accountId: string): Promise<Account> {
         const data = await this.financeData.accounts.retrieveSingle(userId, accountId);
 
@@ -48,12 +40,60 @@ export class FinanceLogic {
         return data;
     }
 
+    public async createAccount(userId: string, account: Account): Promise<Account> {
+        return await this.financeData.accounts.create(userId, account);
+    }
+
+    public async saveAccount(userId: string, account: Account): Promise<Account> {
+        return await this.financeData.accounts.update(userId, account);
+    }
+
+    public async deleteAccount(userId: string, id: string): Promise<void> {
+        await this.financeData.accounts.delete(userId, id);
+    }
+
     public async getAccountBalanceHistory(userId: string, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[]> {
         const startDate = getStartDateForTimeframe(options.timeframe, options.asOfDate);
         const data = await this.financeData.balanceHistory.retrieveForAccount(userId, accountId, startDate.toISOString(), options.asOfDate.toISOString());
         return data;
     }
 
+    public async getTotalValueHistory(userId: string, options: TotalValueHistoryOptions): Promise<TotalValueHistory[]> {
+        options.type = options.type || ValueHistoryType.NetWorth;
+        options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
+
+        const startDate = getStartDateForTimeframe(options.timeframe, options.asOfDate);
+        const data = await this.financeData.balanceHistory.retrieveSumByDate(userId, options.type, startDate, options.asOfDate);
+
+        return data;
+    }
+
+    // Transactions
+    public async getTransaction(userId: string, id: string): Promise<Transaction | undefined> {
+        return await this.financeData.transactions.retrieveSingle(userId, id);
+    }
+
+    public async getTransactions(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]> {
+        // TODO: validate options
+
+        const data = await this.financeData.transactions.search(userId, options, accountId);
+        return data;
+    }
+
+    public async getTransactionMerchants(userId: string): Promise<string[]> {
+        const data = await this.financeData.transactions.retrieveMerchants(userId);
+        return data;
+    }
+
+    public async saveTransaction(userId: string, transaction: Transaction): Promise<Transaction> {
+        return await this.financeData.transactions.update(userId, transaction);
+    }
+
+    public async deleteTransaction(userId: string, id: string): Promise<void> {
+        await this.financeData.transactions.delete(userId, id);
+    }
+
+    // Budget
     public async getBudgetStreams(userId: string): Promise<BudgetStream[]> {
         const data = await this.financeData.budgetStream.retrieveAll(userId).catch(() => []);
         return data;
@@ -67,34 +107,11 @@ export class FinanceLogic {
         await this.financeData.budgetStream.delete(userId, id);
     }
 
-    public async getTransactions(userId: string, options: GetTransactionsOptions, accountId?: string): Promise<Transaction[]> {
-        // TODO: validate options
-
-        const data = await this.financeData.transactions.search(userId, options, accountId);
-        return data;
-    }
-
-    public async getTransactionMerchants(userId: string): Promise<string[]> {
-        const data = await this.financeData.transactions.retrieveMerchants(userId);
-        return data;
-    }
-
+    // Cashflow
     public async getTransactionSpendingByCategory(userId: string, period: BudgetPeriod, asOfDate: string): Promise<SpendingStream[]> {
         const asOf = asOfDate ? new Date(asOfDate) : new Date();
         const { startDate, endDate } = getDatesForPeriod(period, asOf);
         const data = await this.financeData.transactions.retrieveSpendingByCategory(userId, startDate, endDate);
         return data;
-    }
-
-    public async getTransaction(userId: string, id: string): Promise<Transaction | undefined> {
-        return await this.financeData.transactions.retrieveSingle(userId, id);
-    }
-
-    public async saveTransaction(userId: string, transaction: Transaction): Promise<Transaction> {
-        return await this.financeData.transactions.update(userId, transaction);
-    }
-
-    public async deleteTransaction(userId: string, id: string): Promise<void> {
-        await this.financeData.transactions.delete(userId, id);
     }
 }

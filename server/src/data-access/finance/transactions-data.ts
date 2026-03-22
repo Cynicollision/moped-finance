@@ -2,11 +2,11 @@ import { EntityIdPrefix, SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
 import { DatabaseError, databasePool } from './../db-client';
 import { generateEntityId } from './../../utility/id-util';
-import { GetTransactionsOptions, SpendingStream } from '@shared/finance/contracts';
+import { SpendingStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 
 export interface IFinanceTransactionsData {
-    search(userId: string, options: GetTransactionsOptions, accountId?: string): Promise<Transaction[]>;
+    search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
     retrieveMerchants(userId: string): Promise<string[]>;
     retrieveSpendingByCategory(userId: string, startDate: Date, endDate: Date): Promise<SpendingStream[]>;
     retrieveSingle(userId: string, id: string): Promise<Transaction | undefined>;
@@ -16,7 +16,7 @@ export interface IFinanceTransactionsData {
 
 export class FinanceTransactionsData implements IFinanceTransactionsData {
 
-    public async search(userId: string, options: GetTransactionsOptions, accountId?: string): Promise<Transaction[]> {
+    public async search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]> {
         try {
             let query = `SELECT 
                         t.id, 
@@ -32,6 +32,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
                         t.split_parent_id AS "splitParentId"
                     FROM finance.transactions AS t
                         JOIN finance.accounts AS a ON a.id = t.account_id
+                        JOIN finance.categories AS c ON c.id = t.category_id
                     WHERE a.user_id = $1`;
 
             const params: (string | number)[] = [userId];
@@ -78,6 +79,10 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
                     else if (filter.key === TransactionsFilterKey.AccountId) {
                         params.push(filter.value);
                         query += ` AND t.account_id = $${params.length}`;
+                    }
+                    else if (filter.key === TransactionsFilterKey.Group) {
+                        params.push(filter.value);
+                        query += ` AND c.category_group = $${params.length}`;
                     }
                 }
             }

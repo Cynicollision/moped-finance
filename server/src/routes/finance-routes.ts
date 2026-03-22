@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { SortDirection } from '@shared/core/enum';
-import { GetAccountBalanceHistoryOptions, GetTransactionsOptions, TotalValueHistoryOptions } from '@shared/finance/contracts';
+import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { BudgetPeriod, HistoryTimeframe, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { ApiHandler } from './api-handler';
 import { FinanceData } from './../data-access/finance-data';
@@ -56,6 +56,43 @@ router.get('/data/accounts/:accountId', async (req: Request, res: Response) => {
         const result = await financeLogic.getAccount(user!.id, accountId);
 
         return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.post('/data/accounts', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const account = req.body;
+        const result = await financeLogic.createAccount(user!.id, account);
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.put('/data/accounts/:accountId', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const account = req.body;
+        account.id = req.params.accountId;
+        const result = await financeLogic.saveAccount(user!.id, account);
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.delete('/data/accounts/:accountId', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const accountId = req.params.accountId;
+        await financeLogic.deleteAccount(user!.id, accountId);
+        return ApiHandler.succeed(res);
     }
     catch (error) {
         return ApiHandler.failInternalError(res, error);
@@ -238,7 +275,7 @@ router.delete('/data/transactions/:id', async (req: Request, res: Response) => {
     }
 });
 
-function getTransactionSearchOptions(req: Request): GetTransactionsOptions {
+function getTransactionSearchOptions(req: Request): TransactionSearchOptions {
     const sortKey = req.query.sortKey as TransactionsSortKey;
     const sortDirection = req.query.sortDirection as SortDirection;
     const offset = parseInt(req.query.offset as string, 10) || 0;

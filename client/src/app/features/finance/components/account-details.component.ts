@@ -9,7 +9,7 @@ import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/fina
 import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
 import { HistoryTimeframe, ValueHistoryType, AccountCategory } from '@shared/finance/enum';
-import { ModalService } from '../../../core/modal/modal.service';
+import { ModalService } from './../../../core/modal/modal.service';
 import { ValueHistoryComponent } from './value-history.component';
 import { AccountEditComponent } from './account-edit.component';
 
@@ -121,7 +121,11 @@ export class FinanceAccountDetailsComponent implements OnInit {
             return '';
         }
 
-        return acc.type || acc.group;
+        let display: string = acc.type || acc.group;
+        if (acc.isRetirement) {
+            display += ' (Retirement)';
+        }
+        return display;
     });
 
     institutionNameDisplay = computed(() => {

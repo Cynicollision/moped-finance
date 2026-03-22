@@ -1,11 +1,11 @@
 import { TransactionsFilterKey } from './../enum/transactions-filter-key';
 
-export type GetTransactionsFilterItem = {
+export type TransactionSearchFilterItem = {
     key: TransactionsFilterKey;
     value: string;
 }
 
-export type GetTransactionsOptions = {
+export type TransactionSearchOptions = {
     sortKey?: string;
     sortDirection?: string;
     offset?: number;
@@ -14,6 +14,6 @@ export type GetTransactionsOptions = {
     maxAmount?: number;
     startDate?: string;
     endDate?: string;
-    filters?: GetTransactionsFilterItem[];
+    filters?: TransactionSearchFilterItem[];
     includeHidden?: boolean;
 };

@@ -1,4 +1,3 @@
-import { DatabaseError, databasePool } from './db-client';
 import { FinanceBalanceHistoryData, IFinanceBalanceHistoryData } from './finance/balance-history-data';
 import { FinanceBudgetStreamData, IFinanceBudgetStreamData } from './finance/budget-stream-data';
 import { FinanceAccountData, IFinanceAccountData } from './finance/account-data';

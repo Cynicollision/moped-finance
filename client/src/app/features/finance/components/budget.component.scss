@@ -135,8 +135,64 @@
     }
 }
 
-// .income-title { color: #2e7d32; }
-// .expense-title { color: #c62828; }
+.summary-section {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 16px 32px;
+    padding: 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    background-color: rgba(0, 0, 0, 0.01);
+    border-radius: 0 0 4px 4px;
+
+    .summary-item {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        min-width: 100px;
+
+        .label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(0, 0, 0, 0.54);
+            white-space: nowrap;
+        }
+
+        .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: rgba(0, 0, 0, 0.87);
+            white-space: nowrap;
+
+            &.income-total {
+                color: #2e7d32;
+            }
+
+            &.expense-total {
+                color: #c62828;
+            }
+
+            &.income-yearly, &.expense-yearly {
+                font-size: 1.25rem;
+            }
+        }
+    }
+
+    @media (max-width: 600px) {
+        justify-content: space-between;
+        padding: 16px;
+        gap: 16px;
+
+        .summary-item {
+            flex: 1 1 auto;
+            align-items: center;
+            text-align: center;
+        }
+    }
+}
 
 .recurrence-text {
     color: rgba(0, 0, 0, 0.6);

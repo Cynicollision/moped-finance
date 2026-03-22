@@ -30,21 +30,30 @@
                         <mat-datepicker #endPicker></mat-datepicker>
                     </mat-form-field>
                 </div>
-                <div class="filter-row">
+                <div class="filter-row responsive-filter-row">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Group</mat-label>
+                        <input type="text" matInput formControlName="group" [matAutocomplete]="autoGroup">
+                        <mat-autocomplete #autoGroup="matAutocomplete">
+                            <mat-option *ngFor="let g of filteredGroups()" [value]="g">{{g}}</mat-option>
+                        </mat-autocomplete>
+                    </mat-form-field>
                     <mat-form-field appearance="outline">
                         <mat-label>Category</mat-label>
                         <input type="text" matInput formControlName="category" [matAutocomplete]="autoCategory">
                         <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
-                            <mat-option *ngFor="let c of categories" [value]="c.id">
+                            <mat-option *ngFor="let c of filteredCategories()" [value]="c.id">
                                 {{c.icon}} {{c.name}}
                             </mat-option>
                         </mat-autocomplete>
                     </mat-form-field>
+                </div>
+                <div class="filter-row responsive-filter-row">
                     <mat-form-field appearance="outline">
                         <mat-label>Account</mat-label>
                         <mat-select formControlName="account">
                             <mat-option>-- None --</mat-option>
-                            <mat-option *ngFor="let account of accounts" [value]="account.id">
+                            <mat-option *ngFor="let account of accounts()" [value]="account.id">
                                 {{account.name}}
                             </mat-option>
                         </mat-select>
@@ -53,7 +62,7 @@
                         <mat-label>Merchant</mat-label>
                         <input type="text" matInput formControlName="merchant" [matAutocomplete]="autoMerchant">
                         <mat-autocomplete #autoMerchant="matAutocomplete">
-                            <mat-option *ngFor="let m of merchants" [value]="m">{{m}}</mat-option>
+                            <mat-option *ngFor="let m of filteredMerchants()" [value]="m">{{m}}</mat-option>
                         </mat-autocomplete>
                     </mat-form-field>
                 </div>

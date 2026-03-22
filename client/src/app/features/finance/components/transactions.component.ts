@@ -1,4 +1,4 @@
-import { Component, ViewChild, AfterViewInit, inject, OnInit } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
@@ -14,10 +14,11 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { SortDirection } from '@shared/core/enum';
-import { GetTransactionsOptions } from '@shared/finance/contracts';
+import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction, Category, Account } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
+import { startWith, map } from 'rxjs';
 
 @Component({
     selector: 'app-finance-transactions',
@@ -60,14 +61,20 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         endDate: new FormControl<Date | null>(new Date()),
         merchant: new FormControl<string>(''),
         category: new FormControl<string>(''),
-        account: new FormControl<string>('')
+        account: new FormControl<string>(''),
+        group: new FormControl<string>('')
     });
 
-    merchants: string[] = [];
-    categories: Category[] = [];
+    merchants = signal<string[]>([]);
+    categories = signal<Category[]>([]);
+    groups = signal<string[]>([]);
     categoryMap = new Map<string, Category>();
-    accounts: Account[] = [];
+    accounts = signal<Account[]>([]);
     accountMap = new Map<string, Account>();
+
+    filteredMerchants = signal<string[]>([]);
+    filteredCategories = signal<Category[]>([]);
+    filteredGroups = signal<string[]>([]);
 
     constructor() {
     }
@@ -76,20 +83,89 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         const [merchants, categories, accounts] = await Promise.all([
             this.financeService.fetchTransactionMerchants(),
             this.financeService.fetchCategories(false),
-            this.financeService.fetchAccounts()
+            this.financeService.fetchAllAccounts()
         ]);
 
-        this.merchants = merchants || [];
-        this.categories = categories || [];
-        this.categories.forEach(c => this.categoryMap.set(c.id, c));
-        this.accounts = accounts || [];
-        this.accounts.forEach(a => this.accountMap.set(a.id, a));
+        this.merchants.set(merchants || []);
+        this.categories.set(categories || []);
+        this.categories().forEach(c => this.categoryMap.set(c.id, c));
+        this.groups.set([...new Set(this.categories().map(c => c.group))].filter(Boolean).sort());
+        this.accounts.set(accounts || []);
+        this.accounts().forEach(a => this.accountMap.set(a.id, a));
+
+        // Setup filter observers
+        this.setupTypeaheadFilters();
+    }
+
+    private setupTypeaheadFilters() {
+        const _filterMerchants = (value: string): string[] => {
+            const filterValue = value.toLowerCase();
+            return this.merchants().filter(m => m.toLowerCase().includes(filterValue));
+        };
+
+        const _filterCategories = (value: string): Category[] => {
+            const filterValue = value.toLowerCase();
+            return this.categories().filter(c => c.name.toLowerCase().includes(filterValue));
+        };
+
+        const _filterGroups = (value: string): string[] => {
+            const filterValue = value.toLowerCase();
+            return this.groups().filter(g => g.toLowerCase().includes(filterValue));
+        };
+
+        // Merchant Filter
+        this.filterForm.controls.merchant.valueChanges.pipe(
+            startWith(''),
+            map(value => _filterMerchants(value || ''))
+        ).subscribe(filtered => this.filteredMerchants.set(filtered));
+
+        // Category Filter
+        this.filterForm.controls.category.valueChanges.pipe(
+            startWith(''),
+            map(value => typeof value === 'string' ? value : ''),
+            map(name => _filterCategories(name))
+        ).subscribe(filtered => this.filteredCategories.set(filtered));
+
+        // Group Filter
+        this.filterForm.controls.group.valueChanges.pipe(
+            startWith(''),
+            map(value => _filterGroups(value || ''))
+        ).subscribe(filtered => this.filteredGroups.set(filtered));
     }
 
     ngAfterViewInit() {
-        const accountId = this.route.snapshot.queryParamMap.get('accountId');
+        const queryParams = this.route.snapshot.queryParamMap;
+        const accountId = queryParams.get('accountId');
+        const categoryId = queryParams.get('categoryId');
+        const group = queryParams.get('group');
+        const startDateStr = queryParams.get('startDate');
+        const endDateStr = queryParams.get('endDate');
+
+        const patch: any = {};
         if (accountId) {
-            this.filterForm.patchValue({ account: accountId });
+            patch.account = accountId;
+        }
+        if (categoryId) {
+            patch.category = categoryId;
+        }
+        if (group) {
+            patch.group = group;
+        }
+        if (startDateStr) {
+            const date = new Date(startDateStr);
+            if (!isNaN(date.getTime())) {
+                patch.startDate = date;
+            }
+        }
+        if (endDateStr) {
+            const date = new Date(endDateStr);
+            if (!isNaN(date.getTime())) {
+                patch.endDate = date;
+            }
+        }
+
+        if (Object.keys(patch).length > 0) {
+            this.filterForm.patchValue(patch);
         }
 
         this.sort.sortChange.subscribe(() => this.loadData(true));
@@ -113,6 +189,9 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         }
         if (formValues.account) {
             filters.push({ key: TransactionsFilterKey.AccountId, value: formValues.account });
+        }
+        if (formValues.group) {
+            filters.push({ key: TransactionsFilterKey.Group, value: formValues.group });
         }
 
         let sortKey: string | undefined;
@@ -144,7 +223,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             }
         }
 
-        const options: GetTransactionsOptions = {
+        const options: TransactionSearchOptions = {
             limit: this.pageSize,
             offset: this.dataSource.data.length,
             minAmount: formValues.minAmount ?? undefined,
@@ -195,7 +274,8 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             endDate: new Date(),
             merchant: '',
             category: '',
-            account: ''
+            account: '',
+            group: ''
         });
         this.loadData(true);
     }

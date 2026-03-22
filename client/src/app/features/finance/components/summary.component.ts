@@ -41,7 +41,7 @@ export class FinanceSummaryComponent implements OnInit {
     ];
 
     async ngOnInit() {
-        this.accounts.set(await this.financeService.fetchAccounts() || []);
+        this.accounts.set(await this.financeService.fetchAllAccounts() || []);
         await this.updateChartData();
     }
 

@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -8,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
-import { FinanceService } from '../finance.service';
+import { FinanceService } from './../finance.service';
 import { CategoryClass, BudgetPeriod } from '@shared/finance/enum';
 import { Category } from '@shared/finance/types';
 import { SpendingStream } from '@shared/finance/contracts';
@@ -33,6 +34,7 @@ import { SpendingStream } from '@shared/finance/contracts';
 export class FinanceCashflowComponent implements OnInit {
     private financeService = inject(FinanceService);
     private cdr = inject(ChangeDetectorRef);
+    private router = inject(Router);
 
     BudgetPeriod = BudgetPeriod;
     periods = [BudgetPeriod.Monthly, BudgetPeriod.Quarterly, BudgetPeriod.Yearly];
@@ -63,8 +65,8 @@ export class FinanceCashflowComponent implements OnInit {
     categories: Category[] = [];
     categoryMap = new Map<string, Category>();
     spendingStreams: SpendingStream[] = [];
-    incomeStreams: { name: string, amount: number }[] = [];
-    expenseStreams: { name: string, amount: number }[] = [];
+    incomeStreams: { id?: string, name: string, amount: number }[] = [];
+    expenseStreams: { id?: string, name: string, amount: number }[] = [];
 
     totalIncome: number = 0;
     totalExpenses: number = 0;
@@ -132,13 +134,22 @@ export class FinanceCashflowComponent implements OnInit {
         let inc = 0;
         this.incomeStreams = Array.from(incomeMap.entries()).map(([name, amount]) => {
             inc += amount;
-            return { name, amount };
+            // For category view, find the ID. For group, we just have the name.
+            let id: string | undefined;
+            if (this.viewMode === 'category') {
+                id = Array.from(this.categoryMap.values()).find(c => `${c.icon} ${c.name}` === name)?.id;
+            }
+            return { id, name, amount };
         }).sort(sortByAmountDesc);
 
         let exp = 0;
         this.expenseStreams = Array.from(expenseMap.entries()).map(([name, amount]) => {
             exp += Math.abs(amount);
-            return { name, amount };
+            let id: string | undefined;
+            if (this.viewMode === 'category') {
+                id = Array.from(this.categoryMap.values()).find(c => `${c.icon} ${c.name}` === name)?.id;
+            }
+            return { id, name, amount };
         }).sort(sortByAmountDesc);
 
         this.totalIncome = inc;
@@ -155,5 +166,40 @@ export class FinanceCashflowComponent implements OnInit {
 
     onViewModeChange() {
         this.processData();
+    }
+
+    onRowClick(row: { id?: string, name: string }) {
+        const queryParams: any = {};
+
+        if (this.viewMode === 'category' && row.id) {
+            queryParams.categoryId = row.id;
+        }
+        else if (this.viewMode === 'group') {
+            queryParams.group = row.name;
+        }
+
+        const asOfDate = this.getAsOfDate();
+        const startDate = new Date(asOfDate.getTime());
+        const endDate = new Date(asOfDate.getTime());
+
+        switch (this.selectedPeriod) {
+            case BudgetPeriod.Monthly:
+                startDate.setDate(1);
+                endDate.setMonth(endDate.getMonth() + 1, 0);
+                break;
+            case BudgetPeriod.Quarterly:
+                startDate.setDate(1);
+                endDate.setMonth(endDate.getMonth() + 3, 0);
+                break;
+            case BudgetPeriod.Yearly:
+                startDate.setMonth(0, 1);
+                endDate.setMonth(11, 31);
+                break;
+        }
+
+        queryParams.startDate = startDate.toISOString().split('T')[0];
+        queryParams.endDate = endDate.toISOString().split('T')[0];
+
+        this.router.navigate(['/finance/transactions'], { queryParams });
     }
 }

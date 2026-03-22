@@ -2,8 +2,8 @@ import { Entity } from './../../core/types/entity-base';
 import { BalanceHistory } from './balance-history';
 import { Transaction } from './transaction';
 import { AccountCategory } from './../enum/account-category';
-import { AccountGroup } from '../enum/account-group';
-import { AccountType } from '../enum/account-type';
+import { AccountGroup } from './../enum/account-group';
+import { AccountType } from './../enum/account-type';
 
 export type Account = Entity & {
     userId: string;
