@@ -4,6 +4,10 @@
         <a [routerLink]="['/finance']" class="breadcrumb-link">Accounts</a>
         <span class="breadcrumb-separator">/</span>
         <span class="breadcrumb-current">{{ account()?.name }}</span>
+        <span class="spacer"></span>
+        <button mat-icon-button (click)="onEditAccount()" aria-label="Edit account">
+            <mat-icon>edit</mat-icon>
+        </button>
     </div>
 
     <app-value-history [historyData]="historyData()" [currentValue]="account()?.balance || 0"

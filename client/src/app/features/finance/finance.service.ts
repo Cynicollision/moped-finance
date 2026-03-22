@@ -39,6 +39,31 @@ export class FinanceService {
         }
     }
 
+    async saveAccount(account: Account): Promise<Account | undefined> {
+        try {
+            const task = this.api.put<OperationResult<Account>>(`api/finance/data/accounts/${account.id}`, account);
+            const response = await this.loader.withLoading(task);
+            return response.data;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to save account: ${JSON.stringify(error)}`);
+            return undefined;
+        }
+    }
+
+    async deleteAccount(id: string): Promise<boolean> {
+        try {
+            const task = this.api.delete<OperationResult<void>>(`api/finance/data/accounts/${id}`);
+            const response = await this.loader.withLoading(task);
+            return response.success;
+        }
+        catch (error) {
+            this.notificationService.error(`Unable to delete account: ${JSON.stringify(error)}`);
+            return false;
+        }
+    }
+
+
     async fetchAccountBalanceHistory(accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[] | undefined> {
         try {
             const url = `api/finance/data/accounts/${accountId}/balance-history?asOfDate=${options.asOfDate}&timeframe=${options.timeframe}`;

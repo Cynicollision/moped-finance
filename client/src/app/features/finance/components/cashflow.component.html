@@ -1,27 +1,5 @@
 <div class="spending-container">
 
-    <!-- Summary Section -->
-    <mat-card appearance="outlined" class="spending-summary-card section-card" style="margin-bottom: 24px;">
-        <mat-card-content class="summary-row">
-            <div class="summary-item">
-                <span class="label">Total Income</span>
-                <span class="value amount-positive">{{ totalIncome | currency }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="label">Total Expenses</span>
-                <span class="value" style="color: #d32f2f !important;">{{ totalExpenses | currency }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="label">Total Savings</span>
-                <span class="value amount-negative">{{ totalSavings | currency }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="label">Savings Rate</span>
-                <span class="value amount-negative">{{ savingsRate | percent:'1.1-2' }}</span>
-            </div>
-        </mat-card-content>
-    </mat-card>
-
     <!-- Controls -->
     <div class="controls-container">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -58,6 +36,28 @@
             <mat-button-toggle value="group">Group</mat-button-toggle>
         </mat-button-toggle-group>
     </div>
+
+    <!-- Summary Section -->
+    <mat-card appearance="outlined" class="spending-summary-card section-card" style="margin-bottom: 24px;">
+        <mat-card-content class="summary-row">
+            <div class="summary-item">
+                <span class="label">Total Income</span>
+                <span class="value amount-positive">{{ totalIncome | currency }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Total Expenses</span>
+                <span class="value" style="color: #d32f2f !important;">{{ totalExpenses | currency }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Total Savings</span>
+                <span class="value amount-negative">{{ totalSavings | currency }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Savings Rate</span>
+                <span class="value amount-negative">{{ savingsRate | percent:'1.1-2' }}</span>
+            </div>
+        </mat-card-content>
+    </mat-card>
 
     <!-- Income Section -->
     <mat-card class="section-card" appearance="outlined" style="margin-bottom: 24px;">

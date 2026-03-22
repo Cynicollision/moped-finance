@@ -77,8 +77,8 @@ async function readCsv(fileName: string): Promise<string[]> {
                 if (id && userId && name) {
                     await client.query(
                         `INSERT INTO finance.accounts (
-                            id, user_id, institution_id, name, account_category, account_group, account_type, balance, is_hidden, is_retirement
-                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                            id, user_id, institution_id, name, account_category, account_group, account_type, balance, is_hidden, is_manual, is_retirement, hide_from_cashflow
+                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                          ON CONFLICT (id) DO NOTHING`,
                         [
                             id.trim(),
@@ -90,7 +90,9 @@ async function readCsv(fileName: string): Promise<string[]> {
                             subtype?.trim() || null,
                             parseFloat(balance?.trim() || '0'),
                             hidden?.trim().toLowerCase() === 'true',
-                            retirement?.trim().toLowerCase() === 'true'
+                            false,
+                            retirement?.trim().toLowerCase() === 'true',
+                            false
                         ]
                     );
                     count++;

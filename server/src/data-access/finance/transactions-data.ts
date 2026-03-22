@@ -61,6 +61,10 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
                 query += ` AND t.date <= $${params.length}`;
             }
 
+            if (!options.includeHidden) {
+                query += ` AND t.is_hidden = false`;
+            }
+
             if (options.filters) {
                 for (const filter of options.filters) {
                     if (filter.key === TransactionsFilterKey.Merchant) {
@@ -173,7 +177,10 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
                                 SUM(t.amount) AS "amount"
                             FROM finance.transactions AS t
                                 JOIN finance.accounts AS a ON a.id = t.account_id
-                            WHERE a.user_id = $1 AND t.date >= $2 AND t.date <= $3
+                            WHERE a.user_id = $1 
+                                AND t.date >= $2 
+                                AND t.date <= $3
+                                AND a.hide_from_cashflow = false
                             GROUP BY t.category_id`;
 
             const params = [userId, startDate, endDate];

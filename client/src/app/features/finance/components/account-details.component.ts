@@ -1,19 +1,22 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/finance/contracts';
-import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
-import { FinanceService } from './../finance.service';
-import { HistoryTimeframe, ValueHistoryType, AccountType, AccountCategory } from '@shared/finance/enum';
-import { ValueHistoryComponent } from './value-history.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/finance/contracts';
+import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
+import { FinanceService } from './../finance.service';
+import { HistoryTimeframe, ValueHistoryType, AccountCategory } from '@shared/finance/enum';
+import { ModalService } from '../../../core/modal/modal.service';
+import { ValueHistoryComponent } from './value-history.component';
+import { AccountEditComponent } from './account-edit.component';
 
 @Component({
     selector: 'app-finance-accounts',
     standalone: true,
-    imports: [CommonModule, ValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule],
+    imports: [CommonModule, ValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule],
     templateUrl: './account-details.component.html',
     styleUrl: './account-details.component.scss'
 })
@@ -21,6 +24,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
     private financeService = inject(FinanceService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
+    private modalService = inject(ModalService);
     protected readonly Math = Math;
 
     account = signal<Account | undefined>(undefined);
@@ -44,12 +48,15 @@ export class FinanceAccountDetailsComponent implements OnInit {
             ]);
 
             this.account.set(account);
+
             if (categories) {
                 categories.forEach(c => this.categoryMap.set(c.id, c));
             }
+
             if (institutions) {
                 institutions.forEach(i => this.institutionMap.set(i.id, i));
             }
+
             this.transactions.set(transactions || []);
 
             await this.updateChartData(accountId);
@@ -110,17 +117,49 @@ export class FinanceAccountDetailsComponent implements OnInit {
 
     accountTypeDisplay = computed(() => {
         const acc = this.account();
-        if (!acc) return '';
+        if (!acc) {
+            return '';
+        }
+
         return acc.type || acc.group;
     });
 
     institutionNameDisplay = computed(() => {
         const institutionId = this.account()?.institutionId;
-        if (!institutionId) return '';
+        if (!institutionId) {
+            return '';
+        }
+
         return this.institutionMap.get(institutionId)?.name || institutionId;
     });
 
     onRowClick(row: Transaction) {
         this.router.navigate(['/finance/transactions', row.id]);
+    }
+
+    async onEditAccount() {
+        const currentAccount = this.account();
+        if (!currentAccount) return;
+
+        const result: any = await this.modalService.open(AccountEditComponent, {
+            account: currentAccount
+        });
+
+        if (!result) {
+            return;
+        }
+
+        if (result.action === 'save') {
+            const updatedAccount = await this.financeService.saveAccount(result.account);
+            if (updatedAccount) {
+                this.account.set(updatedAccount);
+            }
+        }
+        else if (result.action === 'delete') {
+            const success = await this.financeService.deleteAccount(currentAccount.id);
+            if (success) {
+                this.router.navigate(['/finance']);
+            }
+        }
     }
 }

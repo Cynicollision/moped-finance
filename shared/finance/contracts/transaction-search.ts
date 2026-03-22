@@ -15,4 +15,5 @@ export type GetTransactionsOptions = {
     startDate?: string;
     endDate?: string;
     filters?: GetTransactionsFilterItem[];
+    includeHidden?: boolean;
 };

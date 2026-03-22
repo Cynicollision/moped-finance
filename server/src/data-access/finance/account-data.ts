@@ -25,7 +25,9 @@ export class FinanceAccountData implements IFinanceAccountData {
                     a.account_type AS "type", 
                     a.balance, 
                     a.is_hidden AS "isHidden",
-                    a.is_retirement AS "isRetirement"
+                    a.is_manual AS "isManual",
+                    a.is_retirement AS "isRetirement",
+                    a.hide_from_cashflow AS "hideFromCashflow"
                 FROM finance.accounts AS a
                 WHERE a.user_id = $1`,
                 [userId]
@@ -57,7 +59,9 @@ export class FinanceAccountData implements IFinanceAccountData {
                     a.account_type AS "type", 
                     a.balance, 
                     a.is_hidden AS "isHidden",
-                    a.is_retirement AS "isRetirement"
+                    a.is_manual AS "isManual",
+                    a.is_retirement AS "isRetirement",
+                    a.hide_from_cashflow AS "hideFromCashflow"
                 FROM finance.accounts AS a
                 WHERE a.user_id = $1 AND a.id = $2`,
                 [userId, accountId]

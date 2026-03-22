@@ -68,6 +68,8 @@ export class FinanceLogic {
     }
 
     public async getTransactions(userId: string, options: GetTransactionsOptions, accountId?: string): Promise<Transaction[]> {
+        // TODO: validate options
+
         const data = await this.financeData.transactions.search(userId, options, accountId);
         return data;
     }

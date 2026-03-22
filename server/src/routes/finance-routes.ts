@@ -243,6 +243,7 @@ function getTransactionSearchOptions(req: Request): GetTransactionsOptions {
     const sortDirection = req.query.sortDirection as SortDirection;
     const offset = parseInt(req.query.offset as string, 10) || 0;
     const limit = parseInt(req.query.limit as string, 10) || 50;
+    const includeHidden = req.query.includeHidden === 'true';
 
     const minAmount = req.query.minAmount ? parseFloat(req.query.minAmount as string) : undefined;
     const maxAmount = req.query.maxAmount ? parseFloat(req.query.maxAmount as string) : undefined;
@@ -265,7 +266,8 @@ function getTransactionSearchOptions(req: Request): GetTransactionsOptions {
         maxAmount,
         startDate,
         endDate,
-        filters
+        filters,
+        includeHidden
     };
 }
 

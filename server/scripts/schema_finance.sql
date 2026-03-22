@@ -35,7 +35,9 @@ CREATE TABLE IF NOT EXISTS finance.accounts (
   account_group VARCHAR(50) NOT NULL,
   account_type VARCHAR(50),
   is_hidden BOOLEAN DEFAULT FALSE,
+  is_manual BOOLEAN DEFAULT FALSE,
   is_retirement BOOLEAN DEFAULT FALSE,
+  hide_from_cashflow BOOLEAN DEFAULT FALSE,
   balance DECIMAL(12, 2) NOT NULL DEFAULT 0
 );
 

@@ -1,5 +1,7 @@
 import { Injectable, Type } from '@angular/core';
-import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
+import { ConfirmModalComponent, ConfirmModalData } from './confirm-modal.component';
 
 @Injectable({
     providedIn: 'root'
@@ -13,13 +15,9 @@ export class ModalService {
      * @param component The component to render inside the modal
      * @param data Optional data to pass to the component via MAT_DIALOG_DATA
      * @param config Optional MatDialog configuration overrides
-     * @returns MatDialogRef that can be used to close the modal and receive result data
+     * @returns Promise resolving to the result data when the modal closes
      */
-    open<T, D = any, R = any>(
-        component: Type<T>,
-        data?: D,
-        config?: MatDialogConfig<D>
-    ): MatDialogRef<T, R> {
+    async open<T, D = any, R = any>(component: Type<T>, data?: D, config?: MatDialogConfig<D>): Promise<R | undefined> {
         const dialogConfig: MatDialogConfig<D> = {
             width: '500px',
             disableClose: true, // Requires user to explicitly click close or an action
@@ -28,6 +26,18 @@ export class ModalService {
             ...config
         };
 
-        return this.dialog.open(component, dialogConfig);
+        const dialogRef = this.dialog.open(component, dialogConfig);
+        return firstValueFrom(dialogRef.afterClosed());
+    }
+
+    /**
+     * Opens a standard confirmation modal.
+     *
+     * @param data The configuration for the confirmation modal
+     * @param config Optional MatDialog configuration overrides
+     * @returns Promise resolving to the confirmation boolean
+     */
+    async confirm(data: ConfirmModalData, config?: MatDialogConfig<ConfirmModalData>): Promise<boolean | undefined> {
+        return this.open<ConfirmModalComponent, ConfirmModalData, boolean>(ConfirmModalComponent, data, config);
     }
 }

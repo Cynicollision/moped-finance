@@ -1,20 +1,15 @@
 import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatMenuModule } from '@angular/material/menu';
 import { Category, BudgetStream } from '@shared/finance/types';
 import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
-import { FinanceService } from '../finance.service';
 import { ModalService } from '../../../core/modal/modal.service';
+import { FinanceService } from '../finance.service';
 import { BudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';
-import { ConfirmModalComponent, ConfirmModalData } from '../../../core/modal/confirm-modal.component';
 
 @Component({
     selector: 'app-finance-budget',
@@ -111,31 +106,27 @@ export class FinanceBudgetComponent implements OnInit {
         return cat ? cat.group : '';
     }
 
-    startAdd(type: BudgetStreamType) {
-        const dialogRef = this.modalService.open<BudgetFormModalComponent, BudgetFormModalData>(BudgetFormModalComponent, {
+    async startAdd(type: BudgetStreamType) {
+        const result = await this.modalService.open<BudgetFormModalComponent, BudgetFormModalData, BudgetStream>(BudgetFormModalComponent, {
             type,
             categories: this.categories
         });
 
-        dialogRef.afterClosed().subscribe(async (result: BudgetStream) => {
-            if (result) {
-                await this.save(result);
-            }
-        });
+        if (result) {
+            await this.save(result);
+        }
     }
 
-    startEdit(stream: BudgetStream) {
-        const dialogRef = this.modalService.open<BudgetFormModalComponent, BudgetFormModalData>(BudgetFormModalComponent, {
+    async startEdit(stream: BudgetStream) {
+        const result = await this.modalService.open<BudgetFormModalComponent, BudgetFormModalData, BudgetStream>(BudgetFormModalComponent, {
             stream,
             type: stream.type,
             categories: this.categories
         });
 
-        dialogRef.afterClosed().subscribe(async (result: BudgetStream) => {
-            if (result) {
-                await this.save(result);
-            }
-        });
+        if (result) {
+            await this.save(result);
+        }
     }
 
     async save(stream: BudgetStream) {
@@ -146,20 +137,18 @@ export class FinanceBudgetComponent implements OnInit {
     }
 
     async delete(id: string) {
-        const dialogRef = this.modalService.open<ConfirmModalComponent, ConfirmModalData, boolean>(ConfirmModalComponent, {
+        const confirmed = await this.modalService.confirm({
             title: 'Delete Budget Stream',
             message: 'Are you sure you want to delete this budget stream? This action cannot be undone.',
             confirmLabel: 'Delete',
             isWarn: true
         });
 
-        dialogRef.afterClosed().subscribe(async (confirmed) => {
-            if (confirmed) {
-                const success = await this.financeService.deleteBudgetStream(id);
-                if (success) {
-                    await this.loadData();
-                }
+        if (confirmed) {
+            const success = await this.financeService.deleteBudgetStream(id);
+            if (success) {
+                await this.loadData();
             }
-        });
+        }
     }
 }
