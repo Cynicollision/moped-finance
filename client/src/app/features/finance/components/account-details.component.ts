@@ -10,13 +10,13 @@ import { Account, BalanceHistory, Transaction, Category, Institution } from '@sh
 import { FinanceService } from './../finance.service';
 import { HistoryTimeframe, ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { ModalService } from './../../../core/modal/modal.service';
-import { ValueHistoryComponent } from './value-history.component';
-import { AccountEditComponent } from './account-edit.component';
+import { FinanceValueHistoryComponent } from './value-history.component';
+import { FinanceAccountEditComponent } from './account-edit.component';
 
 @Component({
     selector: 'app-finance-accounts',
     standalone: true,
-    imports: [CommonModule, ValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule],
+    imports: [CommonModule, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule],
     templateUrl: './account-details.component.html',
     styleUrl: './account-details.component.scss'
 })
@@ -145,7 +145,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
         const currentAccount = this.account();
         if (!currentAccount) return;
 
-        const result: any = await this.modalService.open(AccountEditComponent, {
+        const result: any = await this.modalService.open(FinanceAccountEditComponent, {
             account: currentAccount
         });
 

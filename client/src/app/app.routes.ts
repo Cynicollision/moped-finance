@@ -16,10 +16,12 @@ export const routes: Routes = [
     {
         path: 'finance',
         loadChildren: () => import('./features/finance/finance.routes').then(m => m.FINANCE_ROUTES),
-        title: 'Finance', canActivate: [authGuard]
+        title: 'Finance',
+        canActivate: [authGuard]
     },
     {
-        path: 'grounds', component: GroundsComponent,
+        path: 'grounds',
+        loadChildren: () => import('./features/grounds/grounds.routes').then(m => m.GROUNDS_ROUTES),
         title: 'Grounds',
         canActivate: [authGuard]
     },

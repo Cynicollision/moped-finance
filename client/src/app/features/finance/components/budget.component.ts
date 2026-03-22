@@ -9,7 +9,7 @@ import { Category, BudgetStream } from '@shared/finance/types';
 import { BudgetStreamType, CategoryClass, BudgetPeriod } from '@shared/finance/enum';
 import { ModalService } from './../../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
-import { BudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';
+import { FinanceBudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';
 
 export interface BudgetTotals {
     monthly: number;
@@ -158,7 +158,7 @@ export class FinanceBudgetComponent implements OnInit {
     }
 
     async startAdd(type: BudgetStreamType) {
-        const result = await this.modalService.open<BudgetFormModalComponent, BudgetFormModalData, BudgetStream>(BudgetFormModalComponent, {
+        const result = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, BudgetStream>(FinanceBudgetFormModalComponent, {
             type,
             categories: this.categories
         });
@@ -169,7 +169,7 @@ export class FinanceBudgetComponent implements OnInit {
     }
 
     async startEdit(stream: BudgetStream) {
-        const result = await this.modalService.open<BudgetFormModalComponent, BudgetFormModalData, BudgetStream>(BudgetFormModalComponent, {
+        const result = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, BudgetStream>(FinanceBudgetFormModalComponent, {
             stream,
             type: stream.type,
             categories: this.categories

@@ -32,7 +32,7 @@ export class GroundsCareTaskData implements IGroundsCareTaskData {
             return result.rows;
         }
         catch (err) {
-            throw new DatabaseError();
+            throw new DatabaseError('Database error retrieving care tasks.');
         }
     }
 }

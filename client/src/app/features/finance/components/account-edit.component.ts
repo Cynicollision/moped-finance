@@ -27,9 +27,9 @@ import { ModalService } from './../../../core/modal/modal.service';
     templateUrl: './account-edit.component.html',
     styleUrl: './account-edit.component.scss'
 })
-export class AccountEditComponent {
+export class FinanceAccountEditComponent {
     private fb = inject(FormBuilder);
-    private dialogRef = inject(MatDialogRef<AccountEditComponent>);
+    private dialogRef = inject(MatDialogRef<FinanceAccountEditComponent>);
     private modalService = inject(ModalService);
 
     accountForm: FormGroup;

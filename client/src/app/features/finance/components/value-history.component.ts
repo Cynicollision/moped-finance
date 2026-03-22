@@ -28,7 +28,7 @@ export interface ChartTypeOption {
     templateUrl: './value-history.component.html',
     styleUrl: './value-history.component.scss'
 })
-export class ValueHistoryComponent implements OnChanges {
+export class FinanceValueHistoryComponent implements OnChanges {
     // Inputs
     @Input({ required: true }) historyData: TotalValueHistory[] = [];
     @Input() title: string | undefined;

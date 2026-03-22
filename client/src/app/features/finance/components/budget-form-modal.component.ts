@@ -36,7 +36,7 @@ export interface BudgetFormModalData {
     templateUrl: './budget-form-modal.component.html',
     styleUrl: './budget-form-modal.component.scss'
 })
-export class BudgetFormModalComponent implements OnInit {
+export class FinanceBudgetFormModalComponent implements OnInit {
     budgetForm: FormGroup;
     isEditing = false;
     recurrenceOptions = Object.values(BudgetPeriod);
@@ -49,7 +49,7 @@ export class BudgetFormModalComponent implements OnInit {
 
     constructor(
         private fb: FormBuilder,
-        public dialogRef: MatDialogRef<BudgetFormModalComponent>,
+        public dialogRef: MatDialogRef<FinanceBudgetFormModalComponent>,
         @Inject(MAT_DIALOG_DATA) public data: BudgetFormModalData
     ) {
         this.budgetForm = this.fb.group({

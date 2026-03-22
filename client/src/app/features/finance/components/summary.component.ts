@@ -7,7 +7,7 @@ import { TotalValueHistory } from '@shared/finance/contracts';
 import { AccountGroup, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
-import { ValueHistoryComponent } from './value-history.component';
+import { FinanceValueHistoryComponent } from './value-history.component';
 
 @Component({
     selector: 'app-finance-summary',
@@ -17,7 +17,7 @@ import { ValueHistoryComponent } from './value-history.component';
         MatCardModule,
         MatDividerModule,
         RouterLink,
-        ValueHistoryComponent
+        FinanceValueHistoryComponent
     ],
     templateUrl: './summary.component.html',
     styleUrl: './summary.component.scss'

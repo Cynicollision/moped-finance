@@ -17,7 +17,9 @@ CREATE TABLE IF NOT EXISTS grounds.plant_varieties (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   user_id VARCHAR(50) NOT NULL REFERENCES core.users(id) ON DELETE CASCADE,
-  name VARCHAR(100) NOT NULL,
+  common_name VARCHAR(150),
+  family_name VARCHAR(150),
+  scientific_name VARCHAR(150),
   fertilizer_notes TEXT,
   pruning_notes TEXT,
   soil_notes TEXT,
@@ -33,11 +35,7 @@ CREATE TABLE IF NOT EXISTS grounds.plants (
   user_id VARCHAR(50) NOT NULL REFERENCES core.users(id) ON DELETE CASCADE,
   variety_id VARCHAR(50) REFERENCES grounds.plant_varieties(id) ON DELETE SET NULL,
   location_id VARCHAR(50) REFERENCES grounds.locations(id) ON DELETE SET NULL,
-  name VARCHAR(100) NOT NULL,
-  planted_date DATE,
-  common_name VARCHAR(150),
-  family_name VARCHAR(150),
-  scientific_name VARCHAR(150)
+  planted_date DATE
 );
 
 -- Products
