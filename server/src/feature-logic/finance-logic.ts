@@ -5,10 +5,7 @@ import { FinanceData } from './../data-access/finance-data';
 import { getDatesForPeriod, getStartDateForTimeframe } from './../utility/date-time-util';
 
 export class FinanceLogic {
-    private financeData: FinanceData;
-
-    constructor(financeData: FinanceData) {
-        this.financeData = financeData;
+    constructor(private financeData: FinanceData) {
     }
 
     // Metadata

@@ -1,40 +1,44 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "tsc",
-    "dev": "nodemon --legacy-watch",
-    "db:drop": "npm run db:drop:core && npm run db:drop:finance",
-    "db:drop:core": "ts-node -r dotenv/config scripts/drop-core-db.ts dotenv_config_path=../.env",
-    "db:drop:finance": "ts-node -r dotenv/config scripts/drop-finance-db.ts dotenv_config_path=../.env",
-    "db:init": "npm run db:init:core && npm run db:init:finance",
-    "db:init:core": "ts-node -r dotenv/config scripts/init-core-db.ts dotenv_config_path=../.env",
-    "db:init:finance": "ts-node -r dotenv/config scripts/init-finance-db.ts dotenv_config_path=../.env",
-    "db:seed": "npm run db:seed:core && npm run db:seed:finance",
-    "db:seed:core": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/seed-core-db.ts dotenv_config_path=../.env",
-    "db:seed:finance": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/seed-finance-db.ts dotenv_config_path=../.env",
-    "db:reset": "npm run db:drop && npm run db:init && npm run db:seed",
-    "db:reset:core": "npm run db:drop:core && npm run db:init:core && npm run db:seed:core",
-    "db:reset:finance": "npm run db:drop:finance && npm run db:init:finance && npm run db:seed:finance"
-  },
-  "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^16.4.5",
-    "express": "^4.18.2",
-    "express-session": "^1.19.0",
-    "pg": "^8.11.3",
-    "short-unique-id": "^5.2.0"
-  },
-  "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^4.17.21",
-    "@types/express-session": "^1.18.2",
-    "@types/node": "^20.11.20",
-    "@types/pg": "^8.11.0",
-    "nodemon": "^3.1.0",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.3.3"
-  }
+    "name": "server",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc",
+        "dev": "nodemon --legacy-watch",
+        "db:drop": "npm run db:drop:core && npm run db:drop:finance && npm run db:drop:grounds",
+        "db:drop:core": "ts-node -r dotenv/config scripts/drop-core-db.ts dotenv_config_path=../.env",
+        "db:drop:finance": "ts-node -r dotenv/config scripts/drop-finance-db.ts dotenv_config_path=../.env",
+        "db:drop:grounds": "ts-node -r dotenv/config scripts/drop-grounds-db.ts dotenv_config_path=../.env",
+        "db:init": "npm run db:init:core && npm run db:init:finance && npm run db:init:grounds",
+        "db:init:core": "ts-node -r dotenv/config scripts/init-core-db.ts dotenv_config_path=../.env",
+        "db:init:finance": "ts-node -r dotenv/config scripts/init-finance-db.ts dotenv_config_path=../.env",
+        "db:init:grounds": "ts-node -r dotenv/config scripts/init-grounds-db.ts dotenv_config_path=../.env",
+        "db:seed": "npm run db:seed:core && npm run db:seed:finance && npm run db:seed:grounds",
+        "db:seed:core": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/seed-core-db.ts dotenv_config_path=../.env",
+        "db:seed:finance": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/seed-finance-db.ts dotenv_config_path=../.env",
+        "db:seed:grounds": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/seed-grounds-db.ts dotenv_config_path=../.env",
+        "db:reset": "npm run db:drop && npm run db:init && npm run db:seed",
+        "db:reset:core": "npm run db:drop:core && npm run db:init:core && npm run db:seed:core",
+        "db:reset:finance": "npm run db:drop:finance && npm run db:init:finance && npm run db:seed:finance",
+        "db:reset:grounds": "npm run db:drop:grounds && npm run db:init:grounds && npm run db:seed:grounds"
+    },
+    "dependencies": {
+        "cors": "^2.8.6",
+        "dotenv": "^16.4.5",
+        "express": "^4.18.2",
+        "express-session": "^1.19.0",
+        "pg": "^8.11.3",
+        "short-unique-id": "^5.2.0"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.19",
+        "@types/express": "^4.17.21",
+        "@types/express-session": "^1.18.2",
+        "@types/node": "^20.11.20",
+        "@types/pg": "^8.11.0",
+        "nodemon": "^3.1.0",
+        "ts-node": "^10.9.2",
+        "tsconfig-paths": "^4.2.0",
+        "typescript": "^5.3.3"
+    }
 }
