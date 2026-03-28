@@ -1,0 +1,89 @@
+<h2 mat-dialog-title>{{ data.task ? 'Edit' : 'Add' }} Care Task</h2>
+<mat-dialog-content>
+    <form [formGroup]="form" class="modal-container">
+        <mat-form-field appearance="outline">
+            <mat-label>Task Name</mat-label>
+            <input matInput formControlName="name" placeholder="Enter task name">
+        </mat-form-field>
+
+        <div class="row">
+            <mat-form-field appearance="outline">
+                <mat-label>Category</mat-label>
+                <mat-select formControlName="category">
+                    <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Type</mat-label>
+                <mat-select formControlName="type">
+                    <mat-option *ngFor="let t of availableTypes" [value]="t">{{ t }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <div class="row">
+            <mat-form-field appearance="outline">
+                <mat-label>Target Month</mat-label>
+                <mat-select formControlName="targetMonth">
+                    <mat-option [value]="null">None</mat-option>
+                    <mat-option *ngFor="let m of months" [value]="m.value">{{ m.label }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Target Week</mat-label>
+                <mat-select formControlName="targetWeek">
+                    <mat-option [value]="null">None</mat-option>
+                    <mat-option *ngFor="let w of [1,2,3,4,5]" [value]="w">{{ w }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <div class="row">
+            <mat-form-field appearance="outline">
+                <mat-label>Year</mat-label>
+                <mat-select formControlName="year">
+                    <mat-option *ngFor="let y of years" [value]="y">{{ y }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                    <mat-option *ngFor="let s of statuses" [value]="s">{{ s | titlecase }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <div class="row" *ngIf="form.get('status')?.value === 'completed' || form.get('status')?.value === 'Completed' || form.get('status')?.value === 'completedDate'">
+            <mat-form-field appearance="outline">
+                <mat-label>Completed Date</mat-label>
+                <input matInput type="date" formControlName="completedDate">
+            </mat-form-field>
+        </div>
+
+        <div class="checkbox-row">
+            <mat-checkbox formControlName="isAnnualTask">Is Annual Task</mat-checkbox>
+        </div>
+        
+        <mat-form-field appearance="outline">
+            <mat-label>Product Used</mat-label>
+            <mat-select formControlName="productId">
+                <mat-option [value]="null">None / N/A</mat-option>
+                <mat-option *ngFor="let p of data.products" [value]="p.id">{{ p.name }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Notes</mat-label>
+            <textarea matInput formControlName="notes" rows="3" placeholder="Additional details..."></textarea>
+        </mat-form-field>
+    </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-flat-button color="primary" [disabled]="form.invalid || isSaving" (click)="save()">
+        {{ isSaving ? 'Saving...' : 'Save' }}
+    </button>
+</mat-dialog-actions>

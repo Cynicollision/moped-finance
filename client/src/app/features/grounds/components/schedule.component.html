@@ -1,3 +1,82 @@
-<div>
-    TODO schedule page
+<div class="schedule-container">
+    <mat-card>
+        <mat-card-header class="schedule-header">
+            <mat-card-title>Grounds Schedule - {{ selectedYear() }}</mat-card-title>
+            <div class="header-controls">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="year-selector">
+                    <mat-label>Year</mat-label>
+                    <mat-select [ngModel]="selectedYear()" (ngModelChange)="selectedYear.set($event); onYearChange()">
+                        <mat-option *ngFor="let y of availableYears" [value]="y">{{ y }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-button-toggle-group [ngModel]="selectedCategory()"
+                    (ngModelChange)="selectedCategory.set($event); onCategoryChange()" class="category-toggle">
+                    <mat-button-toggle value="All">All</mat-button-toggle>
+                    <mat-button-toggle value="Lawn">Lawn</mat-button-toggle>
+                    <mat-button-toggle value="Garden">Garden</mat-button-toggle>
+                </mat-button-toggle-group>
+
+                <a mat-button color="primary" routerLink="../calendar" style="margin-right: 8px;">
+                    <mat-icon>calendar_month</mat-icon> Calendar View
+                </a>
+            </div>
+        </mat-card-header>
+        <mat-card-content>
+            <table mat-table [dataSource]="dataSource()" class="mat-elevation-z2 schedule-table">
+
+                <!-- Month Column -->
+                <ng-container matColumnDef="month">
+                    <th mat-header-cell *matHeaderCellDef class="month-header"> Month </th>
+                    <td mat-cell *matCellDef="let element" [attr.rowspan]="element.rowspan"
+                        [style.display]="element.isFirstWeekOfMonth ? '' : 'none'" class="month-cell"
+                        [ngClass]="element.monthKey">
+                        {{element.monthLabel}}
+                    </td>
+                </ng-container>
+
+                <!-- Week Column -->
+                <ng-container matColumnDef="week">
+                    <th mat-header-cell *matHeaderCellDef> Week </th>
+                    <td mat-cell *matCellDef="let element" class="week-cell"> {{element.week}} </td>
+                </ng-container>
+
+                <!-- Activities Column -->
+                <ng-container matColumnDef="activities">
+                    <th mat-header-cell *matHeaderCellDef> Activities </th>
+                    <td mat-cell *matCellDef="let element" class="activities-cell" (click)="openTaskModal(element)">
+                        <div class="tasks-list" *ngIf="element.tasks.length > 0">
+                            <div class="task-item" *ngFor="let task of element.tasks"
+                                (click)="$event.stopPropagation(); openTaskModal(element, task)">
+                                <div class="task-item-header"
+                                    style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                                        <span class="category-emoji" title="{{ task.category }}">{{
+                                            getCategoryEmoji(task.category) }}</span>
+                                        <strong>{{task.name}}</strong>
+                                        <span class="text-muted">- {{task.type}}</span>
+                                        <span *ngIf="task.productId" class="text-muted">- {{
+                                            getProductName(task.productId) }}</span>
+                                    </div>
+                                    <span *ngIf="task.status === 'completed' || task.status === 'Completed'"
+                                        class="status-badge complete" title="{{task.name}}">
+                                        {{ task.completedDate ? 'Completed ' + (task.completedDate | date:'M/d') :
+                                        'Completed' }}
+                                    </span>
+                                    <span *ngIf="task.status === 'pending' || task.status === 'Pending'"
+                                        class="status-badge pending" title="{{task.name}}">Pending</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="add-task-btn">
+                            <span class="empty-text"><i>(Click to add)</i></span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="interactive-row"></tr>
+            </table>
+        </mat-card-content>
+    </mat-card>
 </div>

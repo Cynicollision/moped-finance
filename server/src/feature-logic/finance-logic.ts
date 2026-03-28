@@ -1,8 +1,10 @@
+import { EntityIdPrefix } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Account, BalanceHistory, Category, Institution, Transaction, BudgetStream } from '@shared/finance/types';
-import { FinanceData } from './../data-access/finance-data';
 import { getDatesForPeriod, getStartDateForTimeframe } from './../utility/date-time-util';
+import { generateEntityId } from './../utility/id-util';
+import { FinanceData } from './../data-access/finance-data';
 
 export class FinanceLogic {
     constructor(private financeData: FinanceData) {
@@ -38,14 +40,19 @@ export class FinanceLogic {
     }
 
     public async createAccount(userId: string, account: Account): Promise<Account> {
+        account.id = generateEntityId(EntityIdPrefix.FinanceAccount);
+        account.userId = userId;
+
         return await this.financeData.accounts.create(userId, account);
     }
 
     public async saveAccount(userId: string, account: Account): Promise<Account> {
+        // TODO: validate user ownership
         return await this.financeData.accounts.update(userId, account);
     }
 
     public async deleteAccount(userId: string, id: string): Promise<void> {
+        // TODO: validate user ownership
         await this.financeData.accounts.delete(userId, id);
     }
 
@@ -83,10 +90,12 @@ export class FinanceLogic {
     }
 
     public async saveTransaction(userId: string, transaction: Transaction): Promise<Transaction> {
+        // TODO: validate user ownership
         return await this.financeData.transactions.update(userId, transaction);
     }
 
     public async deleteTransaction(userId: string, id: string): Promise<void> {
+        // TODO: validate user ownership
         await this.financeData.transactions.delete(userId, id);
     }
 
@@ -96,11 +105,22 @@ export class FinanceLogic {
         return data;
     }
 
-    public async saveBudgetStream(userId: string, stream: BudgetStream): Promise<BudgetStream> {
+    public async createBudgetStream(userId: string, stream: BudgetStream): Promise<BudgetStream> {
+        stream.id = generateEntityId(EntityIdPrefix.FinanceBudgetStream);
+        stream.userId = userId;
+
         return await this.financeData.budgetStream.insert(userId, stream);
     }
 
+    public async saveBudgetStream(userId: string, stream: BudgetStream): Promise<BudgetStream> {
+        // TODO: validate stream.userId matches, instead?
+        stream.userId = userId;
+
+        return await this.financeData.budgetStream.update(userId, stream);
+    }
+
     public async deleteBudgetStream(userId: string, id: string): Promise<void> {
+        // TODO: validate user ownership
         await this.financeData.budgetStream.delete(userId, id);
     }
 

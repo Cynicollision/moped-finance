@@ -1,4 +1,6 @@
 import { CareTask, Location, Plant, PlantVariety, Product } from '@shared/grounds/types';
+import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
+import { generateEntityId } from './../utility/id-util';
 import { GroundsData } from './../data-access/grounds-data';
 
 export class GroundsLogic {
@@ -7,6 +9,17 @@ export class GroundsLogic {
 
     public async getCareTasks(userId: string, year: string): Promise<CareTask[]> {
         return this.groundsData.careTasks.retrieveAll(userId);
+    }
+
+    public async createCareTask(userId: string, task: CareTask): Promise<CareTask> {
+        task.userId = userId;
+        task.id = generateEntityId(EntityIdPrefix.GroundsCareTask);
+        return await this.groundsData.careTasks.insert(task);
+    }
+
+    public async saveCareTask(userId: string, task: CareTask): Promise<CareTask> {
+        task.userId = userId;
+        return await this.groundsData.careTasks.update(task);
     }
 
     public async getLocations(userId: string): Promise<Location[]> {

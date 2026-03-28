@@ -1,265 +1,107 @@
 import { Injectable, inject } from '@angular/core';
-import { OperationResult } from '@shared/core/contracts';
 import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TransactionSearchOptions } from '@shared/finance/contracts';
 import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../../core/api.service';
-import { LoadingService } from './../../core/loading/loading.service';
-import { NotificationService } from './../../core/notification.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class FinanceService {
     private api = inject(ApiService);
-    private loader = inject(LoadingService);
-    private notificationService = inject(NotificationService);
 
     // Metadata (Institutions, Categories)
-    async fetchInstitutions(): Promise<Institution[] | undefined> {
-        try {
-            const task = this.api.get<OperationResult<Institution[]>>('api/finance/data/institutions');
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch institutions: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchInstitutions(): Promise<Institution[] | undefined> {
+        return this.api.get<Institution[]>('api/finance/data/institutions');
     }
 
-    async fetchCategories(activeOnly: boolean): Promise<Category[] | undefined> {
-        try {
-            const task = this.api.get<OperationResult<Category[]>>(`api/finance/data/categories?activeOnly=${activeOnly}`);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch categories: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchCategories(activeOnly: boolean): Promise<Category[] | undefined> {
+        return this.api.get<Category[]>(`api/finance/data/categories?activeOnly=${activeOnly}`);
     }
 
     // Accounts
-    async fetchAccount(accountId: string): Promise<Account | undefined> {
-        try {
-            const task = this.api.get<OperationResult<Account>>(`api/finance/data/accounts/${accountId}`);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch account: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchAccount(accountId: string): Promise<Account | undefined> {
+        return this.api.get<Account>(`api/finance/data/accounts/${accountId}`);
     }
 
-    async fetchAllAccounts(): Promise<Account[] | undefined> {
-        try {
-            const task = this.api.get<OperationResult<Account[]>>('api/finance/data/accounts');
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch accounts: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchAllAccounts(): Promise<Account[] | undefined> {
+        return this.api.get<Account[]>('api/finance/data/accounts');
     }
 
-    async createAccount(account: Account): Promise<Account | undefined> {
-        try {
-            const task = this.api.post<Account>(`api/finance/data/accounts`, account);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to create account: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    createAccount(account: Account): Promise<Account | undefined> {
+        return this.api.post<Account>(`api/finance/data/accounts`, account);
     }
 
-    async saveAccount(account: Account): Promise<Account | undefined> {
-        try {
-            const task = this.api.put<OperationResult<Account>>(`api/finance/data/accounts/${account.id}`, account);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to save account: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    saveAccount(account: Account): Promise<Account | undefined> {
+        return this.api.put<Account>(`api/finance/data/accounts/${account.id}`, account);
     }
 
-    async deleteAccount(id: string): Promise<boolean> {
-        try {
-            const task = this.api.delete<OperationResult<void>>(`api/finance/data/accounts/${id}`);
-            const response = await this.loader.withLoading(task);
-            return response.success;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to delete account: ${JSON.stringify(error)}`);
-            return false;
-        }
+    deleteAccount(id: string): Promise<boolean> {
+        return this.api.delete(`api/finance/data/accounts/${id}`);
     }
 
-    async fetchAccountBalanceHistory(accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[] | undefined> {
-        try {
-            const url = `api/finance/data/accounts/${accountId}/balance-history?asOfDate=${options.asOfDate}&timeframe=${options.timeframe}`;
-            const task = this.api.get<OperationResult<BalanceHistory[]>>(url);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch account balance history: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchAccountBalanceHistory(accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[] | undefined> {
+        const url = `api/finance/data/accounts/${accountId}/balance-history?asOfDate=${options.asOfDate}&timeframe=${options.timeframe}`;
+        return this.api.get<BalanceHistory[]>(url);
     }
 
-    async fetchTotalValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<TotalValueHistory[] | undefined> {
-        try {
-            const asOfDate = '2026-02-28'; // TODO: replace with current date
-
-            const url = `api/finance/data/accounts/total-value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
-            const task = this.api.get<OperationResult<TotalValueHistory[]>>(url);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch total value history: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchTotalValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<TotalValueHistory[] | undefined> {
+        const asOfDate = '2026-02-28'; // TODO: replace with current date
+        const url = `api/finance/data/accounts/total-value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
+        return this.api.get<TotalValueHistory[]>(url);
     }
 
     // Transactions
-    async fetchTransaction(id: string): Promise<Transaction | undefined> {
-        try {
-            const task = this.api.get<OperationResult<Transaction>>(`api/finance/data/transactions/${id}`);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch transaction: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchTransaction(id: string): Promise<Transaction | undefined> {
+        return this.api.get<Transaction>(`api/finance/data/transactions/${id}`);
     }
 
-    async fetchTransactions(options: TransactionSearchOptions): Promise<Transaction[] | undefined> {
-        try {
-            const params = this.getTransactionUrlParams(options);
-            const url = `api/finance/data/transactions?${params.toString()}`;
-            const task = this.api.get<OperationResult<Transaction[]>>(url);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch transactions: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchTransactions(options: TransactionSearchOptions): Promise<Transaction[] | undefined> {
+        const params = this.getTransactionUrlParams(options);
+        return this.api.get<Transaction[]>(`api/finance/data/transactions?${params.toString()}`);
     }
 
-    async fetchAccountRecentTransactions(accountId: string): Promise<Transaction[] | undefined> {
-        try {
-            const params = this.getTransactionUrlParams({
-                sortKey: 'date',
-                sortDirection: 'desc',
-                limit: 10
-            });
-
-            const url = `api/finance/data/accounts/${accountId}/transactions?${params.toString()}`;
-            const task = this.api.get<OperationResult<Transaction[]>>(url);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch account transactions: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchAccountRecentTransactions(accountId: string): Promise<Transaction[] | undefined> {
+        const params = this.getTransactionUrlParams({
+            sortKey: 'date',
+            sortDirection: 'desc',
+            limit: 10
+        });
+        return this.api.get<Transaction[]>(`api/finance/data/accounts/${accountId}/transactions?${params.toString()}`);
     }
 
-    async fetchTransactionMerchants(): Promise<string[] | undefined> {
-        try {
-            const task = this.api.get<OperationResult<string[]>>(`api/finance/data/transactions/merchants`);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch transaction merchants: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchTransactionMerchants(): Promise<string[] | undefined> {
+        return this.api.get<string[]>(`api/finance/data/transactions/merchants`);
     }
 
-    async saveTransaction(transaction: Transaction): Promise<Transaction | undefined> {
-        try {
-            const task = this.api.put<OperationResult<Transaction>>(`api/finance/data/transactions/${transaction.id}`, transaction);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to save transaction: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    saveTransaction(transaction: Transaction): Promise<Transaction | undefined> {
+        return this.api.put<Transaction>(`api/finance/data/transactions/${transaction.id}`, transaction);
     }
 
-    async deleteTransaction(id: string): Promise<boolean> {
-        try {
-            const task = this.api.delete<OperationResult<void>>(`api/finance/data/transactions/${id}`);
-            const response = await this.loader.withLoading(task);
-            return response.success;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to delete transaction: ${JSON.stringify(error)}`);
-            return false;
-        }
+    deleteTransaction(id: string): Promise<boolean> {
+        return this.api.delete(`api/finance/data/transactions/${id}`);
     }
 
     // Budget
-    async fetchBudgetStreams(): Promise<BudgetStream[] | undefined> {
-        try {
-            const task = this.api.get<OperationResult<BudgetStream[]>>('api/finance/data/budget-streams');
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch budget streams: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchBudgetStreams(): Promise<BudgetStream[] | undefined> {
+        return this.api.get<BudgetStream[]>('api/finance/data/budget-streams');
     }
 
-    async saveBudgetStream(stream: BudgetStream): Promise<BudgetStream | undefined> {
-        try {
-            const task = this.api.post<BudgetStream>('api/finance/data/budget-streams', stream);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to save budget stream: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    createBudgetStream(stream: BudgetStream): Promise<BudgetStream | undefined> {
+        return this.api.post<BudgetStream>('api/finance/data/budget-streams', stream);
     }
 
-    async deleteBudgetStream(id: string): Promise<boolean> {
-        try {
-            const task = this.api.delete<OperationResult<void>>(`api/finance/data/budget-streams/${id}`);
-            const response = await this.loader.withLoading(task);
-            return response.success;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to delete budget stream: ${JSON.stringify(error)}`);
-            return false;
-        }
+    saveBudgetStream(stream: BudgetStream): Promise<BudgetStream | undefined> {
+        return this.api.put<BudgetStream>(`api/finance/data/budget-streams/${stream.id}`, stream);
+    }
+
+    deleteBudgetStream(id: string): Promise<boolean> {
+        return this.api.delete(`api/finance/data/budget-streams/${id}`);
     }
 
     // Cashflow
-    async fetchSpendingStreams(period: BudgetPeriod, asOfDate: string): Promise<SpendingStream[] | undefined> {
-        try {
-            const url = `api/finance/data/transactions/spending?period=${period}&asOfDate=${asOfDate}`;
-            const task = this.api.get<OperationResult<SpendingStream[]>>(url);
-            const response = await this.loader.withLoading(task);
-            return response.data;
-        }
-        catch (error) {
-            this.notificationService.error(`Unable to fetch spending streams: ${JSON.stringify(error)}`);
-            return undefined;
-        }
+    fetchSpendingStreams(period: BudgetPeriod, asOfDate: string): Promise<SpendingStream[] | undefined> {
+        return this.api.get<SpendingStream[]>(`api/finance/data/transactions/spending?period=${period}&asOfDate=${asOfDate}`);
     }
 
     private getTransactionUrlParams(options: TransactionSearchOptions): URLSearchParams {

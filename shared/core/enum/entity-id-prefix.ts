@@ -5,5 +5,6 @@ export enum EntityIdPrefix {
     FinanceCategory = '04',
     FinanceInstitution = '05',
     FinanceTransaction = '06',
-    FinanceBudgetStream = '07'
+    FinanceBudgetStream = '07',
+    GroundsCareTask = '10'
 }

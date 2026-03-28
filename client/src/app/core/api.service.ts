@@ -2,28 +2,70 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { OperationResult } from '@shared/core/contracts';
+import { LoadingService } from './loading/loading.service';
+import { NotificationService } from './notification.service';
 
 @Injectable({
-  providedIn: 'root'
+    providedIn: 'root'
 })
 export class ApiService {
-  private http = inject(HttpClient);
-  // TODO: In a production app, this URL should come from environment.ts
-  private baseUrl = 'http://localhost:3000';
+    private http = inject(HttpClient);
+    private notificationService = inject(NotificationService);
+    private loader = inject(LoadingService);
+    // TODO: In a production app, this URL should come from environment.ts
+    private baseUrl = 'http://localhost:3000';
 
-  get<T>(path: string, params?: HttpParams | { [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean> }): Promise<T> {
-    return firstValueFrom(this.http.get<T>(`${this.baseUrl}/${path}`, { params, withCredentials: true }));
-  }
+    private async handleRequest<T>(request: Promise<OperationResult<T>>): Promise<T | undefined> {
+        try {
+            const response = await this.loader.withLoading(request);
+            if (response.success === false) {
+                const errMsg = response.error?.message || 'Operation failed';
+                this.notificationService.error(errMsg);
+                return undefined;
+            }
+            return response.data as T;
+        }
+        catch (error: any) {
+            this.notificationService.error('An unexpected error was encountered.');
+            return undefined;
+        }
+    }
 
-  post<T>(path: string, body: any): Promise<OperationResult<T>> {
-    return firstValueFrom(this.http.post<OperationResult<T>>(`${this.baseUrl}/${path}`, body, { withCredentials: true }));
-  }
+    get<T>(path: string, params?: HttpParams | { [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean> }): Promise<T | undefined> {
+        return this.handleRequest<T>(
+            firstValueFrom(this.http.get<OperationResult<T>>(`${this.baseUrl}/${path}`, { params, withCredentials: true }))
+        );
+    }
 
-  put<T>(path: string, body: any): Promise<T> {
-    return firstValueFrom(this.http.put<T>(`${this.baseUrl}/${path}`, body, { withCredentials: true }));
-  }
+    post<T>(path: string, body: any): Promise<T | undefined> {
+        return this.handleRequest<T>(
+            firstValueFrom(this.http.post<OperationResult<T>>(`${this.baseUrl}/${path}`, body, { withCredentials: true }))
+        );
+    }
 
-  delete<T>(path: string): Promise<T> {
-    return firstValueFrom(this.http.delete<T>(`${this.baseUrl}/${path}`, { withCredentials: true }));
-  }
+    put<T>(path: string, body: any): Promise<T | undefined> {
+        return this.handleRequest<T>(
+            firstValueFrom(this.http.put<OperationResult<T>>(`${this.baseUrl}/${path}`, body, { withCredentials: true }))
+        );
+    }
+
+    async delete(path: string): Promise<boolean> {
+        try {
+            const request = firstValueFrom(this.http.delete<OperationResult<void>>(`${this.baseUrl}/${path}`, { withCredentials: true }));
+            const response = await this.loader.withLoading(request);
+            if (response.success === false) {
+                const errMsg = response.error?.message || 'Operation failed';
+                this.notificationService.error(errMsg);
+                return false;
+            }
+            return true;
+        } catch (error: any) {
+            if (!error.message || error.status === 0) {
+                this.notificationService.error('Network or server error encountered.');
+            } else {
+                this.notificationService.error(`An error occurred: ${error.message || 'Unknown error'}`);
+            }
+            return false;
+        }
+    }
 }

@@ -19,6 +19,7 @@ export class GroundsComponent {
     navLinks = [
         { path: 'summary', label: 'Summary' },
         { path: 'schedule', label: 'Schedule' },
-        { path: 'plants', label: 'Plants' }
+        { path: 'plants', label: 'Plants' },
+        { path: 'products', label: 'Products' }
     ];
 }

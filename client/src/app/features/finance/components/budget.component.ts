@@ -181,7 +181,9 @@ export class FinanceBudgetComponent implements OnInit {
     }
 
     async save(stream: BudgetStream) {
-        const result = await this.financeService.saveBudgetStream(stream);
+        const result = stream.id
+            ? await this.financeService.saveBudgetStream(stream)
+            : await this.financeService.createBudgetStream(stream);
         if (result) {
             await this.loadData();
         }

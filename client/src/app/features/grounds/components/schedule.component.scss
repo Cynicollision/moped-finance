@@ -1,0 +1,188 @@
+.schedule-container {
+    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+
+    mat-card {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .schedule-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+
+            .year-selector {
+                width: 100px;
+            }
+
+            .category-toggle {
+                height: 40px;
+            }
+        }
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+
+        th.mat-header-cell {
+            background-color: #f5f5f5;
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            border-right: 1px solid #eee;
+            text-align: center;
+        }
+
+        td.mat-cell {
+            border-bottom: 1px solid #eee;
+            border-right: 1px solid #eee;
+            padding: 8px 16px;
+        }
+
+        .interactive-row {
+            transition: background-color 0.2s;
+
+            &:hover {
+                background-color: #fefefe;
+                box-shadow: inset 0 0 0 1px #e0e0e0;
+            }
+        }
+
+        .month-header {
+            width: 120px;
+        }
+
+        .month-cell {
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            border-bottom: 2px solid #ccc;
+            border-right: 2px solid #ddd;
+
+            &.march {
+                background-color: #fde8ed;
+            }
+
+            &.april {
+                background-color: #f8cce8;
+            }
+
+            &.may {
+                background-color: #e6d0f5;
+            }
+
+            &.june {
+                background-color: #dcedc8;
+            }
+
+            &.july {
+                background-color: #c8e6c9;
+            }
+
+            &.august {
+                background-color: #e8f5e9;
+            }
+
+            &.september {
+                background-color: #ffe0b2;
+            }
+
+            &.october {
+                background-color: #ffcc80;
+            }
+
+            &.november {
+                background-color: #fff3e0;
+            }
+        }
+
+        .week-cell {
+            text-align: center;
+            font-weight: 500;
+            background-color: #fafafa;
+            width: 80px;
+        }
+
+        .status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+
+            &.complete {
+                background-color: #c8e6c9;
+                color: #2e7d32;
+            }
+
+            &.pending {
+                background-color: #fef380;
+                color: #3d3b2a;
+            }
+        }
+
+        .activities-cell {
+            cursor: pointer;
+            min-width: 300px;
+
+            .tasks-list {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                margin-bottom: 8px;
+
+                .task-item {
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    background-color: #f9f9f9;
+                    border: 1px solid #eee;
+                    transition: background-color 0.15s;
+
+                    &:hover {
+                        background-color: #f0f0f0;
+                        border-color: #ddd;
+                        cursor: pointer;
+                    }
+                }
+            }
+
+            .add-task-btn {
+                padding: 4px;
+                text-align: left;
+                margin-top: 4px;
+            }
+        }
+
+        .empty-text {
+            color: #9e9e9e;
+            font-size: 13px;
+        }
+
+        .text-muted {
+            color: #757575;
+            font-size: 0.9em;
+        }
+    }
+}

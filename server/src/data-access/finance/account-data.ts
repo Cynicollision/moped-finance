@@ -1,7 +1,5 @@
-import { EntityIdPrefix } from '@shared/core/enum';
 import { Account } from '@shared/finance/types';
 import { DatabaseError, databasePool } from './../db-client';
-import { generateEntityId } from './../../utility/id-util';
 
 export interface IFinanceAccountData {
     retrieveAll(userId: string): Promise<Account[]>;
@@ -87,7 +85,6 @@ export class FinanceAccountData implements IFinanceAccountData {
 
     public async create(userId: string, account: Account): Promise<Account> {
         try {
-            const id = account.id || generateEntityId(EntityIdPrefix.FinanceAccount);
             const now = new Date();
 
             const query = `INSERT INTO finance.accounts 
@@ -110,7 +107,7 @@ export class FinanceAccountData implements IFinanceAccountData {
                     hide_from_cashflow AS "hideFromCashflow"`;
 
             const params = [
-                id,
+                account.id,
                 now,
                 now,
                 userId,

@@ -155,6 +155,19 @@ router.post('/data/budget-streams', async (req: Request, res: Response) => {
     try {
         const user = ApiHandler.getUser(req);
         const stream = req.body;
+        const result = await financeLogic.createBudgetStream(user!.id, stream);
+        return ApiHandler.succeed(res, result);
+    }
+    catch (error) {
+        return ApiHandler.failInternalError(res, error);
+    }
+});
+
+router.put('/data/budget-streams/:id', async (req: Request, res: Response) => {
+    try {
+        const user = ApiHandler.getUser(req);
+        const stream = req.body;
+        stream.id = req.params.id; // ensure ID from URL param overrides body
         const result = await financeLogic.saveBudgetStream(user!.id, stream);
         return ApiHandler.succeed(res, result);
     }

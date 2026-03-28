@@ -1,41 +1,35 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { forkJoin, lastValueFrom } from 'rxjs';
-import { OperationResult } from '@shared/core/contracts';
+import { CareTask } from '@shared/grounds/types/care-task';
 import { ApiService } from './../../core/api.service';
-import { LoadingService } from './../../core/loading/loading.service';
-import { NotificationService } from './../../core/notification.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class GroundsService {
     private api = inject(ApiService);
-    private loader = inject(LoadingService);
-    private notificationService = inject(NotificationService);
 
     // Signals to hold state for subcomponents
     plantsData = signal<any[] | undefined>([]);
     lawnData = signal<any | undefined>(undefined);
 
-    async fetchGroundsData(): Promise<void> {
-        try {
-            // Fetch all required data in parallel
-            const task = lastValueFrom(forkJoin({
-                plants: this.api.get<OperationResult<any[]>>('api/grounds/data/plants'),
-                lawn: this.api.get<OperationResult<any>>('api/grounds/data/lawn'),
-            }));
+    fetchTasks(year?: number): Promise<CareTask[] | undefined> {
+        return this.api.get<CareTask[]>(`api/grounds/data/tasks?year=${year}`);
+    }
 
-            const response = await this.loader.withLoading(task);
+    fetchProducts(): Promise<any[] | undefined> {
+        return this.api.get<any[]>('api/grounds/data/products');
+    }
 
-            if (response.plants.success) {
-                this.plantsData.set(response.plants.data);
-            }
-            if (response.lawn.success) {
-                this.lawnData.set(response.lawn.data);
-            }
+    createTask(careTask: CareTask): Promise<CareTask | undefined> {
+        return this.api.post<CareTask>('api/grounds/data/tasks', careTask);
+    }
 
-        } catch (error) {
-            this.notificationService.error(`Unable to load grounds data: ${JSON.stringify(error)}`);
-        }
+    saveTask(careTask: CareTask): Promise<CareTask | undefined> {
+        return this.api.put<CareTask>(`api/grounds/data/tasks/${careTask.id}`, careTask);
+    }
+
+    deleteTask(id: string): Promise<boolean> {
+        return this.api.delete(`api/grounds/data/tasks/${id}`);
     }
 }
