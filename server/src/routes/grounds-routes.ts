@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { ApiHandler } from './api-handler';
 import { GroundsData } from './../data-access/grounds-data';
-import { GroundsLogic } from './../feature-logic/grounds-logic';
+import { GroundsLogic } from './../logic/grounds-logic';
 
 const router = Router();
 const groundsData = GroundsData.forPgDatabase();

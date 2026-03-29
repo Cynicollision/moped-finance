@@ -11,6 +11,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { Category, Transaction } from '@shared/finance/types';
+import { DateProviderService } from './../../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 
 @Component({
@@ -37,11 +38,12 @@ export class FinanceTransactionDetailsComponent implements OnInit {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private cdr = inject(ChangeDetectorRef);
+    private dateProvider = inject(DateProviderService);
     protected readonly Math = Math;
 
     transactionForm = new FormGroup({
         category: new FormControl<string>('', { nonNullable: true }),
-        date: new FormControl<Date>(new Date(), { nonNullable: true, validators: [Validators.required] }),
+        date: new FormControl<Date>(this.dateProvider.now(), { nonNullable: true, validators: [Validators.required] }),
         notes: new FormControl<string>('', { nonNullable: true }),
         isHidden: new FormControl<boolean>(false, { nonNullable: true })
     });

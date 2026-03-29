@@ -1,7 +1,7 @@
 import { CareTask, Location, Plant, PlantVariety, Product } from '@shared/grounds/types';
 import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
-import { generateEntityId } from './../utility/id-util';
-import { GroundsData } from './../data-access/grounds-data';
+import { generateEntityId } from '../utility/id-util';
+import { GroundsData } from '../data-access/grounds-data';
 
 export class GroundsLogic {
     constructor(private groundsData: GroundsData) {

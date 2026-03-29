@@ -11,6 +11,7 @@ import { CareTask } from '@shared/grounds/types/care-task';
 import { CareTaskCategory } from '@shared/grounds/enum/care-task-category';
 import { CareTaskType } from '@shared/grounds/enum/care-task-type';
 import { CareTaskStatus } from '@shared/grounds/enum/care-task-status';
+import { DateProviderService } from './../../../core/date-provider.service';
 import { GroundsService } from './../grounds.service';
 
 export interface TaskFormModalData {
@@ -35,6 +36,7 @@ export interface TaskFormModalData {
 export class TaskFormModalComponent implements OnInit {
     private fb = inject(FormBuilder);
     private groundsService = inject(GroundsService);
+    private dateProvider = inject(DateProviderService);
 
     form!: FormGroup;
     isSaving = false;
@@ -65,7 +67,7 @@ export class TaskFormModalComponent implements OnInit {
         public dialogRef: MatDialogRef<TaskFormModalComponent>,
         @Inject(MAT_DIALOG_DATA) public data: TaskFormModalData
     ) {
-        const currentYear = new Date().getFullYear();
+        const currentYear = this.dateProvider.now().getFullYear();
         for (let y = currentYear - 2; y <= currentYear + 2; y++) {
             this.years.push(y.toString());
         }

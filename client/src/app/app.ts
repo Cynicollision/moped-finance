@@ -9,8 +9,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
+import { Environment } from './../environments/environment';
 import { AuthService } from './core/auth.service';
 import { LoadingOverlayComponent } from './core/loading/loading-overlay.component';
+import { DateProviderService } from './core/date-provider.service';
 
 interface NavItem {
     label: string;
@@ -39,6 +41,16 @@ interface NavItem {
 export class App {
     private breakpointObserver = inject(BreakpointObserver);
     authService = inject(AuthService);
+    private dateProvider = inject(DateProviderService);
+    isDebugMode = Environment.isDebugMode;
+
+    get debugDateLabel(): string {
+        const now = this.dateProvider.now();
+        const y = now.getFullYear();
+        const m = (now.getMonth() + 1).toString().padStart(2, '0');
+        const d = now.getDate().toString().padStart(2, '0');
+        return `${y}${m}${d}`;
+    }
 
     // Configuration for navigation items
     navItems: NavItem[] = [

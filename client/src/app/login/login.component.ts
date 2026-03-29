@@ -4,20 +4,21 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { Environment } from './../../environments/environment';
 import { AuthService } from './../core/auth.service';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [
-    FormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule
-  ],
-  templateUrl: './login.component.html',
-  styles: [`
+    selector: 'app-login',
+    standalone: true,
+    imports: [
+        FormsModule,
+        MatCardModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule
+    ],
+    templateUrl: './login.component.html',
+    styles: [`
     .login-container {
       display: flex;
       justify-content: center;
@@ -34,12 +35,12 @@ import { AuthService } from './../core/auth.service';
   `]
 })
 export class LoginComponent {
-  username = '';
-  private authService = inject(AuthService);
+    username = Environment.devUsername;
+    private authService = inject(AuthService);
 
-  onLogin() {
-    if (this.username) {
-      this.authService.login(this.username);
+    onLogin() {
+        if (this.username) {
+            this.authService.login(this.username);
+        }
     }
-  }
 }

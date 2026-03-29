@@ -9,6 +9,7 @@ import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/fina
 import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
 import { HistoryTimeframe, ValueHistoryType, AccountCategory } from '@shared/finance/enum';
+import { DateProviderService } from './../../../core/date-provider.service';
 import { ModalService } from './../../../core/modal/modal.service';
 import { FinanceValueHistoryComponent } from './value-history.component';
 import { FinanceAccountEditComponent } from './account-edit.component';
@@ -25,6 +26,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private modalService = inject(ModalService);
+    private dateProvider = inject(DateProviderService);
     protected readonly Math = Math;
 
     account = signal<Account | undefined>(undefined);
@@ -65,7 +67,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
 
     async updateChartData(accountId: string) {
         const timeframe = this.selectedTimeframe();
-        const asOfDate = new Date();
+        const asOfDate = this.dateProvider.now();
 
         const options: GetAccountBalanceHistoryOptions = {
             asOfDate,

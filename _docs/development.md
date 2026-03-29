@@ -27,6 +27,11 @@ To deploy to the Synology NAS or test the production build locally:
     *   *This builds the optimized image (Stage 3), serves the Angular frontend statically, and removes development volume mounts.*
 *   **Stop Production:** `docker-compose -f docker-compose.prod.yml down`
 
+### Build Configurations (Docker)
+The root `Dockerfile` supports a `BUILD_CONFIG` argument to specify the Angular build target.
+- **Production (Default):** `docker build --build-arg BUILD_CONFIG=production .`
+- **Development:** `docker build --build-arg BUILD_CONFIG=development .`
+
 ### Troubleshooting
 *   **Port 5432 already allocated:** This usually happens if an old container wasn't stopped correctly. Run `docker-compose down --remove-orphans` or manually stop the conflicting container with `docker stop <container_name>`.
 
@@ -49,6 +54,25 @@ ng serve
 ```
 Access the app at `http://localhost:4200`.
 
+### Environment Configuration
+The application uses Angular environment files located in `client/src/environments/`.
+- `environment.ts`: Production settings (default).
+- `environment.development.ts`: Development settings (mock dates, dev credentials).
+
+To start with development settings:
+```powershell
+ng serve --configuration development
+```
+
+### Date Mocking (DateProviderService)
+To avoid hardcoding `new Date()` calls, the application uses a centralized `DateProviderService` (under `src/app/core/`).
+- **Production Mode:** Returns the actual system time.
+- **Debug Mode:** Returns a fixed mock date (**2026-01-01**).
+- **Visual Indicator:** In debug mode, a gold bug icon and the current "mock date" appear in the main sidebar toolbar.
+
+### Streamlined Login (Development)
+When running in development mode, the `LoginComponent` automatically populates the username field with the `devUsername` defined in the environment file, allowing for one-click access.
+
 ### API Proxying
 During development, the Angular dev server (port 4200) is configured via `client/proxy.conf.json` to proxy all `/api/*` requests to the Express backend (port 3000). This allows you to use relative URLs in your services (e.g., `/api/healthcheck`) without CORS issues.
 
@@ -56,7 +80,7 @@ During development, the Angular dev server (port 4200) is configured via `client
 To build the application for the Express server to serve:
 ```powershell
 cd client
-ng build
+ng build --configuration production
 ```
 The output is generated in `client/dist/home-lab-client`.
 

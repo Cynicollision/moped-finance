@@ -4,7 +4,7 @@ import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionS
 import { BudgetPeriod, HistoryTimeframe, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { ApiHandler } from './api-handler';
 import { FinanceData } from './../data-access/finance-data';
-import { FinanceLogic } from './../feature-logic/finance-logic';
+import { FinanceLogic } from './../logic/finance-logic';
 
 const router = Router();
 const financeData = FinanceData.forPgDatabase();

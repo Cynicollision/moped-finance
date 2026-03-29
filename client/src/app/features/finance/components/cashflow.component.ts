@@ -9,10 +9,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
-import { FinanceService } from './../finance.service';
 import { CategoryClass, BudgetPeriod } from '@shared/finance/enum';
 import { Category } from '@shared/finance/types';
 import { SpendingStream } from '@shared/finance/contracts';
+import { DateProviderService } from './../../../core/date-provider.service';
+import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-spending',
@@ -35,6 +36,7 @@ export class FinanceCashflowComponent implements OnInit {
     private financeService = inject(FinanceService);
     private cdr = inject(ChangeDetectorRef);
     private router = inject(Router);
+    private dateProvider = inject(DateProviderService);
 
     BudgetPeriod = BudgetPeriod;
     periods = [BudgetPeriod.Monthly, BudgetPeriod.Quarterly, BudgetPeriod.Yearly];
@@ -55,11 +57,11 @@ export class FinanceCashflowComponent implements OnInit {
         { value: 3, label: 'Q3' }, { value: 4, label: 'Q4' }
     ];
 
-    currentYear = new Date().getFullYear();
+    currentYear = this.dateProvider.now().getFullYear();
     years = [this.currentYear - 2, this.currentYear - 1, this.currentYear, this.currentYear + 1];
 
-    selectedMonth = new Date().getMonth();
-    selectedQuarter = Math.floor(new Date().getMonth() / 3) + 1;
+    selectedMonth = this.dateProvider.now().getMonth();
+    selectedQuarter = Math.floor(this.dateProvider.now().getMonth() / 3) + 1;
     selectedYear = this.currentYear;
 
     categories: Category[] = [];

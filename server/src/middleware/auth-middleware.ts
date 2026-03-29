@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiHandler } from './../routes/api-handler';
-import { AuthLogic } from './../feature-logic/auth-logic';
+import { AuthLogic } from './../logic/auth-logic';
 
 const authLogic = new AuthLogic();
 

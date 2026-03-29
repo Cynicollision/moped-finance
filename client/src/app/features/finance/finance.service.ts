@@ -3,12 +3,14 @@ import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, Tra
 import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../../core/api.service';
+import { DateProviderService } from './../../core/date-provider.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class FinanceService {
     private api = inject(ApiService);
+    private dateProvider = inject(DateProviderService);
 
     // Metadata (Institutions, Categories)
     fetchInstitutions(): Promise<Institution[] | undefined> {
@@ -46,7 +48,7 @@ export class FinanceService {
     }
 
     fetchTotalValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<TotalValueHistory[] | undefined> {
-        const asOfDate = '2026-02-28'; // TODO: replace with current date
+        const asOfDate = this.dateProvider.now().toISOString().split('T')[0];
         const url = `api/finance/data/accounts/total-value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
         return this.api.get<TotalValueHistory[]>(url);
     }

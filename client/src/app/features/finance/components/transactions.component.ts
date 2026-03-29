@@ -13,12 +13,13 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
+import { startWith, map } from 'rxjs';
 import { SortDirection } from '@shared/core/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction, Category, Account } from '@shared/finance/types';
+import { DateProviderService } from './../../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
-import { startWith, map } from 'rxjs';
 
 @Component({
     selector: 'app-finance-transactions',
@@ -45,6 +46,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
     private financeService = inject(FinanceService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
+    private dateProvider = inject(DateProviderService);
     protected readonly Math = Math;
 
     displayedColumns: string[] = ['date', 'account', 'merchant', 'category', 'amount'];
@@ -58,7 +60,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         minAmount: new FormControl<number | null>(null),
         maxAmount: new FormControl<number | null>(null),
         startDate: new FormControl<Date | null>(null),
-        endDate: new FormControl<Date | null>(new Date()),
+        endDate: new FormControl<Date | null>(this.dateProvider.now()),
         merchant: new FormControl<string>(''),
         category: new FormControl<string>(''),
         account: new FormControl<string>(''),
@@ -271,7 +273,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             minAmount: null,
             maxAmount: null,
             startDate: null,
-            endDate: new Date(),
+            endDate: this.dateProvider.now(),
             merchant: '',
             category: '',
             account: '',

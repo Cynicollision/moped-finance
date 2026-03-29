@@ -2,9 +2,9 @@ import { EntityIdPrefix } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Account, BalanceHistory, Category, Institution, Transaction, BudgetStream } from '@shared/finance/types';
-import { getDatesForPeriod, getStartDateForTimeframe } from './../utility/date-time-util';
-import { generateEntityId } from './../utility/id-util';
-import { FinanceData } from './../data-access/finance-data';
+import { getDatesForPeriod, getStartDateForTimeframe } from '../utility/date-time-util';
+import { generateEntityId } from '../utility/id-util';
+import { FinanceData } from '../data-access/finance-data';
 
 export class FinanceLogic {
     constructor(private financeData: FinanceData) {

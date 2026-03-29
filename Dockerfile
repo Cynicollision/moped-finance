@@ -3,6 +3,8 @@
 # source code, installs dependencies, and runs the production build.
 FROM node:22-alpine as client-builder
 
+ARG BUILD_CONFIG=production
+
 WORKDIR /app
 
 # Copy dependency definitions and install (leverages Docker cache)
@@ -14,7 +16,7 @@ COPY client ./client
 COPY shared ./shared
 
 # Build the Angular app
-RUN npm run build --prefix client
+RUN npm run build --prefix client -- --configuration=$BUILD_CONFIG
 
 
 # STAGE 2: Build the TypeScript Backend

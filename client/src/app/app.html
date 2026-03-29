@@ -4,7 +4,16 @@
         [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false">
 
         <div style="display: flex; flex-direction: column; height: 100%;">
-            <mat-toolbar>HomeLab</mat-toolbar>
+            <mat-toolbar>
+                HomeLab
+                @if (isDebugMode) {
+                <div style="display: flex; flex-direction: column; align-items: center; margin-left: auto;">
+                    <mat-icon style="color: #ff9800;" title="Debug Mode">bug_report</mat-icon>
+                    <span style="font-size: 10px; color: #ff9800; font-weight: bold; line-height: 1;">{{ debugDateLabel
+                        }}</span>
+                </div>
+                }
+            </mat-toolbar>
 
             <mat-nav-list>
                 @if (authService.currentUser()) {

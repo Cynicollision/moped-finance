@@ -12,9 +12,9 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { RouterModule } from '@angular/router';
 import { CareTask } from '@shared/grounds/types/care-task';
 import { CareTaskCategory } from '@shared/grounds/enum/care-task-category';
-import { GroundsService } from './../grounds.service';
+import { DateProviderService } from './../../../core/date-provider.service';
 import { ModalService } from './../../../core/modal/modal.service';
-
+import { GroundsService } from './../grounds.service';
 import { TaskFormModalComponent, TaskFormModalData } from './task-form-modal.component';
 
 export interface ScheduleRow {
@@ -40,9 +40,10 @@ export interface ScheduleRow {
 export class GroundsScheduleComponent implements OnInit {
     groundsService = inject(GroundsService);
     modalService = inject(ModalService);
+    dateProvider = inject(DateProviderService);
 
     // Filter state
-    selectedYear = signal<number>(new Date().getFullYear());
+    selectedYear = signal<number>(this.dateProvider.now().getFullYear());
     selectedCategory = signal<string>('All');
 
     displayedColumns: string[] = ['month', 'week', 'activities'];
@@ -65,7 +66,7 @@ export class GroundsScheduleComponent implements OnInit {
     availableYears: number[] = [];
 
     ngOnInit() {
-        const currentYear = new Date().getFullYear();
+        const currentYear = this.dateProvider.now().getFullYear();
         this.availableYears = [
             currentYear - 2, currentYear - 1, currentYear, currentYear + 1, currentYear + 2
         ];

@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { OperationResult } from '@shared/core/contracts';
+import { Environment } from './../../environments/environment';
 import { LoadingService } from './loading/loading.service';
 import { NotificationService } from './notification.service';
 
@@ -12,8 +13,7 @@ export class ApiService {
     private http = inject(HttpClient);
     private notificationService = inject(NotificationService);
     private loader = inject(LoadingService);
-    // TODO: In a production app, this URL should come from environment.ts
-    private baseUrl = 'http://localhost:3000';
+    private baseUrl = Environment.apiUrl;
 
     private async handleRequest<T>(request: Promise<OperationResult<T>>): Promise<T | undefined> {
         try {

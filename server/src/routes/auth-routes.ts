@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { User } from '@shared/core/types/user';
 import { ApiHandler } from './api-handler';
-import { AuthLogic } from './../feature-logic/auth-logic';
+import { AuthLogic } from './../logic/auth-logic';
 import { resolveUser } from './../middleware/auth-middleware';
 
 const router = Router();
@@ -42,10 +42,10 @@ router.post('/logout', async (req: Request, res: Response) => {
 router.get('/me', resolveUser, async (req: Request, res: Response) => {
     const user = ApiHandler.getUser(req);
 
-    if (!user) {
-        // TODO: is 401 correct here? Or 200 w/ success = false for more graceful handling on client?
-        return ApiHandler.failUnauthorized(res);
-    }
+    // if (!user) {
+    //     // TODO: is 401 correct here? Or 200 w/ success = false for more graceful handling on client?
+    //     return ApiHandler.failUnauthorized(res);
+    // }
 
     return ApiHandler.succeed(res, user);
 });
