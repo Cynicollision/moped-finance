@@ -7,11 +7,15 @@ const authLogic = new AuthLogic();
 export const resolveUser = async (req: Request, _res: Response, next: NextFunction) => {
     if (!req.session?.user && !(req as any).user) {
         const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.substring(7);
-            const user = await authLogic.getUserByToken(token);
-            if (user) {
-                (req as any).user = user;
+        if (authHeader && authHeader.startsWith('Basic ')) {
+            const b64auth = authHeader.substring(6);
+            const [username, password] = Buffer.from(b64auth, 'base64').toString().split(':');
+            
+            if (username && password) {
+                const user = await authLogic.loginUser(username, password);
+                if (user) {
+                    (req as any).user = user;
+                }
             }
         }
     }

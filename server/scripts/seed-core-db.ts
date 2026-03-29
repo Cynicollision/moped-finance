@@ -15,9 +15,11 @@ const pool = new Pool(dbConfig);
     try {
         console.log('🌱 Seeding core data...');
         console.log(' 1. Inserting core.users: one demo user');
+        const bcrypt = require('bcrypt');
+        const defaultHash = bcrypt.hashSync('password', 10);
         await client.query(
-            'INSERT INTO core.users (id, name, username) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING',
-            ['1', 'Sean', 'stn']
+            'INSERT INTO core.users (id, name, username, password_hash) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING',
+            ['1', 'Sean', 'stn', defaultHash]
         );
         console.log(`✅ Seeded 1 core.user.`);
     }

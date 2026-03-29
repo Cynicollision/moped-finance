@@ -26,7 +26,10 @@ export class ApiService {
             return response.data as T;
         }
         catch (error: any) {
-            this.notificationService.error('An unexpected error was encountered.');
+            if (error) {
+                this.notificationService.error(`${error.status} - ${error.statusText}`);
+            }
+
             return undefined;
         }
     }

@@ -2,10 +2,12 @@ import { Router, Request, Response } from 'express';
 import { ApiHandler } from './api-handler';
 import { GroundsData } from './../data-access/grounds-data';
 import { GroundsLogic } from './../logic/grounds-logic';
+import { AppLogger } from './../utility/logger';
 
 const router = Router();
+const logger = AppLogger.forPgDatabase();
 const groundsData = GroundsData.forPgDatabase();
-const groundsLogic = new GroundsLogic(groundsData);
+const groundsLogic = new GroundsLogic(logger, groundsData);
 
 router.get('/data/locations', async (_req: Request, res: Response) => {
     try {

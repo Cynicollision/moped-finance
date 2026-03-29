@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Pool } from 'pg';
-import { generateEntityId } from './../src/utility/id-util';
+import { EntityIdUtil } from './../src/utility/entity-id';
 import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
 
 const dbConfig = {
@@ -169,7 +169,7 @@ async function readCsv(fileName: string): Promise<string[]> {
                     if (accountId && date && amount) {
                         const categoryId = categoriesMap.get(categoryName?.trim()) || null;
                         transactionCount++;
-                        const txnId = generateEntityId(EntityIdPrefix.FinanceTransaction);
+                        const txnId = EntityIdUtil.generate(EntityIdPrefix.FinanceTransaction);
 
                         await client.query(
                             `INSERT INTO finance.transactions (
@@ -227,7 +227,7 @@ async function readCsv(fileName: string): Promise<string[]> {
 
                     if (accountId && date && balance) {
                         balanceCount++;
-                        const bhId = generateEntityId(EntityIdPrefix.FinanceBalanceHistory);
+                        const bhId = EntityIdUtil.generate(EntityIdPrefix.FinanceBalanceHistory);
 
                         await client.query(
                             `INSERT INTO finance.balance_history (

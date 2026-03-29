@@ -18,29 +18,16 @@ import { AuthService } from './../core/auth.service';
         MatButtonModule
     ],
     templateUrl: './login.component.html',
-    styles: [`
-    .login-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-      padding: 2rem;
-    }
-    .full-width {
-      width: 100%;
-      margin-bottom: 1rem;
-    }
-    .actions { display: flex; justify-content: flex-end; }
-    mat-card { min-width: 300px; }
-  `]
+    styleUrl: './login.component.scss'
 })
 export class LoginComponent {
     username = Environment.devUsername;
+    password = Environment.devPassword;
     private authService = inject(AuthService);
 
     onLogin() {
         if (this.username) {
-            this.authService.login(this.username);
+            this.authService.login(this.username, this.password);
         }
     }
 }

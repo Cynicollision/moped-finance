@@ -2,12 +2,16 @@ import { EntityIdPrefix } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Account, BalanceHistory, Category, Institution, Transaction, BudgetStream } from '@shared/finance/types';
-import { getDatesForPeriod, getStartDateForTimeframe } from '../utility/date-time-util';
-import { generateEntityId } from '../utility/id-util';
-import { FinanceData } from '../data-access/finance-data';
+import { FinanceData } from './../data-access/finance-data';
+import { AppLogger } from './../utility/logger';
+import { DateTimeUtil } from './../utility/date-time';
+import { EntityIdUtil } from './../utility/entity-id';
 
-export class FinanceLogic {
-    constructor(private financeData: FinanceData) {
+import { BaseLogic } from './base-logic';
+
+export class FinanceLogic extends BaseLogic {
+    constructor(logger: AppLogger, private financeData: FinanceData) {
+        super(logger);
     }
 
     // Metadata
@@ -35,15 +39,18 @@ export class FinanceLogic {
     }
 
     public async getAccounts(userId: string): Promise<Account[]> {
-        const data = await this.financeData.accounts.retrieveAll(userId);
-        return data;
+        return await this.execute(userId, 'getAccounts', () =>
+            this.financeData.accounts.retrieveAll(userId)
+        );
     }
 
     public async createAccount(userId: string, account: Account): Promise<Account> {
-        account.id = generateEntityId(EntityIdPrefix.FinanceAccount);
-        account.userId = userId;
+        return await this.execute(userId, 'createAccount', async () => {
+            account.id = EntityIdUtil.generate(EntityIdPrefix.FinanceAccount);
+            account.userId = userId;
 
-        return await this.financeData.accounts.create(userId, account);
+            return await this.financeData.accounts.create(userId, account);
+        });
     }
 
     public async saveAccount(userId: string, account: Account): Promise<Account> {
@@ -57,7 +64,7 @@ export class FinanceLogic {
     }
 
     public async getAccountBalanceHistory(userId: string, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[]> {
-        const startDate = getStartDateForTimeframe(options.timeframe, options.asOfDate);
+        const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         const data = await this.financeData.balanceHistory.retrieveForAccount(userId, accountId, startDate.toISOString(), options.asOfDate.toISOString());
         return data;
     }
@@ -66,7 +73,7 @@ export class FinanceLogic {
         options.type = options.type || ValueHistoryType.NetWorth;
         options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
 
-        const startDate = getStartDateForTimeframe(options.timeframe, options.asOfDate);
+        const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         const data = await this.financeData.balanceHistory.retrieveSumByDate(userId, options.type, startDate, options.asOfDate);
 
         return data;
@@ -106,7 +113,7 @@ export class FinanceLogic {
     }
 
     public async createBudgetStream(userId: string, stream: BudgetStream): Promise<BudgetStream> {
-        stream.id = generateEntityId(EntityIdPrefix.FinanceBudgetStream);
+        stream.id = EntityIdUtil.generate(EntityIdPrefix.FinanceBudgetStream);
         stream.userId = userId;
 
         return await this.financeData.budgetStream.insert(userId, stream);
@@ -126,8 +133,8 @@ export class FinanceLogic {
 
     // Cashflow
     public async getTransactionSpendingByCategory(userId: string, period: BudgetPeriod, asOfDate: string): Promise<SpendingStream[]> {
-        const asOf = asOfDate ? new Date(asOfDate) : new Date();
-        const { startDate, endDate } = getDatesForPeriod(period, asOf);
+        const asOf = asOfDate ? new Date(asOfDate) : DateTimeUtil.now();
+        const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
         const data = await this.financeData.transactions.retrieveSpendingByCategory(userId, startDate, endDate);
         return data;
     }

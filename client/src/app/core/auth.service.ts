@@ -17,9 +17,8 @@ export class AuthService {
         this.currentUser.set(response || null);
     }
 
-    async login(username: string): Promise<void> {
-        // TODO: sending hardcoded sample data for now
-        const credentials = { username: username, password: 'password' };
+    async login(username: string, password?: string): Promise<void> {
+        const credentials = { username, password };
         const response = await this.api.post<User>('auth/login', credentials);
 
         if (response) {

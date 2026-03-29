@@ -23,6 +23,7 @@
         "db:reset:grounds": "npm run db:drop:grounds && npm run db:init:grounds && npm run db:seed:grounds"
     },
     "dependencies": {
+        "bcrypt": "^5.1.1",
         "cors": "^2.8.6",
         "dotenv": "^16.4.5",
         "express": "^4.18.2",
@@ -31,6 +32,7 @@
         "short-unique-id": "^5.2.0"
     },
     "devDependencies": {
+        "@types/bcrypt": "^5.0.2",
         "@types/cors": "^2.8.19",
         "@types/express": "^4.17.21",
         "@types/express-session": "^1.18.2",

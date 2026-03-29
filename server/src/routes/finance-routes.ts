@@ -5,10 +5,13 @@ import { BudgetPeriod, HistoryTimeframe, TransactionsSortKey, ValueHistoryType }
 import { ApiHandler } from './api-handler';
 import { FinanceData } from './../data-access/finance-data';
 import { FinanceLogic } from './../logic/finance-logic';
+import { DateTimeUtil } from './../utility/date-time';
+import { AppLogger } from './../utility/logger';
 
 const router = Router();
+const logger = AppLogger.forPgDatabase();
 const financeData = FinanceData.forPgDatabase();
-const financeLogic = new FinanceLogic(financeData);
+const financeLogic = new FinanceLogic(logger, financeData);
 
 router.get('/data/accounts', async (req: Request, res: Response) => {
     try {
@@ -32,7 +35,7 @@ router.get('/data/accounts/total-value-history', async (req: Request, res: Respo
         const asOfDateStr = req.query.asOfDate as string;
         const asOfDate = asOfDateStr
             ? new Date(asOfDateStr)
-            : new Date();
+            : DateTimeUtil.now();
 
         const options: TotalValueHistoryOptions = {
             asOfDate,
@@ -109,7 +112,7 @@ router.get('/data/accounts/:accountId/balance-history', async (req: Request, res
         const asOfDateStr = req.query.asOfDate as string;
         const asOfDate = asOfDateStr
             ? new Date(asOfDateStr)
-            : new Date();
+            : DateTimeUtil.now();
 
         const options: GetAccountBalanceHistoryOptions = {
             asOfDate,
