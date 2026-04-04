@@ -16,26 +16,29 @@ export class FinanceLogic extends BaseLogic {
 
     // Metadata
     public async getCategories(userId: string, activeOnly: boolean = false): Promise<Category[]> {
-        const data = await this.financeData.categories.retrieveAll(userId, activeOnly);
-        return data;
+        return await this.execute(userId, 'getCategories', () =>
+            this.financeData.categories.retrieveAll(userId, activeOnly)
+        );
     }
 
     public async getInstitutions(userId: string): Promise<Institution[]> {
-        const data = await this.financeData.institutions.retrieveAll(userId);
-        return data;
+        return await this.execute(userId, 'getInstitutions', () =>
+            this.financeData.institutions.retrieveAll(userId)
+        );
     }
 
     // Accounts
     public async getAccount(userId: string, accountId: string): Promise<Account> {
-        const data = await this.financeData.accounts.retrieveSingle(userId, accountId);
-
-        if (data) {
-            return data;
-        }
-        else {
-            // TODO: better bad request error handling
-            throw new Error(`Error: Account not found for user ID: ${userId} and account ID: ${accountId}`);
-        }
+        return await this.execute(userId, 'getAccount', async () => {
+            const data = await this.financeData.accounts.retrieveSingle(userId, accountId);
+            if (data) {
+                return data;
+            }
+            else {
+                // TODO: better bad request error handling
+                throw new Error(`Error: Account not found for user ID: ${userId} and account ID: ${accountId}`);
+            }
+        });
     }
 
     public async getAccounts(userId: string): Promise<Account[]> {
@@ -54,88 +57,108 @@ export class FinanceLogic extends BaseLogic {
     }
 
     public async saveAccount(userId: string, account: Account): Promise<Account> {
-        // TODO: validate user ownership
-        return await this.financeData.accounts.update(userId, account);
+        return await this.execute(userId, 'saveAccount', async () => {
+            // TODO: validate user ownership
+            return await this.financeData.accounts.update(userId, account);
+        });
     }
 
     public async deleteAccount(userId: string, id: string): Promise<void> {
-        // TODO: validate user ownership
-        await this.financeData.accounts.delete(userId, id);
+        return await this.execute(userId, 'deleteAccount', async () => {
+            // TODO: validate user ownership
+            await this.financeData.accounts.delete(userId, id);
+        });
     }
 
     public async getAccountBalanceHistory(userId: string, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[]> {
-        const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        const data = await this.financeData.balanceHistory.retrieveForAccount(userId, accountId, startDate.toISOString(), options.asOfDate.toISOString());
-        return data;
+        return await this.execute(userId, 'getAccountBalanceHistory', async () => {
+            const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
+            return await this.financeData.balanceHistory.retrieveForAccount(userId, accountId, startDate.toISOString(), options.asOfDate.toISOString());
+        });
     }
 
     public async getTotalValueHistory(userId: string, options: TotalValueHistoryOptions): Promise<TotalValueHistory[]> {
-        options.type = options.type || ValueHistoryType.NetWorth;
-        options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
+        return await this.execute(userId, 'getTotalValueHistory', async () => {
+            options.type = options.type || ValueHistoryType.NetWorth;
+            options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
 
-        const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        const data = await this.financeData.balanceHistory.retrieveSumByDate(userId, options.type, startDate, options.asOfDate);
-
-        return data;
+            const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
+            return await this.financeData.balanceHistory.retrieveSumByDate(userId, options.type, startDate, options.asOfDate);
+        });
     }
 
     // Transactions
     public async getTransaction(userId: string, id: string): Promise<Transaction | undefined> {
-        return await this.financeData.transactions.retrieveSingle(userId, id);
+        return await this.execute(userId, 'getTransaction', () =>
+            this.financeData.transactions.retrieveSingle(userId, id)
+        );
     }
 
     public async getTransactions(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]> {
-        // TODO: validate options
-
-        const data = await this.financeData.transactions.search(userId, options, accountId);
-        return data;
+        return await this.execute(userId, 'getTransactions', async () => {
+            // TODO: validate options
+            return await this.financeData.transactions.search(userId, options, accountId);
+        });
     }
 
     public async getTransactionMerchants(userId: string): Promise<string[]> {
-        const data = await this.financeData.transactions.retrieveMerchants(userId);
-        return data;
+        return await this.execute(userId, 'getTransactionMerchants', () =>
+            this.financeData.transactions.retrieveMerchants(userId)
+        );
     }
 
     public async saveTransaction(userId: string, transaction: Transaction): Promise<Transaction> {
-        // TODO: validate user ownership
-        return await this.financeData.transactions.update(userId, transaction);
+        return await this.execute(userId, 'saveTransaction', async () => {
+            // TODO: validate user ownership
+            return await this.financeData.transactions.update(userId, transaction);
+        });
     }
 
     public async deleteTransaction(userId: string, id: string): Promise<void> {
-        // TODO: validate user ownership
-        await this.financeData.transactions.delete(userId, id);
+        return await this.execute(userId, 'deleteTransaction', async () => {
+            // TODO: validate user ownership
+            await this.financeData.transactions.delete(userId, id);
+        });
     }
 
     // Budget
     public async getBudgetStreams(userId: string): Promise<BudgetStream[]> {
-        const data = await this.financeData.budgetStream.retrieveAll(userId).catch(() => []);
-        return data;
+        return await this.execute(userId, 'getBudgetStreams', async () => {
+            return await this.financeData.budgetStream.retrieveAll(userId).catch(() => []);
+        });
     }
 
     public async createBudgetStream(userId: string, stream: BudgetStream): Promise<BudgetStream> {
-        stream.id = EntityIdUtil.generate(EntityIdPrefix.FinanceBudgetStream);
-        stream.userId = userId;
+        return await this.execute(userId, 'createBudgetStream', async () => {
+            stream.id = EntityIdUtil.generate(EntityIdPrefix.FinanceBudgetStream);
+            stream.userId = userId;
 
-        return await this.financeData.budgetStream.insert(userId, stream);
+            return await this.financeData.budgetStream.insert(userId, stream);
+        });
     }
 
     public async saveBudgetStream(userId: string, stream: BudgetStream): Promise<BudgetStream> {
-        // TODO: validate stream.userId matches, instead?
-        stream.userId = userId;
+        return await this.execute(userId, 'saveBudgetStream', async () => {
+            // TODO: validate stream.userId matches, instead?
+            stream.userId = userId;
 
-        return await this.financeData.budgetStream.update(userId, stream);
+            return await this.financeData.budgetStream.update(userId, stream);
+        });
     }
 
     public async deleteBudgetStream(userId: string, id: string): Promise<void> {
-        // TODO: validate user ownership
-        await this.financeData.budgetStream.delete(userId, id);
+        return await this.execute(userId, 'deleteBudgetStream', async () => {
+            // TODO: validate user ownership
+            await this.financeData.budgetStream.delete(userId, id);
+        });
     }
 
     // Cashflow
     public async getTransactionSpendingByCategory(userId: string, period: BudgetPeriod, asOfDate: string): Promise<SpendingStream[]> {
-        const asOf = asOfDate ? new Date(asOfDate) : DateTimeUtil.now();
-        const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
-        const data = await this.financeData.transactions.retrieveSpendingByCategory(userId, startDate, endDate);
-        return data;
+        return await this.execute(userId, 'getTransactionSpendingByCategory', async () => {
+            const asOf = asOfDate ? new Date(asOfDate) : DateTimeUtil.now();
+            const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
+            return await this.financeData.transactions.retrieveSpendingByCategory(userId, startDate, endDate);
+        });
     }
 }
