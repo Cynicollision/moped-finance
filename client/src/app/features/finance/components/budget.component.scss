@@ -70,11 +70,11 @@
             margin-top: 6px;
             font-size: 0.85rem;
             line-height: 1.4;
-            color: rgba(0, 0, 0, 0.6);
+            color: var(--text-muted);
 
             .mobile-category {
                 font-weight: 510;
-                color: rgba(0, 0, 0, 0.8);
+                color: var(--text-main);
                 display: flex;
                 align-items: center;
                 gap: 4px;
@@ -95,8 +95,8 @@
 
 .edit-form-container {
     padding: 24px;
-    border-top: 1px solid rgba(0, 0, 0, 0.12);
-    background-color: rgba(0, 0, 0, 0.02);
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-highlight);
 
     .form-row {
         display: flex;
@@ -141,8 +141,8 @@
     flex-wrap: wrap;
     gap: 16px 32px;
     padding: 24px;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    background-color: rgba(0, 0, 0, 0.01);
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-highlight);
     border-radius: 0 0 4px 4px;
 
     .summary-item {
@@ -157,22 +157,22 @@
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: rgba(0, 0, 0, 0.54);
+            color: var(--text-muted);
             white-space: nowrap;
         }
 
         .value {
             font-size: 1.1rem;
             font-weight: 600;
-            color: rgba(0, 0, 0, 0.87);
+            color: var(--text-main);
             white-space: nowrap;
 
             &.income-total {
-                color: #2e7d32;
+                color: var(--color-positive);
             }
 
             &.expense-total {
-                color: #c62828;
+                color: var(--color-negative);
             }
 
             &.income-yearly, &.expense-yearly {
@@ -195,6 +195,6 @@
 }
 
 .recurrence-text {
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--text-muted);
     font-size: 0.9em;
 }

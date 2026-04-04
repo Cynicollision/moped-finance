@@ -22,7 +22,7 @@
 
 /* Highlight active link */
 .active-link {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--bg-hover);
   font-weight: 500;
 }
 

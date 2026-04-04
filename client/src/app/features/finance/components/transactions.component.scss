@@ -36,11 +36,11 @@ table {
             margin-top: 6px;
             font-size: 0.85rem;
             line-height: 1.4;
-            color: rgba(0, 0, 0, 0.6);
+            color: var(--text-muted);
 
             .mobile-category {
                 font-weight: 510;
-                color: rgba(0, 0, 0, 0.8);
+                color: var(--text-main);
                 display: flex;
                 align-items: center;
                 gap: 4px;
@@ -54,14 +54,7 @@ table {
     }
 }
 
-.clickable-row {
-    cursor: pointer;
-    transition: background-color 200ms;
 
-    &:hover {
-        background-color: rgba(0, 0, 0, 0.04);
-    }
-}
 
 .filter-form {
     display: flex;

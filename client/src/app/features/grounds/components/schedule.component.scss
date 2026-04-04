@@ -38,18 +38,18 @@
         border-collapse: collapse;
 
         th.mat-header-cell {
-            background-color: #f5f5f5;
+            background-color: var(--bg-card);
             font-weight: bold;
             font-size: 14px;
-            color: #333;
-            border-bottom: 2px solid #ddd;
-            border-right: 1px solid #eee;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
             text-align: center;
         }
 
         td.mat-cell {
-            border-bottom: 1px solid #eee;
-            border-right: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
             padding: 8px 16px;
         }
 
@@ -57,8 +57,8 @@
             transition: background-color 0.2s;
 
             &:hover {
-                background-color: #fefefe;
-                box-shadow: inset 0 0 0 1px #e0e0e0;
+                background-color: var(--bg-hover);
+                box-shadow: inset 0 0 0 1px var(--border-color);
             }
         }
 
@@ -70,50 +70,33 @@
             font-weight: 600;
             text-align: center;
             vertical-align: middle;
-            border-bottom: 2px solid #ccc;
-            border-right: 2px solid #ddd;
+            border-bottom: 2px solid var(--border-color);
+            border-right: 2px solid var(--border-color);
+            background-color: var(--bg-card);
 
-            &.march {
-                background-color: #fde8ed;
+            // Season: Spring (Pink/Purple)
+            &.march, &.april, &.may {
+                background-color: rgba(244, 143, 177, 0.07);
+                color: #f8bbd0;
             }
 
-            &.april {
-                background-color: #f8cce8;
+            // Season: Summer (Green)
+            &.june, &.july, &.august {
+                background-color: rgba(165, 214, 167, 0.07);
+                color: #c8e6c9;
             }
 
-            &.may {
-                background-color: #e6d0f5;
-            }
-
-            &.june {
-                background-color: #dcedc8;
-            }
-
-            &.july {
-                background-color: #c8e6c9;
-            }
-
-            &.august {
-                background-color: #e8f5e9;
-            }
-
-            &.september {
-                background-color: #ffe0b2;
-            }
-
-            &.october {
-                background-color: #ffcc80;
-            }
-
-            &.november {
-                background-color: #fff3e0;
+            // Season: Fall (Orange)
+            &.september, &.october, &.november {
+                background-color: rgba(255, 204, 128, 0.07);
+                color: #ffe0b2;
             }
         }
 
         .week-cell {
             text-align: center;
             font-weight: 500;
-            background-color: #fafafa;
+            background-color: var(--bg-highlight);
             width: 80px;
         }
 
@@ -133,13 +116,13 @@
             text-align: center;
 
             &.complete {
-                background-color: #c8e6c9;
-                color: #2e7d32;
+                background-color: rgba(129, 199, 132, 0.2);
+                color: var(--color-positive);
             }
 
             &.pending {
-                background-color: #fef380;
-                color: #3d3b2a;
+                background-color: rgba(255, 235, 59, 0.2);
+                color: #fff59d;
             }
         }
 
@@ -156,13 +139,13 @@
                 .task-item {
                     padding: 4px 8px;
                     border-radius: 4px;
-                    background-color: #f9f9f9;
-                    border: 1px solid #eee;
+                    background-color: var(--bg-highlight);
+                    border: 1px solid var(--border-color);
                     transition: background-color 0.15s;
 
                     &:hover {
-                        background-color: #f0f0f0;
-                        border-color: #ddd;
+                        background-color: var(--bg-hover);
+                        border-color: var(--border-color);
                         cursor: pointer;
                     }
                 }
@@ -176,12 +159,12 @@
         }
 
         .empty-text {
-            color: #9e9e9e;
+            color: var(--text-muted);
             font-size: 13px;
         }
 
         .text-muted {
-            color: #757575;
+            color: var(--text-muted);
             font-size: 0.9em;
         }
     }

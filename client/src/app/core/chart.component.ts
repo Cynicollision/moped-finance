@@ -5,10 +5,28 @@ export type { ChartConfiguration } from 'chart.js';
 
 Chart.register(...registerables);
 
+// Global defaults for Dark Theme
+Chart.defaults.color = '#efefef'; // --text-main
+Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.12)'; // --border-color
+Chart.defaults.elements.line.tension = 0.4; // Slightly smoother lines by default
+Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.08)';
+Chart.defaults.plugins.tooltip.backgroundColor = '#1e1e1e';
+Chart.defaults.plugins.tooltip.titleColor = '#efefef';
+Chart.defaults.plugins.tooltip.bodyColor = '#efefef';
+Chart.defaults.plugins.tooltip.borderColor = 'rgba(255, 255, 255, 0.12)';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+
 @Component({
     selector: 'app-chart',
     standalone: true,
-    templateUrl: './chart.component.html'
+    templateUrl: './chart.component.html',
+    styles: [`
+        :host {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    `]
 })
 export class ChartComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('chartCanvas', { static: true }) chartCanvas!: ElementRef<HTMLCanvasElement>;

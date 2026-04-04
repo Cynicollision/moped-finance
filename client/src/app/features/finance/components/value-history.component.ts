@@ -113,16 +113,21 @@ export class FinanceValueHistoryComponent implements OnChanges {
                     {
                         label: label,
                         data: ascendingData.map(d => d.amount),
-                        borderColor: '#4caf50',
-                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        borderColor: '#81c784', // --color-positive
+                        backgroundColor: 'rgba(129, 199, 132, 0.15)',
                         fill: true,
-                        tension: 0.1
+                        tension: 0.4
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                elements: {
+                    point: {
+                        radius: 0
+                    }
+                },
                 plugins: {
                     legend: { display: false }
                 },
