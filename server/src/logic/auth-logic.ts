@@ -1,11 +1,12 @@
 import * as bcrypt from 'bcrypt';
+import { EntityIdPrefix } from '@shared/core/enum';
 import { User } from '@shared/core/types/user';
 import { CoreUserData, ICoreUserData } from './../data-access/core/user-data';
-import ShortUniqueId from 'short-unique-id';
+import { DateTimeUtil } from './../utility/date-time';
+import { EntityIdUtil } from './../utility/entity-id';
 
 export class AuthLogic {
     private userData: ICoreUserData;
-    private readonly uid = new ShortUniqueId({ length: 10 });
     private readonly saltRounds = 10;
 
     constructor() {
@@ -40,11 +41,11 @@ export class AuthLogic {
         const hash = await bcrypt.hash(password, this.saltRounds);
 
         const newUser: User = {
-            id: this.uid.rnd(),
-            name,
+            id: EntityIdUtil.generate(EntityIdPrefix.User),
             username,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            displayName: name,
+            createdAt: DateTimeUtil.now(),
+            updatedAt: DateTimeUtil.now()
         };
 
         return await this.userData.create(newUser, hash);

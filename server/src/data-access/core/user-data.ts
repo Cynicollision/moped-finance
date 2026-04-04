@@ -18,23 +18,22 @@ export class CoreUserData implements ICoreUserData {
     public async create(user: User, passwordHash: string): Promise<User> {
         const now = DateTimeUtil.now();
 
-        const query = `INSERT INTO core.users 
-            (id, created_at, updated_at, username, name, password_hash)
+        const query = `INSERT INTO core.users (id, created_at, updated_at, username, password_hash, display_name)
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING 
                 id, 
                 created_at AS "createdAt",
                 updated_at AS "updatedAt",
                 username,
-                name`;
+                display_name AS "displayName"`;
 
         const params = [
             user.id,
             now,
             now,
             user.username,
-            user.name,
-            passwordHash
+            passwordHash,
+            user.displayName
         ];
 
         const result = await databasePool.query(query, params);
@@ -48,7 +47,7 @@ export class CoreUserData implements ICoreUserData {
                 created_at AS "createdAt",
                 updated_at AS "updatedAt",
                 username,
-                name
+                display_name AS "displayName"
             FROM core.users 
             WHERE id = $1`,
             [id]
@@ -68,7 +67,7 @@ export class CoreUserData implements ICoreUserData {
                 updated_at AS "updatedAt",
                 username,
                 password_hash AS "passwordHash",
-                name
+                display_name AS "displayName"
             FROM core.users 
             WHERE username = $1`,
             [username]

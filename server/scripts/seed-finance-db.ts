@@ -28,9 +28,20 @@ async function readCsv(fileName: string): Promise<string[]> {
     try {
         console.log('🌱 Seeding finance data...');
 
-        const sampleUserId = '1';
+        const { SEED_USER_USERNAME } = process.env;
+        if (!SEED_USER_USERNAME) {
+            throw new Error('❌ Missing required environment variable: SEED_USER_USERNAME must be defined in your .env file.');
+        }
+
+        const userResult = await client.query('SELECT id FROM core.users WHERE username = $1', [SEED_USER_USERNAME]);
+        if (userResult.rows.length === 0) {
+            throw new Error(`❌ Seed user "${SEED_USER_USERNAME}" not found in core.users. Please run seed-core-db.ts first.`);
+        }
+        const sampleUserId = userResult.rows[0].id;
+        console.log(`👤 Using user ID: ${sampleUserId} (${SEED_USER_USERNAME})`);
 
         // 1. Load Institutions
+        const institutionIdMap = new Map<string, string>();
         console.log(' 1. Reading institutions.csv...');
         const institutionLines = await readCsv('institutions.csv');
 
@@ -43,12 +54,15 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                const [id, userId, name] = line.split(',');
-                if (id && userId && name) {
+                const [id, _csvUserId, name] = line.split(',');
+                if (id && name) {
+                    const generatedId = EntityIdUtil.generate(EntityIdPrefix.FinanceInstitution);
+                    institutionIdMap.set(id.trim(), generatedId);
+
                     await client.query(
                         `INSERT INTO finance.institutions (id, user_id, name) 
                          VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
-                        [id.trim(), userId.trim(), name.trim()]
+                        [generatedId, sampleUserId, name.trim()]
                     );
                     count++;
                 }
@@ -70,19 +84,22 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                const [id, userId, institutionId, name, category, type, subtype, balance, hidden, retirement] = line.split(',');
-                accountsMap.set(name.trim(), id.trim());
+                const [id, _csvUserId, institutionId, name, category, type, subtype, balance, hidden, retirement] = line.split(',');
 
-                if (id && userId && name) {
+                if (id && name) {
+                    const generatedId = EntityIdUtil.generate(EntityIdPrefix.FinanceAccount);
+                    const mappedInstitutionId = institutionIdMap.get(institutionId?.trim()) || null;
+                    accountsMap.set(name.trim(), generatedId);
+
                     await client.query(
                         `INSERT INTO finance.accounts (
                             id, user_id, institution_id, name, account_category, account_group, account_type, balance, is_hidden, is_manual, is_retirement, hide_from_cashflow
                          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                          ON CONFLICT (id) DO NOTHING`,
                         [
-                            id.trim(),
-                            userId.trim(),
-                            institutionId?.trim() || null,
+                            generatedId,
+                            sampleUserId,
+                            mappedInstitutionId,
                             name.trim(),
                             category.trim(),
                             type.trim(),
@@ -113,10 +130,11 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                const [id, userId, type, group, icon, name, isActive] = line.split(',');
+                const [id, _csvUserId, type, group, icon, name, isActive] = line.split(',');
 
-                if (id && userId && type && group && icon && name && isActive) {
-                    categoriesMap.set(name.trim(), id.trim());
+                if (id && type && group && icon && name && isActive) {
+                    const generatedId = EntityIdUtil.generate(EntityIdPrefix.FinanceCategory);
+                    categoriesMap.set(name.trim(), generatedId);
 
                     await client.query(
                         `INSERT INTO finance.categories (
@@ -124,8 +142,8 @@ async function readCsv(fileName: string): Promise<string[]> {
                          ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                          ON CONFLICT (id) DO NOTHING`,
                         [
-                            id.trim(),
-                            userId.trim(),
+                            generatedId,
+                            sampleUserId,
                             type.trim(),
                             group.trim(),
                             icon.trim(),

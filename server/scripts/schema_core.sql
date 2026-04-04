@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS core.users (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   username VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL
+  display_name VARCHAR(255) NOT NULL
 );
 
 -- Log Table

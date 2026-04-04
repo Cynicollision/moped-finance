@@ -36,7 +36,7 @@
                 </a>
                 <a mat-list-item (click)="logout()" style="cursor: pointer;">
                     <mat-icon matListItemIcon>logout</mat-icon>
-                    <span matListItemTitle>Logout ({{ authService.currentUser()?.username }})</span>
+                    <span matListItemTitle>Logout ({{ authService.currentUser()?.displayName }})</span>
                 </a>
                 }
             </mat-nav-list>

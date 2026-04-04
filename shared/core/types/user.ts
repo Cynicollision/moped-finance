@@ -1,6 +1,6 @@
 import { Entity } from './entity-base';
 
 export type User = Entity & {
-    name: string;
+    displayName: string;
     username: string;
 };
