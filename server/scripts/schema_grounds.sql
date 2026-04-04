@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS grounds.locations (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   user_id VARCHAR(50) NOT NULL REFERENCES core.users(id) ON DELETE CASCADE,
-  name VARCHAR(100) NOT NULL,
-  type VARCHAR(50) NOT NULL
+  type VARCHAR(50) NOT NULL,
+  name VARCHAR(100) NOT NULL
 );
 
 -- Plant Varieties
@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS grounds.plant_varieties (
   common_name VARCHAR(100) NOT NULL,
   variety_name VARCHAR(100),
   brand_name VARCHAR(100),
-  purchased_from VARCHAR(100),
   description TEXT,
   fertilizer_notes TEXT,
   pruning_notes TEXT,

@@ -6,7 +6,6 @@ export type PlantVariety = Entity & {
     commonName: string;
     varietyName?: string;
     brandName?: string;
-    purchasedFrom?: string;
     description?: string;
     fertilizerNotes?: string;
     pruningNotes?: string;

@@ -1,0 +1,129 @@
+<div class="container" *ngIf="variety()">
+    <div class="breadcrumb-nav">
+        <a [routerLink]="['/grounds/plants']" class="breadcrumb-link">Plants</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Plant Details</span>
+    </div>
+
+    <!-- Header Section matching list view look -->
+    <div class="header-section">
+        <h2 class="plant-name">{{ originalCommonName() }}</h2>
+        <div class="plant-variety-name" *ngIf="originalVarietyName()">{{ originalVarietyName() }}</div>
+    </div>
+
+    <form [formGroup]="varietyForm" (ngSubmit)="save()" class="details-form">
+
+        <!-- Form controls for Plant Variety -->
+        <div class="field-group">
+            <h3 class="group-title">General Information</h3>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Category</mat-label>
+                <input matInput formControlName="category">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Common Name</mat-label>
+                <input matInput formControlName="commonName">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Variety Name</mat-label>
+                <input matInput formControlName="varietyName">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Brand Name</mat-label>
+                <input matInput formControlName="brandName">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description" rows="2"></textarea>
+            </mat-form-field>
+        </div>
+
+        <div class="field-group">
+            <h3 class="group-title">Care Instructions</h3>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Watering Notes</mat-label>
+                <textarea matInput formControlName="wateringNotes" rows="2"></textarea>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Sunlight Notes</mat-label>
+                <textarea matInput formControlName="sunlightNotes" rows="2"></textarea>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Soil Notes</mat-label>
+                <textarea matInput formControlName="soilNotes" rows="2"></textarea>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Fertilizer Notes</mat-label>
+                <textarea matInput formControlName="fertilizerNotes" rows="2"></textarea>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Pruning Notes</mat-label>
+                <textarea matInput formControlName="pruningNotes" rows="2"></textarea>
+            </mat-form-field>
+        </div>
+
+        <!-- Locations / Plants section -->
+        <h3 class="section-title">Locations</h3>
+
+        <table mat-table [dataSource]="plants()" class="locations-table mat-elevation-z1">
+            <!-- Location Column -->
+            <ng-container matColumnDef="locationId">
+                <th mat-header-cell *matHeaderCellDef> Location </th>
+                <td mat-cell *matCellDef="let element"> {{ getLocationName(element.locationId) }} </td>
+            </ng-container>
+
+            <!-- Date Column -->
+            <ng-container matColumnDef="plantedDate">
+                <th mat-header-cell *matHeaderCellDef> Planted Date </th>
+                <td mat-cell *matCellDef="let element"> {{ element.plantedDate | date:'mediumDate':'UTC' }} </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef> </th>
+                <td mat-cell *matCellDef="let element" style="text-align: right;">
+                    <button mat-icon-button color="warn" type="button" (click)="removePlant(element)"
+                        aria-label="Remove plant">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div *ngIf="plants().length === 0" class="no-locations-message">
+            This variety is currently not assigned to any locations.
+        </div>
+
+        <div class="add-location-controls">
+            <mat-form-field appearance="outline" style="flex: 1;">
+                <mat-label>Location</mat-label>
+                <mat-select [formControl]="newLocationId">
+                    <mat-option *ngFor="let loc of availableLocations()" [value]="loc.id">{{loc.name}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="flex: 1;">
+                <mat-label>Planted Date</mat-label>
+                <input matInput [matDatepicker]="picker" [formControl]="newLocationDate">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+
+            <button mat-flat-button color="primary" type="button" (click)="addPlant()"
+                style="height: 56px; margin-top: 4px;">Add Location</button>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+            <div></div> <!-- Spacer -->
+            <div class="right-actions">
+                <button mat-button type="button" (click)="cancel()">Cancel</button>
+                <button mat-raised-button color="primary" type="submit" [disabled]="varietyForm.invalid">Save
+                    Changes</button>
+            </div>
+        </div>
+    </form>
+</div>

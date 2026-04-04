@@ -40,8 +40,44 @@ async function readCsv(fileName: string): Promise<string[]> {
         const sampleUserId = userResult.rows[0].id;
         console.log(`👤 Using user ID: ${sampleUserId} (${SEED_USER_USERNAME})`);
 
-        // Load Plant Varieties
-        console.log(' 1. Reading plant_varieties.csv...');
+        // 1. Load Locations
+        console.log(' 1. Reading grounds_locations.csv...');
+        const locationLines = await readCsv('grounds_locations.csv');
+        if (locationLines.length > 0) {
+            let count = 0;
+            // Start at 1 to skip header row
+            for (let i = 1; i < locationLines.length; i++) {
+                const line = locationLines[i].trim();
+                if (!line) {
+                    continue;
+                }
+
+                // CSV columns: Category, Common Name, Variety Name, Brand, Purchased From, Description
+                const [locationType, locationName] = line.split(',');
+
+                if (locationName) {
+                    const generatedId = EntityIdUtil.generate(EntityIdPrefix.GroundsLocation);
+
+                    await client.query(
+                        `INSERT INTO grounds.locations (
+                            id, user_id, type, name
+                         ) VALUES ($1, $2, $3, $4)
+                         ON CONFLICT (id) DO NOTHING`,
+                        [
+                            generatedId,
+                            sampleUserId,
+                            locationType.trim(),
+                            locationName.trim()
+                        ]
+                    );
+                    count++;
+                }
+            }
+            console.log(`✅ Seeded ${count} grounds.locations.`);
+        }
+
+        // 2. Load Plant Varieties
+        console.log(' 2. Reading plant_varieties.csv...');
         const varietyLines = await readCsv('plant_varieties.csv');
 
         if (varietyLines.length > 0) {

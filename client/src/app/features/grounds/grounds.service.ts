@@ -1,6 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { forkJoin, lastValueFrom } from 'rxjs';
-import { CareTask } from '@shared/grounds/types/care-task';
+import { CareTask, Location, Plant, PlantVariety, Product } from '@shared/grounds/types';
 import { ApiService } from './../../core/api.service';
 
 @Injectable({
@@ -17,8 +16,29 @@ export class GroundsService {
         return this.api.get<CareTask[]>(`api/grounds/data/tasks?year=${year}`);
     }
 
-    fetchProducts(): Promise<any[] | undefined> {
-        return this.api.get<any[]>('api/grounds/data/products');
+    fetchPlantVarieties(): Promise<PlantVariety[] | undefined> {
+        return this.api.get<PlantVariety[]>('api/grounds/data/plant-varieties');
+    }
+
+    fetchPlantVariety(id: string): Promise<PlantVariety | undefined> {
+        return this.api.get<PlantVariety>(`api/grounds/data/plant-varieties/${id}`);
+    }
+
+    fetchPlants(varietyId?: string): Promise<Plant[] | undefined> {
+        const url = varietyId ? `api/grounds/data/plants?varietyId=${varietyId}` : 'api/grounds/data/plants';
+        return this.api.get<Plant[]>(url);
+    }
+
+    savePlantData(variety: PlantVariety, plants: Partial<Plant>[]): Promise<PlantVariety | undefined> {
+        return this.api.put<PlantVariety>(`api/grounds/data/plant-varieties/${variety.id}`, { variety, plants });
+    }
+
+    fetchLocations(): Promise<Location[] | undefined> {
+        return this.api.get<Location[]>('api/grounds/data/locations');
+    }
+
+    fetchProducts(): Promise<Product[] | undefined> {
+        return this.api.get<Product[]>('api/grounds/data/products');
     }
 
     createTask(careTask: CareTask): Promise<CareTask | undefined> {
