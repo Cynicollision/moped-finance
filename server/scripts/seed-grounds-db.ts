@@ -89,16 +89,16 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                // CSV columns: Category, Common Name, Variety Name, Brand, Purchased From, Description
-                const [category, commonName, varietyName, brand, purchasedFrom, description] = line.split(',');
+                // CSV columns: Category, Common Name, Variety Name, Brand, Description
+                const [category, commonName, varietyName, brand, description] = line.split(',');
 
                 if (category && commonName) {
                     const generatedId = EntityIdUtil.generate(EntityIdPrefix.GroundsPlantVariety);
 
                     await client.query(
                         `INSERT INTO grounds.plant_varieties (
-                            id, user_id, category, common_name, variety_name, brand_name, purchased_from, description
-                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                            id, user_id, category, common_name, variety_name, brand_name, description
+                         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                          ON CONFLICT (id) DO NOTHING`,
                         [
                             generatedId,
@@ -107,7 +107,6 @@ async function readCsv(fileName: string): Promise<string[]> {
                             commonName.trim(),
                             varietyName?.trim() || null,
                             brand?.trim() || null,
-                            purchasedFrom?.trim() || null,
                             description?.trim() || null
                         ]
                     );
