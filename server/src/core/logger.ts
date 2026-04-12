@@ -1,8 +1,8 @@
 import { EntityIdPrefix, LogLevel } from '@shared/core/enum';
 import { LogEntry } from '@shared/core/types';
-import { DateTimeUtil } from './date-time';
-import { EntityIdUtil } from './entity-id';
-import { LogData, ILogData } from './../data-access/core/log-data';
+import { DateTimeUtil } from './../utility/date-time';
+import { EntityIdUtil } from './../utility/entity-id';
+import { LogData, ILogData } from './data/log-data';
 
 // TODO: not strictly a utility. where to put? logic/core?
 export class AppLogger {

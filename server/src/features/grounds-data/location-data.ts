@@ -1,5 +1,5 @@
 import { Location } from '@shared/grounds/types/location';
-import { databasePool } from './../db-client';
+import { databasePool } from './../../core/db-client';
 
 export interface IGroundsLocationData {
     retrieveAll(userId: string): Promise<Location[]>;

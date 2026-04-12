@@ -1,130 +1,76 @@
 import { Router, Request, Response } from 'express';
 import { ApiHandler } from './api-handler';
-import { GroundsData } from './../data-access/grounds-data';
-import { GroundsLogic } from './../logic/grounds-logic';
-import { AppLogger } from './../utility/logger';
+import { AppLogger } from './../core/logger';
+import { GroundsData } from './../features/grounds-data';
+import { GroundsLogic } from './../features/grounds-logic';
 
 const router = Router();
 const logger = AppLogger.forPgDatabase();
 const groundsData = GroundsData.forPgDatabase();
-const groundsLogic = new GroundsLogic(logger, groundsData);
+const groundsLogic = new GroundsLogic(groundsData);
+const handler = new ApiHandler(logger);
 
-router.get('/data/locations', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const result = await groundsLogic.getLocations(user!.id);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.get('/data/locations', (req, res) => {
+    handler.execute(req, res, 'getLocations', (context) => {
+        return groundsLogic.getLocations(context.userId!);
+    });
 });
 
-router.get('/data/plants', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
+router.get('/data/plants', (req, res) => {
+    handler.execute(req, res, 'getPlants', (context) => {
         const varietyId = req.query.varietyId as string;
-        const result = await groundsLogic.getPlants(user!.id, varietyId);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return groundsLogic.getPlants(context.userId!, varietyId);
+    });
 });
 
-router.get('/data/plant-varieties', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const result = await groundsLogic.getPlantVarieties(user!.id);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.get('/data/plant-varieties', (req, res) => {
+    handler.execute(req, res, 'getPlantVarieties', (context) => {
+        return groundsLogic.getPlantVarieties(context.userId!);
+    });
 });
 
-router.get('/data/plant-varieties/:id', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const result = await groundsLogic.getPlantVariety(user!.id, req.params.id);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.get('/data/plant-varieties/:id', (req, res) => {
+    handler.execute(req, res, 'getPlantVariety', (context) => {
+        return groundsLogic.getPlantVariety(context.userId!, req.params.id);
+    });
 });
 
-router.put('/data/plant-varieties/:id', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
+router.put('/data/plant-varieties/:id', (req, res) => {
+    handler.execute(req, res, 'savePlantData', (context) => {
         const requestBody = req.body;
         const variety = requestBody.variety;
         const plants = requestBody.plants || [];
 
         variety.id = req.params.id; // ensure ID from URL param overrides body
-        const result = await groundsLogic.savePlantData(user!.id, variety, plants);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return groundsLogic.savePlantData(context.userId!, variety, plants);
+    });
 });
 
-router.get('/data/products', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const result = await groundsLogic.getProducts(user!.id);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.get('/data/products', (req, res) => {
+    handler.execute(req, res, 'getProducts', (context) => {
+        return groundsLogic.getProducts(context.userId!);
+    });
 });
 
-router.get('/data/tasks', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
+router.get('/data/tasks', (req, res) => {
+    handler.execute(req, res, 'getCareTasks', (context) => {
         const year = (req.query.year as string) || new Date().getFullYear().toString();
-        const result = await groundsLogic.getCareTasks(user!.id, year);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return groundsLogic.getCareTasks(context.userId!, year);
+    });
 });
 
-router.post('/data/tasks', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const task = req.body;
-        const result = await groundsLogic.createCareTask(user!.id, task);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.post('/data/tasks', (req, res) => {
+    handler.execute(req, res, 'createCareTask', (context) => {
+        return groundsLogic.createCareTask(context.userId!, req.body);
+    });
 });
 
-router.put('/data/tasks/:id', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
+router.put('/data/tasks/:id', (req, res) => {
+    handler.execute(req, res, 'saveCareTask', (context) => {
         const task = req.body;
         task.id = req.params.id; // ensure ID from URL param overrides body
-        const result = await groundsLogic.saveCareTask(user!.id, task);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return groundsLogic.saveCareTask(context.userId!, task);
+    });
 });
 
 export default router;

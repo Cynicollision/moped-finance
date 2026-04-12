@@ -1,5 +1,5 @@
 import { PlantVariety } from '@shared/grounds/types';
-import { databasePool } from './../db-client';
+import { databasePool } from './../../core/db-client';
 
 export interface IGroundsPlantVarietyData {
     retrieveAll(userId: string): Promise<PlantVariety[]>;

@@ -1,5 +1,5 @@
 import { CareTask } from '@shared/grounds/types';
-import { databasePool } from './../db-client';
+import { databasePool } from './../../core/db-client';
 
 export interface IGroundsCareTaskData {
     retrieveAll(userId: string): Promise<CareTask[]>;

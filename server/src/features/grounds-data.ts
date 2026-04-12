@@ -1,8 +1,8 @@
-import { GroundsCareTaskData, IGroundsCareTaskData } from './grounds/care-task-data';
-import { GroundsLocationData, IGroundsLocationData } from './grounds/location-data';
-import { GroundsPlantData, IGroundsPlantData } from './grounds/plant-data';
-import { GroundsPlantVarietyData, IGroundsPlantVarietyData } from './grounds/plant-variety-data';
-import { GroundsProductData, IGroundsProductData } from './grounds/product-data';
+import { GroundsCareTaskData, IGroundsCareTaskData } from './../features/grounds-data/care-task-data';
+import { GroundsLocationData, IGroundsLocationData } from './../features/grounds-data/location-data';
+import { GroundsPlantData, IGroundsPlantData } from './../features/grounds-data/plant-data';
+import { GroundsPlantVarietyData, IGroundsPlantVarietyData } from './../features/grounds-data/plant-variety-data';
+import { GroundsProductData, IGroundsProductData } from './../features/grounds-data/product-data';
 
 export class GroundsData {
     constructor(

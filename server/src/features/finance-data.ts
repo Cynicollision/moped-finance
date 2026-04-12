@@ -1,9 +1,9 @@
-import { FinanceBalanceHistoryData, IFinanceBalanceHistoryData } from './finance/balance-history-data';
-import { FinanceBudgetStreamData, IFinanceBudgetStreamData } from './finance/budget-stream-data';
-import { FinanceAccountData, IFinanceAccountData } from './finance/account-data';
-import { FinanceCategoriesData, IFinanceCategoriesData } from './finance/categories-data';
-import { FinanceInstitutionsData, IFinanceInstitutionsData } from './finance/institutions-data';
-import { FinanceTransactionsData, IFinanceTransactionsData } from './finance/transactions-data';
+import { FinanceBalanceHistoryData, IFinanceBalanceHistoryData } from './finance-data/balance-history-data';
+import { FinanceBudgetStreamData, IFinanceBudgetStreamData } from './finance-data/budget-stream-data';
+import { FinanceAccountData, IFinanceAccountData } from './finance-data/account-data';
+import { FinanceCategoriesData, IFinanceCategoriesData } from './finance-data/categories-data';
+import { FinanceInstitutionsData, IFinanceInstitutionsData } from './finance-data/institutions-data';
+import { FinanceTransactionsData, IFinanceTransactionsData } from './finance-data/transactions-data';
 
 export class FinanceData {
 

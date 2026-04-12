@@ -1,8 +1,9 @@
-import { Router, Request, Response } from 'express';
-import { User } from '@shared/core/types/user';
+import { Router } from 'express';
 import { ApiHandler } from './api-handler';
-import { AuthLogic } from './../logic/auth-logic';
-import { resolveUser, requireAuth } from './../middleware/auth-middleware';
+import { resolveUser, requireAuth } from './auth-middleware';
+import { BadRequestError, UnauthorizedError } from './../utility/errors';
+import { AppLogger } from './../core/logger';
+import { AuthController } from './../core/auth-controller';
 
 const router = Router();
 
@@ -14,86 +15,69 @@ type AuthRequest = {
     newPassword?: string;
 };
 
-const authLogic = new AuthLogic();
+const controller = new AuthController();
+const handler = new ApiHandler(AppLogger.forPgDatabase());
 
-router.post('/login', async (req: Request, res: Response) => {
-    try {
+router.post('/login', (req, res) => {
+    handler.execute(req, res, 'login', async (context) => {
         const { username, password } = req.body as AuthRequest;
-
-        const user = await authLogic.loginUser(username, password);
+        const user = await controller.loginUser(username, password);
 
         if (!user) {
-            return ApiHandler.failUnauthorized(res);
+            throw new UnauthorizedError('Invalid username or password.');
         }
 
-        req.session.user = user;
-
-        return ApiHandler.succeed(res, user);
-    } catch (err) {
-        return ApiHandler.failInternalError(res, 'Login failed');
-    }
-});
-
-router.post('/register', async (req: Request, res: Response) => {
-    try {
-        const { username, name, password } = req.body as AuthRequest;
-
-        if (!username || !name || !password) {
-            return ApiHandler.failBadRequest(res, 'Username, name, and password are required.');
-        }
-
-        const user = await authLogic.createUser(username, name, password);
-
-        // Auto-login after registration
-        req.session.user = user;
-
-        return ApiHandler.succeed(res, user);
-    } catch (err: any) {
-        if (err.message === 'Username already exists') {
-            return ApiHandler.failBadRequest(res, 'Username already exists.');
-        }
-        return ApiHandler.failInternalError(res, 'Registration failed');
-    }
-});
-
-router.put('/password', requireAuth, async (req: Request, res: Response) => {
-    try {
-        const { oldPassword, newPassword } = req.body as AuthRequest;
-        const user = ApiHandler.getUser(req);
-
-        if (!user || !oldPassword || !newPassword) {
-            return ApiHandler.failBadRequest(res, 'Missing required fields.');
-        }
-
-        await authLogic.changePassword(user.id, oldPassword, newPassword);
-
-        return ApiHandler.succeed(res);
-    } catch (err: any) {
-        if (err.message === 'Invalid old password.') {
-            return ApiHandler.failBadRequest(res, 'Invalid old password.');
-        }
-        return ApiHandler.failInternalError(res, 'Failed to update password');
-    }
-});
-
-router.post('/logout', async (req: Request, res: Response) => {
-    req.session.destroy((err) => {
-        if (err) {
-            return ApiHandler.failInternalError(res, 'Could not log out.');
-        }
-        res.clearCookie('connect.sid');
-        return ApiHandler.succeed(res);
+        context.req.session.user = user;
+        return user;
     });
 });
 
-router.get('/me', resolveUser, async (req: Request, res: Response) => {
-    const user = ApiHandler.getUser(req);
+router.post('/register', (req, res) => {
+    handler.execute(req, res, 'register', async (context) => {
+        const { username, name, password } = req.body as AuthRequest;
 
-    // if (!user) {
-    //     return ApiHandler.failUnauthorized(res);
-    // }
+        if (!username || !name || !password) {
+            throw new BadRequestError('Username, name, and password are required.');
+        }
 
-    return ApiHandler.succeed(res, user);
+        const user = await controller.createUser(username, name, password);
+
+        // Auto-login after registration
+        context.req.session.user = user;
+        return user;
+    });
+});
+
+router.put('/password', requireAuth, (req, res) => {
+    handler.execute(req, res, 'changePassword', async (context) => {
+        const { oldPassword, newPassword } = req.body as AuthRequest;
+
+        if (!oldPassword || !newPassword) {
+            throw new BadRequestError('Missing required fields.');
+        }
+
+        await controller.changePassword(context.userId!, oldPassword, newPassword);
+    });
+});
+
+router.post('/logout', (req, res) => {
+    handler.execute(req, res, 'logout', async (context) => {
+        return new Promise((resolve, reject) => {
+            context.req.session.destroy((err) => {
+                if (err) {
+                    return reject(new Error('Could not log out.'));
+                }
+                res.clearCookie('connect.sid');
+                resolve(undefined);
+            });
+        });
+    });
+});
+
+router.get('/me', resolveUser, (req, res) => {
+    handler.execute(req, res, 'me', async (context) => {
+        return context.req.session.user;
+    });
 });
 
 export default router;

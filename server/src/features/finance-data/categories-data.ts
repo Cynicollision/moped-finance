@@ -1,5 +1,5 @@
 import { Category } from '@shared/finance/types';
-import { databasePool } from './../db-client';
+import { databasePool } from './../../core/db-client';
 
 export interface IFinanceCategoriesData {
     retrieveAll(userId: string, activeOnly: boolean): Promise<Category[]>;

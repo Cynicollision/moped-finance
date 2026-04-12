@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { ApiHandler } from './../routes/api-handler';
-import { AuthLogic } from './../logic/auth-logic';
+import { ApiUtil } from './api-util';
+import { AuthController } from './../core/auth-controller';
 
-const authLogic = new AuthLogic();
+const controller = new AuthController();
 
 export const resolveUser = async (req: Request, _res: Response, next: NextFunction) => {
     if (!req.session?.user && !(req as any).user) {
@@ -10,9 +10,9 @@ export const resolveUser = async (req: Request, _res: Response, next: NextFuncti
         if (authHeader && authHeader.startsWith('Basic ')) {
             const b64auth = authHeader.substring(6);
             const [username, password] = Buffer.from(b64auth, 'base64').toString().split(':');
-            
+
             if (username && password) {
-                const user = await authLogic.loginUser(username, password);
+                const user = await controller.loginUser(username, password);
                 if (user) {
                     (req as any).user = user;
                 }
@@ -23,11 +23,11 @@ export const resolveUser = async (req: Request, _res: Response, next: NextFuncti
 };
 
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-    const user = ApiHandler.getUser(req);
+    const user = ApiUtil.getUser(req);
     if (user) {
         next();
     }
     else {
-        return ApiHandler.failUnauthorized(res);
+        ApiUtil.unauthorized(res);
     }
 };

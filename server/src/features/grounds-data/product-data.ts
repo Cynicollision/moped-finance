@@ -1,5 +1,5 @@
 import { Product } from '@shared/grounds/types';
-import { databasePool } from './../db-client';
+import { databasePool } from './../../core/db-client';
 
 export interface IGroundsProductData {
     retrieveAll(userId: string): Promise<Product[]>;

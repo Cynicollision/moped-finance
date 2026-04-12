@@ -3,32 +3,26 @@ import { SortDirection } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { BudgetPeriod, HistoryTimeframe, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { ApiHandler } from './api-handler';
-import { FinanceData } from './../data-access/finance-data';
-import { FinanceLogic } from './../logic/finance-logic';
+import { AppLogger } from './../core/logger';
 import { DateTimeUtil } from './../utility/date-time';
-import { AppLogger } from './../utility/logger';
+import { FinanceData } from './../features/finance-data';
+import { FinanceLogic } from './../features/finance-controller';
 
 const router = Router();
 const logger = AppLogger.forPgDatabase();
 const financeData = FinanceData.forPgDatabase();
-const financeLogic = new FinanceLogic(logger, financeData);
+const financeLogic = new FinanceLogic(financeData);
 
-router.get('/data/accounts', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const result = await financeLogic.getAccounts(user!.id);
+const handler = new ApiHandler(logger);
 
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.get('/data/accounts', (req, res) => {
+    handler.execute(req, res, 'getAccounts', (context) => {
+        return financeLogic.getAccounts(context.userId!);
+    });
 });
 
-router.get('/data/accounts/total-value-history', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-
+router.get('/data/accounts/total-value-history', (req, res) => {
+    handler.execute(req, res, 'getTotalValueHistory', (context) => {
         const type = req.query.type as ValueHistoryType;
         const timeframe = req.query.timeframe as HistoryTimeframe;
 
@@ -43,252 +37,137 @@ router.get('/data/accounts/total-value-history', async (req: Request, res: Respo
             timeframe
         };
 
-        const result = await financeLogic.getTotalValueHistory(user!.id, options);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return financeLogic.getTotalValueHistory(context.userId!, options);
+    });
 });
 
-router.get('/data/accounts/:accountId', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const accountId = req.params.accountId;
-        const result = await financeLogic.getAccount(user!.id, accountId);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.get('/data/accounts/:accountId', (req, res) => {
+    handler.execute(req, res, 'getAccount', (context) => {
+        return financeLogic.getAccount(context.userId!, req.params.accountId);
+    });
 });
 
-router.post('/data/accounts', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const account = req.body;
-        const result = await financeLogic.createAccount(user!.id, account);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.post('/data/accounts', (req, res) => {
+    handler.execute(req, res, 'createAccount', (context) => {
+        return financeLogic.createAccount(context.userId!, req.body);
+    });
 });
 
-router.put('/data/accounts/:accountId', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
+router.put('/data/accounts/:accountId', (req, res) => {
+    handler.execute(req, res, 'saveAccount', (context) => {
         const account = req.body;
         account.id = req.params.accountId;
-        const result = await financeLogic.saveAccount(user!.id, account);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return financeLogic.saveAccount(context.userId!, account);
+    });
 });
 
-router.delete('/data/accounts/:accountId', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const accountId = req.params.accountId;
-        await financeLogic.deleteAccount(user!.id, accountId);
-        return ApiHandler.succeed(res);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.delete('/data/accounts/:accountId', (req, res) => {
+    handler.execute(req, res, 'deleteAccount', (context) => {
+        return financeLogic.deleteAccount(context.userId!, req.params.accountId);
+    });
 });
 
-router.get('/data/accounts/:accountId/balance-history', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const accountId = req.params.accountId;
-
+router.get('/data/accounts/:accountId/balance-history', (req, res) => {
+    handler.execute(req, res, 'getAccountBalanceHistory', (context) => {
         const timeframe = req.query.timeframe as HistoryTimeframe;
-
         const asOfDateStr = req.query.asOfDate as string;
-        const asOfDate = asOfDateStr
-            ? new Date(asOfDateStr)
-            : DateTimeUtil.now();
+        const asOfDate = asOfDateStr ? new Date(asOfDateStr) : DateTimeUtil.now();
 
         const options: GetAccountBalanceHistoryOptions = {
             asOfDate,
             timeframe
         };
 
-        const result = await financeLogic.getAccountBalanceHistory(user!.id, accountId, options);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return financeLogic.getAccountBalanceHistory(context.userId!, req.params.accountId, options);
+    });
 });
 
-router.get('/data/accounts/:accountId/transactions', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const accountId = req.params.accountId;
+router.get('/data/accounts/:accountId/transactions', (req, res) => {
+    handler.execute(req, res, 'getTransactions', (context) => {
         const options = getTransactionSearchOptions(req);
-        const result = await financeLogic.getTransactions(user!.id, options, accountId);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return financeLogic.getTransactions(context.userId!, options, req.params.accountId);
+    });
 });
 
 
-router.get('/data/budget-streams', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const result = await financeLogic.getBudgetStreams(user!.id);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.get('/data/budget-streams', (req, res) => {
+    handler.execute(req, res, 'getBudgetStreams', (context) => {
+        return financeLogic.getBudgetStreams(context.userId!);
+    });
 });
 
-router.post('/data/budget-streams', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const stream = req.body;
-        const result = await financeLogic.createBudgetStream(user!.id, stream);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.post('/data/budget-streams', (req, res) => {
+    handler.execute(req, res, 'createBudgetStream', (context) => {
+        return financeLogic.createBudgetStream(context.userId!, req.body);
+    });
 });
 
-router.put('/data/budget-streams/:id', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
+router.put('/data/budget-streams/:id', (req, res) => {
+    handler.execute(req, res, 'saveBudgetStream', (context) => {
         const stream = req.body;
         stream.id = req.params.id; // ensure ID from URL param overrides body
-        const result = await financeLogic.saveBudgetStream(user!.id, stream);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return financeLogic.saveBudgetStream(context.userId!, stream);
+    });
 });
 
-router.delete('/data/budget-streams/:id', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const id = req.params.id;
-        await financeLogic.deleteBudgetStream(user!.id, id);
-        return ApiHandler.succeed(res);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.delete('/data/budget-streams/:id', (req, res) => {
+    handler.execute(req, res, 'deleteBudgetStream', (context) => {
+        return financeLogic.deleteBudgetStream(context.userId!, req.params.id);
+    });
 });
 
-router.get('/data/categories', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
+router.get('/data/categories', (req, res) => {
+    handler.execute(req, res, 'getCategories', (context) => {
         const activeOnly = req.query.activeOnly === 'true';
-        const result = await financeLogic.getCategories(user!.id, activeOnly);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return financeLogic.getCategories(context.userId!, activeOnly);
+    });
 });
 
-router.get('/data/institutions', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const result = await financeLogic.getInstitutions(user!.id);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.get('/data/institutions', (req, res) => {
+    handler.execute(req, res, 'getInstitutions', (context) => {
+        return financeLogic.getInstitutions(context.userId!);
+    });
 });
 
-router.get('/data/transactions', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
+router.get('/data/transactions', (req, res) => {
+    handler.execute(req, res, 'getTransactions', (context) => {
         const options = getTransactionSearchOptions(req);
-        const result = await financeLogic.getTransactions(user!.id, options);
-
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return financeLogic.getTransactions(context.userId!, options);
+    });
 });
 
-router.get('/data/transactions/merchants', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const result = await financeLogic.getTransactionMerchants(user!.id);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.get('/data/transactions/merchants', (req, res) => {
+    handler.execute(req, res, 'getTransactionMerchants', (context) => {
+        return financeLogic.getTransactionMerchants(context.userId!);
+    });
 });
 
-router.get('/data/transactions/spending', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-
+router.get('/data/transactions/spending', (req, res) => {
+    handler.execute(req, res, 'getTransactionSpendingByCategory', (context) => {
         const period = req.query.period as BudgetPeriod;
         const asOfDate = req.query.asOfDate as string;
-        const result = await financeLogic.getTransactionSpendingByCategory(user!.id, period, asOfDate);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return financeLogic.getTransactionSpendingByCategory(context.userId!, period, asOfDate);
+    });
 });
 
-router.get('/data/transactions/:id', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const id = req.params.id;
-        const result = await financeLogic.getTransaction(user!.id, id);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.get('/data/transactions/:id', (req, res) => {
+    handler.execute(req, res, 'getTransaction', (context) => {
+        return financeLogic.getTransaction(context.userId!, req.params.id);
+    });
 });
 
-router.put('/data/transactions/:id', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
+router.put('/data/transactions/:id', (req, res) => {
+    handler.execute(req, res, 'saveTransaction', (context) => {
         const transaction = req.body;
         transaction.id = req.params.id; // ensure ID holds
-        const result = await financeLogic.saveTransaction(user!.id, transaction);
-        return ApiHandler.succeed(res, result);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+        return financeLogic.saveTransaction(context.userId!, transaction);
+    });
 });
 
-router.delete('/data/transactions/:id', async (req: Request, res: Response) => {
-    try {
-        const user = ApiHandler.getUser(req);
-        const id = req.params.id;
-        await financeLogic.deleteTransaction(user!.id, id);
-        return ApiHandler.succeed(res);
-    }
-    catch (error) {
-        return ApiHandler.failInternalError(res, error);
-    }
+router.delete('/data/transactions/:id', (req, res) => {
+    handler.execute(req, res, 'deleteTransaction', (context) => {
+        return financeLogic.deleteTransaction(context.userId!, req.params.id);
+    });
 });
 
 function getTransactionSearchOptions(req: Request): TransactionSearchOptions {

@@ -1,6 +1,6 @@
 import { SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
-import { databasePool } from './../db-client';
+import { databasePool } from './../../core/db-client';
 import { SpendingStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 

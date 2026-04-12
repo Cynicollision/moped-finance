@@ -1,66 +1,55 @@
 import { Request, Response } from 'express';
 import { OperationResult } from '@shared/core/contracts/operation-result';
-import { User } from '@shared/core/types/user';
-import { DateTimeUtil } from './../utility/date-time';
+import { ApiUtil } from './api-util';
+import { AppLogger } from './../core/logger';
+import { BadRequestError, UnauthorizedError, ForbiddenError } from './../utility/errors';
+
+export type ExecutionContext = {
+    userId?: string;
+    context: string;
+    req: Request;
+}
 
 export class ApiHandler {
 
-    private static createSuccessResponse<T>(data?: T): OperationResult<T> {
-        return {
-            success: true,
-            timestamp: DateTimeUtil.getCurrentTimestamp(),
-            data: data,
+    constructor(private logger: AppLogger) {
+    }
+
+    async execute<T>(req: Request, res: Response, context: string, operation: (context: ExecutionContext) => Promise<T>): Promise<OperationResult<T>> {
+        const user = ApiUtil.getUser(req);
+        const userIdForLog = user?.id || 'anonymous';
+
+        const executionContext: ExecutionContext = {
+            userId: user?.id,
+            context: context,
+            req
         };
-    }
 
-    private static createErrorResponse<T>(code: string, message: string, details?: unknown): OperationResult<T> {
-        return {
-            success: false,
-            timestamp: DateTimeUtil.getCurrentTimestamp(),
-            error: {
-                code,
-                message,
-                details,
-            },
-        };
-    }
+        this.logger.info(userIdForLog, context, `Starting operation: ${context}`);
 
-    public static getUser(req: Request): User | undefined {
-        if (req.session?.user) {
-            return req.session.user;
+        try {
+            const result = await operation(executionContext);
+            this.logger.info(userIdForLog, context, `Successfully completed operation: ${context}`);
+            return ApiUtil.success(res, result);
         }
+        catch (error: any) {
+            if (error instanceof BadRequestError) {
+                this.logger.warn(userIdForLog, context, `Bad request: ${context}. Error: ${error.message || error}`);
+                return ApiUtil.badRequest<T>(res, error.message);
+            }
 
-        // Check if user was already resolved and attached to request (e.g. by middleware)
-        if ((req as any).user) {
-            return (req as any).user;
+            if (error instanceof UnauthorizedError) {
+                this.logger.warn(userIdForLog, context, `Unauthorized: ${context}. Error: ${error.message || error}`);
+                return ApiUtil.unauthorized<T>(res);
+            }
+
+            if (error instanceof ForbiddenError) {
+                this.logger.warn(userIdForLog, context, `Forbidden: ${context}. Error: ${error.message || error}`);
+                return ApiUtil.forbidden<T>(res, error.message);
+            }
+
+            this.logger.error(userIdForLog, context, `Internal error: ${context}. Error: ${error.message || error}`);
+            return ApiUtil.internalError<T>(res, error);
         }
-
-        return undefined;
-    }
-
-    public static succeed<T>(res: Response, data?: T): void {
-        const result = this.createSuccessResponse<T>(data);
-        res.status(200).json(result);
-    }
-
-    public static failBadRequest(res: Response, message: string): void {
-        const result = this.createErrorResponse('BAD_REQUEST', message);
-        res.status(400).json(result);
-    }
-
-    public static failUnauthorized(res: Response): void {
-        const result = this.createErrorResponse('UNAUTHORIZED', 'Not authenticated');
-        res.status(401).json(result);
-    }
-
-    public static failNotFound(req: Request, res: Response): void {
-        res.status(404).json(`${req.originalUrl} not found.`);
-    }
-
-    // TODO: accept OperationResult<T> instead?
-    // TODO: log the error somewhere
-    public static failInternalError(res: Response, error: unknown): void {
-        const result = this.createErrorResponse('INTERNAL_ERROR', 'An unexpected error occurred');
-        res.status(500).json(result);
     }
 }

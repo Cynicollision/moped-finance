@@ -1,6 +1,6 @@
 import { Account } from '@shared/finance/types';
 import { DateTimeUtil } from './../../utility/date-time';
-import { databasePool } from './../db-client';
+import { databasePool } from './../../core/db-client';
 
 export interface IFinanceAccountData {
     retrieveAll(userId: string): Promise<Account[]>;

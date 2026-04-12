@@ -1,11 +1,12 @@
 import * as bcrypt from 'bcrypt';
 import { EntityIdPrefix } from '@shared/core/enum';
 import { User } from '@shared/core/types/user';
-import { CoreUserData, ICoreUserData } from './../data-access/core/user-data';
 import { DateTimeUtil } from './../utility/date-time';
 import { EntityIdUtil } from './../utility/entity-id';
+import { BadRequestError } from './../utility/errors';
+import { CoreUserData, ICoreUserData } from './data/user-data';
 
-export class AuthLogic {
+export class AuthController {
     private userData: ICoreUserData;
     private readonly saltRounds = 10;
 
@@ -35,7 +36,7 @@ export class AuthLogic {
 
     async createUser(username: string, name: string, password?: string): Promise<User> {
         if (!password) {
-            throw new Error('Password is required.');
+            throw new BadRequestError('Password is required.');
         }
 
         const hash = await bcrypt.hash(password, this.saltRounds);
@@ -53,23 +54,22 @@ export class AuthLogic {
 
     async changePassword(userId: string, oldPassword?: string, newPassword?: string): Promise<void> {
         if (!oldPassword || !newPassword) {
-            throw new Error('Old and new passwords are required.');
+            throw new BadRequestError('Old and new passwords are required.');
         }
 
         const user = await this.userData.retrieveSingle(userId);
         if (!user) {
-            throw new Error('User not found.');
+            throw new BadRequestError('User not found.');
         }
 
-        // We need to get the user's password hash from the DB, so we look up by username
         const userWithPassword = await this.userData.retrieveByUsername(user.username);
         if (!userWithPassword) {
-            throw new Error('User not found.');
+            throw new BadRequestError('User not found.');
         }
 
         const match = await bcrypt.compare(oldPassword, userWithPassword.passwordHash);
         if (!match) {
-            throw new Error('Invalid old password.');
+            throw new BadRequestError('Invalid old password.');
         }
 
         const newHash = await bcrypt.hash(newPassword, this.saltRounds);

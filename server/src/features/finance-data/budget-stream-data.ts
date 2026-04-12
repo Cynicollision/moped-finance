@@ -1,5 +1,5 @@
 import { BudgetStream } from '@shared/finance/types';
-import { databasePool } from './../db-client';
+import { databasePool } from './../../core/db-client';
 
 export interface IFinanceBudgetStreamData {
     retrieveAll(userId: string): Promise<BudgetStream[]>;
