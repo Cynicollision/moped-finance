@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { CareTask, Plant, PlantVariety, Product } from '@shared/grounds/types';
 import { ApiHandler } from './api-handler';
 import { AppLogger } from './../core/logger';
 import { GroundsController } from './../features/grounds-controller';
@@ -39,8 +40,8 @@ router.get('/data/plant-varieties/:id', (req, res) => {
 router.put('/data/plant-varieties/:id', (req, res) => {
     handler.execute(req, res, 'savePlantData', (context) => {
         const requestBody = req.body;
-        const variety = requestBody.variety;
-        const plants = requestBody.plants || [];
+        const variety: PlantVariety = requestBody.variety;
+        const plants: Plant[] = requestBody.plants || [];
 
         variety.id = req.params.id; // ensure ID from URL param overrides body
         return controller.savePlantData(context.userId!, variety, plants);
@@ -50,6 +51,32 @@ router.put('/data/plant-varieties/:id', (req, res) => {
 router.get('/data/products', (req, res) => {
     handler.execute(req, res, 'getProducts', (context) => {
         return controller.getProducts(context.userId!);
+    });
+});
+
+router.get('/data/products/:id', (req, res) => {
+    handler.execute(req, res, 'getProduct', (context) => {
+        return controller.getProduct(context.userId!, req.params.id);
+    });
+});
+
+router.post('/data/products', (req, res) => {
+    handler.execute(req, res, 'createProduct', (context) => {
+        return controller.createProduct(context.userId!, req.body);
+    });
+});
+
+router.put('/data/products/:id', (req, res) => {
+    handler.execute(req, res, 'saveProduct', (context) => {
+        const product: Product = req.body;
+        product.id = req.params.id; // ensure ID from URL param overrides body
+        return controller.saveProduct(context.userId!, product);
+    });
+});
+
+router.delete('/data/products/:id', (req, res) => {
+    handler.execute(req, res, 'deleteProduct', (context) => {
+        return controller.deleteProduct(context.userId!, req.params.id);
     });
 });
 
@@ -68,7 +95,7 @@ router.post('/data/tasks', (req, res) => {
 
 router.put('/data/tasks/:id', (req, res) => {
     handler.execute(req, res, 'saveCareTask', (context) => {
-        const task = req.body;
+        const task: CareTask = req.body;
         task.id = req.params.id; // ensure ID from URL param overrides body
         return controller.saveCareTask(context.userId!, task);
     });

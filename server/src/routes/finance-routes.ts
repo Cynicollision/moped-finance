@@ -1,5 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request } from 'express';
 import { SortDirection } from '@shared/core/enum';
+import { Account, BudgetStream, Transaction } from '@shared/finance/types';
 import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { BudgetPeriod, HistoryTimeframe, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { ApiHandler } from './api-handler';
@@ -49,13 +50,14 @@ router.get('/data/accounts/:accountId', (req, res) => {
 
 router.post('/data/accounts', (req, res) => {
     handler.execute(req, res, 'createAccount', (context) => {
-        return controller.createAccount(context.userId!, req.body);
+        const account: Account = req.body;
+        return controller.createAccount(context.userId!, account);
     });
 });
 
 router.put('/data/accounts/:accountId', (req, res) => {
     handler.execute(req, res, 'saveAccount', (context) => {
-        const account = req.body;
+        const account: Account = req.body;
         account.id = req.params.accountId;
         return controller.saveAccount(context.userId!, account);
     });
@@ -98,13 +100,14 @@ router.get('/data/budget-streams', (req, res) => {
 
 router.post('/data/budget-streams', (req, res) => {
     handler.execute(req, res, 'createBudgetStream', (context) => {
-        return controller.createBudgetStream(context.userId!, req.body);
+        const stream: BudgetStream = req.body;
+        return controller.createBudgetStream(context.userId!, stream);
     });
 });
 
 router.put('/data/budget-streams/:id', (req, res) => {
     handler.execute(req, res, 'saveBudgetStream', (context) => {
-        const stream = req.body;
+        const stream: BudgetStream = req.body;
         stream.id = req.params.id; // ensure ID from URL param overrides body
         return controller.saveBudgetStream(context.userId!, stream);
     });
@@ -158,7 +161,7 @@ router.get('/data/transactions/:id', (req, res) => {
 
 router.put('/data/transactions/:id', (req, res) => {
     handler.execute(req, res, 'saveTransaction', (context) => {
-        const transaction = req.body;
+        const transaction: Transaction = req.body;
         transaction.id = req.params.id; // ensure ID holds
         return controller.saveTransaction(context.userId!, transaction);
     });

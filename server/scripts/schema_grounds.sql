@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS grounds.products (
   name VARCHAR(100) NOT NULL,
   manufacturer VARCHAR(100),
   care_task_type VARCHAR(50) NOT NULL,
+  purpose_description TEXT,
   url TEXT
 );
 

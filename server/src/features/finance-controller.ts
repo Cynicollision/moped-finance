@@ -4,7 +4,7 @@ import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/financ
 import { Account, BalanceHistory, Category, Institution, Transaction, BudgetStream } from '@shared/finance/types';
 import { DateTimeUtil } from './../utility/date-time';
 import { EntityIdUtil } from './../utility/entity-id';
-import { BadRequestError, ForbiddenError } from './../utility/errors';
+import { BadRequestError } from './../utility/errors';
 import { IFinanceData } from './finance-data';
 
 export class FinanceController {
@@ -58,6 +58,7 @@ export class FinanceController {
     public async getTotalValueHistory(userId: string, options: TotalValueHistoryOptions): Promise<TotalValueHistory[]> {
         options.type = options.type || ValueHistoryType.NetWorth;
         options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
+        // TODO: validate options
 
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         return this.financeData.balanceHistory.retrieveSumByDate(userId, options.type, startDate, options.asOfDate);
@@ -100,8 +101,7 @@ export class FinanceController {
     }
 
     public async saveBudgetStream(userId: string, stream: BudgetStream): Promise<BudgetStream> {
-        // TODO: validate stream.userId matches, instead?
-        stream.userId = userId;
+        // TODO: validate user ownership
 
         return this.financeData.budgetStream.update(userId, stream);
     }

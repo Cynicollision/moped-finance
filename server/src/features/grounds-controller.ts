@@ -46,10 +46,6 @@ export class GroundsController {
         return this.groundsData.plantVarieties.retrieveAll(userId);
     }
 
-    public async getProducts(userId: string): Promise<Product[]> {
-        return this.groundsData.products.retrieveAll(userId);
-    }
-
     // TODO: "Create" plant variety
     // TODO: "Delete" plant variety
 
@@ -88,5 +84,42 @@ export class GroundsController {
         }
 
         return updatedVariety;
+    }
+
+    // Products
+    public async getProducts(userId: string): Promise<Product[]> {
+        return this.groundsData.products.retrieveAll(userId);
+    }
+
+    public async getProduct(userId: string, productId: string): Promise<Product> {
+        const data = await this.groundsData.products.retrieveSingle(userId, productId);
+        if (!data) {
+            throw new BadRequestError(`Product not found for user ID: ${userId} and product ID: ${productId}`);
+        }
+        return data;
+    }
+
+    public async createProduct(userId: string, product: Product): Promise<Product> {
+        product.userId = userId;
+        product.id = EntityIdUtil.generate(EntityIdPrefix.GroundsProduct);
+        return this.groundsData.products.insert(product);
+    }
+
+    public async saveProduct(userId: string, product: Product): Promise<Product> {
+        const current = await this.groundsData.products.retrieveSingle(userId, product.id);
+        if (!current) {
+            throw new BadRequestError(`Product not found for user ID: ${userId} and product ID: ${product.id}`);
+        }
+
+        return this.groundsData.products.update(product);
+    }
+
+    public async deleteProduct(userId: string, productId: string): Promise<void> {
+        const current = await this.groundsData.products.retrieveSingle(userId, productId);
+        if (!current) {
+            throw new BadRequestError(`Product not found for user ID: ${userId} and product ID: ${productId}`);
+        }
+
+        await this.groundsData.products.delete(userId, productId);
     }
 }

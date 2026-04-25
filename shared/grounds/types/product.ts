@@ -6,5 +6,6 @@ export type Product = Entity & {
     name: string;
     manufacturer: string;
     careTaskType: CareTaskType;
+    purposeDescription: string;
     url: string;
 };
