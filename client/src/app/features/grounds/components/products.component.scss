@@ -1,0 +1,39 @@
+.products-container {
+    padding: 20px;
+    
+    .header-actions {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 24px;
+
+        h2 {
+            margin: 0;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        button {
+            border-radius: 24px; // Ensures pill shape if not default
+            padding-left: 16px;
+            padding-right: 24px;
+        }
+    }
+
+    mat-card {
+        padding: 0;
+        overflow: hidden;
+    }
+
+    mat-table {
+        width: 100%;
+    }
+
+    .clickable-row {
+        cursor: pointer;
+        
+        &:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+    }
+}

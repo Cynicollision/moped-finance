@@ -3,6 +3,7 @@ import { databasePool } from './../../core/db-client';
 
 export interface IFinanceBudgetStreamData {
     retrieveAll(userId: string): Promise<BudgetStream[]>;
+    retrieveSingle(userId: string, id: string): Promise<BudgetStream | null>;
     delete(userId: string, id: string): Promise<void>;
     insert(userId: string, stream: BudgetStream): Promise<BudgetStream>;
     update(userId: string, stream: BudgetStream): Promise<BudgetStream>;
@@ -30,6 +31,34 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
             ...row,
             amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
         }));
+    }
+
+    public async retrieveSingle(userId: string, id: string): Promise<BudgetStream | null> {
+        const query = `SELECT 
+                            bs.id, 
+                            bs.created_at AS "createdAt",
+                            bs.updated_at AS "updatedAt",
+                            bs.user_id AS "userId",
+                            bs.name,
+                            bs.category_id AS "categoryId",
+                            bs.type,
+                            bs.recurrence,
+                            bs.amount
+                        FROM finance.budget_streams AS bs
+                        WHERE bs.user_id = $1
+                            AND bs.id = $2`;
+
+        const result = await databasePool.query(query, [userId, id]);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        const row = result.rows[0];
+        return {
+            ...row,
+            amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
+        };
     }
 
     public async delete(userId: string, id: string): Promise<void> {

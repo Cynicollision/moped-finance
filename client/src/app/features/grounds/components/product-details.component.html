@@ -1,0 +1,52 @@
+<div class="product-details-container">
+    <div class="header">
+        <button mat-icon-button (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon>
+        </button>
+        <h2>{{ isNew ? 'New Product' : 'Edit Product' }}</h2>
+    </div>
+
+    <mat-card>
+        <form [formGroup]="productForm" (ngSubmit)="onSave()" class="product-form">
+            <mat-form-field appearance="outline">
+                <mat-label>Product Name</mat-label>
+                <input matInput formControlName="name" placeholder="e.g. Milorganite">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Manufacturer</mat-label>
+                <input matInput formControlName="manufacturer" placeholder="e.g. Milorganite">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Care Task Type</mat-label>
+                <mat-select formControlName="careTaskType">
+                    <mat-option *ngFor="let type of careTaskTypes" [value]="type">
+                        {{type}}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Purpose Description</mat-label>
+                <textarea matInput formControlName="purposeDescription" rows="3" placeholder="e.g. Fertilize the lawn"></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>URL</mat-label>
+                <input matInput formControlName="url" placeholder="e.g. https://...">
+            </mat-form-field>
+
+            <div class="actions">
+                <button *ngIf="!isNew" mat-button color="warn" type="button" (click)="onDelete()">
+                    Delete
+                </button>
+                <span class="spacer"></span>
+                <button mat-button (click)="goBack()" type="button">Cancel</button>
+                <button mat-raised-button color="primary" type="submit" [disabled]="productForm.invalid">
+                    Save
+                </button>
+            </div>
+        </form>
+    </mat-card>
+</div>

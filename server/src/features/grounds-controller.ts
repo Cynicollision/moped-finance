@@ -106,6 +106,7 @@ export class GroundsController {
     }
 
     public async saveProduct(userId: string, product: Product): Promise<Product> {
+        // TODO: standardize ownership validation
         const current = await this.groundsData.products.retrieveSingle(userId, product.id);
         if (!current) {
             throw new BadRequestError(`Product not found for user ID: ${userId} and product ID: ${product.id}`);
@@ -115,6 +116,7 @@ export class GroundsController {
     }
 
     public async deleteProduct(userId: string, productId: string): Promise<void> {
+        // TODO: standardize ownership validation
         const current = await this.groundsData.products.retrieveSingle(userId, productId);
         if (!current) {
             throw new BadRequestError(`Product not found for user ID: ${userId} and product ID: ${productId}`);

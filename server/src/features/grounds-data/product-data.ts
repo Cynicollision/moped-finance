@@ -49,15 +49,17 @@ export class GroundsProductData implements IGroundsProductData {
     async insert(product: Product): Promise<Product> {
         const result = await databasePool.query(
             `INSERT INTO grounds.products (
+                id,
                 user_id,
                 name,
                 manufacturer,
                 care_task_type,
                 purpose_description,
                 url
-            ) VALUES ($1, $2, $3, $4, $5, $6)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *`,
             [
+                product.id,
                 product.userId,
                 product.name,
                 product.manufacturer,

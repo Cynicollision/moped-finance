@@ -41,12 +41,22 @@ export class FinanceController {
     }
 
     public async saveAccount(userId: string, account: Account): Promise<Account> {
-        // TODO: validate user ownership
+        // TODO: standardize ownership validation
+        const current = await this.getAccount(userId, account.id);
+        if (!current) {
+            throw new BadRequestError(`Account not found or access denied for ID: ${account.id}`);
+        }
+
         return this.financeData.accounts.update(userId, account);
     }
 
     public async deleteAccount(userId: string, id: string): Promise<void> {
-        // TODO: validate user ownership
+        // TODO: standardize ownership validation
+        const current = await this.getAccount(userId, id);
+        if (!current) {
+            throw new BadRequestError(`Account not found or access denied for ID: ${id}`);
+        }
+
         await this.financeData.accounts.delete(userId, id);
     }
 
@@ -79,12 +89,22 @@ export class FinanceController {
     }
 
     public async saveTransaction(userId: string, transaction: Transaction): Promise<Transaction> {
-        // TODO: validate user ownership
+        // TODO: standardize ownership validation
+        const current = await this.getTransaction(userId, transaction.id);
+        if (!current) {
+            throw new BadRequestError(`Transaction not found or access denied for ID: ${transaction.id}`);
+        }
+
         return this.financeData.transactions.update(userId, transaction);
     }
 
     public async deleteTransaction(userId: string, id: string): Promise<void> {
-        // TODO: validate user ownership
+        // TODO: standardize ownership validation
+        const current = await this.getTransaction(userId, id);
+        if (!current) {
+            throw new BadRequestError(`Transaction not found or access denied for ID: ${id}`);
+        }
+
         await this.financeData.transactions.delete(userId, id);
     }
 
@@ -101,7 +121,11 @@ export class FinanceController {
     }
 
     public async saveBudgetStream(userId: string, stream: BudgetStream): Promise<BudgetStream> {
-        // TODO: validate user ownership
+        // TODO: standardize ownership validation
+        const current = await this.financeData.budgetStream.retrieveSingle(userId, stream.id);
+        if (!current) {
+            throw new BadRequestError(`Budget stream not found or access denied for ID: ${stream.id}`);
+        }
 
         return this.financeData.budgetStream.update(userId, stream);
     }

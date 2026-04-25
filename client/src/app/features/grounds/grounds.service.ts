@@ -41,6 +41,22 @@ export class GroundsService {
         return this.api.get<Product[]>('api/grounds/data/products');
     }
 
+    fetchProduct(id: string): Promise<Product | undefined> {
+        return this.api.get<Product>(`api/grounds/data/products/${id}`);
+    }
+
+    createProduct(product: Product): Promise<Product | undefined> {
+        return this.api.post<Product>('api/grounds/data/products', product);
+    }
+
+    saveProduct(product: Product): Promise<Product | undefined> {
+        return this.api.put<Product>(`api/grounds/data/products/${product.id}`, product);
+    }
+
+    deleteProduct(id: string): Promise<boolean> {
+        return this.api.delete(`api/grounds/data/products/${id}`);
+    }
+
     createTask(careTask: CareTask): Promise<CareTask | undefined> {
         return this.api.post<CareTask>('api/grounds/data/tasks', careTask);
     }

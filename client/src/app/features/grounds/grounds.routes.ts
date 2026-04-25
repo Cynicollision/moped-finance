@@ -6,6 +6,7 @@ import { GroundsProductsComponent } from './components/products.component';
 import { GroundsScheduleComponent } from './components/schedule.component';
 import { GroundsSummaryComponent } from './components/summary.component';
 import { GroundsPlantDetailsComponent } from './components/plant-details.component';
+import { GroundsProductDetailsComponent } from './components/product-details.component';
 
 export const GROUNDS_ROUTES: Routes = [
     {
@@ -18,7 +19,8 @@ export const GROUNDS_ROUTES: Routes = [
 
             { path: 'plants', component: GroundsPlantsComponent },
             { path: 'plants/:id', component: GroundsPlantDetailsComponent },
-            { path: 'products', component: GroundsProductsComponent }
+            { path: 'products', component: GroundsProductsComponent },
+            { path: 'products/:id', component: GroundsProductDetailsComponent }
         ]
     }
 ];

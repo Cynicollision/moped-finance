@@ -1,3 +1,30 @@
-<div>
-    TODO products page
+<div class="products-container">
+    <div class="header-actions">
+        <h2>Products</h2>
+        <button mat-flat-button color="primary" (click)="onAddProduct()">
+            <mat-icon>add</mat-icon> Add Product
+        </button>
+    </div>
+
+    <mat-card>
+        <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+            <ng-container matColumnDef="name">
+                <mat-header-cell *matHeaderCellDef> Product Name </mat-header-cell>
+                <mat-cell *matCellDef="let element"> {{element.name}} </mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="manufacturer">
+                <mat-header-cell *matHeaderCellDef> Manufacturer </mat-header-cell>
+                <mat-cell *matCellDef="let element"> {{element.manufacturer}} </mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="purposeDescription">
+                <mat-header-cell *matHeaderCellDef> Purpose Description </mat-header-cell>
+                <mat-cell *matCellDef="let element"> {{element.purposeDescription}} </mat-cell>
+            </ng-container>
+
+            <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: displayedColumns;" (click)="onRowClick(row)" class="clickable-row"></mat-row>
+        </mat-table>
+    </mat-card>
 </div>
