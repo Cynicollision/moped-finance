@@ -1,10 +1,10 @@
 import { Account } from '@shared/finance/types';
 import { DateTimeUtil } from './../../utility/date-time';
+import { IOwnedResourceData } from './../../core/base-resource-data';
 import { databasePool } from './../../core/db-client';
 
-export interface IFinanceAccountData {
+export interface IFinanceAccountData extends IOwnedResourceData<Account> {
     retrieveAll(userId: string): Promise<Account[]>;
-    retrieveSingle(userId: string, accountId: string): Promise<Account | null>;
     create(userId: string, account: Account): Promise<Account>;
     update(userId: string, account: Account): Promise<Account>;
     delete(userId: string, accountId: string): Promise<void>;

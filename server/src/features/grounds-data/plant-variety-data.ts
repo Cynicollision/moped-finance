@@ -1,10 +1,12 @@
 import { PlantVariety } from '@shared/grounds/types';
+import { IOwnedResourceData } from './../../core/base-resource-data';
 import { databasePool } from './../../core/db-client';
 
-export interface IGroundsPlantVarietyData {
+export interface IGroundsPlantVarietyData extends IOwnedResourceData<PlantVariety> {
     retrieveAll(userId: string): Promise<PlantVariety[]>;
-    retrieveSingle(userId: string, plantVarietyId: string): Promise<PlantVariety | null>;
+    insert(variety: PlantVariety): Promise<PlantVariety>;
     update(variety: PlantVariety): Promise<PlantVariety>;
+    delete(userId: string, plantVarietyId: string): Promise<void>;
 }
 
 export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
@@ -57,6 +59,55 @@ export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
         return result.rows[0] || null;
     }
 
+    async insert(variety: PlantVariety): Promise<PlantVariety> {
+        const result = await databasePool.query(
+            `INSERT INTO grounds.plant_varieties (
+                id,
+                user_id,
+                category,
+                common_name,
+                variety_name,
+                brand_name,
+                description,
+                fertilizer_notes,
+                pruning_notes,
+                soil_notes,
+                sunlight_notes,
+                watering_notes
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING 
+                id,
+                user_id AS "userId",
+                created_at AS "createdAt",
+                updated_at AS "updatedAt",
+                category,
+                common_name AS "commonName",
+                variety_name AS "varietyName",
+                brand_name AS "brandName",
+                description,
+                fertilizer_notes AS "fertilizerNotes",
+                pruning_notes AS "pruningNotes",
+                soil_notes AS "soilNotes",
+                sunlight_notes AS "sunlightNotes",
+                watering_notes AS "wateringNotes"`,
+            [
+                variety.id,
+                variety.userId,
+                variety.category,
+                variety.commonName,
+                variety.varietyName,
+                variety.brandName,
+                variety.description,
+                variety.fertilizerNotes,
+                variety.pruningNotes,
+                variety.soilNotes,
+                variety.sunlightNotes,
+                variety.wateringNotes
+            ]
+        );
+        return result.rows[0];
+    }
+
     async update(variety: PlantVariety): Promise<PlantVariety> {
         const result = await databasePool.query(
             `UPDATE grounds.plant_varieties
@@ -103,5 +154,13 @@ export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
             ]
         );
         return result.rows[0];
+    }
+
+    async delete(userId: string, plantVarietyId: string): Promise<void> {
+        await databasePool.query(
+            `DELETE FROM grounds.plant_varieties
+             WHERE id = $1 AND user_id = $2`,
+            [plantVarietyId, userId]
+        );
     }
 }

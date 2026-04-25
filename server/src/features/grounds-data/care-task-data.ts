@@ -1,13 +1,40 @@
 import { CareTask } from '@shared/grounds/types';
+import { IOwnedResourceData } from './../../core/base-resource-data';
 import { databasePool } from './../../core/db-client';
 
-export interface IGroundsCareTaskData {
+export interface IGroundsCareTaskData extends IOwnedResourceData<CareTask> {
     retrieveAll(userId: string): Promise<CareTask[]>;
     insert(task: CareTask): Promise<CareTask>;
     update(task: CareTask): Promise<CareTask>;
 }
 
 export class GroundsCareTaskData implements IGroundsCareTaskData {
+
+    public async retrieveSingle(userId: string, id: string): Promise<CareTask | null> {
+        const result = await databasePool.query(
+            `SELECT 
+                ct.id,
+                ct.created_at AS "createdAt",
+                ct.updated_at AS "updatedAt",
+                ct.user_id AS "userId",
+                ct.name,
+                ct.category,
+                ct.type,
+                ct.year,
+                ct.target_month AS "targetMonth",
+                ct.target_week AS "targetWeek",
+                ct.status,
+                ct.completed_date AS "completedDate",
+                ct.notes,
+                ct.is_annual_task AS "isAnnualTask",
+                ct.product_id AS "productId"
+            FROM grounds.care_tasks AS ct
+            WHERE ct.id = $1 AND ct.user_id = $2`,
+            [id, userId]
+        );
+
+        return result.rows[0] || null;
+    }
 
     public async retrieveAll(userId: string): Promise<CareTask[]> {
         const result = await databasePool.query(

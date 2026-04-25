@@ -1,9 +1,9 @@
 import { Product } from '@shared/grounds/types';
+import { IOwnedResourceData } from './../../core/base-resource-data';
 import { databasePool } from './../../core/db-client';
 
-export interface IGroundsProductData {
+export interface IGroundsProductData extends IOwnedResourceData<Product> {
     retrieveAll(userId: string): Promise<Product[]>;
-    retrieveSingle(userId: string, productId: string): Promise<Product | null>;
     insert(product: Product): Promise<Product>;
     update(product: Product): Promise<Product>;
     delete(userId: string, productId: string): Promise<void>;

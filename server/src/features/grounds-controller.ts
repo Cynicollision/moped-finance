@@ -1,13 +1,15 @@
 import { CareTask, Location, Plant, PlantVariety, Product } from '@shared/grounds/types';
 import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
 import { EntityIdUtil } from './../utility/entity-id';
-import { BadRequestError } from './../utility/errors';
+import { BaseResourceController } from './../core/base-resource-controller';
 import { IGroundsData } from './grounds-data';
 
-export class GroundsController {
+export class GroundsController extends BaseResourceController {
     constructor(private groundsData: IGroundsData) {
+        super();
     }
 
+    // Care Tasks
     public async getCareTasks(userId: string, year: string): Promise<CareTask[]> {
         return this.groundsData.careTasks.retrieveAll(userId);
     }
@@ -27,6 +29,7 @@ export class GroundsController {
         return this.groundsData.locations.retrieveAll(userId);
     }
 
+    // Plants
     public async getPlants(userId: string, varietyId?: string): Promise<Plant[]> {
         if (varietyId) {
             return this.groundsData.plants.retrieveByVariety(userId, varietyId);
@@ -35,23 +38,27 @@ export class GroundsController {
     }
 
     public async getPlantVariety(userId: string, plantVarietyId: string): Promise<PlantVariety> {
-        const data = await this.groundsData.plantVarieties.retrieveSingle(userId, plantVarietyId);
-        if (!data) {
-            throw new BadRequestError(`Plant variety not found for user ID: ${userId} and plant variety ID: ${plantVarietyId}`);
-        }
-        return data;
+        return this.validateOwnership(userId, plantVarietyId, this.groundsData.plantVarieties, 'Plant variety');
     }
 
     public async getPlantVarieties(userId: string): Promise<PlantVariety[]> {
         return this.groundsData.plantVarieties.retrieveAll(userId);
     }
 
-    // TODO: "Create" plant variety
-    // TODO: "Delete" plant variety
+    public async createPlantVariety(userId: string, plantVariety: PlantVariety): Promise<PlantVariety> {
+        plantVariety.userId = userId;
+        plantVariety.id = EntityIdUtil.generate(EntityIdPrefix.GroundsPlantVariety);
+        return this.groundsData.plantVarieties.insert(plantVariety);
+    }
+
+    public async deletePlantVariety(userId: string, plantVarietyId: string): Promise<void> {
+        await this.validateOwnership(userId, plantVarietyId, this.groundsData.plantVarieties, 'Plant variety');
+        await this.groundsData.plantVarieties.delete(userId, plantVarietyId);
+    }
 
     public async savePlantData(userId: string, variety: PlantVariety, plants: Partial<Plant>[]): Promise<PlantVariety> {
-        // TODO: validate ownership
-        variety.userId = userId;
+        await this.validateOwnership(userId, variety.id, this.groundsData.plantVarieties, 'Plant variety');
+
         const updatedVariety = await this.groundsData.plantVarieties.update(variety);
 
         // Sync plants
@@ -92,11 +99,7 @@ export class GroundsController {
     }
 
     public async getProduct(userId: string, productId: string): Promise<Product> {
-        const data = await this.groundsData.products.retrieveSingle(userId, productId);
-        if (!data) {
-            throw new BadRequestError(`Product not found for user ID: ${userId} and product ID: ${productId}`);
-        }
-        return data;
+        return this.validateOwnership(userId, productId, this.groundsData.products, 'Product');
     }
 
     public async createProduct(userId: string, product: Product): Promise<Product> {
@@ -106,22 +109,12 @@ export class GroundsController {
     }
 
     public async saveProduct(userId: string, product: Product): Promise<Product> {
-        // TODO: standardize ownership validation
-        const current = await this.groundsData.products.retrieveSingle(userId, product.id);
-        if (!current) {
-            throw new BadRequestError(`Product not found for user ID: ${userId} and product ID: ${product.id}`);
-        }
-
+        await this.validateOwnership(userId, product.id, this.groundsData.products, 'Product');
         return this.groundsData.products.update(product);
     }
 
     public async deleteProduct(userId: string, productId: string): Promise<void> {
-        // TODO: standardize ownership validation
-        const current = await this.groundsData.products.retrieveSingle(userId, productId);
-        if (!current) {
-            throw new BadRequestError(`Product not found for user ID: ${userId} and product ID: ${productId}`);
-        }
-
+        await this.validateOwnership(userId, productId, this.groundsData.products, 'Product');
         await this.groundsData.products.delete(userId, productId);
     }
 }

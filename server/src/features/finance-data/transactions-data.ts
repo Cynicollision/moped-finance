@@ -1,14 +1,15 @@
 import { SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
-import { databasePool } from './../../core/db-client';
 import { SpendingStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { IOwnedResourceData } from './../../core/base-resource-data';
+import { databasePool } from './../../core/db-client';
 
-export interface IFinanceTransactionsData {
+export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction> {
     search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
     retrieveMerchants(userId: string): Promise<string[]>;
     retrieveSpendingByCategory(userId: string, startDate: Date, endDate: Date): Promise<SpendingStream[]>;
-    retrieveSingle(userId: string, id: string): Promise<Transaction | undefined>;
+    retrieveSingle(userId: string, id: string): Promise<Transaction | null>;
     update(userId: string, transaction: Transaction): Promise<Transaction>;
     delete(userId: string, id: string): Promise<void>;
 }
@@ -127,7 +128,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
         return result.rows.map(row => row.merchant);
     }
 
-    public async retrieveSingle(userId: string, id: string): Promise<Transaction | undefined> {
+    public async retrieveSingle(userId: string, id: string): Promise<Transaction | null> {
         const query = `SELECT 
                     t.id, 
                     t.account_id AS "accountId", 
@@ -149,7 +150,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
         const result = await databasePool.query(query, params);
 
         if (result.rows.length === 0) {
-            return undefined;
+            return null;
         }
 
         const row = result.rows[0];

@@ -1,7 +1,8 @@
 import { Plant } from '@shared/grounds/types/plant';
+import { IOwnedResourceData } from './../../core/base-resource-data';
 import { databasePool } from './../../core/db-client';
 
-export interface IGroundsPlantData {
+export interface IGroundsPlantData extends IOwnedResourceData<Plant> {
     retrieveAll(userId: string): Promise<Plant[]>;
     retrieveByVariety(userId: string, varietyId: string): Promise<Plant[]>;
     insert(plant: Plant): Promise<Plant>;
@@ -10,7 +11,23 @@ export interface IGroundsPlantData {
 
 export class GroundsPlantData implements IGroundsPlantData {
 
-    async retrieveAll(userId: string): Promise<Plant[]> {
+    public async retrieveSingle(userId: string, id: string): Promise<Plant | null> {
+        const result = await databasePool.query(
+            `SELECT 
+                p.id,
+                p.user_id AS "userId",
+                p.variety_id AS "varietyId",
+                p.location_id AS "locationId",
+                p.planted_date AS "plantedDate"
+            FROM grounds.plants AS p
+            WHERE p.id = $1 AND p.user_id = $2`,
+            [id, userId]
+        );
+
+        return result.rows[0] || null;
+    }
+
+    public async retrieveAll(userId: string): Promise<Plant[]> {
         const result = await databasePool.query(
             `SELECT
                 p.id, 

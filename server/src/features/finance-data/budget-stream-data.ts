@@ -1,7 +1,8 @@
 import { BudgetStream } from '@shared/finance/types';
+import { IOwnedResourceData } from './../../core/base-resource-data';
 import { databasePool } from './../../core/db-client';
 
-export interface IFinanceBudgetStreamData {
+export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStream> {
     retrieveAll(userId: string): Promise<BudgetStream[]>;
     retrieveSingle(userId: string, id: string): Promise<BudgetStream | null>;
     delete(userId: string, id: string): Promise<void>;
