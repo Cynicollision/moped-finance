@@ -1,11 +1,11 @@
 import { CareTask, Location, Plant, PlantVariety, Product } from '@shared/grounds/types';
 import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
-import { GroundsData } from './grounds-data';
 import { EntityIdUtil } from './../utility/entity-id';
 import { BadRequestError } from './../utility/errors';
+import { IGroundsData } from './grounds-data';
 
-export class GroundsLogic {
-    constructor(private groundsData: GroundsData) {
+export class GroundsController {
+    constructor(private groundsData: IGroundsData) {
     }
 
     public async getCareTasks(userId: string, year: string): Promise<CareTask[]> {

@@ -5,10 +5,10 @@ import { Account, BalanceHistory, Category, Institution, Transaction, BudgetStre
 import { DateTimeUtil } from './../utility/date-time';
 import { EntityIdUtil } from './../utility/entity-id';
 import { BadRequestError, ForbiddenError } from './../utility/errors';
-import { FinanceData } from './finance-data';
+import { IFinanceData } from './finance-data';
 
-export class FinanceLogic {
-    constructor(private financeData: FinanceData) {
+export class FinanceController {
+    constructor(private financeData: IFinanceData) {
     }
 
     // Metadata

@@ -1,37 +1,38 @@
 import { Router, Request, Response } from 'express';
 import { ApiHandler } from './api-handler';
 import { AppLogger } from './../core/logger';
+import { GroundsController } from './../features/grounds-controller';
 import { GroundsData } from './../features/grounds-data';
-import { GroundsLogic } from './../features/grounds-logic';
 
 const router = Router();
-const logger = AppLogger.forPgDatabase();
+
+const logger = AppLogger.fromEnvironment();
 const groundsData = GroundsData.forPgDatabase();
-const groundsLogic = new GroundsLogic(groundsData);
+const controller = new GroundsController(groundsData);
 const handler = new ApiHandler(logger);
 
 router.get('/data/locations', (req, res) => {
     handler.execute(req, res, 'getLocations', (context) => {
-        return groundsLogic.getLocations(context.userId!);
+        return controller.getLocations(context.userId!);
     });
 });
 
 router.get('/data/plants', (req, res) => {
     handler.execute(req, res, 'getPlants', (context) => {
         const varietyId = req.query.varietyId as string;
-        return groundsLogic.getPlants(context.userId!, varietyId);
+        return controller.getPlants(context.userId!, varietyId);
     });
 });
 
 router.get('/data/plant-varieties', (req, res) => {
     handler.execute(req, res, 'getPlantVarieties', (context) => {
-        return groundsLogic.getPlantVarieties(context.userId!);
+        return controller.getPlantVarieties(context.userId!);
     });
 });
 
 router.get('/data/plant-varieties/:id', (req, res) => {
     handler.execute(req, res, 'getPlantVariety', (context) => {
-        return groundsLogic.getPlantVariety(context.userId!, req.params.id);
+        return controller.getPlantVariety(context.userId!, req.params.id);
     });
 });
 
@@ -42,26 +43,26 @@ router.put('/data/plant-varieties/:id', (req, res) => {
         const plants = requestBody.plants || [];
 
         variety.id = req.params.id; // ensure ID from URL param overrides body
-        return groundsLogic.savePlantData(context.userId!, variety, plants);
+        return controller.savePlantData(context.userId!, variety, plants);
     });
 });
 
 router.get('/data/products', (req, res) => {
     handler.execute(req, res, 'getProducts', (context) => {
-        return groundsLogic.getProducts(context.userId!);
+        return controller.getProducts(context.userId!);
     });
 });
 
 router.get('/data/tasks', (req, res) => {
     handler.execute(req, res, 'getCareTasks', (context) => {
         const year = (req.query.year as string) || new Date().getFullYear().toString();
-        return groundsLogic.getCareTasks(context.userId!, year);
+        return controller.getCareTasks(context.userId!, year);
     });
 });
 
 router.post('/data/tasks', (req, res) => {
     handler.execute(req, res, 'createCareTask', (context) => {
-        return groundsLogic.createCareTask(context.userId!, req.body);
+        return controller.createCareTask(context.userId!, req.body);
     });
 });
 
@@ -69,7 +70,7 @@ router.put('/data/tasks/:id', (req, res) => {
     handler.execute(req, res, 'saveCareTask', (context) => {
         const task = req.body;
         task.id = req.params.id; // ensure ID from URL param overrides body
-        return groundsLogic.saveCareTask(context.userId!, task);
+        return controller.saveCareTask(context.userId!, task);
     });
 });
 

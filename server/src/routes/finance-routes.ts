@@ -5,19 +5,19 @@ import { BudgetPeriod, HistoryTimeframe, TransactionsSortKey, ValueHistoryType }
 import { ApiHandler } from './api-handler';
 import { AppLogger } from './../core/logger';
 import { DateTimeUtil } from './../utility/date-time';
+import { FinanceController } from './../features/finance-controller';
 import { FinanceData } from './../features/finance-data';
-import { FinanceLogic } from './../features/finance-controller';
 
 const router = Router();
-const logger = AppLogger.forPgDatabase();
-const financeData = FinanceData.forPgDatabase();
-const financeLogic = new FinanceLogic(financeData);
 
+const logger = AppLogger.fromEnvironment();
+const financeData = FinanceData.forPgDatabase();
+const controller = new FinanceController(financeData);
 const handler = new ApiHandler(logger);
 
 router.get('/data/accounts', (req, res) => {
     handler.execute(req, res, 'getAccounts', (context) => {
-        return financeLogic.getAccounts(context.userId!);
+        return controller.getAccounts(context.userId!);
     });
 });
 
@@ -37,19 +37,19 @@ router.get('/data/accounts/total-value-history', (req, res) => {
             timeframe
         };
 
-        return financeLogic.getTotalValueHistory(context.userId!, options);
+        return controller.getTotalValueHistory(context.userId!, options);
     });
 });
 
 router.get('/data/accounts/:accountId', (req, res) => {
     handler.execute(req, res, 'getAccount', (context) => {
-        return financeLogic.getAccount(context.userId!, req.params.accountId);
+        return controller.getAccount(context.userId!, req.params.accountId);
     });
 });
 
 router.post('/data/accounts', (req, res) => {
     handler.execute(req, res, 'createAccount', (context) => {
-        return financeLogic.createAccount(context.userId!, req.body);
+        return controller.createAccount(context.userId!, req.body);
     });
 });
 
@@ -57,13 +57,13 @@ router.put('/data/accounts/:accountId', (req, res) => {
     handler.execute(req, res, 'saveAccount', (context) => {
         const account = req.body;
         account.id = req.params.accountId;
-        return financeLogic.saveAccount(context.userId!, account);
+        return controller.saveAccount(context.userId!, account);
     });
 });
 
 router.delete('/data/accounts/:accountId', (req, res) => {
     handler.execute(req, res, 'deleteAccount', (context) => {
-        return financeLogic.deleteAccount(context.userId!, req.params.accountId);
+        return controller.deleteAccount(context.userId!, req.params.accountId);
     });
 });
 
@@ -78,27 +78,27 @@ router.get('/data/accounts/:accountId/balance-history', (req, res) => {
             timeframe
         };
 
-        return financeLogic.getAccountBalanceHistory(context.userId!, req.params.accountId, options);
+        return controller.getAccountBalanceHistory(context.userId!, req.params.accountId, options);
     });
 });
 
 router.get('/data/accounts/:accountId/transactions', (req, res) => {
     handler.execute(req, res, 'getTransactions', (context) => {
         const options = getTransactionSearchOptions(req);
-        return financeLogic.getTransactions(context.userId!, options, req.params.accountId);
+        return controller.getTransactions(context.userId!, options, req.params.accountId);
     });
 });
 
 
 router.get('/data/budget-streams', (req, res) => {
     handler.execute(req, res, 'getBudgetStreams', (context) => {
-        return financeLogic.getBudgetStreams(context.userId!);
+        return controller.getBudgetStreams(context.userId!);
     });
 });
 
 router.post('/data/budget-streams', (req, res) => {
     handler.execute(req, res, 'createBudgetStream', (context) => {
-        return financeLogic.createBudgetStream(context.userId!, req.body);
+        return controller.createBudgetStream(context.userId!, req.body);
     });
 });
 
@@ -106,39 +106,39 @@ router.put('/data/budget-streams/:id', (req, res) => {
     handler.execute(req, res, 'saveBudgetStream', (context) => {
         const stream = req.body;
         stream.id = req.params.id; // ensure ID from URL param overrides body
-        return financeLogic.saveBudgetStream(context.userId!, stream);
+        return controller.saveBudgetStream(context.userId!, stream);
     });
 });
 
 router.delete('/data/budget-streams/:id', (req, res) => {
     handler.execute(req, res, 'deleteBudgetStream', (context) => {
-        return financeLogic.deleteBudgetStream(context.userId!, req.params.id);
+        return controller.deleteBudgetStream(context.userId!, req.params.id);
     });
 });
 
 router.get('/data/categories', (req, res) => {
     handler.execute(req, res, 'getCategories', (context) => {
         const activeOnly = req.query.activeOnly === 'true';
-        return financeLogic.getCategories(context.userId!, activeOnly);
+        return controller.getCategories(context.userId!, activeOnly);
     });
 });
 
 router.get('/data/institutions', (req, res) => {
     handler.execute(req, res, 'getInstitutions', (context) => {
-        return financeLogic.getInstitutions(context.userId!);
+        return controller.getInstitutions(context.userId!);
     });
 });
 
 router.get('/data/transactions', (req, res) => {
     handler.execute(req, res, 'getTransactions', (context) => {
         const options = getTransactionSearchOptions(req);
-        return financeLogic.getTransactions(context.userId!, options);
+        return controller.getTransactions(context.userId!, options);
     });
 });
 
 router.get('/data/transactions/merchants', (req, res) => {
     handler.execute(req, res, 'getTransactionMerchants', (context) => {
-        return financeLogic.getTransactionMerchants(context.userId!);
+        return controller.getTransactionMerchants(context.userId!);
     });
 });
 
@@ -146,13 +146,13 @@ router.get('/data/transactions/spending', (req, res) => {
     handler.execute(req, res, 'getTransactionSpendingByCategory', (context) => {
         const period = req.query.period as BudgetPeriod;
         const asOfDate = req.query.asOfDate as string;
-        return financeLogic.getTransactionSpendingByCategory(context.userId!, period, asOfDate);
+        return controller.getTransactionSpendingByCategory(context.userId!, period, asOfDate);
     });
 });
 
 router.get('/data/transactions/:id', (req, res) => {
     handler.execute(req, res, 'getTransaction', (context) => {
-        return financeLogic.getTransaction(context.userId!, req.params.id);
+        return controller.getTransaction(context.userId!, req.params.id);
     });
 });
 
@@ -160,13 +160,13 @@ router.put('/data/transactions/:id', (req, res) => {
     handler.execute(req, res, 'saveTransaction', (context) => {
         const transaction = req.body;
         transaction.id = req.params.id; // ensure ID holds
-        return financeLogic.saveTransaction(context.userId!, transaction);
+        return controller.saveTransaction(context.userId!, transaction);
     });
 });
 
 router.delete('/data/transactions/:id', (req, res) => {
     handler.execute(req, res, 'deleteTransaction', (context) => {
-        return financeLogic.deleteTransaction(context.userId!, req.params.id);
+        return controller.deleteTransaction(context.userId!, req.params.id);
     });
 });
 

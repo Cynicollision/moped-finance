@@ -16,7 +16,7 @@ type AuthRequest = {
 };
 
 const controller = new AuthController();
-const handler = new ApiHandler(AppLogger.forPgDatabase());
+const handler = new ApiHandler(AppLogger.fromEnvironment());
 
 router.post('/login', (req, res) => {
     handler.execute(req, res, 'login', async (context) => {
