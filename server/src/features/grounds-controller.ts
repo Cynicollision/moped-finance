@@ -1,12 +1,38 @@
+import { GroundsSummary } from '@shared/grounds/contracts';
 import { CareTask, Location, Plant, PlantVariety, Product } from '@shared/grounds/types';
 import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
+import { BaseResourceController, LanguageModelGateway } from './../core/interfaces';
 import { EntityIdUtil } from './../utility/entity-id';
-import { BaseResourceController } from './../core/base-resource-controller';
 import { IGroundsData } from './grounds/data';
+import { IWeatherGateway } from './grounds/gateways/weather-gateway';
 
 export class GroundsController extends BaseResourceController {
-    constructor(private groundsData: IGroundsData) {
+    constructor(
+        private groundsData: IGroundsData,
+        private languageModelGateway: LanguageModelGateway,
+        private weatherGateway: IWeatherGateway) {
         super();
+    }
+
+    // Summary
+    // TODO: finish
+    public async getGroundsSummary(userId: string): Promise<GroundsSummary> {
+        const summary: GroundsSummary = {};
+
+        const forecast = await this.weatherGateway.getForecast();
+        summary.todaysShortForecast = forecast.properties.periods[0].shortForecast;
+        summary.todaysDetailedForecast = forecast.properties.periods[0].detailedForecast;
+
+        const rainDataPromptContext = forecast.properties.periods.map(period => {
+            const chanceOfRain = period.probabilityOfPrecipitation?.value ?? 0;
+            return `${period.name}: ${chanceOfRain}% chance of rain.`;
+        }).join('\n');
+
+        const rainSummaryPrompt = `Summarize the following rain forecast data into 1-2 sentences for purposes of lawn and garden maintenance to let them know when they should expect rain and if they should water their plants/lawn: \n${rainDataPromptContext}`;
+
+        const rainSummary = await this.languageModelGateway.generateText(rainSummaryPrompt);
+        summary.rainSummary = rainSummary;
+        return summary;
     }
 
     // Care Tasks

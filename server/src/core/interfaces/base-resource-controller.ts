@@ -1,4 +1,4 @@
-import { BadRequestError } from './../utility/errors';
+import { BadRequestError } from './../../utility/errors';
 import { IOwnedResourceData } from './base-resource-data';
 
 export abstract class BaseResourceController {

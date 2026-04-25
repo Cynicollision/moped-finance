@@ -2,7 +2,7 @@ import { EntityIdPrefix } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
 import { Account, BalanceHistory, Category, Institution, Transaction, BudgetStream } from '@shared/finance/types';
-import { BaseResourceController } from './../core/base-resource-controller';
+import { BaseResourceController } from './../core/interfaces';
 import { DateTimeUtil } from './../utility/date-time';
 import { EntityIdUtil } from './../utility/entity-id';
 import { IFinanceData } from './finance/data';

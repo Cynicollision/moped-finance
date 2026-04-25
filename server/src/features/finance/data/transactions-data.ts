@@ -2,7 +2,7 @@ import { SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
 import { SpendingStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
-import { IOwnedResourceData } from './../../../core/base-resource-data';
+import { IOwnedResourceData } from './../../../core/interfaces';
 import { databasePool } from './../../../core/db-client';
 
 export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction> {

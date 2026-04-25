@@ -1,5 +1,5 @@
 import { BudgetStream } from '@shared/finance/types';
-import { IOwnedResourceData } from './../../../core/base-resource-data';
+import { IOwnedResourceData } from './../../../core/interfaces';
 import { databasePool } from './../../../core/db-client';
 
 export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStream> {

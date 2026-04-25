@@ -25,12 +25,11 @@ services:
     ports:
       - "3000:3000"
       - "9229:9229"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
       - PGHOST=postgres
-      - PGUSER=${PGUSER}
-      - PGPASSWORD=${PGPASSWORD}
-      - PGDATABASE=${PGDATABASE}
       - PORT=3000
     volumes:
       - ./server:/app/server

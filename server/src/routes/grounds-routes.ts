@@ -2,15 +2,25 @@ import { Router, Request, Response } from 'express';
 import { CareTask, Plant, PlantVariety, Product } from '@shared/grounds/types';
 import { ApiHandler } from './api-handler';
 import { AppLogger } from './../core/logger';
+import { GeminiGateway } from './../core/gateways/gemini-gateway';
 import { GroundsController } from './../features/grounds-controller';
 import { GroundsData } from './../features/grounds/data';
+import { WeatherGateway } from './../features/grounds/gateways/weather-gateway';
 
 const router = Router();
 
 const logger = AppLogger.fromEnvironment();
 const groundsData = GroundsData.forPgDatabase();
-const controller = new GroundsController(groundsData);
+const llmGateway = GeminiGateway.fromEnvironment();
+const weatherGateway = WeatherGateway.fromEnvironment();
+const controller = new GroundsController(groundsData, llmGateway, weatherGateway);
 const handler = new ApiHandler(logger);
+
+router.get('/summary', (req, res) => {
+    handler.execute(req, res, 'getGroundsSummary', (context) => {
+        return controller.getGroundsSummary(context.userId!);
+    });
+});
 
 router.get('/data/locations', (req, res) => {
     handler.execute(req, res, 'getLocations', (context) => {
