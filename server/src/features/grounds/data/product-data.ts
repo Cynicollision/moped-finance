@@ -1,6 +1,6 @@
 import { Product } from '@shared/grounds/types';
-import { IOwnedResourceData } from './../../core/base-resource-data';
-import { databasePool } from './../../core/db-client';
+import { IOwnedResourceData } from './../../../core/base-resource-data';
+import { databasePool } from './../../../core/db-client';
 
 export interface IGroundsProductData extends IOwnedResourceData<Product> {
     retrieveAll(userId: string): Promise<Product[]>;

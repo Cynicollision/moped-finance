@@ -1,7 +1,7 @@
 import { Account } from '@shared/finance/types';
-import { DateTimeUtil } from './../../utility/date-time';
-import { IOwnedResourceData } from './../../core/base-resource-data';
-import { databasePool } from './../../core/db-client';
+import { DateTimeUtil } from './../../../utility/date-time';
+import { IOwnedResourceData } from './../../../core/base-resource-data';
+import { databasePool } from './../../../core/db-client';
 
 export interface IFinanceAccountData extends IOwnedResourceData<Account> {
     retrieveAll(userId: string): Promise<Account[]>;

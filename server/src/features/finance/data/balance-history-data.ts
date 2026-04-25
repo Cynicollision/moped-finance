@@ -1,7 +1,7 @@
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
-import { databasePool } from './../../core/db-client';
+import { databasePool } from './../../../core/db-client';
 
 export interface IFinanceBalanceHistoryData {
     retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;

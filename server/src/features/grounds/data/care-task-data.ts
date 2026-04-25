@@ -1,6 +1,6 @@
 import { CareTask } from '@shared/grounds/types';
-import { IOwnedResourceData } from './../../core/base-resource-data';
-import { databasePool } from './../../core/db-client';
+import { IOwnedResourceData } from './../../../core/base-resource-data';
+import { databasePool } from './../../../core/db-client';
 
 export interface IGroundsCareTaskData extends IOwnedResourceData<CareTask> {
     retrieveAll(userId: string): Promise<CareTask[]>;

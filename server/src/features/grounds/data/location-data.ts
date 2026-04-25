@@ -1,6 +1,6 @@
 import { Location } from '@shared/grounds/types/location';
-import { IOwnedResourceData } from './../../core/base-resource-data';
-import { databasePool } from './../../core/db-client';
+import { IOwnedResourceData } from './../../../core/base-resource-data';
+import { databasePool } from './../../../core/db-client';
 
 export interface IGroundsLocationData extends IOwnedResourceData<Location> {
     retrieveAll(userId: string): Promise<Location[]>;

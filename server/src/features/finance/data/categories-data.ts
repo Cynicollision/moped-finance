@@ -1,6 +1,6 @@
 import { Category } from '@shared/finance/types';
-import { IOwnedResourceData } from './../../core/base-resource-data';
-import { databasePool } from './../../core/db-client';
+import { IOwnedResourceData } from './../../../core/base-resource-data';
+import { databasePool } from './../../../core/db-client';
 
 export interface IFinanceCategoriesData extends IOwnedResourceData<Category> {
     retrieveAll(userId: string, activeOnly: boolean): Promise<Category[]>;

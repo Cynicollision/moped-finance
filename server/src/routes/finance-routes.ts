@@ -7,7 +7,7 @@ import { ApiHandler } from './api-handler';
 import { AppLogger } from './../core/logger';
 import { DateTimeUtil } from './../utility/date-time';
 import { FinanceController } from './../features/finance-controller';
-import { FinanceData } from './../features/finance-data';
+import { FinanceData } from './../features/finance/data';
 
 const router = Router();
 

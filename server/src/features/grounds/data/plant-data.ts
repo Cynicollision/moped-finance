@@ -1,6 +1,6 @@
 import { Plant } from '@shared/grounds/types/plant';
-import { IOwnedResourceData } from './../../core/base-resource-data';
-import { databasePool } from './../../core/db-client';
+import { IOwnedResourceData } from './../../../core/base-resource-data';
+import { databasePool } from './../../../core/db-client';
 
 export interface IGroundsPlantData extends IOwnedResourceData<Plant> {
     retrieveAll(userId: string): Promise<Plant[]>;

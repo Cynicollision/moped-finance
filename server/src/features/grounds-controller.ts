@@ -2,7 +2,7 @@ import { CareTask, Location, Plant, PlantVariety, Product } from '@shared/ground
 import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
 import { EntityIdUtil } from './../utility/entity-id';
 import { BaseResourceController } from './../core/base-resource-controller';
-import { IGroundsData } from './grounds-data';
+import { IGroundsData } from './grounds/data';
 
 export class GroundsController extends BaseResourceController {
     constructor(private groundsData: IGroundsData) {

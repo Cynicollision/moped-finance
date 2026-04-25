@@ -1,6 +1,6 @@
 import { BudgetStream } from '@shared/finance/types';
-import { IOwnedResourceData } from './../../core/base-resource-data';
-import { databasePool } from './../../core/db-client';
+import { IOwnedResourceData } from './../../../core/base-resource-data';
+import { databasePool } from './../../../core/db-client';
 
 export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStream> {
     retrieveAll(userId: string): Promise<BudgetStream[]>;

@@ -3,7 +3,7 @@ import { CareTask, Plant, PlantVariety, Product } from '@shared/grounds/types';
 import { ApiHandler } from './api-handler';
 import { AppLogger } from './../core/logger';
 import { GroundsController } from './../features/grounds-controller';
-import { GroundsData } from './../features/grounds-data';
+import { GroundsData } from './../features/grounds/data';
 
 const router = Router();
 
