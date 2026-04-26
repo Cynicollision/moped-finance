@@ -49,7 +49,9 @@ export class GroundsController {
     public async saveCareTask(userId: string, task: CareTask): Promise<OperationResult<CareTask>> {
         task.userId = userId;
         const updated = await this.groundsData.careTasks.update(task);
-        if (!updated) return ResultUtil.userError('Care task not found or access denied');
+        if (!updated) {
+            return ResultUtil.userError('Care task not found or access denied');
+        }
         return ResultUtil.success(updated);
     }
 
@@ -67,7 +69,9 @@ export class GroundsController {
 
     public async getPlantVariety(userId: string, plantVarietyId: string): Promise<OperationResult<PlantVariety>> {
         const variety = await this.groundsData.plantVarieties.retrieveSingle(userId, plantVarietyId);
-        if (!variety) return ResultUtil.userError('Plant variety not found or access denied');
+        if (!variety) {
+            return ResultUtil.userError('Plant variety not found or access denied');
+        }
         return ResultUtil.success(variety);
     }
 
@@ -83,13 +87,17 @@ export class GroundsController {
 
     public async deletePlantVariety(userId: string, plantVarietyId: string): Promise<OperationResult<void>> {
         const deleted = await this.groundsData.plantVarieties.delete(userId, plantVarietyId);
-        if (!deleted) return ResultUtil.userError('Plant variety not found or access denied');
+        if (!deleted) {
+            return ResultUtil.userError('Plant variety not found or access denied');
+        }
         return ResultUtil.success();
     }
 
     public async savePlantData(userId: string, variety: PlantVariety, plants: Partial<Plant>[]): Promise<OperationResult<PlantVariety>> {
         const updatedVariety = await this.groundsData.plantVarieties.update(variety);
-        if (!updatedVariety) return ResultUtil.userError('Plant variety not found or access denied');
+        if (!updatedVariety) {
+            return ResultUtil.userError('Plant variety not found or access denied');
+        }
 
         // Sync plants
         const existingPlants = (await this.groundsData.plants.retrieveAll(userId))
@@ -130,7 +138,9 @@ export class GroundsController {
 
     public async getProduct(userId: string, productId: string): Promise<OperationResult<Product>> {
         const product = await this.groundsData.products.retrieveSingle(userId, productId);
-        if (!product) return ResultUtil.userError('Product not found or access denied');
+        if (!product) {
+            return ResultUtil.userError('Product not found or access denied');
+        }
         return ResultUtil.success(product);
     }
 
@@ -141,14 +151,18 @@ export class GroundsController {
     }
 
     public async saveProduct(userId: string, product: Product): Promise<OperationResult<Product>> {
-        const updated = await this.groundsData.products.update(product);
-        if (!updated) return ResultUtil.userError('Product not found or access denied');
+        const updated = await this.groundsData.products.update(userId, product);
+        if (!updated) {
+            return ResultUtil.userError('Product not found or access denied');
+        }
         return ResultUtil.success(updated);
     }
 
     public async deleteProduct(userId: string, productId: string): Promise<OperationResult<void>> {
         const deleted = await this.groundsData.products.delete(userId, productId);
-        if (!deleted) return ResultUtil.userError('Product not found or access denied');
+        if (!deleted) {
+            return ResultUtil.userError('Product not found or access denied');
+        }
         return ResultUtil.success();
     }
 }

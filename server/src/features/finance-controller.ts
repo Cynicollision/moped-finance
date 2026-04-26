@@ -22,7 +22,9 @@ export class FinanceController {
     // Accounts
     public async getAccount(userId: string, id: string): Promise<OperationResult<Account>> {
         const account = await this.financeData.accounts.retrieveSingle(userId, id);
-        if (!account) return ResultUtil.userError('Account not found or access denied');
+        if (!account) {
+            return ResultUtil.userError('Account not found or access denied');
+        }
         return ResultUtil.success(account);
     }
 
@@ -39,13 +41,17 @@ export class FinanceController {
 
     public async saveAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
         const updated = await this.financeData.accounts.update(userId, account);
-        if (!updated) return ResultUtil.userError('Account not found or access denied');
+        if (!updated) {
+            return ResultUtil.userError('Account not found or access denied');
+        }
         return ResultUtil.success(updated);
     }
 
     public async deleteAccount(userId: string, id: string): Promise<OperationResult<void>> {
         const deleted = await this.financeData.accounts.delete(userId, id);
-        if (!deleted) return ResultUtil.userError('Account not found or access denied');
+        if (!deleted) {
+            return ResultUtil.userError('Account not found or access denied');
+        }
         return ResultUtil.success();
     }
 
@@ -66,7 +72,9 @@ export class FinanceController {
     // Transactions
     public async getTransaction(userId: string, id: string): Promise<OperationResult<Transaction>> {
         const transaction = await this.financeData.transactions.retrieveSingle(userId, id);
-        if (!transaction) return ResultUtil.userError('Transaction not found or access denied');
+        if (!transaction) {
+            return ResultUtil.userError('Transaction not found or access denied');
+        }
         return ResultUtil.success(transaction);
     }
 
@@ -81,13 +89,17 @@ export class FinanceController {
 
     public async saveTransaction(userId: string, transaction: Transaction): Promise<OperationResult<Transaction>> {
         const updated = await this.financeData.transactions.update(userId, transaction);
-        if (!updated) return ResultUtil.userError('Transaction not found or access denied');
+        if (!updated) {
+            return ResultUtil.userError('Transaction not found or access denied');
+        }
         return ResultUtil.success(updated);
     }
 
     public async deleteTransaction(userId: string, id: string): Promise<OperationResult<void>> {
         const deleted = await this.financeData.transactions.delete(userId, id);
-        if (!deleted) return ResultUtil.userError('Transaction not found or access denied');
+        if (!deleted) {
+            return ResultUtil.userError('Transaction not found or access denied');
+        }
         return ResultUtil.success();
     }
 
@@ -106,13 +118,17 @@ export class FinanceController {
 
     public async saveBudgetStream(userId: string, stream: BudgetStream): Promise<OperationResult<BudgetStream>> {
         const updated = await this.financeData.budgetStream.update(userId, stream);
-        if (!updated) return ResultUtil.userError('Budget stream not found or access denied');
+        if (!updated) {
+            return ResultUtil.userError('Budget stream not found or access denied');
+        }
         return ResultUtil.success(updated);
     }
 
     public async deleteBudgetStream(userId: string, id: string): Promise<OperationResult<void>> {
         const deleted = await this.financeData.budgetStream.delete(userId, id);
-        if (!deleted) return ResultUtil.userError('Budget stream not found or access denied');
+        if (!deleted) {
+            return ResultUtil.userError('Budget stream not found or access denied');
+        }
         return ResultUtil.success();
     }
 
