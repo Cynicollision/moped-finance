@@ -5,7 +5,7 @@ import { databasePool } from './../../../core/db-client';
 export interface IGroundsProductData extends IOwnedResourceData<Product> {
     retrieveAll(userId: string): Promise<Product[]>;
     insert(product: Product): Promise<Product>;
-    update(product: Product): Promise<Product | null>;
+    update(userId: string, product: Product): Promise<Product | null>;
     delete(userId: string, productId: string): Promise<boolean>;
 }
 
@@ -71,7 +71,7 @@ export class GroundsProductData implements IGroundsProductData {
         return result.rows[0];
     }
 
-    async update(product: Product): Promise<Product | null> {
+    async update(userId: string, product: Product): Promise<Product | null> {
         const result = await databasePool.query(
             `UPDATE grounds.products
             SET
@@ -89,7 +89,7 @@ export class GroundsProductData implements IGroundsProductData {
                 product.careTaskType,
                 product.purposeDescription,
                 product.url,
-                product.userId
+                userId
             ]
         );
         if (result.rows.length === 0) {
