@@ -1,9 +1,8 @@
 import * as bcrypt from 'bcrypt';
 import { EntityIdPrefix } from '@shared/core/enum';
 import { User } from '@shared/core/types/user';
-import { DateTimeUtil } from './../utility/date-time';
-import { EntityIdUtil } from './../utility/entity-id';
-import { BadRequestError } from './../utility/errors';
+import { OperationResult } from '@shared/core/contracts/operation-result';
+import { DateTimeUtil, EntityIdUtil, ResultUtil } from './../utility';
 import { CoreUserData, ICoreUserData } from './data/user-data';
 
 export class AuthController {
@@ -14,29 +13,29 @@ export class AuthController {
         this.userData = new CoreUserData();
     }
 
-    async loginUser(username: string, password?: string): Promise<User | undefined> {
+    async loginUser(username: string, password?: string): Promise<OperationResult<User>> {
         if (!password) {
-            return undefined;
+            return ResultUtil.userError('Password is required.');
         }
 
         const userWithPassword = await this.userData.retrieveByUsername(username);
         if (!userWithPassword) {
-            return undefined;
+            return ResultUtil.userError('Invalid username or password.');
         }
 
         const match = await bcrypt.compare(password, userWithPassword.passwordHash);
         if (match) {
             // Strip passwordHash before returning
             const { passwordHash, ...user } = userWithPassword;
-            return user;
+            return ResultUtil.success(user);
         }
 
-        return undefined;
+        return ResultUtil.userError('Invalid username or password.');
     }
 
-    async createUser(username: string, name: string, password?: string): Promise<User> {
+    async createUser(username: string, name: string, password?: string): Promise<OperationResult<User>> {
         if (!password) {
-            throw new BadRequestError('Password is required.');
+            return ResultUtil.userError('Password is required.');
         }
 
         const hash = await bcrypt.hash(password, this.saltRounds);
@@ -49,30 +48,31 @@ export class AuthController {
             updatedAt: DateTimeUtil.now()
         };
 
-        return await this.userData.create(newUser, hash);
+        return ResultUtil.success(await this.userData.create(newUser, hash));
     }
 
-    async changePassword(userId: string, oldPassword?: string, newPassword?: string): Promise<void> {
+    async changePassword(userId: string, oldPassword?: string, newPassword?: string): Promise<OperationResult<void>> {
         if (!oldPassword || !newPassword) {
-            throw new BadRequestError('Old and new passwords are required.');
+            return ResultUtil.userError('Old and new passwords are required.');
         }
 
         const user = await this.userData.retrieveSingle(userId);
         if (!user) {
-            throw new BadRequestError('User not found.');
+            return ResultUtil.userError('User not found.');
         }
 
         const userWithPassword = await this.userData.retrieveByUsername(user.username);
         if (!userWithPassword) {
-            throw new BadRequestError('User not found.');
+            return ResultUtil.userError('User not found.');
         }
 
         const match = await bcrypt.compare(oldPassword, userWithPassword.passwordHash);
         if (!match) {
-            throw new BadRequestError('Invalid old password.');
+            return ResultUtil.userError('Invalid old password.');
         }
 
         const newHash = await bcrypt.hash(newPassword, this.saltRounds);
         await this.userData.updatePassword(userId, newHash);
+        return ResultUtil.success();
     }
 }

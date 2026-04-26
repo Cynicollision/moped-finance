@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { OperationResult } from '@shared/core/contracts/operation-result';
-import { User } from '@shared/core/types/user';
-import { DateTimeUtil } from './../utility/date-time';
+import { OperationResult } from '@shared/core/contracts';
+import { User } from '@shared/core/types';
+import { OperationStatus } from '@shared/core/enum';
+import { ResultUtil } from './../utility';
 
 export class ApiUtil {
 
@@ -18,63 +19,52 @@ export class ApiUtil {
         return undefined;
     }
 
-    public static success<T>(res: Response, data?: T): OperationResult<T> {
-        const result = this.createOperationResult(true, data);
-        res.status(200).json(result);
+    public static sendResult<T>(res: Response, result: OperationResult<T>): OperationResult<T> {
+        let statusCode = 200;
+        switch (result.status) {
+            case OperationStatus.Success:
+                statusCode = 200;
+                break;
+            case OperationStatus.UserError:
+                statusCode = 400;
+                break;
+            case OperationStatus.Unauthorized:
+                statusCode = 401;
+                break;
+            case OperationStatus.Forbidden:
+                statusCode = 403;
+                break;
+            case OperationStatus.UnhandledError:
+            default:
+                statusCode = 500;
+                break;
+        }
+
+        res.status(statusCode).json(result);
         return result;
+    }
+
+    public static success<T>(res: Response, data?: T): OperationResult<T> {
+        return this.sendResult(res, ResultUtil.success(data));
     }
 
     public static badRequest<T>(res: Response, message: string): OperationResult<T> {
-        const result = this.createOperationResult<T>(false, undefined, {
-            code: 'BAD_REQUEST',
-            message: message
-        });
-        res.status(400).json(result);
-        return result;
+        return this.sendResult(res, ResultUtil.userError(message));
     }
 
     public static unauthorized<T>(res: Response): OperationResult<T> {
-        const result = this.createOperationResult<T>(false, undefined, {
-            code: 'UNAUTHORIZED',
-            message: 'Not authenticated'
-        });
-        res.status(401).json(result);
-        return result;
+        return this.sendResult(res, ResultUtil.unauthorized());
     }
 
     public static forbidden<T>(res: Response, message: string = 'Access denied'): OperationResult<T> {
-        const result = this.createOperationResult<T>(false, undefined, {
-            code: 'FORBIDDEN',
-            message: message
-        });
-        res.status(403).json(result);
-        return result;
+        return this.sendResult(res, ResultUtil.forbidden(message));
     }
 
     public static notFound<T>(req: Request, res: Response): OperationResult<T> {
-        const result = this.createOperationResult<T>(false, undefined, {
-            code: 'NOT_FOUND',
-            message: `${req.originalUrl} not found.`
-        });
-        res.status(404).json(result);
-        return result;
+        return this.sendResult(res, ResultUtil.notFound(`${req.originalUrl} not found.`));
     }
 
     public static internalError<T>(res: Response, error: unknown): OperationResult<T> {
-        const result = this.createOperationResult<T>(false, undefined, {
-            code: 'INTERNAL_ERROR',
-            message: 'An unexpected error occurred'
-        });
-        res.status(500).json(result);
-        return result;
-    }
-
-    private static createOperationResult<T>(success: boolean, data?: T, error?: any): OperationResult<T> {
-        return {
-            success,
-            timestamp: DateTimeUtil.getCurrentTimestamp(),
-            data,
-            error
-        };
+        return this.sendResult(res, ResultUtil.internalError('An unexpected error occurred'));
     }
 }

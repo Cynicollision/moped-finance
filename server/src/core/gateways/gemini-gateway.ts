@@ -6,24 +6,34 @@ export interface GeminiGatewayConfig {
     model: string;
 }
 
+const GEMINI_CONFIG_ERROR = 'Gemini configuration not found in environment variables.';
+
 export class GeminiGateway implements LanguageModelGateway {
     constructor(private config: GeminiGatewayConfig) {
-        if (!config.apiKey) {
-            console.warn('GeminiGateway: API key is missing. API calls will fail.');
+        if (!config.apiKey || !config.baseUrl || !config.model) {
+            throw new Error(GEMINI_CONFIG_ERROR);
         }
     }
 
     public static fromEnvironment(): GeminiGateway {
+        const apiKey = process.env.GEMINI_API_KEY;
+        const baseUrl = process.env.GEMINI_BASE_URL;
+        const model = process.env.GEMINI_MODEL;
+
+        if (!apiKey || !baseUrl || !model) {
+            throw new Error(GEMINI_CONFIG_ERROR);
+        }
+
         return new GeminiGateway({
-            apiKey: process.env.GEMINI_API_KEY || '',
-            baseUrl: process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/models',
-            model: process.env.GEMINI_MODEL || 'gemini-1.5-flash'
+            apiKey,
+            baseUrl,
+            model
         });
     }
 
     public async generateText(prompt: string, params?: TextGenerationParams): Promise<string> {
-        if (!this.config.apiKey) {
-            throw new Error('Gemini API key is not configured.');
+        if (!this.config.apiKey || !this.config.baseUrl || !this.config.model) {
+            throw new Error(GEMINI_CONFIG_ERROR);
         }
 
         const modelToUse = params?.modelOverride || this.config.model;

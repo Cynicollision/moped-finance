@@ -1,5 +1,5 @@
 import { User } from '@shared/core/types/user';
-import { DateTimeUtil } from './../../utility/date-time';
+import { DateTimeUtil } from './../../utility';
 import { databasePool } from './../db-client';
 
 export interface UserWithPassword extends User {

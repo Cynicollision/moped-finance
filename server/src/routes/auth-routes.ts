@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { ApiHandler } from './api-handler';
-import { resolveUser, requireAuth } from './auth-middleware';
-import { BadRequestError, UnauthorizedError } from './../utility/errors';
+import { OperationResult } from '@shared/core/contracts';
 import { AppLogger } from './../core/logger';
 import { AuthController } from './../core/auth-controller';
+import { ResultUtil } from './../utility';
+import { ApiHandler } from './api-handler';
+import { resolveUser, requireAuth } from './auth-middleware';
 
 const router = Router();
 
@@ -21,14 +22,14 @@ const handler = new ApiHandler(AppLogger.fromEnvironment());
 router.post('/login', (req, res) => {
     handler.execute(req, res, 'login', async (context) => {
         const { username, password } = req.body as AuthRequest;
-        const user = await controller.loginUser(username, password);
+        const result = await controller.loginUser(username, password);
 
-        if (!user) {
-            throw new UnauthorizedError('Invalid username or password.');
+        if (!result.success || !result.data) {
+            return result;
         }
 
-        context.req.session.user = user;
-        return user;
+        context.req.session.user = result.data;
+        return result;
     });
 });
 
@@ -37,14 +38,17 @@ router.post('/register', (req, res) => {
         const { username, name, password } = req.body as AuthRequest;
 
         if (!username || !name || !password) {
-            throw new BadRequestError('Username, name, and password are required.');
+            return ResultUtil.userError('Username, name, and password are required.');
         }
 
-        const user = await controller.createUser(username, name, password);
+        const result = await controller.createUser(username, name, password);
+        if (!result.success || !result.data) {
+            return result;
+        }
 
         // Auto-login after registration
-        context.req.session.user = user;
-        return user;
+        context.req.session.user = result.data;
+        return result;
     });
 });
 
@@ -53,22 +57,34 @@ router.put('/password', requireAuth, (req, res) => {
         const { oldPassword, newPassword } = req.body as AuthRequest;
 
         if (!oldPassword || !newPassword) {
-            throw new BadRequestError('Missing required fields.');
+            return ResultUtil.userError('Missing required fields.');
         }
 
-        await controller.changePassword(context.userId!, oldPassword, newPassword);
+        return await controller.changePassword(context.userId!, oldPassword, newPassword);
     });
 });
 
 router.post('/logout', (req, res) => {
     handler.execute(req, res, 'logout', async (context) => {
-        return new Promise((resolve, reject) => {
-            context.req.session.destroy((err) => {
+        const session = context.req.session;
+        if (!session) {
+            return ResultUtil.success();
+        }
+
+        return new Promise<OperationResult<void>>((resolve) => {
+            session.destroy((err) => {
                 if (err) {
-                    return reject(new Error('Could not log out.'));
+                    return resolve(ResultUtil.internalError('Could not log out.'));
                 }
-                res.clearCookie('connect.sid');
-                resolve(undefined);
+
+                // Explicitly clear the cookie with matching options
+                res.clearCookie('connect.sid', {
+                    path: '/',
+                    secure: process.env.NODE_ENV === 'production',
+                    httpOnly: true
+                });
+
+                resolve(ResultUtil.success());
             });
         });
     });
@@ -76,7 +92,7 @@ router.post('/logout', (req, res) => {
 
 router.get('/me', resolveUser, (req, res) => {
     handler.execute(req, res, 'me', async (context) => {
-        return context.req.session.user;
+        return ResultUtil.success(context.req.session.user);
     });
 });
 

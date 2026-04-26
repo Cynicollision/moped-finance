@@ -5,8 +5,8 @@ import { databasePool } from './../../../core/db-client';
 export interface IGroundsProductData extends IOwnedResourceData<Product> {
     retrieveAll(userId: string): Promise<Product[]>;
     insert(product: Product): Promise<Product>;
-    update(product: Product): Promise<Product>;
-    delete(userId: string, productId: string): Promise<void>;
+    update(product: Product): Promise<Product | null>;
+    delete(userId: string, productId: string): Promise<boolean>;
 }
 
 export class GroundsProductData implements IGroundsProductData {
@@ -71,7 +71,7 @@ export class GroundsProductData implements IGroundsProductData {
         return result.rows[0];
     }
 
-    async update(product: Product): Promise<Product> {
+    async update(product: Product): Promise<Product | null> {
         const result = await databasePool.query(
             `UPDATE grounds.products
             SET
@@ -80,7 +80,7 @@ export class GroundsProductData implements IGroundsProductData {
                 care_task_type = $4,
                 purpose_description = $5,
                 url = $6
-            WHERE id = $1
+            WHERE id = $1 AND user_id = $7
             RETURNING *`,
             [
                 product.id,
@@ -88,18 +88,23 @@ export class GroundsProductData implements IGroundsProductData {
                 product.manufacturer,
                 product.careTaskType,
                 product.purposeDescription,
-                product.url
+                product.url,
+                product.userId
             ]
         );
+        if (result.rows.length === 0) {
+            return null;
+        }
         return result.rows[0];
     }
 
-    async delete(userId: string, productId: string): Promise<void> {
-        await databasePool.query(
+    async delete(userId: string, productId: string): Promise<boolean> {
+        const result = await databasePool.query(
             `DELETE FROM grounds.products
             WHERE id = $1
             AND user_id = $2`,
             [productId, userId]
         );
+        return (result.rowCount ?? 0) > 0;
     }
 }

@@ -10,8 +10,8 @@ export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction
     retrieveMerchants(userId: string): Promise<string[]>;
     retrieveSpendingByCategory(userId: string, startDate: Date, endDate: Date): Promise<SpendingStream[]>;
     retrieveSingle(userId: string, id: string): Promise<Transaction | null>;
-    update(userId: string, transaction: Transaction): Promise<Transaction>;
-    delete(userId: string, id: string): Promise<void>;
+    update(userId: string, transaction: Transaction): Promise<Transaction | null>;
+    delete(userId: string, id: string): Promise<boolean>;
 }
 
 export class FinanceTransactionsData implements IFinanceTransactionsData {
@@ -182,16 +182,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
         }));
     }
 
-    public async update(userId: string, transaction: Transaction): Promise<Transaction> {
-        const retrieveQuery = `SELECT t.id 
-                FROM finance.transactions AS t
-                    JOIN finance.accounts AS a ON a.id = t.account_id
-                WHERE a.user_id = $1 AND t.id = $2`;
-        const checkResult = await databasePool.query(retrieveQuery, [userId, transaction.id]);
-        if (checkResult.rows.length === 0) {
-            throw new Error('Transaction not found or does not belong to user.');
-        }
-
+    public async update(userId: string, transaction: Transaction): Promise<Transaction | null> {
         const query = `UPDATE finance.transactions
                         SET 
                             merchant = $1,
@@ -200,6 +191,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
                             notes = $4,
                             is_hidden = $5
                         WHERE id = $6
+                            AND account_id IN (SELECT id FROM finance.accounts WHERE user_id = $7)
                         RETURNING 
                             id, 
                             account_id AS "accountId", 
@@ -219,10 +211,15 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
             transaction.date,
             transaction.notes,
             transaction.isHidden,
-            transaction.id
+            transaction.id,
+            userId
         ];
 
         const result = await databasePool.query(query, params);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
 
         const row = result.rows[0];
         return {
@@ -231,17 +228,9 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
         };
     }
 
-    public async delete(userId: string, id: string): Promise<void> {
-        const retrieveQuery = `SELECT t.id 
-                FROM finance.transactions AS t
-                    JOIN finance.accounts AS a ON a.id = t.account_id
-                WHERE a.user_id = $1 AND t.id = $2`;
-        const checkResult = await databasePool.query(retrieveQuery, [userId, id]);
-        if (checkResult.rows.length === 0) {
-            throw new Error('Transaction not found or does not belong to user.');
-        }
-
-        const deleteQuery = `DELETE FROM finance.transactions WHERE id = $1`;
-        await databasePool.query(deleteQuery, [id]);
+    public async delete(userId: string, id: string): Promise<boolean> {
+        const deleteQuery = `DELETE FROM finance.transactions WHERE id = $1 AND account_id IN (SELECT id FROM finance.accounts WHERE user_id = $2)`;
+        const result = await databasePool.query(deleteQuery, [id, userId]);
+        return (result.rowCount ?? 0) > 0;
     }
 }

@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
 import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
-import { EntityIdUtil } from './../src/utility/entity-id';
+import { EntityIdUtil } from './../src/utility/entity-id-util';
 
 const dbConfig = {
     user: process.env.PGUSER,

@@ -5,8 +5,8 @@ import { databasePool } from './../../../core/db-client';
 export interface IGroundsPlantVarietyData extends IOwnedResourceData<PlantVariety> {
     retrieveAll(userId: string): Promise<PlantVariety[]>;
     insert(variety: PlantVariety): Promise<PlantVariety>;
-    update(variety: PlantVariety): Promise<PlantVariety>;
-    delete(userId: string, plantVarietyId: string): Promise<void>;
+    update(variety: PlantVariety): Promise<PlantVariety | null>;
+    delete(userId: string, plantVarietyId: string): Promise<boolean>;
 }
 
 export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
@@ -108,7 +108,7 @@ export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
         return result.rows[0];
     }
 
-    async update(variety: PlantVariety): Promise<PlantVariety> {
+    async update(variety: PlantVariety): Promise<PlantVariety | null> {
         const result = await databasePool.query(
             `UPDATE grounds.plant_varieties
              SET updated_at = NOW(),
@@ -153,14 +153,18 @@ export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
                 variety.userId
             ]
         );
+        if (result.rows.length === 0) {
+            return null;
+        }
         return result.rows[0];
     }
 
-    async delete(userId: string, plantVarietyId: string): Promise<void> {
-        await databasePool.query(
+    async delete(userId: string, plantVarietyId: string): Promise<boolean> {
+        const result = await databasePool.query(
             `DELETE FROM grounds.plant_varieties
              WHERE id = $1 AND user_id = $2`,
             [plantVarietyId, userId]
         );
+        return (result.rowCount ?? 0) > 0;
     }
 }

@@ -3,9 +3,9 @@ import { SortDirection } from '@shared/core/enum';
 import { Account, BudgetStream, Transaction } from '@shared/finance/types';
 import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { BudgetPeriod, HistoryTimeframe, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
-import { ApiHandler } from './api-handler';
 import { AppLogger } from './../core/logger';
-import { DateTimeUtil } from './../utility/date-time';
+import { DateTimeUtil } from './../utility';
+import { ApiHandler } from './api-handler';
 import { FinanceController } from './../features/finance-controller';
 import { FinanceData } from './../features/finance/data';
 

@@ -12,9 +12,9 @@ export const resolveUser = async (req: Request, _res: Response, next: NextFuncti
             const [username, password] = Buffer.from(b64auth, 'base64').toString().split(':');
 
             if (username && password) {
-                const user = await controller.loginUser(username, password);
-                if (user) {
-                    (req as any).user = user;
+                const result = await controller.loginUser(username, password);
+                if (result.success && result.data) {
+                    (req as any).user = result.data;
                 }
             }
         }

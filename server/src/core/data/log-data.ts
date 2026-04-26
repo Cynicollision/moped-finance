@@ -1,5 +1,5 @@
 import { LogEntry } from '@shared/core/types';
-import { DateTimeUtil } from './../../utility/date-time';
+import { DateTimeUtil } from './../../utility';
 import { databasePool } from './../db-client';
 
 export interface ILogData {

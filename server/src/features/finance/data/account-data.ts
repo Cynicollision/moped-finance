@@ -1,13 +1,13 @@
 import { Account } from '@shared/finance/types';
-import { DateTimeUtil } from './../../../utility/date-time';
+import { DateTimeUtil } from './../../../utility';
 import { IOwnedResourceData } from './../../../core/interfaces';
 import { databasePool } from './../../../core/db-client';
 
 export interface IFinanceAccountData extends IOwnedResourceData<Account> {
     retrieveAll(userId: string): Promise<Account[]>;
     create(userId: string, account: Account): Promise<Account>;
-    update(userId: string, account: Account): Promise<Account>;
-    delete(userId: string, accountId: string): Promise<void>;
+    update(userId: string, account: Account): Promise<Account | null>;
+    delete(userId: string, accountId: string): Promise<boolean>;
 }
 
 export class FinanceAccountData implements IFinanceAccountData {
@@ -121,12 +121,7 @@ export class FinanceAccountData implements IFinanceAccountData {
         };
     }
 
-    public async update(userId: string, account: Account): Promise<Account> {
-        const checkResult = await databasePool.query(`SELECT id FROM finance.accounts WHERE user_id = $1 AND id = $2`, [userId, account.id]);
-        if (checkResult.rows.length === 0) {
-            throw new Error('Account not found or does not belong to user.');
-        }
-
+    public async update(userId: string, account: Account): Promise<Account | null> {
         const now = DateTimeUtil.now();
         const query = `UPDATE finance.accounts
                         SET 
@@ -141,7 +136,7 @@ export class FinanceAccountData implements IFinanceAccountData {
                             is_manual = $9,
                             is_retirement = $10,
                             hide_from_cashflow = $11
-                        WHERE id = $12
+                        WHERE id = $12 AND user_id = $13
                         RETURNING 
                             id, 
                             created_at AS "createdAt",
@@ -170,10 +165,15 @@ export class FinanceAccountData implements IFinanceAccountData {
             account.isManual,
             account.isRetirement,
             account.hideFromCashflow,
-            account.id
+            account.id,
+            userId
         ];
 
         const result = await databasePool.query(query, params);
+        if (result.rows.length === 0) {
+            return null;
+        }
+
         const row = result.rows[0];
         return {
             ...row,
@@ -181,13 +181,9 @@ export class FinanceAccountData implements IFinanceAccountData {
         };
     }
 
-    public async delete(userId: string, id: string): Promise<void> {
-        const checkResult = await databasePool.query(`SELECT id FROM finance.accounts WHERE user_id = $1 AND id = $2`, [userId, id]);
-        if (checkResult.rows.length === 0) {
-            throw new Error('Account not found or does not belong to user.');
-        }
-
+    public async delete(userId: string, id: string): Promise<boolean> {
         // delete constraints: If transactions exist etc., PG might throw constraint error. We assume PG takes care of it or cascades.
-        await databasePool.query(`DELETE FROM finance.accounts WHERE id = $1`, [id]);
+        const result = await databasePool.query(`DELETE FROM finance.accounts WHERE id = $1 AND user_id = $2`, [id, userId]);
+        return (result.rowCount ?? 0) > 0;
     }
 }

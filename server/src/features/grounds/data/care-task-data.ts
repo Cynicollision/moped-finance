@@ -5,7 +5,7 @@ import { databasePool } from './../../../core/db-client';
 export interface IGroundsCareTaskData extends IOwnedResourceData<CareTask> {
     retrieveAll(userId: string): Promise<CareTask[]>;
     insert(task: CareTask): Promise<CareTask>;
-    update(task: CareTask): Promise<CareTask>;
+    update(task: CareTask): Promise<CareTask | null>;
 }
 
 export class GroundsCareTaskData implements IGroundsCareTaskData {
@@ -93,7 +93,7 @@ export class GroundsCareTaskData implements IGroundsCareTaskData {
         return result.rows[0];
     }
 
-    public async update(task: CareTask): Promise<CareTask> {
+    public async update(task: CareTask): Promise<CareTask | null> {
         const result = await databasePool.query(
             `UPDATE grounds.care_tasks 
             SET
@@ -133,7 +133,7 @@ export class GroundsCareTaskData implements IGroundsCareTaskData {
         );
 
         if (result.rows.length === 0) {
-            throw new Error('Task not found or access denied.');
+            return null;
         }
 
         return result.rows[0];

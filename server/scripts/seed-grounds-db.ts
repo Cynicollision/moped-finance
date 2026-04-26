@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Pool } from 'pg';
-import { EntityIdUtil } from './../src/utility/entity-id';
+import { EntityIdUtil } from './../src/utility/entity-id-util';
 import { EntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
 
 const dbConfig = {

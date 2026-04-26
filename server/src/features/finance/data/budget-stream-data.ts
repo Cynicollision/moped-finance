@@ -5,9 +5,9 @@ import { databasePool } from './../../../core/db-client';
 export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStream> {
     retrieveAll(userId: string): Promise<BudgetStream[]>;
     retrieveSingle(userId: string, id: string): Promise<BudgetStream | null>;
-    delete(userId: string, id: string): Promise<void>;
+    delete(userId: string, id: string): Promise<boolean>;
     insert(userId: string, stream: BudgetStream): Promise<BudgetStream>;
-    update(userId: string, stream: BudgetStream): Promise<BudgetStream>;
+    update(userId: string, stream: BudgetStream): Promise<BudgetStream | null>;
 }
 
 export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
@@ -62,13 +62,14 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
         };
     }
 
-    public async delete(userId: string, id: string): Promise<void> {
-        await databasePool.query(
+    public async delete(userId: string, id: string): Promise<boolean> {
+        const result = await databasePool.query(
             `DELETE FROM finance.budget_streams AS bs
                 WHERE bs.user_id = $1
                     AND bs.id = $2`,
             [userId, id]
         );
+        return (result.rowCount ?? 0) > 0;
     }
 
     public async insert(userId: string, stream: BudgetStream): Promise<BudgetStream> {
@@ -105,7 +106,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
         };
     }
 
-    public async update(userId: string, stream: BudgetStream): Promise<BudgetStream> {
+    public async update(userId: string, stream: BudgetStream): Promise<BudgetStream | null> {
         const query = `
                 UPDATE finance.budget_streams SET
                     name = $1,
@@ -128,6 +129,10 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
         ];
 
         const result = await databasePool.query(query, params);
+        if (result.rows.length === 0) {
+            return null;
+        }
+        
         const row = result.rows[0];
 
         return {
