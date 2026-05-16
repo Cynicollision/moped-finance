@@ -4,9 +4,21 @@
     <mat-card class="section-card" appearance="outlined">
         <div class="card-header">
             <h2>Income</h2>
-            <button mat-flat-button color="primary" (click)="startAdd(BudgetStreamType.Income)">
-                <mat-icon>add</mat-icon> Add Income
-            </button>
+        </div>
+
+        <div class="summary-section">
+            <div class="summary-item">
+                <span class="label">Monthly Total</span>
+                <span class="value income-total">{{ incomeTotals.monthly | currency }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Quarterly Total</span>
+                <span class="value income-total">{{ incomeTotals.quarterly | currency }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Yearly Total</span>
+                <span class="value income-total income-yearly">{{ incomeTotals.yearly | currency }}</span>
+            </div>
         </div>
 
         <mat-card-content>
@@ -59,19 +71,10 @@
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
             </table>
 
-            <div class="summary-section">
-                <div class="summary-item">
-                    <span class="label">Monthly Total</span>
-                    <span class="value income-total">{{ incomeTotals.monthly | currency }}</span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">Quarterly Total</span>
-                    <span class="value income-total">{{ incomeTotals.quarterly | currency }}</span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">Yearly Total</span>
-                    <span class="value income-total income-yearly">{{ incomeTotals.yearly | currency }}</span>
-                </div>
+            <div class="actions-section">
+                <button mat-flat-button color="primary" (click)="startAdd(BudgetStreamType.Income)">
+                    <mat-icon>add</mat-icon> Add Income
+                </button>
             </div>
 
         </mat-card-content>
@@ -81,9 +84,21 @@
     <mat-card class="section-card" appearance="outlined">
         <div class="card-header">
             <h2>Expenses</h2>
-            <button mat-flat-button color="warn" (click)="startAdd(BudgetStreamType.Expense)">
-                <mat-icon>add</mat-icon> Add Expense
-            </button>
+        </div>
+
+        <div class="summary-section">
+            <div class="summary-item">
+                <span class="label">Monthly Total</span>
+                <span class="value expense-total">{{ expenseTotals.monthly | currency }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Quarterly Total</span>
+                <span class="value expense-total">{{ expenseTotals.quarterly | currency }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Yearly Total</span>
+                <span class="value expense-total expense-yearly">{{ expenseTotals.yearly | currency }}</span>
+            </div>
         </div>
 
         <mat-card-content>
@@ -136,19 +151,10 @@
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
             </table>
 
-            <div class="summary-section">
-                <div class="summary-item">
-                    <span class="label">Monthly Total</span>
-                    <span class="value expense-total">{{ expenseTotals.monthly | currency }}</span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">Quarterly Total</span>
-                    <span class="value expense-total">{{ expenseTotals.quarterly | currency }}</span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">Yearly Total</span>
-                    <span class="value expense-total expense-yearly">{{ expenseTotals.yearly | currency }}</span>
-                </div>
+            <div class="actions-section">
+                <button mat-flat-button color="warn" (click)="startAdd(BudgetStreamType.Expense)">
+                    <mat-icon>add</mat-icon> Add Expense
+                </button>
             </div>
 
         </mat-card-content>

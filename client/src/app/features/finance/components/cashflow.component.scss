@@ -28,6 +28,11 @@
     margin-bottom: 24px;
 }
 
+.primary-controls {
+    display: flex;
+    gap: 16px;
+}
+
 mat-form-field {
     width: 200px;
     max-width: 100%;
@@ -40,7 +45,15 @@ mat-form-field {
         gap: 16px;
     }
 
-    mat-form-field {
+    .primary-controls {
+        width: 100%;
+        mat-form-field {
+            flex: 1;
+            width: auto;
+        }
+    }
+
+    .controls-container > mat-form-field {
         width: 100%;
     }
     
@@ -81,9 +94,8 @@ mat-form-field {
         gap: 1rem;
 
         @media (max-width: 600px) {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: flex-start;
         }
     }
 
@@ -91,6 +103,11 @@ mat-form-field {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
+
+        @media (max-width: 600px) {
+            flex: 1 1 calc(50% - 1rem);
+            min-width: 120px;
+        }
 
         .label {
             font-size: 0.75rem;
@@ -104,6 +121,22 @@ mat-form-field {
             font-size: 1.1rem;
             font-weight: 500;
             color: var(--text-main);
+        }
+    }
+}
+
+.view-mode-controls {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 24px;
+    width: 100%;
+
+    mat-button-toggle-group {
+        width: 100%;
+        max-width: 400px;
+        
+        mat-button-toggle {
+            flex: 1;
         }
     }
 }

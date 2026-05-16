@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { ActivatedRoute } from '@angular/router';
 import { Environment } from './../../environments/environment';
 import { AuthService } from './../core/auth.service';
 
@@ -24,10 +25,12 @@ export class LoginComponent {
     username = Environment.devUsername;
     password = Environment.devPassword;
     private authService = inject(AuthService);
+    private route = inject(ActivatedRoute);
 
     onLogin() {
         if (this.username) {
-            this.authService.login(this.username, this.password);
+            const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+            this.authService.login(this.username, this.password, returnUrl);
         }
     }
 }

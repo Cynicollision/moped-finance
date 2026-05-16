@@ -17,13 +17,13 @@ export class AuthService {
         this.currentUser.set(response || null);
     }
 
-    async login(username: string, password?: string): Promise<void> {
+    async login(username: string, password?: string, returnUrl?: string): Promise<void> {
         const credentials = { username, password };
         const response = await this.api.post<User>('auth/login', credentials);
 
         if (response) {
             this.currentUser.set(response);
-            this.router.navigate(['/']);
+            this.router.navigate([returnUrl || '/']);
         }
     }
 

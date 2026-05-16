@@ -5,7 +5,7 @@
 
         <div style="display: flex; flex-direction: column; height: 100%;">
             <mat-toolbar>
-                HomeLab
+                {{ currentApp.name }}
                 @if (isDebugMode) {
                 <div style="display: flex; flex-direction: column; align-items: center; margin-left: auto;">
                     <mat-icon style="color: #ff9800;" title="Debug Mode">bug_report</mat-icon>
@@ -15,14 +15,30 @@
                 }
             </mat-toolbar>
 
-            <mat-nav-list>
-                @if (authService.currentUser()) {
-                <a mat-list-item *ngFor="let item of navItems" [routerLink]="item.route" routerLinkActive="active-link"
-                    [routerLinkActiveOptions]="{exact: true}" (click)="drawer.mode === 'over' && drawer.close()">
-                    <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
+            <div *ngIf="authService.currentUser()" style="padding: 16px;">
+                <button mat-stroked-button [matMenuTriggerFor]="appMenu" style="width: 100%;">
+                    <span style="display: flex; align-items: center; width: 100%;">
+                        <mat-icon style="margin-right: 8px;">apps</mat-icon>
+                        <span>Apps</span>
+                        <span style="flex: 1 1 auto;"></span>
+                        <mat-icon>arrow_drop_down</mat-icon>
+                    </span>
+                </button>
+                <mat-menu #appMenu="matMenu" class="apps-menu">
+                    <a mat-menu-item *ngFor="let app of apps" [routerLink]="app.defaultRoute"
+                        (click)="drawer.mode === 'over' && drawer.close()">
+                        <mat-icon>{{ app.icon }}</mat-icon>
+                        <span>{{ app.name }}</span>
+                    </a>
+                </mat-menu>
+            </div>
+
+            <mat-nav-list *ngIf="authService.currentUser()">
+                <a mat-list-item *ngFor="let item of currentApp.navItems" [routerLink]="item.route"
+                    routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}"
+                    (click)="drawer.mode === 'over' && drawer.close()">
                     <span matListItemTitle>{{item.label}}</span>
                 </a>
-                }
             </mat-nav-list>
 
             <span style="flex: 1 1 auto;"></span>
@@ -46,10 +62,13 @@
     <!-- Main Content Area -->
     <mat-sidenav-content>
         <div class="content-container">
-            <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()"
-                *ngIf="isHandset$ | async">
-                <mat-icon>menu</mat-icon>
-            </button>
+            <div *ngIf="isHandset$ | async" style="display: flex; align-items: center; margin-bottom: 16px;">
+                <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()">
+                    <mat-icon>menu</mat-icon>
+                </button>
+                <span *ngIf="currentNavItem" style="font-size: 20px; font-weight: 500; margin-left: 8px;">{{
+                    currentNavItem.label }}</span>
+            </div>
             <router-outlet></router-outlet>
         </div>
     </mat-sidenav-content>
