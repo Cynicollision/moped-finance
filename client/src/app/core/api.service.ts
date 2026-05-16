@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { OperationResult } from '@shared/core/contracts';
+import { OperationResult } from '@shared/common/contracts';
 import { Environment } from './../../environments/environment';
 import { LoadingService } from './loading/loading.service';
 import { NotificationService } from './notification.service';

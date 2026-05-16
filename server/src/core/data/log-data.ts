@@ -1,12 +1,13 @@
-import { LogEntry } from '@shared/core/types';
-import { DateTimeUtil } from './../../utility';
-import { databasePool } from './../db-client';
+import { LogEntry } from '@shared/common/types';
+import { IDatabaseClient } from '@core/interfaces';
+import { DateTimeUtil } from '@core/utility';
 
 export interface ILogData {
     create(log: LogEntry): Promise<void>;
 }
 
 export class LogData implements ILogData {
+    constructor(private db: IDatabaseClient) { }
 
     public async create(log: LogEntry): Promise<void> {
         const now = DateTimeUtil.now();
@@ -25,6 +26,6 @@ export class LogData implements ILogData {
             log.message
         ];
 
-        await databasePool.query(query, params);
+        await this.db.query(query, params);
     }
 }

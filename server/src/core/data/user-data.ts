@@ -1,6 +1,6 @@
-import { User } from '@shared/core/types/user';
-import { DateTimeUtil } from './../../utility';
-import { databasePool } from './../db-client';
+import { User } from '@shared/common/types/user';
+import { IDatabaseClient } from '@core/interfaces';
+import { DateTimeUtil } from '@core/utility';
 
 export interface UserWithPassword extends User {
     passwordHash: string;
@@ -14,6 +14,7 @@ export interface ICoreUserData {
 }
 
 export class CoreUserData implements ICoreUserData {
+    constructor(private db: IDatabaseClient) { }
 
     public async create(user: User, passwordHash: string): Promise<User> {
         const now = DateTimeUtil.now();
@@ -36,12 +37,12 @@ export class CoreUserData implements ICoreUserData {
             user.displayName
         ];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
         return result.rows[0];
     }
 
     public async retrieveSingle(id: string): Promise<User | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 id, 
                 created_at AS "createdAt",
@@ -60,7 +61,7 @@ export class CoreUserData implements ICoreUserData {
     }
 
     public async retrieveByUsername(username: string): Promise<UserWithPassword | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 id, 
                 created_at AS "createdAt",
@@ -87,7 +88,7 @@ export class CoreUserData implements ICoreUserData {
                             password_hash = $2
                         WHERE id = $3`;
 
-        const result = await databasePool.query(query, [now, passwordHash, id]);
+        const result = await this.db.query(query, [now, passwordHash, id]);
         if (result.rowCount === 0) {
             throw new Error('User not found.');
         }

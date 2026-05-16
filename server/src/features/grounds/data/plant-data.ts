@@ -1,6 +1,5 @@
-import { Plant } from '@shared/grounds/types/plant';
-import { IOwnedResourceData } from './../../../core/interfaces';
-import { databasePool } from './../../../core/db-client';
+import { Plant } from '@shared/grounds/types';
+import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
 
 export interface IGroundsPlantData extends IOwnedResourceData<Plant> {
     retrieveAll(userId: string): Promise<Plant[]>;
@@ -10,9 +9,10 @@ export interface IGroundsPlantData extends IOwnedResourceData<Plant> {
 }
 
 export class GroundsPlantData implements IGroundsPlantData {
+    constructor(private db: IDatabaseClient) { }
 
     public async retrieveSingle(userId: string, id: string): Promise<Plant | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 p.id,
                 p.user_id AS "userId",
@@ -28,7 +28,7 @@ export class GroundsPlantData implements IGroundsPlantData {
     }
 
     public async retrieveAll(userId: string): Promise<Plant[]> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT
                 p.id, 
                 p.user_id AS "userId",
@@ -43,7 +43,7 @@ export class GroundsPlantData implements IGroundsPlantData {
     }
 
     async retrieveByVariety(userId: string, varietyId: string): Promise<Plant[]> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT
                 p.id, 
                 p.user_id AS "userId",
@@ -58,7 +58,7 @@ export class GroundsPlantData implements IGroundsPlantData {
     }
 
     async insert(plant: Plant): Promise<Plant> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `INSERT INTO grounds.plants (id, user_id, variety_id, location_id, planted_date)
              VALUES ($1, $2, $3, $4, $5)
              RETURNING 
@@ -79,7 +79,7 @@ export class GroundsPlantData implements IGroundsPlantData {
     }
 
     async delete(id: string, userId: string): Promise<boolean> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `DELETE FROM grounds.plants
              WHERE id = $1 AND user_id = $2`,
             [id, userId]

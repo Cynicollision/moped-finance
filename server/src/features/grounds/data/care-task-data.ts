@@ -1,6 +1,5 @@
 import { CareTask } from '@shared/grounds/types';
-import { IOwnedResourceData } from './../../../core/interfaces';
-import { databasePool } from './../../../core/db-client';
+import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
 
 export interface IGroundsCareTaskData extends IOwnedResourceData<CareTask> {
     retrieveAll(userId: string): Promise<CareTask[]>;
@@ -9,9 +8,10 @@ export interface IGroundsCareTaskData extends IOwnedResourceData<CareTask> {
 }
 
 export class GroundsCareTaskData implements IGroundsCareTaskData {
+    constructor(private db: IDatabaseClient) {}
 
     public async retrieveSingle(userId: string, id: string): Promise<CareTask | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 ct.id,
                 ct.created_at AS "createdAt",
@@ -37,7 +37,7 @@ export class GroundsCareTaskData implements IGroundsCareTaskData {
     }
 
     public async retrieveAll(userId: string): Promise<CareTask[]> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 ct.id,
                 ct.created_at AS "createdAt",
@@ -63,7 +63,7 @@ export class GroundsCareTaskData implements IGroundsCareTaskData {
     }
 
     public async insert(task: CareTask): Promise<CareTask> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `INSERT INTO grounds.care_tasks(
                 id, user_id, name, category, type, year, target_month, target_week, status, completed_date, notes, is_annual_task, product_id
             ) VALUES(
@@ -94,7 +94,7 @@ export class GroundsCareTaskData implements IGroundsCareTaskData {
     }
 
     public async update(task: CareTask): Promise<CareTask | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `UPDATE grounds.care_tasks 
             SET
                 name = $3,

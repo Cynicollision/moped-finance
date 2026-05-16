@@ -1,6 +1,5 @@
 import { PlantVariety } from '@shared/grounds/types';
-import { IOwnedResourceData } from './../../../core/interfaces';
-import { databasePool } from './../../../core/db-client';
+import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
 
 export interface IGroundsPlantVarietyData extends IOwnedResourceData<PlantVariety> {
     retrieveAll(userId: string): Promise<PlantVariety[]>;
@@ -10,9 +9,10 @@ export interface IGroundsPlantVarietyData extends IOwnedResourceData<PlantVariet
 }
 
 export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
+    constructor(private db: IDatabaseClient) {}
 
     async retrieveAll(userId: string): Promise<PlantVariety[]> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 pv.id,
                 pv.user_id AS "userId",
@@ -36,7 +36,7 @@ export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
     }
 
     async retrieveSingle(userId: string, plantVarietyId: string): Promise<PlantVariety | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 pv.id,
                 pv.user_id AS "userId",
@@ -60,7 +60,7 @@ export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
     }
 
     async insert(variety: PlantVariety): Promise<PlantVariety> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `INSERT INTO grounds.plant_varieties (
                 id,
                 user_id,
@@ -109,7 +109,7 @@ export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
     }
 
     async update(variety: PlantVariety): Promise<PlantVariety | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `UPDATE grounds.plant_varieties
              SET updated_at = NOW(),
                  category = $2,
@@ -160,7 +160,7 @@ export class GroundsPlantVarietyData implements IGroundsPlantVarietyData {
     }
 
     async delete(userId: string, plantVarietyId: string): Promise<boolean> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `DELETE FROM grounds.plant_varieties
              WHERE id = $1 AND user_id = $2`,
             [plantVarietyId, userId]

@@ -1,6 +1,5 @@
 import { BudgetStream } from '@shared/finance/types';
-import { IOwnedResourceData } from './../../../core/interfaces';
-import { databasePool } from './../../../core/db-client';
+import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
 
 export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStream> {
     retrieveAll(userId: string): Promise<BudgetStream[]>;
@@ -11,6 +10,7 @@ export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStrea
 }
 
 export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
+    constructor(private db: IDatabaseClient) {}
 
     public async retrieveAll(userId: string): Promise<BudgetStream[]> {
         const query = `SELECT 
@@ -26,7 +26,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
                         FROM finance.budget_streams AS bs
                         WHERE bs.user_id = $1`;
 
-        const result = await databasePool.query(query, [userId]);
+        const result = await this.db.query(query, [userId]);
 
         return result.rows.map(row => ({
             ...row,
@@ -49,7 +49,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
                         WHERE bs.user_id = $1
                             AND bs.id = $2`;
 
-        const result = await databasePool.query(query, [userId, id]);
+        const result = await this.db.query(query, [userId, id]);
 
         if (result.rows.length === 0) {
             return null;
@@ -63,7 +63,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
     }
 
     public async delete(userId: string, id: string): Promise<boolean> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `DELETE FROM finance.budget_streams AS bs
                 WHERE bs.user_id = $1
                     AND bs.id = $2`,
@@ -90,7 +90,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
             stream.amount
         ];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
         const row = result.rows[0];
 
         return {
@@ -128,7 +128,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
             userId
         ];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
         if (result.rows.length === 0) {
             return null;
         }

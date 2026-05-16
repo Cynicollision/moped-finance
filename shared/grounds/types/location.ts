@@ -1,4 +1,4 @@
-import { Entity } from './../../core/types/entity-base';
+import { Entity } from './../../common/types/entity-base';
 import { LocationType } from './../enum';
 
 export type Location = Entity & {

@@ -1,7 +1,7 @@
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
-import { databasePool } from './../../../core/db-client';
+import { IDatabaseClient } from '@core/interfaces';
 
 export interface IFinanceBalanceHistoryData {
     retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;
@@ -9,6 +9,7 @@ export interface IFinanceBalanceHistoryData {
 }
 
 export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
+    constructor(private db: IDatabaseClient) {}
 
     public async retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]> {
         let query = `SELECT
@@ -35,7 +36,7 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
             query += ` AND bh.date <= $${params.length}`;
         }
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
 
         return result.rows.map(row => ({
             ...row,
@@ -66,7 +67,7 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
             GROUP BY bh.date
             ORDER BY bh.date DESC`;
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
 
         return result.rows.map(row => ({
             ...row,

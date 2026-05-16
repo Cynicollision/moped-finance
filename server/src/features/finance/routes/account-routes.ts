@@ -1,0 +1,135 @@
+import { Router, Request } from 'express';
+import { SortDirection } from '@shared/common/enum';
+import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
+import { HistoryTimeframe, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
+import { Account } from '@shared/finance/types';
+import { AppLogger } from '@core/logger';
+import { DateTimeUtil } from '@core/utility';
+import { ApiHandler } from '@core/api-handler';
+import { AccountController } from './../controllers/account-controller';
+import { TransactionController } from './../controllers/transaction-controller';
+import { IFinanceAccountData } from './../data/account-data';
+import { IFinanceBalanceHistoryData } from './../data/balance-history-data';
+import { IFinanceTransactionsData } from './../data/transactions-data';
+
+export function createAccountRouter(
+    accountData: IFinanceAccountData,
+    balanceHistoryData: IFinanceBalanceHistoryData,
+    transactionsData: IFinanceTransactionsData,
+    logger: AppLogger
+) {
+    const router = Router();
+    const controller = new AccountController(logger, accountData, balanceHistoryData);
+    const transactionController = new TransactionController(logger, transactionsData);
+    const handler = new ApiHandler(logger);
+
+    router.get('/', (req, res) => {
+        handler.execute(req, res, 'getAccounts', (context) => {
+            return controller.getAccounts(context.userId!);
+        });
+    });
+
+    router.get('/total-value-history', (req, res) => {
+        handler.execute(req, res, 'getTotalValueHistory', (context) => {
+            const type = req.query.type as ValueHistoryType;
+            const timeframe = req.query.timeframe as HistoryTimeframe;
+
+            const asOfDateStr = req.query.asOfDate as string;
+            const asOfDate = asOfDateStr
+                ? new Date(asOfDateStr)
+                : DateTimeUtil.now();
+
+            const options: TotalValueHistoryOptions = {
+                asOfDate,
+                type,
+                timeframe
+            };
+
+            return controller.getTotalValueHistory(context.userId!, options);
+        });
+    });
+
+    router.get('/:accountId', (req, res) => {
+        handler.execute(req, res, 'getAccount', (context) => {
+            return controller.getAccount(context.userId!, req.params.accountId);
+        });
+    });
+
+    router.post('/', (req, res) => {
+        handler.execute(req, res, 'createAccount', (context) => {
+            const account: Account = req.body;
+            return controller.createAccount(context.userId!, account);
+        });
+    });
+
+    router.put('/:accountId', (req, res) => {
+        handler.execute(req, res, 'saveAccount', (context) => {
+            const account: Account = req.body;
+            account.id = req.params.accountId;
+            return controller.saveAccount(context.userId!, account);
+        });
+    });
+
+    router.delete('/:accountId', (req, res) => {
+        handler.execute(req, res, 'deleteAccount', (context) => {
+            return controller.deleteAccount(context.userId!, req.params.accountId);
+        });
+    });
+
+    router.get('/:accountId/balance-history', (req, res) => {
+        handler.execute(req, res, 'getAccountBalanceHistory', (context) => {
+            const timeframe = req.query.timeframe as HistoryTimeframe;
+            const asOfDateStr = req.query.asOfDate as string;
+            const asOfDate = asOfDateStr ? new Date(asOfDateStr) : DateTimeUtil.now();
+
+            const options: GetAccountBalanceHistoryOptions = {
+                asOfDate,
+                timeframe
+            };
+
+            return controller.getAccountBalanceHistory(context.userId!, req.params.accountId, options);
+        });
+    });
+
+    router.get('/:accountId/transactions', (req, res) => {
+        handler.execute(req, res, 'getTransactions', (context) => {
+            const options = getTransactionSearchOptions(req);
+            return transactionController.getTransactions(context.userId!, options, req.params.accountId);
+        });
+    });
+
+    function getTransactionSearchOptions(req: Request): TransactionSearchOptions {
+        const sortKey = req.query.sortKey as TransactionsSortKey;
+        const sortDirection = req.query.sortDirection as SortDirection;
+        const offset = parseInt(req.query.offset as string, 10) || 0;
+        const limit = parseInt(req.query.limit as string, 10) || 50;
+        const includeHidden = req.query.includeHidden === 'true';
+
+        const minAmount = req.query.minAmount ? parseFloat(req.query.minAmount as string) : undefined;
+        const maxAmount = req.query.maxAmount ? parseFloat(req.query.maxAmount as string) : undefined;
+        const startDate = req.query.startDate as string;
+        const endDate = req.query.endDate as string;
+
+        let filters;
+        if (typeof req.query.filters === 'string') {
+            try {
+                filters = JSON.parse(req.query.filters);
+            } catch { /* ignore */ }
+        }
+
+        return {
+            sortKey: sortKey,
+            sortDirection: sortDirection,
+            offset: offset,
+            limit: limit,
+            minAmount,
+            maxAmount,
+            startDate,
+            endDate,
+            filters,
+            includeHidden
+        };
+    }
+
+    return router;
+}

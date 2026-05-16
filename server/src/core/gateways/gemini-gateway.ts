@@ -1,4 +1,4 @@
-import { LanguageModelGateway, TextGenerationParams } from './../interfaces';
+import { LanguageModelGateway, TextGenerationParams } from '@core/interfaces';
 
 export interface GeminiGatewayConfig {
     apiKey: string;

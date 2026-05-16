@@ -1,7 +1,6 @@
 import { Account } from '@shared/finance/types';
-import { DateTimeUtil } from './../../../utility';
-import { IOwnedResourceData } from './../../../core/interfaces';
-import { databasePool } from './../../../core/db-client';
+import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
+import { DateTimeUtil } from '@core/utility';
 
 export interface IFinanceAccountData extends IOwnedResourceData<Account> {
     retrieveAll(userId: string): Promise<Account[]>;
@@ -11,9 +10,10 @@ export interface IFinanceAccountData extends IOwnedResourceData<Account> {
 }
 
 export class FinanceAccountData implements IFinanceAccountData {
+    constructor(private db: IDatabaseClient) { }
 
     public async retrieveAll(userId: string): Promise<Account[]> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 a.id, 
                 a.created_at AS "createdAt",
@@ -42,7 +42,7 @@ export class FinanceAccountData implements IFinanceAccountData {
     }
 
     public async retrieveSingle(userId: string, accountId: string): Promise<Account | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 a.id, 
                 a.created_at AS "createdAt",
@@ -113,7 +113,7 @@ export class FinanceAccountData implements IFinanceAccountData {
             account.hideFromCashflow
         ];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
         const row = result.rows[0];
         return {
             ...row,
@@ -169,7 +169,7 @@ export class FinanceAccountData implements IFinanceAccountData {
             userId
         ];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
         if (result.rows.length === 0) {
             return null;
         }
@@ -183,7 +183,7 @@ export class FinanceAccountData implements IFinanceAccountData {
 
     public async delete(userId: string, id: string): Promise<boolean> {
         // delete constraints: If transactions exist etc., PG might throw constraint error. We assume PG takes care of it or cascades.
-        const result = await databasePool.query(`DELETE FROM finance.accounts WHERE id = $1 AND user_id = $2`, [id, userId]);
+        const result = await this.db.query(`DELETE FROM finance.accounts WHERE id = $1 AND user_id = $2`, [id, userId]);
         return (result.rowCount ?? 0) > 0;
     }
 }

@@ -1,9 +1,8 @@
-import { SortDirection } from '@shared/core/enum';
+import { SortDirection } from '@shared/common/enum';
 import { Transaction } from '@shared/finance/types';
 import { SpendingStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
-import { IOwnedResourceData } from './../../../core/interfaces';
-import { databasePool } from './../../../core/db-client';
+import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
 
 export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction> {
     search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
@@ -15,6 +14,7 @@ export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction
 }
 
 export class FinanceTransactionsData implements IFinanceTransactionsData {
+    constructor(private db: IDatabaseClient) { }
 
     public async search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]> {
         let query = `SELECT 
@@ -105,7 +105,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
             query += ` OFFSET $${params.length}`;
         }
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
 
         return result.rows.map(row => ({
             ...row,
@@ -123,7 +123,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
 
         const params = [userId]
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
 
         return result.rows.map(row => row.merchant);
     }
@@ -147,7 +147,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
 
         const params = [userId, id];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
 
         if (result.rows.length === 0) {
             return null;
@@ -174,7 +174,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
 
         const params = [userId, startDate, endDate];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
 
         return result.rows.map(row => ({
             ...row,
@@ -215,7 +215,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
             userId
         ];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
 
         if (result.rows.length === 0) {
             return null;
@@ -230,7 +230,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
 
     public async delete(userId: string, id: string): Promise<boolean> {
         const deleteQuery = `DELETE FROM finance.transactions WHERE id = $1 AND account_id IN (SELECT id FROM finance.accounts WHERE user_id = $2)`;
-        const result = await databasePool.query(deleteQuery, [id, userId]);
+        const result = await this.db.query(deleteQuery, [id, userId]);
         return (result.rowCount ?? 0) > 0;
     }
 }

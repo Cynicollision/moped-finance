@@ -1,7 +1,8 @@
-import { EntityIdPrefix, LogLevel } from '@shared/core/enum';
-import { LogEntry } from '@shared/core/types';
-import { DateTimeUtil, EntityIdUtil } from './../utility';
+import { EntityIdPrefix, LogLevel } from '@shared/common/enum';
+import { LogEntry } from '@shared/common/types';
 import { LogData, ILogData } from './data/log-data';
+import { IDatabaseClient } from './interfaces';
+import { DateTimeUtil, EntityIdUtil } from './utility';
 
 export enum LogBehavior {
     Ignore = 'ignore',
@@ -20,17 +21,17 @@ export class AppLogger {
     constructor(private logData: ILogData, private config: LoggerConfig) {
     }
 
-    public static forPgDatabase(config: LoggerConfig): AppLogger {
-        return new AppLogger(new LogData(), config);
+    public static forPgDatabase(db: IDatabaseClient, config: LoggerConfig): AppLogger {
+        return new AppLogger(new LogData(db), config);
     }
 
-    public static fromEnvironment(): AppLogger {
+    public static fromEnvironment(db: IDatabaseClient): AppLogger {
         const config: LoggerConfig = {
             error: (process.env.LOG_LEVEL_ERROR as LogBehavior) || LogBehavior.Database,
             warn: (process.env.LOG_LEVEL_WARN as LogBehavior) || LogBehavior.Console,
             info: (process.env.LOG_LEVEL_INFO as LogBehavior) || LogBehavior.Console
         };
-        return AppLogger.forPgDatabase(config);
+        return AppLogger.forPgDatabase(db, config);
     }
 
     public error(userId: string, context: string, message: string): void {

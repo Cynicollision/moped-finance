@@ -1,12 +1,12 @@
 import { Category } from '@shared/finance/types';
-import { IOwnedResourceData } from './../../../core/interfaces';
-import { databasePool } from './../../../core/db-client';
+import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
 
 export interface IFinanceCategoriesData extends IOwnedResourceData<Category> {
     retrieveAll(userId: string, activeOnly: boolean): Promise<Category[]>;
 }
 
 export class FinanceCategoriesData implements IFinanceCategoriesData {
+    constructor(private db: IDatabaseClient) {}
 
     public async retrieveAll(userId: string, activeOnly: boolean): Promise<Category[]> {
         let query = `SELECT 
@@ -26,7 +26,7 @@ export class FinanceCategoriesData implements IFinanceCategoriesData {
             query += ' AND c.is_active = true';
         }
 
-        const result = await databasePool.query(query, [userId]);
+        const result = await this.db.query(query, [userId]);
         return result.rows;
     }
 
@@ -45,7 +45,7 @@ export class FinanceCategoriesData implements IFinanceCategoriesData {
                 WHERE c.user_id = $1
                     AND c.id = $2`;
 
-        const result = await databasePool.query(query, [userId, id]);
+        const result = await this.db.query(query, [userId, id]);
 
         if (result.rows.length === 0) {
             return null;
@@ -55,7 +55,7 @@ export class FinanceCategoriesData implements IFinanceCategoriesData {
     }
 
     public async delete(userId: string, id: string): Promise<void> {
-        await databasePool.query(
+        await this.db.query(
             `DELETE FROM finance.categories AS c
                 WHERE c.user_id = $1
                     AND c.id = $2`,
@@ -81,7 +81,7 @@ export class FinanceCategoriesData implements IFinanceCategoriesData {
             category.isActive
         ];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
         const row = result.rows[0];
 
         return {
@@ -119,7 +119,7 @@ export class FinanceCategoriesData implements IFinanceCategoriesData {
             userId
         ];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
         const row = result.rows[0];
 
         return {

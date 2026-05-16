@@ -1,14 +1,14 @@
 import { Institution } from '@shared/finance/types';
-import { IOwnedResourceData } from './../../../core/interfaces';
-import { databasePool } from './../../../core/db-client';
+import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
 
 export interface IFinanceInstitutionsData extends IOwnedResourceData<Institution> {
     retrieveAll(userId: string): Promise<Institution[]>;
 }
 
 export class FinanceInstitutionsData implements IFinanceInstitutionsData {
+    constructor(private db: IDatabaseClient) {}
     public async retrieveAll(userId: string): Promise<Institution[]> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 i.id, 
                 i.created_at AS "createdAt",
@@ -34,7 +34,7 @@ export class FinanceInstitutionsData implements IFinanceInstitutionsData {
             WHERE i.user_id = $1
                 AND i.id = $2`;
 
-        const result = await databasePool.query(query, [userId, id]);
+        const result = await this.db.query(query, [userId, id]);
 
         if (result.rows.length === 0) {
             return null;
@@ -51,7 +51,7 @@ export class FinanceInstitutionsData implements IFinanceInstitutionsData {
     }
 
     public async delete(userId: string, id: string): Promise<void> {
-        await databasePool.query(
+        await this.db.query(
             `DELETE FROM finance.institutions AS i
             WHERE i.user_id = $1
                 AND i.id = $2`,
@@ -73,7 +73,7 @@ export class FinanceInstitutionsData implements IFinanceInstitutionsData {
             institution.name
         ];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
         const row = result.rows[0];
 
         return {
@@ -99,7 +99,7 @@ export class FinanceInstitutionsData implements IFinanceInstitutionsData {
             userId
         ];
 
-        const result = await databasePool.query(query, params);
+        const result = await this.db.query(query, params);
         const row = result.rows[0];
 
         return {

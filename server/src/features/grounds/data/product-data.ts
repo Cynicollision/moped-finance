@@ -1,6 +1,5 @@
 import { Product } from '@shared/grounds/types';
-import { IOwnedResourceData } from './../../../core/interfaces';
-import { databasePool } from './../../../core/db-client';
+import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
 
 export interface IGroundsProductData extends IOwnedResourceData<Product> {
     retrieveAll(userId: string): Promise<Product[]>;
@@ -10,9 +9,10 @@ export interface IGroundsProductData extends IOwnedResourceData<Product> {
 }
 
 export class GroundsProductData implements IGroundsProductData {
+    constructor(private db: IDatabaseClient) {}
 
     async retrieveAll(userId: string): Promise<Product[]> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 p.id,
                 p.user_id AS "userId",
@@ -29,7 +29,7 @@ export class GroundsProductData implements IGroundsProductData {
     }
 
     async retrieveSingle(userId: string, productId: string): Promise<Product | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 p.id,
                 p.user_id AS "userId",
@@ -47,7 +47,7 @@ export class GroundsProductData implements IGroundsProductData {
     }
 
     async insert(product: Product): Promise<Product> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `INSERT INTO grounds.products (
                 id,
                 user_id,
@@ -72,7 +72,7 @@ export class GroundsProductData implements IGroundsProductData {
     }
 
     async update(userId: string, product: Product): Promise<Product | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `UPDATE grounds.products
             SET
                 name = $2,
@@ -99,7 +99,7 @@ export class GroundsProductData implements IGroundsProductData {
     }
 
     async delete(userId: string, productId: string): Promise<boolean> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `DELETE FROM grounds.products
             WHERE id = $1
             AND user_id = $2`,

@@ -1,0 +1,70 @@
+import { Request, Response } from 'express';
+import { OperationResult } from '@shared/common/contracts';
+import { User } from '@shared/common/types';
+import { OperationStatus } from '@shared/common/enum';
+import { ResultUtil } from './result-util';
+
+export class ApiUtil {
+
+    public static getUser(req: Request): User | undefined {
+        if (req.session?.user) {
+            return req.session.user;
+        }
+
+        // Check if user was already resolved and attached to request (e.g. by middleware)
+        if ((req as any).user) {
+            return (req as any).user;
+        }
+
+        return undefined;
+    }
+
+    public static sendResult<T>(res: Response, result: OperationResult<T>): OperationResult<T> {
+        let statusCode = 200;
+        switch (result.status) {
+            case OperationStatus.Success:
+                statusCode = 200;
+                break;
+            case OperationStatus.UserError:
+                statusCode = 400;
+                break;
+            case OperationStatus.Unauthorized:
+                statusCode = 401;
+                break;
+            case OperationStatus.Forbidden:
+                statusCode = 403;
+                break;
+            case OperationStatus.UnhandledError:
+            default:
+                statusCode = 500;
+                break;
+        }
+
+        res.status(statusCode).json(result);
+        return result;
+    }
+
+    public static success<T>(res: Response, data?: T): OperationResult<T> {
+        return this.sendResult(res, ResultUtil.success(data));
+    }
+
+    public static badRequest<T>(res: Response, message: string): OperationResult<T> {
+        return this.sendResult(res, ResultUtil.userError(message));
+    }
+
+    public static unauthorized<T>(res: Response): OperationResult<T> {
+        return this.sendResult(res, ResultUtil.unauthorized());
+    }
+
+    public static forbidden<T>(res: Response, message: string = 'Access denied'): OperationResult<T> {
+        return this.sendResult(res, ResultUtil.forbidden(message));
+    }
+
+    public static notFound<T>(req: Request, res: Response): OperationResult<T> {
+        return this.sendResult(res, ResultUtil.notFound(`${req.originalUrl} not found.`));
+    }
+
+    public static internalError<T>(res: Response, error: unknown): OperationResult<T> {
+        return this.sendResult(res, ResultUtil.internalError('An unexpected error occurred'));
+    }
+}

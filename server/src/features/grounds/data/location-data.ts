@@ -1,15 +1,15 @@
-import { Location } from '@shared/grounds/types/location';
-import { IOwnedResourceData } from './../../../core/interfaces';
-import { databasePool } from './../../../core/db-client';
+import { Location } from '@shared/grounds/types';
+import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
 
 export interface IGroundsLocationData extends IOwnedResourceData<Location> {
     retrieveAll(userId: string): Promise<Location[]>;
 }
 
 export class GroundsLocationData implements IGroundsLocationData {
+    constructor(private db: IDatabaseClient) { }
 
     public async retrieveSingle(userId: string, id: string): Promise<Location | null> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 l.id,
                 l.user_id AS "userId",
@@ -24,7 +24,7 @@ export class GroundsLocationData implements IGroundsLocationData {
     }
 
     public async retrieveAll(userId: string): Promise<Location[]> {
-        const result = await databasePool.query(
+        const result = await this.db.query(
             `SELECT 
                 l.id,
                 l.user_id AS "userId",

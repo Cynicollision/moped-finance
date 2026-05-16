@@ -1,3 +1,4 @@
+import { IDatabaseClient } from '@core/interfaces';
 import { GroundsCareTaskData, IGroundsCareTaskData } from './care-task-data';
 import { GroundsLocationData, IGroundsLocationData } from './location-data';
 import { GroundsPlantData, IGroundsPlantData } from './plant-data';
@@ -21,13 +22,13 @@ export class GroundsData implements IGroundsData {
         readonly products: IGroundsProductData) {
     }
 
-    public static forPgDatabase(): GroundsData {
+    public static forPgDatabase(db: IDatabaseClient): GroundsData {
         return new GroundsData(
-            new GroundsCareTaskData(),
-            new GroundsLocationData(),
-            new GroundsPlantData(),
-            new GroundsPlantVarietyData(),
-            new GroundsProductData()
+            new GroundsCareTaskData(db),
+            new GroundsLocationData(db),
+            new GroundsPlantData(db),
+            new GroundsPlantVarietyData(db),
+            new GroundsProductData(db)
         );
     }
 }

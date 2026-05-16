@@ -2,17 +2,22 @@ import express, { Request, Response } from 'express';
 import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
-import apiRoutes from './src/api-routes';
-import authRoutes from './src/routes/auth-routes';
+import { createAuthRouter } from '@core/auth/auth-routes';
+import { createAuthMiddleware } from '@core/auth/auth-middleware';
+import { CoreUserData } from '@core/data/user-data';
+import { GeminiGateway } from '@core/gateways/gemini-gateway';
+import { AppLogger } from '@core/logger';
+import { PgDatabaseClient } from '@core/pg-client';
+import { ApiUtil } from '@core/utility';
+import { createFinanceModule } from '@features/finance/routes';
+import { WeatherGateway } from '@features/grounds/gateways/weather-gateway';
+import { createGroundsModule } from '@features/grounds/routes';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Trust the first proxy (essential for secure cookies in Docker/Nginx)
 app.set('trust proxy', 1); // TODO: needs review.
-
 app.use(express.json());
-
 app.use(session({
     secret: process.env.SESSION_SECRET || 'dev-secret-key',
     resave: false,
@@ -30,13 +35,36 @@ if (process.env.NODE_ENV === 'development') {
     }));
 }
 
+// Core modules
+const dbClient = new PgDatabaseClient();
+const logger = AppLogger.fromEnvironment(dbClient);
+const userData = new CoreUserData(dbClient);
+const llmGateway = GeminiGateway.fromEnvironment();
+
+// Auth routes
+const { resolveUser, requireAuth } = createAuthMiddleware(userData);
+const authRoutes = createAuthRouter(userData, logger, requireAuth, resolveUser);
 app.use('/auth', authRoutes);
-app.use('/api', apiRoutes);
 
+// Finance routes
+const financeRoutes = createFinanceModule(dbClient, logger);
+app.use('/api/finance', resolveUser, requireAuth, financeRoutes);
+
+// Grounds routes
+const weatherGateway = WeatherGateway.fromEnvironment();
+const groundsRoutes = createGroundsModule(dbClient, logger, llmGateway, weatherGateway);
+app.use('/api/grounds', resolveUser, requireAuth, groundsRoutes);
+
+// Default 404 handler for unmatched API routes
+app.all('/api/*', (req: Request, res: Response) => {
+    return ApiUtil.notFound(req, res);
+});
+
+// Frontend routes
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.get('*', (_req: Request, res: Response) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
