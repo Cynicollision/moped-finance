@@ -4,9 +4,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { ChartComponent, ChartConfiguration } from './../../../core/chart.component';
-import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
+import { HistoryTimeframe } from '@shared/common/enum';
+import { ValueHistoryType } from '@shared/finance/enum';
 import { TotalValueHistory } from '@shared/finance/contracts';
+import { ChartComponent, ChartConfiguration } from './../../../core/chart.component';
 
 export interface ChartTypeOption {
     value: ValueHistoryType;

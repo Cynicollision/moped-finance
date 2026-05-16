@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TransactionSearchOptions } from '@shared/finance/contracts';
-import { BudgetPeriod, HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
+import { CalendarPeriod, HistoryTimeframe } from '@shared/common/enum';
+import { ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../../core/api.service';
 import { DateProviderService } from './../../core/date-provider.service';
@@ -102,7 +103,7 @@ export class FinanceService {
     }
 
     // Cashflow
-    fetchSpendingStreams(period: BudgetPeriod, asOfDate: string): Promise<SpendingStream[] | undefined> {
+    fetchSpendingStreams(period: CalendarPeriod, asOfDate: string): Promise<SpendingStream[] | undefined> {
         return this.api.get<SpendingStream[]>(`api/finance/data/transactions/spending?period=${period}&asOfDate=${asOfDate}`);
     }
 

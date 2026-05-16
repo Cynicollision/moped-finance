@@ -1,4 +1,5 @@
-import { HistoryTimeframe, ValueHistoryType } from './../enum';
+import { HistoryTimeframe } from './../../common/enum';
+import { ValueHistoryType } from './../enum';
 
 export type TotalValueHistoryOptions = {
     asOfDate: Date;

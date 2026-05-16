@@ -1,4 +1,4 @@
-import { Entity } from './../../common/types/entity-base';
+import { Entity } from './../../common/types';
 import { CareTaskCategory, CareTaskStatus, CareTaskType } from './../enum';
 
 export type CareTask = Entity & {

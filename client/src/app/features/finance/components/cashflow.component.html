@@ -9,7 +9,7 @@
             </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" *ngIf="selectedPeriod === BudgetPeriod.Monthly">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" *ngIf="selectedPeriod === CalendarPeriod.Monthly">
             <mat-label>Month</mat-label>
             <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
                 <mat-option *ngFor="let m of months" [value]="m.value">{{m.label}}</mat-option>
@@ -17,7 +17,7 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic"
-            *ngIf="selectedPeriod === BudgetPeriod.Quarterly">
+            *ngIf="selectedPeriod === CalendarPeriod.Quarterly">
             <mat-label>Quarter</mat-label>
             <mat-select [(ngModel)]="selectedQuarter" (selectionChange)="onPeriodChange()">
                 <mat-option *ngFor="let q of quarters" [value]="q.value">{{q.label}}</mat-option>

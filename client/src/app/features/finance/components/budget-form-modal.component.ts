@@ -7,8 +7,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
+import { CalendarPeriod } from '@shared/common/enum';
 import { BudgetStream, Category } from '@shared/finance/types';
-import { BudgetPeriod, BudgetStreamType, CategoryClass } from '@shared/finance/enum';
+import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
 import { ModalLayoutComponent } from './../../../core/modal/modal-layout.component';
 import { signal } from '@angular/core';
 import { startWith, map } from 'rxjs';
@@ -39,7 +40,7 @@ export interface BudgetFormModalData {
 export class FinanceBudgetFormModalComponent implements OnInit {
     budgetForm: FormGroup;
     isEditing = false;
-    recurrenceOptions = Object.values(BudgetPeriod);
+    recurrenceOptions = Object.values(CalendarPeriod);
     categories = signal<Category[]>([]);
     filteredCategories = signal<Category[]>([]);
 
@@ -58,7 +59,7 @@ export class FinanceBudgetFormModalComponent implements OnInit {
             name: ['', Validators.required],
             categoryId: ['', Validators.required],
             amount: [0, [Validators.required, Validators.min(0)]],
-            recurrence: [BudgetPeriod.Monthly, Validators.required]
+            recurrence: [CalendarPeriod.Monthly, Validators.required]
         });
     }
 

@@ -1,4 +1,4 @@
-import { Entity } from './../../common/types/entity-base';
+import { Entity } from './../../common/types';
 
 export type Plant = Entity & {
     userId: string;

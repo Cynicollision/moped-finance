@@ -9,9 +9,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
-import { CategoryClass, BudgetPeriod } from '@shared/finance/enum';
-import { Category } from '@shared/finance/types';
+import { CalendarPeriod } from '@shared/common/enum';
 import { SpendingStream } from '@shared/finance/contracts';
+import { CategoryClass } from '@shared/finance/enum';
+import { Category } from '@shared/finance/types';
 import { DateProviderService } from './../../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 
@@ -38,10 +39,10 @@ export class FinanceCashflowComponent implements OnInit {
     private router = inject(Router);
     private dateProvider = inject(DateProviderService);
 
-    BudgetPeriod = BudgetPeriod;
-    periods = [BudgetPeriod.Monthly, BudgetPeriod.Quarterly, BudgetPeriod.Yearly];
+    CalendarPeriod = CalendarPeriod;
+    periods = [CalendarPeriod.Monthly, CalendarPeriod.Quarterly, CalendarPeriod.Yearly];
 
-    selectedPeriod: BudgetPeriod = BudgetPeriod.Monthly;
+    selectedPeriod: CalendarPeriod = CalendarPeriod.Monthly;
     viewMode: 'category' | 'group' = 'category';
 
     months = [
@@ -96,9 +97,9 @@ export class FinanceCashflowComponent implements OnInit {
     }
 
     getAsOfDate(): Date {
-        if (this.selectedPeriod === BudgetPeriod.Monthly) {
+        if (this.selectedPeriod === CalendarPeriod.Monthly) {
             return new Date(this.selectedYear, this.selectedMonth, 1);
-        } else if (this.selectedPeriod === BudgetPeriod.Quarterly) {
+        } else if (this.selectedPeriod === CalendarPeriod.Quarterly) {
             const firstMonthOfQuarter = (this.selectedQuarter - 1) * 3;
             return new Date(this.selectedYear, firstMonthOfQuarter, 1);
         } else {
@@ -185,15 +186,15 @@ export class FinanceCashflowComponent implements OnInit {
         const endDate = new Date(asOfDate.getTime());
 
         switch (this.selectedPeriod) {
-            case BudgetPeriod.Monthly:
+            case CalendarPeriod.Monthly:
                 startDate.setDate(1);
                 endDate.setMonth(endDate.getMonth() + 1, 0);
                 break;
-            case BudgetPeriod.Quarterly:
+            case CalendarPeriod.Quarterly:
                 startDate.setDate(1);
                 endDate.setMonth(endDate.getMonth() + 3, 0);
                 break;
-            case BudgetPeriod.Yearly:
+            case CalendarPeriod.Yearly:
                 startDate.setMonth(0, 1);
                 endDate.setMonth(11, 31);
                 break;

@@ -1,8 +1,8 @@
 import { Router, Request } from 'express';
-import { SortDirection } from '@shared/common/enum';
-import { Transaction } from '@shared/finance/types';
+import { CalendarPeriod, SortDirection } from '@shared/common/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
-import { BudgetPeriod, TransactionsSortKey } from '@shared/finance/enum';
+import { TransactionsSortKey } from '@shared/finance/enum';
+import { Transaction } from '@shared/finance/types';
 import { ApiHandler } from '@core/api-handler';
 import { AppLogger } from '@core/logger';
 import { TransactionController } from './../controllers/transaction-controller';
@@ -31,7 +31,7 @@ export function createTransactionRouter(
 
     router.get('/spending', (req, res) => {
         handler.execute(req, res, 'getTransactionSpendingByCategory', (context) => {
-            const period = req.query.period as BudgetPeriod;
+            const period = req.query.period as CalendarPeriod;
             const asOfDate = req.query.asOfDate as string;
             return controller.getTransactionSpendingByCategory(context.userId!, period, asOfDate);
         });

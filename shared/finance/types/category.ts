@@ -1,4 +1,4 @@
-import { Entity } from './../../common/types/entity-base';
+import { Entity } from './../../common/types';
 import { CategoryClass } from './../enum/category-class';
 
 export type Category = Entity & {

@@ -1,6 +1,6 @@
 import { OperationResult } from '@shared/common/contracts';
 import { TransactionSearchOptions, SpendingStream } from '@shared/finance/contracts';
-import { BudgetPeriod } from '@shared/finance/enum';
+import { CalendarPeriod } from '@shared/common/enum';
 import { Transaction } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { DateTimeUtil, ResultUtil } from '@core/utility';
@@ -46,7 +46,7 @@ export class TransactionController {
         return ResultUtil.success();
     }
 
-    public async getTransactionSpendingByCategory(userId: string, period: BudgetPeriod, asOfDate: string): Promise<OperationResult<SpendingStream[]>> {
+    public async getTransactionSpendingByCategory(userId: string, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<SpendingStream[]>> {
         const asOf = asOfDate ? new Date(asOfDate) : DateTimeUtil.now();
         const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
         return ResultUtil.success(await this.transactions.retrieveSpendingByCategory(userId, startDate, endDate));

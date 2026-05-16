@@ -9,9 +9,7 @@ import { GeminiGateway } from '@core/gateways/gemini-gateway';
 import { AppLogger } from '@core/logger';
 import { PgDatabaseClient } from '@core/pg-client';
 import { ApiUtil } from '@core/utility';
-import { createFinanceModule } from '@features/finance/routes';
-import { WeatherGateway } from '@features/grounds/gateways/weather-gateway';
-import { createGroundsModule } from '@features/grounds/routes';
+import { createApiRouter } from '@features/api-routes';
 
 const app = express();
 
@@ -46,14 +44,9 @@ const { resolveUser, requireAuth } = createAuthMiddleware(userData);
 const authRoutes = createAuthRouter(userData, logger, requireAuth, resolveUser);
 app.use('/auth', authRoutes);
 
-// Finance routes
-const financeRoutes = createFinanceModule(dbClient, logger);
-app.use('/api/finance', resolveUser, requireAuth, financeRoutes);
-
-// Grounds routes
-const weatherGateway = WeatherGateway.fromEnvironment();
-const groundsRoutes = createGroundsModule(dbClient, logger, llmGateway, weatherGateway);
-app.use('/api/grounds', resolveUser, requireAuth, groundsRoutes);
+// API routes
+const apiRouter = createApiRouter(dbClient, logger, llmGateway, resolveUser, requireAuth);
+app.use('/api', apiRouter);
 
 // Default 404 handler for unmatched API routes
 app.all('/api/*', (req: Request, res: Response) => {

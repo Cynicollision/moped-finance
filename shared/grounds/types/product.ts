@@ -1,4 +1,4 @@
-import { Entity } from './../../common/types/entity-base';
+import { Entity } from './../../common/types';
 import { CareTaskType } from './../enum';
 
 export type Product = Entity & {

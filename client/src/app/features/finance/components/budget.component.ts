@@ -5,8 +5,9 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { CalendarPeriod } from '@shared/common/enum';
+import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
 import { Category, BudgetStream } from '@shared/finance/types';
-import { BudgetStreamType, CategoryClass, BudgetPeriod } from '@shared/finance/enum';
 import { ModalService } from './../../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
 import { FinanceBudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';
@@ -92,13 +93,13 @@ export class FinanceBudgetComponent implements OnInit {
 
         streams.forEach(s => {
             switch (s.recurrence) {
-                case BudgetPeriod.Monthly:
+                case CalendarPeriod.Monthly:
                     totalMonthly += s.amount;
                     break;
-                case BudgetPeriod.Quarterly:
+                case CalendarPeriod.Quarterly:
                     totalMonthly += s.amount / 3;
                     break;
-                case BudgetPeriod.Yearly:
+                case CalendarPeriod.Yearly:
                     totalMonthly += s.amount / 12;
                     break;
             }
@@ -120,9 +121,9 @@ export class FinanceBudgetComponent implements OnInit {
 
         // Sort by Reccurence first: Monthly, Quarterly, Yearly
         const periodOrder = {
-            [BudgetPeriod.Monthly]: 1,
-            [BudgetPeriod.Quarterly]: 2,
-            [BudgetPeriod.Yearly]: 3
+            [CalendarPeriod.Monthly]: 1,
+            [CalendarPeriod.Quarterly]: 2,
+            [CalendarPeriod.Yearly]: 3
         };
 
         const orderA = periodOrder[a.recurrence] || 99;

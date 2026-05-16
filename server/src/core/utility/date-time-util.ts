@@ -1,4 +1,4 @@
-import { BudgetPeriod, HistoryTimeframe } from '@shared/finance/enum'; // TODO: move these to shared/common
+import { CalendarPeriod, HistoryTimeframe } from '@shared/common/enum';
 
 export class DateTimeUtil {
 
@@ -32,17 +32,17 @@ export class DateTimeUtil {
         return startDate;
     }
 
-    public static getDatesForPeriod(period: BudgetPeriod, asOfDate: Date = new Date()): { startDate: Date; endDate: Date } {
+    public static getDatesForPeriod(period: CalendarPeriod, asOfDate: Date = new Date()): { startDate: Date; endDate: Date } {
         const startDate = new Date(asOfDate.getTime());
         const endDate = new Date(asOfDate.getTime());
 
         switch (period) {
-            case BudgetPeriod.Monthly:
+            case CalendarPeriod.Monthly:
                 startDate.setDate(1);
                 endDate.setMonth(endDate.getMonth() + 1, 0);
                 break;
 
-            case BudgetPeriod.Quarterly: {
+            case CalendarPeriod.Quarterly: {
                 const currentMonth = startDate.getMonth(); // 0-indexed
                 const quarterStartMonth = Math.floor(currentMonth / 3) * 3;
                 startDate.setMonth(quarterStartMonth, 1);
@@ -50,7 +50,7 @@ export class DateTimeUtil {
                 break;
             }
 
-            case BudgetPeriod.Yearly:
+            case CalendarPeriod.Yearly:
                 startDate.setMonth(0, 1);
                 endDate.setMonth(11, 31);
                 break;

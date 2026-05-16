@@ -1,4 +1,4 @@
-import { Entity } from './../../common/types/entity-base';
+import { Entity } from './../../common/types';
 
 export type Institution = Entity & {
     userId: string;

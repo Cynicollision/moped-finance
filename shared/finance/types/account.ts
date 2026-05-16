@@ -1,9 +1,7 @@
-import { Entity } from './../../common/types/entity-base';
+import { Entity } from './../../common/types';
+import { AccountCategory, AccountGroup, AccountType } from './../enum';
 import { BalanceHistory } from './balance-history';
 import { Transaction } from './transaction';
-import { AccountCategory } from './../enum/account-category';
-import { AccountGroup } from './../enum/account-group';
-import { AccountType } from './../enum/account-type';
 
 export type Account = Entity & {
     userId: string;

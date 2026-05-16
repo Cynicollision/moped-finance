@@ -1,7 +1,8 @@
 import { OperationResult } from '@shared/common/contracts';
 import { EntityIdPrefix } from '@shared/common/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions } from '@shared/finance/contracts';
-import { HistoryTimeframe, ValueHistoryType } from '@shared/finance/enum';
+import { HistoryTimeframe } from '@shared/common/enum';
+import { ValueHistoryType } from '@shared/finance/enum';
 import { Account, BalanceHistory } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@core/utility';

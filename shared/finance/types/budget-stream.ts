@@ -1,5 +1,5 @@
-import { Entity } from './../../common/types/entity-base';
-import { BudgetPeriod } from './../enum/budget-period';
+import { CalendarPeriod } from './../../common/enum';
+import { Entity } from './../../common/types';
 import { BudgetStreamType } from './../enum/budget-stream-type';
 
 export type BudgetStream = Entity & {
@@ -7,6 +7,6 @@ export type BudgetStream = Entity & {
     type: BudgetStreamType;
     name: string;
     categoryId: string;
-    recurrence: BudgetPeriod;
+    recurrence: CalendarPeriod;
     amount: number;
 };

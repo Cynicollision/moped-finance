@@ -1,7 +1,8 @@
 import { Router, Request } from 'express';
 import { SortDirection } from '@shared/common/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
-import { HistoryTimeframe, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
+import { HistoryTimeframe } from '@shared/common/enum';
+import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { DateTimeUtil } from '@core/utility';
