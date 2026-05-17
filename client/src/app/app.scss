@@ -8,10 +8,16 @@
 
 .sidenav mat-nav-list {
   padding-left: 12px;
+  padding-right: 12px;
 }
 
 .sidenav mat-nav-list a[mat-list-item] {
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  border-radius: 4px !important;
+}
+
+.sidenav button[mat-stroked-button] {
+  border-radius: 4px !important;
 }
 
 .apps-menu {

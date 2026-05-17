@@ -19,6 +19,7 @@ import { LoadingService } from './core/loading/loading.service';
 interface NavItem {
     label: string;
     route: string;
+    icon: string;
 }
 
 interface AppConfig {
@@ -62,19 +63,19 @@ export class App implements OnInit {
         { 
             id: 'finance', name: 'Ledger', icon: 'attach_money', defaultRoute: '/finance', 
             navItems: [
-                { label: 'Dashboard', route: '/finance/summary' },
-                { label: 'Transactions', route: '/finance/transactions' },
-                { label: 'Cashflow', route: '/finance/cashflow' },
-                { label: 'Budget', route: '/finance/budget' }
+                { label: 'Dashboard', route: '/finance/summary', icon: 'home' },
+                { label: 'Transactions', route: '/finance/transactions', icon: 'credit_card' },
+                { label: 'Cashflow', route: '/finance/cashflow', icon: 'bar_chart' },
+                { label: 'Budget', route: '/finance/budget', icon: 'pie_chart' }
             ] 
         },
         { 
             id: 'grounds', name: 'Grounds', icon: 'landscape', defaultRoute: '/grounds', 
             navItems: [
-                { label: 'Summary', route: '/grounds/summary' },
-                { label: 'Schedule', route: '/grounds/schedule' },
-                { label: 'Plants', route: '/grounds/plants' },
-                { label: 'Products', route: '/grounds/products' }
+                { label: 'Summary', route: '/grounds/summary', icon: 'home' },
+                { label: 'Schedule', route: '/grounds/schedule', icon: 'event' },
+                { label: 'Plants', route: '/grounds/plants', icon: 'yard' },
+                { label: 'Products', route: '/grounds/products', icon: 'category' }
             ] 
         }
     ];

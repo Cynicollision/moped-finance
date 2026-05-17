@@ -1,5 +1,6 @@
 import { Component, inject, computed, signal, OnInit } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
+import { DateProviderService } from './../../../core/date-provider.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterLink } from '@angular/router';
@@ -9,6 +10,7 @@ import { AccountGroup, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
 import { FinanceValueHistoryComponent } from './value-history.component';
+import { FinanceValuePeriodChangeComponent } from './value-period-change.component';
 
 @Component({
     selector: 'app-finance-summary',
@@ -18,15 +20,20 @@ import { FinanceValueHistoryComponent } from './value-history.component';
         MatCardModule,
         MatDividerModule,
         RouterLink,
-        FinanceValueHistoryComponent
+        FinanceValueHistoryComponent,
+        FinanceValuePeriodChangeComponent
     ],
     templateUrl: './summary.component.html',
     styleUrl: './summary.component.scss'
 })
 export class FinanceSummaryComponent implements OnInit {
     financeService = inject(FinanceService);
+    dateProvider = inject(DateProviderService);
+    protected readonly Math = Math;
+    protected readonly AccountGroup = AccountGroup;
 
     accounts = signal<Account[]>([]);
+    groupPeriodChanges = signal<Map<string, any>>(new Map());
 
     // Chart Data payload provided to the child `<app-value-history>` component
     historyData = signal<TotalValueHistory[]>([]);
@@ -41,9 +48,81 @@ export class FinanceSummaryComponent implements OnInit {
         { value: ValueHistoryType.Liabilities, label: 'Total Liabilities' }
     ];
 
+    timeframeOptions = [
+        { value: HistoryTimeframe.PastThirtyDays, label: 'Past 30 Days' },
+        { value: HistoryTimeframe.PastSixtyDays, label: 'Past 60 Days' },
+        { value: HistoryTimeframe.PastNinetyDays, label: 'Past 90 Days' },
+        { value: HistoryTimeframe.PastOneYear, label: 'Past Year' },
+        { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years' },
+        { value: HistoryTimeframe.YearToDate, label: 'Year To Date' },
+        { value: HistoryTimeframe.All, label: 'All Time' }
+    ];
+
+    selectedTimeframeLabel = computed(() => {
+        return this.timeframeOptions.find(t => t.value === this.selectedTimeframe())?.label || 'Period';
+    });
+
     async ngOnInit() {
         this.accounts.set(await this.financeService.fetchAllAccounts() || []);
         await this.updateChartData();
+        await this.updateGroupPeriodChanges();
+    }
+
+    async updateGroupPeriodChanges() {
+        const timeframe = this.selectedTimeframe();
+        const asOfDate = this.dateProvider.now();
+
+        const accounts = this.accounts();
+        if (accounts.length === 0) return;
+
+        const changes = new Map<string, any>();
+        const groupedAccounts = new Map<string, Account[]>();
+
+        for (const account of accounts) {
+            const group = account.group;
+            if (!groupedAccounts.has(group)) {
+                groupedAccounts.set(group, []);
+            }
+            groupedAccounts.get(group)!.push(account);
+        }
+
+        for (const [group, groupAccounts] of groupedAccounts.entries()) {
+            let startTotal = 0;
+            let endTotal = 0;
+            let hasData = false;
+
+            await Promise.all(groupAccounts.map(async account => {
+                const history = await this.financeService.fetchAccountBalanceHistory(account.id, { asOfDate, timeframe });
+                if (history && history.length > 0) {
+                    const sorted = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                    startTotal += Number(sorted[0].balance);
+                    endTotal += Number(sorted[sorted.length - 1].balance);
+                    hasData = true;
+                }
+            }));
+
+            if (hasData) {
+                const changeAmount = endTotal - startTotal;
+                const changePercentage = startTotal !== 0 ? (changeAmount / Math.abs(startTotal)) * 100 : 0;
+
+                let isPositive = changeAmount >= 0;
+                let isGood = isPositive;
+
+                if (group === AccountGroup.CreditCard || group === AccountGroup.Loan) {
+                    isPositive = changeAmount < 0;
+                    isGood = !isPositive;
+                }
+
+                changes.set(group, {
+                    amount: Math.abs(changeAmount),
+                    percentage: Math.abs(changePercentage),
+                    isPositive,
+                    isGood
+                });
+            }
+        }
+
+        this.groupPeriodChanges.set(changes);
     }
 
     async updateChartData() {
@@ -65,6 +144,7 @@ export class FinanceSummaryComponent implements OnInit {
     onTimeframeChange(timeframe: HistoryTimeframe) {
         this.selectedTimeframe.set(timeframe);
         this.updateChartData();
+        this.updateGroupPeriodChanges();
     }
 
     // Dynamic Summary value to hand down dependent on chart viewing mode
@@ -118,7 +198,7 @@ export class FinanceSummaryComponent implements OnInit {
         const totalLiabilities = creditCardsTotal + loansTotal;
 
         return {
-            netWorth: totalAssets - totalLiabilities,
+            netWorth: totalAssets - Math.abs(totalLiabilities),
             totalAssets,
             totalLiabilities,
             cash: cashTotal,

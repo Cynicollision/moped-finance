@@ -1,0 +1,15 @@
+<div class="change-indicator" [class.good]="isGood" [class.bad]="!isGood">
+    @if (isPositive) {
+    <mat-icon inline="true">arrow_upward</mat-icon>
+    } @else {
+    <mat-icon inline="true">arrow_downward</mat-icon>
+    }
+    <span class="change-amount">
+        {{ amount | currency }} ({{ percentage | number:'1.1-2' }}%)
+    </span>
+    @if (label) {
+    <span class="change-label">
+        - {{ label }}
+    </span>
+    }
+</div>

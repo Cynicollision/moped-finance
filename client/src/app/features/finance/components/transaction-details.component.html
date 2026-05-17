@@ -7,7 +7,7 @@
 
     <form [formGroup]="transactionForm" (ngSubmit)="save()" class="details-form">
         <!-- Read-only values -->
-        <div class="readonly-field amount">
+        <div class="readonly-field amount transactions-table">
             <div class="label">Amount</div>
             <div class="value" [ngClass]="{'amount-positive': transaction()!.amount > 0, 'amount-negative': transaction()!.amount < 0}">
                 {{Math.abs(transaction()!.amount) | currency}}

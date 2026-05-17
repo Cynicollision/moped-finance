@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, computed, signal, OnChanges, SimpleChanges } from '@angular/core';
-import { CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { HistoryTimeframe } from '@shared/common/enum';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ChartComponent, ChartConfiguration } from './../../../core/chart.component';
+import { FinanceValuePeriodChangeComponent } from './value-period-change.component';
 
 export interface ChartTypeOption {
     value: ValueHistoryType;
@@ -19,12 +20,12 @@ export interface ChartTypeOption {
     standalone: true,
     imports: [
         CurrencyPipe,
-        DecimalPipe,
         MatCardModule,
         MatFormFieldModule,
         MatSelectModule,
         MatIconModule,
-        ChartComponent
+        ChartComponent,
+        FinanceValuePeriodChangeComponent
     ],
     templateUrl: './value-history.component.html',
     styleUrl: './value-history.component.scss'
@@ -133,11 +134,26 @@ export class FinanceValueHistoryComponent implements OnChanges {
                     legend: { display: false }
                 },
                 scales: {
+                    x: {
+                        ticks: {
+                            maxTicksLimit: 20
+                        }
+                    },
                     y: {
                         reverse: type === ValueHistoryType.Liabilities,
                         ticks: {
+                            maxTicksLimit: 6,
                             callback: function (value) {
-                                return '$' + Number(value).toLocaleString();
+                                const num = Number(value);
+                                const absNum = Math.abs(num);
+                                const sign = num < 0 ? '-' : '';
+
+                                if (absNum >= 1000000) {
+                                    return sign + '$' + (absNum / 1000000).toFixed(1) + 'M';
+                                } else if (absNum >= 1000) {
+                                    return sign + '$' + (absNum / 1000).toFixed(1) + 'K';
+                                }
+                                return sign + '$' + absNum.toLocaleString();
                             }
                         }
                     }

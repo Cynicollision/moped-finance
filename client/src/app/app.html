@@ -4,22 +4,11 @@
         [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false">
 
         <div style="display: flex; flex-direction: column; height: 100%;">
-            <mat-toolbar>
-                {{ currentApp.name }}
-                @if (isDebugMode) {
-                <div style="display: flex; flex-direction: column; align-items: center; margin-left: auto;">
-                    <mat-icon style="color: #ff9800;" title="Debug Mode">bug_report</mat-icon>
-                    <span style="font-size: 10px; color: #ff9800; font-weight: bold; line-height: 1;">{{ debugDateLabel
-                        }}</span>
-                </div>
-                }
-            </mat-toolbar>
-
             <div *ngIf="authService.currentUser()" style="padding: 16px;">
                 <button mat-stroked-button [matMenuTriggerFor]="appMenu" style="width: 100%;">
                     <span style="display: flex; align-items: center; width: 100%;">
-                        <mat-icon style="margin-right: 8px;">apps</mat-icon>
-                        <span>Apps</span>
+                        <mat-icon style="margin-right: 8px;">{{ currentApp.icon }}</mat-icon>
+                        <span>{{ currentApp.name }}</span>
                         <span style="flex: 1 1 auto;"></span>
                         <mat-icon>arrow_drop_down</mat-icon>
                     </span>
@@ -37,6 +26,7 @@
                 <a mat-list-item *ngFor="let item of currentApp.navItems" [routerLink]="item.route"
                     routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}"
                     (click)="drawer.mode === 'over' && drawer.close()">
+                    <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
                     <span matListItemTitle>{{item.label}}</span>
                 </a>
             </mat-nav-list>
@@ -45,6 +35,12 @@
 
             <mat-nav-list>
                 @if (authService.currentUser()) {
+                @if (isDebugMode) {
+                <div style="display: flex; flex-direction: column; align-items: center; padding: 8px 16px;">
+                    <mat-icon style="color: #ff9800;" title="Debug Mode">bug_report</mat-icon>
+                    <span style="font-size: 10px; color: #ff9800; font-weight: bold; line-height: 1;">{{ debugDateLabel }}</span>
+                </div>
+                }
                 <a mat-list-item routerLink="/system" routerLinkActive="active-link"
                     (click)="drawer.mode === 'over' && drawer.close()">
                     <mat-icon matListItemIcon>dns</mat-icon>
