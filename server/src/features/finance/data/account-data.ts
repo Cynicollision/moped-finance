@@ -24,12 +24,19 @@ export class FinanceAccountData implements IFinanceAccountData {
                 a.account_category AS "category", 
                 a.account_group AS "group", 
                 a.account_type AS "type", 
-                a.balance, 
+                COALESCE(bh.balance, 0) AS balance, 
                 a.is_hidden AS "isHidden",
                 a.is_manual AS "isManual",
                 a.is_retirement AS "isRetirement",
                 a.hide_from_cashflow AS "hideFromCashflow"
             FROM finance.accounts AS a
+            LEFT JOIN LATERAL (
+                SELECT balance 
+                FROM finance.balance_history 
+                WHERE account_id = a.id
+                ORDER BY date DESC 
+                LIMIT 1
+            ) bh ON true
             WHERE a.user_id = $1`,
             [userId]
         );
@@ -53,12 +60,19 @@ export class FinanceAccountData implements IFinanceAccountData {
                 a.account_category AS "category", 
                 a.account_group AS "group",
                 a.account_type AS "type", 
-                a.balance, 
+                COALESCE(bh.balance, 0) AS balance, 
                 a.is_hidden AS "isHidden",
                 a.is_manual AS "isManual",
                 a.is_retirement AS "isRetirement",
                 a.hide_from_cashflow AS "hideFromCashflow"
             FROM finance.accounts AS a
+            LEFT JOIN LATERAL (
+                SELECT balance 
+                FROM finance.balance_history 
+                WHERE account_id = a.id
+                ORDER BY date DESC 
+                LIMIT 1
+            ) bh ON true
             WHERE a.user_id = $1 AND a.id = $2`,
             [userId, accountId]
         );
@@ -78,8 +92,8 @@ export class FinanceAccountData implements IFinanceAccountData {
         const now = DateTimeUtil.now();
 
         const query = `INSERT INTO finance.accounts 
-            (id, created_at, updated_at, user_id, institution_id, name, account_category, account_group, account_type, balance, is_hidden, is_manual, is_retirement, hide_from_cashflow)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            (id, created_at, updated_at, user_id, institution_id, name, account_category, account_group, account_type, is_hidden, is_manual, is_retirement, hide_from_cashflow)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING 
                 id, 
                 created_at AS "createdAt",
@@ -90,7 +104,6 @@ export class FinanceAccountData implements IFinanceAccountData {
                 account_category AS "category", 
                 account_group AS "group", 
                 account_type AS "type", 
-                balance, 
                 is_hidden AS "isHidden",
                 is_manual AS "isManual",
                 is_retirement AS "isRetirement",
@@ -106,7 +119,6 @@ export class FinanceAccountData implements IFinanceAccountData {
             account.category,
             account.group,
             account.type,
-            account.balance,
             account.isHidden,
             account.isManual,
             account.isRetirement,
@@ -117,7 +129,7 @@ export class FinanceAccountData implements IFinanceAccountData {
         const row = result.rows[0];
         return {
             ...row,
-            balance: typeof row.balance === 'string' ? parseFloat(row.balance) : row.balance
+            balance: 0 // Default to 0 on creation since no history exists yet
         };
     }
 
@@ -131,12 +143,11 @@ export class FinanceAccountData implements IFinanceAccountData {
                             account_category = $4,
                             account_group = $5,
                             account_type = $6,
-                            balance = $7,
-                            is_hidden = $8,
-                            is_manual = $9,
-                            is_retirement = $10,
-                            hide_from_cashflow = $11
-                        WHERE id = $12 AND user_id = $13
+                            is_hidden = $7,
+                            is_manual = $8,
+                            is_retirement = $9,
+                            hide_from_cashflow = $10
+                        WHERE id = $11 AND user_id = $12
                         RETURNING 
                             id, 
                             created_at AS "createdAt",
@@ -147,7 +158,6 @@ export class FinanceAccountData implements IFinanceAccountData {
                             account_category AS "category", 
                             account_group AS "group", 
                             account_type AS "type", 
-                            balance, 
                             is_hidden AS "isHidden",
                             is_manual AS "isManual",
                             is_retirement AS "isRetirement",
@@ -160,7 +170,6 @@ export class FinanceAccountData implements IFinanceAccountData {
             account.category,
             account.group,
             account.type,
-            account.balance,
             account.isHidden,
             account.isManual,
             account.isRetirement,
@@ -175,9 +184,13 @@ export class FinanceAccountData implements IFinanceAccountData {
         }
 
         const row = result.rows[0];
+
+        // Fetch current balance from history after update
+        const balanceResult = await this.retrieveSingle(userId, account.id);
+
         return {
             ...row,
-            balance: typeof row.balance === 'string' ? parseFloat(row.balance) : row.balance
+            balance: balanceResult ? balanceResult.balance : 0
         };
     }
 

@@ -37,8 +37,7 @@ CREATE TABLE IF NOT EXISTS finance.accounts (
   is_hidden BOOLEAN DEFAULT FALSE,
   is_manual BOOLEAN DEFAULT FALSE,
   is_retirement BOOLEAN DEFAULT FALSE,
-  hide_from_cashflow BOOLEAN DEFAULT FALSE,
-  balance DECIMAL(12, 2) NOT NULL DEFAULT 0
+  hide_from_cashflow BOOLEAN DEFAULT FALSE
 );
 
 -- Balance History
@@ -50,6 +49,10 @@ CREATE TABLE IF NOT EXISTS finance.balance_history (
   balance DECIMAL(12, 2) NOT NULL,
   date DATE NOT NULL
 );
+
+-- Indexes for balance history
+CREATE INDEX IF NOT EXISTS idx_balance_history_account_date ON finance.balance_history (account_id, date DESC);
+CREATE INDEX IF NOT EXISTS idx_balance_history_date ON finance.balance_history (date);
 
 -- Transactions
 CREATE TABLE IF NOT EXISTS finance.transactions (
