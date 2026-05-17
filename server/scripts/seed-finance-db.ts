@@ -23,6 +23,32 @@ async function readCsv(fileName: string): Promise<string[]> {
     return content.split(/\r?\n/);
 }
 
+function parseCsvLine(line: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+
+        if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i++; // Skip next quote
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            result.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    result.push(current);
+    return result;
+}
+
 (async () => {
     const client = await pool.connect();
     try {
@@ -54,7 +80,7 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                const [id, _csvUserId, name] = line.split(',');
+                const [id, _csvUserId, name] = parseCsvLine(line);
                 if (id && name) {
                     const generatedId = EntityIdUtil.generate(EntityIdPrefix.FinanceInstitution);
                     institutionIdMap.set(id.trim(), generatedId);
@@ -84,7 +110,7 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                const [id, _csvUserId, institutionId, name, category, type, subtype, balance, hidden, retirement] = line.split(',');
+                const [id, _csvUserId, institutionId, name, category, type, subtype, balance, hidden, retirement] = parseCsvLine(line);
 
                 if (id && name) {
                     const generatedId = EntityIdUtil.generate(EntityIdPrefix.FinanceAccount);
@@ -93,8 +119,8 @@ async function readCsv(fileName: string): Promise<string[]> {
 
                     await client.query(
                         `INSERT INTO finance.accounts (
-                            id, user_id, institution_id, name, account_category, account_group, account_type, balance, is_hidden, is_manual, is_retirement, hide_from_cashflow
-                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                            id, user_id, institution_id, name, account_category, account_group, account_type, is_hidden, is_manual, is_retirement, hide_from_cashflow
+                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                          ON CONFLICT (id) DO NOTHING`,
                         [
                             generatedId,
@@ -104,7 +130,6 @@ async function readCsv(fileName: string): Promise<string[]> {
                             category.trim(),
                             type.trim(),
                             subtype?.trim() || null,
-                            parseFloat(balance?.trim() || '0'),
                             hidden?.trim().toLowerCase() === 'true',
                             false,
                             retirement?.trim().toLowerCase() === 'true',
@@ -130,7 +155,7 @@ async function readCsv(fileName: string): Promise<string[]> {
                     continue;
                 }
 
-                const [id, _csvUserId, type, group, icon, name, isActive] = line.split(',');
+                const [id, _csvUserId, type, group, icon, name, isActive] = parseCsvLine(line);
 
                 if (id && type && group && icon && name && isActive) {
                     const generatedId = EntityIdUtil.generate(EntityIdPrefix.FinanceCategory);
@@ -180,7 +205,7 @@ async function readCsv(fileName: string): Promise<string[]> {
                         continue;
                     }
 
-                    const [date, merchant, categoryName, accountName, originalStatement, notes, amount] = line.split(',');
+                    const [date, merchant, categoryName, accountName, originalStatement, notes, amount] = parseCsvLine(line);
 
                     const accountId = accountsMap.get(accountName?.trim());
 
@@ -240,7 +265,7 @@ async function readCsv(fileName: string): Promise<string[]> {
                         continue;
                     }
 
-                    const [date, balance, accountName] = line.split(',');
+                    const [date, balance, accountName] = parseCsvLine(line);
                     const accountId = accountsMap.get(accountName?.trim());
 
                     if (accountId && date && balance) {
