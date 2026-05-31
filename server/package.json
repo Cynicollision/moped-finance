@@ -4,6 +4,7 @@
     "main": "dist/index.js",
     "scripts": {
         "build": "tsc",
+        "build:prod": "tsc --project tsconfig.prod.json",
         "dev": "nodemon --legacy-watch",
         "db:drop": "npm run db:drop:core && npm run db:drop:finance && npm run db:drop:grounds",
         "db:drop:core": "ts-node -r dotenv/config scripts/drop-core-db.ts dotenv_config_path=../.env",

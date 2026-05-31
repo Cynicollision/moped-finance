@@ -19,7 +19,7 @@ npm test
 ### Docker Environment (Recommended)
 To run tests inside the running server container:
 ```bash
-docker-compose exec server npm test
+docker-compose exec api npm test
 ```
 
 ### Continuous Testing (Watch Mode)
@@ -29,7 +29,7 @@ To keep tests running and re-executing on file changes:
 npm run test:watch
 
 # Docker
-docker-compose exec server npm run test:watch
+docker-compose exec api npm run test:watch
 ```
 
 ## Creating New Tests

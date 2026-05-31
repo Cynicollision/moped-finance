@@ -1,0 +1,31 @@
+# Dependencies (installed inside container)
+**/node_modules
+
+# Build outputs
+client/dist
+server/dist
+
+# Version control
+.git
+.gitignore
+
+# IDE / Editor
+.vscode
+.angular
+
+# Environment (secrets must not enter the image)
+.env
+.env.*
+!.env.example
+
+# Documentation & misc
+_docs
+*.md
+LICENSE
+
+# Docker files (not needed inside context recursively)
+docker-compose*.yml
+
+# Agents / AI tooling
+.agents
+.gemini

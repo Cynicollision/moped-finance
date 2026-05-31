@@ -4,8 +4,8 @@
     *   **Shared Code:** Isomorphic TypeScript code (types, interfaces, etc.) used by both client and server lives in the `shared/` directory.
 2.  **API Consistency:** All API responses must handle errors gracefully (JSON).
 3.  **Environment:** 
-    * Development occurs on Windows (WSL2).
-    * Production deployment is via Docker on a Synology NAS using `docker-compose.prod.yml`.
+    * Development occurs on Windows. Docker Desktop uses WSL2 as its backend.
+    * Production deployment is via Docker on a Synology NAS. See [build.md](build.md) for full deployment details.
 4.  **Backend:** The backend is a Node.js/Express application written in TypeScript, located in the `server/` directory.
 5.  **Database Connection:** The Node.js backend manages a single connection pool to the database. Logical separation is achieved using PostgreSQL schemas.
 
@@ -21,10 +21,12 @@ To manage the development environment, use the following commands from the root 
 
 ## Docker Usage (Production)
 
-To deploy to the Synology NAS or test the production build locally:
+For full production deployment, CI/CD pipeline, and NAS setup details, see [build.md](build.md).
 
-*   **Start Production:** `docker-compose -f docker-compose.prod.yml up -d --build`
-    *   *This builds the optimized image (Stage 3), serves the Angular frontend statically, and removes development volume mounts.*
+To test the production build locally:
+
+*   **Build Image:** `docker build -t home-lab-api:latest .`
+*   **Start Production:** `docker-compose -f docker-compose.prod.yml up -d`
 *   **Stop Production:** `docker-compose -f docker-compose.prod.yml down`
 
 ### Build Configurations (Docker)

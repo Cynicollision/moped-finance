@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Run server tests
+        run: npm test
+        working-directory: server
+
+#   build-and-push:
+#     name: Build & Push Docker Image
+#     needs: test
+#     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: read
+#       packages: write
+#     steps:
+#       - uses: actions/checkout@v4
+# 
+#       - name: Log in to GitHub Container Registry
+#         uses: docker/login-action@v3
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.actor }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+# 
+#       - name: Build and push Docker image
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: .
+#           push: true
+#           tags: |
+#             ghcr.io/${{ github.repository_owner }}/homelab:latest
+#             ghcr.io/${{ github.repository_owner }}/homelab:${{ github.sha }}

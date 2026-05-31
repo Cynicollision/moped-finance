@@ -4,7 +4,6 @@ This document provides a high-level entry point for the Home Lab project. Detail
 
 ## 1. Project Overview
 A single, consolidated web platform to manage personal "Home Lab" domains, including Finance and Garden management.
-* See [_docs/overview.md](_docs/overview.md) for goals and functional domains.
 
 ## 2. Technical Architecture
 The platform is built as a Modular Monolith using Angular, Node.js/Express, and PostgreSQL.
@@ -17,3 +16,9 @@ A single PostgreSQL instance manages multiple logical databases for each module.
 ## 4. Development & Constraints
 Guidelines for local development and maintaining the monolithic structure.
 * See [_docs/development.md](_docs/development.md) for development rules and environment setup instructions.
+
+## 5. Build & Deployment
+CI/CD pipeline, Docker image management, and Synology NAS deployment.
+* See [_docs/build.md](_docs/build.md) for the build pipeline, deployment steps, and environment configuration.
+* See [_docs/nas-deployment.md](_docs/nas-deployment.md) for the complete, step-by-step Synology NAS deployment guide.
+
