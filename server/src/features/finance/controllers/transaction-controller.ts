@@ -1,9 +1,10 @@
 import { OperationResult } from '@shared/common/contracts';
+import { EntityIdPrefix } from '@shared/common/enum';
 import { TransactionSearchOptions, SpendingStream } from '@shared/finance/contracts';
 import { CalendarPeriod } from '@shared/common/enum';
 import { Transaction } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
-import { DateTimeUtil, ResultUtil } from '@core/utility';
+import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@core/utility';
 import { IFinanceTransactionsData } from './../data/transactions-data';
 
 export class TransactionController {
@@ -19,6 +20,11 @@ export class TransactionController {
             return ResultUtil.userError('Transaction not found or access denied');
         }
         return ResultUtil.success(transaction);
+    }
+
+    public async createTransaction(userId: string, transaction: Transaction): Promise<OperationResult<Transaction>> {
+        transaction.id = EntityIdUtil.generate(EntityIdPrefix.FinanceTransaction);
+        return ResultUtil.success(await this.transactions.insert(userId, transaction));
     }
 
     public async getTransactions(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<OperationResult<Transaction[]>> {
@@ -47,7 +53,7 @@ export class TransactionController {
     }
 
     public async getTransactionSpendingByCategory(userId: string, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<SpendingStream[]>> {
-        const asOf = asOfDate ? new Date(asOfDate) : DateTimeUtil.now();
+        const asOf = asOfDate ? DateTimeUtil.parse(asOfDate) : DateTimeUtil.now();
         const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
         return ResultUtil.success(await this.transactions.retrieveSpendingByCategory(userId, startDate, endDate));
     }

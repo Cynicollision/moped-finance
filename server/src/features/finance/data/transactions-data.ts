@@ -15,6 +15,7 @@ export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction
     retrieveMerchants(userId: string): Promise<string[]>;
     retrieveSpendingByCategory(userId: string, startDate: Date, endDate: Date): Promise<SpendingStream[]>;
     retrieveSingle(userId: string, id: string): Promise<Transaction | null>;
+    insert(userId: string, transaction: Transaction): Promise<Transaction>;
     update(userId: string, transaction: Transaction): Promise<Transaction | null>;
     delete(userId: string, id: string): Promise<boolean>;
 }
@@ -177,6 +178,26 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
             categoryId: row.categoryId,
             amount: Number(row.amount)
         }));
+    }
+
+    public async insert(userId: string, transaction: Transaction): Promise<Transaction> {
+        const rows = await this.db.insert(transactionSchema)
+            .values({
+                id: transaction.id,
+                accountId: transaction.accountId,
+                categoryId: transaction.categoryId,
+                date: DateTimeUtil.toDateString(transaction.date),
+                amount: transaction.amount.toString(),
+                merchant: transaction.merchant,
+                originalStatement: transaction.originalStatement,
+                notes: transaction.notes,
+                isHidden: transaction.isHidden,
+                isSplit: transaction.isSplit,
+                splitParentId: transaction.splitParentId
+            })
+            .returning();
+
+        return mapRowToTransaction(rows[0]);
     }
 
     public async update(userId: string, transaction: Transaction): Promise<Transaction | null> {

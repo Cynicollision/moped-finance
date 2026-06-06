@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BudgetStream } from '@shared/finance/types';
 import { IOwnedResourceData } from '@core/interfaces';
+import { DateTimeUtil } from '@core/utility';
 import { budgetStreamSchema } from './../schema/budget-stream-schema';
 
 export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStream> {
@@ -78,7 +79,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
                 type: stream.type,
                 recurrence: stream.recurrence,
                 amount: String(stream.amount),
-                updatedAt: new Date(),
+                updatedAt: DateTimeUtil.now(),
             })
             .where(and(eq(budgetStreamSchema.id, stream.id!), eq(budgetStreamSchema.userId, userId)))
             .returning();

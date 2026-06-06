@@ -5,8 +5,10 @@ import { TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { ApiHandler } from '@core/api-handler';
 import { AppLogger } from '@core/logger';
+import { RequestSchemaValidator } from '@core/validation';
 import { TransactionController } from './../controllers/transaction-controller';
 import { IFinanceTransactionsData } from './../data/transactions-data';
+import { createTransactionSchema, updateTransactionSchema } from './../schema/transactions-schema';
 
 export function createTransactionRouter(
     transactionsData: IFinanceTransactionsData,
@@ -15,11 +17,19 @@ export function createTransactionRouter(
     const router = Router();
     const controller = new TransactionController(logger, transactionsData);
     const handler = new ApiHandler(logger);
+    const validator = new RequestSchemaValidator(logger, 'Transaction');
 
     router.get('/', (req, res) => {
         handler.execute(req, res, 'getTransactions', (context) => {
             const options = getTransactionSearchOptions(req);
             return controller.getTransactions(context.userId!, options);
+        });
+    });
+
+    router.post('/', validator.body(createTransactionSchema), (req, res) => {
+        handler.execute(req, res, 'createTransaction', (context) => {
+            const transaction: Transaction = req.body;
+            return controller.createTransaction(context.userId!, transaction);
         });
     });
 
@@ -37,13 +47,13 @@ export function createTransactionRouter(
         });
     });
 
-    router.get('/:id', (req, res) => {
+    router.get('/:id', validator.id(), (req, res) => {
         handler.execute(req, res, 'getTransaction', (context) => {
             return controller.getTransaction(context.userId!, req.params.id);
         });
     });
 
-    router.put('/:id', (req, res) => {
+    router.put('/:id', validator.id(), validator.body(updateTransactionSchema), (req, res) => {
         handler.execute(req, res, 'saveTransaction', (context) => {
             const transaction: Transaction = req.body;
             transaction.id = req.params.id; // ensure ID holds
@@ -51,7 +61,7 @@ export function createTransactionRouter(
         });
     });
 
-    router.delete('/:id', (req, res) => {
+    router.delete('/:id', validator.id(), (req, res) => {
         handler.execute(req, res, 'deleteTransaction', (context) => {
             return controller.deleteTransaction(context.userId!, req.params.id);
         });

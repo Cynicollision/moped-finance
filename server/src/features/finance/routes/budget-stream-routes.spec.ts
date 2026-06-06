@@ -4,6 +4,7 @@ import { CalendarPeriod } from '@shared/common/enum/calendar-period';
 import { BudgetStreamType } from '@shared/finance/enum/budget-stream-type';
 import { BudgetStream } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
+import { DateTimeUtil } from '@core/utility';
 import { TestExpressUtil } from '@test/express-util';
 import { FinanceMockUtil } from '@test/finance-mocks';
 import { IFinanceBudgetStreamData } from './../data/budget-stream-data';
@@ -25,8 +26,8 @@ describe('Budget Stream Routes', () => {
             type: BudgetStreamType.Expense,
             recurrence: CalendarPeriod.Monthly,
             amount: 150.00,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: DateTimeUtil.now(),
+            updatedAt: DateTimeUtil.now(),
             ...overrides
         };
     };

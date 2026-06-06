@@ -1,14 +1,16 @@
 import express from 'express';
 import request from 'supertest';
-import { AccountCategory, AccountGroup, AccountType, ValueHistoryType } from '@shared/finance/enum';
+import { AccountCategory, AccountGroup, AccountType, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
+import { DateTimeUtil } from '@core/utility';
 import { TestExpressUtil } from '@test/express-util';
 import { FinanceMockUtil } from '@test/finance-mocks';
 import { IFinanceAccountData } from './../data/account-data';
 import { IFinanceBalanceHistoryData } from './../data/balance-history-data';
 import { IFinanceTransactionsData } from './../data/transactions-data';
 import { createAccountRouter } from './account-routes';
+import { SortDirection } from '@shared/common/enum';
 
 describe('Account Routes', () => {
     let app: express.Express;
@@ -33,8 +35,8 @@ describe('Account Routes', () => {
             isManual: false,
             isRetirement: false,
             hideFromCashflow: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: DateTimeUtil.now(),
+            updatedAt: DateTimeUtil.now(),
             ...overrides
         } as Account;
     };
@@ -77,9 +79,9 @@ describe('Account Routes', () => {
     });
 
     describe('GET /accounts/total-value-history', () => {
-        it('should return total value history when successful', async () => {
+        it('should return total value history with specific options', async () => {
             const mockSumHistory = [
-                { balance: 2500.00, date: new Date().toISOString() }
+                { balance: 2500.00, date: DateTimeUtil.toISOString(DateTimeUtil.now()) }
             ];
             mockBalanceHistoryData.retrieveSumByDate.mockResolvedValue(mockSumHistory as any);
 
@@ -91,6 +93,20 @@ describe('Account Routes', () => {
             expect(mockBalanceHistoryData.retrieveSumByDate).toHaveBeenCalledWith(
                 testUserId,
                 ValueHistoryType.NetWorth,
+                expect.any(Date),
+                expect.any(Date)
+            );
+        });
+
+        it('should use default timeframe and asOfDate when not provided', async () => {
+            mockBalanceHistoryData.retrieveSumByDate.mockResolvedValue([]);
+
+            const response = await request(app).get('/accounts/total-value-history');
+
+            expect(response.status).toBe(200);
+            expect(mockBalanceHistoryData.retrieveSumByDate).toHaveBeenCalledWith(
+                testUserId,
+                ValueHistoryType.NetWorth, // NetWorth is default if not provided
                 expect.any(Date),
                 expect.any(Date)
             );
@@ -246,13 +262,13 @@ describe('Account Routes', () => {
     });
 
     describe('GET /accounts/:accountId/balance-history', () => {
-        it('should return balance history for an account when successful', async () => {
+        it('should return balance history for an account with default timeframe', async () => {
             const mockHistory = [
-                { id: 'h1', accountId: 'acc1', balance: 500.00, date: new Date().toISOString() }
+                { id: 'h1', accountId: 'acc1', balance: 500.00, date: DateTimeUtil.toISOString(DateTimeUtil.now()) }
             ];
             mockBalanceHistoryData.retrieveForAccount.mockResolvedValue(mockHistory as any);
 
-            const response = await request(app).get('/accounts/acc1/balance-history?timeframe=PastThirtyDays');
+            const response = await request(app).get('/accounts/acc1/balance-history');
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
@@ -264,12 +280,31 @@ describe('Account Routes', () => {
                 expect.any(String)
             );
         });
+
+        it('should parse timeframe and asOfDate query parameters correctly', async () => {
+            mockBalanceHistoryData.retrieveForAccount.mockResolvedValue([]);
+
+            const response = await request(app)
+                .get('/accounts/acc1/balance-history')
+                .query({
+                    timeframe: 'PastThirtyDays',
+                    asOfDate: '2026-06-01'
+                });
+
+            expect(response.status).toBe(200);
+            expect(mockBalanceHistoryData.retrieveForAccount).toHaveBeenCalledWith(
+                testUserId,
+                'acc1',
+                expect.any(String), // startDate (calculated based on PastThirtyDays and asOfDate)
+                expect.any(String)  // endDate (calculated based on PastThirtyDays and asOfDate)
+            );
+        });
     });
 
     describe('GET /accounts/:accountId/transactions', () => {
-        it('should return transactions for an account when successful', async () => {
+        it('should return transactions for an account with default options', async () => {
             const mockTransactions = [
-                { id: 't1', amount: 50.00, date: new Date().toISOString(), merchant: 'Store' }
+                { id: 't1', amount: 50.00, date: DateTimeUtil.toISOString(DateTimeUtil.now()), merchant: 'Store' }
             ];
             mockTransactionsData.search.mockResolvedValue(mockTransactions as any);
 
@@ -280,7 +315,40 @@ describe('Account Routes', () => {
             expect(response.body.data).toEqual(mockTransactions);
             expect(mockTransactionsData.search).toHaveBeenCalledWith(
                 testUserId,
-                expect.any(Object),
+                expect.objectContaining({
+                    offset: 0,
+                    limit: 50,
+                    includeHidden: false
+                }),
+                'acc1'
+            );
+        });
+
+        it('should pass search options to transaction search properly', async () => {
+            mockTransactionsData.search.mockResolvedValue([]);
+
+            const response = await request(app)
+                .get('/accounts/acc1/transactions')
+                .query({
+                    sortKey: TransactionsSortKey.Date,
+                    sortDirection: SortDirection.Asc,
+                    limit: '10',
+                    offset: '20',
+                    includeHidden: 'true',
+                    minAmount: '100'
+                });
+
+            expect(response.status).toBe(200);
+            expect(mockTransactionsData.search).toHaveBeenCalledWith(
+                testUserId,
+                expect.objectContaining({
+                    sortKey: TransactionsSortKey.Date,
+                    sortDirection: SortDirection.Asc,
+                    limit: 10,
+                    offset: 20,
+                    includeHidden: true,
+                    minAmount: 100
+                }),
                 'acc1'
             );
         });

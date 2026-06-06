@@ -41,7 +41,7 @@ export function createAccountRouter(
 
             const asOfDateStr = req.query.asOfDate as string;
             const asOfDate = asOfDateStr
-                ? new Date(asOfDateStr)
+                ? DateTimeUtil.parse(asOfDateStr)
                 : DateTimeUtil.now();
 
             const options: TotalValueHistoryOptions = {
@@ -85,7 +85,7 @@ export function createAccountRouter(
         handler.execute(req, res, 'getAccountBalanceHistory', (context) => {
             const timeframe = req.query.timeframe as HistoryTimeframe;
             const asOfDateStr = req.query.asOfDate as string;
-            const asOfDate = asOfDateStr ? new Date(asOfDateStr) : DateTimeUtil.now();
+            const asOfDate = asOfDateStr ? DateTimeUtil.parse(asOfDateStr) : DateTimeUtil.now();
 
             const options: GetAccountBalanceHistoryOptions = {
                 asOfDate,

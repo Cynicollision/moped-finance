@@ -21,7 +21,7 @@ export const transactionSchema = financeSchema.table('transactions', {
 });
 
 export const createTransactionSchema = createInsertSchema(transactionSchema, {
-    amount: (schema) => schema.min(1), // Basic validation
+    amount: z.number().finite(),
     merchant: (schema) => schema.min(1).max(255),
     isHidden: z.boolean().optional(),
     isSplit: z.boolean().optional(),

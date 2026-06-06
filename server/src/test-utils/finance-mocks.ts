@@ -29,6 +29,7 @@ export class FinanceMockUtil {
             search: jest.fn(),
             retrieveMerchants: jest.fn(),
             update: jest.fn(),
+            insert: jest.fn(),
             delete: jest.fn(),
             retrieveSpendingByCategory: jest.fn()
         };

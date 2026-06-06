@@ -2,6 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { Institution } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
+import { DateTimeUtil } from '@core/utility';
 import { TestExpressUtil } from '@test/express-util';
 import { FinanceMockUtil } from '@test/finance-mocks';
 import { IFinanceInstitutionsData } from './../data/institutions-data';
@@ -19,8 +20,8 @@ describe('Institution Routes', () => {
             id: 'inst1',
             userId: testUserId,
             name: 'Chase Bank',
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: DateTimeUtil.now(),
+            updatedAt: DateTimeUtil.now(),
             ...overrides
         } as Institution;
     };

@@ -3,6 +3,7 @@ import request from 'supertest';
 import { CategoryClass } from '@shared/finance/enum';
 import { Category } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
+import { DateTimeUtil } from '@core/utility';
 import { TestExpressUtil } from '@test/express-util';
 import { FinanceMockUtil } from '@test/finance-mocks';
 import { IFinanceCategoriesData } from './../data/categories-data';
@@ -24,8 +25,8 @@ describe('Category Routes', () => {
             icon: 'home',
             name: 'Rent',
             isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: DateTimeUtil.now(),
+            updatedAt: DateTimeUtil.now(),
             ...overrides
         } as Category;
     };
