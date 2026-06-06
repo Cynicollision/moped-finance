@@ -10,6 +10,18 @@ export class DateTimeUtil {
         return this.now().toISOString();
     }
 
+    public static parse(dateInput: Date | string): Date {
+        return new Date(dateInput);
+    }
+
+    public static toDateString(dateInput: Date | string): string {
+        return this.parse(dateInput).toISOString().split('T')[0];
+    }
+
+    public static toISOString(dateInput: Date | string): string {
+        return this.parse(dateInput).toISOString();
+    }
+
     public static getStartDateForTimeframe(timeframe: HistoryTimeframe, asOfDate: Date = new Date()): Date {
         const startDate = new Date(asOfDate.getTime());
 

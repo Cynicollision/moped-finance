@@ -1,8 +1,14 @@
+import { eq, and, desc, asc, ilike, sum, inArray, gte, lte } from 'drizzle-orm';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/common/enum';
 import { Transaction } from '@shared/finance/types';
 import { SpendingStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
-import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
+import { IOwnedResourceData } from '@core/interfaces';
+import { DateTimeUtil } from '@core/utility';
+import { transactionSchema } from './../schema/transactions-schema';
+import { accountSchema } from './../schema/account-schema';
+import { categorySchema } from './../schema/category-schema';
 
 export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction> {
     search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
@@ -13,78 +19,80 @@ export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction
     delete(userId: string, id: string): Promise<boolean>;
 }
 
+function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transaction {
+    return {
+        id: row.id,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        accountId: row.accountId,
+        categoryId: row.categoryId,
+        date: DateTimeUtil.toISOString(row.date),
+        amount: Number(row.amount),
+        merchant: row.merchant,
+        originalStatement: row.originalStatement ?? '',
+        notes: row.notes ?? '',
+        isHidden: row.isHidden,
+        isSplit: row.isSplit,
+        splitParentId: row.splitParentId ?? ''
+    };
+}
+
 export class FinanceTransactionsData implements IFinanceTransactionsData {
-    constructor(private db: IDatabaseClient) { }
+    constructor(private db: NodePgDatabase) { }
 
     public async search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]> {
-        let query = `SELECT 
-                    t.id, 
-                    t.account_id AS "accountId", 
-                    t.category_id AS "categoryId", 
-                    t.date, 
-                    t.amount, 
-                    t.merchant, 
-                    t.original_statement as "originalStatement", 
-                    t.notes, 
-                    t.is_hidden AS "isHidden",
-                    t.is_split AS "isSplit", 
-                    t.split_parent_id AS "splitParentId"
-                FROM finance.transactions AS t
-                    JOIN finance.accounts AS a ON a.id = t.account_id
-                    JOIN finance.categories AS c ON c.id = t.category_id
-                WHERE a.user_id = $1`;
-
-        const params: (string | number)[] = [userId];
+        const conditions = [
+            eq(accountSchema.userId, userId)
+        ];
 
         if (accountId) {
-            params.push(accountId);
-            query += ` AND a.id = $${params.length}`;
+            conditions.push(eq(accountSchema.id, accountId));
         }
 
         if (options.minAmount !== undefined) {
-            params.push(options.minAmount);
-            query += ` AND t.amount >= $${params.length}`;
+            conditions.push(gte(transactionSchema.amount, String(options.minAmount)));
         }
 
         if (options.maxAmount !== undefined) {
-            params.push(options.maxAmount);
-            query += ` AND t.amount <= $${params.length}`;
+            conditions.push(lte(transactionSchema.amount, String(options.maxAmount)));
         }
 
         if (options.startDate) {
-            params.push(options.startDate);
-            query += ` AND t.date >= $${params.length}`;
+            conditions.push(gte(transactionSchema.date, DateTimeUtil.toDateString(options.startDate)));
         }
 
         if (options.endDate) {
-            params.push(options.endDate);
-            query += ` AND t.date <= $${params.length}`;
+            conditions.push(lte(transactionSchema.date, DateTimeUtil.toDateString(options.endDate)));
         }
 
         if (!options.includeHidden) {
-            query += ` AND t.is_hidden = false`;
+            conditions.push(eq(transactionSchema.isHidden, false));
         }
 
         if (options.filters) {
             for (const filter of options.filters) {
                 if (filter.key === TransactionsFilterKey.Merchant) {
-                    params.push(`%${filter.value}%`);
-                    query += ` AND t.merchant ILIKE $${params.length}`;
+                    conditions.push(ilike(transactionSchema.merchant, `%${filter.value}%`));
                 }
                 else if (filter.key === TransactionsFilterKey.Category) {
-                    params.push(filter.value);
-                    query += ` AND t.category_id = $${params.length}`;
+                    conditions.push(eq(transactionSchema.categoryId, filter.value));
                 }
                 else if (filter.key === TransactionsFilterKey.AccountId) {
-                    params.push(filter.value);
-                    query += ` AND t.account_id = $${params.length}`;
+                    conditions.push(eq(transactionSchema.accountId, filter.value));
                 }
                 else if (filter.key === TransactionsFilterKey.Group) {
-                    params.push(filter.value);
-                    query += ` AND c.category_group = $${params.length}`;
+                    conditions.push(eq(categorySchema.group, filter.value));
                 }
             }
         }
+
+        let query = this.db.select({
+                transaction: transactionSchema
+            })
+            .from(transactionSchema)
+            .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
+            .innerJoin(categorySchema, eq(categorySchema.id, transactionSchema.categoryId))
+            .where(and(...conditions));
 
         const sort = Object.values(TransactionsSortKey).includes(options.sortKey as TransactionsSortKey)
             ? options.sortKey
@@ -93,144 +101,122 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
         const dirInput = (options.sortDirection || '').toUpperCase();
         const dir = Object.values(SortDirection).includes(dirInput as SortDirection) ? dirInput : SortDirection.Desc;
 
-        query += ` ORDER BY t.${sort} ${dir}, t.id ASC`;
+        // Apply sorting
+        let orderFn;
+        switch (sort) {
+            case TransactionsSortKey.Date:
+                orderFn = dir === SortDirection.Asc ? asc(transactionSchema.date) : desc(transactionSchema.date);
+                break;
+            case TransactionsSortKey.Amount:
+                orderFn = dir === SortDirection.Asc ? asc(transactionSchema.amount) : desc(transactionSchema.amount);
+                break;
+            case TransactionsSortKey.Merchant:
+                orderFn = dir === SortDirection.Asc ? asc(transactionSchema.merchant) : desc(transactionSchema.merchant);
+                break;
+            default:
+                orderFn = desc(transactionSchema.date);
+        }
+
+        query = query.orderBy(orderFn, asc(transactionSchema.id)) as any;
 
         if (options.limit !== undefined) {
-            params.push(options.limit);
-            query += ` LIMIT $${params.length}`;
+            query = query.limit(options.limit) as any;
         }
 
         if (options.offset !== undefined) {
-            params.push(options.offset);
-            query += ` OFFSET $${params.length}`;
+            query = query.offset(options.offset) as any;
         }
 
-        const result = await this.db.query(query, params);
-
-        return result.rows.map(row => ({
-            ...row,
-            amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
-        }));
+        const rows = await query;
+        return rows.map(row => mapRowToTransaction(row.transaction));
     }
 
     public async retrieveMerchants(userId: string): Promise<string[]> {
-        const query = `SELECT t.merchant
-                FROM finance.transactions AS t
-                    JOIN finance.accounts AS a ON a.id = t.account_id
-                WHERE a.user_id = $1
-                GROUP BY t.merchant
-                ORDER BY t.merchant`;
+        const rows = await this.db.select({ merchant: transactionSchema.merchant })
+            .from(transactionSchema)
+            .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
+            .where(eq(accountSchema.userId, userId))
+            .groupBy(transactionSchema.merchant)
+            .orderBy(transactionSchema.merchant);
 
-        const params = [userId]
-
-        const result = await this.db.query(query, params);
-
-        return result.rows.map(row => row.merchant);
+        return rows.map(row => row.merchant);
     }
 
     public async retrieveSingle(userId: string, id: string): Promise<Transaction | null> {
-        const query = `SELECT 
-                    t.id, 
-                    t.account_id AS "accountId", 
-                    t.category_id AS "categoryId", 
-                    t.date, 
-                    t.amount, 
-                    t.merchant, 
-                    t.original_statement as "originalStatement", 
-                    t.notes, 
-                    t.is_hidden AS "isHidden",
-                    t.is_split AS "isSplit", 
-                    t.split_parent_id AS "splitParentId"
-                FROM finance.transactions AS t
-                    JOIN finance.accounts AS a ON a.id = t.account_id
-                WHERE a.user_id = $1 AND t.id = $2`;
+        const rows = await this.db.select({ transaction: transactionSchema })
+            .from(transactionSchema)
+            .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
+            .where(and(
+                eq(accountSchema.userId, userId),
+                eq(transactionSchema.id, id)
+            ));
 
-        const params = [userId, id];
-
-        const result = await this.db.query(query, params);
-
-        if (result.rows.length === 0) {
+        if (rows.length === 0) {
             return null;
         }
 
-        const row = result.rows[0];
-        return {
-            ...row,
-            amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
-        };
+        return mapRowToTransaction(rows[0].transaction);
     }
 
     public async retrieveSpendingByCategory(userId: string, startDate: Date, endDate: Date): Promise<SpendingStream[]> {
-        const query = `SELECT 
-                            t.category_id AS "categoryId", 
-                            SUM(t.amount) AS "amount"
-                        FROM finance.transactions AS t
-                            JOIN finance.accounts AS a ON a.id = t.account_id
-                        WHERE a.user_id = $1 
-                            AND t.date >= $2 
-                            AND t.date <= $3
-                            AND a.hide_from_cashflow = false
-                        GROUP BY t.category_id`;
+        const rows = await this.db.select({
+                categoryId: transactionSchema.categoryId,
+                amount: sum(transactionSchema.amount).mapWith(Number)
+            })
+            .from(transactionSchema)
+            .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
+            .where(and(
+                eq(accountSchema.userId, userId),
+                gte(transactionSchema.date, DateTimeUtil.toDateString(startDate)),
+                lte(transactionSchema.date, DateTimeUtil.toDateString(endDate)),
+                eq(accountSchema.hideFromCashflow, false)
+            ))
+            .groupBy(transactionSchema.categoryId);
 
-        const params = [userId, startDate, endDate];
-
-        const result = await this.db.query(query, params);
-
-        return result.rows.map(row => ({
-            ...row,
-            amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
+        return rows.map(row => ({
+            categoryId: row.categoryId,
+            amount: Number(row.amount)
         }));
     }
 
     public async update(userId: string, transaction: Transaction): Promise<Transaction | null> {
-        const query = `UPDATE finance.transactions
-                        SET 
-                            merchant = $1,
-                            category_id = $2,
-                            date = $3,
-                            notes = $4,
-                            is_hidden = $5
-                        WHERE id = $6
-                            AND account_id IN (SELECT id FROM finance.accounts WHERE user_id = $7)
-                        RETURNING 
-                            id, 
-                            account_id AS "accountId", 
-                            category_id AS "categoryId", 
-                            date, 
-                            amount, 
-                            merchant, 
-                            original_statement as "originalStatement", 
-                            notes, 
-                            is_hidden AS "isHidden",
-                            is_split AS "isSplit", 
-                            split_parent_id AS "splitParentId"`;
+        const userAccountsQuery = this.db.select({ id: accountSchema.id })
+                                        .from(accountSchema)
+                                        .where(eq(accountSchema.userId, userId));
 
-        const params = [
-            transaction.merchant,
-            transaction.categoryId,
-            transaction.date,
-            transaction.notes,
-            transaction.isHidden,
-            transaction.id,
-            userId
-        ];
+        const rows = await this.db.update(transactionSchema)
+            .set({
+                merchant: transaction.merchant,
+                categoryId: transaction.categoryId,
+                date: DateTimeUtil.toDateString(transaction.date),
+                notes: transaction.notes,
+                isHidden: transaction.isHidden,
+                updatedAt: DateTimeUtil.now()
+            })
+            .where(and(
+                eq(transactionSchema.id, transaction.id!),
+                inArray(transactionSchema.accountId, userAccountsQuery)
+            ))
+            .returning();
 
-        const result = await this.db.query(query, params);
-
-        if (result.rows.length === 0) {
+        if (rows.length === 0) {
             return null;
         }
 
-        const row = result.rows[0];
-        return {
-            ...row,
-            amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
-        };
+        return mapRowToTransaction(rows[0]);
     }
 
     public async delete(userId: string, id: string): Promise<boolean> {
-        const deleteQuery = `DELETE FROM finance.transactions WHERE id = $1 AND account_id IN (SELECT id FROM finance.accounts WHERE user_id = $2)`;
-        const result = await this.db.query(deleteQuery, [id, userId]);
+        const userAccountsQuery = this.db.select({ id: accountSchema.id })
+                                        .from(accountSchema)
+                                        .where(eq(accountSchema.userId, userId));
+
+        const result = await this.db.delete(transactionSchema)
+            .where(and(
+                eq(transactionSchema.id, id),
+                inArray(transactionSchema.accountId, userAccountsQuery)
+            ));
+
         return (result.rowCount ?? 0) > 0;
     }
 }

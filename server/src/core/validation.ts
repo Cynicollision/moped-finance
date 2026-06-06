@@ -13,7 +13,7 @@ export class RequestSchemaValidator {
             const result = schema.safeParse(req.params);
             if (!result.success) {
                 const context = `${this.schemaName}:params`
-                const messages = (result.error as ZodError).issues.map(i => i.message).join(', ');
+                const messages = (result.error as ZodError).issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
                 this.logger.warn(userId, context, `Invalid params: ${messages}`);
                 ApiUtil.badRequest(res, messages);
                 return;
@@ -32,7 +32,7 @@ export class RequestSchemaValidator {
             const result = schema.safeParse(req.body);
             if (!result.success) {
                 const context = `${this.schemaName}:body`;
-                const messages = (result.error as ZodError).issues.map(i => i.message).join(', ');
+                const messages = (result.error as ZodError).issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
                 this.logger.warn(userId, context, `Invalid body: ${messages}`);
                 ApiUtil.badRequest(res, messages);
                 return;

@@ -46,15 +46,21 @@ export class FinanceMockUtil {
 
     public static createMockCategoriesData(): jest.Mocked<IFinanceCategoriesData> {
         return {
+            retrieveSingle: jest.fn(),
             retrieveAll: jest.fn(),
-            retrieveSingle: jest.fn()
+            insert: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
         };
     }
 
     public static createMockInstitutionsData(): jest.Mocked<IFinanceInstitutionsData> {
         return {
+            retrieveSingle: jest.fn(),
             retrieveAll: jest.fn(),
-            retrieveSingle: jest.fn()
+            insert: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
         };
     }
 }

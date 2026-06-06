@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { ApiHandler } from '@core/api-handler';
 import { AppLogger } from '@core/logger';
+import { RequestSchemaValidator } from '@core/validation';
 import { InstitutionController } from './../controllers/institution-controller';
 import { IFinanceInstitutionsData } from './../data/institutions-data';
+import { createInstitutionSchema, updateInstitutionSchema } from './../schema/institution-schema';
 
 export function createInstitutionRouter(
     institutionsData: IFinanceInstitutionsData,
@@ -11,10 +13,36 @@ export function createInstitutionRouter(
     const router = Router();
     const controller = new InstitutionController(logger, institutionsData);
     const handler = new ApiHandler(logger);
+    const validator = new RequestSchemaValidator(logger, 'Institution');
 
     router.get('/', (req, res) => {
         handler.execute(req, res, 'getInstitutions', (context) => {
             return controller.getInstitutions(context.userId!);
+        });
+    });
+
+    router.get('/:id', validator.id(), (req, res) => {
+        handler.execute(req, res, 'getInstitution', (context) => {
+            return controller.getInstitution(context.userId!, req.params.id);
+        });
+    });
+
+    router.post('/', validator.body(createInstitutionSchema), (req, res) => {
+        handler.execute(req, res, 'createInstitution', (context) => {
+            return controller.createInstitution(context.userId!, req.body);
+        });
+    });
+
+    router.put('/:id', validator.id(), validator.body(updateInstitutionSchema), (req, res) => {
+        handler.execute(req, res, 'updateInstitution', (context) => {
+            const institution = { ...req.body, id: req.params.id };
+            return controller.updateInstitution(context.userId!, institution);
+        });
+    });
+
+    router.delete('/:id', validator.id(), (req, res) => {
+        handler.execute(req, res, 'deleteInstitution', (context) => {
+            return controller.deleteInstitution(context.userId!, req.params.id);
         });
     });
 

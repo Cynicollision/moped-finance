@@ -1,6 +1,11 @@
+import { eq, and, desc, sql } from 'drizzle-orm';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Account } from '@shared/finance/types';
-import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
+import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
+import { IOwnedResourceData } from '@core/interfaces';
 import { DateTimeUtil } from '@core/utility';
+import { accountSchema } from './../schema/account-schema';
+import { balanceHistorySchema } from './../schema/balance-history-schema';
 
 export interface IFinanceAccountData extends IOwnedResourceData<Account> {
     retrieveAll(userId: string): Promise<Account[]>;
@@ -9,194 +14,115 @@ export interface IFinanceAccountData extends IOwnedResourceData<Account> {
     delete(userId: string, accountId: string): Promise<boolean>;
 }
 
+function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number | string): Account {
+    return {
+        id: row.id,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        userId: row.userId,
+        institutionId: row.institutionId,
+        name: row.name,
+        category: row.category as AccountCategory,
+        group: row.group as AccountGroup,
+        type: (row.type as AccountType) ?? undefined,
+        isHidden: row.isHidden,
+        isManual: row.isManual,
+        isRetirement: row.isRetirement,
+        hideFromCashflow: row.hideFromCashflow,
+        balance: Number(balance)
+    };
+}
+
 export class FinanceAccountData implements IFinanceAccountData {
-    constructor(private db: IDatabaseClient) { }
+    constructor(private db: NodePgDatabase) { }
+
+    private getLatestBalanceSubquery() {
+        return this.db.select({ balance: balanceHistorySchema.balance })
+            .from(balanceHistorySchema)
+            .where(eq(balanceHistorySchema.accountId, accountSchema.id))
+            .orderBy(desc(balanceHistorySchema.date))
+            .limit(1);
+    }
 
     public async retrieveAll(userId: string): Promise<Account[]> {
-        const result = await this.db.query(
-            `SELECT 
-                a.id, 
-                a.created_at AS "createdAt",
-                a.updated_at AS "updatedAt",
-                a.user_id AS "userId", 
-                a.institution_id AS "institutionId", 
-                a.name,
-                a.account_category AS "category", 
-                a.account_group AS "group", 
-                a.account_type AS "type", 
-                COALESCE(bh.balance, 0) AS balance, 
-                a.is_hidden AS "isHidden",
-                a.is_manual AS "isManual",
-                a.is_retirement AS "isRetirement",
-                a.hide_from_cashflow AS "hideFromCashflow"
-            FROM finance.accounts AS a
-            LEFT JOIN LATERAL (
-                SELECT balance 
-                FROM finance.balance_history 
-                WHERE account_id = a.id
-                ORDER BY date DESC 
-                LIMIT 1
-            ) bh ON true
-            WHERE a.user_id = $1`,
-            [userId]
-        );
+        const rows = await this.db.select({
+            account: accountSchema,
+            balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
+        })
+            .from(accountSchema)
+            .where(eq(accountSchema.userId, userId));
 
-        return result.rows.map(row => ({
-            ...row,
-            // pg driver returns numeric/bigint as strings to preserve precision
-            balance: typeof row.balance === 'string' ? parseFloat(row.balance) : row.balance
-        }));
+        return rows.map(row => mapRowToAccount(row.account, row.balance));
     }
 
     public async retrieveSingle(userId: string, accountId: string): Promise<Account | null> {
-        const result = await this.db.query(
-            `SELECT 
-                a.id, 
-                a.created_at AS "createdAt",
-                a.updated_at AS "updatedAt",
-                a.user_id AS "userId", 
-                a.institution_id AS "institutionId", 
-                a.name,
-                a.account_category AS "category", 
-                a.account_group AS "group",
-                a.account_type AS "type", 
-                COALESCE(bh.balance, 0) AS balance, 
-                a.is_hidden AS "isHidden",
-                a.is_manual AS "isManual",
-                a.is_retirement AS "isRetirement",
-                a.hide_from_cashflow AS "hideFromCashflow"
-            FROM finance.accounts AS a
-            LEFT JOIN LATERAL (
-                SELECT balance 
-                FROM finance.balance_history 
-                WHERE account_id = a.id
-                ORDER BY date DESC 
-                LIMIT 1
-            ) bh ON true
-            WHERE a.user_id = $1 AND a.id = $2`,
-            [userId, accountId]
-        );
+        const rows = await this.db.select({
+            account: accountSchema,
+            balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
+        })
+            .from(accountSchema)
+            .where(and(eq(accountSchema.userId, userId), eq(accountSchema.id, accountId)));
 
-        if (result.rows.length > 0) {
-            const row = result.rows[0];
-            return {
-                ...row,
-                // pg driver returns numeric/bigint as strings to preserve precision
-                balance: typeof row.balance === 'string' ? parseFloat(row.balance) : row.balance
-            };
-        }
-        return null;
-    }
-
-    public async create(userId: string, account: Account): Promise<Account> {
-        const now = DateTimeUtil.now();
-
-        const query = `INSERT INTO finance.accounts 
-            (id, created_at, updated_at, user_id, institution_id, name, account_category, account_group, account_type, is_hidden, is_manual, is_retirement, hide_from_cashflow)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-            RETURNING 
-                id, 
-                created_at AS "createdAt",
-                updated_at AS "updatedAt",
-                user_id AS "userId", 
-                institution_id AS "institutionId", 
-                name,
-                account_category AS "category", 
-                account_group AS "group", 
-                account_type AS "type", 
-                is_hidden AS "isHidden",
-                is_manual AS "isManual",
-                is_retirement AS "isRetirement",
-                hide_from_cashflow AS "hideFromCashflow"`;
-
-        const params = [
-            account.id,
-            now,
-            now,
-            userId,
-            account.institutionId,
-            account.name,
-            account.category,
-            account.group,
-            account.type,
-            account.isHidden,
-            account.isManual,
-            account.isRetirement,
-            account.hideFromCashflow
-        ];
-
-        const result = await this.db.query(query, params);
-        const row = result.rows[0];
-        return {
-            ...row,
-            balance: 0 // Default to 0 on creation since no history exists yet
-        };
-    }
-
-    public async update(userId: string, account: Account): Promise<Account | null> {
-        const now = DateTimeUtil.now();
-        const query = `UPDATE finance.accounts
-                        SET 
-                            updated_at = $1,
-                            institution_id = $2,
-                            name = $3,
-                            account_category = $4,
-                            account_group = $5,
-                            account_type = $6,
-                            is_hidden = $7,
-                            is_manual = $8,
-                            is_retirement = $9,
-                            hide_from_cashflow = $10
-                        WHERE id = $11 AND user_id = $12
-                        RETURNING 
-                            id, 
-                            created_at AS "createdAt",
-                            updated_at AS "updatedAt",
-                            user_id AS "userId", 
-                            institution_id AS "institutionId", 
-                            name,
-                            account_category AS "category", 
-                            account_group AS "group", 
-                            account_type AS "type", 
-                            is_hidden AS "isHidden",
-                            is_manual AS "isManual",
-                            is_retirement AS "isRetirement",
-                            hide_from_cashflow AS "hideFromCashflow"`;
-
-        const params = [
-            now,
-            account.institutionId,
-            account.name,
-            account.category,
-            account.group,
-            account.type,
-            account.isHidden,
-            account.isManual,
-            account.isRetirement,
-            account.hideFromCashflow,
-            account.id,
-            userId
-        ];
-
-        const result = await this.db.query(query, params);
-        if (result.rows.length === 0) {
+        if (rows.length === 0) {
             return null;
         }
 
-        const row = result.rows[0];
+        return mapRowToAccount(rows[0].account, rows[0].balance);
+    }
 
-        // Fetch current balance from history after update
-        const balanceResult = await this.retrieveSingle(userId, account.id);
+    public async create(userId: string, account: Account): Promise<Account> {
+        const rows = await this.db.insert(accountSchema)
+            .values({
+                id: account.id,
+                userId: userId,
+                institutionId: account.institutionId,
+                name: account.name,
+                category: account.category,
+                group: account.group,
+                type: account.type,
+                isHidden: account.isHidden,
+                isManual: account.isManual,
+                isRetirement: account.isRetirement,
+                hideFromCashflow: account.hideFromCashflow
+            })
+            .returning();
+
+        return mapRowToAccount(rows[0], 0);
+    }
+
+    public async update(userId: string, account: Account): Promise<Account | null> {
+        const rows = await this.db.update(accountSchema)
+            .set({
+                institutionId: account.institutionId,
+                name: account.name,
+                category: account.category,
+                group: account.group,
+                type: account.type,
+                isHidden: account.isHidden,
+                isManual: account.isManual,
+                isRetirement: account.isRetirement,
+                hideFromCashflow: account.hideFromCashflow,
+                updatedAt: DateTimeUtil.now()
+            })
+            .where(and(eq(accountSchema.id, account.id!), eq(accountSchema.userId, userId)))
+            .returning();
+
+        if (rows.length === 0) {
+            return null;
+        }
+
+        const balanceResult = await this.retrieveSingle(userId, account.id!);
 
         return {
-            ...row,
+            ...mapRowToAccount(rows[0], 0),
             balance: balanceResult ? balanceResult.balance : 0
         };
     }
 
     public async delete(userId: string, id: string): Promise<boolean> {
-        // delete constraints: If transactions exist etc., PG might throw constraint error. We assume PG takes care of it or cascades.
-        const result = await this.db.query(`DELETE FROM finance.accounts WHERE id = $1 AND user_id = $2`, [id, userId]);
+        const result = await this.db.delete(accountSchema)
+            .where(and(eq(accountSchema.userId, userId), eq(accountSchema.id, id)));
+
         return (result.rowCount ?? 0) > 0;
     }
 }

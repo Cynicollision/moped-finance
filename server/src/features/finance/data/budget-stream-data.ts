@@ -22,7 +22,7 @@ function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect): Budg
         categoryId: row.categoryId ?? '',
         type: row.type as BudgetStream['type'],
         recurrence: row.recurrence as BudgetStream['recurrence'],
-        amount: typeof row.amount === 'string' ? parseFloat(row.amount) : Number(row.amount),
+        amount: Number(row.amount),
     };
 }
 

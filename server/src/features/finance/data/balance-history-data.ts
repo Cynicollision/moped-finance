@@ -1,7 +1,11 @@
+import { eq, and, desc, sum, gte, lte } from 'drizzle-orm';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { TotalValueHistory } from '@shared/finance/contracts';
-import { ValueHistoryType } from '@shared/finance/enum';
+import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
-import { IDatabaseClient } from '@core/interfaces';
+import { DateTimeUtil } from '@core/utility';
+import { accountSchema } from './../schema/account-schema';
+import { balanceHistorySchema } from './../schema/balance-history-schema';
 
 export interface IFinanceBalanceHistoryData {
     retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;
@@ -9,70 +13,68 @@ export interface IFinanceBalanceHistoryData {
 }
 
 export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
-    constructor(private db: IDatabaseClient) {}
+    constructor(private db: NodePgDatabase) {}
 
     public async retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]> {
-        let query = `SELECT
-                        bh.id,
-                        bh.created_at AS "createdAt",
-                        bh.updated_at AS "updatedAt",
-                        bh.account_id AS "accountId",
-                        bh.date,
-                        bh.balance
-                    FROM finance.balance_history AS bh
-                        JOIN finance.accounts AS a ON a.id = bh.account_id
-                    WHERE a.user_id = $1
-                        AND bh.account_id = $2`;
-
-        const params: (string | number)[] = [userId, accountId];
+        const conditions = [
+            eq(accountSchema.userId, userId),
+            eq(balanceHistorySchema.accountId, accountId)
+        ];
 
         if (startDate) {
-            params.push(startDate);
-            query += ` AND bh.date >= $${params.length}`;
+            conditions.push(gte(balanceHistorySchema.date, DateTimeUtil.toDateString(startDate)));
         }
 
         if (endDate) {
-            params.push(endDate);
-            query += ` AND bh.date <= $${params.length}`;
+            conditions.push(lte(balanceHistorySchema.date, DateTimeUtil.toDateString(endDate)));
         }
 
-        const result = await this.db.query(query, params);
+        const rows = await this.db.select({
+                id: balanceHistorySchema.id,
+                createdAt: balanceHistorySchema.createdAt,
+                updatedAt: balanceHistorySchema.updatedAt,
+                accountId: balanceHistorySchema.accountId,
+                date: balanceHistorySchema.date,
+                balance: balanceHistorySchema.balance
+            })
+            .from(balanceHistorySchema)
+            .innerJoin(accountSchema, eq(accountSchema.id, balanceHistorySchema.accountId))
+            .where(and(...conditions));
 
-        return result.rows.map(row => ({
+        return rows.map(row => ({
             ...row,
-            balance: typeof row.balance === 'string' ? parseFloat(row.balance) : row.balance
+            date: DateTimeUtil.parse(row.date),
+            balance: Number(row.balance)
         }));
     }
 
     public async retrieveSumByDate(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]> {
-        let query = `SELECT 
-                        bh.date, 
-                        SUM(bh.balance) AS "amount"
-                    FROM finance.balance_history AS bh
-                        JOIN finance.accounts AS a ON a.id = bh.account_id
-                    WHERE a.user_id = $1
-                        AND bh.date >= $2
-                        AND bh.date <= $3`;
-
-        const params: (string | Date)[] = [userId, startDate, endDate];
+        const conditions = [
+            eq(accountSchema.userId, userId),
+            gte(balanceHistorySchema.date, DateTimeUtil.toDateString(startDate)),
+            lte(balanceHistorySchema.date, DateTimeUtil.toDateString(endDate))
+        ];
 
         if (type === ValueHistoryType.Assets) {
-            query += ` AND a.account_category = 'Asset'`;
+            conditions.push(eq(accountSchema.category, AccountCategory.Asset));
+        } else if (type === ValueHistoryType.Liabilities) {
+            conditions.push(eq(accountSchema.category, AccountCategory.Liability));
         }
-        else if (type === ValueHistoryType.Liabilities) {
-            query += ` AND a.account_category = 'Liability'`;
-        }
 
-        query += `
-            GROUP BY bh.date
-            ORDER BY bh.date DESC`;
+        const rows = await this.db.select({
+                date: balanceHistorySchema.date,
+                amount: sum(balanceHistorySchema.balance).mapWith(Number)
+            })
+            .from(balanceHistorySchema)
+            .innerJoin(accountSchema, eq(accountSchema.id, balanceHistorySchema.accountId))
+            .where(and(...conditions))
+            .groupBy(balanceHistorySchema.date)
+            .orderBy(desc(balanceHistorySchema.date));
 
-        const result = await this.db.query(query, params);
-
-        return result.rows.map(row => ({
-            ...row,
+        return rows.map(row => ({
+            date: DateTimeUtil.parse(row.date),
             type,
-            amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
+            amount: Number(row.amount)
         }));
     }
 }

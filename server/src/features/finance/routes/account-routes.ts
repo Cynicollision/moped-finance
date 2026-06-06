@@ -4,14 +4,17 @@ import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionS
 import { HistoryTimeframe } from '@shared/common/enum';
 import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
+import { ApiHandler } from '@core/api-handler';
 import { AppLogger } from '@core/logger';
 import { DateTimeUtil } from '@core/utility';
-import { ApiHandler } from '@core/api-handler';
+import { RequestSchemaValidator } from '@core/validation';
 import { AccountController } from './../controllers/account-controller';
 import { TransactionController } from './../controllers/transaction-controller';
 import { IFinanceAccountData } from './../data/account-data';
 import { IFinanceBalanceHistoryData } from './../data/balance-history-data';
 import { IFinanceTransactionsData } from './../data/transactions-data';
+
+import { createAccountSchema, updateAccountSchema } from './../schema/account-schema';
 
 export function createAccountRouter(
     accountData: IFinanceAccountData,
@@ -23,6 +26,7 @@ export function createAccountRouter(
     const controller = new AccountController(logger, accountData, balanceHistoryData);
     const transactionController = new TransactionController(logger, transactionsData);
     const handler = new ApiHandler(logger);
+    const validator = new RequestSchemaValidator(logger, 'Account');
 
     router.get('/', (req, res) => {
         handler.execute(req, res, 'getAccounts', (context) => {
@@ -50,34 +54,34 @@ export function createAccountRouter(
         });
     });
 
-    router.get('/:accountId', (req, res) => {
+    router.get('/:id', validator.id(), (req, res) => {
         handler.execute(req, res, 'getAccount', (context) => {
-            return controller.getAccount(context.userId!, req.params.accountId);
+            return controller.getAccount(context.userId!, req.params.id);
         });
     });
 
-    router.post('/', (req, res) => {
+    router.post('/', validator.body(createAccountSchema), (req, res) => {
         handler.execute(req, res, 'createAccount', (context) => {
             const account: Account = req.body;
             return controller.createAccount(context.userId!, account);
         });
     });
 
-    router.put('/:accountId', (req, res) => {
+    router.put('/:id', validator.id(), validator.body(updateAccountSchema), (req, res) => {
         handler.execute(req, res, 'saveAccount', (context) => {
             const account: Account = req.body;
-            account.id = req.params.accountId;
+            account.id = req.params.id;
             return controller.saveAccount(context.userId!, account);
         });
     });
 
-    router.delete('/:accountId', (req, res) => {
+    router.delete('/:id', validator.id(), (req, res) => {
         handler.execute(req, res, 'deleteAccount', (context) => {
-            return controller.deleteAccount(context.userId!, req.params.accountId);
+            return controller.deleteAccount(context.userId!, req.params.id);
         });
     });
 
-    router.get('/:accountId/balance-history', (req, res) => {
+    router.get('/:id/balance-history', validator.id(), (req, res) => {
         handler.execute(req, res, 'getAccountBalanceHistory', (context) => {
             const timeframe = req.query.timeframe as HistoryTimeframe;
             const asOfDateStr = req.query.asOfDate as string;
@@ -88,14 +92,14 @@ export function createAccountRouter(
                 timeframe
             };
 
-            return controller.getAccountBalanceHistory(context.userId!, req.params.accountId, options);
+            return controller.getAccountBalanceHistory(context.userId!, req.params.id, options);
         });
     });
 
-    router.get('/:accountId/transactions', (req, res) => {
+    router.get('/:id/transactions', validator.id(), (req, res) => {
         handler.execute(req, res, 'getTransactions', (context) => {
             const options = getTransactionSearchOptions(req);
-            return transactionController.getTransactions(context.userId!, options, req.params.accountId);
+            return transactionController.getTransactions(context.userId!, options, req.params.id);
         });
     });
 

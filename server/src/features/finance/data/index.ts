@@ -28,11 +28,11 @@ export class FinanceData implements IFinanceData {
 
     public static forDatabase(db: DatabaseClient): FinanceData {
         return new FinanceData(
-            new FinanceAccountData(db),
-            new FinanceBalanceHistoryData(db),
+            new FinanceAccountData(db.drizzle),
+            new FinanceBalanceHistoryData(db.drizzle),
             new FinanceBudgetStreamData(db.drizzle),
-            new FinanceCategoriesData(db),
-            new FinanceInstitutionsData(db),
-            new FinanceTransactionsData(db));
+            new FinanceCategoriesData(db.drizzle),
+            new FinanceInstitutionsData(db.drizzle),
+            new FinanceTransactionsData(db.drizzle));
     }
 }

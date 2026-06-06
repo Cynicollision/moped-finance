@@ -1,13 +1,13 @@
 import express from 'express';
 import request from 'supertest';
+import { CalendarPeriod } from '@shared/common/enum/calendar-period';
+import { BudgetStreamType } from '@shared/finance/enum/budget-stream-type';
+import { BudgetStream } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { TestExpressUtil } from '@test/express-util';
 import { FinanceMockUtil } from '@test/finance-mocks';
 import { IFinanceBudgetStreamData } from './../data/budget-stream-data';
 import { createBudgetStreamRouter } from './budget-stream-routes';
-import { BudgetStream } from '@shared/finance/types';
-import { BudgetStreamType } from '@shared/finance/enum/budget-stream-type';
-import { CalendarPeriod } from '@shared/common/enum/calendar-period';
 
 describe('Budget Stream Routes', () => {
     let app: express.Express;
@@ -105,6 +105,7 @@ describe('Budget Stream Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
+            expect(response.body.error.message).toContain('name:');
             expect(response.body.error.message).toContain('expected string');
             expect(mockBudgetStreamData.insert).not.toHaveBeenCalled();
         });

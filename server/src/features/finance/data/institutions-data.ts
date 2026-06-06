@@ -1,113 +1,80 @@
+import { eq, and } from 'drizzle-orm';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Institution } from '@shared/finance/types';
-import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
+import { IOwnedResourceData } from '@core/interfaces';
+import { DateTimeUtil } from '@core/utility';
+import { institutionSchema } from './../schema/institution-schema';
 
 export interface IFinanceInstitutionsData extends IOwnedResourceData<Institution> {
     retrieveAll(userId: string): Promise<Institution[]>;
+    delete(userId: string, id: string): Promise<boolean>;
+    insert(userId: string, institution: Institution): Promise<Institution>;
+    update(userId: string, institution: Institution): Promise<Institution | null>;
+}
+
+function mapRowToInstitution(row: typeof institutionSchema.$inferSelect): Institution {
+    return {
+        id: row.id,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        userId: row.userId,
+        name: row.name,
+    };
 }
 
 export class FinanceInstitutionsData implements IFinanceInstitutionsData {
-    constructor(private db: IDatabaseClient) {}
+    constructor(private db: NodePgDatabase) {}
+    
     public async retrieveAll(userId: string): Promise<Institution[]> {
-        const result = await this.db.query(
-            `SELECT 
-                i.id, 
-                i.created_at AS "createdAt",
-                i.updated_at AS "updatedAt",
-                i.user_id as "userId", 
-                i.name 
-            FROM finance.institutions AS i
-            WHERE i.user_id = $1`,
-            [userId]
-        );
-        return result.rows;
+        const rows = await this.db.select().from(institutionSchema)
+            .where(eq(institutionSchema.userId, userId));
+
+        return rows.map(mapRowToInstitution);
     }
 
     public async retrieveSingle(userId: string, id: string): Promise<Institution | null> {
-        const query = `
-            SELECT 
-                i.id, 
-                i.created_at AS "createdAt",
-                i.updated_at AS "updatedAt",
-                i.user_id AS "userId", 
-                i.name 
-            FROM finance.institutions AS i
-            WHERE i.user_id = $1
-                AND i.id = $2`;
+        const rows = await this.db.select().from(institutionSchema)
+            .where(and(eq(institutionSchema.userId, userId), eq(institutionSchema.id, id)));
 
-        const result = await this.db.query(query, [userId, id]);
-
-        if (result.rows.length === 0) {
+        if (rows.length === 0) {
             return null;
         }
 
-        const row = result.rows[0];
-        return {
-            id: row.id,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            userId: row.user_id,
-            name: row.name
-        };
+        return mapRowToInstitution(rows[0]);
     }
 
-    public async delete(userId: string, id: string): Promise<void> {
-        await this.db.query(
-            `DELETE FROM finance.institutions AS i
-            WHERE i.user_id = $1
-                AND i.id = $2`,
-            [userId, id]
-        );
+    public async delete(userId: string, id: string): Promise<boolean> {
+        const result = await this.db.delete(institutionSchema)
+            .where(and(eq(institutionSchema.userId, userId), eq(institutionSchema.id, id)));
+
+        return (result.rowCount ?? 0) > 0;
     }
 
     public async insert(userId: string, institution: Institution): Promise<Institution> {
-        const query = `
-            INSERT INTO finance.institutions (
-                id, user_id, name
-            )
-            VALUES ($1, $2, $3)
-            RETURNING *`;
+        const rows = await this.db.insert(institutionSchema)
+            .values({
+                id: institution.id,
+                userId: userId,
+                name: institution.name,
+            })
+            .returning();
 
-        const params = [
-            institution.id,
-            userId,
-            institution.name
-        ];
-
-        const result = await this.db.query(query, params);
-        const row = result.rows[0];
-
-        return {
-            id: row.id,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            userId: row.user_id,
-            name: row.name
-        };
+        return mapRowToInstitution(rows[0]);
     }
 
-    public async update(userId: string, institution: Institution): Promise<Institution> {
-        const query = `
-            UPDATE finance.institutions SET
-                name = $1,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2 AND user_id = $3
-            RETURNING *`;
+    public async update(userId: string, institution: Institution): Promise<Institution | null> {
+        const rows = await this.db.update(institutionSchema)
+            .set({
+                name: institution.name,
+                updatedAt: DateTimeUtil.now(),
+            })
+            .where(and(eq(institutionSchema.userId, userId), eq(institutionSchema.id, institution.id!)))
+            .returning();
 
-        const params = [
-            institution.name,
-            institution.id,
-            userId
-        ];
+        if (rows.length === 0) {
+            return null;
+        }
 
-        const result = await this.db.query(query, params);
-        const row = result.rows[0];
-
-        return {
-            id: row.id,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            userId: row.user_id,
-            name: row.name
-        };
+        return mapRowToInstitution(rows[0]);
     }
 }

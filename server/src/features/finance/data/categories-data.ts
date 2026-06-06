@@ -1,137 +1,99 @@
+import { eq, and } from 'drizzle-orm';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Category } from '@shared/finance/types';
-import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
+import { CategoryClass } from '@shared/finance/enum';
+import { IOwnedResourceData } from '@core/interfaces';
+import { DateTimeUtil } from '@core/utility';
+import { categorySchema } from './../schema/category-schema';
 
 export interface IFinanceCategoriesData extends IOwnedResourceData<Category> {
     retrieveAll(userId: string, activeOnly: boolean): Promise<Category[]>;
+    delete(userId: string, id: string): Promise<boolean>;
+    insert(userId: string, category: Category): Promise<Category>;
+    update(userId: string, category: Category): Promise<Category | null>;
+}
+
+function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
+    return {
+        id: row.id,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        userId: row.userId,
+        class: row.class as CategoryClass,
+        group: row.group,
+        icon: row.icon,
+        name: row.name,
+        isActive: row.isActive,
+    };
 }
 
 export class FinanceCategoriesData implements IFinanceCategoriesData {
-    constructor(private db: IDatabaseClient) {}
+    constructor(private db: NodePgDatabase) {}
 
     public async retrieveAll(userId: string, activeOnly: boolean): Promise<Category[]> {
-        let query = `SELECT 
-                    c.id, 
-                    c.created_at AS "createdAt",
-                    c.updated_at AS "updatedAt",
-                    c.user_id AS "userId",
-                    c.category_class AS "class",
-                    c.category_group AS "group",
-                    c.icon,
-                    c.name,
-                    c.is_active AS "isActive"
-                FROM finance.categories AS c
-                WHERE c.user_id = $1`;
+        const conditions = [
+            eq(categorySchema.userId, userId)
+        ];
 
         if (activeOnly) {
-            query += ' AND c.is_active = true';
+            conditions.push(eq(categorySchema.isActive, true));
         }
 
-        const result = await this.db.query(query, [userId]);
-        return result.rows;
+        const rows = await this.db.select().from(categorySchema).where(and(...conditions));
+        return rows.map(mapRowToCategory);
     }
 
     public async retrieveSingle(userId: string, id: string): Promise<Category | null> {
-        const query = `SELECT 
-                    c.id, 
-                    c.created_at AS "createdAt",
-                    c.updated_at AS "updatedAt",
-                    c.user_id AS "userId",
-                    c.category_class AS "class",
-                    c.category_group AS "group",
-                    c.icon,
-                    c.name,
-                    c.is_active AS "isActive"
-                FROM finance.categories AS c
-                WHERE c.user_id = $1
-                    AND c.id = $2`;
+        const rows = await this.db.select().from(categorySchema)
+            .where(and(eq(categorySchema.userId, userId), eq(categorySchema.id, id)));
 
-        const result = await this.db.query(query, [userId, id]);
-
-        if (result.rows.length === 0) {
+        if (rows.length === 0) {
             return null;
         }
 
-        return result.rows[0];
+        return mapRowToCategory(rows[0]);
     }
 
-    public async delete(userId: string, id: string): Promise<void> {
-        await this.db.query(
-            `DELETE FROM finance.categories AS c
-                WHERE c.user_id = $1
-                    AND c.id = $2`,
-            [userId, id]
-        );
+    public async delete(userId: string, id: string): Promise<boolean> {
+        const result = await this.db.delete(categorySchema)
+            .where(and(eq(categorySchema.userId, userId), eq(categorySchema.id, id)));
+
+        return (result.rowCount ?? 0) > 0;
     }
 
     public async insert(userId: string, category: Category): Promise<Category> {
-        const query = `
-                INSERT INTO finance.categories (
-                    id, user_id, category_class, category_group, icon, name, is_active
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING *`;
+        const rows = await this.db.insert(categorySchema)
+            .values({
+                id: category.id,
+                userId: userId,
+                class: category.class,
+                group: category.group,
+                icon: category.icon,
+                name: category.name,
+                isActive: category.isActive
+            })
+            .returning();
 
-        const params = [
-            category.id,
-            userId,
-            category.class,
-            category.group,
-            category.icon,
-            category.name,
-            category.isActive
-        ];
-
-        const result = await this.db.query(query, params);
-        const row = result.rows[0];
-
-        return {
-            id: row.id,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            userId: row.user_id,
-            class: row.category_class,
-            group: row.category_group,
-            icon: row.icon,
-            name: row.name,
-            isActive: row.is_active
-        };
+        return mapRowToCategory(rows[0]);
     }
 
-    public async update(userId: string, category: Category): Promise<Category> {
-        const query = `
-                UPDATE finance.categories SET
-                    category_class = $1,
-                    category_group = $2,
-                    icon = $3,
-                    name = $4,
-                    is_active = $5,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = $6 AND user_id = $7
-                RETURNING *`;
+    public async update(userId: string, category: Category): Promise<Category | null> {
+        const rows = await this.db.update(categorySchema)
+            .set({
+                class: category.class,
+                group: category.group,
+                icon: category.icon,
+                name: category.name,
+                isActive: category.isActive,
+                updatedAt: DateTimeUtil.now()
+            })
+            .where(and(eq(categorySchema.id, category.id!), eq(categorySchema.userId, userId)))
+            .returning();
 
-        const params = [
-            category.class,
-            category.group,
-            category.icon,
-            category.name,
-            category.isActive,
-            category.id,
-            userId
-        ];
+        if (rows.length === 0) {
+            return null;
+        }
 
-        const result = await this.db.query(query, params);
-        const row = result.rows[0];
-
-        return {
-            id: row.id,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            userId: row.user_id,
-            class: row.category_class,
-            group: row.category_group,
-            icon: row.icon,
-            name: row.name,
-            isActive: row.is_active
-        };
+        return mapRowToCategory(rows[0]);
     }
 }
