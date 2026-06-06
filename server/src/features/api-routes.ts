@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { GeminiGateway } from '@core/gateways/gemini-gateway';
-import { PgDatabaseClient } from '@core/pg-client';
+import { DatabaseClient } from '@core/db';
 import { AppLogger } from '@core/logger';
 import { createFinanceModule } from '@features/finance/routes';
 import { WeatherGateway } from '@features/grounds/gateways/weather-gateway';
 import { createGroundsModule } from '@features/grounds/routes';
 
 export function createApiRouter(
-    dbClient: PgDatabaseClient,
+    dbClient: DatabaseClient,
     logger: AppLogger,
     llmGateway: GeminiGateway,
     resolveUser: any,

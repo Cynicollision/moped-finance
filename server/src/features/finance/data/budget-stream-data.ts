@@ -1,5 +1,8 @@
+import { eq, and } from 'drizzle-orm';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BudgetStream } from '@shared/finance/types';
-import { IOwnedResourceData, IDatabaseClient } from '@core/interfaces';
+import { IOwnedResourceData } from '@core/interfaces';
+import { budgetStreamSchema } from './../schema/budget-stream-schema';
 
 export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStream> {
     retrieveAll(userId: string): Promise<BudgetStream[]>;
@@ -9,142 +12,81 @@ export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStrea
     update(userId: string, stream: BudgetStream): Promise<BudgetStream | null>;
 }
 
+function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect): BudgetStream {
+    return {
+        id: row.id,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        userId: row.userId,
+        name: row.name,
+        categoryId: row.categoryId ?? '',
+        type: row.type as BudgetStream['type'],
+        recurrence: row.recurrence as BudgetStream['recurrence'],
+        amount: typeof row.amount === 'string' ? parseFloat(row.amount) : Number(row.amount),
+    };
+}
+
 export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
-    constructor(private db: IDatabaseClient) {}
+    constructor(private db: NodePgDatabase) { }
 
     public async retrieveAll(userId: string): Promise<BudgetStream[]> {
-        const query = `SELECT 
-                            bs.id, 
-                            bs.created_at AS "createdAt",
-                            bs.updated_at AS "updatedAt",
-                            bs.user_id AS "userId",
-                            bs.name,
-                            bs.category_id AS "categoryId",
-                            bs.type,
-                            bs.recurrence,
-                            bs.amount
-                        FROM finance.budget_streams AS bs
-                        WHERE bs.user_id = $1`;
+        const rows = await this.db.select().from(budgetStreamSchema)
+            .where(eq(budgetStreamSchema.userId, userId));
 
-        const result = await this.db.query(query, [userId]);
-
-        return result.rows.map(row => ({
-            ...row,
-            amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
-        }));
+        return rows.map(mapRowToBudgetStream);
     }
 
     public async retrieveSingle(userId: string, id: string): Promise<BudgetStream | null> {
-        const query = `SELECT 
-                            bs.id, 
-                            bs.created_at AS "createdAt",
-                            bs.updated_at AS "updatedAt",
-                            bs.user_id AS "userId",
-                            bs.name,
-                            bs.category_id AS "categoryId",
-                            bs.type,
-                            bs.recurrence,
-                            bs.amount
-                        FROM finance.budget_streams AS bs
-                        WHERE bs.user_id = $1
-                            AND bs.id = $2`;
+        const rows = await this.db.select().from(budgetStreamSchema)
+            .where(and(eq(budgetStreamSchema.userId, userId), eq(budgetStreamSchema.id, id)));
 
-        const result = await this.db.query(query, [userId, id]);
-
-        if (result.rows.length === 0) {
+        if (rows.length === 0) {
             return null;
         }
 
-        const row = result.rows[0];
-        return {
-            ...row,
-            amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
-        };
+        return mapRowToBudgetStream(rows[0]);
     }
 
     public async delete(userId: string, id: string): Promise<boolean> {
-        const result = await this.db.query(
-            `DELETE FROM finance.budget_streams AS bs
-                WHERE bs.user_id = $1
-                    AND bs.id = $2`,
-            [userId, id]
-        );
+        const result = await this.db.delete(budgetStreamSchema)
+            .where(and(eq(budgetStreamSchema.userId, userId), eq(budgetStreamSchema.id, id)));
+
         return (result.rowCount ?? 0) > 0;
     }
 
     public async insert(userId: string, stream: BudgetStream): Promise<BudgetStream> {
-        const query = `
-                INSERT INTO finance.budget_streams (
-                    id, user_id, name, category_id, type, recurrence, amount
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING *`;
+        const rows = await this.db.insert(budgetStreamSchema)
+            .values({
+                id: stream.id,
+                userId: userId,
+                name: stream.name,
+                categoryId: stream.categoryId,
+                type: stream.type,
+                recurrence: stream.recurrence,
+                amount: String(stream.amount),
+            })
+            .returning();
 
-        const params = [
-            stream.id,
-            userId,
-            stream.name,
-            stream.categoryId,
-            stream.type,
-            stream.recurrence,
-            stream.amount
-        ];
-
-        const result = await this.db.query(query, params);
-        const row = result.rows[0];
-
-        return {
-            id: row.id,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            userId: row.user_id,
-            name: row.name,
-            categoryId: row.category_id,
-            type: row.type,
-            recurrence: row.recurrence,
-            amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
-        };
+        return mapRowToBudgetStream(rows[0]);
     }
 
     public async update(userId: string, stream: BudgetStream): Promise<BudgetStream | null> {
-        const query = `
-                UPDATE finance.budget_streams SET
-                    name = $1,
-                    category_id = $2,
-                    type = $3,
-                    recurrence = $4,
-                    amount = $5,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = $6 AND user_id = $7
-                RETURNING *`;
+        const rows = await this.db.update(budgetStreamSchema)
+            .set({
+                name: stream.name,
+                categoryId: stream.categoryId,
+                type: stream.type,
+                recurrence: stream.recurrence,
+                amount: String(stream.amount),
+                updatedAt: new Date(),
+            })
+            .where(and(eq(budgetStreamSchema.id, stream.id!), eq(budgetStreamSchema.userId, userId)))
+            .returning();
 
-        const params = [
-            stream.name,
-            stream.categoryId,
-            stream.type,
-            stream.recurrence,
-            stream.amount,
-            stream.id,
-            userId
-        ];
-
-        const result = await this.db.query(query, params);
-        if (result.rows.length === 0) {
+        if (rows.length === 0) {
             return null;
         }
-        
-        const row = result.rows[0];
 
-        return {
-            id: row.id,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            userId: row.user_id,
-            name: row.name,
-            categoryId: row.category_id,
-            type: row.type,
-            recurrence: row.recurrence,
-            amount: typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount
-        };
+        return mapRowToBudgetStream(rows[0]);
     }
 }

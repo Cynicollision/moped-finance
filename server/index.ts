@@ -7,7 +7,7 @@ import { createAuthMiddleware } from '@core/auth/auth-middleware';
 import { CoreUserData } from '@core/data/user-data';
 import { GeminiGateway } from '@core/gateways/gemini-gateway';
 import { AppLogger } from '@core/logger';
-import { PgDatabaseClient } from '@core/pg-client';
+import { DatabaseClient } from '@core/db';
 import { ApiUtil } from '@core/utility';
 import { createApiRouter } from '@features/api-routes';
 
@@ -34,7 +34,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Core modules
-const dbClient = new PgDatabaseClient();
+const dbClient = new DatabaseClient();
 const logger = AppLogger.fromEnvironment(dbClient);
 const userData = new CoreUserData(dbClient);
 const llmGateway = GeminiGateway.fromEnvironment();

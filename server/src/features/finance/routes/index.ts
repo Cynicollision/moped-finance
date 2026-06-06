@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { IDatabaseClient } from '@core/interfaces';
+import { DatabaseClient } from '@core/db';
 import { AppLogger } from '@core/logger';
 import { FinanceData, IFinanceData } from './../data';
 import { createAccountRouter } from './account-routes';
@@ -20,6 +20,6 @@ export function createFinanceRouter(financeData: IFinanceData, logger: AppLogger
     return router;
 }
 
-export function createFinanceModule(db: IDatabaseClient, logger: AppLogger) {
-    return createFinanceRouter(FinanceData.forPgDatabase(db), logger);
+export function createFinanceModule(db: DatabaseClient, logger: AppLogger) {
+    return createFinanceRouter(FinanceData.forDatabase(db), logger);
 }

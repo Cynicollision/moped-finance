@@ -6,6 +6,8 @@ import { ResultUtil } from './result-util';
 
 export class ApiUtil {
 
+    private static anonymousUserId = 'anonymous';
+
     public static getUser(req: Request): User | undefined {
         if (req.session?.user) {
             return req.session.user;
@@ -17,6 +19,12 @@ export class ApiUtil {
         }
 
         return undefined;
+    }
+
+    public static getUserId(req: Request): string {
+        const user = ApiUtil.getUser(req);
+        const userId = user?.id || ApiUtil.anonymousUserId;
+        return userId;
     }
 
     public static sendResult<T>(res: Response, result: OperationResult<T>): OperationResult<T> {

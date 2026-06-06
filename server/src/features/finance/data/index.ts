@@ -1,4 +1,4 @@
-import { IDatabaseClient } from '@core/interfaces';
+import { DatabaseClient } from '@core/db';
 import { FinanceBalanceHistoryData, IFinanceBalanceHistoryData } from './balance-history-data';
 import { FinanceBudgetStreamData, IFinanceBudgetStreamData } from './budget-stream-data';
 import { FinanceAccountData, IFinanceAccountData } from './account-data';
@@ -26,11 +26,11 @@ export class FinanceData implements IFinanceData {
         readonly transactions: IFinanceTransactionsData) {
     }
 
-    public static forPgDatabase(db: IDatabaseClient): FinanceData {
+    public static forDatabase(db: DatabaseClient): FinanceData {
         return new FinanceData(
             new FinanceAccountData(db),
             new FinanceBalanceHistoryData(db),
-            new FinanceBudgetStreamData(db),
+            new FinanceBudgetStreamData(db.drizzle),
             new FinanceCategoriesData(db),
             new FinanceInstitutionsData(db),
             new FinanceTransactionsData(db));
