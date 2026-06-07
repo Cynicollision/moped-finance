@@ -1,22 +1,30 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { authGuard } from './core/auth.guard';
+import { FinanceSummaryComponent } from './finance/components/summary.component';
+import { FinanceAccountDetailsComponent } from './finance/components/account-details.component';
+import { FinanceTransactionsComponent } from './finance/components/transactions.component';
+import { FinanceBudgetComponent } from './finance/components/budget.component';
+import { FinanceCashflowComponent } from './finance/components/cashflow.component';
+import { FinanceTransactionDetailsComponent } from './finance/components/transaction-details.component';
 
 export const routes: Routes = [
-    {
-        path: '', component: HomeComponent,
-        title: 'Home'
-    },
     {
         path: 'login', component: LoginComponent,
         title: 'Login'
     },
     {
-        path: 'finance',
-        loadChildren: () => import('./finance/finance.routes').then(m => m.FINANCE_ROUTES),
-        title: 'Finance',
-        canActivate: [authGuard]
+        path: '',
+        canActivate: [authGuard],
+        children: [
+            { path: '', redirectTo: 'summary', pathMatch: 'full' },
+            { path: 'summary', component: FinanceSummaryComponent, title: 'Dashboard' },
+            { path: 'accounts/:accountId', component: FinanceAccountDetailsComponent, title: 'Account Details' },
+            { path: 'transactions', component: FinanceTransactionsComponent, title: 'Transactions' },
+            { path: 'transactions/:transactionId', component: FinanceTransactionDetailsComponent, title: 'Transaction Details' },
+            { path: 'cashflow', component: FinanceCashflowComponent, title: 'Cashflow' },
+            { path: 'budget', component: FinanceBudgetComponent, title: 'Budget' }
+        ]
     },
     {
         path: '**',

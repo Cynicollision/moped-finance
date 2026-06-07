@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd, RouteConfigLoadStart, RouteConfigLoadEnd } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map, shareReplay, filter } from 'rxjs/operators';
@@ -47,14 +47,14 @@ export class App implements OnInit {
     private dateProvider = inject(DateProviderService);
     private router = inject(Router);
     private loadingService = inject(LoadingService);
-    
+
     isDebugMode = Environment.isDebugMode;
 
     navItems: NavItem[] = [
-        { label: 'Dashboard', route: '/finance/summary', icon: 'home' },
-        { label: 'Transactions', route: '/finance/transactions', icon: 'credit_card' },
-        { label: 'Cashflow', route: '/finance/cashflow', icon: 'bar_chart' },
-        { label: 'Budget', route: '/finance/budget', icon: 'pie_chart' }
+        { label: 'Dashboard', route: '/summary', icon: 'home' },
+        { label: 'Transactions', route: '/transactions', icon: 'credit_card' },
+        { label: 'Cashflow', route: '/cashflow', icon: 'bar_chart' },
+        { label: 'Budget', route: '/budget', icon: 'pie_chart' }
     ];
 
     currentNavItem: NavItem | null = null;
@@ -75,16 +75,6 @@ export class App implements OnInit {
         );
 
     ngOnInit() {
-        this.router.events.pipe(
-            filter(event => event instanceof RouteConfigLoadStart || event instanceof RouteConfigLoadEnd)
-        ).subscribe(event => {
-            if (event instanceof RouteConfigLoadStart) {
-                this.loadingService.show();
-            } else if (event instanceof RouteConfigLoadEnd) {
-                this.loadingService.hide();
-            }
-        });
-
         this.router.events.pipe(
             filter(event => event instanceof NavigationEnd)
         ).subscribe((event: any) => {

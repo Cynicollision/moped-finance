@@ -1,7 +1,7 @@
 <div class="summary-container details-container">
     @if (account()) {
     <div class="breadcrumb-nav">
-        <a [routerLink]="['/finance']" class="breadcrumb-link">Accounts</a>
+        <a [routerLink]="['/']" class="breadcrumb-link">Accounts</a>
         <span class="breadcrumb-separator">/</span>
         <span class="breadcrumb-current">{{ account()?.name }}</span>
         <span class="spacer"></span>
@@ -75,7 +75,7 @@
         </table>
 
         <div class="footer-actions">
-            <a mat-raised-button color="primary" [routerLink]="['/finance/transactions']"
+            <a mat-raised-button color="primary" [routerLink]="['/transactions']"
                 [queryParams]="{ accountId: account()?.id }">
                 Go To Transactions
             </a>

@@ -141,7 +141,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
     });
 
     onRowClick(row: Transaction) {
-        this.router.navigate(['/finance/transactions', row.id]);
+        this.router.navigate(['/transactions', row.id]);
     }
 
     async onEditAccount() {
@@ -165,7 +165,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
         else if (result.action === 'delete') {
             const success = await this.financeService.deleteAccount(currentAccount.id);
             if (success) {
-                this.router.navigate(['/finance']);
+                this.router.navigate(['/']);
             }
         }
     }

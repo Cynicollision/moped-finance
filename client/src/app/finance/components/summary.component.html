@@ -28,7 +28,7 @@
                 </div>
                 @for (account of summary().cashAccounts; track account) {
                 <div class="row-item indented">
-                    <a [routerLink]="['/finance/accounts', account.id]">{{ account.name }}</a>
+                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
                     <span>{{ account.balance | currency }}</span>
                 </div>
                 @if (!$last) { <mat-divider></mat-divider> }
@@ -52,7 +52,7 @@
                 </div>
                 @for (account of summary().investmentAccounts; track account) {
                 <div class="row-item indented">
-                    <a [routerLink]="['/finance/accounts', account.id]">{{ account.name }}</a>
+                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
                     <span>{{ account.balance | currency }}</span>
                 </div>
                 @if (!$last) { <mat-divider></mat-divider> }
@@ -76,7 +76,7 @@
                 </div>
                 @for (account of summary().creditCardAccounts; track account) {
                 <div class="row-item indented">
-                    <a [routerLink]="['/finance/accounts', account.id]">{{ account.name }}</a>
+                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
                     <span>{{ Math.abs(account.balance) | currency }}</span>
                 </div>
                 @if (!$last) { <mat-divider></mat-divider> }
@@ -100,7 +100,7 @@
                 </div>
                 @for (account of summary().loanAccounts; track account) {
                 <div class="row-item indented">
-                    <a [routerLink]="['/finance/accounts', account.id]">{{ account.name }}</a>
+                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
                     <span>{{ Math.abs(account.balance) | currency }}</span>
                 </div>
                 @if (!$last) { <mat-divider></mat-divider> }
@@ -124,7 +124,7 @@
                 </div>
                 @for (account of summary().realEstateAccounts; track account) {
                 <div class="row-item indented">
-                    <a [routerLink]="['/finance/accounts', account.id]">{{ account.name }}</a>
+                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
                     <span>{{ account.balance | currency }}</span>
                 </div>
                 @if (!$last) { <mat-divider></mat-divider> }

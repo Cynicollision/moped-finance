@@ -109,12 +109,12 @@ export class FinanceTransactionDetailsComponent implements OnInit {
 
         const result = await this.financeService.saveTransaction(updatedTransaction);
         if (result) {
-            this.router.navigate(['/finance/transactions']);
+            this.router.navigate(['/transactions']);
         }
     }
 
     cancel() {
-        this.router.navigate(['/finance/transactions']);
+        this.router.navigate(['/transactions']);
     }
 
     async deleteTransaction() {
@@ -124,7 +124,7 @@ export class FinanceTransactionDetailsComponent implements OnInit {
         if (confirmDelete) {
             const success = await this.financeService.deleteTransaction(this.transactionId);
             if (success) {
-                this.router.navigate(['/finance/transactions']);
+                this.router.navigate(['/transactions']);
             }
         }
     }

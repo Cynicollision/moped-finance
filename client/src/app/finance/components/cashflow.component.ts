@@ -203,6 +203,6 @@ export class FinanceCashflowComponent implements OnInit {
         queryParams.startDate = startDate.toISOString().split('T')[0];
         queryParams.endDate = endDate.toISOString().split('T')[0];
 
-        this.router.navigate(['/finance/transactions'], { queryParams });
+        this.router.navigate(['/transactions'], { queryParams });
     }
 }
