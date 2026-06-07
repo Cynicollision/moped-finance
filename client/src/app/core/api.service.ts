@@ -15,6 +15,23 @@ export class ApiService {
     private loader = inject(LoadingService);
     private baseUrl = Environment.apiUrl;
 
+    private getErrorMessage(error: any): string {
+        if (!error) {
+            return 'An unknown error occurred';
+        }
+        if (error.status === 0) {
+            return 'Network or server error encountered.';
+        }
+        if (error.status >= 400 && error.status < 500) {
+            if (error.error && error.error.error && error.error.error.message) {
+                return error.error.error.message;
+            } else if (error.error && typeof error.error === 'string') {
+                return error.error;
+            }
+        }
+        return error.message || `${error.status} - ${error.statusText}`;
+    }
+
     private async handleRequest<T>(request: Promise<OperationResult<T>>): Promise<T | undefined> {
         try {
             const response = await this.loader.withLoading(request);
@@ -26,10 +43,7 @@ export class ApiService {
             return response.data as T;
         }
         catch (error: any) {
-            if (error) {
-                this.notificationService.error(`${error.status} - ${error.statusText}`);
-            }
-
+            this.notificationService.error(this.getErrorMessage(error));
             return undefined;
         }
     }
@@ -63,11 +77,7 @@ export class ApiService {
             }
             return true;
         } catch (error: any) {
-            if (!error.message || error.status === 0) {
-                this.notificationService.error('Network or server error encountered.');
-            } else {
-                this.notificationService.error(`An error occurred: ${error.message || 'Unknown error'}`);
-            }
+            this.notificationService.error(this.getErrorMessage(error));
             return false;
         }
     }

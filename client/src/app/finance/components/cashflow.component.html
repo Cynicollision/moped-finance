@@ -67,7 +67,7 @@
 
     <!-- Income Section -->
     <mat-card class="section-card" appearance="outlined" style="margin-bottom: 24px;">
-        <div class="card-header" style="padding: 16px; border-bottom: 1px solid rgba(0, 0, 0, 0.12);">
+        <div class="card-header">
             <h2 class="income-title" style="margin: 0; font-size: 1.25rem; font-weight: 500;">Income</h2>
         </div>
 
@@ -93,8 +93,7 @@
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="onRowClick(row)" class="clickable-row"></tr>
             </table>
 
-            <div *ngIf="incomeStreams.length === 0" class="no-data-message"
-                style="padding: 24px; text-align: center; color: rgba(0,0,0,0.6);">
+            <div *ngIf="incomeStreams.length === 0" class="no-data">
                 No income data for the selected period.
             </div>
         </mat-card-content>
@@ -102,7 +101,7 @@
 
     <!-- Expenses Section -->
     <mat-card class="section-card" appearance="outlined">
-        <div class="card-header" style="padding: 16px; border-bottom: 1px solid rgba(0, 0, 0, 0.12);">
+        <div class="card-header">
             <h2 class="expense-title" style="margin: 0; font-size: 1.25rem; font-weight: 500;">Expenses</h2>
         </div>
 
@@ -128,8 +127,7 @@
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="onRowClick(row)" class="clickable-row"></tr>
             </table>
 
-            <div *ngIf="expenseStreams.length === 0" class="no-data-message"
-                style="padding: 24px; text-align: center; color: rgba(0,0,0,0.6);">
+            <div *ngIf="expenseStreams.length === 0" class="no-data">
                 No expense data for the selected period.
             </div>
         </mat-card-content>

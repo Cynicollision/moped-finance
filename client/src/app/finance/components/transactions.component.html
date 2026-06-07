@@ -120,6 +120,10 @@
         </tr>
     </table>
 
+    <div *ngIf="loaded && dataSource.data.length === 0" class="no-transactions-message">
+        No transactions found
+    </div>
+
     <div class="footer" *ngIf="hasMoreData">
         <button mat-raised-button color="primary" (click)="loadMore()">Load More</button>
     </div>

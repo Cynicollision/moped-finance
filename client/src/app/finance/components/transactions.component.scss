@@ -86,3 +86,26 @@ table {
     display: flex;
     justify-content: flex-end;
 }
+
+mat-expansion-panel {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color);
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    overflow: hidden;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+}
+
+.no-transactions-message {
+    margin-top: 16px;
+    padding: 48px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 1rem;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}

@@ -27,6 +27,16 @@ export class AuthService {
         }
     }
 
+    async register(username: string, displayName: string, password?: string, returnUrl?: string): Promise<void> {
+        const payload = { username, name: displayName, password };
+        const response = await this.api.post<User>('auth/register', payload);
+
+        if (response) {
+            this.currentUser.set(response);
+            this.router.navigate([returnUrl || '/']);
+        }
+    }
+
     async logout(): Promise<void> {
         await this.api.post('auth/logout', {});
         this.currentUser.set(null);

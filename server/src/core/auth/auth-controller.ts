@@ -32,9 +32,10 @@ export class AuthController {
         return ResultUtil.userError('Invalid username or password.');
     }
 
-    async createUser(username: string, name: string, password?: string): Promise<OperationResult<User>> {
-        if (!password) {
-            return ResultUtil.userError('Password is required.');
+    async createUser(username: string, name: string, password: string): Promise<OperationResult<User>> {
+        const existingUser = await this.userData.retrieveByUsername(username);
+        if (existingUser) {
+            return ResultUtil.userError('Username already taken.');
         }
 
         const hash = await bcrypt.hash(password, this.saltRounds);

@@ -53,6 +53,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
     dataSource = new MatTableDataSource<Transaction>([]);
     pageSize = 25;
     hasMoreData = true;
+    loaded = false;
 
     @ViewChild(MatSort) sort!: MatSort;
 
@@ -246,6 +247,8 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         } else {
             this.dataSource.data = [...this.dataSource.data, ...newTransactions];
         }
+
+        this.loaded = true;
     }
 
     async loadMore() {

@@ -67,6 +67,16 @@ export class App implements OnInit {
         return `${y}${m}${d}`;
     }
 
+    getUserInitials(): string {
+        const name = this.authService.currentUser()?.displayName || '';
+        if (!name) return '?';
+        const parts = name.split(' ');
+        if (parts.length > 1) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+        return name[0].toUpperCase();
+    }
+
     // Observable to detect handset/mobile view
     isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
         .pipe(
