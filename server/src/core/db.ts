@@ -2,20 +2,20 @@ import { Pool } from 'pg';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IDatabaseClient, IDatabaseResult } from './interfaces';
 
-const dbConfig = {
-    user: process.env.PGUSER,
-    password: process.env.PGPASSWORD,
-    host: process.env.PGHOST || 'localhost',
-    database: process.env.PGDATABASE,
-    port: parseInt(process.env.PGPORT || '5432'),
-};
+export interface DatabaseClientConfig {
+    user: string;
+    password: string;
+    host: string;
+    database: string;
+    port: number;
+}
 
 export class DatabaseClient implements IDatabaseClient {
-    public readonly pool: Pool; // TODO (Remove Post-Grounds): may no longer need to expose this after full ORM conversion
+    private readonly pool: Pool;
     public readonly drizzle: NodePgDatabase;
 
-    constructor() {
-        this.pool = new Pool(dbConfig);
+    constructor(config: DatabaseClientConfig) {
+        this.pool = new Pool(config);
         this.drizzle = drizzle(this.pool);
     }
 

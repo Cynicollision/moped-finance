@@ -6,7 +6,7 @@ import { createAuthRouter } from '@core/auth/auth-routes';
 import { createAuthMiddleware } from '@core/auth/auth-middleware';
 import { CoreUserData } from '@core/data/user-data';
 import { AppLogger } from '@core/logger';
-import { DatabaseClient } from '@core/db';
+import { DatabaseClient, DatabaseClientConfig } from '@core/db';
 import { ApiUtil } from '@core/utility';
 import { createFinanceModule } from './src/finance';
 
@@ -32,22 +32,27 @@ if (process.env.NODE_ENV === 'development') {
     }));
 }
 
-// Core modules
-const dbClient = new DatabaseClient();
+const dbConfig: DatabaseClientConfig = {
+    user: process.env.PGUSER || '',
+    password: process.env.PGPASSWORD || '',
+    host: process.env.PGHOST || 'localhost',
+    database: process.env.PGDATABASE || '',
+    port: parseInt(process.env.PGPORT || '5432'),
+};
+
+// Core services
+const dbClient = new DatabaseClient(dbConfig);
 const logger = AppLogger.fromEnvironment(dbClient);
+
+// Auth module
 const userData = new CoreUserData(dbClient);
-
-
-// Auth routes
 const { resolveUser, requireAuth } = createAuthMiddleware(userData);
 const authRoutes = createAuthRouter(userData, logger, requireAuth, resolveUser);
 app.use('/auth', authRoutes);
 
-// API routes
+// API module routes
 const apiRouter = createFinanceModule(dbClient, logger);
 app.use('/api', resolveUser, requireAuth, apiRouter);
-
-// Default 404 handler for unmatched API routes
 app.all('/api/*', (req: Request, res: Response) => {
     return ApiUtil.notFound(req, res);
 });
