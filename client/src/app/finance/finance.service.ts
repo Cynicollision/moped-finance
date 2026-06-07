@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TransactionSearchOptions } from '@shared/finance/contracts';
-import { CalendarPeriod, HistoryTimeframe } from '@shared/common/enum';
+import { CalendarPeriod, HistoryTimeframe } from '@shared/core/enum';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../core/api.service';

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { User } from '@shared/common/types/user';
+import { User } from '@shared/core/types/user';
 import { ApiService } from './api.service';
 
 @Injectable({

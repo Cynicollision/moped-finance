@@ -1,5 +1,5 @@
-import { OperationResult } from '@shared/common/contracts';
-import { OperationStatus } from '@shared/common/enum';
+import { OperationResult } from '@shared/core/contracts';
+import { OperationStatus } from '@shared/core/enum';
 import { DateTimeUtil } from './date-time-util';
 
 export class ResultUtil {

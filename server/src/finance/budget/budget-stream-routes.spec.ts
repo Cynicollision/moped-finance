@@ -1,6 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import { CalendarPeriod } from '@shared/common/enum/calendar-period';
+import { CalendarPeriod } from '@shared/core/enum/calendar-period';
 import { BudgetStreamType } from '@shared/finance/enum/budget-stream-type';
 import { BudgetStream } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';

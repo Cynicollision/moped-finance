@@ -1,5 +1,5 @@
-import { CoreEntityIdPrefix, LogLevel } from '@shared/common/enum';
-import { LogEntry } from '@shared/common/types';
+import { CoreEntityIdPrefix, LogLevel } from '@shared/core/enum';
+import { LogEntry } from '@shared/core/types';
 import { LogData, ILogData } from './data/log-data';
 import { IDatabaseClient } from './interfaces';
 import { DateTimeUtil, EntityIdUtil } from './utility';

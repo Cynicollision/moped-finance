@@ -1,5 +1,5 @@
 import { Router, Request } from 'express';
-import { CalendarPeriod, SortDirection } from '@shared/common/enum';
+import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';

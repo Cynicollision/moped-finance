@@ -1,4 +1,4 @@
-import { Entity } from './../../common/types';
+import { Entity } from './../../core/types';
 import { AccountCategory, AccountGroup, AccountType } from './../enum';
 import { BalanceHistory } from './balance-history';
 import { Transaction } from './transaction';

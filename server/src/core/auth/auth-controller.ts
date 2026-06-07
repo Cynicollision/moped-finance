@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcrypt';
-import { OperationResult } from '@shared/common/contracts/operation-result';
-import { CoreEntityIdPrefix } from '@shared/common/enum';
-import { User } from '@shared/common/types/user';
+import { OperationResult } from '@shared/core/contracts/operation-result';
+import { CoreEntityIdPrefix } from '@shared/core/enum';
+import { User } from '@shared/core/types/user';
 import { ICoreUserData } from '@core/data/user-data';
 import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@core/utility';
 

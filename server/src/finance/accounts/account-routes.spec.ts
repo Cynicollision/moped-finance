@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { AccountCategory, AccountGroup, AccountType, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
-import { SortDirection } from '@shared/common/enum';
+import { SortDirection } from '@shared/core/enum';
 import { Account } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { DateTimeUtil } from '@core/utility';

@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
-import { CalendarPeriod } from '@shared/common/enum';
+import { CalendarPeriod } from '@shared/core/enum';
 import { SpendingStream } from '@shared/finance/contracts';
 import { CategoryClass } from '@shared/finance/enum';
 import { Category } from '@shared/finance/types';

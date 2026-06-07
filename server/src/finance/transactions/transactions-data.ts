@@ -1,6 +1,6 @@
 import { eq, and, desc, asc, ilike, sum, inArray, gte, lte } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { SortDirection } from '@shared/common/enum';
+import { SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
 import { SpendingStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';

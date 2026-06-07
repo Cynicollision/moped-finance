@@ -1,4 +1,4 @@
-import { HistoryTimeframe } from './../../common/enum';
+import { HistoryTimeframe } from './../../core/enum';
 import { ValueHistoryType } from './../enum';
 
 export type TotalValueHistoryOptions = {

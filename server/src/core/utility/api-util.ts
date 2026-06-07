@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { OperationResult } from '@shared/common/contracts';
-import { User } from '@shared/common/types';
-import { OperationStatus } from '@shared/common/enum';
+import { OperationResult } from '@shared/core/contracts';
+import { User } from '@shared/core/types';
+import { OperationStatus } from '@shared/core/enum';
 import { ResultUtil } from './result-util';
 
 export class ApiUtil {

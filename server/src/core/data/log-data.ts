@@ -1,10 +1,12 @@
-import { LogEntry } from '@shared/common/types';
+import { LogEntry } from '@shared/core/types';
 import { IDatabaseClient } from '@core/interfaces';
 import { DateTimeUtil } from '@core/utility';
 
 export interface ILogData {
     create(log: LogEntry): Promise<void>;
 }
+
+// TODO: ORM conversion
 
 export class LogData implements ILogData {
     constructor(private db: IDatabaseClient) { }

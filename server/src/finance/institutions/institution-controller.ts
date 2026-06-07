@@ -1,4 +1,4 @@
-import { OperationResult } from '@shared/common/contracts';
+import { OperationResult } from '@shared/core/contracts';
 import { FinanceEntityIdPrefix } from '@shared/finance/enum';
 import { Institution } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';

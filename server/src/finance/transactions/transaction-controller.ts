@@ -1,5 +1,5 @@
-import { OperationResult } from '@shared/common/contracts';
-import { CalendarPeriod } from '@shared/common/enum';
+import { OperationResult } from '@shared/core/contracts';
+import { CalendarPeriod } from '@shared/core/enum';
 import { FinanceEntityIdPrefix } from '@shared/finance/enum';
 import { TransactionSearchOptions, SpendingStream } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';

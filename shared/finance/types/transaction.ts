@@ -1,4 +1,4 @@
-import { Entity } from './../../common/types';
+import { Entity } from './../../core/types';
 
 export type Transaction = Entity & {
     accountId: string;

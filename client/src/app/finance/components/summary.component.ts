@@ -4,7 +4,7 @@ import { DateProviderService } from './../../core/date-provider.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterLink } from '@angular/router';
-import { HistoryTimeframe } from '@shared/common/enum';
+import { HistoryTimeframe } from '@shared/core/enum';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { AccountGroup, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';

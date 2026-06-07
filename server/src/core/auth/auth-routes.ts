@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { OperationResult } from '@shared/common/contracts';
+import { OperationResult } from '@shared/core/contracts';
 import { ICoreUserData } from '@core/data/user-data';
 import { ApiHandler } from '@core/api-handler';
 import { AppLogger } from '@core/logger';
@@ -13,6 +13,8 @@ type AuthRequest = {
     oldPassword?: string;
     newPassword?: string;
 };
+
+// TODO: needs tests
 
 export function createAuthRouter(userData: ICoreUserData, logger: AppLogger, requireAuthMiddleware: any, resolveUserMiddleware: any) {
     const router = Router();

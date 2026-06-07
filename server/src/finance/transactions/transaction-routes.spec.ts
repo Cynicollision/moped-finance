@@ -1,6 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import { CalendarPeriod, SortDirection } from '@shared/common/enum';
+import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';

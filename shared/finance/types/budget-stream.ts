@@ -1,5 +1,5 @@
-import { CalendarPeriod } from './../../common/enum';
-import { Entity } from './../../common/types';
+import { CalendarPeriod } from './../../core/enum';
+import { Entity } from './../../core/types';
 import { BudgetStreamType } from './../enum/budget-stream-type';
 
 export type BudgetStream = Entity & {

@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
 import { Category, BudgetStream } from '@shared/finance/types';
-import { CalendarPeriod } from '@shared/common/enum';
+import { CalendarPeriod } from '@shared/core/enum';
 import { ModalService } from './../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
 import { FinanceBudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';

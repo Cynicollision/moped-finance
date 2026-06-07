@@ -1,10 +1,12 @@
-import { User } from '@shared/common/types/user';
+import { User } from '@shared/core/types/user';
 import { IDatabaseClient } from '@core/interfaces';
 import { DateTimeUtil } from '@core/utility';
 
 export interface UserWithPassword extends User {
     passwordHash: string;
 }
+
+// TODO: ORM conversion
 
 export interface ICoreUserData {
     create(user: User, passwordHash: string): Promise<User>;

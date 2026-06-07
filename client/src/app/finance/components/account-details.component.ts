@@ -5,7 +5,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { HistoryTimeframe } from '@shared/common/enum';
+import { HistoryTimeframe } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';

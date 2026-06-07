@@ -1,4 +1,4 @@
-import { CalendarPeriod, HistoryTimeframe } from '@shared/common/enum';
+import { CalendarPeriod, HistoryTimeframe } from '@shared/core/enum';
 
 export class DateTimeUtil {
 

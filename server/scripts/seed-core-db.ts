@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
-import { CoreEntityIdPrefix } from '@shared/common/enum/entity-id-prefix';
+import { CoreEntityIdPrefix } from '@shared/core/enum/entity-id-prefix';
 import { EntityIdUtil } from './../src/core/utility/entity-id-util';
 
 const dbConfig = {

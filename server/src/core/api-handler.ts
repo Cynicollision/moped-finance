@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { OperationResult } from '@shared/common/contracts/operation-result';
+import { OperationResult } from '@shared/core/contracts/operation-result';
 import { ApiUtil } from './utility/api-util';
 import { AppLogger } from './logger';
 
