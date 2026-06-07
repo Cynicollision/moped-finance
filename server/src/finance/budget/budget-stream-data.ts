@@ -28,7 +28,11 @@ function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect): Budg
 }
 
 export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
-    constructor(private db: NodePgDatabase) { }
+    private readonly db: NodePgDatabase;
+
+    constructor(db: NodePgDatabase) {
+        this.db = db;
+    }
 
     public async retrieveAll(userId: string): Promise<BudgetStream[]> {
         const rows = await this.db.select().from(budgetStreamSchema)

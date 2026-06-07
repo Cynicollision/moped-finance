@@ -3,13 +3,10 @@ import { ApiHandler } from '@core/api-handler';
 import { AppLogger } from '@core/logger';
 import { RequestSchemaValidator } from '@core/validation';
 import { CategoryController } from './category-controller';
-import { IFinanceCategoriesData } from './categories-data';
+import { IFinanceCategoriesData } from './category-data';
 import { createCategorySchema, updateCategorySchema } from './category-schema';
 
-export function createCategoryRouter(
-    categoriesData: IFinanceCategoriesData,
-    logger: AppLogger
-) {
+export function createCategoryRouter(logger: AppLogger, categoriesData: IFinanceCategoriesData) {
     const router = Router();
     const controller = new CategoryController(logger, categoriesData);
     const handler = new ApiHandler(logger);

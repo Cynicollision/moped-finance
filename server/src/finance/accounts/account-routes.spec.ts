@@ -47,7 +47,7 @@ describe('Account Routes', () => {
         mockTransactionsData = FinanceMockUtil.createMockTransactionsData();
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createAccountRouter(mockAccountData, mockBalanceHistoryData, mockTransactionsData, mockLogger);
+        const router = createAccountRouter(mockLogger, mockAccountData, mockBalanceHistoryData, mockTransactionsData);
         app = TestExpressUtil.createTestApp(router, '/accounts', testUserId);
     });
 
@@ -351,6 +351,29 @@ describe('Account Routes', () => {
                 }),
                 'acc1'
             );
+        });
+    });
+
+    describe('GET /accounts/:accountId/transactions/export', () => {
+        xit('should return export stub success', async () => {
+            const response = await request(app)
+                .get('/accounts/acc1/transactions/export')
+                .query({ format: 'csv' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.message).toContain('Export logic stub');
+        });
+    });
+
+    describe('POST /accounts/:accountId/sync', () => {
+        xit('should return sync stub success', async () => {
+            const response = await request(app)
+                .post('/accounts/acc1/sync');
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.message).toContain('Sync account logic stub');
         });
     });
 });

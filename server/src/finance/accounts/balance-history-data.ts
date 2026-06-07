@@ -13,7 +13,11 @@ export interface IFinanceBalanceHistoryData {
 }
 
 export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
-    constructor(private db: NodePgDatabase) { }
+    private readonly db: NodePgDatabase;
+
+    constructor(db: NodePgDatabase) {
+        this.db = db;
+    }
 
     public async retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]> {
         const conditions = [

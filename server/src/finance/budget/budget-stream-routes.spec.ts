@@ -36,7 +36,7 @@ describe('Budget Stream Routes', () => {
         mockBudgetStreamData = FinanceMockUtil.createMockBudgetStreamData();
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createBudgetStreamRouter(mockBudgetStreamData, mockLogger);
+        const router = createBudgetStreamRouter(mockLogger, mockBudgetStreamData);
         app = TestExpressUtil.createTestApp(router, '/budget-streams', testUserId);
     });
 

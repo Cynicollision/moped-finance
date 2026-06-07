@@ -6,9 +6,9 @@ import { SpendingStream, TransactionSearchOptions } from '@shared/finance/contra
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { IOwnedResourceData } from '@core/interfaces';
 import { DateTimeUtil } from '@core/utility';
-import { transactionSchema } from './transactions-schema';
 import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';
+import { transactionSchema } from './transaction-schema';
 
 export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction> {
     search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
@@ -39,7 +39,11 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
 }
 
 export class FinanceTransactionsData implements IFinanceTransactionsData {
-    constructor(private db: NodePgDatabase) { }
+    private readonly db: NodePgDatabase;
+
+    constructor(db: NodePgDatabase) {
+        this.db = db;
+    }
 
     public async search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]> {
         const conditions = [

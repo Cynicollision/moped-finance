@@ -6,8 +6,12 @@ import { EntityIdUtil, ResultUtil } from '@core/utility';
 import { IFinanceBudgetStreamData } from './budget-stream-data';
 
 export class BudgetStreamController {
+    private readonly logger: AppLogger;
+    private readonly budgetStreamData: IFinanceBudgetStreamData;
 
-    constructor(private logger: AppLogger, private budgetStreamData: IFinanceBudgetStreamData) {
+    constructor(logger: AppLogger, budgetStreamData: IFinanceBudgetStreamData) {
+        this.logger = logger;
+        this.budgetStreamData = budgetStreamData;
     }
 
     public async getBudgetStreams(userId: string): Promise<OperationResult<BudgetStream[]>> {
@@ -15,23 +19,22 @@ export class BudgetStreamController {
         return ResultUtil.success(streams);
     }
 
-    public async createBudgetStream(userId: string, stream: BudgetStream): Promise<OperationResult<BudgetStream>> {
-        stream.id = EntityIdUtil.generate(FinanceEntityIdPrefix.BudgetStream);
-        stream.userId = userId;
-
-        return ResultUtil.success(await this.budgetStreamData.insert(userId, stream));
+    public async createBudgetStream(userId: string, budgetStream: BudgetStream): Promise<OperationResult<BudgetStream>> {
+        budgetStream.id = EntityIdUtil.generate(FinanceEntityIdPrefix.BudgetStream);
+        budgetStream.userId = userId;
+        return ResultUtil.success(await this.budgetStreamData.insert(userId, budgetStream));
     }
 
-    public async saveBudgetStream(userId: string, stream: BudgetStream): Promise<OperationResult<BudgetStream>> {
-        const updated = await this.budgetStreamData.update(userId, stream);
+    public async saveBudgetStream(userId: string, budgetStream: BudgetStream): Promise<OperationResult<BudgetStream>> {
+        const updated = await this.budgetStreamData.update(userId, budgetStream);
         if (!updated) {
             return ResultUtil.userError('Budget stream not found or access denied');
         }
         return ResultUtil.success(updated);
     }
 
-    public async deleteBudgetStream(userId: string, id: string): Promise<OperationResult<void>> {
-        const deleted = await this.budgetStreamData.delete(userId, id);
+    public async deleteBudgetStream(userId: string, budgetStreamId: string): Promise<OperationResult<void>> {
+        const deleted = await this.budgetStreamData.delete(userId, budgetStreamId);
         if (!deleted) {
             return ResultUtil.userError('Budget stream not found or access denied');
         }

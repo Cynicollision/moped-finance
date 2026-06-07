@@ -3,17 +3,19 @@ import { FinanceEntityIdPrefix } from '@shared/finance/enum';
 import { Institution } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { EntityIdUtil, ResultUtil } from '@core/utility';
-import { IFinanceInstitutionsData } from './institutions-data';
+import { IFinanceInstitutionsData } from './institution-data';
 
 export class InstitutionController {
-    constructor(
-        private logger: AppLogger,
-        private institutions: IFinanceInstitutionsData
-    ) {
+    private readonly logger: AppLogger;
+    private readonly institutions: IFinanceInstitutionsData;
+
+    constructor(logger: AppLogger, institutions: IFinanceInstitutionsData) {
+        this.logger = logger;
+        this.institutions = institutions;
     }
 
-    public async getInstitution(userId: string, id: string): Promise<OperationResult<Institution>> {
-        const institution = await this.institutions.retrieveSingle(userId, id);
+    public async getInstitution(userId: string, institutionId: string): Promise<OperationResult<Institution>> {
+        const institution = await this.institutions.retrieveSingle(userId, institutionId);
         if (!institution) {
             return ResultUtil.userError('Institution not found or access denied');
         }
@@ -39,11 +41,16 @@ export class InstitutionController {
         return ResultUtil.success(updated);
     }
 
-    public async deleteInstitution(userId: string, id: string): Promise<OperationResult<void>> {
-        const deleted = await this.institutions.delete(userId, id);
+    public async deleteInstitution(userId: string, institutionId: string): Promise<OperationResult<void>> {
+        const deleted = await this.institutions.delete(userId, institutionId);
         if (!deleted) {
             return ResultUtil.userError('Institution not found or access denied');
         }
         return ResultUtil.success();
+    }
+
+    public async syncInstitution(userId: string, institutionId: string): Promise<OperationResult<any>> {
+        // TODO: implement sync logic
+        return ResultUtil.success({ message: 'Sync institution logic stub' });
     }
 }

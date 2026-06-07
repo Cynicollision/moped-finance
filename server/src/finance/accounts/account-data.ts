@@ -34,7 +34,11 @@ function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number
 }
 
 export class FinanceAccountData implements IFinanceAccountData {
-    constructor(private db: NodePgDatabase) { }
+    private readonly db: NodePgDatabase;
+
+    constructor(db: NodePgDatabase) {
+        this.db = db;
+    }
 
     private getLatestBalanceSubquery() {
         return this.db.select({ balance: balanceHistorySchema.balance })

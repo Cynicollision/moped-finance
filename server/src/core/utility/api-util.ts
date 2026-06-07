@@ -31,7 +31,7 @@ export class ApiUtil {
         let statusCode = 200;
         switch (result.status) {
             case OperationStatus.Success:
-                statusCode = 200;
+                statusCode = 200; // TODO: need to support 201 created, 202 accepted, etc.
                 break;
             case OperationStatus.UserError:
                 statusCode = 400;

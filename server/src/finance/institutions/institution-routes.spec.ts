@@ -5,7 +5,7 @@ import { AppLogger } from '@core/logger';
 import { DateTimeUtil } from '@core/utility';
 import { TestExpressUtil } from '@test/express-util';
 import { FinanceMockUtil } from '@test/finance-mocks';
-import { IFinanceInstitutionsData } from './institutions-data';
+import { IFinanceInstitutionsData } from './institution-data';
 import { createInstitutionRouter } from './institution-routes';
 
 describe('Institution Routes', () => {
@@ -30,7 +30,7 @@ describe('Institution Routes', () => {
         mockInstitutionsData = FinanceMockUtil.createMockInstitutionsData();
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createInstitutionRouter(mockInstitutionsData, mockLogger);
+        const router = createInstitutionRouter(mockLogger, mockInstitutionsData);
         app = TestExpressUtil.createTestApp(router, '/institutions', testUserId);
     });
 
@@ -168,6 +168,17 @@ describe('Institution Routes', () => {
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('not found or access denied');
+        });
+    });
+
+    describe('POST /institutions/:id/sync', () => {
+        xit('should return sync stub success', async () => {
+            const response = await request(app)
+                .post('/institutions/inst1/sync');
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.message).toContain('Sync institution logic stub');
         });
     });
 });

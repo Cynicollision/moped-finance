@@ -9,15 +9,18 @@ import { IFinanceAccountData } from './account-data';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 
 export class AccountController {
-    constructor(
-        private logger: AppLogger,
-        private accounts: IFinanceAccountData,
-        private balanceHistory: IFinanceBalanceHistoryData
-    ) {
+    private readonly logger: AppLogger;
+    private readonly accounts: IFinanceAccountData;
+    private readonly balanceHistory: IFinanceBalanceHistoryData;
+
+    constructor(logger: AppLogger, accounts: IFinanceAccountData, balanceHistory: IFinanceBalanceHistoryData) {
+        this.logger = logger;
+        this.accounts = accounts;
+        this.balanceHistory = balanceHistory;
     }
 
-    public async getAccount(userId: string, id: string): Promise<OperationResult<Account>> {
-        const account = await this.accounts.retrieveSingle(userId, id);
+    public async getAccount(userId: string, accountId: string): Promise<OperationResult<Account>> {
+        const account = await this.accounts.retrieveSingle(userId, accountId);
         if (!account) {
             return ResultUtil.userError('Account not found or access denied');
         }
@@ -43,8 +46,8 @@ export class AccountController {
         return ResultUtil.success(updated);
     }
 
-    public async deleteAccount(userId: string, id: string): Promise<OperationResult<void>> {
-        const deleted = await this.accounts.delete(userId, id);
+    public async deleteAccount(userId: string, accountId: string): Promise<OperationResult<void>> {
+        const deleted = await this.accounts.delete(userId, accountId);
         if (!deleted) {
             return ResultUtil.userError('Account not found or access denied');
         }
@@ -63,5 +66,10 @@ export class AccountController {
 
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         return ResultUtil.success(await this.balanceHistory.retrieveSumByDate(userId, options.type, startDate, options.asOfDate));
+    }
+
+    public async syncAccount(userId: string, accountId: string): Promise<OperationResult<any>> {
+        // TODO: implement sync/synchronization logic
+        return ResultUtil.success({ message: 'Sync account logic stub' });
     }
 }

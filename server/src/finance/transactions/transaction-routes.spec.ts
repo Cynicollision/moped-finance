@@ -8,7 +8,7 @@ import { DateTimeUtil } from '@core/utility';
 import { TestExpressUtil } from '@test/express-util';
 import { FinanceMockUtil } from '@test/finance-mocks';
 
-import { IFinanceTransactionsData } from './transactions-data';
+import { IFinanceTransactionsData } from './transaction-data';
 import { createTransactionRouter } from './transaction-routes';
 
 describe('Transaction Routes', () => {
@@ -41,7 +41,7 @@ describe('Transaction Routes', () => {
         mockTransactionsData = FinanceMockUtil.createMockTransactionsData();
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createTransactionRouter(mockTransactionsData, mockLogger);
+        const router = createTransactionRouter(mockLogger, mockTransactionsData);
         app = TestExpressUtil.createTestApp(router, '/transactions', testUserId);
     });
 
@@ -250,6 +250,30 @@ describe('Transaction Routes', () => {
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('not found or access denied');
+        });
+    });
+
+    describe('GET /export', () => {
+        xit('should return export stub success', async () => {
+            const response = await request(app)
+                .get('/transactions/export')
+                .query({ format: 'csv' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.message).toContain('Export logic stub');
+        });
+    });
+
+    describe('POST /import', () => {
+        xit('should return import stub success', async () => {
+            const response = await request(app)
+                .post('/transactions/import')
+                .send({ transactions: [] });
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.message).toContain('Import logic stub');
         });
     });
 });

@@ -7,7 +7,7 @@ import { BudgetStreamController } from './budget-stream-controller';
 import { IFinanceBudgetStreamData } from './budget-stream-data';
 import { createBudgetStreamSchema, updateBudgetStreamSchema } from './budget-stream-schema';
 
-export function createBudgetStreamRouter(budgetStreamData: IFinanceBudgetStreamData, logger: AppLogger) {
+export function createBudgetStreamRouter(logger: AppLogger, budgetStreamData: IFinanceBudgetStreamData) {
     const router = Router();
     const handler = new ApiHandler(logger);
     const validator = new RequestSchemaValidator(logger, 'BudgetStream');

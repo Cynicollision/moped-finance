@@ -23,7 +23,11 @@ function mapRowToInstitution(row: typeof institutionSchema.$inferSelect): Instit
 }
 
 export class FinanceInstitutionsData implements IFinanceInstitutionsData {
-    constructor(private db: NodePgDatabase) { }
+    private readonly db: NodePgDatabase;
+
+    constructor(db: NodePgDatabase) {
+        this.db = db;
+    }
 
     public async retrieveAll(userId: string): Promise<Institution[]> {
         const rows = await this.db.select().from(institutionSchema)

@@ -7,13 +7,10 @@ import { ApiHandler } from '@core/api-handler';
 import { AppLogger } from '@core/logger';
 import { RequestSchemaValidator } from '@core/validation';
 import { TransactionController } from './transaction-controller';
-import { IFinanceTransactionsData } from './transactions-data';
-import { createTransactionSchema, updateTransactionSchema } from './transactions-schema';
+import { IFinanceTransactionsData } from './transaction-data';
+import { createTransactionSchema, updateTransactionSchema } from './transaction-schema';
 
-export function createTransactionRouter(
-    transactionsData: IFinanceTransactionsData,
-    logger: AppLogger
-) {
+export function createTransactionRouter(logger: AppLogger, transactionsData: IFinanceTransactionsData) {
     const router = Router();
     const controller = new TransactionController(logger, transactionsData);
     const handler = new ApiHandler(logger);
@@ -44,6 +41,22 @@ export function createTransactionRouter(
             const period = req.query.period as CalendarPeriod;
             const asOfDate = req.query.asOfDate as string;
             return controller.getTransactionSpendingByCategory(context.userId!, period, asOfDate);
+        });
+    });
+
+    router.get('/export', (req, res) => {
+        handler.execute(req, res, 'exportTransactions', (context) => {
+            const format = req.query.format as string;
+            const startDate = req.query.startDate as string;
+            const endDate = req.query.endDate as string;
+            return controller.exportTransactions(context.userId!, { format, startDate, endDate });
+        });
+    });
+
+    router.post('/import', (req, res) => {
+        handler.execute(req, res, 'importTransactions', (context) => {
+            const dryRun = req.query.dryRun === 'true';
+            return controller.importTransactions(context.userId!, { dryRun, body: req.body });
         });
     });
 

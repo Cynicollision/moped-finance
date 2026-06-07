@@ -3,13 +3,10 @@ import { ApiHandler } from '@core/api-handler';
 import { AppLogger } from '@core/logger';
 import { RequestSchemaValidator } from '@core/validation';
 import { InstitutionController } from './institution-controller';
-import { IFinanceInstitutionsData } from './institutions-data';
+import { IFinanceInstitutionsData } from './institution-data';
 import { createInstitutionSchema, updateInstitutionSchema } from './institution-schema';
 
-export function createInstitutionRouter(
-    institutionsData: IFinanceInstitutionsData,
-    logger: AppLogger
-) {
+export function createInstitutionRouter(logger: AppLogger, institutionsData: IFinanceInstitutionsData) {
     const router = Router();
     const controller = new InstitutionController(logger, institutionsData);
     const handler = new ApiHandler(logger);
@@ -43,6 +40,12 @@ export function createInstitutionRouter(
     router.delete('/:id', validator.id(), (req, res) => {
         handler.execute(req, res, 'deleteInstitution', (context) => {
             return controller.deleteInstitution(context.userId!, req.params.id);
+        });
+    });
+
+    router.post('/:id/sync', validator.id(), (req, res) => {
+        handler.execute(req, res, 'syncInstitution', (context) => {
+            return controller.syncInstitution(context.userId!, req.params.id);
         });
     });
 

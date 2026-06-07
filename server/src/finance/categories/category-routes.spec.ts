@@ -6,7 +6,7 @@ import { AppLogger } from '@core/logger';
 import { DateTimeUtil } from '@core/utility';
 import { TestExpressUtil } from '@test/express-util';
 import { FinanceMockUtil } from '@test/finance-mocks';
-import { IFinanceCategoriesData } from './categories-data';
+import { IFinanceCategoriesData } from './category-data';
 import { createCategoryRouter } from './category-routes';
 
 describe('Category Routes', () => {
@@ -35,7 +35,7 @@ describe('Category Routes', () => {
         mockCategoriesData = FinanceMockUtil.createMockCategoriesData();
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createCategoryRouter(mockCategoriesData, mockLogger);
+        const router = createCategoryRouter(mockLogger, mockCategoriesData);
         app = TestExpressUtil.createTestApp(router, '/categories', testUserId);
     });
 

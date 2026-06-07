@@ -20,11 +20,11 @@ export function createFinanceModule(db: DatabaseClient, logger: AppLogger) {
     const transactionsData = new FinanceTransactionsData(drizzle);
 
     // Register routes
-    router.use('/data/accounts', createAccountRouter(accountData, balanceHistoryData, transactionsData, logger));
-    router.use('/data/transactions', createTransactionRouter(transactionsData, logger));
-    router.use('/data/budget-streams', createBudgetStreamRouter(budgetStreamData, logger));
-    router.use('/data/categories', createCategoryRouter(categoriesData, logger));
-    router.use('/data/institutions', createInstitutionRouter(institutionsData, logger));
+    router.use('/data/accounts', createAccountRouter(logger, accountData, balanceHistoryData, transactionsData));
+    router.use('/data/transactions', createTransactionRouter(logger, transactionsData));
+    router.use('/data/budget-streams', createBudgetStreamRouter(logger, budgetStreamData));
+    router.use('/data/categories', createCategoryRouter(logger, categoriesData));
+    router.use('/data/institutions', createInstitutionRouter(logger, institutionsData));
 
     return router;
 }

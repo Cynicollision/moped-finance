@@ -14,12 +14,7 @@ import { TransactionController, IFinanceTransactionsData } from './../transactio
 
 import { createAccountSchema, updateAccountSchema } from './account-schema';
 
-export function createAccountRouter(
-    accountData: IFinanceAccountData,
-    balanceHistoryData: IFinanceBalanceHistoryData,
-    transactionsData: IFinanceTransactionsData,
-    logger: AppLogger
-) {
+export function createAccountRouter(logger: AppLogger, accountData: IFinanceAccountData, balanceHistoryData: IFinanceBalanceHistoryData, transactionsData: IFinanceTransactionsData) {
     const router = Router();
     const controller = new AccountController(logger, accountData, balanceHistoryData);
     const transactionController = new TransactionController(logger, transactionsData);
@@ -98,6 +93,19 @@ export function createAccountRouter(
         handler.execute(req, res, 'getTransactions', (context) => {
             const options = getTransactionSearchOptions(req);
             return transactionController.getTransactions(context.userId!, options, req.params.id);
+        });
+    });
+
+    router.get('/:id/transactions/export', validator.id(), (req, res) => {
+        handler.execute(req, res, 'exportAccountTransactions', (context) => {
+            const format = req.query.format as string;
+            return transactionController.exportTransactions(context.userId!, { format, accountId: req.params.id });
+        });
+    });
+
+    router.post('/:id/sync', validator.id(), (req, res) => {
+        handler.execute(req, res, 'syncAccount', (context) => {
+            return controller.syncAccount(context.userId!, req.params.id);
         });
     });
 

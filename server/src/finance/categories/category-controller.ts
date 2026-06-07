@@ -3,17 +3,19 @@ import { FinanceEntityIdPrefix } from '@shared/finance/enum';
 import { Category } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { EntityIdUtil, ResultUtil } from '@core/utility';
-import { IFinanceCategoriesData } from './categories-data';
+import { IFinanceCategoriesData } from './category-data';
 
 export class CategoryController {
-    constructor(
-        private logger: AppLogger,
-        private categories: IFinanceCategoriesData
-    ) {
+    private readonly logger: AppLogger;
+    private readonly categories: IFinanceCategoriesData;
+
+    constructor(logger: AppLogger, categories: IFinanceCategoriesData) {
+        this.logger = logger;
+        this.categories = categories;
     }
 
-    public async getCategory(userId: string, id: string): Promise<OperationResult<Category>> {
-        const category = await this.categories.retrieveSingle(userId, id);
+    public async getCategory(userId: string, categoryId: string): Promise<OperationResult<Category>> {
+        const category = await this.categories.retrieveSingle(userId, categoryId);
         if (!category) {
             return ResultUtil.userError('Category not found or access denied');
         }
@@ -39,8 +41,8 @@ export class CategoryController {
         return ResultUtil.success(updated);
     }
 
-    public async deleteCategory(userId: string, id: string): Promise<OperationResult<void>> {
-        const deleted = await this.categories.delete(userId, id);
+    public async deleteCategory(userId: string, categoryId: string): Promise<OperationResult<void>> {
+        const deleted = await this.categories.delete(userId, categoryId);
         if (!deleted) {
             return ResultUtil.userError('Category not found or access denied');
         }

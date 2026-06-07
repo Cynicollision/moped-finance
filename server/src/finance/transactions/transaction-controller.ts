@@ -5,17 +5,19 @@ import { TransactionSearchOptions, SpendingStream } from '@shared/finance/contra
 import { Transaction } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@core/utility';
-import { IFinanceTransactionsData } from './transactions-data';
+import { IFinanceTransactionsData } from './transaction-data';
 
 export class TransactionController {
-    constructor(
-        private logger: AppLogger,
-        private transactions: IFinanceTransactionsData
-    ) {
+    private readonly logger: AppLogger;
+    private readonly transactions: IFinanceTransactionsData;
+
+    constructor(logger: AppLogger, transactions: IFinanceTransactionsData) {
+        this.logger = logger;
+        this.transactions = transactions;
     }
 
-    public async getTransaction(userId: string, id: string): Promise<OperationResult<Transaction>> {
-        const transaction = await this.transactions.retrieveSingle(userId, id);
+    public async getTransaction(userId: string, transactionId: string): Promise<OperationResult<Transaction>> {
+        const transaction = await this.transactions.retrieveSingle(userId, transactionId);
         if (!transaction) {
             return ResultUtil.userError('Transaction not found or access denied');
         }
@@ -44,8 +46,8 @@ export class TransactionController {
         return ResultUtil.success(updated);
     }
 
-    public async deleteTransaction(userId: string, id: string): Promise<OperationResult<void>> {
-        const deleted = await this.transactions.delete(userId, id);
+    public async deleteTransaction(userId: string, transactionId: string): Promise<OperationResult<void>> {
+        const deleted = await this.transactions.delete(userId, transactionId);
         if (!deleted) {
             return ResultUtil.userError('Transaction not found or access denied');
         }
@@ -56,5 +58,15 @@ export class TransactionController {
         const asOf = asOfDate ? DateTimeUtil.parse(asOfDate) : DateTimeUtil.now();
         const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
         return ResultUtil.success(await this.transactions.retrieveSpendingByCategory(userId, startDate, endDate));
+    }
+
+    public async exportTransactions(userId: string, options: { format?: string; startDate?: string; endDate?: string; accountId?: string }): Promise<OperationResult<any>> {
+        // TODO: implement export logic
+        return ResultUtil.success({ message: 'Export logic stub' });
+    }
+
+    public async importTransactions(userId: string, options: { dryRun?: boolean; body?: any }): Promise<OperationResult<any>> {
+        // TODO: implement import logic
+        return ResultUtil.success({ message: 'Import logic stub' });
     }
 }

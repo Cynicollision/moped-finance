@@ -28,7 +28,11 @@ function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
 }
 
 export class FinanceCategoriesData implements IFinanceCategoriesData {
-    constructor(private db: NodePgDatabase) { }
+    private readonly db: NodePgDatabase;
+
+    constructor(db: NodePgDatabase) {
+        this.db = db;
+    }
 
     public async retrieveAll(userId: string, activeOnly: boolean): Promise<Category[]> {
         const conditions = [
