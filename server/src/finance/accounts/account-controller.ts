@@ -1,8 +1,7 @@
 import { OperationResult } from '@shared/common/contracts';
-import { EntityIdPrefix } from '@shared/common/enum';
-import { GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions } from '@shared/finance/contracts';
 import { HistoryTimeframe } from '@shared/common/enum';
-import { ValueHistoryType } from '@shared/finance/enum';
+import { FinanceEntityIdPrefix, ValueHistoryType } from '@shared/finance/enum';
+import { GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions } from '@shared/finance/contracts';
 import { Account, BalanceHistory } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@core/utility';
@@ -30,7 +29,7 @@ export class AccountController {
     }
 
     public async createAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
-        account.id = EntityIdUtil.generate(EntityIdPrefix.FinanceAccount);
+        account.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Account);
         account.userId = userId;
 
         return ResultUtil.success(await this.accounts.create(userId, account));

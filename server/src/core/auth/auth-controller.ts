@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import { OperationResult } from '@shared/common/contracts/operation-result';
-import { EntityIdPrefix } from '@shared/common/enum';
+import { CoreEntityIdPrefix } from '@shared/common/enum';
 import { User } from '@shared/common/types/user';
 import { ICoreUserData } from '@core/data/user-data';
 import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@core/utility';
@@ -40,7 +40,7 @@ export class AuthController {
         const hash = await bcrypt.hash(password, this.saltRounds);
 
         const newUser: User = {
-            id: EntityIdUtil.generate(EntityIdPrefix.User),
+            id: EntityIdUtil.generate(CoreEntityIdPrefix.User),
             username,
             displayName: name,
             createdAt: DateTimeUtil.now(),

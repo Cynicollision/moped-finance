@@ -5,9 +5,9 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { CalendarPeriod } from '@shared/common/enum';
 import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
 import { Category, BudgetStream } from '@shared/finance/types';
+import { CalendarPeriod } from '@shared/common/enum';
 import { ModalService } from './../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
 import { FinanceBudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';
@@ -120,7 +120,7 @@ export class FinanceBudgetComponent implements OnInit {
         const groupB = catB?.group || '';
 
         // Sort by Reccurence first: Monthly, Quarterly, Yearly
-        const periodOrder = {
+        const periodOrder: Record<CalendarPeriod, number> = {
             [CalendarPeriod.Monthly]: 1,
             [CalendarPeriod.Quarterly]: 2,
             [CalendarPeriod.Yearly]: 3

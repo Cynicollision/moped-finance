@@ -1,5 +1,5 @@
 import { OperationResult } from '@shared/common/contracts';
-import { EntityIdPrefix } from '@shared/common/enum';
+import { FinanceEntityIdPrefix } from '@shared/finance/enum';
 import { Category } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { EntityIdUtil, ResultUtil } from '@core/utility';
@@ -25,7 +25,7 @@ export class CategoryController {
     }
 
     public async createCategory(userId: string, category: Category): Promise<OperationResult<Category>> {
-        category.id = EntityIdUtil.generate(EntityIdPrefix.FinanceCategory);
+        category.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Category);
         category.userId = userId;
 
         return ResultUtil.success(await this.categories.insert(userId, category));

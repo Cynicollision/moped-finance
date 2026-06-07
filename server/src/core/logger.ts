@@ -1,4 +1,4 @@
-import { EntityIdPrefix, LogLevel } from '@shared/common/enum';
+import { CoreEntityIdPrefix, LogLevel } from '@shared/common/enum';
 import { LogEntry } from '@shared/common/types';
 import { LogData, ILogData } from './data/log-data';
 import { IDatabaseClient } from './interfaces';
@@ -74,7 +74,7 @@ export class AppLogger {
 
     private createLogEntry(userId: string, context: string, level: LogLevel, message: string): LogEntry {
         return {
-            id: EntityIdUtil.generate(EntityIdPrefix.LogEntry),
+            id: EntityIdUtil.generate(CoreEntityIdPrefix.LogEntry),
             createdAt: DateTimeUtil.now(),
             updatedAt: DateTimeUtil.now(),
             userId,

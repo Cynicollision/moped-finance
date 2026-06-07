@@ -1,5 +1,5 @@
 import { OperationResult } from '@shared/common/contracts';
-import { EntityIdPrefix } from '@shared/common/enum';
+import { FinanceEntityIdPrefix } from '@shared/finance/enum';
 import { Institution } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { EntityIdUtil, ResultUtil } from '@core/utility';
@@ -25,7 +25,7 @@ export class InstitutionController {
     }
 
     public async createInstitution(userId: string, institution: Institution): Promise<OperationResult<Institution>> {
-        institution.id = EntityIdUtil.generate(EntityIdPrefix.FinanceInstitution);
+        institution.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Institution);
         institution.userId = userId;
 
         return ResultUtil.success(await this.institutions.insert(userId, institution));

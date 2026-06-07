@@ -1,7 +1,6 @@
 import { Router, Request } from 'express';
-import { SortDirection } from '@shared/common/enum';
+import { HistoryTimeframe, SortDirection } from '@shared/common/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
-import { HistoryTimeframe } from '@shared/common/enum';
 import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { ApiHandler } from '@core/api-handler';

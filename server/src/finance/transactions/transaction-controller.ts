@@ -1,7 +1,7 @@
 import { OperationResult } from '@shared/common/contracts';
-import { EntityIdPrefix } from '@shared/common/enum';
-import { TransactionSearchOptions, SpendingStream } from '@shared/finance/contracts';
 import { CalendarPeriod } from '@shared/common/enum';
+import { FinanceEntityIdPrefix } from '@shared/finance/enum';
+import { TransactionSearchOptions, SpendingStream } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { AppLogger } from '@core/logger';
 import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@core/utility';
@@ -23,7 +23,7 @@ export class TransactionController {
     }
 
     public async createTransaction(userId: string, transaction: Transaction): Promise<OperationResult<Transaction>> {
-        transaction.id = EntityIdUtil.generate(EntityIdPrefix.FinanceTransaction);
+        transaction.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Transaction);
         return ResultUtil.success(await this.transactions.insert(userId, transaction));
     }
 
