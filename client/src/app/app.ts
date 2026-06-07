@@ -22,14 +22,6 @@ interface NavItem {
     icon: string;
 }
 
-interface AppConfig {
-    id: string;
-    name: string;
-    icon: string;
-    defaultRoute: string;
-    navItems: NavItem[];
-}
-
 @Component({
     selector: 'app-root',
     standalone: true,
@@ -58,29 +50,13 @@ export class App implements OnInit {
     
     isDebugMode = Environment.isDebugMode;
 
-    apps: AppConfig[] = [
-        { id: 'home', name: 'Home', icon: 'home', defaultRoute: '/', navItems: [] },
-        { 
-            id: 'finance', name: 'Ledger', icon: 'attach_money', defaultRoute: '/finance', 
-            navItems: [
-                { label: 'Dashboard', route: '/finance/summary', icon: 'home' },
-                { label: 'Transactions', route: '/finance/transactions', icon: 'credit_card' },
-                { label: 'Cashflow', route: '/finance/cashflow', icon: 'bar_chart' },
-                { label: 'Budget', route: '/finance/budget', icon: 'pie_chart' }
-            ] 
-        },
-        { 
-            id: 'grounds', name: 'Grounds', icon: 'landscape', defaultRoute: '/grounds', 
-            navItems: [
-                { label: 'Summary', route: '/grounds/summary', icon: 'home' },
-                { label: 'Schedule', route: '/grounds/schedule', icon: 'event' },
-                { label: 'Plants', route: '/grounds/plants', icon: 'yard' },
-                { label: 'Products', route: '/grounds/products', icon: 'category' }
-            ] 
-        }
+    navItems: NavItem[] = [
+        { label: 'Dashboard', route: '/finance/summary', icon: 'home' },
+        { label: 'Transactions', route: '/finance/transactions', icon: 'credit_card' },
+        { label: 'Cashflow', route: '/finance/cashflow', icon: 'bar_chart' },
+        { label: 'Budget', route: '/finance/budget', icon: 'pie_chart' }
     ];
 
-    currentApp: AppConfig = this.apps[0];
     currentNavItem: NavItem | null = null;
 
     get debugDateLabel(): string {
@@ -113,15 +89,7 @@ export class App implements OnInit {
             filter(event => event instanceof NavigationEnd)
         ).subscribe((event: any) => {
             const url = event.urlAfterRedirects;
-            if (url.startsWith('/finance')) {
-                this.currentApp = this.apps.find(a => a.id === 'finance')!;
-            } else if (url.startsWith('/grounds')) {
-                this.currentApp = this.apps.find(a => a.id === 'grounds')!;
-            } else {
-                this.currentApp = this.apps.find(a => a.id === 'home')!;
-            }
-            
-            this.currentNavItem = this.currentApp.navItems.find(item => item.route === url) || null;
+            this.currentNavItem = this.navItems.find(item => item.route === url) || null;
         });
     }
 

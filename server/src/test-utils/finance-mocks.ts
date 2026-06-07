@@ -1,9 +1,8 @@
-import { IFinanceAccountData } from './../features/finance/data/account-data';
-import { IFinanceBalanceHistoryData } from './../features/finance/data/balance-history-data';
-import { IFinanceTransactionsData } from './../features/finance/data/transactions-data';
-import { IFinanceBudgetStreamData } from './../features/finance/data/budget-stream-data';
-import { IFinanceCategoriesData } from './../features/finance/data/categories-data';
-import { IFinanceInstitutionsData } from './../features/finance/data/institutions-data';
+import { IFinanceAccountData, IFinanceBalanceHistoryData } from './../finance/accounts';
+import { IFinanceBudgetStreamData } from './../finance/budget';
+import { IFinanceCategoriesData } from './../finance/categories';
+import { IFinanceInstitutionsData } from './../finance/institutions';
+import { IFinanceTransactionsData } from './../finance/transactions';
 
 export class FinanceMockUtil {
     public static createMockAccountData(): jest.Mocked<IFinanceAccountData> {
@@ -20,18 +19,6 @@ export class FinanceMockUtil {
         return {
             retrieveForAccount: jest.fn(),
             retrieveSumByDate: jest.fn()
-        };
-    }
-
-    public static createMockTransactionsData(): jest.Mocked<IFinanceTransactionsData> {
-        return {
-            retrieveSingle: jest.fn(),
-            search: jest.fn(),
-            retrieveMerchants: jest.fn(),
-            update: jest.fn(),
-            insert: jest.fn(),
-            delete: jest.fn(),
-            retrieveSpendingByCategory: jest.fn()
         };
     }
 
@@ -62,6 +49,18 @@ export class FinanceMockUtil {
             insert: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
+        };
+    }
+
+    public static createMockTransactionsData(): jest.Mocked<IFinanceTransactionsData> {
+        return {
+            retrieveSingle: jest.fn(),
+            search: jest.fn(),
+            retrieveMerchants: jest.fn(),
+            update: jest.fn(),
+            insert: jest.fn(),
+            delete: jest.fn(),
+            retrieveSpendingByCategory: jest.fn()
         };
     }
 }

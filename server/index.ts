@@ -5,11 +5,10 @@ import path from 'path';
 import { createAuthRouter } from '@core/auth/auth-routes';
 import { createAuthMiddleware } from '@core/auth/auth-middleware';
 import { CoreUserData } from '@core/data/user-data';
-import { GeminiGateway } from '@core/gateways/gemini-gateway';
 import { AppLogger } from '@core/logger';
 import { DatabaseClient } from '@core/db';
 import { ApiUtil } from '@core/utility';
-import { createApiRouter } from '@features/api-routes';
+import { createFinanceModule } from './src/finance';
 
 const app = express();
 
@@ -37,7 +36,7 @@ if (process.env.NODE_ENV === 'development') {
 const dbClient = new DatabaseClient();
 const logger = AppLogger.fromEnvironment(dbClient);
 const userData = new CoreUserData(dbClient);
-const llmGateway = GeminiGateway.fromEnvironment();
+
 
 // Auth routes
 const { resolveUser, requireAuth } = createAuthMiddleware(userData);
@@ -45,8 +44,8 @@ const authRoutes = createAuthRouter(userData, logger, requireAuth, resolveUser);
 app.use('/auth', authRoutes);
 
 // API routes
-const apiRouter = createApiRouter(dbClient, logger, llmGateway, resolveUser, requireAuth);
-app.use('/api', apiRouter);
+const apiRouter = createFinanceModule(dbClient, logger);
+app.use('/api', resolveUser, requireAuth, apiRouter);
 
 // Default 404 handler for unmatched API routes
 app.all('/api/*', (req: Request, res: Response) => {

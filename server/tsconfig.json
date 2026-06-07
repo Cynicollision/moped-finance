@@ -11,9 +11,7 @@
             "@core/*": [
                 "src/core/*"
             ],
-            "@features/*": [
-                "src/features/*"
-            ],
+
             "@test/*": [
                 "src/test-utils/*"
             ]

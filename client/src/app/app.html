@@ -4,26 +4,13 @@
         [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false">
 
         <div style="display: flex; flex-direction: column; height: 100%;">
-            <div *ngIf="authService.currentUser()" style="padding: 16px;">
-                <button mat-stroked-button [matMenuTriggerFor]="appMenu" style="width: 100%;">
-                    <span style="display: flex; align-items: center; width: 100%;">
-                        <mat-icon style="margin-right: 8px;">{{ currentApp.icon }}</mat-icon>
-                        <span>{{ currentApp.name }}</span>
-                        <span style="flex: 1 1 auto;"></span>
-                        <mat-icon>arrow_drop_down</mat-icon>
-                    </span>
-                </button>
-                <mat-menu #appMenu="matMenu" class="apps-menu">
-                    <a mat-menu-item *ngFor="let app of apps" [routerLink]="app.defaultRoute"
-                        (click)="drawer.mode === 'over' && drawer.close()">
-                        <mat-icon>{{ app.icon }}</mat-icon>
-                        <span>{{ app.name }}</span>
-                    </a>
-                </mat-menu>
+            <div *ngIf="authService.currentUser()" style="padding: 16px 24px; display: flex; align-items: center; gap: 8px;">
+                <mat-icon style="color: #3f51b5;">attach_money</mat-icon>
+                <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.5px; color: rgba(0, 0, 0, 0.87);">Ledger</span>
             </div>
 
             <mat-nav-list *ngIf="authService.currentUser()">
-                <a mat-list-item *ngFor="let item of currentApp.navItems" [routerLink]="item.route"
+                <a mat-list-item *ngFor="let item of navItems" [routerLink]="item.route"
                     routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}"
                     (click)="drawer.mode === 'over' && drawer.close()">
                     <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
