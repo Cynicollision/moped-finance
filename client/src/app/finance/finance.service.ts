@@ -18,6 +18,22 @@ export class FinanceService {
         return this.api.get<Institution[]>('api/data/institutions');
     }
 
+    fetchInstitution(id: string): Promise<Institution | undefined> {
+        return this.api.get<Institution>(`api/data/institutions/${id}`);
+    }
+
+    createInstitution(institution: Institution): Promise<Institution | undefined> {
+        return this.api.post<Institution>('api/data/institutions', institution);
+    }
+
+    saveInstitution(institution: Institution): Promise<Institution | undefined> {
+        return this.api.put<Institution>(`api/data/institutions/${institution.id}`, institution);
+    }
+
+    deleteInstitution(id: string): Promise<boolean> {
+        return this.api.delete(`api/data/institutions/${id}`);
+    }
+
     fetchCategories(activeOnly: boolean): Promise<Category[] | undefined> {
         return this.api.get<Category[]>(`api/data/categories?activeOnly=${activeOnly}`);
     }

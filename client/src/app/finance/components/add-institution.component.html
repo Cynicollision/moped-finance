@@ -1,0 +1,48 @@
+<div class="add-container">
+    <div class="breadcrumb-nav">
+        <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Add Institution</span>
+    </div>
+
+    <mat-card class="add-card">
+        <mat-card-header>
+            <mat-card-title>Add Institution</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+            @if (mode === 'selection') {
+            <div class="selection-mode">
+                <p class="description">How would you like to add this institution?</p>
+                <div class="options-container">
+                    <button mat-stroked-button class="option-btn" disabled>
+                        <mat-icon>link</mat-icon>
+                        <span>Connect to institution (Coming Soon)</span>
+                    </button>
+                    <button mat-stroked-button color="primary" class="option-btn" (click)="setMode('manual')">
+                        <mat-icon>edit</mat-icon>
+                        <span>Add manually</span>
+                    </button>
+                </div>
+            </div>
+            } @else if (mode === 'manual') {
+            <form [formGroup]="institutionForm" (ngSubmit)="onSubmit()" class="manual-form">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Institution Name</mat-label>
+                    <input matInput formControlName="name" placeholder="e.g. Chase Bank" autofocus>
+                    <mat-error *ngIf="institutionForm.get('name')?.hasError('required')">
+                        Name is required
+                    </mat-error>
+                </mat-form-field>
+
+                <div class="actions-row">
+                    <button mat-button type="button" (click)="setMode('selection')">Back</button>
+                    <span class="spacer"></span>
+                    <button mat-raised-button color="primary" type="submit" [disabled]="!institutionForm.valid">Save
+                        Institution</button>
+                </div>
+            </form>
+            }
+        </mat-card-content>
+    </mat-card>
+</div>

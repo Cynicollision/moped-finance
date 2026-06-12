@@ -1,90 +1,115 @@
-import { Component, Inject, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatCardModule } from '@angular/material/card';
 import { Account } from '@shared/finance/types';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
 import { ModalService } from './../../core/modal/modal.service';
+import { FinanceService } from '../finance.service';
 
 @Component({
-    selector: 'app-account-edit',
+    selector: 'app-edit-account',
     standalone: true,
     imports: [
         CommonModule,
         ReactiveFormsModule,
-        MatDialogModule,
         MatButtonModule,
         MatFormFieldModule,
         MatInputModule,
         MatSelectModule,
-        MatCheckboxModule
+        MatCheckboxModule,
+        MatCardModule,
+        RouterLink
     ],
-    templateUrl: './account-edit.component.html',
-    styleUrl: './account-edit.component.scss'
+    templateUrl: './edit-account.component.html',
+    styleUrl: './edit-account.component.scss'
 })
-export class FinanceAccountEditComponent {
+export class FinanceEditAccountComponent implements OnInit {
     private fb = inject(FormBuilder);
-    private dialogRef = inject(MatDialogRef<FinanceAccountEditComponent>);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
     private modalService = inject(ModalService);
+    private financeService = inject(FinanceService);
+    private cdr = inject(ChangeDetectorRef);
 
-    accountForm: FormGroup;
+    accountForm?: FormGroup;
     categories = Object.values(AccountCategory);
-
     groups: AccountGroup[] = [];
     types: AccountType[] = [];
 
-    constructor(@Inject(MAT_DIALOG_DATA) public data: { account: Account }) {
+    accountId?: string;
+    accountData?: Account;
+
+    async ngOnInit() {
+        this.accountId = this.route.snapshot.paramMap.get('accountId') || undefined;
+        if (this.accountId) {
+            this.accountData = await this.financeService.fetchAccount(this.accountId);
+            if (this.accountData) {
+                this.initForm(this.accountData);
+            } else {
+                this.router.navigate(['/']); // fallback if not found
+            }
+        }
+    }
+
+    private initForm(account: Account) {
+        // Initialize dropdowns based on initial data BEFORE form creation
+        // to prevent ExpressionChangedAfterItHasBeenCheckedError on the view bindings
+        this.updateAvailableGroups(account.category);
+        this.updateAvailableTypes(account.group);
+
         this.accountForm = this.fb.group({
-            name: [data.account.name, Validators.required],
-            category: [data.account.category, Validators.required],
-            group: [data.account.group, Validators.required],
-            type: [data.account.type, Validators.required],
-            isHidden: [data.account.isHidden],
-            isManual: [data.account.isManual],
-            isRetirement: [data.account.isRetirement],
-            hideFromCashflow: [data.account.hideFromCashflow],
-            balance: [{ value: data.account.balance, disabled: !data.account.isManual }, [Validators.required, Validators.pattern(/^-?\d+(\.\d{1,2})?$/)]]
+            name: [account.name, Validators.required],
+            category: [account.category, Validators.required],
+            group: [account.group, Validators.required],
+            type: [account.type, Validators.required],
+            isHidden: [account.isHidden],
+            isManual: [account.isManual],
+            isRetirement: [account.isRetirement],
+            hideFromCashflow: [account.hideFromCashflow],
+            balance: [{ value: account.balance, disabled: !account.isManual }, [Validators.required, Validators.pattern(/^-?\d+(\.\d{1,2})?$/)]]
         });
 
         this.accountForm.get('isManual')?.valueChanges.subscribe(isManual => {
-            const balanceControl = this.accountForm.get('balance');
+            const balanceControl = this.accountForm?.get('balance');
             if (isManual) {
                 balanceControl?.enable();
             }
             else {
                 balanceControl?.disable();
-                balanceControl?.setValue(this.data.account.balance); // reset to original value if disabled
+                if (this.accountData) {
+                    balanceControl?.setValue(this.accountData.balance); // reset to original value if disabled
+                }
             }
         });
 
         this.accountForm.get('category')?.valueChanges.subscribe(category => {
             this.updateAvailableGroups(category);
-            if (this.groups.length > 0 && !this.groups.includes(this.accountForm.get('group')?.value)) {
-                this.accountForm.get('group')?.setValue(this.groups[0]);
+            if (this.groups.length > 0 && !this.groups.includes(this.accountForm?.get('group')?.value)) {
+                this.accountForm?.get('group')?.setValue(this.groups[0]);
             }
             else if (this.groups.length === 0) {
-                this.accountForm.get('group')?.setValue(null);
+                this.accountForm?.get('group')?.setValue(null);
             }
         });
 
         this.accountForm.get('group')?.valueChanges.subscribe(group => {
             this.updateAvailableTypes(group);
-            if (this.types.length > 0 && !this.types.includes(this.accountForm.get('type')?.value)) {
-                this.accountForm.get('type')?.setValue(this.types[0]);
+            if (this.types.length > 0 && !this.types.includes(this.accountForm?.get('type')?.value)) {
+                this.accountForm?.get('type')?.setValue(this.types[0]);
             }
             else if (this.types.length === 0) {
-                this.accountForm.get('type')?.setValue(null);
+                this.accountForm?.get('type')?.setValue(null);
             }
         });
 
-        // Initialize dropdowns based on initial data
-        this.updateAvailableGroups(data.account.category);
-        this.updateAvailableTypes(data.account.group);
+        this.cdr.detectChanges();
     }
 
     private updateAvailableGroups(category: AccountCategory) {
@@ -121,18 +146,23 @@ export class FinanceAccountEditComponent {
         }
     }
 
-    onSave() {
-        if (this.accountForm.valid) {
+    async onSave() {
+        if (this.accountForm?.valid && this.accountData) {
             const updatedAccount: Account = {
-                ...this.data.account,
+                ...this.accountData,
                 ...this.accountForm.getRawValue(),
                 balance: parseFloat(this.accountForm.getRawValue().balance)
             };
-            this.dialogRef.close({ action: 'save', account: updatedAccount });
+            const result = await this.financeService.saveAccount(updatedAccount);
+            if (result) {
+                this.router.navigate(['/accounts', this.accountData.id]);
+            }
         }
     }
 
     async onDelete() {
+        if (!this.accountData) return;
+
         const confirmed = await this.modalService.confirm({
             title: 'Delete Account',
             message: 'Are you sure you want to delete this account? This action cannot be undone.',
@@ -141,11 +171,18 @@ export class FinanceAccountEditComponent {
         });
 
         if (confirmed) {
-            this.dialogRef.close({ action: 'delete' });
+            const success = await this.financeService.deleteAccount(this.accountData.id);
+            if (success) {
+                this.router.navigate(['/']); // go back to summary or institutions since account is deleted
+            }
         }
     }
 
     onCancel() {
-        this.dialogRef.close();
+        if (this.accountData) {
+            this.router.navigate(['/accounts', this.accountData.id]);
+        } else {
+            this.router.navigate(['/']);
+        }
     }
 }

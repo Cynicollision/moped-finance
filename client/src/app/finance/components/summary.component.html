@@ -135,11 +135,11 @@
     </mat-card>
 
     <!-- Assets Card -->
-    <mat-card appearance="outlined" class="summary-card">
-        <mat-card-header>
-            <mat-card-title>Assets</mat-card-title>
-            <mat-card-subtitle>Total: {{ summary().totalAssets | currency }}</mat-card-subtitle>
-        </mat-card-header>
+    <mat-card appearance="outlined" class="summary-card" style="overflow: hidden;">
+        <div class="group-header">
+            <span class="header-label">TOTAL ASSETS</span>
+            <span class="header-total">{{ summary().totalAssets | currency }}</span>
+        </div>
         <mat-card-content>
             <div class="row-item">
                 <span>Cash</span>
@@ -159,11 +159,11 @@
     </mat-card>
 
     <!-- Liabilities Card -->
-    <mat-card appearance="outlined" class="summary-card">
-        <mat-card-header>
-            <mat-card-title>Liabilities</mat-card-title>
-            <mat-card-subtitle>Total: {{ Math.abs(summary().totalLiabilities) | currency }}</mat-card-subtitle>
-        </mat-card-header>
+    <mat-card appearance="outlined" class="summary-card" style="overflow: hidden;">
+        <div class="group-header">
+            <span class="header-label">TOTAL LIABILITIES</span>
+            <span class="header-total">{{ Math.abs(summary().totalLiabilities) | currency }}</span>
+        </div>
         <mat-card-content>
             <div class="row-item">
                 <span>Credit Cards</span>

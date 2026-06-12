@@ -1,0 +1,87 @@
+<div class="add-container">
+    <div class="breadcrumb-nav">
+        <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Add Account</span>
+    </div>
+
+    <mat-card class="add-card">
+        <mat-card-header>
+            <mat-card-title>Add Account {{ institution ? 'to ' + institution.name : '' }}</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+            @if (mode === 'selection') {
+            <div class="selection-mode">
+                <p class="description">How would you like to add this account?</p>
+                <div class="options-container">
+                    <button mat-stroked-button class="option-btn" disabled>
+                        <mat-icon>link</mat-icon>
+                        <span>Connect via {{ institution?.name }} (Coming Soon)</span>
+                    </button>
+                    <button mat-stroked-button color="primary" class="option-btn" (click)="setMode('manual')">
+                        <mat-icon>edit</mat-icon>
+                        <span>Add manually</span>
+                    </button>
+                </div>
+            </div>
+            } @else if (mode === 'manual' && accountForm) {
+            <form [formGroup]="accountForm" (ngSubmit)="onSubmit()" class="manual-form">
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Account Name</mat-label>
+                    <input matInput formControlName="name" placeholder="e.g. Checking 1234" autofocus>
+                    <mat-error *ngIf="accountForm.get('name')?.hasError('required')">
+                        Name is required
+                    </mat-error>
+                </mat-form-field>
+
+                <div class="row">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Category</mat-label>
+                        <mat-select formControlName="category">
+                            <mat-option *ngFor="let cat of categories" [value]="cat">{{cat}}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Group</mat-label>
+                        <mat-select formControlName="group">
+                            <mat-option *ngFor="let grp of groups" [value]="grp">{{grp}}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Type</mat-label>
+                        <mat-select formControlName="type">
+                            <mat-option *ngFor="let typ of types" [value]="typ">{{typ}}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="toggles-grid">
+                    <mat-checkbox formControlName="isHidden">Hide Account</mat-checkbox>
+                    <mat-checkbox formControlName="isManual">Manual Account</mat-checkbox>
+                    <mat-checkbox formControlName="isRetirement">Retirement Account</mat-checkbox>
+                    <mat-checkbox formControlName="hideFromCashflow">Hide from Cashflow</mat-checkbox>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width" *ngIf="accountForm.get('isManual')?.value">
+                    <mat-label>Balance</mat-label>
+                    <input matInput formControlName="balance" type="number" step="0.01">
+                    <mat-error *ngIf="accountForm.get('balance')?.hasError('pattern')">
+                        Invalid decimal format
+                    </mat-error>
+                </mat-form-field>
+
+                <div class="actions-row">
+                    <button mat-button type="button" (click)="setMode('selection')">Back</button>
+                    <span class="spacer"></span>
+                    <button mat-raised-button color="primary" type="submit" [disabled]="!accountForm.valid">Save
+                        Account</button>
+                </div>
+            </form>
+            }
+        </mat-card-content>
+    </mat-card>
+</div>

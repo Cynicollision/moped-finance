@@ -5,20 +5,19 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { HistoryTimeframe } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { DateProviderService } from './../../core/date-provider.service';
-import { ModalService } from './../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
 import { FinanceValueHistoryComponent } from './value-history.component';
-import { FinanceAccountEditComponent } from './account-edit.component';
 
 @Component({
     selector: 'app-finance-accounts',
     standalone: true,
-    imports: [CommonModule, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule],
+    imports: [CommonModule, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule],
     templateUrl: './account-details.component.html',
     styleUrl: './account-details.component.scss'
 })
@@ -26,7 +25,6 @@ export class FinanceAccountDetailsComponent implements OnInit {
     private financeService = inject(FinanceService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private modalService = inject(ModalService);
     private dateProvider = inject(DateProviderService);
     protected readonly Math = Math;
 
@@ -142,31 +140,5 @@ export class FinanceAccountDetailsComponent implements OnInit {
 
     onRowClick(row: Transaction) {
         this.router.navigate(['/transactions', row.id]);
-    }
-
-    async onEditAccount() {
-        const currentAccount = this.account();
-        if (!currentAccount) return;
-
-        const result: any = await this.modalService.open(FinanceAccountEditComponent, {
-            account: currentAccount
-        });
-
-        if (!result) {
-            return;
-        }
-
-        if (result.action === 'save') {
-            const updatedAccount = await this.financeService.saveAccount(result.account);
-            if (updatedAccount) {
-                this.account.set(updatedAccount);
-            }
-        }
-        else if (result.action === 'delete') {
-            const success = await this.financeService.deleteAccount(currentAccount.id);
-            if (success) {
-                this.router.navigate(['/']);
-            }
-        }
     }
 }

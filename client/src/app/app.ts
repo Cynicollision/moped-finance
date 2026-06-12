@@ -51,10 +51,11 @@ export class App implements OnInit {
     isDebugMode = Environment.isDebugMode;
 
     navItems: NavItem[] = [
-        { label: 'Dashboard', route: '/summary', icon: 'home' },
+        { label: 'Accounts', route: '/summary', icon: 'account_balance_wallet' },
         { label: 'Transactions', route: '/transactions', icon: 'credit_card' },
         { label: 'Cashflow', route: '/cashflow', icon: 'bar_chart' },
-        { label: 'Budget', route: '/budget', icon: 'pie_chart' }
+        { label: 'Budget', route: '/budget', icon: 'pie_chart' },
+        { label: 'Institutions', route: '/institutions', icon: 'account_balance' }
     ];
 
     currentNavItem: NavItem | null = null;

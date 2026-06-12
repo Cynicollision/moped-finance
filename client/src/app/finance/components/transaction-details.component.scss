@@ -10,7 +10,7 @@
     text-decoration: none;
     color: var(--color-link);
     font-weight: 500;
-    
+
     &:hover {
         text-decoration: underline;
     }
@@ -40,10 +40,13 @@
 .details-form {
     display: flex;
     flex-direction: column;
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    padding: 2rem;
 
     .readonly-field {
         margin-bottom: 32px;
-        
+
         .label {
             font-size: 0.75rem;
             color: var(--text-muted);
@@ -52,7 +55,7 @@
             margin-bottom: 8px;
             font-weight: 500;
         }
-        
+
         .value {
             font-size: 1.1rem;
             color: var(--text-main);
@@ -61,6 +64,7 @@
 
         &.amount {
             margin-bottom: 40px;
+
             .value {
                 font-size: 2rem;
                 font-weight: 700;

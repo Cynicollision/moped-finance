@@ -1,0 +1,74 @@
+<div class="institutions-container">
+    <div class="header-section">
+        <div class="title-container hide-on-mobile">
+            <h1 class="desktop-page-title">Institutions</h1>
+        </div>
+        <div class="actions-container" style="flex: 1; display: flex; justify-content: flex-end;">
+            <button mat-flat-button color="primary" class="add-institution-btn hide-on-mobile"
+                [routerLink]="['/institutions/add']">
+                <mat-icon>add</mat-icon>
+                Add institution
+            </button>
+            <a class="show-on-mobile" [routerLink]="['/institutions/add']"
+                style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.1rem; font-weight: 500; color: var(--color-link); text-decoration: none; padding: 8px 0; width: 100%;">
+                <mat-icon>add</mat-icon>
+                Add institution
+            </a>
+        </div>
+    </div>
+
+    <div class="institution-list">
+        @for (group of institutionGroups(); track group.institution.id) {
+        <mat-card class="institution-card">
+            <mat-card-header class="institution-header">
+                <div mat-card-avatar class="institution-avatar">
+                    <mat-icon>account_balance</mat-icon>
+                </div>
+                <mat-card-title>{{ group.institution.name }}</mat-card-title>
+                <mat-card-subtitle>{{ group.accounts.length }} account{{ group.accounts.length === 1 ? '' : 's'
+                    }}</mat-card-subtitle>
+                <span class="spacer"></span>
+                <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
+                    <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                    <a mat-menu-item [routerLink]="['/institutions', group.institution.id, 'add-account']">
+                        <mat-icon>add</mat-icon>
+                        <span>Add account</span>
+                    </a>
+                </mat-menu>
+            </mat-card-header>
+
+            <mat-card-content class="accounts-content">
+                @if (group.accounts.length > 0) {
+                <div class="accounts-list">
+                    @for (account of group.accounts; track account.id) {
+                    <div class="account-row">
+                        <div class="account-info">
+                            <a [routerLink]="['/accounts', account.id]" class="account-name-link">{{ account.name }}</a>
+                            <span class="account-type">{{ account.type || account.group }}</span>
+                        </div>
+                        <div class="account-actions">
+                            <a mat-stroked-button [routerLink]="['/accounts', account.id]">View</a>
+                        </div>
+                    </div>
+                    }
+                </div>
+                } @else {
+                <div class="no-accounts">
+                    <p>No accounts found for this institution.</p>
+                </div>
+                }
+            </mat-card-content>
+        </mat-card>
+        }
+
+        @if (institutionGroups().length === 0) {
+        <div class="empty-state">
+            <p>You haven't added any institutions yet.</p>
+            <button mat-raised-button color="primary" [routerLink]="['/institutions/add']">Add your first
+                institution</button>
+        </div>
+        }
+    </div>
+</div>

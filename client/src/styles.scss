@@ -45,6 +45,46 @@ body {
 }
 
 /* You can add global styles to this file, and also import other style files */
+
+mat-card, 
+mat-card.mat-mdc-card, 
+mat-card.mat-mdc-card-outlined {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+table.mat-mdc-table {
+    background-color: var(--bg-card) !important;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+mat-card table.mat-mdc-table,
+mat-card.mat-mdc-card table.mat-mdc-table {
+    border: none;
+}
+
+.desktop-page-title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 500;
+}
+
+.hide-on-mobile {
+    @media (max-width: 768px) {
+        display: none !important;
+    }
+}
+
+.show-on-mobile {
+    display: none !important;
+
+    @media (max-width: 768px) {
+        display: inline-flex !important;
+    }
+}
+
 .amount-positive {
     color: var(--color-positive) !important;
 }
