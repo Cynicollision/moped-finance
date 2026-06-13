@@ -1,23 +1,26 @@
 import { Router, Request } from 'express';
-import { HistoryTimeframe, SortDirection } from '@shared/core/enum';
+import multer from 'multer';
+import { HistoryTimeframe, SortDirection, OperationStatus } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { ApiHandler } from '@server-core/api-handler';
 import { AppLogger } from '@server-core/logger';
-import { DateTimeUtil } from '@server-core/utility';
+import { DateTimeUtil, ApiUtil } from '@server-core/utility';
 import { RequestSchemaValidator } from '@server-core/validation';
+import { IFinanceCategoriesData } from './../categories/category-data';
+import { TransactionController, IFinanceTransactionsData } from './../transactions';
 import { AccountController } from './account-controller';
 import { IFinanceAccountData } from './account-data';
-import { IFinanceBalanceHistoryData } from './balance-history-data';
-import { TransactionController, IFinanceTransactionsData } from './../transactions';
-
 import { createAccountSchema, updateAccountSchema } from './account-schema';
+import { IFinanceBalanceHistoryData } from './balance-history-data';
 
-export function createAccountRouter(logger: AppLogger, accountData: IFinanceAccountData, balanceHistoryData: IFinanceBalanceHistoryData, transactionsData: IFinanceTransactionsData) {
+const upload = multer({ storage: multer.memoryStorage() });
+
+export function createAccountRouter(logger: AppLogger, accountData: IFinanceAccountData, balanceHistoryData: IFinanceBalanceHistoryData, categoriesData: IFinanceCategoriesData, transactionsData: IFinanceTransactionsData) {
     const router = Router();
     const controller = new AccountController(logger, accountData, balanceHistoryData);
-    const transactionController = new TransactionController(logger, transactionsData);
+    const transactionController = new TransactionController(logger, accountData, categoriesData, transactionsData);
     const handler = new ApiHandler(logger);
     const validator = new RequestSchemaValidator(logger, 'Account');
 
@@ -96,16 +99,38 @@ export function createAccountRouter(logger: AppLogger, accountData: IFinanceAcco
         });
     });
 
-    router.get('/:id/transactions/export', validator.id(), (req, res) => {
-        handler.execute(req, res, 'exportAccountTransactions', (context) => {
-            const format = req.query.format as string;
-            return transactionController.exportTransactions(context.userId!, { format, accountId: req.params.id });
-        });
-    });
-
     router.post('/:id/sync', validator.id(), (req, res) => {
         handler.execute(req, res, 'syncAccount', (context) => {
             return controller.syncAccount(context.userId!, req.params.id);
+        });
+    });
+
+    router.get('/:id/export-balances', validator.id(), async (req, res) => {
+        const userId = ApiUtil.getUserId(req);
+        logger.info(userId, 'exportBalanceHistory', 'Starting balance history export');
+        try {
+            const result = await controller.exportBalanceHistory(userId, req.params.id);
+
+            if (result.status === OperationStatus.Success) {
+                const timestamp = new Date().toISOString().substring(0, 10);
+                res.setHeader('Content-Type', 'text/csv');
+                res.attachment(`Balances_${timestamp}.csv`);
+                return res.send(result.data);
+            }
+            else {
+                return ApiUtil.sendResult(res, result);
+            }
+        }
+        catch (error: any) {
+            logger.error(userId, 'exportBalanceHistory', `Error: ${error.message || error}`);
+            return ApiUtil.internalError(res, error);
+        }
+    });
+
+    router.post('/:id/import-balances', validator.id(), upload.single('file'), (req, res) => {
+        handler.execute(req, res, 'importBalanceHistory', (context) => {
+            const dryRun = req.query.dryRun === 'true';
+            return controller.importBalanceHistory(context.userId!, req.params.id, req.file?.buffer, dryRun);
         });
     });
 
@@ -125,7 +150,8 @@ export function createAccountRouter(logger: AppLogger, accountData: IFinanceAcco
         if (typeof req.query.filters === 'string') {
             try {
                 filters = JSON.parse(req.query.filters);
-            } catch { /* ignore */ }
+            }
+            catch { /* ignore */ }
         }
 
         return {

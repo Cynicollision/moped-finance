@@ -22,6 +22,10 @@ export class DateTimeUtil {
         return this.parse(dateInput).toISOString();
     }
 
+    public static nowToISOString(): string {
+        return this.now().toISOString();
+    }
+
     public static getStartDateForTimeframe(timeframe: HistoryTimeframe, asOfDate: Date = new Date()): Date {
         const startDate = new Date(asOfDate.getTime());
 

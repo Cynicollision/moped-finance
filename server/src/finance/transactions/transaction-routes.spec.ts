@@ -9,11 +9,15 @@ import { TestExpressUtil } from '@server-core/utility/testing';
 import { FinanceMockUtil } from './../finance-mocks';
 
 import { IFinanceTransactionsData } from './transaction-data';
+import { IFinanceAccountData } from './../accounts/account-data';
+import { IFinanceCategoriesData } from './../categories/category-data';
 import { createTransactionRouter } from './transaction-routes';
 
 describe('Transaction Routes', () => {
     let app: express.Express;
     let mockTransactionsData: jest.Mocked<IFinanceTransactionsData>;
+    let mockAccountData: jest.Mocked<IFinanceAccountData>;
+    let mockCategoriesData: jest.Mocked<IFinanceCategoriesData>;
     let mockLogger: jest.Mocked<AppLogger>;
 
     const testUserId = 'test-user-id';
@@ -39,9 +43,11 @@ describe('Transaction Routes', () => {
 
     beforeEach(() => {
         mockTransactionsData = FinanceMockUtil.createMockTransactionsData();
+        mockAccountData = FinanceMockUtil.createMockAccountData();
+        mockCategoriesData = FinanceMockUtil.createMockCategoriesData();
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createTransactionRouter(mockLogger, mockTransactionsData);
+        const router = createTransactionRouter(mockLogger, mockAccountData, mockCategoriesData, mockTransactionsData);
         app = TestExpressUtil.createTestApp(router, '/transactions', testUserId);
     });
 
@@ -254,26 +260,68 @@ describe('Transaction Routes', () => {
     });
 
     describe('GET /export', () => {
-        xit('should return export stub success', async () => {
-            const response = await request(app)
-                .get('/transactions/export')
-                .query({ format: 'csv' });
+        it('should return a CSV file of exported transactions', async () => {
+            mockTransactionsData.exportSearch.mockResolvedValue([
+                { id: 'txn-1', date: '2026-06-06', accountName: 'Checking', merchant: 'Test Merchant', categoryName: 'Groceries', amount: 100, originalStatement: '', notes: '', isHidden: false }
+            ]);
+
+            const response = await request(app).get('/transactions/export');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.message).toContain('Export logic stub');
+            expect(response.header['content-type']).toContain('text/csv');
+            expect(response.text).toContain('Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden');
+            expect(response.text).toContain('txn-1');
         });
     });
 
     describe('POST /import', () => {
-        xit('should return import stub success', async () => {
+        it('should process a CSV file and return import statistics', async () => {
+            mockAccountData.retrieveAll.mockResolvedValue([{ id: 'acc-1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any]);
+            mockCategoriesData.retrieveAll.mockResolvedValue([{ id: 'cat-1', name: 'Groceries', class: 'Expense', group: 'Food', userId: testUserId, icon: 'apple', isActive: true, createdAt: new Date(), updatedAt: new Date() } as any]);
+            mockTransactionsData.insert.mockResolvedValue({} as any);
+
+            const csvContent = 'Date,Amount,Merchant,CategoryName,AccountName\n2026-06-06,100,Test,Groceries,Checking';
+
             const response = await request(app)
                 .post('/transactions/import')
-                .send({ transactions: [] });
+                .attach('file', Buffer.from(csvContent), 'import.csv');
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data.message).toContain('Import logic stub');
+            expect(response.body.data.created).toBe(1);
+        });
+
+        it('should perform a dry run without saving when dryRun=true', async () => {
+            mockAccountData.retrieveAll.mockResolvedValue([{ id: 'acc-1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any]);
+            mockCategoriesData.retrieveAll.mockResolvedValue([{ id: 'cat-1', name: 'Groceries', class: 'Expense', group: 'Food', userId: testUserId, icon: 'apple', isActive: true, createdAt: new Date(), updatedAt: new Date() } as any]);
+
+            const csvContent = 'Date,Amount,Merchant,CategoryName,AccountName\n2026-06-06,100,Test,Groceries,Checking';
+
+            const response = await request(app)
+                .post('/transactions/import?dryRun=true')
+                .attach('file', Buffer.from(csvContent), 'import.csv');
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.created).toBe(1);
+            expect(mockTransactionsData.insert).not.toHaveBeenCalled();
+            expect(mockTransactionsData.update).not.toHaveBeenCalled();
+        });
+
+        it('should fail validation when Category is missing or invalid', async () => {
+            mockAccountData.retrieveAll.mockResolvedValue([{ id: 'acc-1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any]);
+            mockCategoriesData.retrieveAll.mockResolvedValue([{ id: 'cat-1', name: 'Groceries', class: 'Expense', group: 'Food', userId: testUserId, icon: 'apple', isActive: true, createdAt: new Date(), updatedAt: new Date() } as any]);
+
+            const csvContent = 'Date,Amount,Merchant,CategoryName,AccountName\n2026-06-06,100,Test,InvalidCategory,Checking';
+
+            const response = await request(app)
+                .post('/transactions/import?dryRun=true')
+                .attach('file', Buffer.from(csvContent), 'import.csv');
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.failed.length).toBe(1);
+            expect(response.body.data.created).toBe(0);
         });
     });
 });

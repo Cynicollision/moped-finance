@@ -1,4 +1,4 @@
-import { eq, and, desc, sum, gte, lte } from 'drizzle-orm';
+import { eq, and, desc, sum, gte, lte, inArray } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
@@ -10,6 +10,9 @@ import { balanceHistorySchema } from './balance-history-schema';
 export interface IFinanceBalanceHistoryData {
     retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;
     retrieveSumByDate(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]>;
+    deleteRange(userId: string, accountId: string, startDate: string, endDate: string): Promise<boolean>;
+    insertBulk(userId: string, records: BalanceHistory[]): Promise<boolean>;
+    exportSearch(userId: string, accountId: string): Promise<any[]>;
 }
 
 export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
@@ -79,6 +82,59 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
             date: DateTimeUtil.parse(row.date),
             type,
             amount: Number(row.amount)
+        }));
+    }
+
+    public async deleteRange(userId: string, accountId: string, startDate: string, endDate: string): Promise<boolean> {
+        const userAccountsQuery = this.db.select({ id: accountSchema.id })
+            .from(accountSchema)
+            .where(eq(accountSchema.userId, userId));
+
+        await this.db.delete(balanceHistorySchema)
+            .where(and(
+                eq(balanceHistorySchema.accountId, accountId),
+                inArray(balanceHistorySchema.accountId, userAccountsQuery),
+                gte(balanceHistorySchema.date, DateTimeUtil.toDateString(startDate)),
+                lte(balanceHistorySchema.date, DateTimeUtil.toDateString(endDate))
+            ));
+
+        return true;
+    }
+
+    public async insertBulk(userId: string, records: BalanceHistory[]): Promise<boolean> {
+        if (records.length === 0) return true;
+
+        const values = records.map(r => ({
+            id: r.id,
+            accountId: r.accountId,
+            date: DateTimeUtil.toDateString(r.date),
+            balance: r.balance.toString(),
+            createdAt: r.createdAt,
+            updatedAt: r.updatedAt
+        }));
+
+        await this.db.insert(balanceHistorySchema).values(values);
+        return true;
+    }
+
+    public async exportSearch(userId: string, accountId: string): Promise<any[]> {
+        const rows = await this.db.select({
+            date: balanceHistorySchema.date,
+            accountName: accountSchema.name,
+            balance: balanceHistorySchema.balance
+        })
+            .from(balanceHistorySchema)
+            .innerJoin(accountSchema, eq(accountSchema.id, balanceHistorySchema.accountId))
+            .where(and(
+                eq(accountSchema.userId, userId),
+                eq(balanceHistorySchema.accountId, accountId)
+            ))
+            .orderBy(desc(balanceHistorySchema.date));
+
+        return rows.map(row => ({
+            Date: row.date,
+            AccountName: row.accountName,
+            Balance: Number(row.balance)
         }));
     }
 }

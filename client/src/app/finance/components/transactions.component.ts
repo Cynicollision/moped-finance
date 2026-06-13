@@ -1,6 +1,6 @@
 import { Component, ViewChild, AfterViewInit, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -12,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { startWith, map } from 'rxjs';
 import { SortDirection } from '@shared/core/enum';
@@ -37,7 +38,9 @@ import { FinanceService } from './../finance.service';
         MatDatepickerModule,
         MatNativeDateModule,
         MatAutocompleteModule,
-        MatSelectModule
+        MatSelectModule,
+        RouterModule,
+        MatMenuModule
     ],
     templateUrl: './transactions.component.html',
     styleUrl: './transactions.component.scss'
@@ -283,5 +286,12 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             group: ''
         });
         this.loadData(true);
+    }
+
+    downloadTransactions() {
+        const formValues = this.filterForm.value;
+        const accountId = formValues.account || undefined;
+        const url = this.financeService.getExportTransactionsUrl(accountId);
+        window.open(url, '_blank');
     }
 }

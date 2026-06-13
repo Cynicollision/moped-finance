@@ -141,4 +141,20 @@ export class FinanceAccountDetailsComponent implements OnInit {
     onRowClick(row: Transaction) {
         this.router.navigate(['/transactions', row.id]);
     }
+
+    downloadTransactions() {
+        const accountId = this.account()?.id;
+        if (accountId) {
+            const url = this.financeService.getExportTransactionsUrl(accountId);
+            window.open(url, '_blank');
+        }
+    }
+
+    downloadBalanceHistory() {
+        const accountId = this.account()?.id;
+        if (accountId) {
+            const url = this.financeService.getExportBalanceHistoryUrl(accountId);
+            window.open(url, '_blank');
+        }
+    }
 }

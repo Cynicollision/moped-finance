@@ -18,7 +18,10 @@ export class FinanceMockUtil {
     public static createMockBalanceHistoryData(): jest.Mocked<IFinanceBalanceHistoryData> {
         return {
             retrieveForAccount: jest.fn(),
-            retrieveSumByDate: jest.fn()
+            retrieveSumByDate: jest.fn(),
+            deleteRange: jest.fn(),
+            insertBulk: jest.fn(),
+            exportSearch: jest.fn()
         };
     }
 
@@ -56,6 +59,7 @@ export class FinanceMockUtil {
         return {
             retrieveSingle: jest.fn(),
             search: jest.fn(),
+            exportSearch: jest.fn(),
             retrieveMerchants: jest.fn(),
             update: jest.fn(),
             insert: jest.fn(),

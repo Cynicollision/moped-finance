@@ -1,0 +1,59 @@
+<div class="import-container details-container">
+    <div class="breadcrumb-nav">
+        <a [routerLink]="['/']" class="breadcrumb-link">Accounts</a>
+        <span class="breadcrumb-separator">/</span>
+        <a *ngIf="account()" [routerLink]="['/accounts', account()?.id]" class="breadcrumb-link">{{ account()?.name
+            }}</a>
+        <span *ngIf="account()" class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Import Transactions</span>
+    </div>
+
+    <mat-card appearance="outlined" class="import-card">
+        <mat-card-header>
+            <mat-card-title>Import Transactions</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <p class="mt-16">Select a CSV file containing your transactions. The file must have columns like <strong>Id,
+                    Date, AccountName, Merchant, CategoryName, Amount, Notes</strong>.</p>
+
+            <div class="file-upload-section">
+                <input type="file" #fileInput (change)="onFileSelected($event)" accept=".csv" class="hidden-input">
+                <button mat-stroked-button (click)="fileInput.click()" [disabled]="isProcessing()">
+                    <mat-icon>attach_file</mat-icon>
+                    Choose CSV File
+                </button>
+                <span class="file-name" *ngIf="selectedFile()">{{ selectedFile()?.name }}</span>
+            </div>
+
+            <div class="dry-run-results" *ngIf="dryRunResults()">
+                <h3 class="mt-0">Confirm Import</h3>
+                <p>Please review the validated results before finalizing the import.</p>
+                <ul>
+                    <li>Created Records: {{ dryRunResults()?.created || 0 }}</li>
+                    <li>Updated Records: {{ dryRunResults()?.updated || 0 }}</li>
+                    <li>Failed Records: {{ dryRunResults()?.failed?.length || 0 }}</li>
+                </ul>
+
+                <div *ngIf="dryRunResults()?.failed?.length > 0" class="error-list">
+                    <strong>Errors:</strong>
+                    <ul>
+                        <li *ngFor="let failure of dryRunResults()?.failed" class="error-item">
+                            {{ failure.error }} (Row context available in console)
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="actions mt-24">
+                    <button mat-raised-button color="primary" (click)="confirmImport()"
+                        [disabled]="isProcessing()">Confirm Import</button>
+                    <button mat-button (click)="cancelImport()" [disabled]="isProcessing()">Cancel</button>
+                </div>
+            </div>
+
+            <div class="actions mt-24" *ngIf="!dryRunResults()">
+                <button mat-raised-button color="primary" (click)="validateImport()"
+                    [disabled]="!selectedFile() || isProcessing()">Validate Import</button>
+            </div>
+        </mat-card-content>
+    </mat-card>
+</div>

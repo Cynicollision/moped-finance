@@ -11,12 +11,14 @@ import { IFinanceAccountData } from './account-data';
 import { createAccountRouter } from './account-routes';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 import { IFinanceTransactionsData } from './../transactions';
+import { IFinanceCategoriesData } from './../categories/category-data';
 
 describe('Account Routes', () => {
     let app: express.Express;
     let mockAccountData: jest.Mocked<IFinanceAccountData>;
     let mockBalanceHistoryData: jest.Mocked<IFinanceBalanceHistoryData>;
     let mockTransactionsData: jest.Mocked<IFinanceTransactionsData>;
+    let mockCategoriesData: jest.Mocked<IFinanceCategoriesData>;
     let mockLogger: jest.Mocked<AppLogger>;
 
     const testUserId = 'test-user-id';
@@ -46,8 +48,9 @@ describe('Account Routes', () => {
         mockBalanceHistoryData = FinanceMockUtil.createMockBalanceHistoryData();
         mockTransactionsData = FinanceMockUtil.createMockTransactionsData();
         mockLogger = TestExpressUtil.createMockLogger();
+        mockCategoriesData = FinanceMockUtil.createMockCategoriesData();
 
-        const router = createAccountRouter(mockLogger, mockAccountData, mockBalanceHistoryData, mockTransactionsData);
+        const router = createAccountRouter(mockLogger, mockAccountData, mockBalanceHistoryData, mockCategoriesData, mockTransactionsData);
         app = TestExpressUtil.createTestApp(router, '/accounts', testUserId);
     });
 
@@ -81,7 +84,7 @@ describe('Account Routes', () => {
     describe('GET /accounts/total-value-history', () => {
         it('should return total value history with specific options', async () => {
             const mockSumHistory = [
-                { balance: 2500.00, date: DateTimeUtil.toISOString(DateTimeUtil.now()) }
+                { balance: 2500.00, date: DateTimeUtil.nowToISOString() }
             ];
             mockBalanceHistoryData.retrieveSumByDate.mockResolvedValue(mockSumHistory as any);
 
@@ -264,7 +267,7 @@ describe('Account Routes', () => {
     describe('GET /accounts/:accountId/balance-history', () => {
         it('should return balance history for an account with default timeframe', async () => {
             const mockHistory = [
-                { id: 'h1', accountId: 'acc1', balance: 500.00, date: DateTimeUtil.toISOString(DateTimeUtil.now()) }
+                { id: 'h1', accountId: 'acc1', balance: 500.00, date: DateTimeUtil.nowToISOString() }
             ];
             mockBalanceHistoryData.retrieveForAccount.mockResolvedValue(mockHistory as any);
 
@@ -304,7 +307,7 @@ describe('Account Routes', () => {
     describe('GET /accounts/:accountId/transactions', () => {
         it('should return transactions for an account with default options', async () => {
             const mockTransactions = [
-                { id: 't1', amount: 50.00, date: DateTimeUtil.toISOString(DateTimeUtil.now()), merchant: 'Store' }
+                { id: 't1', amount: 50.00, date: DateTimeUtil.nowToISOString(), merchant: 'Store' }
             ];
             mockTransactionsData.search.mockResolvedValue(mockTransactions as any);
 
@@ -354,20 +357,71 @@ describe('Account Routes', () => {
         });
     });
 
-    describe('GET /accounts/:accountId/transactions/export', () => {
-        xit('should return export stub success', async () => {
+    describe('GET /:accountId/export-balances', () => {
+        it('should return a CSV file of exported balances', async () => {
+            mockBalanceHistoryData.exportSearch.mockResolvedValue([
+                { Date: '2026-06-06', AccountName: 'Checking', Balance: 100 }
+            ]);
+
+            const response = await request(app).get('/accounts/acc1/export-balances');
+
+            expect(response.status).toBe(200);
+            expect(response.header['content-type']).toContain('text/csv');
+            expect(response.text).toContain('Date,AccountName,Balance');
+            expect(response.text).toContain('2026-06-06');
+        });
+    });
+
+    describe('POST /:accountId/import-balances', () => {
+        it('should process a CSV file and return import statistics', async () => {
+            mockAccountData.retrieveSingle.mockResolvedValue({ id: 'acc1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any);
+            mockBalanceHistoryData.insertBulk.mockResolvedValue(true);
+
+            const csvContent = 'Date,Balance,AccountName\n2026-06-06,100,Checking';
+
             const response = await request(app)
-                .get('/accounts/acc1/transactions/export')
-                .query({ format: 'csv' });
+                .post('/accounts/acc1/import-balances')
+                .attach('file', Buffer.from(csvContent), 'import.csv');
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data.message).toContain('Export logic stub');
+            expect(response.body.data.created).toBe(1);
+        });
+
+        it('should perform a dry run without saving when dryRun=true', async () => {
+            mockAccountData.retrieveSingle.mockResolvedValue({ id: 'acc1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any);
+
+            const csvContent = 'Date,Balance,AccountName\n2026-06-06,100,Checking\n2026-06-07,150,Checking';
+
+            const response = await request(app)
+                .post('/accounts/acc1/import-balances?dryRun=true')
+                .attach('file', Buffer.from(csvContent), 'import.csv');
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.created).toBe(2);
+            expect(mockBalanceHistoryData.insertBulk).not.toHaveBeenCalled();
+            expect(mockBalanceHistoryData.deleteRange).not.toHaveBeenCalled();
+        });
+
+        it('should fail validation when Date or Balance are missing', async () => {
+            mockAccountData.retrieveSingle.mockResolvedValue({ id: 'acc1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any);
+
+            const csvContent = 'Date,Balance,AccountName\n,100,Checking\n2026-06-06,,Checking';
+
+            const response = await request(app)
+                .post('/accounts/acc1/import-balances?dryRun=true')
+                .attach('file', Buffer.from(csvContent), 'import.csv');
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.failed.length).toBe(2);
+            expect(response.body.data.created).toBe(0);
         });
     });
 
     describe('POST /accounts/:accountId/sync', () => {
-        xit('should return sync stub success', async () => {
+        it('should return sync stub success', async () => {
             const response = await request(app)
                 .post('/accounts/acc1/sync');
 

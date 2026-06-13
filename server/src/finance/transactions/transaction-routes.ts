@@ -1,18 +1,24 @@
 import { Router, Request } from 'express';
-import { CalendarPeriod, SortDirection } from '@shared/core/enum';
+import multer from 'multer';
+import { CalendarPeriod, SortDirection, OperationStatus } from '@shared/core/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { ApiHandler } from '@server-core/api-handler';
+import { ApiUtil, DateTimeUtil } from '@server-core/utility';
 import { AppLogger } from '@server-core/logger';
 import { RequestSchemaValidator } from '@server-core/validation';
+import { IFinanceAccountData } from './../accounts/account-data';
+import { IFinanceCategoriesData } from './../categories/category-data';
 import { TransactionController } from './transaction-controller';
 import { IFinanceTransactionsData } from './transaction-data';
 import { createTransactionSchema, updateTransactionSchema } from './transaction-schema';
 
-export function createTransactionRouter(logger: AppLogger, transactionsData: IFinanceTransactionsData) {
+const upload = multer({ storage: multer.memoryStorage() });
+
+export function createTransactionRouter(logger: AppLogger, accountData: IFinanceAccountData, categoriesData: IFinanceCategoriesData, transactionsData: IFinanceTransactionsData) {
     const router = Router();
-    const controller = new TransactionController(logger, transactionsData);
+    const controller = new TransactionController(logger, accountData, categoriesData, transactionsData);
     const handler = new ApiHandler(logger);
     const validator = new RequestSchemaValidator(logger, 'Transaction');
 
@@ -44,19 +50,35 @@ export function createTransactionRouter(logger: AppLogger, transactionsData: IFi
         });
     });
 
-    router.get('/export', (req, res) => {
-        handler.execute(req, res, 'exportTransactions', (context) => {
-            const format = req.query.format as string;
-            const startDate = req.query.startDate as string;
-            const endDate = req.query.endDate as string;
-            return controller.exportTransactions(context.userId!, { format, startDate, endDate });
-        });
+    router.get('/export', async (req, res) => {
+        const userId = ApiUtil.getUserId(req);
+        logger.info(userId, 'exportTransactions', 'Starting export transactions');
+        try {
+            const accountId = req.query.accountId as string;
+
+            const result = await controller.exportTransactions(userId, accountId);
+
+            if (result.status === OperationStatus.Success) {
+                const timestamp = DateTimeUtil.nowToISOString().substring(0, 19).replace('T', '_').replace(/:/g, '-');
+                res.setHeader('Content-Type', 'text/csv');
+                res.attachment(`Transactions_${timestamp}.csv`);
+                return res.send(result.data);
+            }
+            else {
+                return ApiUtil.sendResult(res, result);
+            }
+        }
+        catch (error: any) {
+            logger.error(userId, 'exportTransactions', `Error: ${error.message || error}`);
+            return ApiUtil.internalError(res, error);
+        }
     });
 
-    router.post('/import', (req, res) => {
+    router.post('/import', upload.single('file'), (req, res) => {
         handler.execute(req, res, 'importTransactions', (context) => {
             const dryRun = req.query.dryRun === 'true';
-            return controller.importTransactions(context.userId!, { dryRun, body: req.body });
+            const accountId = req.query.accountId as string;
+            return controller.importTransactions(context.userId!, req.file?.buffer, dryRun, accountId);
         });
     });
 
@@ -96,7 +118,8 @@ export function createTransactionRouter(logger: AppLogger, transactionsData: IFi
         if (typeof req.query.filters === 'string') {
             try {
                 filters = JSON.parse(req.query.filters);
-            } catch { /* ignore */ }
+            }
+            catch { /* ignore */ }
         }
 
         return {

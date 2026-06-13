@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TransactionSearchOptions } from '@shared/finance/contracts';
 import { CalendarPeriod, HistoryTimeframe } from '@shared/core/enum';
+import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TransactionSearchOptions } from '@shared/finance/contracts';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../core/api.service';
@@ -64,6 +64,14 @@ export class FinanceService {
         return this.api.get<BalanceHistory[]>(url);
     }
 
+    importBalanceHistory(accountId: string, formData: FormData, dryRun: boolean): Promise<any> {
+        return this.api.post(`api/data/accounts/${accountId}/import-balances?dryRun=${dryRun}`, formData);
+    }
+
+    getExportBalanceHistoryUrl(accountId: string): string {
+        return `/api/data/accounts/${accountId}/export-balances`;
+    }
+
     fetchTotalValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<TotalValueHistory[] | undefined> {
         const asOfDate = this.dateProvider.now().toISOString().split('T')[0];
         const url = `api/data/accounts/total-value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
@@ -95,6 +103,26 @@ export class FinanceService {
 
     saveTransaction(transaction: Transaction): Promise<Transaction | undefined> {
         return this.api.put<Transaction>(`api/data/transactions/${transaction.id}`, transaction);
+    }
+
+    createTransaction(transaction: Transaction): Promise<Transaction | undefined> {
+        return this.api.post<Transaction>('api/data/transactions', transaction);
+    }
+
+    importTransactions(formData: FormData, dryRun: boolean, accountId?: string | null): Promise<any> {
+        let url = `api/data/transactions/import?dryRun=${dryRun}`;
+        if (accountId) {
+            url += `&accountId=${accountId}`;
+        }
+        return this.api.post(url, formData);
+    }
+
+    getExportTransactionsUrl(accountId?: string): string {
+        let url = `/api/data/transactions/export`;
+        if (accountId) {
+            url += `?accountId=${accountId}`;
+        }
+        return url;
     }
 
     deleteTransaction(id: string): Promise<boolean> {

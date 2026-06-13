@@ -1,6 +1,24 @@
 <div class="container">
-    <div class="header-section hide-on-mobile" style="margin-bottom: 24px;">
-        <h1 class="desktop-page-title">Transactions</h1>
+    <div class="header-section hide-on-mobile" style="margin-bottom: 24px; display: flex; align-items: center;">
+        <h1 class="desktop-page-title" style="margin: 0;">Transactions</h1>
+        <span class="spacer" style="flex: 1 1 auto;"></span>
+        <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
+            <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+            <a mat-menu-item [routerLink]="['/transactions/new']">
+                <mat-icon>add</mat-icon>
+                <span>Add Transaction</span>
+            </a>
+            <a mat-menu-item [routerLink]="['/transactions/import']">
+                <mat-icon>file_upload</mat-icon>
+                <span>Import Transactions</span>
+            </a>
+            <button mat-menu-item (click)="downloadTransactions()">
+                <mat-icon>file_download</mat-icon>
+                <span>Download Transactions</span>
+            </button>
+        </mat-menu>
     </div>
     <mat-accordion>
         <mat-expansion-panel>

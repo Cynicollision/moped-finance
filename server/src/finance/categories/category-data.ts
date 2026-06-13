@@ -7,7 +7,7 @@ import { DateTimeUtil } from '@server-core/utility';
 import { categorySchema } from './category-schema';
 
 export interface IFinanceCategoriesData extends IOwnedResourceData<Category> {
-    retrieveAll(userId: string, activeOnly: boolean): Promise<Category[]>;
+    retrieveAll(userId: string, activeOnly?: boolean): Promise<Category[]>;
     delete(userId: string, id: string): Promise<boolean>;
     insert(userId: string, category: Category): Promise<Category>;
     update(userId: string, category: Category): Promise<Category | null>;
@@ -34,7 +34,7 @@ export class FinanceCategoriesData implements IFinanceCategoriesData {
         this.db = db;
     }
 
-    public async retrieveAll(userId: string, activeOnly: boolean): Promise<Category[]> {
+    public async retrieveAll(userId: string, activeOnly?: boolean): Promise<Category[]> {
         const conditions = [
             eq(categorySchema.userId, userId)
         ];

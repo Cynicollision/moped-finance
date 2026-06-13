@@ -12,6 +12,9 @@ import { FinanceInstitutionsComponent } from './finance/components/institutions.
 import { FinanceAddInstitutionComponent } from './finance/components/add-institution.component';
 import { FinanceAddAccountComponent } from './finance/components/add-account.component';
 import { FinanceEditAccountComponent } from './finance/components/edit-account.component';
+import { AddTransactionComponent } from './finance/components/add-transaction.component';
+import { ImportTransactionsComponent } from './finance/components/import-transactions.component';
+import { BalanceImportComponent } from './finance/components/balance-import.component';
 
 export const routes: Routes = [
     {
@@ -30,13 +33,16 @@ export const routes: Routes = [
             { path: 'summary', component: FinanceSummaryComponent, title: 'Dashboard' },
             { path: 'accounts/:accountId', component: FinanceAccountDetailsComponent, title: 'Account Details' },
             { path: 'transactions', component: FinanceTransactionsComponent, title: 'Transactions' },
+            { path: 'transactions/new', component: AddTransactionComponent, title: 'Add Transaction' },
+            { path: 'transactions/import', component: ImportTransactionsComponent, title: 'Import Transactions' },
             { path: 'transactions/:transactionId', component: FinanceTransactionDetailsComponent, title: 'Transaction Details' },
             { path: 'cashflow', component: FinanceCashflowComponent, title: 'Cashflow' },
             { path: 'budget', component: FinanceBudgetComponent, title: 'Budget' },
             { path: 'institutions', component: FinanceInstitutionsComponent, title: 'Institutions' },
             { path: 'institutions/add', component: FinanceAddInstitutionComponent, title: 'Add Institution' },
             { path: 'institutions/:id/add-account', component: FinanceAddAccountComponent, title: 'Add Account' },
-            { path: 'accounts/:accountId/edit', component: FinanceEditAccountComponent, title: 'Edit Account' }
+            { path: 'accounts/:accountId/edit', component: FinanceEditAccountComponent, title: 'Edit Account' },
+            { path: 'accounts/:accountId/import-balances', component: BalanceImportComponent, title: 'Import Balance History' }
         ]
     },
     {

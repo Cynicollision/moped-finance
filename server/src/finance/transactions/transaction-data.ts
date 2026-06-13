@@ -12,6 +12,7 @@ import { transactionSchema } from './transaction-schema';
 
 export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction> {
     search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
+    exportSearch(userId: string, accountId?: string): Promise<any[]>;
     retrieveMerchants(userId: string): Promise<string[]>;
     retrieveSpendingByCategory(userId: string, startDate: Date, endDate: Date): Promise<SpendingStream[]>;
     retrieveSingle(userId: string, id: string): Promise<Transaction | null>;
@@ -43,6 +44,45 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
 
     constructor(db: NodePgDatabase) {
         this.db = db;
+    }
+
+    public async exportSearch(userId: string, accountId?: string): Promise<any[]> {
+        const conditions = [
+            eq(accountSchema.userId, userId)
+        ];
+
+        if (accountId) {
+            conditions.push(eq(accountSchema.id, accountId));
+        }
+
+        const rows = await this.db.select({
+            id: transactionSchema.id,
+            date: transactionSchema.date,
+            accountName: accountSchema.name,
+            merchant: transactionSchema.merchant,
+            categoryName: categorySchema.name,
+            amount: transactionSchema.amount,
+            originalStatement: transactionSchema.originalStatement,
+            notes: transactionSchema.notes,
+            isHidden: transactionSchema.isHidden
+        })
+            .from(transactionSchema)
+            .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
+            .leftJoin(categorySchema, eq(categorySchema.id, transactionSchema.categoryId))
+            .where(and(...conditions))
+            .orderBy(asc(transactionSchema.date), asc(transactionSchema.id));
+
+        return rows.map(row => ({
+            id: row.id,
+            date: DateTimeUtil.toISOString(row.date),
+            accountName: row.accountName,
+            merchant: row.merchant,
+            categoryName: row.categoryName ?? '',
+            amount: Number(row.amount),
+            originalStatement: row.originalStatement ?? '',
+            notes: row.notes ?? '',
+            isHidden: row.isHidden
+        }));
     }
 
     public async search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]> {
@@ -193,11 +233,11 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
                 date: DateTimeUtil.toDateString(transaction.date),
                 amount: transaction.amount.toString(),
                 merchant: transaction.merchant,
-                originalStatement: transaction.originalStatement,
-                notes: transaction.notes,
+                originalStatement: transaction.originalStatement || null,
+                notes: transaction.notes || null,
                 isHidden: transaction.isHidden,
                 isSplit: transaction.isSplit,
-                splitParentId: transaction.splitParentId
+                splitParentId: transaction.splitParentId || null
             })
             .returning();
 
@@ -213,8 +253,10 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
             .set({
                 merchant: transaction.merchant,
                 categoryId: transaction.categoryId,
+                amount: transaction.amount.toString(),
                 date: DateTimeUtil.toDateString(transaction.date),
-                notes: transaction.notes,
+                originalStatement: transaction.originalStatement || null,
+                notes: transaction.notes || null,
                 isHidden: transaction.isHidden,
                 updatedAt: DateTimeUtil.now()
             })

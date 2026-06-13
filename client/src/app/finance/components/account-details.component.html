@@ -13,6 +13,22 @@
                 <mat-icon>edit</mat-icon>
                 <span>Edit</span>
             </a>
+            <a mat-menu-item [routerLink]="['/accounts', account()?.id, 'import-balances']">
+                <mat-icon>upload_file</mat-icon>
+                <span>Import Balance History</span>
+            </a>
+            <button mat-menu-item (click)="downloadBalanceHistory()">
+                <mat-icon>download</mat-icon>
+                <span>Download Balance History</span>
+            </button>
+            <a mat-menu-item [routerLink]="['/transactions/import']" [queryParams]="{ accountId: account()?.id }">
+                <mat-icon>file_upload</mat-icon>
+                <span>Import Transactions</span>
+            </a>
+            <button mat-menu-item (click)="downloadTransactions()">
+                <mat-icon>file_download</mat-icon>
+                <span>Download Transactions</span>
+            </button>
         </mat-menu>
     </div>
 
