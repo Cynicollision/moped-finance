@@ -1,24 +1,24 @@
-# Project Context: Home Lab Platform (Modular Monolith)
+# Project Context: Personal Finance Application
 
-This document provides a high-level entry point for the Home Lab project. Detailed documentation is maintained in the `_docs` folder.
+This document provides the high-level context and entry point for the Home Lab Finance application. It outlines the project's structure, rules, and available agent skills.
 
 ## 1. Project Overview
-A single, consolidated web platform to manage personal "Home Lab" domains, including Finance and Garden management.
+A web application dedicated to managing personal finances. The architecture follows a strict client/server/shared structure to cleanly separate concerns.
 
 ## 2. Technical Architecture
-The platform is built as a Modular Monolith using Angular, Node.js/Express, and PostgreSQL.
-* See [_docs/architecture.md](_docs/architecture.md) for stack details and deployment info.
+The codebase is divided into three primary packages:
+- **`/client`**: The frontend web application (e.g., Angular/React).
+- **`/server`**: The backend API services (e.g., Node.js/Express).
+- **`/shared`**: Common models, types, schemas, and utilities shared between the client and server.
 
-## 3. Database Strategy
-A single PostgreSQL instance manages multiple logical databases for each module.
-* See [_docs/database.md](_docs/database.md) for schema details and logical database structure.
+## 3. Agent Instructions & Rules
+All code generation and modifications must adhere to the rules defined in the `.agents` directory. You should review these rules before suggesting architectural changes or writing code:
+- [Coding Standards](file:///c:/code/HomeLab/.agents/rules/coding-standards.md)
+- [Architecture Rules](file:///c:/code/HomeLab/.agents/rules/architecture.md)
 
-## 4. Development & Constraints
-Guidelines for local development and maintaining the monolithic structure.
-* See [_docs/development.md](_docs/development.md) for development rules and environment setup instructions.
+## 4. Documentation
+Detailed documentation is maintained in the `_docs` folder:
+- **`_docs/`**: General project documentation (currently being rewritten for the standalone finance app).
 
-## 5. Build & Deployment
-CI/CD pipeline, Docker image management, and Synology NAS deployment.
-* See [_docs/build.md](_docs/build.md) for the build pipeline, deployment steps, and environment configuration.
-* See [_docs/nas-deployment.md](_docs/nas-deployment.md) for the complete, step-by-step Synology NAS deployment guide.
-
+## 5. Agent Skills & Workflows
+Custom skills and automated workflows are located in the `.agents/skills` directory to assist with context, builds, and standard processes.
