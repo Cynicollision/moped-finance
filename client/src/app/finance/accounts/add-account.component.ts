@@ -11,7 +11,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { Account, Institution } from '@shared/finance/types';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
-import { FinanceService } from '../finance.service';
+import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-add-account',
@@ -57,7 +57,8 @@ export class FinanceAddAccountComponent implements OnInit {
                 return;
             }
             this.initForm();
-        } else {
+        }
+        else {
             this.router.navigate(['/institutions']);
         }
     }

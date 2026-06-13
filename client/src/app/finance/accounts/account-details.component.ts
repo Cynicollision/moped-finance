@@ -11,8 +11,8 @@ import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/fina
 import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { DateProviderService } from './../../core/date-provider.service';
+import { FinanceValueHistoryComponent } from './../common/value-history.component';
 import { FinanceService } from './../finance.service';
-import { FinanceValueHistoryComponent } from './value-history.component';
 
 @Component({
     selector: 'app-finance-accounts',

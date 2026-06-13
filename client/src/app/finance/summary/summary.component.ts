@@ -8,9 +8,9 @@ import { HistoryTimeframe } from '@shared/core/enum';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { AccountGroup, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
+import { FinanceValueHistoryComponent } from './../common/value-history.component';
+import { FinanceValuePeriodChangeComponent } from './../common/value-period-change.component';
 import { FinanceService } from './../finance.service';
-import { FinanceValueHistoryComponent } from './value-history.component';
-import { FinanceValuePeriodChangeComponent } from './value-period-change.component';
 
 @Component({
     selector: 'app-finance-summary',

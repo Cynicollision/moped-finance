@@ -1,20 +1,20 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth.guard';
+import { FinanceAccountDetailsComponent } from './finance/accounts/account-details.component';
+import { FinanceAddAccountComponent } from './finance/accounts/add-account.component';
+import { BalanceImportComponent } from './finance/accounts/balance-import.component';
+import { FinanceEditAccountComponent } from './finance/accounts/edit-account.component';
+import { FinanceBudgetComponent } from './finance/budget/budget.component';
+import { FinanceCashflowComponent } from './finance/cashflow/cashflow.component';
+import { FinanceAddInstitutionComponent } from './finance/institutions/add-institution.component';
+import { FinanceInstitutionsComponent } from './finance/institutions/institutions.component';
+import { FinanceSummaryComponent } from './finance/summary/summary.component';
+import { AddTransactionComponent } from './finance/transactions/add-transaction.component';
+import { ImportTransactionsComponent } from './finance/transactions/import-transactions.component';
+import { FinanceTransactionDetailsComponent } from './finance/transactions/transaction-details.component';
+import { FinanceTransactionsComponent } from './finance/transactions/transactions.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
-import { authGuard } from './core/auth.guard';
-import { FinanceSummaryComponent } from './finance/components/summary.component';
-import { FinanceAccountDetailsComponent } from './finance/components/account-details.component';
-import { FinanceTransactionsComponent } from './finance/components/transactions.component';
-import { FinanceBudgetComponent } from './finance/components/budget.component';
-import { FinanceCashflowComponent } from './finance/components/cashflow.component';
-import { FinanceTransactionDetailsComponent } from './finance/components/transaction-details.component';
-import { FinanceInstitutionsComponent } from './finance/components/institutions.component';
-import { FinanceAddInstitutionComponent } from './finance/components/add-institution.component';
-import { FinanceAddAccountComponent } from './finance/components/add-account.component';
-import { FinanceEditAccountComponent } from './finance/components/edit-account.component';
-import { AddTransactionComponent } from './finance/components/add-transaction.component';
-import { ImportTransactionsComponent } from './finance/components/import-transactions.component';
-import { BalanceImportComponent } from './finance/components/balance-import.component';
 
 export const routes: Routes = [
     {

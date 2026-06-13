@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -21,7 +21,6 @@ export class BalanceImportComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private notificationService = inject(NotificationService);
-    private location = inject(Location);
 
     accountId = signal<string | null>(null);
     account = signal<Account | null>(null);

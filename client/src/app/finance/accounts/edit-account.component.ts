@@ -11,7 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { Account } from '@shared/finance/types';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
 import { ModalService } from './../../core/modal/modal.service';
-import { FinanceService } from '../finance.service';
+import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-edit-account',
@@ -52,7 +52,8 @@ export class FinanceEditAccountComponent implements OnInit {
             this.accountData = await this.financeService.fetchAccount(this.accountId);
             if (this.accountData) {
                 this.initForm(this.accountData);
-            } else {
+            }
+            else {
                 this.router.navigate(['/']); // fallback if not found
             }
         }

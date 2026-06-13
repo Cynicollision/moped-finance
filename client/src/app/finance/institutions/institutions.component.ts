@@ -6,7 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Account, Institution } from '@shared/finance/types';
-import { FinanceService } from '../finance.service';
+import { FinanceService } from './../finance.service';
 
 interface InstitutionGroup {
     institution: Institution;

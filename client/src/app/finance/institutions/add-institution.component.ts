@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { Institution } from '@shared/finance/types';
-import { FinanceService } from '../finance.service';
+import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-add-institution',
