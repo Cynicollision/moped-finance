@@ -3,8 +3,8 @@ import { HistoryTimeframe } from '@shared/core/enum';
 import { FinanceEntityIdPrefix, ValueHistoryType } from '@shared/finance/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions } from '@shared/finance/contracts';
 import { Account, BalanceHistory } from '@shared/finance/types';
-import { AppLogger } from '@core/logger';
-import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@core/utility';
+import { AppLogger } from './../../core/logger';
+import { DateTimeUtil, EntityIdUtil, ResultUtil } from './../../core/utility';
 import { IFinanceAccountData } from './account-data';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 

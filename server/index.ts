@@ -2,12 +2,12 @@ import express, { Request, Response } from 'express';
 import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
-import { createAuthRouter } from '@core/auth/auth-routes';
-import { createAuthMiddleware } from '@core/auth/auth-middleware';
-import { CoreUserData } from '@core/data/user-data';
-import { AppLogger } from '@core/logger';
-import { DatabaseClient, DatabaseClientConfig } from '@core/db';
-import { ApiUtil } from '@core/utility';
+import { createAuthRouter } from '@server-core/auth/auth-routes';
+import { createAuthMiddleware } from '@server-core/auth/auth-middleware';
+import { CoreUserData } from '@server-core/data/user-data';
+import { AppLogger } from '@server-core/logger';
+import { DatabaseClient, DatabaseClientConfig } from '@server-core/db';
+import { ApiUtil } from '@server-core/utility';
 import { createFinanceModule } from './src/finance';
 
 const app = express();

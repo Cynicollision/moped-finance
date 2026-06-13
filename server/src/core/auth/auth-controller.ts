@@ -2,8 +2,8 @@ import * as bcrypt from 'bcrypt';
 import { OperationResult } from '@shared/core/contracts/operation-result';
 import { CoreEntityIdPrefix } from '@shared/core/enum';
 import { User } from '@shared/core/types/user';
-import { ICoreUserData } from '@core/data/user-data';
-import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@core/utility';
+import { ICoreUserData } from '@server-core/data/user-data';
+import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@server-core/utility';
 
 export class AuthController {
     private readonly saltRounds = 10;

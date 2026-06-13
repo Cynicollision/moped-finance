@@ -1,10 +1,10 @@
 import express from 'express';
 import request from 'supertest';
 import { Institution } from '@shared/finance/types';
-import { AppLogger } from '@core/logger';
-import { DateTimeUtil } from '@core/utility';
-import { TestExpressUtil } from '@test/express-util';
-import { FinanceMockUtil } from '@test/finance-mocks';
+import { AppLogger } from '@server-core/logger';
+import { DateTimeUtil } from '@server-core/utility';
+import { TestExpressUtil } from '@server-core/utility/testing';
+import { FinanceMockUtil } from './../finance-mocks';
 import { IFinanceInstitutionsData } from './institution-data';
 import { createInstitutionRouter } from './institution-routes';
 

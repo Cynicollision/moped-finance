@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { DatabaseClient } from '@core/db';
-import { AppLogger } from '@core/logger';
+import { DatabaseClient } from '@server-core/db';
+import { AppLogger } from '@server-core/logger';
 import { FinanceAccountData, FinanceBalanceHistoryData, createAccountRouter } from './accounts';
 import { FinanceBudgetStreamData, createBudgetStreamRouter } from './budget';
 import { FinanceCategoriesData, createCategoryRouter } from './categories';

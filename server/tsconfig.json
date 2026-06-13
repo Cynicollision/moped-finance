@@ -8,12 +8,8 @@
             "@shared/*": [
                 "./../shared/*"
             ],
-            "@core/*": [
+            "@server-core/*": [
                 "src/core/*"
-            ],
-
-            "@test/*": [
-                "src/test-utils/*"
             ]
         },
         "esModuleInterop": true,

@@ -1,6 +1,6 @@
 import { User } from '@shared/core/types/user';
-import { IDatabaseClient } from '@core/interfaces';
-import { DateTimeUtil } from '@core/utility';
+import { IDatabaseClient } from '@server-core/interfaces';
+import { DateTimeUtil } from '@server-core/utility';
 
 export interface UserWithPassword extends User {
     passwordHash: string;

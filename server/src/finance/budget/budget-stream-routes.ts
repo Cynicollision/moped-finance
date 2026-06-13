@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { BudgetStream } from '@shared/finance/types';
-import { ApiHandler } from '@core/api-handler';
-import { AppLogger } from '@core/logger';
-import { RequestSchemaValidator } from '@core/validation';
+import { ApiHandler } from '@server-core/api-handler';
+import { AppLogger } from '@server-core/logger';
+import { RequestSchemaValidator } from '@server-core/validation';
 import { BudgetStreamController } from './budget-stream-controller';
 import { IFinanceBudgetStreamData } from './budget-stream-data';
 import { createBudgetStreamSchema, updateBudgetStreamSchema } from './budget-stream-schema';

@@ -1,4 +1,4 @@
-import { LanguageModelGateway } from './../core/interfaces';
+import { LanguageModelGateway } from '@server-core/interfaces';
 
 export class CoreMockUtil {
     public static createMockLlmGateway(): jest.Mocked<LanguageModelGateway> {

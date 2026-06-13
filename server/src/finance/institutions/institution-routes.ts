@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { ApiHandler } from '@core/api-handler';
-import { AppLogger } from '@core/logger';
-import { RequestSchemaValidator } from '@core/validation';
+import { ApiHandler } from '@server-core/api-handler';
+import { AppLogger } from '@server-core/logger';
+import { RequestSchemaValidator } from '@server-core/validation';
 import { InstitutionController } from './institution-controller';
 import { IFinanceInstitutionsData } from './institution-data';
 import { createInstitutionSchema, updateInstitutionSchema } from './institution-schema';

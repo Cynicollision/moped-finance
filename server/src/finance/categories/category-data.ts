@@ -2,8 +2,8 @@ import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Category } from '@shared/finance/types';
 import { CategoryClass } from '@shared/finance/enum';
-import { IOwnedResourceData } from '@core/interfaces';
-import { DateTimeUtil } from '@core/utility';
+import { IOwnedResourceData } from '@server-core/interfaces';
+import { DateTimeUtil } from '@server-core/utility';
 import { categorySchema } from './category-schema';
 
 export interface IFinanceCategoriesData extends IOwnedResourceData<Category> {

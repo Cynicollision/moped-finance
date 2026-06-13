@@ -1,8 +1,8 @@
 import { OperationResult } from '@shared/core/contracts';
 import { FinanceEntityIdPrefix } from '@shared/finance/enum';
 import { Category } from '@shared/finance/types';
-import { AppLogger } from '@core/logger';
-import { EntityIdUtil, ResultUtil } from '@core/utility';
+import { AppLogger } from '@server-core/logger';
+import { EntityIdUtil, ResultUtil } from '@server-core/utility';
 import { IFinanceCategoriesData } from './category-data';
 
 export class CategoryController {

@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { OperationResult } from '@shared/core/contracts';
-import { ICoreUserData } from '@core/data/user-data';
-import { ApiHandler } from '@core/api-handler';
-import { AppLogger } from '@core/logger';
-import { ResultUtil } from '@core/utility';
+import { ICoreUserData } from '@server-core/data/user-data';
+import { ApiHandler } from '@server-core/api-handler';
+import { AppLogger } from '@server-core/logger';
+import { ResultUtil } from '@server-core/utility';
 import { AuthController } from './auth-controller';
 
 type AuthRequest = {

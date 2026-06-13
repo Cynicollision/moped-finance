@@ -1,8 +1,8 @@
-import { IFinanceAccountData, IFinanceBalanceHistoryData } from './../finance/accounts';
-import { IFinanceBudgetStreamData } from './../finance/budget';
-import { IFinanceCategoriesData } from './../finance/categories';
-import { IFinanceInstitutionsData } from './../finance/institutions';
-import { IFinanceTransactionsData } from './../finance/transactions';
+import { IFinanceAccountData, IFinanceBalanceHistoryData } from './accounts';
+import { IFinanceBudgetStreamData } from './budget';
+import { IFinanceCategoriesData } from './categories';
+import { IFinanceInstitutionsData } from './institutions';
+import { IFinanceTransactionsData } from './transactions';
 
 export class FinanceMockUtil {
     public static createMockAccountData(): jest.Mocked<IFinanceAccountData> {

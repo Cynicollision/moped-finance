@@ -2,8 +2,8 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Account } from '@shared/finance/types';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
-import { IOwnedResourceData } from '@core/interfaces';
-import { DateTimeUtil } from '@core/utility';
+import { IOwnedResourceData } from '@server-core/interfaces';
+import { DateTimeUtil } from '@server-core/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
 

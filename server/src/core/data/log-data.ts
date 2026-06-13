@@ -1,6 +1,6 @@
 import { LogEntry } from '@shared/core/types';
-import { IDatabaseClient } from '@core/interfaces';
-import { DateTimeUtil } from '@core/utility';
+import { IDatabaseClient } from '@server-core/interfaces';
+import { DateTimeUtil } from '@server-core/utility';
 
 export interface ILogData {
     create(log: LogEntry): Promise<void>;

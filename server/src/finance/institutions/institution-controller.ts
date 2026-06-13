@@ -1,8 +1,8 @@
 import { OperationResult } from '@shared/core/contracts';
 import { FinanceEntityIdPrefix } from '@shared/finance/enum';
 import { Institution } from '@shared/finance/types';
-import { AppLogger } from '@core/logger';
-import { EntityIdUtil, ResultUtil } from '@core/utility';
+import { AppLogger } from '@server-core/logger';
+import { EntityIdUtil, ResultUtil } from '@server-core/utility';
 import { IFinanceInstitutionsData } from './institution-data';
 
 export class InstitutionController {

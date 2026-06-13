@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import { AppLogger } from './../core/logger';
+import { AppLogger } from '@server-core/logger';
 
 export class TestExpressUtil {
     /**

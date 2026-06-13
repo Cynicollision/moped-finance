@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { ICoreUserData } from '@core/data/user-data';
-import { ApiUtil } from '@core/utility';
+import { ICoreUserData } from '@server-core/data/user-data';
+import { ApiUtil } from '@server-core/utility';
 import { AuthController } from './auth-controller';
 
 export function createAuthMiddleware(userData: ICoreUserData) {

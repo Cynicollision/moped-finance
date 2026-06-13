@@ -1,8 +1,8 @@
 import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Institution } from '@shared/finance/types';
-import { IOwnedResourceData } from '@core/interfaces';
-import { DateTimeUtil } from '@core/utility';
+import { IOwnedResourceData } from '@server-core/interfaces';
+import { DateTimeUtil } from '@server-core/utility';
 import { institutionSchema } from './institution-schema';
 
 export interface IFinanceInstitutionsData extends IOwnedResourceData<Institution> {
