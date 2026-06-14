@@ -21,13 +21,14 @@ export class ImportTransactionsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private notificationService = inject(NotificationService);
-    private location = inject(Location);
+    //private location = inject(Location);
 
     accountId = signal<string | null>(null);
     account = signal<Account | null>(null);
     selectedFile = signal<File | null>(null);
     isProcessing = signal<boolean>(false);
     dryRunResults = signal<any>(null);
+    validationError = signal<string | null>(null);
 
     ngOnInit() {
         const id = this.route.snapshot.queryParamMap.get('accountId');
@@ -49,6 +50,7 @@ export class ImportTransactionsComponent implements OnInit {
         if (file) {
             this.selectedFile.set(file);
             this.dryRunResults.set(null); // Reset results when a new file is chosen
+            this.validationError.set(null);
         }
     }
 
@@ -62,12 +64,18 @@ export class ImportTransactionsComponent implements OnInit {
         const formData = new FormData();
         formData.append('file', file);
 
+        this.validationError.set(null);
         const response = await this.financeService.importTransactions(formData, true, this.accountId());
         if (response) {
-            this.dryRunResults.set(response);
-            this.notificationService.success('File validated successfully');
-            if (response.failed?.length > 0) {
-                console.warn('Import Validation Failures:', response.failed);
+            if (response.isValidToImport) {
+                this.dryRunResults.set(response);
+                const failureMessages = response.failedRowMessages || [];
+                const failureCount = failureMessages.length;
+                if (failureCount > 0) {
+                    console.warn('Import Validation Failures:', failureMessages);
+                }
+            } else {
+                this.validationError.set(response.resultMessage || 'An unknown validation error occurred.');
             }
         }
 
@@ -84,15 +92,20 @@ export class ImportTransactionsComponent implements OnInit {
         const formData = new FormData();
         formData.append('file', file);
 
+        this.validationError.set(null);
         const response = await this.financeService.importTransactions(formData, false, this.accountId());
         if (response) {
-            this.notificationService.success(`Successfully created ${response.created || 0} and updated ${response.updated || 0} records.`);
-            const id = this.accountId();
-            if (id) {
-                this.router.navigate(['/accounts', id]);
-            }
-            else {
-                this.router.navigate(['/transactions']);
+            if (response.isValidToImport) {
+                this.notificationService.success(`Successfully created ${response.createdCount || 0} and updated ${response.updatedCount || 0} records.`);
+                const id = this.accountId();
+                if (id) {
+                    this.router.navigate(['/accounts', id]);
+                }
+                else {
+                    this.router.navigate(['/transactions']);
+                }
+            } else {
+                this.validationError.set(response.resultMessage || 'An unknown error occurred during import.');
             }
         }
 
@@ -102,5 +115,6 @@ export class ImportTransactionsComponent implements OnInit {
     cancelImport() {
         this.selectedFile.set(null);
         this.dryRunResults.set(null);
+        this.validationError.set(null);
     }
 }

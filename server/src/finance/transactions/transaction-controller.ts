@@ -2,7 +2,7 @@ import Papa from 'papaparse';
 import { OperationResult } from '@shared/core/contracts';
 import { CalendarPeriod } from '@shared/core/enum';
 import { FinanceEntityIdPrefix } from '@shared/finance/enum';
-import { TransactionSearchOptions, SpendingStream } from '@shared/finance/contracts';
+import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
 import { ResultUtil, DateTimeUtil, EntityIdUtil } from '@server-core/utility';
@@ -16,7 +16,7 @@ export class TransactionController {
     private categoriesData: IFinanceCategoriesData;
     private transactionsData: IFinanceTransactionsData;
 
-    // TODO: reconsile AccountData vs. AccountsData etc.
+    // TODO: reconcile AccountData vs. AccountsData etc.
     constructor(
         logger: AppLogger,
         accountData: IFinanceAccountData,
@@ -67,10 +67,10 @@ export class TransactionController {
         return ResultUtil.success();
     }
 
-    public async getTransactionSpendingByCategory(userId: string, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<SpendingStream[]>> {
+    public async getTransactionCashflowByCategory(userId: string, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<CashflowStream[]>> {
         const asOf = asOfDate ? DateTimeUtil.parse(asOfDate) : DateTimeUtil.now();
         const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
-        return ResultUtil.success(await this.transactionsData.retrieveSpendingByCategory(userId, startDate, endDate));
+        return ResultUtil.success(await this.transactionsData.retrieveCashflowByCategory(userId, startDate, endDate));
     }
 
     public async exportTransactions(userId: string, accountId?: string): Promise<OperationResult<any>> {
@@ -93,7 +93,7 @@ export class TransactionController {
         return ResultUtil.success(finalCsv);
     }
 
-    public async importTransactions(userId: string, fileBuffer?: Buffer, dryRun: boolean = false, targetAccountId?: string): Promise<OperationResult<any>> {
+    public async importTransactions(userId: string, fileBuffer?: Buffer, dryRun: boolean = false, targetAccountId?: string): Promise<OperationResult<TransactionImportResult>> {
         if (!fileBuffer) {
             return ResultUtil.userError('No file provided');
         }
@@ -108,6 +108,23 @@ export class TransactionController {
             return ResultUtil.userError('Failed to parse CSV file: ' + parsed.errors[0].message);
         }
 
+        const headers = parsed.meta.fields || [];
+        const requiredHeaders = ['Id', 'Date', 'AccountName', 'Merchant', 'CategoryName', 'Amount', 'OriginalStatement', 'Notes', 'IsHidden'];
+        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+
+        // TODO: use, move method to /transaction-import
+        let importResult: TransactionImportResult = {};
+
+        if (missingHeaders.length > 0) {
+            return ResultUtil.success({
+                createdCount: 0,
+                updatedCount: 0,
+                failedRowMessages: [],
+                isValidToImport: false,
+                resultMessage: 'Missing required CSV headers: ' + missingHeaders.join(', ')
+            });
+        }
+
         const [accountsList, categoriesList] = await Promise.all([
             this.accountData.retrieveAll(userId),
             this.categoriesData.retrieveAll(userId)
@@ -118,10 +135,11 @@ export class TransactionController {
         const categoryMap = new Map<string, string>();
         categoriesList.forEach(c => categoryMap.set(c.name.toLowerCase(), c.id!));
 
-        const failedRows: any[] = [];
-        let created = 0;
+        const failedRowMessages: string[] = [];
+        let createdCount = 0;
         let updatedCount = 0;
 
+        let rowIndex = 2;
         for (const row of parsed.data as any[]) {
             const accountName = (row['AccountName'] || '').trim().toLowerCase();
             const categoryName = (row['CategoryName'] || '').trim().toLowerCase();
@@ -136,14 +154,16 @@ export class TransactionController {
             const categoryId = categoryName ? categoryMap.get(categoryName) : '';
 
             if (!accountId) {
-                failedRows.push({ row, error: `Account name '${row['AccountName']}' not found and no target account selected.` });
+                failedRowMessages.push(`Row ${rowIndex}: Account name '${row['AccountName']}' not found and no target account selected.`);
+                rowIndex++;
                 continue;
             }
             if (!categoryId) {
                 const error = categoryName
                     ? `Category name '${row['CategoryName']}' not found.`
                     : 'Category is required.';
-                failedRows.push({ row, error });
+                failedRowMessages.push(`Row ${rowIndex}: ${error}`);
+                rowIndex++;
                 continue;
             }
 
@@ -172,27 +192,38 @@ export class TransactionController {
                             updatedCount++;
                         }
                         else {
-                            failedRows.push({ row, error: 'Transaction ID not found for update or access denied.' });
+                            failedRowMessages.push(`Row ${rowIndex}: Transaction ID not found for update or access denied.`);
                         }
                     }
                     else {
                         // Insert
                         await this.transactionsData.insert(userId, transaction);
-                        created++;
+                        createdCount++;
                     }
                 } else {
                     if (row['Id'] && String(row['Id']).trim() !== '') {
                         updatedCount++;
                     } else {
-                        created++;
+                        createdCount++;
                     }
                 }
             }
             catch (err: any) {
-                failedRows.push({ row, error: err.message || 'Database error during save' });
+                failedRowMessages.push(`Row ${rowIndex}: ${err.message || 'Database error during save'}`);
             }
+            rowIndex++;
         }
 
-        return ResultUtil.success({ created, updated: updatedCount, failed: failedRows });
+        // TODO: allow partial import? i.e createdCount+updatedCount > 0
+        const canImport = failedRowMessages.length === 0;
+        const msgType = dryRun ? 'Dry run: ' : 'Imported: ';
+
+        return ResultUtil.success({
+            createdCount: createdCount,
+            updatedCount: updatedCount,
+            failedRowMessages: failedRowMessages,
+            isValidToImport: canImport,
+            resultMessage: `${msgType}Created ${createdCount}, Updated ${updatedCount} transactions.`
+        });
     }
 }

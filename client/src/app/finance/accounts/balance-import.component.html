@@ -25,18 +25,33 @@
                 <span class="file-name" *ngIf="selectedFile()">{{ selectedFile()?.name }}</span>
             </div>
 
+            <div *ngIf="validationError()" class="validation-error error-list mt-16 mb-24">
+                <strong style="display: flex; align-items: center;"><mat-icon color="warn"
+                        style="margin-right: 4px;">error_outline</mat-icon> Validation Error:</strong>
+                <p style="margin-top: 8px;">{{ validationError() }}</p>
+            </div>
+
             <div class="dry-run-results" *ngIf="dryRunResults()">
-                <h3 class="mt-0">Confirm Import</h3>
+                <h3 class="mt-0" style="display: flex; align-items: center;">
+                    <mat-icon color="warn" style="margin-right: 8px;">warning</mat-icon> Confirm Import
+                </h3>
                 <p>This import will replace all existing balance history for this account between <strong>{{
                         dryRunResults()?.startDate }}</strong> and <strong>{{ dryRunResults()?.endDate }}</strong>.</p>
                 <ul>
-                    <li>Created Records: {{ dryRunResults()?.created || 0 }}</li>
-                    <li>Updated Records: {{ dryRunResults()?.updated || 0 }}</li>
-                    <li>Failed Records: {{ dryRunResults()?.failed?.length || 0 }}</li>
+                    <li>Days of history to import: {{ dryRunResults()?.createdCount || 0 }}</li>
+                    <li>Rows with errors: {{ dryRunResults()?.failedRowMessages?.length || 0 }}</li>
                 </ul>
+                <div *ngIf="dryRunResults()?.failedRowMessages?.length > 0" class="error-list mt-8">
+                    <strong>Errors:</strong>
+                    <ul>
+                        <li *ngFor="let msg of dryRunResults()?.failedRowMessages" class="error-item">
+                            {{ msg }}
+                        </li>
+                    </ul>
+                </div>
                 <div class="actions mt-24">
                     <button mat-raised-button color="primary" (click)="confirmImport()"
-                        [disabled]="isProcessing()">Confirm Import</button>
+                        [disabled]="isProcessing()">Begin Import</button>
                     <button mat-button (click)="cancelImport()" [disabled]="isProcessing()">Cancel</button>
                 </div>
             </div>

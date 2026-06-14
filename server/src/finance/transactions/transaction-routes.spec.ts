@@ -169,17 +169,17 @@ describe('Transaction Routes', () => {
         });
     });
 
-    describe('GET /spending', () => {
-        it('should return spending by category', async () => {
-            const spending = [{ categoryId: 'cat-1', amount: 500 }];
-            mockTransactionsData.retrieveSpendingByCategory.mockResolvedValue(spending);
+    describe('GET /cashflow', () => {
+        it('should return cashflow by category', async () => {
+            const cashflow = [{ categoryId: 'cat-1', amount: 500 }];
+            mockTransactionsData.retrieveCashflowByCategory.mockResolvedValue(cashflow);
 
-            const response = await request(app).get('/transactions/spending?period=Monthly');
+            const response = await request(app).get('/transactions/cashflow?period=Monthly');
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(spending);
-            expect(mockTransactionsData.retrieveSpendingByCategory).toHaveBeenCalled();
+            expect(response.body.data).toEqual(cashflow);
+            expect(mockTransactionsData.retrieveCashflowByCategory).toHaveBeenCalled();
         });
     });
 
@@ -280,7 +280,7 @@ describe('Transaction Routes', () => {
             mockCategoriesData.retrieveAll.mockResolvedValue([{ id: 'cat-1', name: 'Groceries', class: 'Expense', group: 'Food', userId: testUserId, icon: 'apple', isActive: true, createdAt: new Date(), updatedAt: new Date() } as any]);
             mockTransactionsData.insert.mockResolvedValue({} as any);
 
-            const csvContent = 'Date,Amount,Merchant,CategoryName,AccountName\n2026-06-06,100,Test,Groceries,Checking';
+            const csvContent = 'Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n,2026-06-06,Checking,Test,Groceries,100,,,false';
 
             const response = await request(app)
                 .post('/transactions/import')
@@ -288,14 +288,14 @@ describe('Transaction Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data.created).toBe(1);
+            expect(response.body.data.createdCount).toBe(1);
         });
 
         it('should perform a dry run without saving when dryRun=true', async () => {
             mockAccountData.retrieveAll.mockResolvedValue([{ id: 'acc-1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any]);
             mockCategoriesData.retrieveAll.mockResolvedValue([{ id: 'cat-1', name: 'Groceries', class: 'Expense', group: 'Food', userId: testUserId, icon: 'apple', isActive: true, createdAt: new Date(), updatedAt: new Date() } as any]);
 
-            const csvContent = 'Date,Amount,Merchant,CategoryName,AccountName\n2026-06-06,100,Test,Groceries,Checking';
+            const csvContent = 'Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n,2026-06-06,Checking,Test,Groceries,100,,,false';
 
             const response = await request(app)
                 .post('/transactions/import?dryRun=true')
@@ -303,7 +303,7 @@ describe('Transaction Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data.created).toBe(1);
+            expect(response.body.data.createdCount).toBe(1);
             expect(mockTransactionsData.insert).not.toHaveBeenCalled();
             expect(mockTransactionsData.update).not.toHaveBeenCalled();
         });
@@ -312,7 +312,7 @@ describe('Transaction Routes', () => {
             mockAccountData.retrieveAll.mockResolvedValue([{ id: 'acc-1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any]);
             mockCategoriesData.retrieveAll.mockResolvedValue([{ id: 'cat-1', name: 'Groceries', class: 'Expense', group: 'Food', userId: testUserId, icon: 'apple', isActive: true, createdAt: new Date(), updatedAt: new Date() } as any]);
 
-            const csvContent = 'Date,Amount,Merchant,CategoryName,AccountName\n2026-06-06,100,Test,InvalidCategory,Checking';
+            const csvContent = 'Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n,2026-06-06,Checking,Test,InvalidCategory,100,,,false';
 
             const response = await request(app)
                 .post('/transactions/import?dryRun=true')
@@ -320,8 +320,8 @@ describe('Transaction Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data.failed.length).toBe(1);
-            expect(response.body.data.created).toBe(0);
+            expect(response.body.data.failedRowMessages.length).toBe(1);
+            expect(response.body.data.createdCount).toBe(0);
         });
     });
 });

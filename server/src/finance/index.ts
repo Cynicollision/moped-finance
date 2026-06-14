@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { DatabaseClient } from '@server-core/db';
+import { DatabaseClient } from '@server-core/db-client';
 import { AppLogger } from '@server-core/logger';
 import { FinanceAccountData, FinanceBalanceHistoryData, createAccountRouter } from './accounts';
 import { FinanceBudgetStreamData, createBudgetStreamRouter } from './budget';
@@ -9,22 +9,20 @@ import { FinanceTransactionsData, createTransactionRouter } from './transactions
 
 export function createFinanceModule(db: DatabaseClient, logger: AppLogger) {
     const router = Router();
-    const drizzle = db.drizzle;
-
     // Instantiate data classes
-    const accountData = new FinanceAccountData(drizzle);
-    const balanceHistoryData = new FinanceBalanceHistoryData(drizzle);
-    const budgetStreamData = new FinanceBudgetStreamData(drizzle);
-    const categoriesData = new FinanceCategoriesData(drizzle);
-    const institutionsData = new FinanceInstitutionsData(drizzle);
-    const transactionsData = new FinanceTransactionsData(drizzle);
+    const accountData = new FinanceAccountData(db);
+    const balanceHistoryData = new FinanceBalanceHistoryData(db);
+    const budgetStreamData = new FinanceBudgetStreamData(db);
+    const categoriesData = new FinanceCategoriesData(db);
+    const institutionsData = new FinanceInstitutionsData(db);
+    const transactionsData = new FinanceTransactionsData(db);
 
     // Register routes
-    router.use('/data/accounts', createAccountRouter(logger, accountData, balanceHistoryData, categoriesData, transactionsData));
-    router.use('/data/transactions', createTransactionRouter(logger, accountData, categoriesData, transactionsData));
-    router.use('/data/budget-streams', createBudgetStreamRouter(logger, budgetStreamData));
-    router.use('/data/categories', createCategoryRouter(logger, categoriesData));
-    router.use('/data/institutions', createInstitutionRouter(logger, institutionsData));
+    router.use('/v1/accounts', createAccountRouter(logger, accountData, balanceHistoryData, categoriesData, transactionsData));
+    router.use('/v1/transactions', createTransactionRouter(logger, accountData, categoriesData, transactionsData));
+    router.use('/v1/budget-streams', createBudgetStreamRouter(logger, budgetStreamData));
+    router.use('/v1/categories', createCategoryRouter(logger, categoriesData));
+    router.use('/v1/institutions', createInstitutionRouter(logger, institutionsData));
 
     return router;
 }

@@ -2,10 +2,11 @@ import Papa from 'papaparse';
 import { OperationResult } from '@shared/core/contracts';
 import { HistoryTimeframe } from '@shared/core/enum';
 import { FinanceEntityIdPrefix, ValueHistoryType } from '@shared/finance/enum';
-import { GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions } from '@shared/finance/contracts';
-import { Account, BalanceHistory } from '@shared/finance/types';
+import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
+import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
 import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@server-core/utility';
+import { IFinanceTransactionsData } from './../transactions';
 import { IFinanceAccountData } from './account-data';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 
@@ -13,11 +14,18 @@ export class AccountController {
     private readonly logger: AppLogger;
     private readonly accounts: IFinanceAccountData;
     private readonly balanceHistory: IFinanceBalanceHistoryData;
+    private readonly transactionsData: IFinanceTransactionsData;
 
-    constructor(logger: AppLogger, accounts: IFinanceAccountData, balanceHistory: IFinanceBalanceHistoryData) {
+    constructor(
+        logger: AppLogger,
+        accounts: IFinanceAccountData,
+        balanceHistory: IFinanceBalanceHistoryData,
+        transactionsData: IFinanceTransactionsData
+    ) {
         this.logger = logger;
         this.accounts = accounts;
         this.balanceHistory = balanceHistory;
+        this.transactionsData = transactionsData;
     }
 
     public async getAccount(userId: string, accountId: string): Promise<OperationResult<Account>> {
@@ -55,6 +63,11 @@ export class AccountController {
         return ResultUtil.success();
     }
 
+    public async getAccountTransactions(userId: string, accountId: string, options: TransactionSearchOptions): Promise<OperationResult<Transaction[]>> {
+        // TODO: validate options
+        return ResultUtil.success(await this.transactionsData.search(userId, options, accountId));
+    }
+
     public async getAccountBalanceHistory(userId: string, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<OperationResult<BalanceHistory[]>> {
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         return ResultUtil.success(await this.balanceHistory.retrieveForAccount(userId, accountId, startDate.toISOString(), options.asOfDate.toISOString()));
@@ -89,7 +102,7 @@ export class AccountController {
         return ResultUtil.success(csv);
     }
 
-    public async importBalanceHistory(userId: string, accountId: string, fileBuffer: Buffer | undefined, dryRun: boolean): Promise<OperationResult<any>> {
+    public async importBalanceHistory(userId: string, accountId: string, fileBuffer: Buffer | undefined, dryRun: boolean): Promise<OperationResult<BalanceImportResult>> {
         if (!fileBuffer) {
             return ResultUtil.userError('No file provided');
         }
@@ -105,27 +118,60 @@ export class AccountController {
             skipEmptyLines: true
         });
 
+        // TODO: use, move method to /balance-import
+        let importResult: BalanceImportResult = {};
+
         if (parsed.errors.length > 0) {
-            return ResultUtil.userError('Failed to parse CSV file: ' + parsed.errors[0].message);
+            return ResultUtil.success({
+                startDate: '',
+                endDate: '',
+                createdCount: 0,
+                failedRowMessages: [],
+                isValidToImport: false,
+                resultMessage: 'Failed to parse CSV file: ' + parsed.errors[0].message
+            });
+        }
+
+        const headers = parsed.meta.fields || [];
+        const requiredHeaders = ['Date', 'Balance'];
+        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+        if (missingHeaders.length > 0) {
+            return ResultUtil.success({
+                startDate: '',
+                endDate: '',
+                createdCount: 0,
+                failedRowMessages: [],
+                isValidToImport: false,
+                resultMessage: 'Missing required CSV headers: ' + missingHeaders.join(', ')
+            });
         }
 
         const records = parsed.data as any[];
         if (records.length === 0) {
-            return ResultUtil.userError('CSV is empty');
+            return ResultUtil.success({
+                startDate: '',
+                endDate: '',
+                createdCount: 0,
+                failedRowMessages: [],
+                isValidToImport: false,
+                resultMessage: 'CSV is empty'
+            });
         }
 
         let minDate = '';
         let maxDate = '';
 
         const validRows: BalanceHistory[] = [];
-        const failedRows: any[] = [];
+        const failedRowMessages: string[] = [];
 
+        let rowIndex = 2;
         for (const row of records) {
             const dateStr = (row['Date'] || '').trim();
             const balanceStr = (row['Balance'] || '').trim();
 
             if (!dateStr || !balanceStr) {
-                failedRows.push({ row, error: 'Date and Balance are required' });
+                failedRowMessages.push(`Row ${rowIndex}: Date and Balance are required`);
+                rowIndex++;
                 continue;
             }
 
@@ -143,16 +189,17 @@ export class AccountController {
                 date: parsedDate,
                 balance: parseFloat(balanceStr) || 0
             });
+            rowIndex++;
         }
 
         if (dryRun) {
             return ResultUtil.success({
                 startDate: minDate,
                 endDate: maxDate,
-                created: validRows.length,
-                updated: 0,
-                failed: failedRows,
-                message: `Will replace dates ${minDate} to ${maxDate}`
+                createdCount: validRows.length,
+                failedRowMessages: failedRowMessages,
+                isValidToImport: failedRowMessages.length === 0, // TODO: allow partial import?
+                resultMessage: `Dry run: Will replace dates ${minDate} to ${maxDate}`
             });
         }
 
@@ -166,10 +213,13 @@ export class AccountController {
             }
         }
 
-        return ResultUtil.success({ 
-            created: validRows.length,
-            updated: 0,
-            failed: failedRows 
+        return ResultUtil.success({
+            startDate: minDate,
+            endDate: maxDate,
+            createdCount: validRows.length,
+            failedRowMessages: failedRowMessages,
+            isValidToImport: failedRowMessages.length === 0, // TODO: allow partial import?
+            resultMessage: `Imported ${validRows.length} balance records.`
         });
     }
 }

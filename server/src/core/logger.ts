@@ -1,7 +1,7 @@
 import { CoreEntityIdPrefix, LogLevel } from '@shared/core/enum';
 import { LogEntry } from '@shared/core/types';
 import { LogData, ILogData } from './data/log-data';
-import { IDatabaseClient } from './interfaces';
+import { IDatabaseClient } from './db-client';
 import { DateTimeUtil, EntityIdUtil } from './utility';
 
 export enum LogBehavior {
@@ -22,7 +22,8 @@ export class AppLogger {
     }
 
     public static forPgDatabase(db: IDatabaseClient, config: LoggerConfig): AppLogger {
-        return new AppLogger(new LogData(db), config);
+        const logData = new LogData(db);
+        return new AppLogger(logData, config);
     }
 
     public static fromEnvironment(db: IDatabaseClient): AppLogger {

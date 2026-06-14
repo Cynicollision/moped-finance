@@ -385,7 +385,7 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data.created).toBe(1);
+            expect(response.body.data.createdCount).toBe(1);
         });
 
         it('should perform a dry run without saving when dryRun=true', async () => {
@@ -399,7 +399,7 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data.created).toBe(2);
+            expect(response.body.data.createdCount).toBe(2);
             expect(mockBalanceHistoryData.insertBulk).not.toHaveBeenCalled();
             expect(mockBalanceHistoryData.deleteRange).not.toHaveBeenCalled();
         });
@@ -415,8 +415,8 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data.failed.length).toBe(2);
-            expect(response.body.data.created).toBe(0);
+            expect(response.body.data.failedRowMessages.length).toBe(2);
+            expect(response.body.data.createdCount).toBe(0);
         });
     });
 

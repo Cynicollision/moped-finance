@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { CalendarPeriod, HistoryTimeframe } from '@shared/core/enum';
-import { GetAccountBalanceHistoryOptions, SpendingStream, TotalValueHistory, TransactionSearchOptions } from '@shared/finance/contracts';
+import { BalanceImportResult, CashflowStream, GetAccountBalanceHistoryOptions, TotalValueHistory, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../core/api.service';
 import { DateProviderService } from './../core/date-provider.service';
+
+const API_BASE_PATH = 'api/v1';
 
 @Injectable({
     providedIn: 'root'
@@ -15,77 +17,77 @@ export class FinanceService {
 
     // Metadata (Institutions, Categories)
     fetchInstitutions(): Promise<Institution[] | undefined> {
-        return this.api.get<Institution[]>('api/data/institutions');
+        return this.api.get<Institution[]>(`${API_BASE_PATH}/institutions`);
     }
 
     fetchInstitution(id: string): Promise<Institution | undefined> {
-        return this.api.get<Institution>(`api/data/institutions/${id}`);
+        return this.api.get<Institution>(`${API_BASE_PATH}/institutions/${id}`);
     }
 
     createInstitution(institution: Institution): Promise<Institution | undefined> {
-        return this.api.post<Institution>('api/data/institutions', institution);
+        return this.api.post<Institution>(`${API_BASE_PATH}/institutions`, institution);
     }
 
     saveInstitution(institution: Institution): Promise<Institution | undefined> {
-        return this.api.put<Institution>(`api/data/institutions/${institution.id}`, institution);
+        return this.api.put<Institution>(`${API_BASE_PATH}/institutions/${institution.id}`, institution);
     }
 
     deleteInstitution(id: string): Promise<boolean> {
-        return this.api.delete(`api/data/institutions/${id}`);
+        return this.api.delete(`${API_BASE_PATH}/institutions/${id}`);
     }
 
     fetchCategories(activeOnly: boolean): Promise<Category[] | undefined> {
-        return this.api.get<Category[]>(`api/data/categories?activeOnly=${activeOnly}`);
+        return this.api.get<Category[]>(`${API_BASE_PATH}/categories?activeOnly=${activeOnly}`);
     }
 
     // Accounts
     fetchAccount(accountId: string): Promise<Account | undefined> {
-        return this.api.get<Account>(`api/data/accounts/${accountId}`);
+        return this.api.get<Account>(`${API_BASE_PATH}/accounts/${accountId}`);
     }
 
     fetchAllAccounts(): Promise<Account[] | undefined> {
-        return this.api.get<Account[]>('api/data/accounts');
+        return this.api.get<Account[]>(`${API_BASE_PATH}/accounts`);
     }
 
     createAccount(account: Account): Promise<Account | undefined> {
-        return this.api.post<Account>(`api/data/accounts`, account);
+        return this.api.post<Account>(`${API_BASE_PATH}/accounts`, account);
     }
 
     saveAccount(account: Account): Promise<Account | undefined> {
-        return this.api.put<Account>(`api/data/accounts/${account.id}`, account);
+        return this.api.put<Account>(`${API_BASE_PATH}/accounts/${account.id}`, account);
     }
 
     deleteAccount(id: string): Promise<boolean> {
-        return this.api.delete(`api/data/accounts/${id}`);
+        return this.api.delete(`${API_BASE_PATH}/accounts/${id}`);
     }
 
     fetchAccountBalanceHistory(accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[] | undefined> {
-        const url = `api/data/accounts/${accountId}/balance-history?asOfDate=${options.asOfDate}&timeframe=${options.timeframe}`;
+        const url = `${API_BASE_PATH}/accounts/${accountId}/balance-history?asOfDate=${options.asOfDate}&timeframe=${options.timeframe}`;
         return this.api.get<BalanceHistory[]>(url);
     }
 
-    importBalanceHistory(accountId: string, formData: FormData, dryRun: boolean): Promise<any> {
-        return this.api.post(`api/data/accounts/${accountId}/import-balances?dryRun=${dryRun}`, formData);
+    importBalanceHistory(accountId: string, formData: FormData, dryRun: boolean): Promise<BalanceImportResult | undefined> {
+        return this.api.post<BalanceImportResult>(`${API_BASE_PATH}/accounts/${accountId}/import-balances?dryRun=${dryRun}`, formData);
     }
 
     getExportBalanceHistoryUrl(accountId: string): string {
-        return `/api/data/accounts/${accountId}/export-balances`;
+        return `/${API_BASE_PATH}/accounts/${accountId}/export-balances`;
     }
 
     fetchTotalValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<TotalValueHistory[] | undefined> {
         const asOfDate = this.dateProvider.now().toISOString().split('T')[0];
-        const url = `api/data/accounts/total-value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
+        const url = `${API_BASE_PATH}/accounts/total-value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
         return this.api.get<TotalValueHistory[]>(url);
     }
 
     // Transactions
     fetchTransaction(id: string): Promise<Transaction | undefined> {
-        return this.api.get<Transaction>(`api/data/transactions/${id}`);
+        return this.api.get<Transaction>(`${API_BASE_PATH}/transactions/${id}`);
     }
 
     fetchTransactions(options: TransactionSearchOptions): Promise<Transaction[] | undefined> {
         const params = this.getTransactionUrlParams(options);
-        return this.api.get<Transaction[]>(`api/data/transactions?${params.toString()}`);
+        return this.api.get<Transaction[]>(`${API_BASE_PATH}/transactions?${params.toString()}`);
     }
 
     fetchAccountRecentTransactions(accountId: string): Promise<Transaction[] | undefined> {
@@ -94,31 +96,31 @@ export class FinanceService {
             sortDirection: 'desc',
             limit: 10
         });
-        return this.api.get<Transaction[]>(`api/data/accounts/${accountId}/transactions?${params.toString()}`);
+        return this.api.get<Transaction[]>(`${API_BASE_PATH}/accounts/${accountId}/transactions?${params.toString()}`);
     }
 
     fetchTransactionMerchants(): Promise<string[] | undefined> {
-        return this.api.get<string[]>(`api/data/transactions/merchants`);
+        return this.api.get<string[]>(`${API_BASE_PATH}/transactions/merchants`);
     }
 
     saveTransaction(transaction: Transaction): Promise<Transaction | undefined> {
-        return this.api.put<Transaction>(`api/data/transactions/${transaction.id}`, transaction);
+        return this.api.put<Transaction>(`${API_BASE_PATH}/transactions/${transaction.id}`, transaction);
     }
 
     createTransaction(transaction: Transaction): Promise<Transaction | undefined> {
-        return this.api.post<Transaction>('api/data/transactions', transaction);
+        return this.api.post<Transaction>(`${API_BASE_PATH}/transactions`, transaction);
     }
 
-    importTransactions(formData: FormData, dryRun: boolean, accountId?: string | null): Promise<any> {
-        let url = `api/data/transactions/import?dryRun=${dryRun}`;
+    importTransactions(formData: FormData, dryRun: boolean, accountId?: string | null): Promise<TransactionImportResult | undefined> {
+        let url = `${API_BASE_PATH}/transactions/import?dryRun=${dryRun}`;
         if (accountId) {
             url += `&accountId=${accountId}`;
         }
-        return this.api.post(url, formData);
+        return this.api.post<TransactionImportResult>(url, formData);
     }
 
     getExportTransactionsUrl(accountId?: string): string {
-        let url = `/api/data/transactions/export`;
+        let url = `${API_BASE_PATH}/transactions/export`;
         if (accountId) {
             url += `?accountId=${accountId}`;
         }
@@ -126,29 +128,29 @@ export class FinanceService {
     }
 
     deleteTransaction(id: string): Promise<boolean> {
-        return this.api.delete(`api/data/transactions/${id}`);
+        return this.api.delete(`${API_BASE_PATH}/transactions/${id}`);
     }
 
     // Budget
     fetchBudgetStreams(): Promise<BudgetStream[] | undefined> {
-        return this.api.get<BudgetStream[]>('api/data/budget-streams');
+        return this.api.get<BudgetStream[]>(`${API_BASE_PATH}/budget-streams`);
     }
 
     createBudgetStream(stream: BudgetStream): Promise<BudgetStream | undefined> {
-        return this.api.post<BudgetStream>('api/data/budget-streams', stream);
+        return this.api.post<BudgetStream>(`${API_BASE_PATH}/budget-streams`, stream);
     }
 
     saveBudgetStream(stream: BudgetStream): Promise<BudgetStream | undefined> {
-        return this.api.put<BudgetStream>(`api/data/budget-streams/${stream.id}`, stream);
+        return this.api.put<BudgetStream>(`${API_BASE_PATH}/budget-streams/${stream.id}`, stream);
     }
 
     deleteBudgetStream(id: string): Promise<boolean> {
-        return this.api.delete(`api/data/budget-streams/${id}`);
+        return this.api.delete(`${API_BASE_PATH}/budget-streams/${id}`);
     }
 
     // Cashflow
-    fetchSpendingStreams(period: CalendarPeriod, asOfDate: string): Promise<SpendingStream[] | undefined> {
-        return this.api.get<SpendingStream[]>(`api/data/transactions/spending?period=${period}&asOfDate=${asOfDate}`);
+    fetchCashflowStreams(period: CalendarPeriod, asOfDate: string): Promise<CashflowStream[] | undefined> {
+        return this.api.get<CashflowStream[]>(`${API_BASE_PATH}/transactions/cashflow?period=${period}&asOfDate=${asOfDate}`);
     }
 
     private getTransactionUrlParams(options: TransactionSearchOptions): URLSearchParams {

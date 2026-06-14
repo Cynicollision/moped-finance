@@ -3,6 +3,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
+import { IDatabaseClient } from '@server-core/db-client';
 import { DateTimeUtil } from '@server-core/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
@@ -18,8 +19,8 @@ export interface IFinanceBalanceHistoryData {
 export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
     private readonly db: NodePgDatabase;
 
-    constructor(db: NodePgDatabase) {
-        this.db = db;
+    constructor(dbClient: IDatabaseClient) {
+        this.db = dbClient.drizzle;
     }
 
     public async retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]> {

@@ -14,8 +14,6 @@ type AuthRequest = {
     newPassword?: string;
 };
 
-// TODO: needs tests
-
 export function createAuthRouter(userData: ICoreUserData, logger: AppLogger, requireAuthMiddleware: any, resolveUserMiddleware: any) {
     const router = Router();
     const controller = new AuthController(userData);

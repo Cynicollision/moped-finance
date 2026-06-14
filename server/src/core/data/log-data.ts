@@ -1,33 +1,39 @@
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { pgSchema, varchar, timestamp, text } from 'drizzle-orm/pg-core';
 import { LogEntry } from '@shared/core/types';
-import { IDatabaseClient } from '@server-core/interfaces';
-import { DateTimeUtil } from '@server-core/utility';
+import { IDatabaseClient } from '@server-core/db-client';
+
+const coreSchema = pgSchema('core');
+
+const logSchema = coreSchema.table('logs', {
+    id: varchar('id', { length: 50 }).primaryKey(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    userId: varchar('user_id', { length: 50 }).notNull(),
+    level: varchar('level', { length: 50 }).notNull(),
+    context: varchar('context', { length: 255 }).notNull(),
+    message: text('message').notNull()
+});
 
 export interface ILogData {
     create(log: LogEntry): Promise<void>;
 }
 
-// TODO: ORM conversion
-
 export class LogData implements ILogData {
-    constructor(private db: IDatabaseClient) { }
+    private db: NodePgDatabase;
+
+    constructor(dbClient: IDatabaseClient) {
+        this.db = dbClient.drizzle;
+    }
 
     public async create(log: LogEntry): Promise<void> {
-        const now = DateTimeUtil.now();
-
-        const query = `INSERT INTO core.logs 
-            (id, created_at, updated_at, user_id, level, context, message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)`;
-
-        const params = [
-            log.id,
-            now,
-            now,
-            log.userId,
-            log.level,
-            log.context,
-            log.message
-        ];
-
-        await this.db.query(query, params);
+        await this.db.insert(logSchema)
+            .values({
+                id: log.id,
+                userId: log.userId,
+                level: log.level,
+                context: log.context,
+                message: log.message
+            });
     }
-}
+}

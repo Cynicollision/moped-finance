@@ -6,14 +6,11 @@ import { createAuthRouter } from '@server-core/auth/auth-routes';
 import { createAuthMiddleware } from '@server-core/auth/auth-middleware';
 import { CoreUserData } from '@server-core/data/user-data';
 import { AppLogger } from '@server-core/logger';
-import { DatabaseClient, DatabaseClientConfig } from '@server-core/db';
+import { DatabaseClient, DatabaseClientConfig } from '@server-core/db-client';
 import { ApiUtil } from '@server-core/utility';
 import { createFinanceModule } from './src/finance';
 
 const app = express();
-
-// Trust the first proxy (essential for secure cookies in Docker/Nginx)
-app.set('trust proxy', 1); // TODO: needs review.
 app.use(express.json());
 app.use(session({
     secret: process.env.SESSION_SECRET || 'dev-secret-key',
@@ -25,6 +22,10 @@ app.use(session({
     }
 }));
 
+if (process.env.TRUST_FIRST_PROXY === 'true') {
+    app.set('trust proxy', 1);
+}
+
 if (process.env.NODE_ENV === 'development') {
     app.use(cors({
         origin: 'http://localhost:4200',
@@ -32,6 +33,7 @@ if (process.env.NODE_ENV === 'development') {
     }));
 }
 
+// Core services
 const dbConfig: DatabaseClientConfig = {
     user: process.env.PGUSER || '',
     password: process.env.PGPASSWORD || '',
@@ -40,8 +42,7 @@ const dbConfig: DatabaseClientConfig = {
     port: parseInt(process.env.PGPORT || '5432'),
 };
 
-// Core services
-const dbClient = new DatabaseClient(dbConfig);
+const dbClient = DatabaseClient.fromConfig(dbConfig);
 const logger = AppLogger.fromEnvironment(dbClient);
 
 // Auth module

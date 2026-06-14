@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Category } from '@shared/finance/types';
 import { CategoryClass } from '@shared/finance/enum';
+import { IDatabaseClient } from '@server-core/db-client';
 import { IOwnedResourceData } from '@server-core/interfaces';
 import { DateTimeUtil } from '@server-core/utility';
 import { categorySchema } from './category-schema';
@@ -30,8 +31,8 @@ function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
 export class FinanceCategoriesData implements IFinanceCategoriesData {
     private readonly db: NodePgDatabase;
 
-    constructor(db: NodePgDatabase) {
-        this.db = db;
+    constructor(dbClient: IDatabaseClient) {
+        this.db = dbClient.drizzle;
     }
 
     public async retrieveAll(userId: string, activeOnly?: boolean): Promise<Category[]> {

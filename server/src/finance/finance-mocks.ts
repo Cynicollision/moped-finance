@@ -64,7 +64,7 @@ export class FinanceMockUtil {
             update: jest.fn(),
             insert: jest.fn(),
             delete: jest.fn(),
-            retrieveSpendingByCategory: jest.fn()
+            retrieveCashflowByCategory: jest.fn()
         };
     }
 }

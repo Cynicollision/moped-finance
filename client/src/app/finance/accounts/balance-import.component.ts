@@ -27,6 +27,7 @@ export class BalanceImportComponent implements OnInit {
     selectedFile = signal<File | null>(null);
     isProcessing = signal<boolean>(false);
     dryRunResults = signal<any>(null);
+    validationError = signal<string | null>(null);
 
     ngOnInit() {
         const id = this.route.snapshot.paramMap.get('accountId');
@@ -48,6 +49,7 @@ export class BalanceImportComponent implements OnInit {
         if (file) {
             this.selectedFile.set(file);
             this.dryRunResults.set(null); // Reset results when a new file is chosen
+            this.validationError.set(null);
         }
     }
 
@@ -62,10 +64,14 @@ export class BalanceImportComponent implements OnInit {
         const formData = new FormData();
         formData.append('file', file);
 
+        this.validationError.set(null);
         const response = await this.financeService.importBalanceHistory(id, formData, true);
         if (response) {
-            this.dryRunResults.set(response);
-            this.notificationService.success('File validated successfully');
+            if (response.isValidToImport) {
+                this.dryRunResults.set(response);
+            } else {
+                this.validationError.set(response.resultMessage || 'An unknown validation error occurred.');
+            }
         }
 
         this.isProcessing.set(false);
@@ -82,10 +88,15 @@ export class BalanceImportComponent implements OnInit {
         const formData = new FormData();
         formData.append('file', file);
 
+        this.validationError.set(null);
         const response = await this.financeService.importBalanceHistory(id, formData, false);
         if (response) {
-            this.notificationService.success(`Successfully created ${response.created || 0} and updated ${response.updated || 0} records.`);
-            this.router.navigate(['/accounts', id]);
+            if (response.isValidToImport) {
+                this.notificationService.success(`Successfully imported ${response.createdCount || 0} records.`);
+                this.router.navigate(['/accounts', id]);
+            } else {
+                this.validationError.set(response.resultMessage || 'An unknown error occurred during import.');
+            }
         }
 
         this.isProcessing.set(false);
@@ -94,5 +105,6 @@ export class BalanceImportComponent implements OnInit {
     cancelImport() {
         this.selectedFile.set(null);
         this.dryRunResults.set(null);
+        this.validationError.set(null);
     }
 }

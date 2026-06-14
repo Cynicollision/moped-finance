@@ -2,6 +2,7 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Account } from '@shared/finance/types';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
+import { IDatabaseClient } from '@server-core/db-client';
 import { IOwnedResourceData } from '@server-core/interfaces';
 import { DateTimeUtil } from '@server-core/utility';
 import { accountSchema } from './account-schema';
@@ -36,8 +37,8 @@ function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number
 export class FinanceAccountData implements IFinanceAccountData {
     private readonly db: NodePgDatabase;
 
-    constructor(db: NodePgDatabase) {
-        this.db = db;
+    constructor(dbClient: IDatabaseClient) {
+        this.db = dbClient.drizzle;
     }
 
     private getLatestBalanceSubquery() {

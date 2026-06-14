@@ -10,14 +10,14 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { CalendarPeriod } from '@shared/core/enum';
-import { SpendingStream } from '@shared/finance/contracts';
+import { CashflowStream } from '@shared/finance/contracts';
 import { CategoryClass } from '@shared/finance/enum';
 import { Category } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 
 @Component({
-    selector: 'app-finance-spending',
+    selector: 'app-finance-cashflow',
     standalone: true,
     imports: [
         CommonModule,
@@ -67,7 +67,8 @@ export class FinanceCashflowComponent implements OnInit {
 
     categories: Category[] = [];
     categoryMap = new Map<string, Category>();
-    spendingStreams: SpendingStream[] = [];
+
+    cashflowStreams: CashflowStream[] = [];
     incomeStreams: { id?: string, name: string, amount: number }[] = [];
     expenseStreams: { id?: string, name: string, amount: number }[] = [];
 
@@ -90,8 +91,8 @@ export class FinanceCashflowComponent implements OnInit {
 
     async loadData() {
         const asOfDate = this.getAsOfDate();
-        const streams = await this.financeService.fetchSpendingStreams(this.selectedPeriod, asOfDate.toISOString().split('T')[0]);
-        this.spendingStreams = streams || [];
+        const streams = await this.financeService.fetchCashflowStreams(this.selectedPeriod, asOfDate.toISOString().split('T')[0]);
+        this.cashflowStreams = streams || [];
         this.processData();
         this.cdr.detectChanges();
     }
@@ -111,7 +112,7 @@ export class FinanceCashflowComponent implements OnInit {
         const incomeMap = new Map<string, number>();
         const expenseMap = new Map<string, number>();
 
-        this.spendingStreams.forEach(s => {
+        this.cashflowStreams.forEach(s => {
             const cat = s.categoryId ? this.categoryMap.get(s.categoryId) : undefined;
 
             if (cat?.class === CategoryClass.Transfer) {
@@ -121,13 +122,15 @@ export class FinanceCashflowComponent implements OnInit {
             let nameKey = 'Uncategorized';
             if (this.viewMode === 'category') {
                 nameKey = cat ? `${cat.icon} ${cat.name}` : 'Uncategorized';
-            } else {
+            }
+            else {
                 nameKey = cat?.group || 'Uncategorized';
             }
 
             if (cat?.class === CategoryClass.Income) {
                 incomeMap.set(nameKey, (incomeMap.get(nameKey) || 0) + s.amount);
-            } else {
+            }
+            else {
                 expenseMap.set(nameKey, (expenseMap.get(nameKey) || 0) + s.amount);
             }
         });

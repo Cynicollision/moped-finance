@@ -42,11 +42,11 @@ export function createTransactionRouter(logger: AppLogger, accountData: IFinance
         });
     });
 
-    router.get('/spending', (req, res) => {
-        handler.execute(req, res, 'getTransactionSpendingByCategory', (context) => {
+    router.get('/cashflow', (req, res) => {
+        handler.execute(req, res, 'getTransactionCashflowByCategory', (context) => {
             const period = req.query.period as CalendarPeriod;
             const asOfDate = req.query.asOfDate as string;
-            return controller.getTransactionSpendingByCategory(context.userId!, period, asOfDate);
+            return controller.getTransactionCashflowByCategory(context.userId!, period, asOfDate);
         });
     });
 

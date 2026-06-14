@@ -2,8 +2,9 @@ import { eq, and, desc, asc, ilike, sum, inArray, gte, lte } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
-import { SpendingStream, TransactionSearchOptions } from '@shared/finance/contracts';
+import { CashflowStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { IDatabaseClient } from '@server-core/db-client';
 import { IOwnedResourceData } from '@server-core/interfaces';
 import { DateTimeUtil } from '@server-core/utility';
 import { accountSchema } from './../accounts/account-schema';
@@ -14,7 +15,7 @@ export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction
     search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
     exportSearch(userId: string, accountId?: string): Promise<any[]>;
     retrieveMerchants(userId: string): Promise<string[]>;
-    retrieveSpendingByCategory(userId: string, startDate: Date, endDate: Date): Promise<SpendingStream[]>;
+    retrieveCashflowByCategory(userId: string, startDate: Date, endDate: Date): Promise<CashflowStream[]>;
     retrieveSingle(userId: string, id: string): Promise<Transaction | null>;
     insert(userId: string, transaction: Transaction): Promise<Transaction>;
     update(userId: string, transaction: Transaction): Promise<Transaction | null>;
@@ -42,8 +43,8 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
 export class FinanceTransactionsData implements IFinanceTransactionsData {
     private readonly db: NodePgDatabase;
 
-    constructor(db: NodePgDatabase) {
-        this.db = db;
+    constructor(dbClient: IDatabaseClient) {
+        this.db = dbClient.drizzle;
     }
 
     public async exportSearch(userId: string, accountId?: string): Promise<any[]> {
@@ -203,7 +204,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
         return mapRowToTransaction(rows[0].transaction);
     }
 
-    public async retrieveSpendingByCategory(userId: string, startDate: Date, endDate: Date): Promise<SpendingStream[]> {
+    public async retrieveCashflowByCategory(userId: string, startDate: Date, endDate: Date): Promise<CashflowStream[]> {
         const rows = await this.db.select({
             categoryId: transactionSchema.categoryId,
             amount: sum(transactionSchema.amount).mapWith(Number)

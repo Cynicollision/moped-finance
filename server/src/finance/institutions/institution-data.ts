@@ -1,6 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Institution } from '@shared/finance/types';
+import { IDatabaseClient } from '@server-core/db-client';
 import { IOwnedResourceData } from '@server-core/interfaces';
 import { DateTimeUtil } from '@server-core/utility';
 import { institutionSchema } from './institution-schema';
@@ -25,8 +26,8 @@ function mapRowToInstitution(row: typeof institutionSchema.$inferSelect): Instit
 export class FinanceInstitutionsData implements IFinanceInstitutionsData {
     private readonly db: NodePgDatabase;
 
-    constructor(db: NodePgDatabase) {
-        this.db = db;
+    constructor(dbClient: IDatabaseClient) {
+        this.db = dbClient.drizzle;
     }
 
     public async retrieveAll(userId: string): Promise<Institution[]> {
