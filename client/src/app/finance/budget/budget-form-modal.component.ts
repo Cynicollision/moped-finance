@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -7,17 +7,17 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
+import { startWith, map } from 'rxjs';
 import { CalendarPeriod } from '@shared/core/enum';
-import { BudgetStream, Category } from '@shared/finance/types';
+import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
 import { ModalLayoutComponent } from './../../core/modal/modal-layout.component';
-import { signal } from '@angular/core';
-import { startWith, map } from 'rxjs';
 
 export interface BudgetFormModalData {
     stream?: BudgetStream;
     type: BudgetStreamType;
     categories: Category[];
+    groups: CategoryGroup[];
 }
 
 @Component({
@@ -65,7 +65,11 @@ export class FinanceBudgetFormModalComponent implements OnInit {
 
     ngOnInit() {
         const targetClass = this.data.type === BudgetStreamType.Income ? CategoryClass.Income : CategoryClass.Expense;
-        const available = this.data.categories.filter(c => c.class === targetClass);
+        const groupMap = new Map(this.data.groups.map(g => [g.id, g]));
+        const available = this.data.categories.filter(c => {
+            const group = groupMap.get(c.groupId);
+            return group?.class === targetClass;
+        });
         this.categories.set(available);
 
         this.setupTypeaheadFilters();

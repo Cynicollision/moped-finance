@@ -12,7 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { CalendarPeriod } from '@shared/core/enum';
 import { CashflowStream } from '@shared/finance/contracts';
 import { CategoryClass } from '@shared/finance/enum';
-import { Category } from '@shared/finance/types';
+import { Category, CategoryGroup } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 
@@ -67,6 +67,7 @@ export class FinanceCashflowComponent implements OnInit {
 
     categories: Category[] = [];
     categoryMap = new Map<string, Category>();
+    groupMap = new Map<string, CategoryGroup>();
 
     cashflowStreams: CashflowStream[] = [];
     incomeStreams: { id?: string, name: string, amount: number }[] = [];
@@ -82,9 +83,15 @@ export class FinanceCashflowComponent implements OnInit {
     displayedColumns: string[] = ['name', 'amount'];
 
     async ngOnInit() {
-        const categories = await this.financeService.fetchCategories(false);
+        const [categories, groups] = await Promise.all([
+            this.financeService.fetchCategories(false),
+            this.financeService.fetchCategoryGroups()
+        ]);
         this.categories = categories || [];
         this.categories.forEach(c => this.categoryMap.set(c.id, c));
+        
+        const groupArray = groups || [];
+        groupArray.forEach(g => this.groupMap.set(g.id, g));
 
         await this.loadData();
     }
@@ -114,8 +121,9 @@ export class FinanceCashflowComponent implements OnInit {
 
         this.cashflowStreams.forEach(s => {
             const cat = s.categoryId ? this.categoryMap.get(s.categoryId) : undefined;
+            const group = cat ? this.groupMap.get(cat.groupId) : undefined;
 
-            if (cat?.class === CategoryClass.Transfer) {
+            if (group?.class === CategoryClass.Transfer) {
                 return;
             }
 
@@ -124,10 +132,10 @@ export class FinanceCashflowComponent implements OnInit {
                 nameKey = cat ? `${cat.icon} ${cat.name}` : 'Uncategorized';
             }
             else {
-                nameKey = cat?.group || 'Uncategorized';
+                nameKey = group?.name || 'Uncategorized';
             }
 
-            if (cat?.class === CategoryClass.Income) {
+            if (group?.class === CategoryClass.Income) {
                 incomeMap.set(nameKey, (incomeMap.get(nameKey) || 0) + s.amount);
             }
             else {
@@ -140,10 +148,11 @@ export class FinanceCashflowComponent implements OnInit {
         let inc = 0;
         this.incomeStreams = Array.from(incomeMap.entries()).map(([name, amount]) => {
             inc += amount;
-            // For category view, find the ID. For group, we just have the name.
             let id: string | undefined;
             if (this.viewMode === 'category') {
                 id = Array.from(this.categoryMap.values()).find(c => `${c.icon} ${c.name}` === name)?.id;
+            } else if (this.viewMode === 'group') {
+                id = Array.from(this.groupMap.values()).find(g => g.name === name)?.id;
             }
             return { id, name, amount };
         }).sort(sortByAmountDesc);
@@ -154,6 +163,8 @@ export class FinanceCashflowComponent implements OnInit {
             let id: string | undefined;
             if (this.viewMode === 'category') {
                 id = Array.from(this.categoryMap.values()).find(c => `${c.icon} ${c.name}` === name)?.id;
+            } else if (this.viewMode === 'group') {
+                id = Array.from(this.groupMap.values()).find(g => g.name === name)?.id;
             }
             return { id, name, amount };
         }).sort(sortByAmountDesc);
@@ -180,8 +191,8 @@ export class FinanceCashflowComponent implements OnInit {
         if (this.viewMode === 'category' && row.id) {
             queryParams.categoryId = row.id;
         }
-        else if (this.viewMode === 'group') {
-            queryParams.group = row.name;
+        else if (this.viewMode === 'group' && row.id) {
+            queryParams.group = row.id;
         }
 
         const asOfDate = this.getAsOfDate();

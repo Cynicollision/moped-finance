@@ -1,10 +1,8 @@
 import { Entity } from './../../core/types';
-import { CategoryClass } from './../enum/category-class';
 
 export type Category = Entity & {
     userId: string;
-    class: CategoryClass;
-    group: string;
+    groupId: string;
     icon: string;
     name: string;
     isActive: boolean;

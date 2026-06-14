@@ -6,7 +6,7 @@ import { IOwnedResourceData } from '@server-core/interfaces';
 import { DateTimeUtil } from '@server-core/utility';
 import { institutionSchema } from './institution-schema';
 
-export interface IFinanceInstitutionsData extends IOwnedResourceData<Institution> {
+export interface IFinanceInstitutionData extends IOwnedResourceData<Institution> {
     retrieveAll(userId: string): Promise<Institution[]>;
     delete(userId: string, id: string): Promise<boolean>;
     insert(userId: string, institution: Institution): Promise<Institution>;
@@ -23,7 +23,7 @@ function mapRowToInstitution(row: typeof institutionSchema.$inferSelect): Instit
     };
 }
 
-export class FinanceInstitutionsData implements IFinanceInstitutionsData {
+export class FinanceInstitutionData implements IFinanceInstitutionData {
     private readonly db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {

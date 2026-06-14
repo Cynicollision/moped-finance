@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
-import { Category, BudgetStream } from '@shared/finance/types';
+import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { ModalService } from './../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
@@ -39,6 +39,8 @@ export class FinanceBudgetComponent implements OnInit {
 
     categories: Category[] = [];
     categoryMap = new Map<string, Category>();
+    groups: CategoryGroup[] = [];
+    groupMap = new Map<string, CategoryGroup>();
     budgetStreams: BudgetStream[] = [];
 
     BudgetStreamType = BudgetStreamType;
@@ -58,14 +60,19 @@ export class FinanceBudgetComponent implements OnInit {
     }
 
     async loadData() {
-        const [categories, budgetStreams] = await Promise.all([
+        const [categories, groups, budgetStreams] = await Promise.all([
             this.financeService.fetchCategories(false),
+            this.financeService.fetchCategoryGroups(),
             this.financeService.fetchBudgetStreams()
         ]);
 
         this.categories = categories || [];
         this.categoryMap.clear();
         this.categories.forEach(c => this.categoryMap.set(c.id, c));
+
+        this.groups = groups || [];
+        this.groupMap.clear();
+        this.groups.forEach(g => this.groupMap.set(g.id, g));
 
         this.budgetStreams = budgetStreams || [];
         this.splitStreams();
@@ -116,8 +123,8 @@ export class FinanceBudgetComponent implements OnInit {
         const catA = this.categoryMap.get(a.categoryId);
         const catB = this.categoryMap.get(b.categoryId);
 
-        const groupA = catA?.group || '';
-        const groupB = catB?.group || '';
+        const groupA = catA ? this.groupMap.get(catA.groupId)?.name || '' : '';
+        const groupB = catB ? this.groupMap.get(catB.groupId)?.name || '' : '';
 
         // Sort by Reccurence first: Monthly, Quarterly, Yearly
         const periodOrder: Record<CalendarPeriod, number> = {
@@ -145,7 +152,10 @@ export class FinanceBudgetComponent implements OnInit {
 
     getCategoriesByType(type: BudgetStreamType) {
         const targetClass = type === BudgetStreamType.Income ? CategoryClass.Income : CategoryClass.Expense;
-        return this.categories.filter(c => c.class === targetClass);
+        return this.categories.filter(c => {
+            const group = this.groupMap.get(c.groupId);
+            return group?.class === targetClass;
+        });
     }
 
     getCategoryName(id: string) {
@@ -155,13 +165,16 @@ export class FinanceBudgetComponent implements OnInit {
 
     getCategoryGroup(id: string) {
         const cat = this.categoryMap.get(id);
-        return cat ? cat.group : '';
+        if (!cat) return '';
+        const group = this.groupMap.get(cat.groupId);
+        return group ? group.name : '';
     }
 
     async startAdd(type: BudgetStreamType) {
         const result = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, BudgetStream>(FinanceBudgetFormModalComponent, {
             type,
-            categories: this.categories
+            categories: this.categories,
+            groups: this.groups
         });
 
         if (result) {
@@ -173,7 +186,8 @@ export class FinanceBudgetComponent implements OnInit {
         const result = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, BudgetStream>(FinanceBudgetFormModalComponent, {
             stream,
             type: stream.type,
-            categories: this.categories
+            categories: this.categories,
+            groups: this.groups
         });
 
         if (result) {

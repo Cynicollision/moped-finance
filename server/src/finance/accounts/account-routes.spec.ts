@@ -10,15 +10,15 @@ import { FinanceMockUtil } from './../finance-mocks';
 import { IFinanceAccountData } from './account-data';
 import { createAccountRouter } from './account-routes';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
-import { IFinanceTransactionsData } from './../transactions';
-import { IFinanceCategoriesData } from './../categories/category-data';
+import { IFinanceTransactionData } from './../transactions';
+import { IFinanceCategoryData } from './../categories/category-data';
 
 describe('Account Routes', () => {
     let app: express.Express;
     let mockAccountData: jest.Mocked<IFinanceAccountData>;
     let mockBalanceHistoryData: jest.Mocked<IFinanceBalanceHistoryData>;
-    let mockTransactionsData: jest.Mocked<IFinanceTransactionsData>;
-    let mockCategoriesData: jest.Mocked<IFinanceCategoriesData>;
+    let mockTransactionsData: jest.Mocked<IFinanceTransactionData>;
+    let mockCategoriesData: jest.Mocked<IFinanceCategoryData>;
     let mockLogger: jest.Mocked<AppLogger>;
 
     const testUserId = 'test-user-id';

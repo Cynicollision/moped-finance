@@ -6,30 +6,21 @@ import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory
 import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
 import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@server-core/utility';
-import { IFinanceTransactionsData } from './../transactions';
+import { IFinanceTransactionData } from './../transactions';
 import { IFinanceAccountData } from './account-data';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 
 export class AccountController {
-    private readonly logger: AppLogger;
-    private readonly accounts: IFinanceAccountData;
-    private readonly balanceHistory: IFinanceBalanceHistoryData;
-    private readonly transactionsData: IFinanceTransactionsData;
-
     constructor(
-        logger: AppLogger,
-        accounts: IFinanceAccountData,
-        balanceHistory: IFinanceBalanceHistoryData,
-        transactionsData: IFinanceTransactionsData
+        private logger: AppLogger,
+        private accountData: IFinanceAccountData,
+        private balanceHistoryData: IFinanceBalanceHistoryData,
+        private transactionData: IFinanceTransactionData
     ) {
-        this.logger = logger;
-        this.accounts = accounts;
-        this.balanceHistory = balanceHistory;
-        this.transactionsData = transactionsData;
     }
 
     public async getAccount(userId: string, accountId: string): Promise<OperationResult<Account>> {
-        const account = await this.accounts.retrieveSingle(userId, accountId);
+        const account = await this.accountData.retrieveSingle(userId, accountId);
         if (!account) {
             return ResultUtil.userError('Account not found or access denied');
         }
@@ -37,18 +28,18 @@ export class AccountController {
     }
 
     public async getAccounts(userId: string): Promise<OperationResult<Account[]>> {
-        return ResultUtil.success(await this.accounts.retrieveAll(userId));
+        return ResultUtil.success(await this.accountData.retrieveAll(userId));
     }
 
     public async createAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
         account.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Account);
         account.userId = userId;
 
-        return ResultUtil.success(await this.accounts.create(userId, account));
+        return ResultUtil.success(await this.accountData.create(userId, account));
     }
 
     public async saveAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
-        const updated = await this.accounts.update(userId, account);
+        const updated = await this.accountData.update(userId, account);
         if (!updated) {
             return ResultUtil.userError('Account not found or access denied');
         }
@@ -56,7 +47,7 @@ export class AccountController {
     }
 
     public async deleteAccount(userId: string, accountId: string): Promise<OperationResult<void>> {
-        const deleted = await this.accounts.delete(userId, accountId);
+        const deleted = await this.accountData.delete(userId, accountId);
         if (!deleted) {
             return ResultUtil.userError('Account not found or access denied');
         }
@@ -65,12 +56,12 @@ export class AccountController {
 
     public async getAccountTransactions(userId: string, accountId: string, options: TransactionSearchOptions): Promise<OperationResult<Transaction[]>> {
         // TODO: validate options
-        return ResultUtil.success(await this.transactionsData.search(userId, options, accountId));
+        return ResultUtil.success(await this.transactionData.search(userId, options, accountId));
     }
 
     public async getAccountBalanceHistory(userId: string, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<OperationResult<BalanceHistory[]>> {
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        return ResultUtil.success(await this.balanceHistory.retrieveForAccount(userId, accountId, startDate.toISOString(), options.asOfDate.toISOString()));
+        return ResultUtil.success(await this.balanceHistoryData.retrieveForAccount(userId, accountId, startDate.toISOString(), options.asOfDate.toISOString()));
     }
 
     public async getTotalValueHistory(userId: string, options: TotalValueHistoryOptions): Promise<OperationResult<TotalValueHistory[]>> {
@@ -79,7 +70,7 @@ export class AccountController {
         // TODO: validate options
 
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        return ResultUtil.success(await this.balanceHistory.retrieveSumByDate(userId, options.type, startDate, options.asOfDate));
+        return ResultUtil.success(await this.balanceHistoryData.retrieveSumByDate(userId, options.type, startDate, options.asOfDate));
     }
 
     public async syncAccount(userId: string, accountId: string): Promise<OperationResult<any>> {
@@ -88,7 +79,7 @@ export class AccountController {
     }
 
     public async exportBalanceHistory(userId: string, accountId: string): Promise<OperationResult<any>> {
-        const history = await this.balanceHistory.exportSearch(userId, accountId);
+        const history = await this.balanceHistoryData.exportSearch(userId, accountId);
 
         if (!history || history.length === 0) {
             return ResultUtil.success('Date,AccountName,Balance\n');
@@ -107,7 +98,7 @@ export class AccountController {
             return ResultUtil.userError('No file provided');
         }
 
-        const account = await this.accounts.retrieveSingle(userId, accountId);
+        const account = await this.accountData.retrieveSingle(userId, accountId);
         if (!account) {
             return ResultUtil.userError('Account not found');
         }
@@ -205,8 +196,8 @@ export class AccountController {
 
         if (validRows.length > 0) {
             try {
-                await this.balanceHistory.deleteRange(userId, accountId, minDate, maxDate);
-                await this.balanceHistory.insertBulk(userId, validRows);
+                await this.balanceHistoryData.deleteRange(userId, accountId, minDate, maxDate);
+                await this.balanceHistoryData.insertBulk(userId, validRows);
             }
             catch (err: any) {
                 return ResultUtil.userError('Database error during import: ' + err.message);

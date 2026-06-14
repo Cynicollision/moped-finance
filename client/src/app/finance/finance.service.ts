@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { CalendarPeriod, HistoryTimeframe } from '@shared/core/enum';
 import { BalanceImportResult, CashflowStream, GetAccountBalanceHistoryOptions, TotalValueHistory, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { ValueHistoryType } from '@shared/finance/enum';
-import { Institution, Account, Category, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
+import { Institution, Account, Category, CategoryGroup, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../core/api.service';
 import { DateProviderService } from './../core/date-provider.service';
 
@@ -38,6 +38,34 @@ export class FinanceService {
 
     fetchCategories(activeOnly: boolean): Promise<Category[] | undefined> {
         return this.api.get<Category[]>(`${API_BASE_PATH}/categories?activeOnly=${activeOnly}`);
+    }
+
+    fetchCategoryGroups(): Promise<CategoryGroup[] | undefined> {
+        return this.api.get<CategoryGroup[]>(`${API_BASE_PATH}/categories/groups`);
+    }
+
+    createCategoryGroup(group: CategoryGroup): Promise<CategoryGroup | undefined> {
+        return this.api.post<CategoryGroup>(`${API_BASE_PATH}/categories/groups`, group);
+    }
+
+    saveCategoryGroup(group: CategoryGroup): Promise<CategoryGroup | undefined> {
+        return this.api.put<CategoryGroup>(`${API_BASE_PATH}/categories/groups/${group.id}`, group);
+    }
+
+    deleteCategoryGroup(id: string): Promise<boolean> {
+        return this.api.delete(`${API_BASE_PATH}/categories/groups/${id}`);
+    }
+
+    createCategory(category: Category): Promise<Category | undefined> {
+        return this.api.post<Category>(`${API_BASE_PATH}/categories`, category);
+    }
+
+    saveCategory(category: Category): Promise<Category | undefined> {
+        return this.api.put<Category>(`${API_BASE_PATH}/categories/${category.id}`, category);
+    }
+
+    deleteCategory(id: string): Promise<boolean> {
+        return this.api.delete(`${API_BASE_PATH}/categories/${id}`);
     }
 
     // Accounts

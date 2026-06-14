@@ -9,16 +9,16 @@ import { ApiUtil, DateTimeUtil } from '@server-core/utility';
 import { AppLogger } from '@server-core/logger';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { IFinanceAccountData } from './../accounts/account-data';
-import { IFinanceCategoriesData } from './../categories/category-data';
+import { IFinanceCategoryData } from './../categories/category-data';
 import { TransactionController } from './transaction-controller';
-import { IFinanceTransactionsData } from './transaction-data';
+import { IFinanceTransactionData } from './transaction-data';
 import { createTransactionSchema, updateTransactionSchema } from './transaction-schema';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-export function createTransactionRouter(logger: AppLogger, accountData: IFinanceAccountData, categoriesData: IFinanceCategoriesData, transactionsData: IFinanceTransactionsData) {
+export function createTransactionRouter(logger: AppLogger, accountData: IFinanceAccountData, categoryData: IFinanceCategoryData, transactionsData: IFinanceTransactionData) {
     const router = Router();
-    const controller = new TransactionController(logger, accountData, categoriesData, transactionsData);
+    const controller = new TransactionController(logger, accountData, categoryData, transactionsData);
     const handler = new ApiHandler(logger);
     const validator = new RequestSchemaValidator(logger, 'Transaction');
 

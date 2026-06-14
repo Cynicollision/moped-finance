@@ -3,19 +3,17 @@ import { FinanceEntityIdPrefix } from '@shared/finance/enum';
 import { Institution } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
 import { EntityIdUtil, ResultUtil } from '@server-core/utility';
-import { IFinanceInstitutionsData } from './institution-data';
+import { IFinanceInstitutionData } from './institution-data';
 
 export class InstitutionController {
-    private readonly logger: AppLogger;
-    private readonly institutions: IFinanceInstitutionsData;
-
-    constructor(logger: AppLogger, institutions: IFinanceInstitutionsData) {
-        this.logger = logger;
-        this.institutions = institutions;
+    constructor(
+        private logger: AppLogger,
+        private institutionData: IFinanceInstitutionData
+    ) {
     }
 
     public async getInstitution(userId: string, institutionId: string): Promise<OperationResult<Institution>> {
-        const institution = await this.institutions.retrieveSingle(userId, institutionId);
+        const institution = await this.institutionData.retrieveSingle(userId, institutionId);
         if (!institution) {
             return ResultUtil.userError('Institution not found or access denied');
         }
@@ -23,18 +21,18 @@ export class InstitutionController {
     }
 
     public async getInstitutions(userId: string): Promise<OperationResult<Institution[]>> {
-        return ResultUtil.success(await this.institutions.retrieveAll(userId));
+        return ResultUtil.success(await this.institutionData.retrieveAll(userId));
     }
 
     public async createInstitution(userId: string, institution: Institution): Promise<OperationResult<Institution>> {
         institution.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Institution);
         institution.userId = userId;
 
-        return ResultUtil.success(await this.institutions.insert(userId, institution));
+        return ResultUtil.success(await this.institutionData.insert(userId, institution));
     }
 
     public async updateInstitution(userId: string, institution: Institution): Promise<OperationResult<Institution>> {
-        const updated = await this.institutions.update(userId, institution);
+        const updated = await this.institutionData.update(userId, institution);
         if (!updated) {
             return ResultUtil.userError('Institution not found or access denied');
         }
@@ -42,7 +40,7 @@ export class InstitutionController {
     }
 
     public async deleteInstitution(userId: string, institutionId: string): Promise<OperationResult<void>> {
-        const deleted = await this.institutions.delete(userId, institutionId);
+        const deleted = await this.institutionData.delete(userId, institutionId);
         if (!deleted) {
             return ResultUtil.userError('Institution not found or access denied');
         }

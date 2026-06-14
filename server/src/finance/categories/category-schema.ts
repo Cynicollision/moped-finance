@@ -9,22 +9,19 @@ export const categorySchema = financeSchema.table('categories', {
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     userId: varchar('user_id', { length: 50 }).notNull(),
-    class: varchar('category_class', { length: 50 }).notNull(),
-    group: varchar('category_group', { length: 50 }).notNull(),
+    groupId: varchar('group_id', { length: 50 }).notNull(),
     icon: varchar('icon', { length: 50 }).notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     isActive: boolean('is_active').notNull().default(true),
 });
 
 export const createCategorySchema = createInsertSchema(categorySchema, {
-    class: (schema) => schema.min(1),
-    group: (schema) => schema.min(1),
+    groupId: (schema) => schema.min(1),
     icon: (schema) => schema.min(1),
     name: (schema) => schema.min(1).max(100),
     isActive: z.boolean().optional(),
 }).pick({
-    class: true,
-    group: true,
+    groupId: true,
     icon: true,
     name: true,
     isActive: true,

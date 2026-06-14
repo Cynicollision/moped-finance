@@ -6,12 +6,9 @@ import { EntityIdUtil, ResultUtil } from '@server-core/utility';
 import { IFinanceBudgetStreamData } from './budget-stream-data';
 
 export class BudgetStreamController {
-    private readonly logger: AppLogger;
-    private readonly budgetStreamData: IFinanceBudgetStreamData;
-
-    constructor(logger: AppLogger, budgetStreamData: IFinanceBudgetStreamData) {
-        this.logger = logger;
-        this.budgetStreamData = budgetStreamData;
+    constructor(
+        private logger: AppLogger,
+        private budgetStreamData: IFinanceBudgetStreamData) {
     }
 
     public async getBudgetStreams(userId: string): Promise<OperationResult<BudgetStream[]>> {

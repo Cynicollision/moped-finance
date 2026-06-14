@@ -5,12 +5,12 @@ import { AppLogger } from '@server-core/logger';
 import { DateTimeUtil } from '@server-core/utility';
 import { TestExpressUtil } from '@server-core/utility/testing';
 import { FinanceMockUtil } from './../finance-mocks';
-import { IFinanceInstitutionsData } from './institution-data';
+import { IFinanceInstitutionData } from './institution-data';
 import { createInstitutionRouter } from './institution-routes';
 
 describe('Institution Routes', () => {
     let app: express.Express;
-    let mockInstitutionsData: jest.Mocked<IFinanceInstitutionsData>;
+    let mockInstitutionsData: jest.Mocked<IFinanceInstitutionData>;
     let mockLogger: jest.Mocked<AppLogger>;
 
     const testUserId = 'test-user-id';

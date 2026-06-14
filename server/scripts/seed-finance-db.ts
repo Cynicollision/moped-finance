@@ -142,12 +142,14 @@ function parseCsvLine(line: string): string[] {
             console.log(`✅ Seeded ${count} finance.accounts.`);
         }
 
-        // 3. Load Categories
+        // 3. Load Categories and Groups
+        const categoryGroupsMap = new Map<string, string>();
         const categoriesMap = new Map<string, string>();
         console.log(' 3. Reading categories.csv...');
         const categoriesLines = await readCsv('categories.csv');
         if (categoriesLines.length > 0) {
-            let count = 0;
+            let catCount = 0;
+            let groupCount = 0;
             // Start at 1 to skip header row
             for (let i = 1; i < categoriesLines.length; i++) {
                 const line = categoriesLines[i].trim();
@@ -158,28 +160,47 @@ function parseCsvLine(line: string): string[] {
                 const [id, _csvUserId, type, group, icon, name, isActive] = parseCsvLine(line);
 
                 if (id && type && group && icon && name && isActive) {
+                    let groupId = categoryGroupsMap.get(group.trim());
+                    if (!groupId) {
+                        groupId = EntityIdUtil.generate(FinanceEntityIdPrefix.CategoryGroup);
+                        categoryGroupsMap.set(group.trim(), groupId);
+
+                        await client.query(
+                            `INSERT INTO finance.category_groups (
+                                id, user_id, category_class, name
+                             ) VALUES ($1, $2, $3, $4)
+                             ON CONFLICT (id) DO NOTHING`,
+                            [
+                                groupId,
+                                sampleUserId,
+                                type.trim(),
+                                group.trim()
+                            ]
+                        );
+                        groupCount++;
+                    }
+
                     const generatedId = EntityIdUtil.generate(FinanceEntityIdPrefix.Category);
                     categoriesMap.set(name.trim(), generatedId);
 
                     await client.query(
                         `INSERT INTO finance.categories (
-                            id, user_id, category_class, category_group, icon, name, is_active
-                         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                            id, user_id, group_id, icon, name, is_active
+                         ) VALUES ($1, $2, $3, $4, $5, $6)
                          ON CONFLICT (id) DO NOTHING`,
                         [
                             generatedId,
                             sampleUserId,
-                            type.trim(),
-                            group.trim(),
+                            groupId,
                             icon.trim(),
                             name.trim(),
                             isActive?.trim().toLowerCase() === 'true'
                         ]
                     );
-                    count++;
+                    catCount++;
                 }
             }
-            console.log(`✅ Seeded ${count} finance.categories.`);
+            console.log(`✅ Seeded ${groupCount} finance.category_groups and ${catCount} finance.categories.`);
         }
 
         // 4. Load Transactions

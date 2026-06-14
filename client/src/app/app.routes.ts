@@ -9,6 +9,7 @@ import { FinanceCashflowComponent } from './finance/cashflow/cashflow.component'
 import { FinanceAddInstitutionComponent } from './finance/institutions/add-institution.component';
 import { FinanceInstitutionsComponent } from './finance/institutions/institutions.component';
 import { FinanceSummaryComponent } from './finance/summary/summary.component';
+import { FinanceCategoriesComponent } from './finance/categories/categories.component';
 import { AddTransactionComponent } from './finance/transactions/add-transaction.component';
 import { ImportTransactionsComponent } from './finance/transactions/import-transactions.component';
 import { FinanceTransactionDetailsComponent } from './finance/transactions/transaction-details.component';
@@ -40,6 +41,7 @@ export const routes: Routes = [
             { path: 'budget', component: FinanceBudgetComponent, title: 'Budget' },
             { path: 'institutions', component: FinanceInstitutionsComponent, title: 'Institutions' },
             { path: 'institutions/add', component: FinanceAddInstitutionComponent, title: 'Add Institution' },
+            { path: 'categories', component: FinanceCategoriesComponent, title: 'Categories' },
             { path: 'institutions/:id/add-account', component: FinanceAddAccountComponent, title: 'Add Account' },
             { path: 'accounts/:accountId/edit', component: FinanceEditAccountComponent, title: 'Edit Account' },
             { path: 'accounts/:accountId/import-balances', component: BalanceImportComponent, title: 'Import Balance History' }

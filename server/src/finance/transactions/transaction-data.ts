@@ -11,7 +11,7 @@ import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';
 import { transactionSchema } from './transaction-schema';
 
-export interface IFinanceTransactionsData extends IOwnedResourceData<Transaction> {
+export interface IFinanceTransactionData extends IOwnedResourceData<Transaction> {
     search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
     exportSearch(userId: string, accountId?: string): Promise<any[]>;
     retrieveMerchants(userId: string): Promise<string[]>;
@@ -40,7 +40,7 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
     };
 }
 
-export class FinanceTransactionsData implements IFinanceTransactionsData {
+export class FinanceTransactionData implements IFinanceTransactionData {
     private readonly db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {
@@ -127,7 +127,7 @@ export class FinanceTransactionsData implements IFinanceTransactionsData {
                     conditions.push(eq(transactionSchema.accountId, filter.value));
                 }
                 else if (filter.key === TransactionsFilterKey.Group) {
-                    conditions.push(eq(categorySchema.group, filter.value));
+                    conditions.push(eq(categorySchema.groupId, filter.value));
                 }
             }
         }

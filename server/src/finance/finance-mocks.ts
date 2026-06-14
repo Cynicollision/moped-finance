@@ -1,8 +1,8 @@
 import { IFinanceAccountData, IFinanceBalanceHistoryData } from './accounts';
 import { IFinanceBudgetStreamData } from './budget';
-import { IFinanceCategoriesData } from './categories';
-import { IFinanceInstitutionsData } from './institutions';
-import { IFinanceTransactionsData } from './transactions';
+import { IFinanceCategoryData } from './categories';
+import { IFinanceInstitutionData } from './institutions';
+import { IFinanceTransactionData } from './transactions';
 
 export class FinanceMockUtil {
     public static createMockAccountData(): jest.Mocked<IFinanceAccountData> {
@@ -35,7 +35,7 @@ export class FinanceMockUtil {
         };
     }
 
-    public static createMockCategoriesData(): jest.Mocked<IFinanceCategoriesData> {
+    public static createMockCategoriesData(): jest.Mocked<IFinanceCategoryData> {
         return {
             retrieveSingle: jest.fn(),
             retrieveAll: jest.fn(),
@@ -45,7 +45,7 @@ export class FinanceMockUtil {
         };
     }
 
-    public static createMockInstitutionsData(): jest.Mocked<IFinanceInstitutionsData> {
+    public static createMockInstitutionsData(): jest.Mocked<IFinanceInstitutionData> {
         return {
             retrieveSingle: jest.fn(),
             retrieveAll: jest.fn(),
@@ -55,7 +55,7 @@ export class FinanceMockUtil {
         };
     }
 
-    public static createMockTransactionsData(): jest.Mocked<IFinanceTransactionsData> {
+    public static createMockTransactionsData(): jest.Mocked<IFinanceTransactionData> {
         return {
             retrieveSingle: jest.fn(),
             search: jest.fn(),

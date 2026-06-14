@@ -7,30 +7,20 @@ import { Transaction } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
 import { ResultUtil, DateTimeUtil, EntityIdUtil } from '@server-core/utility';
 import { IFinanceAccountData } from './../accounts/account-data';
-import { IFinanceCategoriesData } from './../categories/category-data';
-import { IFinanceTransactionsData } from './transaction-data';
+import { IFinanceCategoryData } from './../categories/category-data';
+import { IFinanceTransactionData } from './transaction-data';
 
 export class TransactionController {
-    private logger: AppLogger;
-    private accountData: IFinanceAccountData;
-    private categoriesData: IFinanceCategoriesData;
-    private transactionsData: IFinanceTransactionsData;
-
-    // TODO: reconcile AccountData vs. AccountsData etc.
     constructor(
-        logger: AppLogger,
-        accountData: IFinanceAccountData,
-        categoriesData: IFinanceCategoriesData,
-        transactionsData: IFinanceTransactionsData
+        private logger: AppLogger,
+        private accountData: IFinanceAccountData,
+        private categoryData: IFinanceCategoryData,
+        private transactionData: IFinanceTransactionData
     ) {
-        this.logger = logger;
-        this.accountData = accountData;
-        this.categoriesData = categoriesData;
-        this.transactionsData = transactionsData;
     }
 
     public async getTransaction(userId: string, transactionId: string): Promise<OperationResult<Transaction>> {
-        const transaction = await this.transactionsData.retrieveSingle(userId, transactionId);
+        const transaction = await this.transactionData.retrieveSingle(userId, transactionId);
         if (!transaction) {
             return ResultUtil.userError('Transaction not found or access denied');
         }
@@ -39,20 +29,20 @@ export class TransactionController {
 
     public async createTransaction(userId: string, transaction: Transaction): Promise<OperationResult<Transaction>> {
         transaction.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Transaction);
-        return ResultUtil.success(await this.transactionsData.insert(userId, transaction));
+        return ResultUtil.success(await this.transactionData.insert(userId, transaction));
     }
 
     public async getTransactions(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<OperationResult<Transaction[]>> {
         // TODO: validate options
-        return ResultUtil.success(await this.transactionsData.search(userId, options, accountId));
+        return ResultUtil.success(await this.transactionData.search(userId, options, accountId));
     }
 
     public async getTransactionMerchants(userId: string): Promise<OperationResult<string[]>> {
-        return ResultUtil.success(await this.transactionsData.retrieveMerchants(userId));
+        return ResultUtil.success(await this.transactionData.retrieveMerchants(userId));
     }
 
     public async saveTransaction(userId: string, transaction: Transaction): Promise<OperationResult<Transaction>> {
-        const updated = await this.transactionsData.update(userId, transaction);
+        const updated = await this.transactionData.update(userId, transaction);
         if (!updated) {
             return ResultUtil.userError('Transaction not found or access denied');
         }
@@ -60,7 +50,7 @@ export class TransactionController {
     }
 
     public async deleteTransaction(userId: string, transactionId: string): Promise<OperationResult<void>> {
-        const deleted = await this.transactionsData.delete(userId, transactionId);
+        const deleted = await this.transactionData.delete(userId, transactionId);
         if (!deleted) {
             return ResultUtil.userError('Transaction not found or access denied');
         }
@@ -70,11 +60,11 @@ export class TransactionController {
     public async getTransactionCashflowByCategory(userId: string, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<CashflowStream[]>> {
         const asOf = asOfDate ? DateTimeUtil.parse(asOfDate) : DateTimeUtil.now();
         const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
-        return ResultUtil.success(await this.transactionsData.retrieveCashflowByCategory(userId, startDate, endDate));
+        return ResultUtil.success(await this.transactionData.retrieveCashflowByCategory(userId, startDate, endDate));
     }
 
     public async exportTransactions(userId: string, accountId?: string): Promise<OperationResult<any>> {
-        const transactions = await this.transactionsData.exportSearch(userId, accountId);
+        const transactions = await this.transactionData.exportSearch(userId, accountId);
 
         if (!transactions || transactions.length === 0) {
             return ResultUtil.success('Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n');
@@ -127,7 +117,7 @@ export class TransactionController {
 
         const [accountsList, categoriesList] = await Promise.all([
             this.accountData.retrieveAll(userId),
-            this.categoriesData.retrieveAll(userId)
+            this.categoryData.retrieveAll(userId)
         ]);
         const accountMap = new Map<string, string>();
         accountsList.forEach(a => accountMap.set(a.name.toLowerCase(), a.id!));
@@ -187,7 +177,7 @@ export class TransactionController {
                 if (!dryRun) {
                     if (row['Id'] && String(row['Id']).trim() !== '') {
                         // Update
-                        const updated = await this.transactionsData.update(userId, transaction);
+                        const updated = await this.transactionData.update(userId, transaction);
                         if (updated) {
                             updatedCount++;
                         }
@@ -197,7 +187,7 @@ export class TransactionController {
                     }
                     else {
                         // Insert
-                        await this.transactionsData.insert(userId, transaction);
+                        await this.transactionData.insert(userId, transaction);
                         createdCount++;
                     }
                 } else {

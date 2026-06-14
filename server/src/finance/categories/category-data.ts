@@ -1,13 +1,12 @@
 import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Category } from '@shared/finance/types';
-import { CategoryClass } from '@shared/finance/enum';
 import { IDatabaseClient } from '@server-core/db-client';
 import { IOwnedResourceData } from '@server-core/interfaces';
 import { DateTimeUtil } from '@server-core/utility';
 import { categorySchema } from './category-schema';
 
-export interface IFinanceCategoriesData extends IOwnedResourceData<Category> {
+export interface IFinanceCategoryData extends IOwnedResourceData<Category> {
     retrieveAll(userId: string, activeOnly?: boolean): Promise<Category[]>;
     delete(userId: string, id: string): Promise<boolean>;
     insert(userId: string, category: Category): Promise<Category>;
@@ -20,15 +19,14 @@ function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         userId: row.userId,
-        class: row.class as CategoryClass,
-        group: row.group,
+        groupId: row.groupId,
         icon: row.icon,
         name: row.name,
         isActive: row.isActive,
     };
 }
 
-export class FinanceCategoriesData implements IFinanceCategoriesData {
+export class FinanceCategoryData implements IFinanceCategoryData {
     private readonly db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {
@@ -61,9 +59,10 @@ export class FinanceCategoriesData implements IFinanceCategoriesData {
 
     public async delete(userId: string, id: string): Promise<boolean> {
         const result = await this.db.delete(categorySchema)
-            .where(and(eq(categorySchema.userId, userId), eq(categorySchema.id, id)));
+            .where(and(eq(categorySchema.userId, userId), eq(categorySchema.id, id)))
+            .returning({ id: categorySchema.id });
 
-        return (result.rowCount ?? 0) > 0;
+        return result.length > 0;
     }
 
     public async insert(userId: string, category: Category): Promise<Category> {
@@ -71,8 +70,7 @@ export class FinanceCategoriesData implements IFinanceCategoriesData {
             .values({
                 id: category.id,
                 userId: userId,
-                class: category.class,
-                group: category.group,
+                groupId: category.groupId,
                 icon: category.icon,
                 name: category.name,
                 isActive: category.isActive
@@ -85,8 +83,7 @@ export class FinanceCategoriesData implements IFinanceCategoriesData {
     public async update(userId: string, category: Category): Promise<Category | null> {
         const rows = await this.db.update(categorySchema)
             .set({
-                class: category.class,
-                group: category.group,
+                groupId: category.groupId,
                 icon: category.icon,
                 name: category.name,
                 isActive: category.isActive,

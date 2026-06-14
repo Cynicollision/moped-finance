@@ -1,17 +1,52 @@
 import { OperationResult } from '@shared/core/contracts';
 import { FinanceEntityIdPrefix } from '@shared/finance/enum';
-import { Category } from '@shared/finance/types';
+import { Category, CategoryGroup } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
 import { EntityIdUtil, ResultUtil } from '@server-core/utility';
-import { IFinanceCategoriesData } from './category-data';
+import { IFinanceCategoryData } from './category-data';
+import { IFinanceCategoryGroupData } from './category-groups';
 
 export class CategoryController {
-    private readonly logger: AppLogger;
-    private readonly categories: IFinanceCategoriesData;
+    constructor(
+        private logger: AppLogger,
+        private categories: IFinanceCategoryData,
+        private groups: IFinanceCategoryGroupData
+    ) {
+    }
 
-    constructor(logger: AppLogger, categories: IFinanceCategoriesData) {
-        this.logger = logger;
-        this.categories = categories;
+    public async getGroup(userId: string, groupId: string): Promise<OperationResult<CategoryGroup>> {
+        const group = await this.groups.retrieveSingle(userId, groupId);
+        if (!group) {
+            return ResultUtil.userError('Category Group not found or access denied');
+        }
+        return ResultUtil.success(group);
+    }
+
+    public async getGroups(userId: string): Promise<OperationResult<CategoryGroup[]>> {
+        return ResultUtil.success(await this.groups.retrieveAll(userId));
+    }
+
+    public async createGroup(userId: string, group: CategoryGroup): Promise<OperationResult<CategoryGroup>> {
+        group.id = EntityIdUtil.generate(FinanceEntityIdPrefix.CategoryGroup);
+        group.userId = userId;
+
+        return ResultUtil.success(await this.groups.insert(userId, group));
+    }
+
+    public async updateGroup(userId: string, group: CategoryGroup): Promise<OperationResult<CategoryGroup>> {
+        const updated = await this.groups.update(userId, group);
+        if (!updated) {
+            return ResultUtil.userError('Category Group not found or access denied');
+        }
+        return ResultUtil.success(updated);
+    }
+
+    public async deleteGroup(userId: string, groupId: string): Promise<OperationResult<void>> {
+        const deleted = await this.groups.delete(userId, groupId);
+        if (!deleted) {
+            return ResultUtil.userError('Category Group not found or access denied');
+        }
+        return ResultUtil.success();
     }
 
     public async getCategory(userId: string, categoryId: string): Promise<OperationResult<Category>> {

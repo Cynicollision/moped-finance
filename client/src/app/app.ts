@@ -55,6 +55,7 @@ export class App implements OnInit {
         { label: 'Transactions', route: '/transactions', icon: 'credit_card' },
         { label: 'Cashflow', route: '/cashflow', icon: 'bar_chart' },
         { label: 'Budget', route: '/budget', icon: 'pie_chart' },
+        { label: 'Categories', route: '/categories', icon: 'category' },
         { label: 'Institutions', route: '/institutions', icon: 'account_balance' }
     ];
 

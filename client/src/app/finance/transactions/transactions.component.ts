@@ -18,7 +18,7 @@ import { startWith, map } from 'rxjs';
 import { SortDirection } from '@shared/core/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
-import { Transaction, Category, Account } from '@shared/finance/types';
+import { Transaction, Category, Account, CategoryGroup } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 
@@ -73,29 +73,32 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
 
     merchants = signal<string[]>([]);
     categories = signal<Category[]>([]);
-    groups = signal<string[]>([]);
+    groups = signal<CategoryGroup[]>([]);
     categoryMap = new Map<string, Category>();
+    groupMap = new Map<string, CategoryGroup>();
     accounts = signal<Account[]>([]);
     accountMap = new Map<string, Account>();
 
     filteredMerchants = signal<string[]>([]);
     filteredCategories = signal<Category[]>([]);
-    filteredGroups = signal<string[]>([]);
+    filteredGroups = signal<CategoryGroup[]>([]);
 
     constructor() {
     }
 
     async ngOnInit() {
-        const [merchants, categories, accounts] = await Promise.all([
+        const [merchants, categories, accounts, groups] = await Promise.all([
             this.financeService.fetchTransactionMerchants(),
             this.financeService.fetchCategories(false),
-            this.financeService.fetchAllAccounts()
+            this.financeService.fetchAllAccounts(),
+            this.financeService.fetchCategoryGroups()
         ]);
 
         this.merchants.set(merchants || []);
         this.categories.set(categories || []);
         this.categories().forEach(c => this.categoryMap.set(c.id, c));
-        this.groups.set([...new Set(this.categories().map(c => c.group))].filter(Boolean).sort());
+        this.groups.set(groups || []);
+        this.groups().forEach(g => this.groupMap.set(g.id, g));
         this.accounts.set(accounts || []);
         this.accounts().forEach(a => this.accountMap.set(a.id, a));
 
@@ -114,9 +117,9 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             return this.categories().filter(c => c.name.toLowerCase().includes(filterValue));
         };
 
-        const _filterGroups = (value: string): string[] => {
+        const _filterGroups = (value: string): CategoryGroup[] => {
             const filterValue = value.toLowerCase();
-            return this.groups().filter(g => g.toLowerCase().includes(filterValue));
+            return this.groups().filter(g => g.name.toLowerCase().includes(filterValue));
         };
 
         // Merchant Filter
@@ -135,7 +138,8 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         // Group Filter
         this.filterForm.controls.group.valueChanges.pipe(
             startWith(''),
-            map(value => _filterGroups(value || ''))
+            map(value => typeof value === 'string' ? value : ''),
+            map(name => _filterGroups(name))
         ).subscribe(filtered => this.filteredGroups.set(filtered));
     }
 
@@ -273,6 +277,11 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
     }
 
     readonly displayCategory = (id: string): string => this.getCategoryName(id);
+
+    readonly displayGroup = (id: string): string => {
+        const group = this.groupMap.get(id);
+        return group ? group.name : '';
+    };
 
     clearFilters() {
         this.filterForm.reset({

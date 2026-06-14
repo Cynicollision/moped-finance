@@ -55,8 +55,8 @@
                     <mat-form-field appearance="outline">
                         <mat-label>Group</mat-label>
                         <input type="text" matInput formControlName="group" [matAutocomplete]="autoGroup">
-                        <mat-autocomplete #autoGroup="matAutocomplete">
-                            <mat-option *ngFor="let g of filteredGroups()" [value]="g">{{g}}</mat-option>
+                        <mat-autocomplete #autoGroup="matAutocomplete" [displayWith]="displayGroup">
+                            <mat-option *ngFor="let g of filteredGroups()" [value]="g.id">{{g.name}}</mat-option>
                         </mat-autocomplete>
                     </mat-form-field>
                     <mat-form-field appearance="outline">

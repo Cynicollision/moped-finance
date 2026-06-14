@@ -8,16 +8,16 @@ import { DateTimeUtil } from '@server-core/utility';
 import { TestExpressUtil } from '@server-core/utility/testing';
 import { FinanceMockUtil } from './../finance-mocks';
 
-import { IFinanceTransactionsData } from './transaction-data';
+import { IFinanceTransactionData } from './transaction-data';
 import { IFinanceAccountData } from './../accounts/account-data';
-import { IFinanceCategoriesData } from './../categories/category-data';
+import { IFinanceCategoryData } from './../categories/category-data';
 import { createTransactionRouter } from './transaction-routes';
 
 describe('Transaction Routes', () => {
     let app: express.Express;
-    let mockTransactionsData: jest.Mocked<IFinanceTransactionsData>;
+    let mockTransactionsData: jest.Mocked<IFinanceTransactionData>;
     let mockAccountData: jest.Mocked<IFinanceAccountData>;
-    let mockCategoriesData: jest.Mocked<IFinanceCategoriesData>;
+    let mockCategoriesData: jest.Mocked<IFinanceCategoryData>;
     let mockLogger: jest.Mocked<AppLogger>;
 
     const testUserId = 'test-user-id';
