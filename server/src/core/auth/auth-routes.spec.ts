@@ -56,16 +56,6 @@ describe('Auth Routes', () => {
         agent = request.agent(app);
     });
 
-    it('debug db client', async () => {
-        try {
-            const user = await userData.retrieveByUsername('newuser');
-            console.log('User:', user);
-        }
-        catch (err: any) {
-            console.error('DB ERROR:', err, err.cause);
-        }
-    });
-
     describe('POST /auth/register', () => {
         it('should register a new user successfully', async () => {
             const response = await agent.post('/auth/register').send({

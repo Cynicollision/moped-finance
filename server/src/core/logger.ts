@@ -16,7 +16,14 @@ export type LoggerConfig = {
     info: LogBehavior;
 };
 
-export class AppLogger {
+// TODO: "context" object param vs. userId and context string
+export interface IAppLoger {
+    error(userId: string, context: string, message: string): void;
+    warn(userId: string, context: string, message: string): void;
+    info(userId: string, context: string, message: string): void;
+}
+
+export class AppLogger implements IAppLoger {
 
     constructor(private logData: ILogData, private config: LoggerConfig) {
     }

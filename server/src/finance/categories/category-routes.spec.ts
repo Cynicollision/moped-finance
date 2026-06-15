@@ -5,6 +5,7 @@ import { CategoryClass } from '@shared/finance/enum';
 import { AppLogger } from '@server-core/logger';
 import { DatabaseClient } from '@server-core/db-client';
 import { TestExpressUtil, TestDatabaseUtil } from '@server-core/utility/testing';
+import { FinanceEntityFactory } from './../common';
 import { FinanceCategoryData } from './category-data';
 import { FinanceCategoryGroupData } from './category-groups/category-group-data';
 import { createCategoryRouter } from './category-routes';
@@ -49,27 +50,27 @@ describe('Category Routes', () => {
     // ---------------------------------------------------------
     describe('GET /categories/groups', () => {
         it('should return a list of category groups', async () => {
-            await groupsData.insert(testUserId, { id: 'g1', class: CategoryClass.Income, name: 'Job' } as any);
-            await groupsData.insert(testUserId, { id: 'g2', class: CategoryClass.Expense, name: 'Bills' } as any);
+            const g1 = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Income, name: 'Job' }));
+            const g2 = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Expense, name: 'Bills' }));
 
             const response = await request(app).get('/categories/groups');
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
             expect(response.body.data.length).toBe(2);
-            expect(response.body.data.map((g: any) => g.id)).toEqual(expect.arrayContaining(['g1', 'g2']));
+            expect(response.body.data.map((g: any) => g.id)).toEqual(expect.arrayContaining([g1.id, g2.id]));
         });
     });
 
     describe('GET /categories/groups/:id', () => {
         it('should return a single category group', async () => {
-            await groupsData.insert(testUserId, { id: 'g1', class: CategoryClass.Income, name: 'Job' } as any);
+            const group = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Income, name: 'Job' }));
 
-            const response = await request(app).get('/categories/groups/g1');
+            const response = await request(app).get(`/categories/groups/${group.id}`);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data.id).toBe('g1');
+            expect(response.body.data.id).toBe(group.id);
             expect(response.body.data.name).toBe('Job');
         });
 
@@ -104,30 +105,30 @@ describe('Category Routes', () => {
 
     describe('PUT /categories/groups/:id', () => {
         it('should update a category group', async () => {
-            const group = await groupsData.insert(testUserId, { id: 'g1', class: CategoryClass.Income, name: 'Old Name' } as any);
+            const group = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Income, name: 'Old Name' }));
 
             const payload = { ...group, name: 'New Name' };
-            const response = await request(app).put('/categories/groups/g1').send(payload);
+            const response = await request(app).put(`/categories/groups/${group.id}`).send(payload);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
             expect(response.body.data.name).toBe('New Name');
 
-            const updated = await groupsData.retrieveSingle(testUserId, 'g1');
+            const updated = await groupsData.retrieveSingle(testUserId, group.id!);
             expect(updated?.name).toBe('New Name');
         });
     });
 
     describe('DELETE /categories/groups/:id', () => {
         it('should delete a category group', async () => {
-            await groupsData.insert(testUserId, { id: 'g1', class: CategoryClass.Income, name: 'Job' } as any);
+            const group = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Income, name: 'Job' }));
 
-            const response = await request(app).delete('/categories/groups/g1');
+            const response = await request(app).delete(`/categories/groups/${group.id}`);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
 
-            const dbGroup = await groupsData.retrieveSingle(testUserId, 'g1');
+            const dbGroup = await groupsData.retrieveSingle(testUserId, group.id!);
             expect(dbGroup).toBeNull();
         });
     });
@@ -137,35 +138,35 @@ describe('Category Routes', () => {
     // ---------------------------------------------------------
     describe('GET /categories', () => {
         it('should return a list of categories', async () => {
-            const group = await groupsData.insert(testUserId, { id: 'g1', class: CategoryClass.Expense, name: 'Housing' } as any);
-            await categoriesData.insert(testUserId, { id: 'c1', groupId: group.id, name: 'Rent', icon: 'home', isActive: true } as any);
+            const group = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Expense, name: 'Housing' }));
+            const category = await categoriesData.insert(testUserId, FinanceEntityFactory.createCategory({ userId: testUserId, groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
 
             const response = await request(app).get('/categories');
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
             expect(response.body.data.length).toBe(1);
-            expect(response.body.data[0].id).toBe('c1');
+            expect(response.body.data[0].id).toBe(category.id);
             expect(response.body.data[0].name).toBe('Rent');
         });
     });
 
     describe('GET /categories/:id', () => {
         it('should return a single category', async () => {
-            const group = await groupsData.insert(testUserId, { id: 'g1', class: CategoryClass.Expense, name: 'Housing' } as any);
-            await categoriesData.insert(testUserId, { id: 'c1', groupId: group.id, name: 'Rent', icon: 'home', isActive: true } as any);
+            const group = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Expense, name: 'Housing' }));
+            const category = await categoriesData.insert(testUserId, FinanceEntityFactory.createCategory({ userId: testUserId, groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
 
-            const response = await request(app).get('/categories/c1');
+            const response = await request(app).get(`/categories/${category.id}`);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data.id).toBe('c1');
+            expect(response.body.data.id).toBe(category.id);
         });
     });
 
     describe('POST /categories', () => {
         it('should create a new category', async () => {
-            const group = await groupsData.insert(testUserId, { id: 'g1', class: CategoryClass.Expense, name: 'Housing' } as any);
+            const group = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Expense, name: 'Housing' }));
 
             const payload = {
                 groupId: group.id,
@@ -188,32 +189,32 @@ describe('Category Routes', () => {
 
     describe('PUT /categories/:id', () => {
         it('should update a category', async () => {
-            const group = await groupsData.insert(testUserId, { id: 'g1', class: CategoryClass.Expense, name: 'Housing' } as any);
-            const category = await categoriesData.insert(testUserId, { id: 'c1', groupId: group.id, name: 'Rent', icon: 'home', isActive: true } as any);
+            const group = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Expense, name: 'Housing' }));
+            const category = await categoriesData.insert(testUserId, FinanceEntityFactory.createCategory({ userId: testUserId, groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
 
             const payload = { ...category, name: 'New Rent' };
-            const response = await request(app).put('/categories/c1').send(payload);
+            const response = await request(app).put(`/categories/${category.id}`).send(payload);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
             expect(response.body.data.name).toBe('New Rent');
 
-            const updated = await categoriesData.retrieveSingle(testUserId, 'c1');
+            const updated = await categoriesData.retrieveSingle(testUserId, category.id!);
             expect(updated?.name).toBe('New Rent');
         });
     });
 
     describe('DELETE /categories/:id', () => {
         it('should delete a category', async () => {
-            const group = await groupsData.insert(testUserId, { id: 'g1', class: CategoryClass.Expense, name: 'Housing' } as any);
-            await categoriesData.insert(testUserId, { id: 'c1', groupId: group.id, name: 'Rent', icon: 'home', isActive: true } as any);
+            const group = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Expense, name: 'Housing' }));
+            const category = await categoriesData.insert(testUserId, FinanceEntityFactory.createCategory({ userId: testUserId, groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
 
-            const response = await request(app).delete('/categories/c1');
+            const response = await request(app).delete(`/categories/${category.id}`);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
 
-            const dbCategory = await categoriesData.retrieveSingle(testUserId, 'c1');
+            const dbCategory = await categoriesData.retrieveSingle(testUserId, category.id!);
             expect(dbCategory).toBeNull();
         });
     });

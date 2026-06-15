@@ -55,9 +55,10 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
 
     public async delete(userId: string, id: string): Promise<boolean> {
         const result = await this.db.delete(budgetStreamSchema)
-            .where(and(eq(budgetStreamSchema.userId, userId), eq(budgetStreamSchema.id, id)));
+            .where(and(eq(budgetStreamSchema.userId, userId), eq(budgetStreamSchema.id, id)))
+            .returning({ id: budgetStreamSchema.id });
 
-        return (result.rowCount ?? 0) > 0;
+        return result.length > 0;
     }
 
     public async insert(userId: string, stream: BudgetStream): Promise<BudgetStream> {

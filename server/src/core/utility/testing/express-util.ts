@@ -20,9 +20,7 @@ export class TestExpressUtil {
         return app;
     }
 
-    /**
-     * Creates a standard mock AppLogger for testing.
-     */
+    // TODO: replace w/ IAppLogger implementation
     public static createMockLogger(): jest.Mocked<AppLogger> {
         return {
             info: jest.fn(),

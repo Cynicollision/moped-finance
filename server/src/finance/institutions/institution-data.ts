@@ -50,9 +50,10 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
 
     public async delete(userId: string, id: string): Promise<boolean> {
         const result = await this.db.delete(institutionSchema)
-            .where(and(eq(institutionSchema.userId, userId), eq(institutionSchema.id, id)));
+            .where(and(eq(institutionSchema.userId, userId), eq(institutionSchema.id, id)))
+            .returning({ id: institutionSchema.id });
 
-        return (result.rowCount ?? 0) > 0;
+        return result.length > 0;
     }
 
     public async insert(userId: string, institution: Institution): Promise<Institution> {

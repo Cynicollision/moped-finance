@@ -1,85 +1,94 @@
 import express from 'express';
 import request from 'supertest';
-import { CalendarPeriod, SortDirection } from '@shared/core/enum';
-import { TransactionsSortKey } from '@shared/finance/enum';
-import { Transaction } from '@shared/finance/types';
+import { PGlite } from '@electric-sql/pglite';
+import { SortDirection } from '@shared/core/enum';
+import { AccountCategory, AccountGroup, AccountType, CategoryClass, TransactionsSortKey } from '@shared/finance/enum';
 import { AppLogger } from '@server-core/logger';
-import { DateTimeUtil } from '@server-core/utility';
-import { TestExpressUtil } from '@server-core/utility/testing';
-import { FinanceMockUtil } from './../finance-mocks';
-
-import { IFinanceTransactionData } from './transaction-data';
-import { IFinanceAccountData } from './../accounts/account-data';
-import { IFinanceCategoryData } from './../categories/category-data';
+import { DatabaseClient } from '@server-core/db-client';
+import { TestExpressUtil, TestDatabaseUtil } from '@server-core/utility/testing';
+import { FinanceEntityFactory } from './../common';
+import { FinanceAccountData } from './../accounts/account-data';
+import { FinanceCategoryData } from './../categories/category-data';
+import { FinanceCategoryGroupData } from './../categories/category-groups/category-group-data';
+import { FinanceInstitutionData } from './../institutions/institution-data';
 import { createTransactionRouter } from './transaction-routes';
+import { FinanceTransactionData } from './transaction-data';
 
 describe('Transaction Routes', () => {
     let app: express.Express;
-    let mockTransactionsData: jest.Mocked<IFinanceTransactionData>;
-    let mockAccountData: jest.Mocked<IFinanceAccountData>;
-    let mockCategoriesData: jest.Mocked<IFinanceCategoryData>;
+    let dbClient: DatabaseClient;
+    let pglite: PGlite;
+    let transactionsData: FinanceTransactionData;
+    let accountsData: FinanceAccountData;
+    let categoriesData: FinanceCategoryData;
+    let groupsData: FinanceCategoryGroupData;
+    let institutionsData: FinanceInstitutionData;
     let mockLogger: jest.Mocked<AppLogger>;
+    let testUserId: string;
 
-    const testUserId = 'test-user-id';
+    let testAccountId: string;
+    let testCategoryId: string;
 
-    const createMockTransaction = (overrides?: Partial<Transaction>): Transaction => {
-        return {
-            id: 'txn-1',
-            accountId: 'acc-1',
-            categoryId: 'cat-1',
-            date: '2026-06-06',
-            amount: 150.00,
-            merchant: 'Test Merchant',
-            originalStatement: 'Test Merchant',
-            notes: '',
-            isHidden: false,
-            isSplit: false,
-            splitParentId: '',
-            createdAt: DateTimeUtil.now(),
-            updatedAt: DateTimeUtil.now(),
-            ...overrides
-        };
-    };
+    beforeAll(async () => {
+        const mockDb = await TestDatabaseUtil.createMockDatabase();
+        dbClient = mockDb.dbClient;
+        pglite = mockDb.pglite;
 
-    beforeEach(() => {
-        mockTransactionsData = FinanceMockUtil.createMockTransactionsData();
-        mockAccountData = FinanceMockUtil.createMockAccountData();
-        mockCategoriesData = FinanceMockUtil.createMockCategoriesData();
+        const user = await TestDatabaseUtil.createTestUser(dbClient);
+        testUserId = user.id;
+
+        transactionsData = new FinanceTransactionData(dbClient);
+        accountsData = new FinanceAccountData(dbClient);
+        categoriesData = new FinanceCategoryData(dbClient);
+        groupsData = new FinanceCategoryGroupData(dbClient);
+        institutionsData = new FinanceInstitutionData(dbClient);
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createTransactionRouter(mockLogger, mockAccountData, mockCategoriesData, mockTransactionsData);
+        const router = createTransactionRouter(mockLogger, accountsData, categoriesData, transactionsData);
         app = TestExpressUtil.createTestApp(router, '/transactions', testUserId);
+    });
+
+    afterAll(async () => {
+        if (pglite) {
+            await pglite.close();
+        }
+    });
+
+    beforeEach(async () => {
+        await pglite.exec('TRUNCATE finance.institutions, finance.accounts, finance.category_groups, finance.categories, finance.transactions CASCADE;');
+
+        const inst = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Bank' }));
+        const account = await accountsData.create(testUserId, FinanceEntityFactory.createAccount({
+            userId: testUserId, institutionId: inst.id!, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, balance: 0
+        }));
+        testAccountId = account.id!;
+
+        const group = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Expense, name: 'Food' }));
+        const category = await categoriesData.insert(testUserId, FinanceEntityFactory.createCategory({
+            userId: testUserId, groupId: group.id!, name: 'Groceries', icon: 'apple', isActive: true
+        }));
+        testCategoryId = category.id!;
     });
 
     describe('GET /', () => {
         it('should return a list of transactions when successful with default options', async () => {
-            const mockTxns = [
-                createMockTransaction({ id: 'txn-1', amount: 100 }),
-                createMockTransaction({ id: 'txn-2', amount: 200 })
-            ];
-            mockTransactionsData.search.mockResolvedValue(mockTxns);
+            const txn1 = await transactionsData.insert(testUserId, FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant 1', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn2 = await transactionsData.insert(testUserId, FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-07', amount: 200, merchant: 'Test Merchant 2', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions');
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(JSON.parse(JSON.stringify(mockTxns)));
-            expect(mockTransactionsData.search).toHaveBeenCalledWith(testUserId, expect.objectContaining({
-                sortKey: undefined,
-                sortDirection: undefined,
-                offset: 0,
-                limit: 50,
-                includeHidden: false
-            }), undefined);
+            expect(response.body.data.length).toBe(2);
+            expect(response.body.data.map((t: any) => t.id)).toEqual(expect.arrayContaining([txn1.id, txn2.id]));
         });
 
         it('should parse and pass all search options correctly', async () => {
-            mockTransactionsData.search.mockResolvedValue([]);
+            const txn = await transactionsData.insert(testUserId, FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const filters = [
-                { filterKey: 'categoryId', value: 'cat-1' },
-                { filterKey: 'merchant', value: 'Amazon' },
-                { filterKey: 'search', value: 'Test' }
+                { key: 'categoryId', value: testCategoryId },
+                { key: 'merchant', value: 'Test' }
             ];
 
             const response = await request(app)
@@ -87,7 +96,7 @@ describe('Transaction Routes', () => {
                 .query({
                     sortKey: TransactionsSortKey.Amount,
                     sortDirection: SortDirection.Desc,
-                    offset: '10',
+                    offset: '0',
                     limit: '25',
                     includeHidden: 'true',
                     minAmount: '50',
@@ -98,32 +107,21 @@ describe('Transaction Routes', () => {
                 });
 
             expect(response.status).toBe(200);
-            expect(mockTransactionsData.search).toHaveBeenCalledWith(testUserId, expect.objectContaining({
-                sortKey: TransactionsSortKey.Amount,
-                sortDirection: SortDirection.Desc,
-                offset: 10,
-                limit: 25,
-                includeHidden: true,
-                minAmount: 50,
-                maxAmount: 500,
-                startDate: '2026-01-01',
-                endDate: '2026-12-31',
-                filters: filters
-            }), undefined);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.length).toBe(1);
+            expect(response.body.data[0].id).toBe(txn.id);
         });
     });
 
     describe('POST /', () => {
         it('should create a new transaction when input is valid', async () => {
             const payload = {
-                accountId: 'acc-1',
-                categoryId: 'cat-1',
+                accountId: testAccountId,
+                categoryId: testCategoryId,
                 date: '2026-06-06',
                 amount: 300.00,
                 merchant: 'Groceries'
             };
-            const createdTxn = createMockTransaction({ ...payload, id: 'generated-id' });
-            mockTransactionsData.insert.mockResolvedValue(createdTxn);
 
             const response = await request(app)
                 .post('/transactions')
@@ -131,17 +129,18 @@ describe('Transaction Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(JSON.parse(JSON.stringify(createdTxn)));
-            expect(mockTransactionsData.insert).toHaveBeenCalledWith(
-                testUserId,
-                expect.objectContaining(payload)
-            );
+            expect(response.body.data.merchant).toBe('Groceries');
+            expect(response.body.data.amount).toBe(300);
+
+            const dbTxn = await transactionsData.retrieveSingle(testUserId, response.body.data.id);
+            expect(dbTxn).not.toBeNull();
+            expect(dbTxn?.merchant).toBe('Groceries');
         });
 
         it('should return 400 when schema validation fails (missing amount)', async () => {
             const payload = {
-                accountId: 'acc-1',
-                categoryId: 'cat-1',
+                accountId: testAccountId,
+                categoryId: testCategoryId,
                 date: '2026-06-06',
                 merchant: 'Groceries'
             };
@@ -152,52 +151,49 @@ describe('Transaction Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
-            expect(mockTransactionsData.insert).not.toHaveBeenCalled();
+            expect(response.body.error.message).toContain('amount');
         });
     });
 
     describe('GET /merchants', () => {
         it('should return a list of merchants', async () => {
-            const merchants = ['Amazon', 'Walmart'];
-            mockTransactionsData.retrieveMerchants.mockResolvedValue(merchants);
+            await transactionsData.insert(testUserId, FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Amazon', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(testUserId, FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Walmart', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions/merchants');
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(merchants);
+            expect(response.body.data).toEqual(expect.arrayContaining(['Amazon', 'Walmart']));
         });
     });
 
     describe('GET /cashflow', () => {
         it('should return cashflow by category', async () => {
-            const cashflow = [{ categoryId: 'cat-1', amount: 500 }];
-            mockTransactionsData.retrieveCashflowByCategory.mockResolvedValue(cashflow);
+            await transactionsData.insert(testUserId, FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 500, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions/cashflow?period=Monthly');
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(cashflow);
-            expect(mockTransactionsData.retrieveCashflowByCategory).toHaveBeenCalled();
+            expect(response.body.data.length).toBe(1);
+            expect(response.body.data[0].categoryId).toBe(testCategoryId);
+            expect(response.body.data[0].amount).toBe(500);
         });
     });
 
     describe('GET /:id', () => {
         it('should return a single transaction when found', async () => {
-            const txn = createMockTransaction({ id: 'txn-1' });
-            mockTransactionsData.retrieveSingle.mockResolvedValue(txn);
+            const txn = await transactionsData.insert(testUserId, FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
-            const response = await request(app).get('/transactions/txn-1');
+            const response = await request(app).get(`/transactions/${txn.id}`);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(JSON.parse(JSON.stringify(txn)));
+            expect(response.body.data.id).toBe(txn.id);
         });
 
         it('should return 400 when transaction is not found', async () => {
-            mockTransactionsData.retrieveSingle.mockResolvedValue(null);
-
             const response = await request(app).get('/transactions/missing-id');
 
             expect(response.status).toBe(400);
@@ -207,29 +203,28 @@ describe('Transaction Routes', () => {
 
     describe('PUT /:id', () => {
         it('should update a transaction when valid and resource belongs to user', async () => {
-            const txnId = 'txn-1';
+            const txn = await transactionsData.insert(testUserId, FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+
             const payload = {
+                ...txn,
                 amount: 120.00,
                 merchant: 'Updated Merchant'
             };
-            const updatedTxn = createMockTransaction({ ...payload, id: txnId });
-            mockTransactionsData.update.mockResolvedValue(updatedTxn);
 
             const response = await request(app)
-                .put(`/transactions/${txnId}`)
+                .put(`/transactions/${txn.id}`)
                 .send(payload);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(JSON.parse(JSON.stringify(updatedTxn)));
+            expect(response.body.data.amount).toBe(120);
+            expect(response.body.data.merchant).toBe('Updated Merchant');
         });
 
         it('should return 400 when update fails because resource does not exist or user lacks ownership', async () => {
-            mockTransactionsData.update.mockResolvedValue(null);
-
             const response = await request(app)
                 .put('/transactions/txn-1')
-                .send({ merchant: 'Updated' });
+                .send({ amount: 100, merchant: 'Updated', date: '2026-06-06', accountId: testAccountId, categoryId: testCategoryId, isHidden: false, isSplit: false });
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
@@ -239,19 +234,19 @@ describe('Transaction Routes', () => {
 
     describe('DELETE /:id', () => {
         it('should delete a transaction when resource belongs to user', async () => {
-            mockTransactionsData.delete.mockResolvedValue(true);
+            const txn = await transactionsData.insert(testUserId, FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
-            const response = await request(app).delete('/transactions/txn-1');
+            const response = await request(app).delete(`/transactions/${txn.id}`);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(mockTransactionsData.delete).toHaveBeenCalledWith(testUserId, 'txn-1');
+
+            const dbTxn = await transactionsData.retrieveSingle(testUserId, txn.id!);
+            expect(dbTxn).toBeNull();
         });
 
         it('should return 400 when delete fails', async () => {
-            mockTransactionsData.delete.mockResolvedValue(false);
-
-            const response = await request(app).delete('/transactions/txn-1');
+            const response = await request(app).delete('/transactions/missing');
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
@@ -261,25 +256,19 @@ describe('Transaction Routes', () => {
 
     describe('GET /export', () => {
         it('should return a CSV file of exported transactions', async () => {
-            mockTransactionsData.exportSearch.mockResolvedValue([
-                { id: 'txn-1', date: '2026-06-06', accountName: 'Checking', merchant: 'Test Merchant', categoryName: 'Groceries', amount: 100, originalStatement: '', notes: '', isHidden: false }
-            ]);
+            await transactionsData.insert(testUserId, FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions/export');
 
             expect(response.status).toBe(200);
             expect(response.header['content-type']).toContain('text/csv');
             expect(response.text).toContain('Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden');
-            expect(response.text).toContain('txn-1');
+            expect(response.text).toContain('Test Merchant');
         });
     });
 
     describe('POST /import', () => {
         it('should process a CSV file and return import statistics', async () => {
-            mockAccountData.retrieveAll.mockResolvedValue([{ id: 'acc-1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any]);
-            mockCategoriesData.retrieveAll.mockResolvedValue([{ id: 'cat-1', name: 'Groceries', class: 'Expense', group: 'Food', userId: testUserId, icon: 'apple', isActive: true, createdAt: new Date(), updatedAt: new Date() } as any]);
-            mockTransactionsData.insert.mockResolvedValue({} as any);
-
             const csvContent = 'Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n,2026-06-06,Checking,Test,Groceries,100,,,false';
 
             const response = await request(app)
@@ -289,12 +278,10 @@ describe('Transaction Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
             expect(response.body.data.createdCount).toBe(1);
+            expect(response.body.data.failedRowMessages.length).toBe(0);
         });
 
         it('should perform a dry run without saving when dryRun=true', async () => {
-            mockAccountData.retrieveAll.mockResolvedValue([{ id: 'acc-1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any]);
-            mockCategoriesData.retrieveAll.mockResolvedValue([{ id: 'cat-1', name: 'Groceries', class: 'Expense', group: 'Food', userId: testUserId, icon: 'apple', isActive: true, createdAt: new Date(), updatedAt: new Date() } as any]);
-
             const csvContent = 'Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n,2026-06-06,Checking,Test,Groceries,100,,,false';
 
             const response = await request(app)
@@ -304,14 +291,12 @@ describe('Transaction Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
             expect(response.body.data.createdCount).toBe(1);
-            expect(mockTransactionsData.insert).not.toHaveBeenCalled();
-            expect(mockTransactionsData.update).not.toHaveBeenCalled();
+
+            const txns = await transactionsData.search(testUserId, { limit: 10, offset: 0, sortKey: TransactionsSortKey.Date, sortDirection: SortDirection.Desc, includeHidden: true });
+            expect(txns.length).toBe(0);
         });
 
         it('should fail validation when Category is missing or invalid', async () => {
-            mockAccountData.retrieveAll.mockResolvedValue([{ id: 'acc-1', name: 'Checking', category: 'Asset', group: 'Cash', type: 'Checking', balance: 0, userId: testUserId, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, createdAt: new Date(), updatedAt: new Date(), institutionId: '' } as any]);
-            mockCategoriesData.retrieveAll.mockResolvedValue([{ id: 'cat-1', name: 'Groceries', class: 'Expense', group: 'Food', userId: testUserId, icon: 'apple', isActive: true, createdAt: new Date(), updatedAt: new Date() } as any]);
-
             const csvContent = 'Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n,2026-06-06,Checking,Test,InvalidCategory,100,,,false';
 
             const response = await request(app)

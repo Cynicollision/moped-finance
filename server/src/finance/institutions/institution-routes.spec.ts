@@ -1,72 +1,73 @@
 import express from 'express';
 import request from 'supertest';
-import { Institution } from '@shared/finance/types';
+import { PGlite } from '@electric-sql/pglite';
 import { AppLogger } from '@server-core/logger';
-import { DateTimeUtil } from '@server-core/utility';
-import { TestExpressUtil } from '@server-core/utility/testing';
-import { FinanceMockUtil } from './../finance-mocks';
-import { IFinanceInstitutionData } from './institution-data';
+import { DatabaseClient } from '@server-core/db-client';
+import { TestExpressUtil, TestDatabaseUtil } from '@server-core/utility/testing';
+import { FinanceEntityFactory } from './../common';
+import { FinanceInstitutionData } from './institution-data';
 import { createInstitutionRouter } from './institution-routes';
 
 describe('Institution Routes', () => {
     let app: express.Express;
-    let mockInstitutionsData: jest.Mocked<IFinanceInstitutionData>;
+    let dbClient: DatabaseClient;
+    let pglite: PGlite;
+    let institutionsData: FinanceInstitutionData;
     let mockLogger: jest.Mocked<AppLogger>;
+    let testUserId: string;
 
-    const testUserId = 'test-user-id';
+    beforeAll(async () => {
+        const mockDb = await TestDatabaseUtil.createMockDatabase();
+        dbClient = mockDb.dbClient;
+        pglite = mockDb.pglite;
 
-    const createMockInstitution = (overrides?: Partial<Institution>): Institution => {
-        return {
-            id: 'inst1',
-            userId: testUserId,
-            name: 'Chase Bank',
-            createdAt: DateTimeUtil.now(),
-            updatedAt: DateTimeUtil.now(),
-            ...overrides
-        } as Institution;
-    };
+        const user = await TestDatabaseUtil.createTestUser(dbClient);
+        testUserId = user.id;
 
-    beforeEach(() => {
-        mockInstitutionsData = FinanceMockUtil.createMockInstitutionsData();
+        institutionsData = new FinanceInstitutionData(dbClient);
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createInstitutionRouter(mockLogger, mockInstitutionsData);
+        const router = createInstitutionRouter(mockLogger, institutionsData);
         app = TestExpressUtil.createTestApp(router, '/institutions', testUserId);
+    });
+
+    afterAll(async () => {
+        if (pglite) {
+            await pglite.close();
+        }
+    });
+
+    beforeEach(async () => {
+        await pglite.exec('TRUNCATE finance.institutions CASCADE;');
     });
 
     describe('GET /institutions', () => {
         it('should return a list of institutions when successful', async () => {
-            const mockInstitutions = [
-                createMockInstitution({ id: 'inst1', name: 'Chase' }),
-                createMockInstitution({ id: 'inst2', name: 'Vanguard' })
-            ];
-            mockInstitutionsData.retrieveAll.mockResolvedValue(mockInstitutions);
+            const inst1 = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Chase' }));
+            const inst2 = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Vanguard' }));
 
             const response = await request(app).get('/institutions');
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(JSON.parse(JSON.stringify(mockInstitutions)));
-            expect(mockInstitutionsData.retrieveAll).toHaveBeenCalledWith(testUserId);
+            expect(response.body.data.length).toBe(2);
+            expect(response.body.data.map((i: any) => i.id)).toEqual(expect.arrayContaining([inst1.id, inst2.id]));
         });
     });
 
     describe('GET /institutions/:id', () => {
         it('should return a single institution when found', async () => {
-            const mockInstitution = createMockInstitution({ id: 'inst1', name: 'Chase' });
-            mockInstitutionsData.retrieveSingle.mockResolvedValue(mockInstitution);
+            const institution = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Chase' }));
 
-            const response = await request(app).get('/institutions/inst1');
+            const response = await request(app).get(`/institutions/${institution.id}`);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(JSON.parse(JSON.stringify(mockInstitution)));
-            expect(mockInstitutionsData.retrieveSingle).toHaveBeenCalledWith(testUserId, 'inst1');
+            expect(response.body.data.id).toBe(institution.id);
+            expect(response.body.data.name).toBe('Chase');
         });
 
         it('should return 400 when institution is not found', async () => {
-            mockInstitutionsData.retrieveSingle.mockResolvedValue(null);
-
             const response = await request(app).get('/institutions/missing');
 
             expect(response.status).toBe(400);
@@ -80,8 +81,6 @@ describe('Institution Routes', () => {
             const payload = {
                 name: 'Chase'
             };
-            const createdInstitution = createMockInstitution({ ...payload, id: 'new-inst-id' });
-            mockInstitutionsData.insert.mockResolvedValue(createdInstitution);
 
             const response = await request(app)
                 .post('/institutions')
@@ -89,8 +88,11 @@ describe('Institution Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(JSON.parse(JSON.stringify(createdInstitution)));
-            expect(mockInstitutionsData.insert).toHaveBeenCalledWith(testUserId, expect.objectContaining(payload));
+            expect(response.body.data.name).toBe('Chase');
+
+            const inst = await institutionsData.retrieveSingle(testUserId, response.body.data.id);
+            expect(inst).not.toBeNull();
+            expect(inst?.name).toBe('Chase');
         });
 
         it('should return 400 when schema validation fails (missing name)', async () => {
@@ -104,30 +106,27 @@ describe('Institution Routes', () => {
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('name:');
             expect(response.body.error.message).toContain('expected string');
-            expect(mockInstitutionsData.insert).not.toHaveBeenCalled();
         });
     });
 
     describe('PUT /institutions/:id', () => {
         it('should update an institution when input is valid and resource belongs to user', async () => {
-            const institutionId = 'inst1';
+            const institution = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Old Chase' }));
+
             const payload = {
                 name: 'Updated Chase'
             };
-            const updatedInstitution = createMockInstitution({ ...payload, id: institutionId });
-            mockInstitutionsData.update.mockResolvedValue(updatedInstitution);
 
             const response = await request(app)
-                .put(`/institutions/${institutionId}`)
+                .put(`/institutions/${institution.id}`)
                 .send(payload);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(JSON.parse(JSON.stringify(updatedInstitution)));
-            expect(mockInstitutionsData.update).toHaveBeenCalledWith(
-                testUserId,
-                expect.objectContaining({ ...payload, id: institutionId })
-            );
+            expect(response.body.data.name).toBe('Updated Chase');
+
+            const dbInst = await institutionsData.retrieveSingle(testUserId, institution.id!);
+            expect(dbInst?.name).toBe('Updated Chase');
         });
 
         it('should return 400 when update fails because resource does not exist or user lacks ownership', async () => {
@@ -135,7 +134,6 @@ describe('Institution Routes', () => {
             const payload = {
                 name: 'Updated Chase'
             };
-            mockInstitutionsData.update.mockResolvedValue(null as any);
 
             const response = await request(app)
                 .put(`/institutions/${institutionId}`)
@@ -149,19 +147,19 @@ describe('Institution Routes', () => {
 
     describe('DELETE /institutions/:id', () => {
         it('should delete an institution when resource belongs to user', async () => {
-            const institutionId = 'inst1';
-            mockInstitutionsData.delete.mockResolvedValue(true);
+            const institution = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Chase' }));
 
-            const response = await request(app).delete(`/institutions/${institutionId}`);
+            const response = await request(app).delete(`/institutions/${institution.id}`);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(mockInstitutionsData.delete).toHaveBeenCalledWith(testUserId, institutionId);
+            
+            const dbInst = await institutionsData.retrieveSingle(testUserId, institution.id!);
+            expect(dbInst).toBeNull();
         });
 
         it('should return 400 when delete fails because resource does not exist or user lacks ownership', async () => {
             const institutionId = 'unowned-inst';
-            mockInstitutionsData.delete.mockResolvedValue(false);
 
             const response = await request(app).delete(`/institutions/${institutionId}`);
 
@@ -173,8 +171,10 @@ describe('Institution Routes', () => {
 
     describe('POST /institutions/:id/sync', () => {
         xit('should return sync stub success', async () => {
+            const institution = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Chase' }));
+
             const response = await request(app)
-                .post('/institutions/inst1/sync');
+                .post(`/institutions/${institution.id}/sync`);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);

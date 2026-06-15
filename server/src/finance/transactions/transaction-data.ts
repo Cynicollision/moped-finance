@@ -283,8 +283,9 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .where(and(
                 eq(transactionSchema.id, id),
                 inArray(transactionSchema.accountId, userAccountsQuery)
-            ));
+            ))
+            .returning({ id: transactionSchema.id });
 
-        return (result.rowCount ?? 0) > 0;
+        return result.length > 0;
     }
 }
