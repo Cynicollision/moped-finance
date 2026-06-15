@@ -8,10 +8,10 @@ import { budgetStreamSchema } from './budget-stream-schema';
 
 export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStream> {
     retrieveAll(userId: string): Promise<BudgetStream[]>;
-    retrieveSingle(userId: string, id: string): Promise<BudgetStream | null>;
-    delete(userId: string, id: string): Promise<boolean>;
-    insert(userId: string, stream: BudgetStream): Promise<BudgetStream>;
-    update(userId: string, stream: BudgetStream): Promise<BudgetStream | null>;
+    retrieveSingle(id: string): Promise<BudgetStream | null>;
+    delete(id: string): Promise<boolean>;
+    insert(stream: BudgetStream): Promise<BudgetStream>;
+    update(stream: BudgetStream): Promise<BudgetStream | null>;
 }
 
 function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect): BudgetStream {
@@ -42,9 +42,9 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
         return rows.map(mapRowToBudgetStream);
     }
 
-    public async retrieveSingle(userId: string, id: string): Promise<BudgetStream | null> {
+    public async retrieveSingle(id: string): Promise<BudgetStream | null> {
         const rows = await this.db.select().from(budgetStreamSchema)
-            .where(and(eq(budgetStreamSchema.userId, userId), eq(budgetStreamSchema.id, id)));
+            .where(eq(budgetStreamSchema.id, id));
 
         if (rows.length === 0) {
             return null;
@@ -53,19 +53,19 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
         return mapRowToBudgetStream(rows[0]);
     }
 
-    public async delete(userId: string, id: string): Promise<boolean> {
+    public async delete(id: string): Promise<boolean> {
         const result = await this.db.delete(budgetStreamSchema)
-            .where(and(eq(budgetStreamSchema.userId, userId), eq(budgetStreamSchema.id, id)))
+            .where(eq(budgetStreamSchema.id, id))
             .returning({ id: budgetStreamSchema.id });
 
         return result.length > 0;
     }
 
-    public async insert(userId: string, stream: BudgetStream): Promise<BudgetStream> {
+    public async insert(stream: BudgetStream): Promise<BudgetStream> {
         const rows = await this.db.insert(budgetStreamSchema)
             .values({
                 id: stream.id,
-                userId: userId,
+                userId: stream.userId,
                 name: stream.name,
                 categoryId: stream.categoryId,
                 type: stream.type,
@@ -77,7 +77,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
         return mapRowToBudgetStream(rows[0]);
     }
 
-    public async update(userId: string, stream: BudgetStream): Promise<BudgetStream | null> {
+    public async update(stream: BudgetStream): Promise<BudgetStream | null> {
         const rows = await this.db.update(budgetStreamSchema)
             .set({
                 name: stream.name,
@@ -87,7 +87,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
                 amount: String(stream.amount),
                 updatedAt: DateTimeUtil.now(),
             })
-            .where(and(eq(budgetStreamSchema.id, stream.id!), eq(budgetStreamSchema.userId, userId)))
+            .where(eq(budgetStreamSchema.id, stream.id!))
             .returning();
 
         if (rows.length === 0) {

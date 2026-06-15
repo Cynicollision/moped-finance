@@ -4,4 +4,4 @@ export type Entity = {
     updatedAt: Date;
 };
 
-export type NewEntity<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt'> & { id?: string };
+export type NewEntity<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'userId'> & { id?: string };

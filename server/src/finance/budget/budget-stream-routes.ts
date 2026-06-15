@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { BudgetStream } from '@shared/finance/types';
 import { ApiHandler } from '@server-core/api-handler';
-import { AppLogger } from '@server-core/logger';
+import { IAppLogger } from '@server-core/logger';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { BudgetStreamController } from './budget-stream-controller';
 import { IFinanceBudgetStreamData } from './budget-stream-data';
 import { createBudgetStreamSchema, updateBudgetStreamSchema } from './budget-stream-schema';
 
-export function createBudgetStreamRouter(logger: AppLogger, budgetStreamData: IFinanceBudgetStreamData) {
+export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: IFinanceBudgetStreamData) {
     const router = Router();
     const handler = new ApiHandler(logger);
     const validator = new RequestSchemaValidator(logger, 'BudgetStream');

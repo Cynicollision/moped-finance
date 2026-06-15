@@ -8,9 +8,9 @@ import { institutionSchema } from './institution-schema';
 
 export interface IFinanceInstitutionData extends IOwnedResourceData<Institution> {
     retrieveAll(userId: string): Promise<Institution[]>;
-    delete(userId: string, id: string): Promise<boolean>;
-    insert(userId: string, institution: Institution): Promise<Institution>;
-    update(userId: string, institution: Institution): Promise<Institution | null>;
+    delete(id: string): Promise<boolean>;
+    insert(institution: Institution): Promise<Institution>;
+    update(institution: Institution): Promise<Institution | null>;
 }
 
 function mapRowToInstitution(row: typeof institutionSchema.$inferSelect): Institution {
@@ -37,9 +37,9 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
         return rows.map(mapRowToInstitution);
     }
 
-    public async retrieveSingle(userId: string, id: string): Promise<Institution | null> {
+    public async retrieveSingle(id: string): Promise<Institution | null> {
         const rows = await this.db.select().from(institutionSchema)
-            .where(and(eq(institutionSchema.userId, userId), eq(institutionSchema.id, id)));
+            .where(eq(institutionSchema.id, id));
 
         if (rows.length === 0) {
             return null;
@@ -48,19 +48,19 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
         return mapRowToInstitution(rows[0]);
     }
 
-    public async delete(userId: string, id: string): Promise<boolean> {
+    public async delete(id: string): Promise<boolean> {
         const result = await this.db.delete(institutionSchema)
-            .where(and(eq(institutionSchema.userId, userId), eq(institutionSchema.id, id)))
+            .where(eq(institutionSchema.id, id))
             .returning({ id: institutionSchema.id });
 
         return result.length > 0;
     }
 
-    public async insert(userId: string, institution: Institution): Promise<Institution> {
+    public async insert(institution: Institution): Promise<Institution> {
         const rows = await this.db.insert(institutionSchema)
             .values({
                 id: institution.id,
-                userId: userId,
+                userId: institution.userId,
                 name: institution.name,
             })
             .returning();
@@ -68,13 +68,13 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
         return mapRowToInstitution(rows[0]);
     }
 
-    public async update(userId: string, institution: Institution): Promise<Institution | null> {
+    public async update(institution: Institution): Promise<Institution | null> {
         const rows = await this.db.update(institutionSchema)
             .set({
                 name: institution.name,
                 updatedAt: DateTimeUtil.now(),
             })
-            .where(and(eq(institutionSchema.userId, userId), eq(institutionSchema.id, institution.id!)))
+            .where(eq(institutionSchema.id, institution.id!))
             .returning();
 
         if (rows.length === 0) {

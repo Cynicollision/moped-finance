@@ -4,7 +4,7 @@ import { NewEntity } from '@shared/core/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
-import { AppLogger } from '@server-core/logger';
+import { IAppLogger } from '@server-core/logger';
 import { ResultUtil, DateTimeUtil } from '@server-core/utility';
 import { FinanceEntityFactory } from './../common';
 import { IFinanceAccountData } from './../accounts/account-data';
@@ -13,7 +13,7 @@ import { IFinanceTransactionData } from './transaction-data';
 
 export class TransactionController {
     constructor(
-        private logger: AppLogger,
+        private logger: IAppLogger,
         private accountData: IFinanceAccountData,
         private categoryData: IFinanceCategoryData,
         private transactionData: IFinanceTransactionData
@@ -21,7 +21,7 @@ export class TransactionController {
     }
 
     public async getTransaction(userId: string, transactionId: string): Promise<OperationResult<Transaction>> {
-        const transaction = await this.transactionData.retrieveSingle(userId, transactionId);
+        const transaction = await this.transactionData.retrieveSingle(transactionId);
         if (!transaction) {
             return ResultUtil.userError('Transaction not found or access denied');
         }
@@ -29,8 +29,8 @@ export class TransactionController {
     }
 
     public async createTransaction(userId: string, newTransaction: NewEntity<Transaction>): Promise<OperationResult<Transaction>> {
-        const transaction = FinanceEntityFactory.createTransaction(newTransaction);
-        return ResultUtil.success(await this.transactionData.insert(userId, transaction));
+        const transaction = FinanceEntityFactory.createTransaction(newTransaction.accountId!, newTransaction);
+        return ResultUtil.success(await this.transactionData.insert(transaction));
     }
 
     public async getTransactions(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<OperationResult<Transaction[]>> {
@@ -43,7 +43,7 @@ export class TransactionController {
     }
 
     public async saveTransaction(userId: string, transaction: Transaction): Promise<OperationResult<Transaction>> {
-        const updated = await this.transactionData.update(userId, transaction);
+        const updated = await this.transactionData.update(transaction);
         if (!updated) {
             return ResultUtil.userError('Transaction not found or access denied');
         }
@@ -51,7 +51,7 @@ export class TransactionController {
     }
 
     public async deleteTransaction(userId: string, transactionId: string): Promise<OperationResult<void>> {
-        const deleted = await this.transactionData.delete(userId, transactionId);
+        const deleted = await this.transactionData.delete(transactionId);
         if (!deleted) {
             return ResultUtil.userError('Transaction not found or access denied');
         }
@@ -153,7 +153,7 @@ export class TransactionController {
                 continue;
             }
 
-            const transaction = FinanceEntityFactory.createTransaction({
+            const transaction = FinanceEntityFactory.createTransaction(accountId, {
                 accountId: accountId,
                 categoryId: categoryId,
                 date: DateTimeUtil.toISOString(row['Date'] || DateTimeUtil.now()),
@@ -169,7 +169,7 @@ export class TransactionController {
             try {
                 if (!dryRun) {
                     // TODO: add bulk insert support
-                    await this.transactionData.insert(userId, transaction);
+                    await this.transactionData.insert(transaction);
                 }
 
                 createdCount++;

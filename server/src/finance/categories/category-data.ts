@@ -8,9 +8,9 @@ import { categorySchema } from './category-schema';
 
 export interface IFinanceCategoryData extends IOwnedResourceData<Category> {
     retrieveAll(userId: string, activeOnly?: boolean): Promise<Category[]>;
-    delete(userId: string, id: string): Promise<boolean>;
-    insert(userId: string, category: Category): Promise<Category>;
-    update(userId: string, category: Category): Promise<Category | null>;
+    delete(id: string): Promise<boolean>;
+    insert(category: Category): Promise<Category>;
+    update(category: Category): Promise<Category | null>;
 }
 
 function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
@@ -46,9 +46,9 @@ export class FinanceCategoryData implements IFinanceCategoryData {
         return rows.map(mapRowToCategory);
     }
 
-    public async retrieveSingle(userId: string, id: string): Promise<Category | null> {
+    public async retrieveSingle(id: string): Promise<Category | null> {
         const rows = await this.db.select().from(categorySchema)
-            .where(and(eq(categorySchema.userId, userId), eq(categorySchema.id, id)));
+            .where(eq(categorySchema.id, id));
 
         if (rows.length === 0) {
             return null;
@@ -57,19 +57,19 @@ export class FinanceCategoryData implements IFinanceCategoryData {
         return mapRowToCategory(rows[0]);
     }
 
-    public async delete(userId: string, id: string): Promise<boolean> {
+    public async delete(id: string): Promise<boolean> {
         const result = await this.db.delete(categorySchema)
-            .where(and(eq(categorySchema.userId, userId), eq(categorySchema.id, id)))
+            .where(eq(categorySchema.id, id))
             .returning({ id: categorySchema.id });
 
         return result.length > 0;
     }
 
-    public async insert(userId: string, category: Category): Promise<Category> {
+    public async insert(category: Category): Promise<Category> {
         const rows = await this.db.insert(categorySchema)
             .values({
                 id: category.id,
-                userId: userId,
+                userId: category.userId,
                 groupId: category.groupId,
                 icon: category.icon,
                 name: category.name,
@@ -80,7 +80,7 @@ export class FinanceCategoryData implements IFinanceCategoryData {
         return mapRowToCategory(rows[0]);
     }
 
-    public async update(userId: string, category: Category): Promise<Category | null> {
+    public async update(category: Category): Promise<Category | null> {
         const rows = await this.db.update(categorySchema)
             .set({
                 groupId: category.groupId,
@@ -89,7 +89,7 @@ export class FinanceCategoryData implements IFinanceCategoryData {
                 isActive: category.isActive,
                 updatedAt: DateTimeUtil.now()
             })
-            .where(and(eq(categorySchema.id, category.id!), eq(categorySchema.userId, userId)))
+            .where(eq(categorySchema.id, category.id!))
             .returning();
 
         if (rows.length === 0) {

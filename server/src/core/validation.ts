@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodError } from 'zod';
 import { ApiUtil } from './utility/api-util';
-import { AppLogger } from './logger';
+import { IAppLogger } from './logger';
 
 export class RequestSchemaValidator {
-    constructor(private readonly logger: AppLogger, private readonly schemaName: string) {
+    constructor(private readonly logger: IAppLogger, private readonly schemaName: string) {
     }
 
     params(schema: z.ZodObject): (req: Request, res: Response, next: NextFunction) => void {

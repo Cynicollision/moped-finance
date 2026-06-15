@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { OperationResult } from '@shared/core/contracts';
 import { ICoreUserData } from '@server-core/data/user-data';
 import { ApiHandler } from '@server-core/api-handler';
-import { AppLogger } from '@server-core/logger';
+import { IAppLogger } from '@server-core/logger';
 import { ResultUtil } from '@server-core/utility';
 import { AuthController } from './auth-controller';
 
@@ -14,7 +14,7 @@ type AuthRequest = {
     newPassword?: string;
 };
 
-export function createAuthRouter(userData: ICoreUserData, logger: AppLogger, requireAuthMiddleware: any, resolveUserMiddleware: any) {
+export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, requireAuthMiddleware: any, resolveUserMiddleware: any) {
     const router = Router();
     const controller = new AuthController(userData);
     const handler = new ApiHandler(logger);

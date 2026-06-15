@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { DatabaseClient } from '@server-core/db-client';
-import { AppLogger } from '@server-core/logger';
+import { IAppLogger } from '@server-core/logger';
 import { FinanceAccountData, FinanceBalanceHistoryData, createAccountRouter } from './accounts';
 import { FinanceBudgetStreamData, createBudgetStreamRouter } from './budget';
 import { FinanceCategoryData, FinanceCategoryGroupData, createCategoryRouter } from './categories';
 import { FinanceInstitutionData, createInstitutionRouter } from './institutions';
 import { FinanceTransactionData, createTransactionRouter } from './transactions';
 
-export function createFinanceModule(db: DatabaseClient, logger: AppLogger) {
+export function createFinanceModule(db: DatabaseClient, logger: IAppLogger) {
     const router = Router();
     // Instantiate data classes
     const accountData = new FinanceAccountData(db);

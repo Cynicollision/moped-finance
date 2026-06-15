@@ -1,3 +1,3 @@
 export interface IOwnedResourceData<T> {
-    retrieveSingle(userId: string, id: string): Promise<T | null>;
+    retrieveSingle(id: string): Promise<T | null>;
 }

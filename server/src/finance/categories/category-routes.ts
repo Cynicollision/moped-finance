@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ApiHandler } from '@server-core/api-handler';
-import { AppLogger } from '@server-core/logger';
+import { IAppLogger } from '@server-core/logger';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { CategoryController } from './category-controller';
 import { IFinanceCategoryData } from './category-data';
@@ -8,7 +8,7 @@ import { createCategorySchema, updateCategorySchema } from './category-schema';
 import { IFinanceCategoryGroupData } from './category-groups/category-group-data';
 import { createCategoryGroupSchema, updateCategoryGroupSchema } from './category-groups/category-group-schema';
 
-export function createCategoryRouter(logger: AppLogger, categoriesData: IFinanceCategoryData, groupsData: IFinanceCategoryGroupData) {
+export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanceCategoryData, groupsData: IFinanceCategoryGroupData) {
     const router = Router();
     const controller = new CategoryController(logger, categoriesData, groupsData);
     const handler = new ApiHandler(logger);

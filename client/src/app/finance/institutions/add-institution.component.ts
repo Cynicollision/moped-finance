@@ -7,6 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { NewEntity } from '@shared/core/types';
 import { Institution } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
 
@@ -46,13 +47,9 @@ export class FinanceAddInstitutionComponent {
 
     async onSubmit() {
         if (this.institutionForm.valid) {
-
-            // TODO: revisit
-            const newInst: Institution = {
-                id: '', // Server will generate or omit based on Entity
-                userId: '', // Server will set
+            const newInst: NewEntity<Institution> = {
                 name: this.institutionForm.value.name
-            } as Institution;
+            };
 
             const created = await this.financeService.createInstitution(newInst);
             if (created) {

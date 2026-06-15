@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
+import { NewEntity } from '@shared/core/types';
 import { Account, Institution } from '@shared/finance/types';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
 import { FinanceService } from './../finance.service';
@@ -154,9 +155,7 @@ export class FinanceAddAccountComponent implements OnInit {
     async onSubmit() {
         if (this.accountForm?.valid && this.institutionId) {
             const rawValue = this.accountForm.getRawValue();
-            const newAccount: Account = {
-                id: '',
-                userId: '',
+            const newAccount: NewEntity<Account> = {
                 institutionId: this.institutionId,
                 name: rawValue.name,
                 category: rawValue.category,
@@ -167,7 +166,7 @@ export class FinanceAddAccountComponent implements OnInit {
                 isManual: rawValue.isManual,
                 isRetirement: rawValue.isRetirement,
                 hideFromCashflow: rawValue.hideFromCashflow
-            } as Account;
+            };
 
             const created = await this.financeService.createAccount(newAccount);
             if (created) {

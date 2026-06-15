@@ -16,10 +16,9 @@ export interface IFinanceTransactionData extends IOwnedResourceData<Transaction>
     exportSearch(userId: string, accountId?: string): Promise<any[]>;
     retrieveMerchants(userId: string): Promise<string[]>;
     retrieveCashflowByCategory(userId: string, startDate: Date, endDate: Date): Promise<CashflowStream[]>;
-    retrieveSingle(userId: string, id: string): Promise<Transaction | null>;
-    insert(userId: string, transaction: Transaction): Promise<Transaction>;
-    update(userId: string, transaction: Transaction): Promise<Transaction | null>;
-    delete(userId: string, id: string): Promise<boolean>;
+    insert(transaction: Transaction): Promise<Transaction>;
+    update(transaction: Transaction): Promise<Transaction | null>;
+    delete(id: string): Promise<boolean>;
 }
 
 function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transaction {
@@ -188,14 +187,11 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         return rows.map(row => row.merchant);
     }
 
-    public async retrieveSingle(userId: string, id: string): Promise<Transaction | null> {
+    public async retrieveSingle(id: string): Promise<Transaction | null> {
         const rows = await this.db.select({ transaction: transactionSchema })
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
-            .where(and(
-                eq(accountSchema.userId, userId),
-                eq(transactionSchema.id, id)
-            ));
+            .where(eq(transactionSchema.id, id));
 
         if (rows.length === 0) {
             return null;
@@ -225,7 +221,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         }));
     }
 
-    public async insert(userId: string, transaction: Transaction): Promise<Transaction> {
+    public async insert(transaction: Transaction): Promise<Transaction> {
         const rows = await this.db.insert(transactionSchema)
             .values({
                 id: transaction.id,
@@ -245,11 +241,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         return mapRowToTransaction(rows[0]);
     }
 
-    public async update(userId: string, transaction: Transaction): Promise<Transaction | null> {
-        const userAccountsQuery = this.db.select({ id: accountSchema.id })
-            .from(accountSchema)
-            .where(eq(accountSchema.userId, userId));
-
+    public async update(transaction: Transaction): Promise<Transaction | null> {
         const rows = await this.db.update(transactionSchema)
             .set({
                 merchant: transaction.merchant,
@@ -261,10 +253,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
                 isHidden: transaction.isHidden,
                 updatedAt: DateTimeUtil.now()
             })
-            .where(and(
-                eq(transactionSchema.id, transaction.id!),
-                inArray(transactionSchema.accountId, userAccountsQuery)
-            ))
+            .where(eq(transactionSchema.id, transaction.id!))
             .returning();
 
         if (rows.length === 0) {
@@ -274,16 +263,9 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         return mapRowToTransaction(rows[0]);
     }
 
-    public async delete(userId: string, id: string): Promise<boolean> {
-        const userAccountsQuery = this.db.select({ id: accountSchema.id })
-            .from(accountSchema)
-            .where(eq(accountSchema.userId, userId));
-
+    public async delete(id: string): Promise<boolean> {
         const result = await this.db.delete(transactionSchema)
-            .where(and(
-                eq(transactionSchema.id, id),
-                inArray(transactionSchema.accountId, userAccountsQuery)
-            ))
+            .where(eq(transactionSchema.id, id))
             .returning({ id: transactionSchema.id });
 
         return result.length > 0;

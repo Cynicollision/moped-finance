@@ -19,31 +19,45 @@ export class FinanceEntityFactory {
         return CoreEntityFactory.generateId(prefix);
     }
 
-    public static createAccount(account: NewEntity<Account>): Account {
-        return CoreEntityFactory.createEntity<Account>(FinanceEntityIdPrefix.Account, account);
+    public static createAccount(userId: string, account: NewEntity<Account>): Account {
+        const entity = CoreEntityFactory.createEntity<Account>(FinanceEntityIdPrefix.Account, account);
+        entity.userId = userId;
+        return entity;
     }
 
-    public static createBalanceHistory(history: NewEntity<BalanceHistory>): BalanceHistory {
-        return CoreEntityFactory.createEntity<BalanceHistory>(FinanceEntityIdPrefix.BalanceHistory, history);
+    public static createBalanceHistory(accountId: string, history: NewEntity<BalanceHistory>): BalanceHistory {
+        const entity = CoreEntityFactory.createEntity<BalanceHistory>(FinanceEntityIdPrefix.BalanceHistory, history);
+        entity.accountId = accountId;
+        return entity;
     }
 
-    public static createTransaction(transaction: NewEntity<Transaction>): Transaction {
-        return CoreEntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, transaction);
+    public static createTransaction(accountId: string, transaction: NewEntity<Transaction>): Transaction {
+        const entity = CoreEntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, transaction);
+        entity.accountId = accountId;
+        return entity;
     }
 
-    public static createInstitution(institution: NewEntity<Institution>): Institution {
-        return CoreEntityFactory.createEntity<Institution>(FinanceEntityIdPrefix.Institution, institution);
+    public static createInstitution(userId: string, institution: NewEntity<Institution>): Institution {
+        const entity = CoreEntityFactory.createEntity<Institution>(FinanceEntityIdPrefix.Institution, institution);
+        entity.userId = userId;
+        return entity;
     }
 
-    public static createCategory(category: NewEntity<Category>): Category {
-        return CoreEntityFactory.createEntity<Category>(FinanceEntityIdPrefix.Category, category);
+    public static createCategory(userId: string, category: NewEntity<Category>): Category {
+        const entity = CoreEntityFactory.createEntity<Category>(FinanceEntityIdPrefix.Category, category);
+        entity.userId = userId;
+        return entity;
     }
 
-    public static createCategoryGroup(group: NewEntity<CategoryGroup>): CategoryGroup {
-        return CoreEntityFactory.createEntity<CategoryGroup>(FinanceEntityIdPrefix.CategoryGroup, group);
+    public static createCategoryGroup(userId: string, group: NewEntity<CategoryGroup>): CategoryGroup {
+        const entity = CoreEntityFactory.createEntity<CategoryGroup>(FinanceEntityIdPrefix.CategoryGroup, group);
+        entity.userId = userId;
+        return entity;
     }
 
-    public static createBudgetStream(stream: NewEntity<BudgetStream>): BudgetStream {
-        return CoreEntityFactory.createEntity<BudgetStream>(FinanceEntityIdPrefix.BudgetStream, stream);
+    public static createBudgetStream(userId: string, stream: NewEntity<BudgetStream>): BudgetStream {
+        const entity = CoreEntityFactory.createEntity<BudgetStream>(FinanceEntityIdPrefix.BudgetStream, stream);
+        entity.userId = userId;
+        return entity;
     }
 }

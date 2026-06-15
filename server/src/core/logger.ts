@@ -17,13 +17,13 @@ export type LoggerConfig = {
 };
 
 // TODO: "context" object param vs. userId and context string
-export interface IAppLoger {
+export interface IAppLogger {
     error(userId: string, context: string, message: string): void;
     warn(userId: string, context: string, message: string): void;
     info(userId: string, context: string, message: string): void;
 }
 
-export class AppLogger implements IAppLoger {
+export class AppLogger implements IAppLogger {
 
     constructor(private logData: ILogData, private config: LoggerConfig) {
     }
@@ -80,9 +80,9 @@ export class AppLogger implements IAppLoger {
         }
     }
 
-    private createLogEntry(userId: string, context: string, level: LogLevel, message: string): LogEntry {
+    private createLogEntry(contextUserId: string, context: string, level: LogLevel, message: string): LogEntry {
         return CoreEntityFactory.createLogEntry({
-            userId,
+            contextUserId,
             context,
             message,
             level
@@ -91,6 +91,6 @@ export class AppLogger implements IAppLoger {
 
     private formatForConsole(entry: LogEntry): string {
         const timestamp = entry.createdAt.toISOString();
-        return `[${timestamp}] [${entry.level.toUpperCase()}] [${entry.context}] [${entry.userId}]: ${entry.message}`;
+        return `[${timestamp}] [${entry.level.toUpperCase()}] [${entry.context}] [${entry.contextUserId}]: ${entry.message}`;
     }
 }

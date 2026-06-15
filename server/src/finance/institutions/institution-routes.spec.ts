@@ -43,8 +43,8 @@ describe('Institution Routes', () => {
 
     describe('GET /institutions', () => {
         it('should return a list of institutions when successful', async () => {
-            const inst1 = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Chase' }));
-            const inst2 = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Vanguard' }));
+            const inst1 = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Chase' }));
+            const inst2 = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Vanguard' }));
 
             const response = await request(app).get('/institutions');
 
@@ -57,7 +57,7 @@ describe('Institution Routes', () => {
 
     describe('GET /institutions/:id', () => {
         it('should return a single institution when found', async () => {
-            const institution = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Chase' }));
+            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Chase' }));
 
             const response = await request(app).get(`/institutions/${institution.id}`);
 
@@ -90,7 +90,7 @@ describe('Institution Routes', () => {
             expect(response.body.success).toBe(true);
             expect(response.body.data.name).toBe('Chase');
 
-            const inst = await institutionsData.retrieveSingle(testUserId, response.body.data.id);
+            const inst = await institutionsData.retrieveSingle(response.body.data.id);
             expect(inst).not.toBeNull();
             expect(inst?.name).toBe('Chase');
         });
@@ -111,7 +111,7 @@ describe('Institution Routes', () => {
 
     describe('PUT /institutions/:id', () => {
         it('should update an institution when input is valid and resource belongs to user', async () => {
-            const institution = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Old Chase' }));
+            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Old Chase' }));
 
             const payload = {
                 name: 'Updated Chase'
@@ -125,7 +125,7 @@ describe('Institution Routes', () => {
             expect(response.body.success).toBe(true);
             expect(response.body.data.name).toBe('Updated Chase');
 
-            const dbInst = await institutionsData.retrieveSingle(testUserId, institution.id!);
+            const dbInst = await institutionsData.retrieveSingle(institution.id!);
             expect(dbInst?.name).toBe('Updated Chase');
         });
 
@@ -147,14 +147,14 @@ describe('Institution Routes', () => {
 
     describe('DELETE /institutions/:id', () => {
         it('should delete an institution when resource belongs to user', async () => {
-            const institution = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Chase' }));
+            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Chase' }));
 
             const response = await request(app).delete(`/institutions/${institution.id}`);
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
             
-            const dbInst = await institutionsData.retrieveSingle(testUserId, institution.id!);
+            const dbInst = await institutionsData.retrieveSingle(institution.id!);
             expect(dbInst).toBeNull();
         });
 
@@ -171,7 +171,7 @@ describe('Institution Routes', () => {
 
     describe('POST /institutions/:id/sync', () => {
         xit('should return sync stub success', async () => {
-            const institution = await institutionsData.insert(testUserId, FinanceEntityFactory.createInstitution({ userId: testUserId, name: 'Chase' }));
+            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Chase' }));
 
             const response = await request(app)
                 .post(`/institutions/${institution.id}/sync`);

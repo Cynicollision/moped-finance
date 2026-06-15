@@ -30,10 +30,10 @@ export class LogData implements ILogData {
         await this.db.insert(logSchema)
             .values({
                 id: log.id,
-                userId: log.userId,
+                userId: log.contextUserId,
                 level: log.level,
                 context: log.context,
                 message: log.message
             });
     }
-}
+}

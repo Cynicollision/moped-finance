@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { OperationResult } from '@shared/core/contracts/operation-result';
 import { ApiUtil } from './utility/api-util';
-import { AppLogger } from './logger';
+import { IAppLogger } from './logger';
 
 export type ExecutionContext = {
     userId?: string;
@@ -11,7 +11,7 @@ export type ExecutionContext = {
 
 export class ApiHandler {
 
-    constructor(private logger: AppLogger) {
+    constructor(private logger: IAppLogger) {
     }
 
     async execute<T>(req: Request, res: Response, context: string, operation: (context: ExecutionContext) => Promise<OperationResult<T>>): Promise<OperationResult<T>> {

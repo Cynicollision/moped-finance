@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { CalendarPeriod, HistoryTimeframe } from '@shared/core/enum';
+import { NewEntity } from '@shared/core/types';
 import { BalanceImportResult, CashflowStream, GetAccountBalanceHistoryOptions, TotalValueHistory, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, CategoryGroup, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../core/api.service';
 import { DateProviderService } from './../core/date-provider.service';
+
 
 const API_BASE_PATH = 'api/v1';
 
@@ -24,7 +26,7 @@ export class FinanceService {
         return this.api.get<Institution>(`${API_BASE_PATH}/institutions/${id}`);
     }
 
-    createInstitution(institution: Institution): Promise<Institution | undefined> {
+    createInstitution(institution: NewEntity<Institution>): Promise<Institution | undefined> {
         return this.api.post<Institution>(`${API_BASE_PATH}/institutions`, institution);
     }
 
@@ -44,7 +46,7 @@ export class FinanceService {
         return this.api.get<CategoryGroup[]>(`${API_BASE_PATH}/categories/groups`);
     }
 
-    createCategoryGroup(group: CategoryGroup): Promise<CategoryGroup | undefined> {
+    createCategoryGroup(group: NewEntity<CategoryGroup>): Promise<CategoryGroup | undefined> {
         return this.api.post<CategoryGroup>(`${API_BASE_PATH}/categories/groups`, group);
     }
 
@@ -56,7 +58,7 @@ export class FinanceService {
         return this.api.delete(`${API_BASE_PATH}/categories/groups/${id}`);
     }
 
-    createCategory(category: Category): Promise<Category | undefined> {
+    createCategory(category: NewEntity<Category>): Promise<Category | undefined> {
         return this.api.post<Category>(`${API_BASE_PATH}/categories`, category);
     }
 
@@ -77,7 +79,7 @@ export class FinanceService {
         return this.api.get<Account[]>(`${API_BASE_PATH}/accounts`);
     }
 
-    createAccount(account: Account): Promise<Account | undefined> {
+    createAccount(account: NewEntity<Account>): Promise<Account | undefined> {
         return this.api.post<Account>(`${API_BASE_PATH}/accounts`, account);
     }
 
@@ -135,7 +137,7 @@ export class FinanceService {
         return this.api.put<Transaction>(`${API_BASE_PATH}/transactions/${transaction.id}`, transaction);
     }
 
-    createTransaction(transaction: Transaction): Promise<Transaction | undefined> {
+    createTransaction(transaction: NewEntity<Transaction>): Promise<Transaction | undefined> {
         return this.api.post<Transaction>(`${API_BASE_PATH}/transactions`, transaction);
     }
 
@@ -164,7 +166,7 @@ export class FinanceService {
         return this.api.get<BudgetStream[]>(`${API_BASE_PATH}/budget-streams`);
     }
 
-    createBudgetStream(stream: BudgetStream): Promise<BudgetStream | undefined> {
+    createBudgetStream(stream: NewEntity<BudgetStream>): Promise<BudgetStream | undefined> {
         return this.api.post<BudgetStream>(`${API_BASE_PATH}/budget-streams`, stream);
     }
 

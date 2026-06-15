@@ -5,7 +5,7 @@ import { HistoryTimeframe } from '@shared/core/enum';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
-import { AppLogger } from '@server-core/logger';
+import { IAppLogger } from '@server-core/logger';
 import { DateTimeUtil, ResultUtil } from '@server-core/utility';
 import { FinanceEntityFactory } from './../common';
 import { IFinanceTransactionData } from './../transactions';
@@ -14,7 +14,7 @@ import { IFinanceBalanceHistoryData } from './balance-history-data';
 
 export class AccountController {
     constructor(
-        private logger: AppLogger,
+        private logger: IAppLogger,
         private accountData: IFinanceAccountData,
         private balanceHistoryData: IFinanceBalanceHistoryData,
         private transactionData: IFinanceTransactionData
@@ -22,7 +22,7 @@ export class AccountController {
     }
 
     public async getAccount(userId: string, accountId: string): Promise<OperationResult<Account>> {
-        const account = await this.accountData.retrieveSingle(userId, accountId);
+        const account = await this.accountData.retrieveSingle(accountId);
         if (!account) {
             return ResultUtil.userError('Account not found or access denied');
         }
@@ -33,15 +33,13 @@ export class AccountController {
         return ResultUtil.success(await this.accountData.retrieveAll(userId));
     }
 
-    public async createAccount(userId: string, account: NewEntity<Account>): Promise<OperationResult<Account>> {
-        const fullAccount = FinanceEntityFactory.createAccount(account);
-        fullAccount.userId = userId;
-
-        return ResultUtil.success(await this.accountData.create(userId, fullAccount));
+    public async createAccount(userId: string, newAccount: NewEntity<Account>): Promise<OperationResult<Account>> {
+        const account = FinanceEntityFactory.createAccount(userId, newAccount);
+        return ResultUtil.success(await this.accountData.create(account));
     }
 
     public async saveAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
-        const updated = await this.accountData.update(userId, account);
+        const updated = await this.accountData.update(account);
         if (!updated) {
             return ResultUtil.userError('Account not found or access denied');
         }
@@ -49,7 +47,7 @@ export class AccountController {
     }
 
     public async deleteAccount(userId: string, accountId: string): Promise<OperationResult<void>> {
-        const deleted = await this.accountData.delete(userId, accountId);
+        const deleted = await this.accountData.delete(accountId);
         if (!deleted) {
             return ResultUtil.userError('Account not found or access denied');
         }
@@ -100,7 +98,7 @@ export class AccountController {
             return ResultUtil.userError('No file provided');
         }
 
-        const account = await this.accountData.retrieveSingle(userId, accountId);
+        const account = await this.accountData.retrieveSingle(accountId);
         if (!account) {
             return ResultUtil.userError('Account not found');
         }
@@ -174,7 +172,7 @@ export class AccountController {
             if (!minDate || isoDate < minDate) minDate = isoDate;
             if (!maxDate || isoDate > maxDate) maxDate = isoDate;
 
-            validRows.push(FinanceEntityFactory.createBalanceHistory({
+            validRows.push(FinanceEntityFactory.createBalanceHistory(accountId, {
                 accountId: accountId,
                 date: parsedDate,
                 balance: parseFloat(balanceStr) || 0

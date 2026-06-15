@@ -6,7 +6,7 @@ import { TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { ApiHandler } from '@server-core/api-handler';
 import { ApiUtil, DateTimeUtil } from '@server-core/utility';
-import { AppLogger } from '@server-core/logger';
+import { IAppLogger } from '@server-core/logger';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
@@ -16,7 +16,7 @@ import { createTransactionSchema, updateTransactionSchema } from './transaction-
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-export function createTransactionRouter(logger: AppLogger, accountData: IFinanceAccountData, categoryData: IFinanceCategoryData, transactionsData: IFinanceTransactionData) {
+export function createTransactionRouter(logger: IAppLogger, accountData: IFinanceAccountData, categoryData: IFinanceCategoryData, transactionsData: IFinanceTransactionData) {
     const router = Router();
     const controller = new TransactionController(logger, accountData, categoryData, transactionsData);
     const handler = new ApiHandler(logger);

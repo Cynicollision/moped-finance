@@ -5,7 +5,7 @@ import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionS
 import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { ApiHandler } from '@server-core/api-handler';
-import { AppLogger } from '@server-core/logger';
+import { IAppLogger } from '@server-core/logger';
 import { DateTimeUtil, ApiUtil } from '@server-core/utility';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { IFinanceCategoryData } from './../categories';
@@ -17,7 +17,7 @@ import { IFinanceBalanceHistoryData } from './balance-history-data';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-export function createAccountRouter(logger: AppLogger, accountData: IFinanceAccountData, balanceHistoryData: IFinanceBalanceHistoryData, categoriesData: IFinanceCategoryData, transactionData: IFinanceTransactionData) {
+export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAccountData, balanceHistoryData: IFinanceBalanceHistoryData, categoriesData: IFinanceCategoryData, transactionData: IFinanceTransactionData) {
     const router = Router();
     const controller = new AccountController(logger, accountData, balanceHistoryData, transactionData);
     const handler = new ApiHandler(logger);

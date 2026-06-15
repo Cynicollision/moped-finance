@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { ApiHandler } from '@server-core/api-handler';
-import { AppLogger } from '@server-core/logger';
+import { IAppLogger } from '@server-core/logger';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { InstitutionController } from './institution-controller';
 import { IFinanceInstitutionData } from './institution-data';
 import { createInstitutionSchema, updateInstitutionSchema } from './institution-schema';
 
-export function createInstitutionRouter(logger: AppLogger, institutionsData: IFinanceInstitutionData) {
+export function createInstitutionRouter(logger: IAppLogger, institutionsData: IFinanceInstitutionData) {
     const router = Router();
     const controller = new InstitutionController(logger, institutionsData);
     const handler = new ApiHandler(logger);

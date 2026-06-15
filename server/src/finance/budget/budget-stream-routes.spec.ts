@@ -50,24 +50,20 @@ describe('Budget Stream Routes', () => {
     beforeEach(async () => {
         await pglite.exec('TRUNCATE finance.category_groups, finance.categories, finance.budget_streams CASCADE;');
 
-        const group = await groupsData.insert(testUserId, FinanceEntityFactory.createCategoryGroup({ userId: testUserId, class: CategoryClass.Expense, name: 'General' }));
-        const category = await categoriesData.insert(testUserId, FinanceEntityFactory.createCategory({ userId: testUserId, groupId: group.id, name: 'Misc', icon: 'star', isActive: true }));
+        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'General' }));
+        const category = await categoriesData.insert(FinanceEntityFactory.createCategory(testUserId, { groupId: group.id, name: 'Misc', icon: 'star', isActive: true }));
         testCategoryId = category.id!;
     });
 
     describe('GET /', () => {
         it('should return a list of budget streams when successful', async () => {
-            const stream1 = await budgetStreamData.insert(testUserId, FinanceEntityFactory.createBudgetStream({
-                userId: testUserId,
-                categoryId: testCategoryId,
+            const stream1 = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream(testUserId, { categoryId: testCategoryId,
                 name: 'Utilities',
                 type: BudgetStreamType.Expense,
                 recurrence: CalendarPeriod.Monthly,
                 amount: 150.00
             }));
-            const stream2 = await budgetStreamData.insert(testUserId, FinanceEntityFactory.createBudgetStream({
-                userId: testUserId,
-                categoryId: testCategoryId,
+            const stream2 = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream(testUserId, { categoryId: testCategoryId,
                 name: 'Salary',
                 type: BudgetStreamType.Income,
                 recurrence: CalendarPeriod.Monthly,
@@ -101,7 +97,7 @@ describe('Budget Stream Routes', () => {
             expect(response.body.success).toBe(true);
             expect(response.body.data.name).toBe('Groceries');
 
-            const dbStream = await budgetStreamData.retrieveSingle(testUserId, response.body.data.id);
+            const dbStream = await budgetStreamData.retrieveSingle(response.body.data.id);
             expect(dbStream).not.toBeNull();
             expect(dbStream?.name).toBe('Groceries');
         });
@@ -126,9 +122,7 @@ describe('Budget Stream Routes', () => {
 
     describe('PUT /:id', () => {
         it('should update a budget stream when valid and resource belongs to the user', async () => {
-            const stream = await budgetStreamData.insert(testUserId, FinanceEntityFactory.createBudgetStream({
-                userId: testUserId,
-                categoryId: testCategoryId,
+            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream(testUserId, { categoryId: testCategoryId,
                 name: 'Utilities',
                 type: BudgetStreamType.Expense,
                 recurrence: CalendarPeriod.Monthly,
@@ -145,16 +139,14 @@ describe('Budget Stream Routes', () => {
             expect(response.body.success).toBe(true);
             expect(response.body.data.amount).toBe(180.00);
 
-            const dbStream = await budgetStreamData.retrieveSingle(testUserId, stream.id!);
+            const dbStream = await budgetStreamData.retrieveSingle(stream.id!);
             expect(dbStream?.amount).toBe(180.00);
         });
     });
 
     describe('DELETE /:id', () => {
         it('should delete a budget stream when resource belongs to the user', async () => {
-            const stream = await budgetStreamData.insert(testUserId, FinanceEntityFactory.createBudgetStream({
-                userId: testUserId,
-                categoryId: testCategoryId,
+            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream(testUserId, { categoryId: testCategoryId,
                 name: 'Utilities',
                 type: BudgetStreamType.Expense,
                 recurrence: CalendarPeriod.Monthly,
@@ -166,7 +158,7 @@ describe('Budget Stream Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
 
-            const dbStream = await budgetStreamData.retrieveSingle(testUserId, stream.id!);
+            const dbStream = await budgetStreamData.retrieveSingle(stream.id!);
             expect(dbStream).toBeNull();
         });
     });
