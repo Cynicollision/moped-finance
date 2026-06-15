@@ -1,11 +1,12 @@
 import Papa from 'papaparse';
 import { OperationResult } from '@shared/core/contracts';
+import { NewEntity } from '@shared/core/types';
 import { CalendarPeriod } from '@shared/core/enum';
-import { FinanceEntityIdPrefix } from '@shared/finance/enum';
 import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
-import { ResultUtil, DateTimeUtil, EntityIdUtil } from '@server-core/utility';
+import { ResultUtil, DateTimeUtil } from '@server-core/utility';
+import { FinanceEntityFactory } from './../common';
 import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
 import { IFinanceTransactionData } from './transaction-data';
@@ -27,8 +28,8 @@ export class TransactionController {
         return ResultUtil.success(transaction);
     }
 
-    public async createTransaction(userId: string, transaction: Transaction): Promise<OperationResult<Transaction>> {
-        transaction.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Transaction);
+    public async createTransaction(userId: string, newTransaction: NewEntity<Transaction>): Promise<OperationResult<Transaction>> {
+        const transaction = FinanceEntityFactory.createTransaction(newTransaction);
         return ResultUtil.success(await this.transactionData.insert(userId, transaction));
     }
 
@@ -127,7 +128,6 @@ export class TransactionController {
 
         const failedRowMessages: string[] = [];
         let createdCount = 0;
-        let updatedCount = 0;
 
         let rowIndex = 2;
         for (const row of parsed.data as any[]) {
@@ -157,12 +157,9 @@ export class TransactionController {
                 continue;
             }
 
-            const transaction: Transaction = {
-                id: row['Id'] ? String(row['Id']).trim() : EntityIdUtil.generate(FinanceEntityIdPrefix.Transaction),
-                createdAt: DateTimeUtil.now(),
-                updatedAt: DateTimeUtil.now(),
+            const transaction = FinanceEntityFactory.createTransaction({
                 accountId: accountId,
-                categoryId: categoryId || '',
+                categoryId: categoryId,
                 date: DateTimeUtil.toISOString(row['Date'] || DateTimeUtil.now()),
                 amount: parseFloat(row['Amount']) || 0,
                 merchant: row['Merchant'] || '',
@@ -171,36 +168,20 @@ export class TransactionController {
                 isHidden: String(row['IsHidden']).toLowerCase() === 'true',
                 isSplit: false,
                 splitParentId: ''
-            };
+            });
 
             try {
                 if (!dryRun) {
-                    if (row['Id'] && String(row['Id']).trim() !== '') {
-                        // Update
-                        const updated = await this.transactionData.update(userId, transaction);
-                        if (updated) {
-                            updatedCount++;
-                        }
-                        else {
-                            failedRowMessages.push(`Row ${rowIndex}: Transaction ID not found for update or access denied.`);
-                        }
-                    }
-                    else {
-                        // Insert
-                        await this.transactionData.insert(userId, transaction);
-                        createdCount++;
-                    }
-                } else {
-                    if (row['Id'] && String(row['Id']).trim() !== '') {
-                        updatedCount++;
-                    } else {
-                        createdCount++;
-                    }
+                    // TODO: add bulk insert support
+                    await this.transactionData.insert(userId, transaction);
                 }
+
+                createdCount++;
             }
             catch (err: any) {
                 failedRowMessages.push(`Row ${rowIndex}: ${err.message || 'Database error during save'}`);
             }
+
             rowIndex++;
         }
 
@@ -210,10 +191,9 @@ export class TransactionController {
 
         return ResultUtil.success({
             createdCount: createdCount,
-            updatedCount: updatedCount,
             failedRowMessages: failedRowMessages,
             isValidToImport: canImport,
-            resultMessage: `${msgType}Created ${createdCount}, Updated ${updatedCount} transactions.`
+            resultMessage: `${msgType}Created ${createdCount} transactions.`
         });
     }
 }

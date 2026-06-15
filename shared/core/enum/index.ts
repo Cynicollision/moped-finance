@@ -1,5 +1,4 @@
 export { CalendarPeriod } from './calendar-period';
-export { CoreEntityIdPrefix } from './entity-id-prefix';
 export { HistoryTimeframe } from './history-timeframe';
 export { LogLevel } from './log-level';
 export { OperationStatus } from './operation-status';

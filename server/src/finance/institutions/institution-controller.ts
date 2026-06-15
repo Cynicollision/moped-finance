@@ -1,8 +1,9 @@
 import { OperationResult } from '@shared/core/contracts';
-import { FinanceEntityIdPrefix } from '@shared/finance/enum';
+import { NewEntity } from '@shared/core/types';
 import { Institution } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
-import { EntityIdUtil, ResultUtil } from '@server-core/utility';
+import { ResultUtil } from '@server-core/utility';
+import { FinanceEntityFactory } from './../common';
 import { IFinanceInstitutionData } from './institution-data';
 
 export class InstitutionController {
@@ -24,10 +25,8 @@ export class InstitutionController {
         return ResultUtil.success(await this.institutionData.retrieveAll(userId));
     }
 
-    public async createInstitution(userId: string, institution: Institution): Promise<OperationResult<Institution>> {
-        institution.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Institution);
-        institution.userId = userId;
-
+    public async createInstitution(userId: string, newInsitution: NewEntity<Institution>): Promise<OperationResult<Institution>> {
+        const institution = FinanceEntityFactory.createInstitution(newInsitution);
         return ResultUtil.success(await this.institutionData.insert(userId, institution));
     }
 

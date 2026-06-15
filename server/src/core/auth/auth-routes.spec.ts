@@ -60,7 +60,8 @@ describe('Auth Routes', () => {
         try {
             const user = await userData.retrieveByUsername('newuser');
             console.log('User:', user);
-        } catch (err: any) {
+        }
+        catch (err: any) {
             console.error('DB ERROR:', err, err.cause);
         }
     });

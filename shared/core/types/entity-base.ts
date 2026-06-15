@@ -3,3 +3,5 @@ export type Entity = {
     createdAt: Date;
     updatedAt: Date;
 };
+
+export type NewEntity<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt'> & { id?: string };

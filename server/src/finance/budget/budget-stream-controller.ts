@@ -1,8 +1,9 @@
 import { OperationResult } from '@shared/core/contracts';
-import { FinanceEntityIdPrefix } from '@shared/finance/enum';
+import { NewEntity } from '@shared/core/types';
 import { BudgetStream } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
-import { EntityIdUtil, ResultUtil } from '@server-core/utility';
+import { ResultUtil } from '@server-core/utility';
+import { FinanceEntityFactory } from './../common';
 import { IFinanceBudgetStreamData } from './budget-stream-data';
 
 export class BudgetStreamController {
@@ -16,8 +17,8 @@ export class BudgetStreamController {
         return ResultUtil.success(streams);
     }
 
-    public async createBudgetStream(userId: string, budgetStream: BudgetStream): Promise<OperationResult<BudgetStream>> {
-        budgetStream.id = EntityIdUtil.generate(FinanceEntityIdPrefix.BudgetStream);
+    public async createBudgetStream(userId: string, newBudgetStream: NewEntity<BudgetStream>): Promise<OperationResult<BudgetStream>> {
+        const budgetStream = FinanceEntityFactory.createBudgetStream(newBudgetStream);
         budgetStream.userId = userId;
         return ResultUtil.success(await this.budgetStreamData.insert(userId, budgetStream));
     }

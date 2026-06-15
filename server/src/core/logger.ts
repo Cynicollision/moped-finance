@@ -1,8 +1,8 @@
-import { CoreEntityIdPrefix, LogLevel } from '@shared/core/enum';
+import { LogLevel } from '@shared/core/enum';
 import { LogEntry } from '@shared/core/types';
+import { CoreEntityFactory } from '@server-core/utility';
 import { LogData, ILogData } from './data/log-data';
 import { IDatabaseClient } from './db-client';
-import { DateTimeUtil, EntityIdUtil } from './utility';
 
 export enum LogBehavior {
     Ignore = 'ignore',
@@ -74,15 +74,12 @@ export class AppLogger {
     }
 
     private createLogEntry(userId: string, context: string, level: LogLevel, message: string): LogEntry {
-        return {
-            id: EntityIdUtil.generate(CoreEntityIdPrefix.LogEntry),
-            createdAt: DateTimeUtil.now(),
-            updatedAt: DateTimeUtil.now(),
+        return CoreEntityFactory.createLogEntry({
             userId,
             context,
             message,
             level
-        };
+        });
     }
 
     private formatForConsole(entry: LogEntry): string {

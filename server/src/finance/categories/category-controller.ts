@@ -1,8 +1,9 @@
 import { OperationResult } from '@shared/core/contracts';
-import { FinanceEntityIdPrefix } from '@shared/finance/enum';
+import { NewEntity } from '@shared/core/types';
 import { Category, CategoryGroup } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
-import { EntityIdUtil, ResultUtil } from '@server-core/utility';
+import { ResultUtil } from '@server-core/utility';
+import { FinanceEntityFactory } from './../common';
 import { IFinanceCategoryData } from './category-data';
 import { IFinanceCategoryGroupData } from './category-groups';
 
@@ -26,8 +27,8 @@ export class CategoryController {
         return ResultUtil.success(await this.groups.retrieveAll(userId));
     }
 
-    public async createGroup(userId: string, group: CategoryGroup): Promise<OperationResult<CategoryGroup>> {
-        group.id = EntityIdUtil.generate(FinanceEntityIdPrefix.CategoryGroup);
+    public async createGroup(userId: string, newGroup: NewEntity<CategoryGroup>): Promise<OperationResult<CategoryGroup>> {
+        const group = FinanceEntityFactory.createCategoryGroup(newGroup);
         group.userId = userId;
 
         return ResultUtil.success(await this.groups.insert(userId, group));
@@ -61,8 +62,8 @@ export class CategoryController {
         return ResultUtil.success(await this.categories.retrieveAll(userId, activeOnly));
     }
 
-    public async createCategory(userId: string, category: Category): Promise<OperationResult<Category>> {
-        category.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Category);
+    public async createCategory(userId: string, newCategory: NewEntity<Category>): Promise<OperationResult<Category>> {
+        const category = FinanceEntityFactory.createCategory(newCategory);
         category.userId = userId;
 
         return ResultUtil.success(await this.categories.insert(userId, category));

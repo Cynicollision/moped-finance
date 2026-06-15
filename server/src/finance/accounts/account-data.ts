@@ -126,8 +126,9 @@ export class FinanceAccountData implements IFinanceAccountData {
 
     public async delete(userId: string, id: string): Promise<boolean> {
         const result = await this.db.delete(accountSchema)
-            .where(and(eq(accountSchema.userId, userId), eq(accountSchema.id, id)));
+            .where(and(eq(accountSchema.userId, userId), eq(accountSchema.id, id)))
+            .returning({ id: accountSchema.id });
 
-        return (result.rowCount ?? 0) > 0;
+        return result.length > 0;
     }
 }

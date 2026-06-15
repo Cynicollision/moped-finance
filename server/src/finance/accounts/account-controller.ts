@@ -1,11 +1,13 @@
 import Papa from 'papaparse';
 import { OperationResult } from '@shared/core/contracts';
+import { NewEntity } from '@shared/core/types';
 import { HistoryTimeframe } from '@shared/core/enum';
-import { FinanceEntityIdPrefix, ValueHistoryType } from '@shared/finance/enum';
+import { ValueHistoryType } from '@shared/finance/enum';
 import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
 import { AppLogger } from '@server-core/logger';
-import { DateTimeUtil, EntityIdUtil, ResultUtil } from '@server-core/utility';
+import { DateTimeUtil, ResultUtil } from '@server-core/utility';
+import { FinanceEntityFactory } from './../common';
 import { IFinanceTransactionData } from './../transactions';
 import { IFinanceAccountData } from './account-data';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
@@ -31,11 +33,11 @@ export class AccountController {
         return ResultUtil.success(await this.accountData.retrieveAll(userId));
     }
 
-    public async createAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
-        account.id = EntityIdUtil.generate(FinanceEntityIdPrefix.Account);
-        account.userId = userId;
+    public async createAccount(userId: string, account: NewEntity<Account>): Promise<OperationResult<Account>> {
+        const fullAccount = FinanceEntityFactory.createAccount(account);
+        fullAccount.userId = userId;
 
-        return ResultUtil.success(await this.accountData.create(userId, account));
+        return ResultUtil.success(await this.accountData.create(userId, fullAccount));
     }
 
     public async saveAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
@@ -172,14 +174,11 @@ export class AccountController {
             if (!minDate || isoDate < minDate) minDate = isoDate;
             if (!maxDate || isoDate > maxDate) maxDate = isoDate;
 
-            validRows.push({
-                id: EntityIdUtil.generate(FinanceEntityIdPrefix.BalanceHistory),
-                createdAt: DateTimeUtil.now(),
-                updatedAt: DateTimeUtil.now(),
+            validRows.push(FinanceEntityFactory.createBalanceHistory({
                 accountId: accountId,
                 date: parsedDate,
                 balance: parseFloat(balanceStr) || 0
-            });
+            }));
             rowIndex++;
         }
 
