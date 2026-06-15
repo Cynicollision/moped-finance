@@ -236,12 +236,13 @@ function parseCsvLine(line: string): string[] {
 
                         await client.query(
                             `INSERT INTO finance.transactions (
-                                id, account_id, category_id, date, amount, merchant, 
+                                id, user_id, account_id, category_id, date, amount, merchant, 
                                 original_statement, notes, is_hidden, is_split
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                             ON CONFLICT (id) DO NOTHING`,
                             [
                                 txnId,
+                                sampleUserId,
                                 accountId,
                                 categoryId,
                                 date.trim(),
@@ -294,11 +295,12 @@ function parseCsvLine(line: string): string[] {
 
                         await client.query(
                             `INSERT INTO finance.balance_history (
-                                id, account_id, date, balance
-                            ) VALUES ($1, $2, $3, $4)
+                                id, user_id, account_id, date, balance
+                            ) VALUES ($1, $2, $3, $4, $5)
                             ON CONFLICT (id) DO NOTHING`,
                             [
                                 bhId,
+                                sampleUserId,
                                 accountId,
                                 date.trim(),
                                 parseFloat(balance.trim())

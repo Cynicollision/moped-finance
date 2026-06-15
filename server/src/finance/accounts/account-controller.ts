@@ -61,7 +61,7 @@ export class AccountController {
 
     public async getAccountBalanceHistory(userId: string, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<OperationResult<BalanceHistory[]>> {
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        return ResultUtil.success(await this.balanceHistoryData.retrieveForAccount(userId, accountId, startDate.toISOString(), options.asOfDate.toISOString()));
+        return ResultUtil.success(await this.balanceHistoryData.retrieveForAccount(accountId, startDate.toISOString(), options.asOfDate.toISOString()));
     }
 
     public async getTotalValueHistory(userId: string, options: TotalValueHistoryOptions): Promise<OperationResult<TotalValueHistory[]>> {
@@ -79,7 +79,7 @@ export class AccountController {
     }
 
     public async exportBalanceHistory(userId: string, accountId: string): Promise<OperationResult<any>> {
-        const history = await this.balanceHistoryData.exportSearch(userId, accountId);
+        const history = await this.balanceHistoryData.exportSearch(accountId);
 
         if (!history || history.length === 0) {
             return ResultUtil.success('Date,AccountName,Balance\n');
@@ -108,9 +108,6 @@ export class AccountController {
             header: true,
             skipEmptyLines: true
         });
-
-        // TODO: use, move method to /balance-import
-        let importResult: BalanceImportResult = {};
 
         if (parsed.errors.length > 0) {
             return ResultUtil.success({
@@ -172,7 +169,7 @@ export class AccountController {
             if (!minDate || isoDate < minDate) minDate = isoDate;
             if (!maxDate || isoDate > maxDate) maxDate = isoDate;
 
-            validRows.push(FinanceEntityFactory.createBalanceHistory(accountId, {
+            validRows.push(FinanceEntityFactory.createBalanceHistory(userId, {
                 accountId: accountId,
                 date: parsedDate,
                 balance: parseFloat(balanceStr) || 0
@@ -193,8 +190,8 @@ export class AccountController {
 
         if (validRows.length > 0) {
             try {
-                await this.balanceHistoryData.deleteRange(userId, accountId, minDate, maxDate);
-                await this.balanceHistoryData.insertBulk(userId, validRows);
+                await this.balanceHistoryData.deleteRange(accountId, minDate, maxDate);
+                await this.balanceHistoryData.insertBulk(validRows);
             }
             catch (err: any) {
                 return ResultUtil.userError('Database error during import: ' + err.message);

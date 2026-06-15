@@ -9,11 +9,11 @@ import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
 
 export interface IFinanceBalanceHistoryData {
-    retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;
+    retrieveForAccount(accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;
     retrieveSumByDate(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]>;
-    deleteRange(userId: string, accountId: string, startDate: string, endDate: string): Promise<boolean>;
-    insertBulk(userId: string, records: BalanceHistory[]): Promise<boolean>;
-    exportSearch(userId: string, accountId: string): Promise<any[]>;
+    deleteRange(accountId: string, startDate: string, endDate: string): Promise<boolean>;
+    insertBulk(records: BalanceHistory[]): Promise<boolean>;
+    exportSearch(accountId: string): Promise<any[]>;
 }
 
 export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
@@ -23,9 +23,8 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         this.db = dbClient.drizzle;
     }
 
-    public async retrieveForAccount(userId: string, accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]> {
+    public async retrieveForAccount(accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]> {
         const conditions = [
-            eq(accountSchema.userId, userId),
             eq(balanceHistorySchema.accountId, accountId)
         ];
 
@@ -37,14 +36,16 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
             conditions.push(lte(balanceHistorySchema.date, DateTimeUtil.toDateString(endDate)));
         }
 
-        const rows = await this.db.select({
-            id: balanceHistorySchema.id,
-            createdAt: balanceHistorySchema.createdAt,
-            updatedAt: balanceHistorySchema.updatedAt,
-            accountId: balanceHistorySchema.accountId,
-            date: balanceHistorySchema.date,
-            balance: balanceHistorySchema.balance
-        })
+        const rows = await this.db
+            .select({
+                id: balanceHistorySchema.id,
+                createdAt: balanceHistorySchema.createdAt,
+                updatedAt: balanceHistorySchema.updatedAt,
+                userId: balanceHistorySchema.userId,
+                accountId: balanceHistorySchema.accountId,
+                date: balanceHistorySchema.date,
+                balance: balanceHistorySchema.balance
+            })
             .from(balanceHistorySchema)
             .innerJoin(accountSchema, eq(accountSchema.id, balanceHistorySchema.accountId))
             .where(and(...conditions));
@@ -86,10 +87,10 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         }));
     }
 
-    public async deleteRange(userId: string, accountId: string, startDate: string, endDate: string): Promise<boolean> {
+    public async deleteRange(accountId: string, startDate: string, endDate: string): Promise<boolean> {
         const userAccountsQuery = this.db.select({ id: accountSchema.id })
             .from(accountSchema)
-            .where(eq(accountSchema.userId, userId));
+            .where(eq(accountSchema.id, accountId));
 
         await this.db.delete(balanceHistorySchema)
             .where(and(
@@ -102,11 +103,12 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         return true;
     }
 
-    public async insertBulk(userId: string, records: BalanceHistory[]): Promise<boolean> {
+    public async insertBulk(records: BalanceHistory[]): Promise<boolean> {
         if (records.length === 0) return true;
 
         const values = records.map(r => ({
             id: r.id,
+            userId: r.userId,
             accountId: r.accountId,
             date: DateTimeUtil.toDateString(r.date),
             balance: r.balance.toString(),
@@ -118,7 +120,8 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         return true;
     }
 
-    public async exportSearch(userId: string, accountId: string): Promise<any[]> {
+    // TODO: return type
+    public async exportSearch(accountId: string): Promise<any> {
         const rows = await this.db.select({
             date: balanceHistorySchema.date,
             accountName: accountSchema.name,
@@ -126,10 +129,7 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         })
             .from(balanceHistorySchema)
             .innerJoin(accountSchema, eq(accountSchema.id, balanceHistorySchema.accountId))
-            .where(and(
-                eq(accountSchema.userId, userId),
-                eq(balanceHistorySchema.accountId, accountId)
-            ))
+            .where(eq(balanceHistorySchema.accountId, accountId))
             .orderBy(desc(balanceHistorySchema.date));
 
         return rows.map(row => ({

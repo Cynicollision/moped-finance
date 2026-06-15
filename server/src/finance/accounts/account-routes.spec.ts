@@ -74,7 +74,8 @@ describe('Account Routes', () => {
 
     describe('GET /accounts', () => {
         it('should return a list of accounts when successful', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -85,7 +86,8 @@ describe('Account Routes', () => {
                 isRetirement: false,
                 hideFromCashflow: false
             }));
-            const acc2 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc2 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Savings',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -108,7 +110,8 @@ describe('Account Routes', () => {
 
     describe('GET /accounts/total-value-history', () => {
         it('should return total value history with specific options', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -122,13 +125,14 @@ describe('Account Routes', () => {
 
             const balanceHistory: BalanceHistory[] = [{
                 id: 'bh1',
+                userId: testUserId,
                 accountId: acc1.id!,
                 balance: 2500.00,
                 date: DateTimeUtil.now(),
                 createdAt: DateTimeUtil.now(),
                 updatedAt: DateTimeUtil.now()
             }];
-            await balanceHistoryData.insertBulk(testUserId, balanceHistory);
+            await balanceHistoryData.insertBulk(balanceHistory);
 
             const response = await request(app).get('/accounts/total-value-history?type=NetWorth&timeframe=PastThirtyDays');
 
@@ -147,7 +151,8 @@ describe('Account Routes', () => {
 
     describe('GET /accounts/:accountId', () => {
         it('should return a single account when found', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -223,7 +228,8 @@ describe('Account Routes', () => {
 
     describe('PUT /accounts/:accountId', () => {
         it('should update an account when input is valid and resource belongs to user', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Old Checking',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -277,7 +283,8 @@ describe('Account Routes', () => {
 
     describe('DELETE /accounts/:accountId', () => {
         it('should delete an account when resource belongs to user', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -309,7 +316,8 @@ describe('Account Routes', () => {
 
     describe('GET /accounts/:accountId/balance-history', () => {
         it('should return balance history for an account with default timeframe', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking Account',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -322,9 +330,9 @@ describe('Account Routes', () => {
             }));
 
             const balanceHistory: BalanceHistory[] = [
-                FinanceEntityFactory.createBalanceHistory(acc1.id!, { accountId: acc1.id!, balance: 500.00, date: DateTimeUtil.now() })
+                FinanceEntityFactory.createBalanceHistory(testUserId, { accountId: acc1.id!, balance: 500.00, date: DateTimeUtil.now() })
             ];
-            await balanceHistoryData.insertBulk(testUserId, balanceHistory);
+            await balanceHistoryData.insertBulk(balanceHistory);
 
             const response = await request(app).get(`/accounts/${acc1.id}/balance-history`);
 
@@ -335,7 +343,8 @@ describe('Account Routes', () => {
         });
 
         it('should parse timeframe and asOfDate query parameters correctly', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking Account',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -361,7 +370,8 @@ describe('Account Routes', () => {
 
     describe('GET /accounts/:accountId/transactions', () => {
         it('should return transactions for an account with default options', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking Account',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -373,7 +383,8 @@ describe('Account Routes', () => {
                 hideFromCashflow: false
             }));
 
-            await transactionsData.insert(FinanceEntityFactory.createTransaction(acc1.id, { accountId: acc1.id, categoryId: testCategoryId,
+            await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, {
+                accountId: acc1.id, categoryId: testCategoryId,
                 date: DateTimeUtil.nowToISOString(),
                 amount: 50.00,
                 merchant: 'Store',
@@ -394,7 +405,8 @@ describe('Account Routes', () => {
         });
 
         it('should pass search options to transaction search properly', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking Account',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -424,7 +436,8 @@ describe('Account Routes', () => {
 
     describe('GET /:accountId/export-balances', () => {
         it('should return a CSV file of exported balances', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -437,9 +450,9 @@ describe('Account Routes', () => {
             }));
 
             const balanceHistory: BalanceHistory[] = [
-                FinanceEntityFactory.createBalanceHistory(acc1.id!, { accountId: acc1.id!, balance: 100.00, date: DateTimeUtil.now() })
+                FinanceEntityFactory.createBalanceHistory(testUserId, { accountId: acc1.id!, balance: 100.00, date: DateTimeUtil.now() })
             ];
-            await balanceHistoryData.insertBulk(testUserId, balanceHistory);
+            await balanceHistoryData.insertBulk(balanceHistory);
 
             const response = await request(app).get(`/accounts/${acc1.id}/export-balances`);
 
@@ -452,7 +465,8 @@ describe('Account Routes', () => {
 
     describe('POST /:accountId/import-balances', () => {
         it('should process a CSV file and return import statistics', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -479,7 +493,8 @@ describe('Account Routes', () => {
         });
 
         it('should perform a dry run without saving when dryRun=true', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -506,7 +521,8 @@ describe('Account Routes', () => {
         });
 
         it('should fail validation when Date or Balance are missing', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,
@@ -533,7 +549,8 @@ describe('Account Routes', () => {
 
     describe('POST /accounts/:accountId/sync', () => {
         it('should return sync stub success', async () => {
-            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: testInstitutionId,
+            const acc1 = await accountData.create(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
                 name: 'Checking Account',
                 category: AccountCategory.Asset,
                 group: AccountGroup.Cash,

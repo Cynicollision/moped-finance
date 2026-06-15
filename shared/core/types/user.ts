@@ -1,6 +1,7 @@
-import { Entity } from './entity-base';
-
-export type User = Entity & {
+export type User = {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
     displayName: string;
     username: string;
 };

@@ -70,8 +70,8 @@ describe('Transaction Routes', () => {
 
     describe('GET /', () => {
         it('should return a list of transactions when successful with default options', async () => {
-            const txn1 = await transactionsData.insert(FinanceEntityFactory.createTransaction(testAccountId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant 1', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
-            const txn2 = await transactionsData.insert(FinanceEntityFactory.createTransaction(testAccountId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-07', amount: 200, merchant: 'Test Merchant 2', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn1 = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant 1', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn2 = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-07', amount: 200, merchant: 'Test Merchant 2', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions');
 
@@ -82,7 +82,7 @@ describe('Transaction Routes', () => {
         });
 
         it('should parse and pass all search options correctly', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testAccountId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const filters = [
                 { key: 'categoryId', value: testCategoryId },
@@ -155,8 +155,8 @@ describe('Transaction Routes', () => {
 
     describe('GET /merchants', () => {
         it('should return a list of merchants', async () => {
-            await transactionsData.insert(FinanceEntityFactory.createTransaction(testAccountId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Amazon', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
-            await transactionsData.insert(FinanceEntityFactory.createTransaction(testAccountId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Walmart', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Amazon', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Walmart', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions/merchants');
 
@@ -168,7 +168,7 @@ describe('Transaction Routes', () => {
 
     describe('GET /cashflow', () => {
         it('should return cashflow by category', async () => {
-            await transactionsData.insert(FinanceEntityFactory.createTransaction(testAccountId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 500, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 500, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions/cashflow?period=Monthly');
 
@@ -182,7 +182,7 @@ describe('Transaction Routes', () => {
 
     describe('GET /:id', () => {
         it('should return a single transaction when found', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testAccountId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get(`/transactions/${txn.id}`);
 
@@ -201,7 +201,7 @@ describe('Transaction Routes', () => {
 
     describe('PUT /:id', () => {
         it('should update a transaction when valid and resource belongs to user', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testAccountId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const payload = {
                 ...txn,
@@ -232,7 +232,7 @@ describe('Transaction Routes', () => {
 
     describe('DELETE /:id', () => {
         it('should delete a transaction when resource belongs to user', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testAccountId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).delete(`/transactions/${txn.id}`);
 
@@ -254,7 +254,7 @@ describe('Transaction Routes', () => {
 
     describe('GET /export', () => {
         it('should return a CSV file of exported transactions', async () => {
-            await transactionsData.insert(FinanceEntityFactory.createTransaction(testAccountId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions/export');
 

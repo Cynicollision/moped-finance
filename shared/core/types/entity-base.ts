@@ -1,5 +1,6 @@
 export type Entity = {
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
 };

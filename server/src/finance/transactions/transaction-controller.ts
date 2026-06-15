@@ -29,7 +29,7 @@ export class TransactionController {
     }
 
     public async createTransaction(userId: string, newTransaction: NewEntity<Transaction>): Promise<OperationResult<Transaction>> {
-        const transaction = FinanceEntityFactory.createTransaction(newTransaction.accountId!, newTransaction);
+        const transaction = FinanceEntityFactory.createTransaction(userId, newTransaction);
         return ResultUtil.success(await this.transactionData.insert(transaction));
     }
 
@@ -153,7 +153,7 @@ export class TransactionController {
                 continue;
             }
 
-            const transaction = FinanceEntityFactory.createTransaction(accountId, {
+            const transaction = FinanceEntityFactory.createTransaction(userId, {
                 accountId: accountId,
                 categoryId: categoryId,
                 date: DateTimeUtil.toISOString(row['Date'] || DateTimeUtil.now()),

@@ -5,7 +5,6 @@ import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/pglite';
 import { User } from '@shared/core/types/user';
 import { DatabaseClient } from '@server-core/db-client';
-import { CoreEntityFactory } from '@server-core/utility';
 
 export class TestDatabaseUtil {
     public static async createMockDatabase(): Promise<{ dbClient: DatabaseClient, pglite: PGlite }> {
@@ -34,7 +33,13 @@ export class TestDatabaseUtil {
     }
 
     public static async createTestUser(dbClient: DatabaseClient): Promise<User> {
-        const user = CoreEntityFactory.createUser({ username: 'testuser', displayName: 'Test User' });
+        const user: User = { 
+            id: '01testuser123456',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            username: 'testuser', 
+            displayName: 'Test User' 
+        };
         await this.seedUser(dbClient, user, 'mock-hash');
         return user;
     }

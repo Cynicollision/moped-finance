@@ -26,6 +26,7 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
+        userId: row.userId,
         accountId: row.accountId,
         categoryId: row.categoryId,
         date: DateTimeUtil.toISOString(row.date),
@@ -201,10 +202,11 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     }
 
     public async retrieveCashflowByCategory(userId: string, startDate: Date, endDate: Date): Promise<CashflowStream[]> {
-        const rows = await this.db.select({
-            categoryId: transactionSchema.categoryId,
-            amount: sum(transactionSchema.amount).mapWith(Number)
-        })
+        const rows = await this.db
+            .select({
+                categoryId: transactionSchema.categoryId,
+                amount: sum(transactionSchema.amount).mapWith(Number)
+            })
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
             .where(and(
@@ -225,6 +227,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         const rows = await this.db.insert(transactionSchema)
             .values({
                 id: transaction.id,
+                userId: transaction.userId,
                 accountId: transaction.accountId,
                 categoryId: transaction.categoryId,
                 date: DateTimeUtil.toDateString(transaction.date),

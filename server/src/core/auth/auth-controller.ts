@@ -2,7 +2,7 @@ import * as bcrypt from 'bcrypt';
 import { OperationResult } from '@shared/core/contracts/operation-result';
 import { User } from '@shared/core/types/user';
 import { ICoreUserData } from '@server-core/data/user-data';
-import { CoreEntityFactory, ResultUtil } from '@server-core/utility';
+import { CoreEntityIdPrefix, DateTimeUtil, EntityIdUtil, ResultUtil } from '@server-core/utility';
 
 export class AuthController {
     private readonly saltRounds = 10;
@@ -39,10 +39,13 @@ export class AuthController {
 
         const hash = await bcrypt.hash(password, this.saltRounds);
 
-        const newUser = CoreEntityFactory.createUser({
+        const newUser: User = {
+            id: EntityIdUtil.generate(CoreEntityIdPrefix.User),
+            createdAt: DateTimeUtil.now(),
+            updatedAt: DateTimeUtil.now(),
             username,
             displayName: name
-        });
+        };
 
         return ResultUtil.success(await this.userData.create(newUser, hash));
     }
