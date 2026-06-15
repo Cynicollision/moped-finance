@@ -96,7 +96,7 @@ export class ImportTransactionsComponent implements OnInit {
         const response = await this.financeService.importTransactions(formData, false, this.accountId());
         if (response) {
             if (response.isValidToImport) {
-                this.notificationService.success(`Successfully created ${response.createdCount || 0} and updated ${response.updatedCount || 0} records.`);
+                this.notificationService.success(`Successfully created ${response.createdCount || 0} transactions.`);
                 const id = this.accountId();
                 if (id) {
                     this.router.navigate(['/accounts', id]);

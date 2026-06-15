@@ -68,17 +68,17 @@ export class TransactionController {
         const transactions = await this.transactionData.exportSearch(userId, accountId);
 
         if (!transactions || transactions.length === 0) {
-            return ResultUtil.success('Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n');
+            return ResultUtil.success('Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n');
         }
 
         const csv = Papa.unparse(transactions, {
             header: true,
-            columns: ['id', 'date', 'accountName', 'merchant', 'categoryName', 'amount', 'originalStatement', 'notes', 'isHidden']
+            columns: ['date', 'accountName', 'merchant', 'categoryName', 'amount', 'originalStatement', 'notes', 'isHidden']
         });
 
         const finalCsv = csv.replace(
-            /^id,date,accountName,merchant,categoryName,amount,originalStatement,notes,isHidden/i,
-            'Id,Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden'
+            /^date,accountName,merchant,categoryName,amount,originalStatement,notes,isHidden/i,
+            'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden'
         );
 
         return ResultUtil.success(finalCsv);
@@ -100,20 +100,16 @@ export class TransactionController {
         }
 
         const headers = parsed.meta.fields || [];
-        const requiredHeaders = ['Id', 'Date', 'AccountName', 'Merchant', 'CategoryName', 'Amount', 'OriginalStatement', 'Notes', 'IsHidden'];
+        const requiredHeaders = ['Date', 'AccountName', 'Merchant', 'CategoryName', 'Amount', 'OriginalStatement', 'Notes', 'IsHidden'];
         const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-
-        // TODO: use, move method to /transaction-import
-        let importResult: TransactionImportResult = {};
 
         if (missingHeaders.length > 0) {
             return ResultUtil.success({
                 createdCount: 0,
-                updatedCount: 0,
                 failedRowMessages: [],
                 isValidToImport: false,
                 resultMessage: 'Missing required CSV headers: ' + missingHeaders.join(', ')
-            });
+            } as TransactionImportResult);
         }
 
         const [accountsList, categoriesList] = await Promise.all([
@@ -185,7 +181,7 @@ export class TransactionController {
             rowIndex++;
         }
 
-        // TODO: allow partial import? i.e createdCount+updatedCount > 0
+        // TODO: allow partial import? i.e createdCount > 0
         const canImport = failedRowMessages.length === 0;
         const msgType = dryRun ? 'Dry run: ' : 'Imported: ';
 
@@ -194,6 +190,6 @@ export class TransactionController {
             failedRowMessages: failedRowMessages,
             isValidToImport: canImport,
             resultMessage: `${msgType}Created ${createdCount} transactions.`
-        });
+        } as TransactionImportResult);
     }
 }

@@ -13,8 +13,9 @@
             <mat-card-title>Import Transactions</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-            <p class="mt-16">Select a CSV file containing your transactions. The file must have columns like <strong>Id,
-                    Date, AccountName, Merchant, CategoryName, Amount, Notes</strong>.</p>
+            <p class="mt-16">Select a CSV file containing your transactions. The file must have the following columns:
+                <strong>Id, Date, AccountName, Merchant, CategoryName, Amount, Notes</strong>.
+            </p>
 
             <div class="file-upload-section">
                 <input type="file" #fileInput (change)="onFileSelected($event)" accept=".csv" class="hidden-input">
@@ -38,7 +39,6 @@
                 <p>Please review the validated results before finalizing the import.</p>
                 <ul>
                     <li>Transactions to create: {{ dryRunResults()?.createdCount || 0 }}</li>
-                    <li>Transactions to update: {{ dryRunResults()?.updatedCount || 0 }}</li>
                     <li>Rows with errors: {{ dryRunResults()?.failedRowMessages?.length || 0 }}</li>
                 </ul>
 
