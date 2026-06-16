@@ -5,12 +5,13 @@ import { CalendarPeriod } from '@shared/core/enum';
 import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { IAppLogger } from '@server-core/logger';
-import { ResultUtil, DateTimeUtil } from '@server-core/utility';
+import { DateTimeUtil, Result } from '@server-core/utility';
 import { FinanceEntityFactory } from './../common';
 import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
 import { IFinanceTransactionData } from './transaction-data';
 
+// TODO: resource ownership logic
 export class TransactionController {
     constructor(
         private logger: IAppLogger,
@@ -23,52 +24,52 @@ export class TransactionController {
     public async getTransaction(userId: string, transactionId: string): Promise<OperationResult<Transaction>> {
         const transaction = await this.transactionData.retrieveSingle(transactionId);
         if (!transaction) {
-            return ResultUtil.userError('Transaction not found or access denied');
+            return Result.userError('Transaction not found or access denied');
         }
-        return ResultUtil.success(transaction);
+        return Result.success(transaction);
     }
 
     public async createTransaction(userId: string, newTransaction: NewEntity<Transaction>): Promise<OperationResult<Transaction>> {
         const transaction = FinanceEntityFactory.createTransaction(userId, newTransaction);
-        return ResultUtil.success(await this.transactionData.insert(transaction));
+        return Result.success(await this.transactionData.insert(transaction));
     }
 
     public async getTransactions(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<OperationResult<Transaction[]>> {
         // TODO: validate options
-        return ResultUtil.success(await this.transactionData.search(userId, options, accountId));
+        return Result.success(await this.transactionData.search(userId, options, accountId));
     }
 
     public async getTransactionMerchants(userId: string): Promise<OperationResult<string[]>> {
-        return ResultUtil.success(await this.transactionData.retrieveMerchants(userId));
+        return Result.success(await this.transactionData.retrieveMerchants(userId));
     }
 
     public async saveTransaction(userId: string, transaction: Transaction): Promise<OperationResult<Transaction>> {
         const updated = await this.transactionData.update(transaction);
         if (!updated) {
-            return ResultUtil.userError('Transaction not found or access denied');
+            return Result.userError('Transaction not found or access denied');
         }
-        return ResultUtil.success(updated);
+        return Result.success(updated);
     }
 
     public async deleteTransaction(userId: string, transactionId: string): Promise<OperationResult<void>> {
         const deleted = await this.transactionData.delete(transactionId);
         if (!deleted) {
-            return ResultUtil.userError('Transaction not found or access denied');
+            return Result.userError('Transaction not found or access denied');
         }
-        return ResultUtil.success();
+        return Result.success();
     }
 
     public async getTransactionCashflowByCategory(userId: string, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<CashflowStream[]>> {
         const asOf = asOfDate ? DateTimeUtil.parse(asOfDate) : DateTimeUtil.now();
         const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
-        return ResultUtil.success(await this.transactionData.retrieveCashflowByCategory(userId, startDate, endDate));
+        return Result.success(await this.transactionData.retrieveCashflowByCategory(userId, startDate, endDate));
     }
 
     public async exportTransactions(userId: string, accountId?: string): Promise<OperationResult<any>> {
         const transactions = await this.transactionData.exportSearch(userId, accountId);
 
         if (!transactions || transactions.length === 0) {
-            return ResultUtil.success('Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n');
+            return Result.success('Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n');
         }
 
         const csv = Papa.unparse(transactions, {
@@ -81,12 +82,12 @@ export class TransactionController {
             'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden'
         );
 
-        return ResultUtil.success(finalCsv);
+        return Result.success(finalCsv);
     }
 
     public async importTransactions(userId: string, fileBuffer?: Buffer, dryRun: boolean = false, targetAccountId?: string): Promise<OperationResult<TransactionImportResult>> {
         if (!fileBuffer) {
-            return ResultUtil.userError('No file provided');
+            return Result.userError('No file provided');
         }
 
         const csvString = fileBuffer.toString('utf8');
@@ -96,7 +97,7 @@ export class TransactionController {
         });
 
         if (parsed.errors.length > 0) {
-            return ResultUtil.userError('Failed to parse CSV file: ' + parsed.errors[0].message);
+            return Result.userError('Failed to parse CSV file: ' + parsed.errors[0].message);
         }
 
         const headers = parsed.meta.fields || [];
@@ -104,7 +105,7 @@ export class TransactionController {
         const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
 
         if (missingHeaders.length > 0) {
-            return ResultUtil.success({
+            return Result.success({
                 createdCount: 0,
                 failedRowMessages: [],
                 isValidToImport: false,
@@ -185,7 +186,7 @@ export class TransactionController {
         const canImport = failedRowMessages.length === 0;
         const msgType = dryRun ? 'Dry run: ' : 'Imported: ';
 
-        return ResultUtil.success({
+        return Result.success({
             createdCount: createdCount,
             failedRowMessages: failedRowMessages,
             isValidToImport: canImport,

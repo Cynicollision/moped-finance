@@ -172,10 +172,10 @@ describe('Account Routes', () => {
             expect(response.body.data.name).toBe('Checking');
         });
 
-        it('should return 400 when account is not found', async () => {
+        it('should return 404 when account is not found', async () => {
             const response = await request(app).get('/accounts/missing');
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('not found');
         });
@@ -199,7 +199,7 @@ describe('Account Routes', () => {
                 .post('/accounts')
                 .send(payload);
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(response.body.success).toBe(true);
             expect(response.body.data.name).toBe('New Account');
             expect(response.body.data.category).toBe(AccountCategory.Asset);
@@ -258,7 +258,7 @@ describe('Account Routes', () => {
             expect(updatedAccount?.name).toBe('Updated Checking');
         });
 
-        it('should return 400 when update fails because resource does not exist', async () => {
+        it('should return 404 when update fails because resource does not exist', async () => {
             const payload = {
                 name: 'Updated Checking',
                 institutionId: testInstitutionId,
@@ -275,7 +275,7 @@ describe('Account Routes', () => {
                 .put('/accounts/unowned-acc')
                 .send(payload);
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('not found');
         });
@@ -305,10 +305,10 @@ describe('Account Routes', () => {
             expect(deletedAccount).toBeNull();
         });
 
-        it('should return 400 when delete fails because resource does not exist', async () => {
+        it('should return 404 when delete fails because resource does not exist', async () => {
             const response = await request(app).delete('/accounts/unowned-acc');
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('not found');
         });

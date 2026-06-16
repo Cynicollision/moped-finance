@@ -14,6 +14,9 @@ export class ApiHandler {
     constructor(private logger: IAppLogger) {
     }
 
+    // TODO: rename class OperationHandler (operation-handler.ts)
+    // TODO: better context object
+
     async execute<T>(req: Request, res: Response, context: string, operation: (context: ExecutionContext) => Promise<OperationResult<T>>): Promise<OperationResult<T>> {
         const userId = ApiUtil.getUserId(req);
 

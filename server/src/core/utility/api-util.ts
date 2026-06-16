@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { OperationResult } from '@shared/core/contracts';
-import { User } from '@shared/core/types';
 import { OperationStatus } from '@shared/core/enum';
-import { ResultUtil } from './result-util';
+import { User } from '@shared/core/types';
+import { Result } from './result-util';
 
 export class ApiUtil {
 
@@ -31,7 +31,13 @@ export class ApiUtil {
         let statusCode = 200;
         switch (result.status) {
             case OperationStatus.Success:
-                statusCode = 200; // TODO: need to support 201 created, 202 accepted, etc.
+                statusCode = 200;
+                break;
+            case OperationStatus.SuccessCreated:
+                statusCode = 201;
+                break;
+            case OperationStatus.SuccessAccepted:
+                statusCode = 202;
                 break;
             case OperationStatus.UserError:
                 statusCode = 400;
@@ -40,7 +46,10 @@ export class ApiUtil {
                 statusCode = 401;
                 break;
             case OperationStatus.Forbidden:
-                statusCode = 403;
+                statusCode = 403; // TODO not used?
+                break;
+            case OperationStatus.NotFound:
+                statusCode = 404;
                 break;
             case OperationStatus.UnhandledError:
             default:
@@ -48,31 +57,37 @@ export class ApiUtil {
                 break;
         }
 
+        // if (result.success) {
+        //     res.status(statusCode).json(result.data);
+        // } else {
+        //     res.status(statusCode).json(result.error);
+        // }
         res.status(statusCode).json(result);
+
         return result;
     }
 
-    public static success<T>(res: Response, data?: T): OperationResult<T> {
-        return this.sendResult(res, ResultUtil.success(data));
-    }
+    // public static success<T>(res: Response, data?: T): OperationResult<T> {
+    //     return this.sendResult(res, OperationResult.success(data));
+    // }
 
     public static badRequest<T>(res: Response, message: string): OperationResult<T> {
-        return this.sendResult(res, ResultUtil.userError(message));
+        return this.sendResult(res, Result.userError(message));
     }
 
     public static unauthorized<T>(res: Response): OperationResult<T> {
-        return this.sendResult(res, ResultUtil.unauthorized());
+        return this.sendResult(res, Result.unauthorized());
     }
 
-    public static forbidden<T>(res: Response, message: string = 'Access denied'): OperationResult<T> {
-        return this.sendResult(res, ResultUtil.forbidden(message));
-    }
+    // public static forbidden<T>(res: Response, message: string = 'Access denied'): OperationResult<T> {
+    //     return this.sendResult(res, OperationResult.forbidden(message));
+    // }
 
     public static notFound<T>(req: Request, res: Response): OperationResult<T> {
-        return this.sendResult(res, ResultUtil.notFound(`${req.originalUrl} not found.`));
+        return this.sendResult(res, Result.notFound(`${req.originalUrl} not found.`));
     }
 
     public static internalError<T>(res: Response, error: unknown): OperationResult<T> {
-        return this.sendResult(res, ResultUtil.internalError('An unexpected error occurred'));
+        return this.sendResult(res, Result.internalError('An unexpected error occurred'));
     }
 }

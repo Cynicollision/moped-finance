@@ -1,6 +1,6 @@
 import { Router, Request } from 'express';
 import multer from 'multer';
-import { HistoryTimeframe, SortDirection, OperationStatus } from '@shared/core/enum';
+import { HistoryTimeframe, OperationStatus, SortDirection } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
@@ -107,6 +107,7 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
     });
 
     router.get('/:id/export-balances', validator.id(), async (req, res) => {
+        // TODO needs to use handler
         const userId = ApiUtil.getUserId(req);
         logger.info(userId, 'exportBalanceHistory', 'Starting balance history export');
         try {

@@ -2,7 +2,8 @@ import { Entity } from "@shared/core/types";
 
 export abstract class FinanceController {
 
-    protected hasResourceAccess(userId: string, resource: Entity): boolean {
+    // TODO: utility class? @server-core/auth/access-service ?
+    protected hasResourceAccess(userId: string, resource: Entity | null): boolean {
         return resource ? userId === resource.userId : false;
     }
 }

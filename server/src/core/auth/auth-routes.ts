@@ -3,7 +3,7 @@ import { OperationResult } from '@shared/core/contracts';
 import { ICoreUserData } from '@server-core/data/user-data';
 import { ApiHandler } from '@server-core/api-handler';
 import { IAppLogger } from '@server-core/logger';
-import { ResultUtil } from '@server-core/utility';
+import { Result } from '@server-core/utility';
 import { AuthController } from './auth-controller';
 
 type AuthRequest = {
@@ -37,8 +37,9 @@ export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, re
         handler.execute(req, res, 'register', async (context) => {
             const { username, name, password } = req.body as AuthRequest;
 
+            // TODO: move validation into controller
             if (!username || !name || !password) {
-                return ResultUtil.userError('Username, name, and password are required.');
+                return Result.userError('Username, name, and password are required.');
             }
 
             const result = await controller.createUser(username, name, password);
@@ -56,8 +57,9 @@ export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, re
         handler.execute(req, res, 'changePassword', async (context) => {
             const { oldPassword, newPassword } = req.body as AuthRequest;
 
+            // TODO: move to controller
             if (!oldPassword || !newPassword) {
-                return ResultUtil.userError('Missing required fields.');
+                return Result.userError('Missing required fields.');
             }
 
             return await controller.changePassword(context.userId!, oldPassword, newPassword);
@@ -68,13 +70,13 @@ export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, re
         handler.execute(req, res, 'logout', async (context) => {
             const session = context.req.session;
             if (!session) {
-                return ResultUtil.success();
+                return Result.success();
             }
 
             return new Promise<OperationResult<void>>((resolve) => {
                 session.destroy((err) => {
                     if (err) {
-                        return resolve(ResultUtil.internalError('Could not log out.'));
+                        return resolve(Result.internalError('Could not log out.'));
                     }
 
                     // Explicitly clear the cookie with matching options
@@ -84,7 +86,7 @@ export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, re
                         httpOnly: true
                     });
 
-                    resolve(ResultUtil.success());
+                    resolve(Result.success());
                 });
             });
         });
@@ -92,7 +94,7 @@ export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, re
 
     router.get('/me', resolveUserMiddleware, (req, res) => {
         handler.execute(req, res, 'me', async (context) => {
-            return ResultUtil.success(context.req.session.user);
+            return Result.success(context.req.session.user);
         });
     });
 

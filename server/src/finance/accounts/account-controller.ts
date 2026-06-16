@@ -6,62 +6,82 @@ import { ValueHistoryType } from '@shared/finance/enum';
 import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
 import { IAppLogger } from '@server-core/logger';
-import { DateTimeUtil, ResultUtil } from '@server-core/utility';
-import { FinanceEntityFactory } from './../common';
+import { DateTimeUtil, Result } from '@server-core/utility';
+import { FinanceController, FinanceEntityFactory } from './../common';
 import { IFinanceTransactionData } from './../transactions';
 import { IFinanceAccountData } from './account-data';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 
-export class AccountController {
+export class AccountController extends FinanceController {
     constructor(
         private logger: IAppLogger,
         private accountData: IFinanceAccountData,
         private balanceHistoryData: IFinanceBalanceHistoryData,
         private transactionData: IFinanceTransactionData
     ) {
+        super();
     }
 
     public async getAccount(userId: string, accountId: string): Promise<OperationResult<Account>> {
         const account = await this.accountData.retrieveSingle(accountId);
-        if (!account) {
-            return ResultUtil.userError('Account not found or access denied');
+        if (!account || !this.hasResourceAccess(userId, account)) {
+            return Result.userErrorNotFound();
         }
-        return ResultUtil.success(account);
+
+        return Result.success(account);
     }
 
     public async getAccounts(userId: string): Promise<OperationResult<Account[]>> {
-        return ResultUtil.success(await this.accountData.retrieveAll(userId));
+        const accounts = await this.accountData.retrieveAll(userId);
+        return Result.success(accounts);
     }
 
     public async createAccount(userId: string, newAccount: NewEntity<Account>): Promise<OperationResult<Account>> {
         const account = FinanceEntityFactory.createAccount(userId, newAccount);
-        return ResultUtil.success(await this.accountData.create(account));
+        const created = await this.accountData.create(account);
+        return Result.successCreated(created);
     }
 
     public async saveAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
+        const current = await this.accountData.retrieveSingle(account.id);
+        if (!current || !this.hasResourceAccess(userId, current)) {
+            return Result.userErrorNotFound();
+        }
+
         const updated = await this.accountData.update(account);
         if (!updated) {
-            return ResultUtil.userError('Account not found or access denied');
+            return Result.userError('Account not found or access denied');
         }
-        return ResultUtil.success(updated);
+
+        return Result.success(updated);
     }
 
     public async deleteAccount(userId: string, accountId: string): Promise<OperationResult<void>> {
-        const deleted = await this.accountData.delete(accountId);
-        if (!deleted) {
-            return ResultUtil.userError('Account not found or access denied');
+        const current = await this.accountData.retrieveSingle(accountId);
+        if (!current || !this.hasResourceAccess(userId, current)) {
+            return Result.userErrorNotFound();
         }
-        return ResultUtil.success();
+
+        await this.accountData.delete(accountId);
+        return Result.success();
     }
 
     public async getAccountTransactions(userId: string, accountId: string, options: TransactionSearchOptions): Promise<OperationResult<Transaction[]>> {
         // TODO: validate options
-        return ResultUtil.success(await this.transactionData.search(userId, options, accountId));
+        const tranactions = await this.transactionData.search(userId, options, accountId);
+        return Result.success(tranactions);
     }
 
     public async getAccountBalanceHistory(userId: string, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<OperationResult<BalanceHistory[]>> {
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        return ResultUtil.success(await this.balanceHistoryData.retrieveForAccount(accountId, startDate.toISOString(), options.asOfDate.toISOString()));
+        const account = await this.accountData.retrieveSingle(accountId);
+
+        if (!account || !this.hasResourceAccess(userId, account)) {
+            return Result.userErrorNotFound();
+        }
+
+        const history = await this.balanceHistoryData.retrieveForAccount(accountId, startDate.toISOString(), options.asOfDate.toISOString());
+        return Result.success(history);
     }
 
     public async getTotalValueHistory(userId: string, options: TotalValueHistoryOptions): Promise<OperationResult<TotalValueHistory[]>> {
@@ -70,19 +90,27 @@ export class AccountController {
         // TODO: validate options
 
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        return ResultUtil.success(await this.balanceHistoryData.retrieveSumByDate(userId, options.type, startDate, options.asOfDate));
+        const totalValueHistory = await this.balanceHistoryData.retrieveSumByDate(userId, options.type, startDate, options.asOfDate);
+
+        return Result.success(totalValueHistory);
     }
 
     public async syncAccount(userId: string, accountId: string): Promise<OperationResult<any>> {
         // TODO: implement sync/synchronization logic
-        return ResultUtil.success({ message: 'Sync account logic stub' });
+        return Result.success({ message: 'Sync account logic stub' });
     }
 
     public async exportBalanceHistory(userId: string, accountId: string): Promise<OperationResult<any>> {
+        const account = await this.accountData.retrieveSingle(accountId);
+
+        if (!account || !this.hasResourceAccess(userId, account)) {
+            return Result.userErrorNotFound();
+        }
+
         const history = await this.balanceHistoryData.exportSearch(accountId);
 
         if (!history || history.length === 0) {
-            return ResultUtil.success('Date,AccountName,Balance\n');
+            return Result.success('Date,AccountName,Balance\n');
         }
 
         const csv = Papa.unparse(history, {
@@ -90,17 +118,17 @@ export class AccountController {
             columns: ['Date', 'AccountName', 'Balance']
         });
 
-        return ResultUtil.success(csv);
+        return Result.success(csv);
     }
 
     public async importBalanceHistory(userId: string, accountId: string, fileBuffer: Buffer | undefined, dryRun: boolean): Promise<OperationResult<BalanceImportResult>> {
         if (!fileBuffer) {
-            return ResultUtil.userError('No file provided');
+            return Result.userError('No file provided');
         }
 
         const account = await this.accountData.retrieveSingle(accountId);
-        if (!account) {
-            return ResultUtil.userError('Account not found');
+        if (!account || !this.hasResourceAccess(userId, account)) {
+            return Result.userErrorNotFound();
         }
 
         const csvString = fileBuffer.toString('utf8');
@@ -110,7 +138,7 @@ export class AccountController {
         });
 
         if (parsed.errors.length > 0) {
-            return ResultUtil.success({
+            return Result.success({
                 startDate: '',
                 endDate: '',
                 createdCount: 0,
@@ -124,7 +152,7 @@ export class AccountController {
         const requiredHeaders = ['Date', 'Balance'];
         const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
         if (missingHeaders.length > 0) {
-            return ResultUtil.success({
+            return Result.success({
                 startDate: '',
                 endDate: '',
                 createdCount: 0,
@@ -136,7 +164,7 @@ export class AccountController {
 
         const records = parsed.data as any[];
         if (records.length === 0) {
-            return ResultUtil.success({
+            return Result.success({
                 startDate: '',
                 endDate: '',
                 createdCount: 0,
@@ -178,7 +206,7 @@ export class AccountController {
         }
 
         if (dryRun) {
-            return ResultUtil.success({
+            return Result.success({
                 startDate: minDate,
                 endDate: maxDate,
                 createdCount: validRows.length,
@@ -194,11 +222,11 @@ export class AccountController {
                 await this.balanceHistoryData.insertBulk(validRows);
             }
             catch (err: any) {
-                return ResultUtil.userError('Database error during import: ' + err.message);
+                return Result.userError('Database error during import: ' + err.message);
             }
         }
 
-        return ResultUtil.success({
+        return Result.success({
             startDate: minDate,
             endDate: maxDate,
             createdCount: validRows.length,

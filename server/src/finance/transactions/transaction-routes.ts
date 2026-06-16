@@ -51,6 +51,7 @@ export function createTransactionRouter(logger: IAppLogger, accountData: IFinanc
     });
 
     router.get('/export', async (req, res) => {
+        // TODO needs to use handler
         const userId = ApiUtil.getUserId(req);
         logger.info(userId, 'exportTransactions', 'Starting export transactions');
         try {

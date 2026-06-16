@@ -1,8 +1,8 @@
 import * as bcrypt from 'bcrypt';
-import { OperationResult } from '@shared/core/contracts/operation-result';
-import { User } from '@shared/core/types/user';
+import { OperationResult } from '@shared/core/contracts';
+import { User } from '@shared/core/types';
 import { ICoreUserData } from '@server-core/data/user-data';
-import { CoreEntityIdPrefix, DateTimeUtil, EntityIdUtil, ResultUtil } from '@server-core/utility';
+import { CoreEntityIdPrefix, DateTimeUtil, EntityIdUtil, Result } from '@server-core/utility';
 
 export class AuthController {
     private readonly saltRounds = 10;
@@ -11,30 +11,32 @@ export class AuthController {
         this.userData = userData;
     }
 
+    // TODO: use OperationHandler (fka ApiHandler) here to get logging
+
     async loginUser(username: string, password?: string): Promise<OperationResult<User>> {
         if (!password) {
-            return ResultUtil.userError('Password is required.');
+            return Result.userError('Password is required.');
         }
 
         const userWithPassword = await this.userData.retrieveByUsername(username);
         if (!userWithPassword) {
-            return ResultUtil.userError('Invalid username or password.');
+            return Result.userError('Invalid username or password.');
         }
 
         const match = await bcrypt.compare(password, userWithPassword.passwordHash);
         if (match) {
             // Strip passwordHash before returning
             const { passwordHash, ...user } = userWithPassword;
-            return ResultUtil.success(user);
+            return Result.success(user);
         }
 
-        return ResultUtil.userError('Invalid username or password.');
+        return Result.userError('Invalid username or password.');
     }
 
     async createUser(username: string, name: string, password: string): Promise<OperationResult<User>> {
         const existingUser = await this.userData.retrieveByUsername(username);
         if (existingUser) {
-            return ResultUtil.userError('Username already taken.');
+            return Result.userError('Username already taken.');
         }
 
         const hash = await bcrypt.hash(password, this.saltRounds);
@@ -47,31 +49,31 @@ export class AuthController {
             displayName: name
         };
 
-        return ResultUtil.success(await this.userData.create(newUser, hash));
+        return Result.success(await this.userData.create(newUser, hash));
     }
 
     async changePassword(userId: string, oldPassword?: string, newPassword?: string): Promise<OperationResult<void>> {
         if (!oldPassword || !newPassword) {
-            return ResultUtil.userError('Old and new passwords are required.');
+            return Result.userError('Old and new passwords are required.');
         }
 
         const user = await this.userData.retrieveSingle(userId);
         if (!user) {
-            return ResultUtil.userError('User not found.');
+            return Result.userError('User not found.');
         }
 
         const userWithPassword = await this.userData.retrieveByUsername(user.username);
         if (!userWithPassword) {
-            return ResultUtil.userError('User not found.');
+            return Result.userError('User not found.');
         }
 
         const match = await bcrypt.compare(oldPassword, userWithPassword.passwordHash);
         if (!match) {
-            return ResultUtil.userError('Invalid old password.');
+            return Result.userError('Invalid old password.');
         }
 
         const newHash = await bcrypt.hash(newPassword, this.saltRounds);
         await this.userData.updatePassword(userId, newHash);
-        return ResultUtil.success();
+        return Result.success();
     }
 }
