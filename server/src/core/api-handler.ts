@@ -30,6 +30,7 @@ export class ApiHandler {
 
         try {
             const result = await operation(executionContext);
+            // TODO: check success and warn if not
             this.logger.info(userId, context, `Successfully completed operation: ${context}`);
             return ApiUtil.sendResult(res, result);
         }

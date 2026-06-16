@@ -1,18 +1,17 @@
 import { OperationResult } from '@shared/core/contracts';
 import { NewEntity } from '@shared/core/types';
 import { Institution } from '@shared/finance/types';
+import { ResourceAccess } from '@server-core/auth';
 import { IAppLogger } from '@server-core/logger';
 import { Result } from '@server-core/utility';
-import { FinanceController, FinanceEntityFactory } from './../common';
+import { FinanceEntityFactory } from './../common';
 import { IFinanceInstitutionData } from './institution-data';
 
-// TODO: resource ownership logic
-export class InstitutionController extends FinanceController {
+export class InstitutionController {
     constructor(
         private logger: IAppLogger,
         private institutionData: IFinanceInstitutionData
     ) {
-        super();
     }
 
     public async getInstitution(userId: string, institutionId: string): Promise<OperationResult<Institution>> {
@@ -24,17 +23,19 @@ export class InstitutionController extends FinanceController {
     }
 
     public async getInstitutions(userId: string): Promise<OperationResult<Institution[]>> {
-        return Result.success(await this.institutionData.retrieveAll(userId));
+        const institutions = await this.institutionData.retrieveAll(userId);
+        return Result.success(institutions);
     }
 
     public async createInstitution(userId: string, newInsitution: NewEntity<Institution>): Promise<OperationResult<Institution>> {
         const institution = FinanceEntityFactory.createInstitution(userId, newInsitution);
-        return Result.successCreated(await this.institutionData.insert(institution));
+        const created = await this.institutionData.insert(institution);
+        return Result.successCreated(created);
     }
 
     public async updateInstitution(userId: string, institution: Institution): Promise<OperationResult<Institution>> {
         const current = await this.institutionData.retrieveSingle(institution.id);
-        if (!this.hasResourceAccess(userId, current)) {
+        if (!ResourceAccess.validate(userId, current)) {
             return Result.userErrorNotFound();
         }
 
@@ -48,7 +49,7 @@ export class InstitutionController extends FinanceController {
 
     public async deleteInstitution(userId: string, institutionId: string): Promise<OperationResult<boolean>> {
         const current = await this.institutionData.retrieveSingle(institutionId);
-        if (!this.hasResourceAccess(userId, current)) {
+        if (!ResourceAccess.validate(userId, current)) {
             return Result.userErrorNotFound();
         }
 

@@ -5,26 +5,27 @@ import { HistoryTimeframe } from '@shared/core/enum';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
+import { ResourceAccess } from '@server-core/auth';
 import { IAppLogger } from '@server-core/logger';
 import { DateTimeUtil, Result } from '@server-core/utility';
-import { FinanceController, FinanceEntityFactory } from './../common';
+import { FinanceEntityFactory } from './../common';
 import { IFinanceTransactionData } from './../transactions';
 import { IFinanceAccountData } from './account-data';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 
-export class AccountController extends FinanceController {
+
+export class AccountController {
     constructor(
         private logger: IAppLogger,
         private accountData: IFinanceAccountData,
         private balanceHistoryData: IFinanceBalanceHistoryData,
         private transactionData: IFinanceTransactionData
     ) {
-        super();
     }
 
     public async getAccount(userId: string, accountId: string): Promise<OperationResult<Account>> {
         const account = await this.accountData.retrieveSingle(accountId);
-        if (!account || !this.hasResourceAccess(userId, account)) {
+        if (!account || !ResourceAccess.validate(userId, account)) {
             return Result.userErrorNotFound();
         }
 
@@ -44,7 +45,7 @@ export class AccountController extends FinanceController {
 
     public async updateAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
         const current = await this.accountData.retrieveSingle(account.id);
-        if (!current || !this.hasResourceAccess(userId, current)) {
+        if (!current || !ResourceAccess.validate(userId, current)) {
             return Result.userErrorNotFound();
         }
 
@@ -58,11 +59,15 @@ export class AccountController extends FinanceController {
 
     public async deleteAccount(userId: string, accountId: string): Promise<OperationResult<void>> {
         const current = await this.accountData.retrieveSingle(accountId);
-        if (!current || !this.hasResourceAccess(userId, current)) {
+        if (!current || !ResourceAccess.validate(userId, current)) {
             return Result.userErrorNotFound();
         }
 
-        await this.accountData.delete(accountId);
+        const deleted = await this.accountData.delete(accountId);
+        if (!deleted) {
+            return Result.userErrorNotFound();
+        }
+
         return Result.successDeleted();
     }
 
@@ -76,7 +81,7 @@ export class AccountController extends FinanceController {
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         const account = await this.accountData.retrieveSingle(accountId);
 
-        if (!account || !this.hasResourceAccess(userId, account)) {
+        if (!account || !ResourceAccess.validate(userId, account)) {
             return Result.userErrorNotFound();
         }
 
@@ -103,7 +108,7 @@ export class AccountController extends FinanceController {
     public async exportBalanceHistory(userId: string, accountId: string): Promise<OperationResult<any>> {
         const account = await this.accountData.retrieveSingle(accountId);
 
-        if (!account || !this.hasResourceAccess(userId, account)) {
+        if (!account || !ResourceAccess.validate(userId, account)) {
             return Result.userErrorNotFound();
         }
 
@@ -127,7 +132,7 @@ export class AccountController extends FinanceController {
         }
 
         const account = await this.accountData.retrieveSingle(accountId);
-        if (!account || !this.hasResourceAccess(userId, account)) {
+        if (!account || !ResourceAccess.validate(userId, account)) {
             return Result.userErrorNotFound();
         }
 

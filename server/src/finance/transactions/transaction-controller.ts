@@ -4,6 +4,7 @@ import { NewEntity } from '@shared/core/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
+import { ResourceAccess } from '@server-core/auth';
 import { IAppLogger } from '@server-core/logger';
 import { DateTimeUtil, Result } from '@server-core/utility';
 import { FinanceEntityFactory } from './../common';
@@ -11,7 +12,6 @@ import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
 import { IFinanceTransactionData } from './transaction-data';
 
-// TODO: resource ownership logic
 export class TransactionController {
     constructor(
         private logger: IAppLogger,
@@ -23,46 +23,68 @@ export class TransactionController {
 
     public async getTransaction(userId: string, transactionId: string): Promise<OperationResult<Transaction>> {
         const transaction = await this.transactionData.retrieveSingle(transactionId);
-        if (!transaction) {
-            return Result.userError('Transaction not found or access denied');
+        if (!transaction || !ResourceAccess.validate(userId, transaction)) {
+            return Result.userErrorNotFound();
         }
         return Result.success(transaction);
     }
 
     public async createTransaction(userId: string, newTransaction: NewEntity<Transaction>): Promise<OperationResult<Transaction>> {
         const transaction = FinanceEntityFactory.createTransaction(userId, newTransaction);
-        return Result.success(await this.transactionData.insert(transaction));
+
+        const account = await this.accountData.retrieveSingle(transaction.accountId);
+        if (!account || !ResourceAccess.validate(userId, account)) {
+            return Result.userError('Invalid account specified.');
+        }
+
+        const created = await this.transactionData.insert(transaction);
+        return Result.successCreated(created);
     }
 
     public async getTransactions(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<OperationResult<Transaction[]>> {
         // TODO: validate options
-        return Result.success(await this.transactionData.search(userId, options, accountId));
+        const transactions = await this.transactionData.search(userId, options, accountId);
+        return Result.success(transactions);
     }
 
     public async getTransactionMerchants(userId: string): Promise<OperationResult<string[]>> {
-        return Result.success(await this.transactionData.retrieveMerchants(userId));
+        const merchantNames = await this.transactionData.retrieveMerchants(userId);
+        return Result.success(merchantNames);
     }
 
     public async saveTransaction(userId: string, transaction: Transaction): Promise<OperationResult<Transaction>> {
+        const current = await this.transactionData.retrieveSingle(transaction.id);
+        if (!current || !ResourceAccess.validate(userId, current)) {
+            return Result.userErrorNotFound();
+        }
+
         const updated = await this.transactionData.update(transaction);
         if (!updated) {
             return Result.userError('Transaction not found or access denied');
         }
-        return Result.success(updated);
+
+        return Result.successUpdated(updated);
     }
 
     public async deleteTransaction(userId: string, transactionId: string): Promise<OperationResult<void>> {
+        const current = await this.transactionData.retrieveSingle(transactionId);
+        if (!current || !ResourceAccess.validate(userId, current)) {
+            return Result.userErrorNotFound();
+        }
+
         const deleted = await this.transactionData.delete(transactionId);
         if (!deleted) {
-            return Result.userError('Transaction not found or access denied');
+            return Result.userErrorNotFound();
         }
-        return Result.success();
+
+        return Result.successDeleted();
     }
 
     public async getTransactionCashflowByCategory(userId: string, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<CashflowStream[]>> {
         const asOf = asOfDate ? DateTimeUtil.parse(asOfDate) : DateTimeUtil.now();
         const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
-        return Result.success(await this.transactionData.retrieveCashflowByCategory(userId, startDate, endDate));
+        const cashflow = await this.transactionData.retrieveCashflowByCategory(userId, startDate, endDate);
+        return Result.success(cashflow);
     }
 
     public async exportTransactions(userId: string, accountId?: string): Promise<OperationResult<any>> {
@@ -141,7 +163,7 @@ export class TransactionController {
             const categoryId = categoryName ? categoryMap.get(categoryName) : '';
 
             if (!accountId) {
-                failedRowMessages.push(`Row ${rowIndex}: Account name '${row['AccountName']}' not found and no target account selected.`);
+                failedRowMessages.push(`Row ${rowIndex}: Account name '${row['AccountName']}' not found.`);
                 rowIndex++;
                 continue;
             }
@@ -186,11 +208,13 @@ export class TransactionController {
         const canImport = failedRowMessages.length === 0;
         const msgType = dryRun ? 'Dry run: ' : 'Imported: ';
 
-        return Result.success({
+        const result: TransactionImportResult = {
             createdCount: createdCount,
             failedRowMessages: failedRowMessages,
             isValidToImport: canImport,
             resultMessage: `${msgType}Created ${createdCount} transactions.`
-        } as TransactionImportResult);
+        };
+
+        return dryRun ? Result.success(result) : Result.successCreated(result);
     }
 }

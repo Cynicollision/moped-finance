@@ -58,12 +58,14 @@ describe('Transaction Routes', () => {
         await pglite.exec('TRUNCATE finance.institutions, finance.accounts, finance.category_groups, finance.categories, finance.transactions CASCADE;');
 
         const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Bank' }));
-        const account = await accountsData.create(FinanceEntityFactory.createAccount(testUserId, { institutionId: inst.id!, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, balance: 0
+        const account = await accountsData.create(FinanceEntityFactory.createAccount(testUserId, {
+            institutionId: inst.id!, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, balance: 0
         }));
         testAccountId = account.id!;
 
         const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'Food' }));
-        const category = await categoriesData.insert(FinanceEntityFactory.createCategory(testUserId, { groupId: group.id!, name: 'Groceries', icon: 'apple', isActive: true
+        const category = await categoriesData.insert(FinanceEntityFactory.createCategory(testUserId, {
+            groupId: group.id!, name: 'Groceries', icon: 'apple', isActive: true
         }));
         testCategoryId = category.id!;
     });
@@ -125,7 +127,7 @@ describe('Transaction Routes', () => {
                 .post('/transactions')
                 .send(payload);
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(response.body.success).toBe(true);
             expect(response.body.data.merchant).toBe('Groceries');
             expect(response.body.data.amount).toBe(300);
@@ -191,10 +193,10 @@ describe('Transaction Routes', () => {
             expect(response.body.data.id).toBe(txn.id);
         });
 
-        it('should return 400 when transaction is not found', async () => {
+        it('should return 404 when transaction is not found', async () => {
             const response = await request(app).get('/transactions/missing-id');
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
         });
     });
@@ -219,12 +221,12 @@ describe('Transaction Routes', () => {
             expect(response.body.data.merchant).toBe('Updated Merchant');
         });
 
-        it('should return 400 when update fails because resource does not exist or user lacks ownership', async () => {
+        it('should return 404 when update fails because resource does not exist or user lacks ownership', async () => {
             const response = await request(app)
                 .put('/transactions/txn-1')
                 .send({ amount: 100, merchant: 'Updated', date: '2026-06-06', accountId: testAccountId, categoryId: testCategoryId, isHidden: false, isSplit: false });
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('not found or access denied');
         });
@@ -236,17 +238,16 @@ describe('Transaction Routes', () => {
 
             const response = await request(app).delete(`/transactions/${txn.id}`);
 
-            expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
+            expect(response.status).toBe(204);
 
             const dbTxn = await transactionsData.retrieveSingle(txn.id!);
             expect(dbTxn).toBeNull();
         });
 
-        it('should return 400 when delete fails', async () => {
+        it('should return 404 when delete fails because resource does not exist or user lacks ownership', async () => {
             const response = await request(app).delete('/transactions/missing');
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('not found or access denied');
         });
@@ -273,7 +274,7 @@ describe('Transaction Routes', () => {
                 .post('/transactions/import')
                 .attach('file', Buffer.from(csvContent), 'import.csv');
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(response.body.success).toBe(true);
             expect(response.body.data.createdCount).toBe(1);
             expect(response.body.data.failedRowMessages.length).toBe(0);

@@ -74,10 +74,10 @@ describe('Category Routes', () => {
             expect(response.body.data.name).toBe('Job');
         });
 
-        it('should return 400 when group not found', async () => {
+        it('should return 404 when group not found', async () => {
             const response = await request(app).get('/categories/groups/missing');
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('not found');
         });
@@ -92,7 +92,7 @@ describe('Category Routes', () => {
 
             const response = await request(app).post('/categories/groups').send(payload);
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(response.body.success).toBe(true);
             expect(response.body.data.name).toBe('Housing');
             expect(response.body.data.class).toBe(CategoryClass.Expense);
@@ -125,8 +125,7 @@ describe('Category Routes', () => {
 
             const response = await request(app).delete(`/categories/groups/${group.id}`);
 
-            expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
+            expect(response.status).toBe(204);
 
             const dbGroup = await groupsData.retrieveSingle(group.id!);
             expect(dbGroup).toBeNull();
@@ -177,7 +176,7 @@ describe('Category Routes', () => {
 
             const response = await request(app).post('/categories').send(payload);
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(response.body.success).toBe(true);
             expect(response.body.data.name).toBe('Rent');
 
@@ -211,8 +210,7 @@ describe('Category Routes', () => {
 
             const response = await request(app).delete(`/categories/${category.id}`);
 
-            expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
+            expect(response.status).toBe(204);
 
             const dbCategory = await categoriesData.retrieveSingle(category.id!);
             expect(dbCategory).toBeNull();
