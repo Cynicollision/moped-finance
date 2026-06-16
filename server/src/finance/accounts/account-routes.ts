@@ -67,7 +67,7 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
         handler.execute(req, res, 'saveAccount', (context) => {
             const account: Account = req.body;
             account.id = req.params.id;
-            return controller.saveAccount(context.userId!, account);
+            return controller.updateAccount(context.userId!, account);
         });
     });
 

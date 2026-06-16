@@ -24,14 +24,32 @@ export class Result {
         };
     }
 
-    public static successAccepted<T>(data?: T): OperationResult<T> {
+    public static successUpdated<T>(data?: T): OperationResult<T> {
         return {
             success: true,
-            status: OperationStatus.SuccessAccepted,
+            status: OperationStatus.SuccessUpdated,
             timestamp: DateTimeUtil.getCurrentTimestamp(),
             data
         };
     }
+
+    public static successDeleted<T>(data?: T): OperationResult<T> {
+        return {
+            success: true,
+            status: OperationStatus.SuccessDeleted,
+            timestamp: DateTimeUtil.getCurrentTimestamp(),
+            data
+        };
+    }
+
+    // public static successAccepted<T>(data?: T): OperationResult<T> {
+    //     return {
+    //         success: true,
+    //         status: OperationStatus.SuccessAccepted,
+    //         timestamp: DateTimeUtil.getCurrentTimestamp(),
+    //         data
+    //     };
+    // }
 
     public static userError<T>(message: string, code: string = 'BAD_REQUEST'): OperationResult<T> {
         return {

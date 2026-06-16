@@ -3,15 +3,16 @@ import { NewEntity } from '@shared/core/types';
 import { Institution } from '@shared/finance/types';
 import { IAppLogger } from '@server-core/logger';
 import { Result } from '@server-core/utility';
-import { FinanceEntityFactory } from './../common';
+import { FinanceController, FinanceEntityFactory } from './../common';
 import { IFinanceInstitutionData } from './institution-data';
 
 // TODO: resource ownership logic
-export class InstitutionController {
+export class InstitutionController extends FinanceController {
     constructor(
         private logger: IAppLogger,
         private institutionData: IFinanceInstitutionData
     ) {
+        super();
     }
 
     public async getInstitution(userId: string, institutionId: string): Promise<OperationResult<Institution>> {
@@ -28,27 +29,39 @@ export class InstitutionController {
 
     public async createInstitution(userId: string, newInsitution: NewEntity<Institution>): Promise<OperationResult<Institution>> {
         const institution = FinanceEntityFactory.createInstitution(userId, newInsitution);
-        return Result.success(await this.institutionData.insert(institution));
+        return Result.successCreated(await this.institutionData.insert(institution));
     }
 
     public async updateInstitution(userId: string, institution: Institution): Promise<OperationResult<Institution>> {
+        const current = await this.institutionData.retrieveSingle(institution.id);
+        if (!this.hasResourceAccess(userId, current)) {
+            return Result.userErrorNotFound();
+        }
+
         const updated = await this.institutionData.update(institution);
         if (!updated) {
-            return Result.userError('Institution not found or access denied');
+            return Result.userErrorNotFound();
         }
-        return Result.success(updated);
+
+        return Result.successUpdated(updated);
     }
 
-    public async deleteInstitution(userId: string, institutionId: string): Promise<OperationResult<void>> {
+    public async deleteInstitution(userId: string, institutionId: string): Promise<OperationResult<boolean>> {
+        const current = await this.institutionData.retrieveSingle(institutionId);
+        if (!this.hasResourceAccess(userId, current)) {
+            return Result.userErrorNotFound();
+        }
+
         const deleted = await this.institutionData.delete(institutionId);
         if (!deleted) {
-            return Result.userError('Institution not found or access denied');
+            return Result.userErrorNotFound();
         }
-        return Result.success();
+
+        return Result.successDeleted();
     }
 
     public async syncInstitution(userId: string, institutionId: string): Promise<OperationResult<any>> {
         // TODO: implement sync logic
-        return Result.success({ message: 'Sync institution logic stub' });
+        return Result.successCreated({ message: 'Sync institution logic stub' });
     }
 }

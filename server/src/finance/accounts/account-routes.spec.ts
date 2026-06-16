@@ -298,8 +298,7 @@ describe('Account Routes', () => {
 
             const response = await request(app).delete(`/accounts/${acc1.id}`);
 
-            expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
+            expect(response.status).toBe(204);
 
             const deletedAccount = await accountData.retrieveSingle(acc1.id!);
             expect(deletedAccount).toBeNull();

@@ -3,6 +3,8 @@ export enum OperationStatus {
     Success = 'Success',
     SuccessCreated = 'SuccessCreated',
     SuccessAccepted = 'SuccessAccepted',
+    SuccessUpdated = 'SuccessUpdated',
+    SuccessDeleted = 'SuccessDeleted',
     UnhandledError = 'UnhandledError',
     UserError = 'UserError',
     NotFound = 'NotFound',

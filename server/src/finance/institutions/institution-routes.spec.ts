@@ -86,7 +86,7 @@ describe('Institution Routes', () => {
                 .post('/institutions')
                 .send(payload);
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(response.body.success).toBe(true);
             expect(response.body.data.name).toBe('Chase');
 
@@ -139,7 +139,7 @@ describe('Institution Routes', () => {
                 .put(`/institutions/${institutionId}`)
                 .send(payload);
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('not found or access denied');
         });
@@ -151,9 +151,8 @@ describe('Institution Routes', () => {
 
             const response = await request(app).delete(`/institutions/${institution.id}`);
 
-            expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            
+            expect(response.status).toBe(204);
+
             const dbInst = await institutionsData.retrieveSingle(institution.id!);
             expect(dbInst).toBeNull();
         });
@@ -163,7 +162,7 @@ describe('Institution Routes', () => {
 
             const response = await request(app).delete(`/institutions/${institutionId}`);
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toContain('not found or access denied');
         });
@@ -176,7 +175,7 @@ describe('Institution Routes', () => {
             const response = await request(app)
                 .post(`/institutions/${institution.id}/sync`);
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(response.body.success).toBe(true);
             expect(response.body.data.message).toContain('Sync institution logic stub');
         });

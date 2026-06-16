@@ -42,7 +42,7 @@ export class AccountController extends FinanceController {
         return Result.successCreated(created);
     }
 
-    public async saveAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
+    public async updateAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
         const current = await this.accountData.retrieveSingle(account.id);
         if (!current || !this.hasResourceAccess(userId, current)) {
             return Result.userErrorNotFound();
@@ -50,10 +50,10 @@ export class AccountController extends FinanceController {
 
         const updated = await this.accountData.update(account);
         if (!updated) {
-            return Result.userError('Account not found or access denied');
+            return Result.userErrorNotFound();
         }
 
-        return Result.success(updated);
+        return Result.successUpdated(updated);
     }
 
     public async deleteAccount(userId: string, accountId: string): Promise<OperationResult<void>> {
@@ -63,7 +63,7 @@ export class AccountController extends FinanceController {
         }
 
         await this.accountData.delete(accountId);
-        return Result.success();
+        return Result.successDeleted();
     }
 
     public async getAccountTransactions(userId: string, accountId: string, options: TransactionSearchOptions): Promise<OperationResult<Transaction[]>> {

@@ -31,6 +31,7 @@ export class ApiUtil {
         let statusCode = 200;
         switch (result.status) {
             case OperationStatus.Success:
+            case OperationStatus.SuccessUpdated:
                 statusCode = 200;
                 break;
             case OperationStatus.SuccessCreated:
@@ -38,6 +39,9 @@ export class ApiUtil {
                 break;
             case OperationStatus.SuccessAccepted:
                 statusCode = 202;
+                break;
+            case OperationStatus.SuccessDeleted:
+                statusCode = 204;
                 break;
             case OperationStatus.UserError:
                 statusCode = 400;
@@ -57,11 +61,6 @@ export class ApiUtil {
                 break;
         }
 
-        // if (result.success) {
-        //     res.status(statusCode).json(result.data);
-        // } else {
-        //     res.status(statusCode).json(result.error);
-        // }
         res.status(statusCode).json(result);
 
         return result;
