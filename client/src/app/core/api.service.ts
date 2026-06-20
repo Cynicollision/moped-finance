@@ -23,10 +23,10 @@ export class ApiService {
             return 'Network or server error encountered.';
         }
         if (error.status >= 400 && error.status < 500) {
-            // TODO: what is this
-            if (error.error && error.error.error && error.error.error.message) {
-                return error.error.error.message;
-            } else if (error.error && typeof error.error === 'string') {
+            const opResult = error.error as OperationResult<any>;
+            if (opResult?.error?.message) {
+                return opResult.error.message;
+            } else if (typeof error.error === 'string') {
                 return error.error;
             }
         }
@@ -35,13 +35,13 @@ export class ApiService {
 
     private async handleRequest<T>(request: Promise<OperationResult<T>>): Promise<T | undefined> {
         try {
-            const response = await this.loader.withLoading(request);
-            if (response.success === false) {
-                const errMsg = response.error?.message || 'Operation failed';
+            const result = await this.loader.withLoading(request);
+            if (result && result.success === false) {
+                const errMsg = result.error?.message || 'Operation failed';
                 this.notificationService.error(errMsg);
                 return undefined;
             }
-            return response.data as T;
+            return result?.data as T;
         }
         catch (error: any) {
             this.notificationService.error(this.getErrorMessage(error));
@@ -71,7 +71,7 @@ export class ApiService {
         try {
             const request = firstValueFrom(this.http.delete<OperationResult<void>>(`${this.baseUrl}/${path}`, { withCredentials: true }));
             const response = await this.loader.withLoading(request);
-            if (response.success === false) {
+            if (response && response.success === false) {
                 const errMsg = response.error?.message || 'Operation failed';
                 this.notificationService.error(errMsg);
                 return false;

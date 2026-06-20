@@ -7,6 +7,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { Transaction } from '@shared/finance/types';
 import { TransactionFormComponent } from './transaction-form.component';
 import { FinanceService } from './../finance.service';
+import { ModalService } from './../../core/modal/modal.service';
 
 @Component({
     selector: 'app-finance-view-transaction',
@@ -26,6 +27,7 @@ export class ViewTransactionComponent implements OnInit {
     private financeService = inject(FinanceService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
+    private modalService = inject(ModalService);
 
     transactionId: string | null = null;
     transaction = signal<Transaction | null>(null);
@@ -50,7 +52,13 @@ export class ViewTransactionComponent implements OnInit {
     async deleteTransaction() {
         if (!this.transactionId) return;
 
-        const confirmDelete = confirm('Are you sure you want to delete this transaction?');
+        const confirmDelete = await this.modalService.confirm({
+            title: 'Delete Transaction',
+            message: 'Are you sure you want to delete this transaction?',
+            confirmLabel: 'Delete',
+            isWarn: true
+        });
+
         if (confirmDelete) {
             const success = await this.financeService.deleteTransaction(this.transactionId);
             if (success) {
