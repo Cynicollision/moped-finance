@@ -114,7 +114,7 @@ export class AccountController {
         const timestamp = DateTimeUtil.nowToISOSafeFilename();
         const fileName = `Balances_${accountName}_${timestamp}.csv`;
 
-        const history = await this.balanceHistoryData.exportSearch(accountId);
+        const history = await this.balanceHistoryData.retrieveForExport(accountId);
 
         if (!history || history.length === 0) {
             return Result.successFile('text/csv', fileName, 'Date,AccountName,Balance\n');
@@ -122,11 +122,15 @@ export class AccountController {
 
         const csv = Papa.unparse(history, {
             header: true,
-            columns: ['Date', 'AccountName', 'Balance']
+            columns: ['date', 'accountName', 'balance']
         });
 
+        const finalCsv = csv.replace(
+            /^date,accountName,balance/i,
+            'Date,AccountName,Balance'
+        );
 
-        return Result.successFile('text/csv', fileName, csv);
+        return Result.successFile('text/csv', fileName, finalCsv);
     }
 
     public async importBalanceHistory(context: OperationContext, accountId: string, fileBuffer: Buffer | undefined, dryRun: boolean): Promise<OperationResult<BalanceImportResult>> {

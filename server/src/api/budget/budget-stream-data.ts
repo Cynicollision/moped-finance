@@ -1,5 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { CalendarPeriod } from '@shared/core/enum';
+import { BudgetStreamType } from '@shared/finance/enum';
 import { BudgetStream } from '@shared/finance/types';
 import { IDatabaseClient, IOwnedResourceData } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
@@ -17,8 +19,8 @@ function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect): Budg
         userId: row.userId,
         name: row.name,
         categoryId: row.categoryId ?? '',
-        type: row.type as BudgetStream['type'],
-        recurrence: row.recurrence as BudgetStream['recurrence'],
+        type: row.type as BudgetStreamType,
+        recurrence: row.recurrence as CalendarPeriod,
         amount: Number(row.amount),
     };
 }

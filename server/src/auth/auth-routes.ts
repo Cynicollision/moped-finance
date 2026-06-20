@@ -38,7 +38,7 @@ export function buildAuthRouter(logger: IAppLogger, controller: AuthController, 
         handler.execute(req, res, op, async (context) => {
             const { username, name, password } = req.body as AuthRequest;
 
-            // TODO: move validation into controller
+            // TODO: move validation into schema/middleware
             if (!username || !name || !password) {
                 return Result.userError('Username, name, and password are required.');
             }

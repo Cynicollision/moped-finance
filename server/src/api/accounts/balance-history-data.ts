@@ -8,12 +8,18 @@ import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
 
+export type BalanceHistoryExport = {
+    date: string;
+    accountName: string;
+    balance: number;
+};
+
 export interface IFinanceBalanceHistoryData {
     retrieveForAccount(accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;
     retrieveSumByDate(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]>;
     deleteRange(accountId: string, startDate: string, endDate: string): Promise<boolean>;
     insertBulk(records: BalanceHistory[]): Promise<boolean>;
-    exportSearch(accountId: string): Promise<any[]>;
+    retrieveForExport(accountId: string): Promise<BalanceHistoryExport[]>;
 }
 
 export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
@@ -120,22 +126,22 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         return true;
     }
 
-    // TODO: return type
-    public async exportSearch(accountId: string): Promise<any> {
-        const rows = await this.db.select({
-            date: balanceHistorySchema.date,
-            accountName: accountSchema.name,
-            balance: balanceHistorySchema.balance
-        })
+    public async retrieveForExport(accountId: string): Promise<BalanceHistoryExport[]> {
+        const rows = await this.db
+            .select({
+                date: balanceHistorySchema.date,
+                accountName: accountSchema.name,
+                balance: balanceHistorySchema.balance
+            })
             .from(balanceHistorySchema)
             .innerJoin(accountSchema, eq(accountSchema.id, balanceHistorySchema.accountId))
             .where(eq(balanceHistorySchema.accountId, accountId))
             .orderBy(desc(balanceHistorySchema.date));
 
         return rows.map(row => ({
-            Date: row.date,
-            AccountName: row.accountName,
-            Balance: Number(row.balance)
+            date: DateTimeUtil.toISOString(row.date),
+            accountName: row.accountName,
+            balance: Number(row.balance)
         }));
     }
 }

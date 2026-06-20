@@ -87,7 +87,7 @@ export class TransactionController {
     }
 
     public async exportTransactions(context: OperationContext, accountId?: string): Promise<OperationResult<any>> {
-        const transactions = await this.transactionData.exportSearch(context.user.getId(), accountId);
+        const transactions = await this.transactionData.retrieveForExport(context.user.getId(), accountId);
 
         const account = accountId ? await this.accountData.retrieveSingle(accountId) : undefined;
         const accountName = account?.name?.replace(/[^a-zA-Z0-9]/g, '-');

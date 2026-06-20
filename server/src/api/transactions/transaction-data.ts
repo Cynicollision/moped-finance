@@ -10,9 +10,21 @@ import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';
 import { transactionSchema } from './transaction-schema';
 
+export type TransactionExport = {
+    id: string;
+    date: string;
+    accountName: string;
+    merchant: string;
+    categoryName: string;
+    amount: number;
+    originalStatement: string;
+    notes: string;
+    isHidden: boolean;
+};
+
 export interface IFinanceTransactionData extends IOwnedResourceData<Transaction> {
     search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
-    exportSearch(userId: string, accountId?: string): Promise<any[]>;
+    retrieveForExport(userId: string, accountId?: string): Promise<TransactionExport[]>;
     retrieveMerchants(userId: string): Promise<string[]>;
     retrieveCashflowByCategory(userId: string, startDate: Date, endDate: Date): Promise<CashflowStream[]>;
 }
@@ -43,7 +55,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         this.db = dbClient.drizzle;
     }
 
-    public async exportSearch(userId: string, accountId?: string): Promise<any[]> {
+    public async retrieveForExport(userId: string, accountId?: string): Promise<TransactionExport[]> {
         const conditions = [
             eq(accountSchema.userId, userId)
         ];
