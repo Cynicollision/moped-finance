@@ -3,17 +3,18 @@ import request from 'supertest';
 import session from 'express-session';
 import TestAgent from 'supertest/lib/agent';
 import { PGlite } from '@electric-sql/pglite';
-import { createAuthRouter } from './auth-routes';
-import { createAuthMiddleware } from './auth-middleware';
-import { DatabaseClient } from '@server-core/db-client';
-import { CoreUserData } from '@server-core/data/user-data';
+import { buildAuthRouter } from './auth-routes';
+import { buildAuthMiddleware } from './auth-middleware';
+import { DatabaseClient } from '@server-core/database';
+import { UserData } from '@server-core/auth/user-data';
 import { TestDatabaseUtil, TestExpressUtil } from '@server-core/utility/testing';
+import { AuthController } from './auth-controller';
 
 describe('Auth Routes', () => {
     let app: express.Express;
     let dbClient: DatabaseClient;
     let pglite: PGlite;
-    let userData: CoreUserData;
+    let userData: UserData;
     const mockLogger = TestExpressUtil.createMockLogger();
     mockLogger.error.mockImplementation((...args: any[]) => {
         console.error('SERVER ERROR LOG:', ...args);
@@ -23,10 +24,11 @@ describe('Auth Routes', () => {
         const mockDb = await TestDatabaseUtil.createMockDatabase();
         dbClient = mockDb.dbClient;
         pglite = mockDb.pglite;
-        userData = new CoreUserData(dbClient);
+        userData = new UserData(dbClient);
 
-        const { resolveUser, requireAuth } = createAuthMiddleware(userData);
-        const authRoutes = createAuthRouter(userData, mockLogger, requireAuth, resolveUser);
+        const controller = new AuthController(userData)
+        const middleware = buildAuthMiddleware(controller);
+        const authRoutes = buildAuthRouter(mockLogger, controller, middleware);
 
         app = express();
         app.use(express.json());
@@ -37,7 +39,7 @@ describe('Auth Routes', () => {
         }));
 
         // Expose resolveUser middleware for testing /me globally
-        app.use(resolveUser);
+        app.use(middleware.resolveUser);
         app.use('/auth', authRoutes);
     });
 

@@ -1,11 +1,10 @@
-import { eq, and, desc, asc, ilike, sum, inArray, gte, lte } from 'drizzle-orm';
+import { eq, and, desc, asc, ilike, sum, gte, lte } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
 import { CashflowStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
-import { IDatabaseClient } from '@server-core/db-client';
-import { IOwnedResourceData } from '@server-core/interfaces';
+import { IDatabaseClient, IOwnedResourceData } from '@server-core/database';
 import { DateTimeUtil } from '@server-core/utility';
 import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';

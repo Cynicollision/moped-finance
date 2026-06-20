@@ -5,7 +5,7 @@ import { CalendarPeriod } from '@shared/core/enum/calendar-period';
 import { CategoryClass } from '@shared/finance/enum';
 import { BudgetStreamType } from '@shared/finance/enum/budget-stream-type';
 import { AppLogger } from '@server-core/logger';
-import { DatabaseClient } from '@server-core/db-client';
+import { DatabaseClient } from '@server-core/database';
 import { TestExpressUtil, TestDatabaseUtil } from '@server-core/utility/testing';
 import { FinanceEntityFactory } from './../common';
 import { FinanceBudgetStreamData } from './budget-stream-data';

@@ -1,13 +1,29 @@
 import { Request, Response } from 'express';
-import { OperationResult } from '@shared/core/contracts/operation-result';
-import { ApiUtil } from './utility/api-util';
+import { OperationResult } from '@shared/core/contracts';
+import { OperationStatus } from '@shared/core/enum'
+import { UserContext } from './auth';
 import { IAppLogger } from './logger';
 import { Result } from './utility';
 
-export type ExecutionContext = {
-    userId?: string;
-    context: string; // TODO: replace with: domain, operation
-    req: Request;
+export type OperationDefinition = {
+    domain: string;
+    operation: string;
+}
+
+export class OperationContext {
+    public readonly user: UserContext;
+    public readonly req: Request;
+    public readonly operation: OperationDefinition;
+
+    constructor(operation: OperationDefinition, req: Request) {
+        this.user = UserContext.fromRequest(req);
+        this.req = req;
+        this.operation = operation;
+    }
+
+    toString(): string {
+        return `${this.operation.domain}.${this.operation.operation}`;
+    }
 }
 
 export class OperationHandler {
@@ -15,26 +31,58 @@ export class OperationHandler {
     constructor(private logger: IAppLogger) {
     }
 
-    async execute<T>(req: Request, res: Response, context: string, operation: (context: ExecutionContext) => Promise<OperationResult<T>>): Promise<OperationResult<T>> {
-        const userId = ApiUtil.getUserId(req);
+    async execute<T>(req: Request, res: Response, operationDef: OperationDefinition, operation: (context: OperationContext) => Promise<OperationResult<T>>): Promise<OperationResult<T>> {
+        const context = new OperationContext(operationDef, req);
+        const userId = context.user.getId();
 
-        const executionContext: ExecutionContext = {
-            userId: userId,
-            context: context,
-            req: req
-        };
-
-        this.logger.info(userId, context, `Starting operation: ${context}`);
+        this.logger.info(userId, 'Starting operation', context);
 
         try {
-            const result = await operation(executionContext);
+            const result = await operation(context);
             // TODO: check success and warn if not
-            this.logger.info(userId, context, `Successfully completed operation: ${context}`);
-            return ApiUtil.sendResult(res, result);
+            this.logger.info(userId, 'Successfully completed operation', context);
+            return this.sendResult(res, result);
         }
         catch (error: any) {
-            this.logger.error(userId, context, `Internal error: ${context}. Error: ${error.message || error}`);
-            return ApiUtil.sendResult(res, Result.internalError('An unexpected error occurred'));
+            this.logger.error(userId, 'Internal error: ' + error.message || error, context);
+            return this.sendResult(res, Result.internalError('An unexpected error occurred'));
         }
+    }
+
+    private sendResult<T>(res: Response, result: OperationResult<T>): OperationResult<T> {
+        let statusCode = 200;
+        switch (result.status) {
+            case OperationStatus.Success:
+            case OperationStatus.SuccessUpdated:
+                statusCode = 200;
+                break;
+            case OperationStatus.SuccessCreated:
+                statusCode = 201;
+                break;
+            case OperationStatus.SuccessDeleted:
+                statusCode = 204;
+                break;
+            case OperationStatus.UserError:
+                statusCode = 400;
+                break;
+            case OperationStatus.NotFound:
+                statusCode = 404;
+                break;
+            case OperationStatus.UnhandledError:
+            default:
+                statusCode = 500;
+                break;
+        }
+
+        if (result.success && result.file) {
+            res.setHeader('Content-Type', result.file.contentType);
+            res.attachment(result.file.fileName);
+            res.send(result.data);
+        }
+        else {
+            res.status(statusCode).json(result);
+        }
+
+        return result;
     }
 }

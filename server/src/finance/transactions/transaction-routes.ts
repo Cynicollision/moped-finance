@@ -4,7 +4,7 @@ import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
-import { OperationHandler } from '@server-core/operation-handler';
+import { OperationDefinition, OperationHandler } from '@server-core/operation-handler';
 import { IAppLogger } from '@server-core/logger';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { IFinanceAccountData } from './../accounts/account-data';
@@ -13,6 +13,7 @@ import { TransactionController } from './transaction-controller';
 import { IFinanceTransactionData } from './transaction-data';
 import { createTransactionSchema, updateTransactionSchema } from './transaction-schema';
 
+const domain = 'Transaction';
 const upload = multer({ storage: multer.memoryStorage() });
 
 export function createTransactionRouter(logger: IAppLogger, accountData: IFinanceAccountData, categoryData: IFinanceCategoryData, transactionsData: IFinanceTransactionData) {
@@ -22,67 +23,76 @@ export function createTransactionRouter(logger: IAppLogger, accountData: IFinanc
     const validator = new RequestSchemaValidator(logger, 'Transaction');
 
     router.get('/', (req, res) => {
-        handler.execute(req, res, 'getTransactions', (context) => {
+        const op: OperationDefinition = { domain, operation: 'getTransactions' };
+        handler.execute(req, res, op, (context) => {
             const options = getTransactionSearchOptions(req);
-            return controller.getTransactions(context.userId!, options);
+            return controller.getTransactions(context, options);
         });
     });
 
     router.post('/', validator.body(createTransactionSchema), (req, res) => {
-        handler.execute(req, res, 'createTransaction', (context) => {
+        const op: OperationDefinition = { domain, operation: 'createTransaction' };
+        handler.execute(req, res, op, (context) => {
             const transaction: Transaction = req.body;
-            return controller.createTransaction(context.userId!, transaction);
+            return controller.createTransaction(context, transaction);
         });
     });
 
     router.get('/merchants', (req, res) => {
-        handler.execute(req, res, 'getTransactionMerchants', (context) => {
-            return controller.getTransactionMerchants(context.userId!);
+        const op: OperationDefinition = { domain, operation: 'getTransactionMerchants' };
+        handler.execute(req, res, op, (context) => {
+            return controller.getTransactionMerchants(context);
         });
     });
 
     router.get('/cashflow', (req, res) => {
-        handler.execute(req, res, 'getTransactionCashflowByCategory', (context) => {
+        const op: OperationDefinition = { domain, operation: 'getTransactionCashflowByCategory' };
+        handler.execute(req, res, op, (context) => {
             const period = req.query.period as CalendarPeriod;
             const asOfDate = req.query.asOfDate as string;
             // TODO validate params
-            return controller.getTransactionCashflowByCategory(context.userId!, period, asOfDate);
+            return controller.getTransactionCashflowByCategory(context, period, asOfDate);
         });
     });
 
     router.get('/export', (req, res) => {
-        handler.execute(req, res, 'exportTransactions', (context) => {
+        const op: OperationDefinition = { domain, operation: 'exportTransactions' };
+        handler.execute(req, res, op, (context) => {
             // TODO validate params
             const accountId = req.query.accountId as string;
-            return controller.exportTransactions(context.userId!, accountId);
+            return controller.exportTransactions(context, accountId);
         });
     });
 
     router.post('/import', upload.single('file'), (req, res) => {
-        handler.execute(req, res, 'importTransactions', (context) => {
+        const op: OperationDefinition = { domain, operation: 'importTransactions' };
+        handler.execute(req, res, op, (context) => {
             const dryRun = req.query.dryRun === 'true';
             const accountId = req.query.accountId as string;
-            return controller.importTransactions(context.userId!, req.file?.buffer, dryRun, accountId);
+            return controller.importTransactions(context, req.file?.buffer, dryRun, accountId);
         });
     });
 
     router.get('/:id', validator.id(), (req, res) => {
-        handler.execute(req, res, 'getTransaction', (context) => {
-            return controller.getTransaction(context.userId!, req.params.id);
+        const op: OperationDefinition = { domain, operation: 'getTransaction' };
+        handler.execute(req, res, op, (context) => {
+            return controller.getTransaction(context, req.params.id);
         });
     });
 
     router.put('/:id', validator.id(), validator.body(updateTransactionSchema), (req, res) => {
-        handler.execute(req, res, 'saveTransaction', (context) => {
+        const op: OperationDefinition = { domain, operation: 'saveTransaction' };
+        handler.execute(req, res, op, (context) => {
             const transaction: Transaction = req.body;
             transaction.id = req.params.id; // ensure ID holds
-            return controller.saveTransaction(context.userId!, transaction);
+            return controller.saveTransaction(context, transaction);
         });
     });
 
     router.delete('/:id', validator.id(), (req, res) => {
-        handler.execute(req, res, 'deleteTransaction', (context) => {
-            return controller.deleteTransaction(context.userId!, req.params.id);
+        const op: OperationDefinition = { domain, operation: 'deleteTransaction' };
+        handler.execute(req, res, op, (context) => {
+            return controller.deleteTransaction(context, req.params.id);
         });
     });
 

@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { pgSchema, varchar, timestamp } from 'drizzle-orm/pg-core';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { User } from '@shared/core/types/user';
-import { IDatabaseClient } from '@server-core/db-client';
+import { IDatabaseClient } from '@server-core/database';
 import { DateTimeUtil } from '@server-core/utility';
 
 const coreSchema = pgSchema('core');
@@ -20,14 +20,14 @@ export interface UserWithPassword extends User {
     passwordHash: string;
 }
 
-export interface ICoreUserData {
+export interface IUserData {
     create(user: User, passwordHash: string): Promise<User>;
     retrieveSingle(id: string): Promise<User | null>;
     retrieveByUsername(username: string): Promise<UserWithPassword | null>;
     updatePassword(id: string, passwordHash: string): Promise<void>;
 }
 
-export class CoreUserData implements ICoreUserData {
+export class UserData implements IUserData {
     private db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {

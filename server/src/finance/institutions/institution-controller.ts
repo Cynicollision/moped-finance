@@ -1,8 +1,8 @@
 import { OperationResult } from '@shared/core/contracts';
 import { NewEntity } from '@shared/core/types';
 import { Institution } from '@shared/finance/types';
-import { ResourceAccess } from '@server-core/auth';
 import { IAppLogger } from '@server-core/logger';
+import { OperationContext } from '@server-core/operation-handler';
 import { Result } from '@server-core/utility';
 import { FinanceEntityFactory } from './../common';
 import { IFinanceInstitutionData } from './institution-data';
@@ -14,7 +14,7 @@ export class InstitutionController {
     ) {
     }
 
-    public async getInstitution(userId: string, institutionId: string): Promise<OperationResult<Institution>> {
+    public async getInstitution(context: OperationContext, institutionId: string): Promise<OperationResult<Institution>> {
         const institution = await this.institutionData.retrieveSingle(institutionId);
         if (!institution) {
             return Result.userError('Institution not found or access denied');
@@ -22,20 +22,20 @@ export class InstitutionController {
         return Result.success(institution);
     }
 
-    public async getInstitutions(userId: string): Promise<OperationResult<Institution[]>> {
-        const institutions = await this.institutionData.retrieveAll(userId);
+    public async getInstitutions(context: OperationContext): Promise<OperationResult<Institution[]>> {
+        const institutions = await this.institutionData.retrieveAll(context.user.getId());
         return Result.success(institutions);
     }
 
-    public async createInstitution(userId: string, newInsitution: NewEntity<Institution>): Promise<OperationResult<Institution>> {
-        const institution = FinanceEntityFactory.createInstitution(userId, newInsitution);
+    public async createInstitution(context: OperationContext, newInsitution: NewEntity<Institution>): Promise<OperationResult<Institution>> {
+        const institution = FinanceEntityFactory.createInstitution(context.user.getId(), newInsitution);
         const created = await this.institutionData.insert(institution);
         return Result.successCreated(created);
     }
 
-    public async updateInstitution(userId: string, institution: Institution): Promise<OperationResult<Institution>> {
+    public async updateInstitution(context: OperationContext, institution: Institution): Promise<OperationResult<Institution>> {
         const current = await this.institutionData.retrieveSingle(institution.id);
-        if (!ResourceAccess.validate(userId, current)) {
+        if (!context.user.canAccess(current)) {
             return Result.userErrorNotFound();
         }
 
@@ -47,9 +47,9 @@ export class InstitutionController {
         return Result.successUpdated(updated);
     }
 
-    public async deleteInstitution(userId: string, institutionId: string): Promise<OperationResult<boolean>> {
+    public async deleteInstitution(context: OperationContext, institutionId: string): Promise<OperationResult<boolean>> {
         const current = await this.institutionData.retrieveSingle(institutionId);
-        if (!ResourceAccess.validate(userId, current)) {
+        if (!context.user.canAccess(current)) {
             return Result.userErrorNotFound();
         }
 
@@ -61,7 +61,7 @@ export class InstitutionController {
         return Result.successDeleted();
     }
 
-    public async syncInstitution(userId: string, institutionId: string): Promise<OperationResult<any>> {
+    public async syncInstitution(context: OperationContext, institutionId: string): Promise<OperationResult<any>> {
         // TODO: implement sync logic
         return Result.successCreated({ message: 'Sync institution logic stub' });
     }

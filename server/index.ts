@@ -2,11 +2,10 @@ import express, { Request, Response } from 'express';
 import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
-import { createAuthRouter, createAuthMiddleware } from '@server-core/auth';
-import { CoreUserData } from '@server-core/data/user-data';
+import { buildAuthRouter, buildAuthMiddleware, AuthController, UserData } from '@server-core/auth';
 import { AppLogger } from '@server-core/logger';
-import { DatabaseClient, DatabaseClientConfig } from '@server-core/db-client';
-import { createFinanceModule } from './src/finance';
+import { DatabaseClient, DatabaseClientConfig } from '@server-core/database';
+import { buildFinanceRouter } from './src/finance';
 
 const app = express();
 app.use(express.json());
@@ -44,19 +43,20 @@ const dbClient = DatabaseClient.fromConfig(dbConfig);
 const logger = AppLogger.fromEnvironment(dbClient);
 
 // Auth module
-const userData = new CoreUserData(dbClient);
-const { resolveUser, requireAuth } = createAuthMiddleware(userData);
-const authRoutes = createAuthRouter(userData, logger, requireAuth, resolveUser);
+const userData = new UserData(dbClient);
+const authController = new AuthController(userData);
+const authMiddleware = buildAuthMiddleware(authController);
+const authRoutes = buildAuthRouter(logger, authController, authMiddleware);
 app.use('/auth', authRoutes);
 
-// API module routes
-const apiRouter = createFinanceModule(dbClient, logger);
-app.use('/api', resolveUser, requireAuth, apiRouter);
+// API module
+const apiRouter = buildFinanceRouter(logger, dbClient, authMiddleware);
+app.use('/api', apiRouter);
 app.all('/api/*', (req: Request, res: Response) => {
     res.status(404).send(`${req.originalUrl} not found.`);
 });
 
-// Frontend routes
+// Frontend
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (_req: Request, res: Response) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

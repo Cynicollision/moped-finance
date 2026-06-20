@@ -2,8 +2,6 @@ import { OperationResult } from '@shared/core/contracts';
 import { OperationStatus } from '@shared/core/enum';
 import { DateTimeUtil } from './date-time-util';
 
-// TODO rename file: result-factory.ts
-
 export class Result {
 
     public static success<T>(data?: T): OperationResult<T> {

@@ -5,14 +5,14 @@ import { HistoryTimeframe } from '@shared/core/enum';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
-import { ResourceAccess } from '@server-core/auth';
+import { UserContext } from '@server-core/auth';
 import { IAppLogger } from '@server-core/logger';
 import { DateTimeUtil, Result } from '@server-core/utility';
+import { OperationContext } from '@server-core/operation-handler';
 import { FinanceEntityFactory } from './../common';
 import { IFinanceTransactionData } from './../transactions';
 import { IFinanceAccountData } from './account-data';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
-
 
 export class AccountController {
     constructor(
@@ -23,29 +23,28 @@ export class AccountController {
     ) {
     }
 
-    public async getAccount(userId: string, accountId: string): Promise<OperationResult<Account>> {
+    public async getAccount(context: OperationContext, accountId: string): Promise<OperationResult<Account>> {
         const account = await this.accountData.retrieveSingle(accountId);
-        if (!account || !ResourceAccess.validate(userId, account)) {
+        if (!account || !context.user.canAccess(account)) {
             return Result.userErrorNotFound();
         }
-
         return Result.success(account);
     }
 
-    public async getAccounts(userId: string): Promise<OperationResult<Account[]>> {
-        const accounts = await this.accountData.retrieveAll(userId);
+    public async getAccounts(context: OperationContext): Promise<OperationResult<Account[]>> {
+        const accounts = await this.accountData.retrieveAll(context.user.getId());
         return Result.success(accounts);
     }
 
-    public async createAccount(userId: string, newAccount: NewEntity<Account>): Promise<OperationResult<Account>> {
-        const account = FinanceEntityFactory.createAccount(userId, newAccount);
+    public async createAccount(context: OperationContext, newAccount: NewEntity<Account>): Promise<OperationResult<Account>> {
+        const account = FinanceEntityFactory.createAccount(context.user.getId(), newAccount);
         const created = await this.accountData.insert(account);
         return Result.successCreated(created);
     }
 
-    public async updateAccount(userId: string, account: Account): Promise<OperationResult<Account>> {
+    public async updateAccount(context: OperationContext, account: Account): Promise<OperationResult<Account>> {
         const current = await this.accountData.retrieveSingle(account.id);
-        if (!current || !ResourceAccess.validate(userId, current)) {
+        if (!current || !context.user.canAccess(current)) {
             return Result.userErrorNotFound();
         }
 
@@ -57,9 +56,9 @@ export class AccountController {
         return Result.successUpdated(updated);
     }
 
-    public async deleteAccount(userId: string, accountId: string): Promise<OperationResult<void>> {
+    public async deleteAccount(context: OperationContext, accountId: string): Promise<OperationResult<void>> {
         const current = await this.accountData.retrieveSingle(accountId);
-        if (!current || !ResourceAccess.validate(userId, current)) {
+        if (!current || !context.user.canAccess(current)) {
             return Result.userErrorNotFound();
         }
 
@@ -71,17 +70,17 @@ export class AccountController {
         return Result.successDeleted();
     }
 
-    public async getAccountTransactions(userId: string, accountId: string, options: TransactionSearchOptions): Promise<OperationResult<Transaction[]>> {
+    public async getAccountTransactions(context: OperationContext, accountId: string, options: TransactionSearchOptions): Promise<OperationResult<Transaction[]>> {
         // TODO: validate options
-        const tranactions = await this.transactionData.search(userId, options, accountId);
+        const tranactions = await this.transactionData.search(context.user.getId(), options, accountId);
         return Result.success(tranactions);
     }
 
-    public async getAccountBalanceHistory(userId: string, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<OperationResult<BalanceHistory[]>> {
+    public async getAccountBalanceHistory(context: OperationContext, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<OperationResult<BalanceHistory[]>> {
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         const account = await this.accountData.retrieveSingle(accountId);
 
-        if (!account || !ResourceAccess.validate(userId, account)) {
+        if (!account || !context.user.canAccess(account)) {
             return Result.userErrorNotFound();
         }
 
@@ -89,26 +88,26 @@ export class AccountController {
         return Result.success(history);
     }
 
-    public async getTotalValueHistory(userId: string, options: TotalValueHistoryOptions): Promise<OperationResult<TotalValueHistory[]>> {
+    public async getTotalValueHistory(context: OperationContext, options: TotalValueHistoryOptions): Promise<OperationResult<TotalValueHistory[]>> {
         options.type = options.type || ValueHistoryType.NetWorth;
         options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
         // TODO: validate options
 
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        const totalValueHistory = await this.balanceHistoryData.retrieveSumByDate(userId, options.type, startDate, options.asOfDate);
+        const totalValueHistory = await this.balanceHistoryData.retrieveSumByDate(context.user.getId(), options.type, startDate, options.asOfDate);
 
         return Result.success(totalValueHistory);
     }
 
-    public async syncAccount(userId: string, accountId: string): Promise<OperationResult<any>> {
+    public async syncAccount(context: OperationContext, accountId: string): Promise<OperationResult<any>> {
         // TODO: implement sync/synchronization logic
         return Result.success({ message: 'Sync account logic stub' });
     }
 
-    public async exportBalanceHistory(userId: string, accountId: string): Promise<OperationResult<string>> {
+    public async exportBalanceHistory(context: OperationContext, accountId: string): Promise<OperationResult<string>> {
         const account = await this.accountData.retrieveSingle(accountId);
 
-        if (!account || !ResourceAccess.validate(userId, account)) {
+        if (!account || !context.user.canAccess(account)) {
             return Result.userErrorNotFound();
         }
 
@@ -131,13 +130,13 @@ export class AccountController {
         return Result.successFile('text/csv', fileName, csv);
     }
 
-    public async importBalanceHistory(userId: string, accountId: string, fileBuffer: Buffer | undefined, dryRun: boolean): Promise<OperationResult<BalanceImportResult>> {
+    public async importBalanceHistory(context: OperationContext, accountId: string, fileBuffer: Buffer | undefined, dryRun: boolean): Promise<OperationResult<BalanceImportResult>> {
         if (!fileBuffer) {
             return Result.userError('No file provided');
         }
 
         const account = await this.accountData.retrieveSingle(accountId);
-        if (!account || !ResourceAccess.validate(userId, account)) {
+        if (!account || !context.user.canAccess(account)) {
             return Result.userErrorNotFound();
         }
 
@@ -147,6 +146,7 @@ export class AccountController {
             skipEmptyLines: true
         });
 
+        // TODO: bad request
         if (parsed.errors.length > 0) {
             return Result.success({
                 startDate: '',
@@ -207,7 +207,7 @@ export class AccountController {
             if (!minDate || isoDate < minDate) minDate = isoDate;
             if (!maxDate || isoDate > maxDate) maxDate = isoDate;
 
-            validRows.push(FinanceEntityFactory.createBalanceHistory(userId, {
+            validRows.push(FinanceEntityFactory.createBalanceHistory(context.user.getId(), {
                 accountId: accountId,
                 date: parsedDate,
                 balance: parseFloat(balanceStr) || 0

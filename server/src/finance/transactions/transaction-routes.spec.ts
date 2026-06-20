@@ -4,7 +4,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { SortDirection } from '@shared/core/enum';
 import { AccountCategory, AccountGroup, AccountType, CategoryClass, TransactionsSortKey } from '@shared/finance/enum';
 import { AppLogger } from '@server-core/logger';
-import { DatabaseClient } from '@server-core/db-client';
+import { DatabaseClient } from '@server-core/database';
 import { TestExpressUtil, TestDatabaseUtil } from '@server-core/utility/testing';
 import { FinanceEntityFactory } from './../common';
 import { FinanceAccountData } from './../accounts/account-data';

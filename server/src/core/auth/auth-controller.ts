@@ -1,17 +1,13 @@
 import * as bcrypt from 'bcrypt';
 import { OperationResult } from '@shared/core/contracts';
 import { User } from '@shared/core/types';
-import { ICoreUserData } from '@server-core/data/user-data';
 import { CoreEntityIdPrefix, DateTimeUtil, EntityIdUtil, Result } from '@server-core/utility';
+import { IUserData } from './user-data';
 
 export class AuthController {
     private readonly saltRounds = 10;
 
-    constructor(private userData: ICoreUserData) {
-        this.userData = userData;
-    }
-
-    // TODO: use OperationHandler (fka OperationHandler) here to get logging
+    constructor(private userData: IUserData) { }
 
     async loginUser(username: string, password?: string): Promise<OperationResult<User>> {
         if (!password) {

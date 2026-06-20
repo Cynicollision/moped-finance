@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { OperationResult } from '@shared/core/contracts';
-import { ICoreUserData } from '@server-core/data/user-data';
-import { OperationHandler } from '@server-core/operation-handler';
+import { OperationDefinition, OperationHandler } from '@server-core/operation-handler';
 import { IAppLogger } from '@server-core/logger';
 import { Result } from '@server-core/utility';
 import { AuthController } from './auth-controller';
+import { AuthMiddleware } from './auth-middleware';
 
 type AuthRequest = {
     username: string;
@@ -14,13 +14,14 @@ type AuthRequest = {
     newPassword?: string;
 };
 
-export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, requireAuthMiddleware: any, resolveUserMiddleware: any) {
-    const router = Router();
-    const controller = new AuthController(userData);
+export function buildAuthRouter(logger: IAppLogger, controller: AuthController, middleware: AuthMiddleware) {
+    const domain = 'Auth';
     const handler = new OperationHandler(logger);
+    const router = Router();
 
     router.post('/login', (req, res) => {
-        handler.execute(req, res, 'login', async (context) => {
+        const op: OperationDefinition = { domain, operation: 'login' };
+        handler.execute(req, res, op, async (context) => {
             const { username, password } = req.body as AuthRequest;
             const result = await controller.loginUser(username, password);
 
@@ -34,7 +35,8 @@ export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, re
     });
 
     router.post('/register', (req, res) => {
-        handler.execute(req, res, 'register', async (context) => {
+        const op: OperationDefinition = { domain, operation: 'register' };
+        handler.execute(req, res, op, async (context) => {
             const { username, name, password } = req.body as AuthRequest;
 
             // TODO: move validation into controller
@@ -53,8 +55,9 @@ export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, re
         });
     });
 
-    router.put('/password', requireAuthMiddleware, (req, res) => {
-        handler.execute(req, res, 'changePassword', async (context) => {
+    router.put('/password', middleware.requireAuth, (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'changePassword' };
+        handler.execute(req, res, op, async (context) => {
             const { oldPassword, newPassword } = req.body as AuthRequest;
 
             // TODO: move to controller
@@ -62,12 +65,14 @@ export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, re
                 return Result.userError('Missing required fields.');
             }
 
-            return await controller.changePassword(context.userId!, oldPassword, newPassword);
+            const userId = context.user.getId();
+            return await controller.changePassword(userId, oldPassword, newPassword);
         });
     });
 
     router.post('/logout', (req, res) => {
-        handler.execute(req, res, 'logout', async (context) => {
+        const op: OperationDefinition = { domain, operation: 'logout' };
+        handler.execute(req, res, op, async (context) => {
             const session = context.req.session;
             if (!session) {
                 return Result.success();
@@ -92,8 +97,9 @@ export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, re
         });
     });
 
-    router.get('/me', resolveUserMiddleware, (req, res) => {
-        handler.execute(req, res, 'me', async (context) => {
+    router.get('/me', middleware.resolveUser, (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'me' };
+        handler.execute(req, res, op, async (context) => {
             return Result.success(context.req.session.user);
         });
     });

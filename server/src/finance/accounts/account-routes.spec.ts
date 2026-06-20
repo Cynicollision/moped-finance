@@ -8,7 +8,7 @@ import { IAppLogger } from '@server-core/logger';
 import { DateTimeUtil } from '@server-core/utility';
 import { TestExpressUtil, TestDatabaseUtil } from '@server-core/utility/testing';
 import { FinanceEntityFactory } from './../common';
-import { DatabaseClient } from '@server-core/db-client';
+import { DatabaseClient } from '@server-core/database';
 import { FinanceAccountData } from './account-data';
 import { createAccountRouter } from './account-routes';
 import { FinanceBalanceHistoryData } from './balance-history-data';
@@ -42,12 +42,11 @@ describe('Account Routes', () => {
         accountData = new FinanceAccountData(dbClient);
         balanceHistoryData = new FinanceBalanceHistoryData(dbClient);
         transactionsData = new FinanceTransactionData(dbClient);
-        categoriesData = new FinanceCategoryData(dbClient);
         institutionData = new FinanceInstitutionData(dbClient);
 
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createAccountRouter(mockLogger, accountData, balanceHistoryData, categoriesData, transactionsData);
+        const router = createAccountRouter(mockLogger, accountData, balanceHistoryData, transactionsData);
         app = TestExpressUtil.createTestApp(router, '/accounts', testUserId);
     });
 

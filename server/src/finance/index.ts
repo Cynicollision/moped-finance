@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { DatabaseClient } from '@server-core/db-client';
+import { AuthMiddleware } from '@server-core/auth';
+import { DatabaseClient } from '@server-core/database';
 import { IAppLogger } from '@server-core/logger';
 import { FinanceAccountData, FinanceBalanceHistoryData, createAccountRouter } from './accounts';
 import { FinanceBudgetStreamData, createBudgetStreamRouter } from './budget';
@@ -7,9 +8,9 @@ import { FinanceCategoryData, FinanceCategoryGroupData, createCategoryRouter } f
 import { FinanceInstitutionData, createInstitutionRouter } from './institutions';
 import { FinanceTransactionData, createTransactionRouter } from './transactions';
 
-export function createFinanceModule(db: DatabaseClient, logger: IAppLogger) {
+export function buildFinanceRouter(logger: IAppLogger, db: DatabaseClient, authMiddleware: AuthMiddleware): Router {
     const router = Router();
-    // Instantiate data classes
+
     const accountData = new FinanceAccountData(db);
     const balanceHistoryData = new FinanceBalanceHistoryData(db);
     const budgetStreamData = new FinanceBudgetStreamData(db);
@@ -18,12 +19,20 @@ export function createFinanceModule(db: DatabaseClient, logger: IAppLogger) {
     const institutionData = new FinanceInstitutionData(db);
     const transactionData = new FinanceTransactionData(db);
 
-    // Register routes
-    router.use('/v1/accounts', createAccountRouter(logger, accountData, balanceHistoryData, categoryData, transactionData));
-    router.use('/v1/transactions', createTransactionRouter(logger, accountData, categoryData, transactionData));
-    router.use('/v1/budget-streams', createBudgetStreamRouter(logger, budgetStreamData));
-    router.use('/v1/categories', createCategoryRouter(logger, categoryData, categoryGroupData));
-    router.use('/v1/institutions', createInstitutionRouter(logger, institutionData));
+    const accounts = createAccountRouter(logger, accountData, balanceHistoryData, transactionData);
+    router.use('/v1/accounts', authMiddleware.resolveUser, authMiddleware.requireAuth, accounts);
+
+    const budgetStreams = createBudgetStreamRouter(logger, budgetStreamData);
+    router.use('/v1/budget-streams', authMiddleware.resolveUser, authMiddleware.requireAuth, budgetStreams);
+
+    const categories = createCategoryRouter(logger, categoryData, categoryGroupData);
+    router.use('/v1/categories', authMiddleware.resolveUser, authMiddleware.requireAuth, categories);
+
+    const institutions = createInstitutionRouter(logger, institutionData);
+    router.use('/v1/institutions', authMiddleware.resolveUser, authMiddleware.requireAuth, institutions);
+
+    const transactions = createTransactionRouter(logger, accountData, categoryData, transactionData);
+    router.use('/v1/transactions', authMiddleware.resolveUser, authMiddleware.requireAuth, transactions);
 
     return router;
 }

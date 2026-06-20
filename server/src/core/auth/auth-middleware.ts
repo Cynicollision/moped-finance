@@ -1,11 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { ICoreUserData } from '@server-core/data/user-data';
-import { ApiUtil, Result } from '@server-core/utility';
+import { Result } from '@server-core/utility';
 import { AuthController } from './auth-controller';
+import { UserContext } from './user-context';
 
-export function createAuthMiddleware(userData: ICoreUserData) {
-    const controller = new AuthController(userData);
+export type AuthMiddleware = {
+    resolveUser: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+    requireAuth: (req: Request, res: Response, next: NextFunction) => void;
+}
 
+export function buildAuthMiddleware(controller: AuthController): AuthMiddleware {
     const resolveUser = async (req: Request, _res: Response, next: NextFunction) => {
         if (!req.session?.user && !(req as any).user) {
             const authHeader = req.headers.authorization;
@@ -25,12 +28,12 @@ export function createAuthMiddleware(userData: ICoreUserData) {
     };
 
     const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-        const user = ApiUtil.getUser(req);
+        const user = UserContext.fromRequest(req).getUser();
         if (user) {
             next();
         }
         else {
-            ApiUtil.sendResult(res, Result.unauthorized());
+            res.status(401).json(Result.unauthorized());
         }
     };
 

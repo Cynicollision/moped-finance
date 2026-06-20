@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { AppLogger } from '@server-core/logger';
-import { DatabaseClient } from '@server-core/db-client';
+import { DatabaseClient } from '@server-core/database';
 import { TestExpressUtil, TestDatabaseUtil } from '@server-core/utility/testing';
 import { FinanceEntityFactory } from './../common';
 import { FinanceInstitutionData } from './institution-data';

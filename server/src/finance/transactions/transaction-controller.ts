@@ -4,8 +4,8 @@ import { NewEntity } from '@shared/core/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
-import { ResourceAccess } from '@server-core/auth';
 import { IAppLogger } from '@server-core/logger';
+import { OperationContext } from '@server-core/operation-handler';
 import { DateTimeUtil, Result } from '@server-core/utility';
 import { FinanceEntityFactory } from './../common';
 import { IFinanceAccountData } from './../accounts/account-data';
@@ -21,19 +21,19 @@ export class TransactionController {
     ) {
     }
 
-    public async getTransaction(userId: string, transactionId: string): Promise<OperationResult<Transaction>> {
+    public async getTransaction(context: OperationContext, transactionId: string): Promise<OperationResult<Transaction>> {
         const transaction = await this.transactionData.retrieveSingle(transactionId);
-        if (!transaction || !ResourceAccess.validate(userId, transaction)) {
+        if (!transaction || !context.user.canAccess(transaction)) {
             return Result.userErrorNotFound();
         }
         return Result.success(transaction);
     }
 
-    public async createTransaction(userId: string, newTransaction: NewEntity<Transaction>): Promise<OperationResult<Transaction>> {
-        const transaction = FinanceEntityFactory.createTransaction(userId, newTransaction);
+    public async createTransaction(context: OperationContext, newTransaction: NewEntity<Transaction>): Promise<OperationResult<Transaction>> {
+        const transaction = FinanceEntityFactory.createTransaction(context.user.getId(), newTransaction);
 
         const account = await this.accountData.retrieveSingle(transaction.accountId);
-        if (!account || !ResourceAccess.validate(userId, account)) {
+        if (!account || !context.user.canAccess(account)) {
             return Result.userError('Invalid account specified.');
         }
 
@@ -41,20 +41,19 @@ export class TransactionController {
         return Result.successCreated(created);
     }
 
-    public async getTransactions(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<OperationResult<Transaction[]>> {
-        // TODO: validate options
-        const transactions = await this.transactionData.search(userId, options, accountId);
+    public async getTransactions(context: OperationContext, options: TransactionSearchOptions, accountId?: string): Promise<OperationResult<Transaction[]>> {
+        const transactions = await this.transactionData.search(context.user.getId(), options, accountId);
         return Result.success(transactions);
     }
 
-    public async getTransactionMerchants(userId: string): Promise<OperationResult<string[]>> {
-        const merchantNames = await this.transactionData.retrieveMerchants(userId);
+    public async getTransactionMerchants(context: OperationContext): Promise<OperationResult<string[]>> {
+        const merchantNames = await this.transactionData.retrieveMerchants(context.user.getId());
         return Result.success(merchantNames);
     }
 
-    public async saveTransaction(userId: string, transaction: Transaction): Promise<OperationResult<Transaction>> {
+    public async saveTransaction(context: OperationContext, transaction: Transaction): Promise<OperationResult<Transaction>> {
         const current = await this.transactionData.retrieveSingle(transaction.id);
-        if (!current || !ResourceAccess.validate(userId, current)) {
+        if (!current || !context.user.canAccess(current)) {
             return Result.userErrorNotFound();
         }
 
@@ -66,9 +65,9 @@ export class TransactionController {
         return Result.successUpdated(updated);
     }
 
-    public async deleteTransaction(userId: string, transactionId: string): Promise<OperationResult<void>> {
+    public async deleteTransaction(context: OperationContext, transactionId: string): Promise<OperationResult<void>> {
         const current = await this.transactionData.retrieveSingle(transactionId);
-        if (!current || !ResourceAccess.validate(userId, current)) {
+        if (!current || !context.user.canAccess(current)) {
             return Result.userErrorNotFound();
         }
 
@@ -80,15 +79,15 @@ export class TransactionController {
         return Result.successDeleted();
     }
 
-    public async getTransactionCashflowByCategory(userId: string, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<CashflowStream[]>> {
+    public async getTransactionCashflowByCategory(context: OperationContext, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<CashflowStream[]>> {
         const asOf = asOfDate ? DateTimeUtil.parse(asOfDate) : DateTimeUtil.now();
         const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
-        const cashflow = await this.transactionData.retrieveCashflowByCategory(userId, startDate, endDate);
+        const cashflow = await this.transactionData.retrieveCashflowByCategory(context.user.getId(), startDate, endDate);
         return Result.success(cashflow);
     }
 
-    public async exportTransactions(userId: string, accountId?: string): Promise<OperationResult<any>> {
-        const transactions = await this.transactionData.exportSearch(userId, accountId);
+    public async exportTransactions(context: OperationContext, accountId?: string): Promise<OperationResult<any>> {
+        const transactions = await this.transactionData.exportSearch(context.user.getId(), accountId);
 
         const account = accountId ? await this.accountData.retrieveSingle(accountId) : undefined;
         const accountName = account?.name?.replace(/[^a-zA-Z0-9]/g, '-');
@@ -112,7 +111,7 @@ export class TransactionController {
         return Result.successFile('text/csv', fileName, finalCsv);
     }
 
-    public async importTransactions(userId: string, fileBuffer?: Buffer, dryRun: boolean = false, targetAccountId?: string): Promise<OperationResult<TransactionImportResult>> {
+    public async importTransactions(context: OperationContext, fileBuffer?: Buffer, dryRun: boolean = false, targetAccountId?: string): Promise<OperationResult<TransactionImportResult>> {
         if (!fileBuffer) {
             return Result.userError('No file provided');
         }
@@ -140,6 +139,7 @@ export class TransactionController {
             } as TransactionImportResult);
         }
 
+        const userId = context.user.getId();
         const [accountsList, categoriesList] = await Promise.all([
             this.accountData.retrieveAll(userId),
             this.categoryData.retrieveAll(userId)

@@ -1,6 +1,7 @@
 import { NewEntity } from '@shared/core/types';
 import { Account, BalanceHistory, BudgetStream, Category, CategoryGroup, Institution, Transaction } from '@shared/finance/types';
 import { DateTimeUtil, EntityIdUtil } from '@server-core/utility';
+
 export enum FinanceEntityIdPrefix {
     Account = '10',
     BalanceHistory = '11',

@@ -1,8 +1,8 @@
 import { OperationResult } from '@shared/core/contracts';
 import { NewEntity } from '@shared/core/types';
 import { Category, CategoryGroup } from '@shared/finance/types';
-import { ResourceAccess } from '@server-core/auth';
 import { IAppLogger } from '@server-core/logger';
+import { OperationContext } from '@server-core/operation-handler';
 import { Result } from '@server-core/utility';
 import { FinanceEntityFactory } from './../common';
 import { IFinanceCategoryData } from './category-data';
@@ -16,7 +16,7 @@ export class CategoryController {
     ) {
     }
 
-    public async getGroup(userId: string, groupId: string): Promise<OperationResult<CategoryGroup>> {
+    public async getGroup(context: OperationContext, groupId: string): Promise<OperationResult<CategoryGroup>> {
         const group = await this.groupData.retrieveSingle(groupId);
         if (!group) {
             return Result.userErrorNotFound();
@@ -24,20 +24,20 @@ export class CategoryController {
         return Result.success(group);
     }
 
-    public async getGroups(userId: string): Promise<OperationResult<CategoryGroup[]>> {
-        const groups = await this.groupData.retrieveAll(userId);
+    public async getGroups(context: OperationContext): Promise<OperationResult<CategoryGroup[]>> {
+        const groups = await this.groupData.retrieveAll(context.user.getId());
         return Result.success(groups);
     }
 
-    public async createGroup(userId: string, newGroup: NewEntity<CategoryGroup>): Promise<OperationResult<CategoryGroup>> {
-        const group = FinanceEntityFactory.createCategoryGroup(userId, newGroup);
+    public async createGroup(context: OperationContext, newGroup: NewEntity<CategoryGroup>): Promise<OperationResult<CategoryGroup>> {
+        const group = FinanceEntityFactory.createCategoryGroup(context.user.getId(), newGroup);
         const created = await this.groupData.insert(group);
         return Result.successCreated(created);
     }
 
-    public async updateGroup(userId: string, group: CategoryGroup): Promise<OperationResult<CategoryGroup>> {
+    public async updateGroup(context: OperationContext, group: CategoryGroup): Promise<OperationResult<CategoryGroup>> {
         const current = await this.groupData.retrieveSingle(group.id);
-        if (!current || !ResourceAccess.validate(userId, current)) {
+        if (!current || !context.user.canAccess(current)) {
             return Result.userErrorNotFound();
         }
 
@@ -49,9 +49,9 @@ export class CategoryController {
         return Result.success(updated);
     }
 
-    public async deleteGroup(userId: string, groupId: string): Promise<OperationResult<void>> {
+    public async deleteGroup(context: OperationContext, groupId: string): Promise<OperationResult<void>> {
         const current = await this.groupData.retrieveSingle(groupId);
-        if (!current || !ResourceAccess.validate(userId, current)) {
+        if (!current || !context.user.canAccess(current)) {
             return Result.userErrorNotFound();
         }
 
@@ -63,7 +63,7 @@ export class CategoryController {
         return Result.successDeleted();
     }
 
-    public async getCategory(userId: string, categoryId: string): Promise<OperationResult<Category>> {
+    public async getCategory(context: OperationContext, categoryId: string): Promise<OperationResult<Category>> {
         const category = await this.categoryData.retrieveSingle(categoryId);
         if (!category) {
             return Result.userErrorNotFound();
@@ -71,20 +71,20 @@ export class CategoryController {
         return Result.success(category);
     }
 
-    public async getCategories(userId: string, activeOnly: boolean = false): Promise<OperationResult<Category[]>> {
-        const categories = await this.categoryData.retrieveAll(userId, activeOnly);
+    public async getCategories(context: OperationContext, activeOnly: boolean = false): Promise<OperationResult<Category[]>> {
+        const categories = await this.categoryData.retrieveAll(context.user.getId(), activeOnly);
         return Result.success(categories);
     }
 
-    public async createCategory(userId: string, newCategory: NewEntity<Category>): Promise<OperationResult<Category>> {
-        const category = FinanceEntityFactory.createCategory(userId, newCategory);
+    public async createCategory(context: OperationContext, newCategory: NewEntity<Category>): Promise<OperationResult<Category>> {
+        const category = FinanceEntityFactory.createCategory(context.user.getId(), newCategory);
         const created = await this.categoryData.insert(category);
         return Result.successCreated(created);
     }
 
-    public async updateCategory(userId: string, category: Category): Promise<OperationResult<Category>> {
+    public async updateCategory(context: OperationContext, category: Category): Promise<OperationResult<Category>> {
         const current = await this.categoryData.retrieveSingle(category.id);
-        if (!current || !ResourceAccess.validate(userId, current)) {
+        if (!current || !context.user.canAccess(current)) {
             return Result.userErrorNotFound();
         }
 
@@ -95,9 +95,9 @@ export class CategoryController {
         return Result.successUpdated(updated);
     }
 
-    public async deleteCategory(userId: string, categoryId: string): Promise<OperationResult<void>> {
+    public async deleteCategory(context: OperationContext, categoryId: string): Promise<OperationResult<void>> {
         const current = await this.categoryData.retrieveSingle(categoryId);
-        if (!current || !ResourceAccess.validate(userId, current)) {
+        if (!current || !context.user.canAccess(current)) {
             return Result.userErrorNotFound();
         }
 

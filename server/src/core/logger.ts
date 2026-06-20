@@ -1,7 +1,8 @@
 import { LogLevel } from '@shared/core/enum';
 import { LogEntry } from '@shared/core/types';
-import { LogData, ILogData } from './data/log-data';
-import { IDatabaseClient } from './db-client';
+import { LogData, ILogData } from './logging/log-data';
+import { IDatabaseClient } from './database';
+import { OperationContext } from './operation-handler';
 import { CoreEntityIdPrefix, DateTimeUtil, EntityIdUtil } from './utility';
 
 export enum LogBehavior {
@@ -16,11 +17,10 @@ export type LoggerConfig = {
     info: LogBehavior;
 };
 
-// TODO: "context" object param vs. userId and context string
 export interface IAppLogger {
-    error(userId: string, context: string, message: string): void;
-    warn(userId: string, context: string, message: string): void;
-    info(userId: string, context: string, message: string): void;
+    error(userId: string, message: string, context?: OperationContext): void;
+    warn(userId: string, message: string, context?: OperationContext): void;
+    info(userId: string, message: string, context?: OperationContext): void;
 }
 
 export class AppLogger implements IAppLogger {
@@ -42,16 +42,19 @@ export class AppLogger implements IAppLogger {
         return AppLogger.forPgDatabase(db, config);
     }
 
-    public error(userId: string, context: string, message: string): void {
-        this.processLog(userId, context, LogLevel.ERROR, message, this.config.error);
+    public error(userId: string, message: string, context?: OperationContext): void {
+        const contextStr = context ? context.toString() : '';
+        this.processLog(userId, contextStr, LogLevel.ERROR, message, this.config.error);
     }
 
-    public warn(userId: string, context: string, message: string): void {
-        this.processLog(userId, context, LogLevel.WARN, message, this.config.warn);
+    public warn(userId: string, message: string, context?: OperationContext): void {
+        const contextStr = context ? context.toString() : '';
+        this.processLog(userId, contextStr, LogLevel.WARN, message, this.config.warn);
     }
 
-    public info(userId: string, context: string, message: string): void {
-        this.processLog(userId, context, LogLevel.INFO, message, this.config.info);
+    public info(userId: string, message: string, context?: OperationContext): void {
+        const contextStr = context ? context.toString() : '';
+        this.processLog(userId, contextStr, LogLevel.INFO, message, this.config.info);
     }
 
     private processLog(userId: string, context: string, level: LogLevel, message: string, behavior: LogBehavior): void {

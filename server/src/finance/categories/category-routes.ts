@@ -1,12 +1,15 @@
 import { Router } from 'express';
-import { OperationHandler } from '@server-core/operation-handler';
+import { Category } from '@shared/finance/types';
 import { IAppLogger } from '@server-core/logger';
+import { OperationDefinition, OperationHandler } from '@server-core/operation-handler';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { CategoryController } from './category-controller';
 import { IFinanceCategoryData } from './category-data';
 import { createCategorySchema, updateCategorySchema } from './category-schema';
 import { IFinanceCategoryGroupData } from './category-groups/category-group-data';
 import { createCategoryGroupSchema, updateCategoryGroupSchema } from './category-groups/category-group-schema';
+
+const domain = 'Category';
 
 export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanceCategoryData, groupsData: IFinanceCategoryGroupData) {
     const router = Router();
@@ -17,66 +20,77 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
 
     // --- Category Groups ---
     router.get('/groups', (req, res) => {
-        handler.execute(req, res, 'getGroups', (context) => {
-            return controller.getGroups(context.userId!);
+        const op: OperationDefinition = { domain, operation: 'getGroups' };
+        handler.execute(req, res, op, (context) => {
+            return controller.getGroups(context);
         });
     });
 
     router.get('/groups/:id', groupValidator.id(), (req, res) => {
-        handler.execute(req, res, 'getGroup', (context) => {
-            return controller.getGroup(context.userId!, req.params.id);
+        const op: OperationDefinition = { domain, operation: 'getGroup' };
+        handler.execute(req, res, op, (context) => {
+            return controller.getGroup(context, req.params.id);
         });
     });
 
     router.post('/groups', groupValidator.body(createCategoryGroupSchema), (req, res) => {
-        handler.execute(req, res, 'createGroup', (context) => {
-            return controller.createGroup(context.userId!, req.body);
+        const op: OperationDefinition = { domain, operation: 'createGroup' };
+        handler.execute(req, res, op, (context) => {
+            return controller.createGroup(context, req.body);
         });
     });
 
     router.put('/groups/:id', groupValidator.id(), groupValidator.body(updateCategoryGroupSchema), (req, res) => {
-        handler.execute(req, res, 'updateGroup', (context) => {
+        const op: OperationDefinition = { domain, operation: 'updateGroup' };
+        handler.execute(req, res, op, (context) => {
             const group = { ...req.body, id: req.params.id };
-            return controller.updateGroup(context.userId!, group);
+            return controller.updateGroup(context, group);
         });
     });
 
     router.delete('/groups/:id', groupValidator.id(), (req, res) => {
-        handler.execute(req, res, 'deleteGroup', (context) => {
-            return controller.deleteGroup(context.userId!, req.params.id);
+        const op: OperationDefinition = { domain, operation: 'deleteGroup' };
+        handler.execute(req, res, op, (context) => {
+            return controller.deleteGroup(context, req.params.id);
         });
     });
 
     // --- Categories ---
     router.get('/', (req, res) => {
-        handler.execute(req, res, 'getCategories', (context) => {
+        const op: OperationDefinition = { domain, operation: 'getCategories' };
+        handler.execute(req, res, op, (context) => {
             const activeOnly = req.query.activeOnly === 'true';
-            return controller.getCategories(context.userId!, activeOnly);
+            return controller.getCategories(context, activeOnly);
         });
     });
 
     router.get('/:id', categoryValidator.id(), (req, res) => {
-        handler.execute(req, res, 'getCategory', (context) => {
-            return controller.getCategory(context.userId!, req.params.id);
+        const op: OperationDefinition = { domain, operation: 'getCategory' };
+        handler.execute(req, res, op, (context) => {
+            return controller.getCategory(context, req.params.id);
         });
     });
 
     router.post('/', categoryValidator.body(createCategorySchema), (req, res) => {
-        handler.execute(req, res, 'createCategory', (context) => {
-            return controller.createCategory(context.userId!, req.body);
+        const op: OperationDefinition = { domain, operation: 'createCategory' };
+        handler.execute(req, res, op, (context) => {
+            return controller.createCategory(context, req.body);
         });
     });
 
     router.put('/:id', categoryValidator.id(), categoryValidator.body(updateCategorySchema), (req, res) => {
-        handler.execute(req, res, 'updateCategory', (context) => {
-            const category = { ...req.body, id: req.params.id };
-            return controller.updateCategory(context.userId!, category);
+        const op: OperationDefinition = { domain, operation: 'updateCategory' };
+        handler.execute(req, res, op, (context) => {
+            const category: Category = req.body;
+            category.id = req.params.id;
+            return controller.updateCategory(context, category);
         });
     });
 
     router.delete('/:id', categoryValidator.id(), (req, res) => {
-        handler.execute(req, res, 'deleteCategory', (context) => {
-            return controller.deleteCategory(context.userId!, req.params.id);
+        const op: OperationDefinition = { domain, operation: 'deleteCategory' };
+        handler.execute(req, res, op, (context) => {
+            return controller.deleteCategory(context, req.params.id);
         });
     });
 
