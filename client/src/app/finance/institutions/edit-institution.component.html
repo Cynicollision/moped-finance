@@ -1,0 +1,16 @@
+<div class="container" *ngIf="institution()">
+    <div class="breadcrumb-nav">
+        <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
+        <span class="breadcrumb-separator">/</span>
+        <a [routerLink]="['/institutions', institutionId]" class="breadcrumb-link">{{institution()!.name}}</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Edit Institution</span>
+    </div>
+
+    <div class="header-section" style="margin-bottom: 24px;">
+        <h1 class="desktop-page-title">Edit Institution</h1>
+    </div>
+
+    <app-institution-form [institution]="institution()" mode="edit" (save)="onSave($event)" (cancel)="onCancel()">
+    </app-institution-form>
+</div>

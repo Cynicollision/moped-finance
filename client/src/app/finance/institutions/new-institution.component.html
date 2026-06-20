@@ -1,0 +1,17 @@
+<div class="container">
+    <div class="breadcrumb-nav">
+        <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Add New</span>
+    </div>
+
+    <div class="header-section" style="margin-bottom: 24px;">
+        <h1 class="desktop-page-title">Add Institution</h1>
+    </div>
+
+    <app-institution-form
+        mode="create"
+        (save)="onSave($event)"
+        (cancel)="onCancel()">
+    </app-institution-form>
+</div>

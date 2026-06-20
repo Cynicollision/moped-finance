@@ -1,74 +1,32 @@
 <div class="summary-container details-container">
-    @if (accountData) {
+    @if (accountData()) {
     <div class="breadcrumb-nav">
         <a [routerLink]="['/']" class="breadcrumb-link">Accounts</a>
         <span class="breadcrumb-separator">/</span>
-        <a [routerLink]="['/accounts', accountData.id]" class="breadcrumb-link">{{ accountData.name }}</a>
+        <a [routerLink]="['/accounts', accountData()!.id]" class="breadcrumb-link">{{ accountData()!.name }}</a>
         <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">Edit</span>
+        <span class="breadcrumb-current">Edit Account</span>
     </div>
 
-    <mat-card class="edit-card">
-        <mat-card-header>
-            <mat-card-title>Edit Account</mat-card-title>
-        </mat-card-header>
+    <div class="header-section" style="margin-bottom: 24px;">
+        <h1 class="desktop-page-title">Edit Account</h1>
+    </div>
 
-        <mat-card-content>
-            <form *ngIf="accountForm" [formGroup]="accountForm" class="account-form">
+    <app-account-form mode="edit" [account]="accountData()!" (save)="onSave($event)" (cancel)="onCancel()">
+    </app-account-form>
 
-                <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Name</mat-label>
-                    <input matInput formControlName="name" placeholder="Account Name">
-                </mat-form-field>
-
-                <div class="row">
-                    <mat-form-field appearance="outline">
-                        <mat-label>Category</mat-label>
-                        <mat-select formControlName="category">
-                            <mat-option *ngFor="let cat of categories" [value]="cat">{{cat}}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                        <mat-label>Group</mat-label>
-                        <mat-select formControlName="group">
-                            <mat-option *ngFor="let grp of groups" [value]="grp">{{grp}}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                        <mat-label>Type</mat-label>
-                        <mat-select formControlName="type">
-                            <mat-option *ngFor="let typ of types" [value]="typ">{{typ}}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <div class="toggles-grid">
-                    <mat-checkbox formControlName="isHidden">Hide Account</mat-checkbox>
-                    <mat-checkbox formControlName="isManual">Manual Account</mat-checkbox>
-                    <mat-checkbox formControlName="isRetirement">Retirement Account</mat-checkbox>
-                    <mat-checkbox formControlName="hideFromCashflow">Hide from Cashflow</mat-checkbox>
-                </div>
-
-                <mat-form-field appearance="outline" class="full-width" *ngIf="accountForm.get('isManual')?.value">
-                    <mat-label>Balance</mat-label>
-                    <input matInput formControlName="balance" type="number" step="0.01">
-                    <mat-error *ngIf="accountForm.get('balance')?.hasError('pattern')">
-                        Invalid decimal format
-                    </mat-error>
-                </mat-form-field>
-
-            </form>
-        </mat-card-content>
-
-        <mat-card-actions align="end" class="actions-row">
-            <button mat-raised-button color="warn" class="delete-btn" (click)="onDelete()">Delete</button>
-            <span class="spacer"></span>
-            <button mat-button (click)="onCancel()">Cancel</button>
-            <button mat-raised-button color="primary" (click)="onSave()" [disabled]="!accountForm?.valid">Save</button>
-        </mat-card-actions>
-    </mat-card>
+    <div class="danger-zone"
+        style="background-color: var(--bg-card); border-radius: 8px; padding: 2rem; margin-top: 24px; display: flex; flex-direction: column; align-items: flex-start;">
+        <h3 style="color: var(--color-negative); margin-top: 0; display: flex; align-items: center; font-size: 16px;">
+            <mat-icon style="vertical-align: middle; margin-right: 4px;">warning</mat-icon>
+            Danger Zone
+        </h3>
+        <p style="color: var(--text-muted); margin-top: 0;">Once you delete an account, there is no going back. Please
+            be certain.</p>
+        <button mat-stroked-button color="warn" type="button" (click)="onDelete()">
+            Delete Account
+        </button>
+    </div>
     } @else {
     <p>Loading account details...</p>
     }

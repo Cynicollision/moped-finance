@@ -5,11 +5,11 @@
         </div>
         <div class="actions-container" style="flex: 1; display: flex; justify-content: flex-end;">
             <button mat-flat-button color="primary" class="add-institution-btn hide-on-mobile"
-                [routerLink]="['/institutions/add']">
+                [routerLink]="['/institutions/new']">
                 <mat-icon>add</mat-icon>
                 Add institution
             </button>
-            <a class="show-on-mobile" [routerLink]="['/institutions/add']"
+            <a class="show-on-mobile" [routerLink]="['/institutions/new']"
                 style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.1rem; font-weight: 500; color: var(--color-link); text-decoration: none; padding: 8px 0; width: 100%;">
                 <mat-icon>add</mat-icon>
                 Add institution
@@ -24,7 +24,11 @@
                 <div mat-card-avatar class="institution-avatar">
                     <mat-icon>account_balance</mat-icon>
                 </div>
-                <mat-card-title>{{ group.institution.name }}</mat-card-title>
+                <mat-card-title>
+                    <a [routerLink]="['/institutions', group.institution.id]" style="color: inherit; text-decoration: none;">
+                        {{ group.institution.name }}
+                    </a>
+                </mat-card-title>
                 <mat-card-subtitle>{{ group.accounts.length }} account{{ group.accounts.length === 1 ? '' : 's'
                     }}</mat-card-subtitle>
                 <span class="spacer"></span>
@@ -32,6 +36,10 @@
                     <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #menu="matMenu">
+                    <a mat-menu-item [routerLink]="['/institutions', group.institution.id, 'edit']">
+                        <mat-icon>edit</mat-icon>
+                        <span>Edit</span>
+                    </a>
                     <a mat-menu-item [routerLink]="['/institutions', group.institution.id, 'add-account']">
                         <mat-icon>add</mat-icon>
                         <span>Add account</span>
@@ -66,7 +74,7 @@
         @if (institutionGroups().length === 0) {
         <div class="empty-state">
             <p>You haven't added any institutions yet.</p>
-            <button mat-raised-button color="primary" [routerLink]="['/institutions/add']">Add your first
+            <button mat-raised-button color="primary" [routerLink]="['/institutions/new']">Add your first
                 institution</button>
         </div>
         }

@@ -179,7 +179,10 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         }
 
         this.sort.sortChange.subscribe(() => this.loadData(true));
-        this.sort.sort({ id: 'date', start: 'desc', disableClear: false });
+        
+        Promise.resolve().then(() => {
+            this.sort.sort({ id: 'date', start: 'desc', disableClear: false });
+        });
     }
 
     async loadData(reset: boolean = false) {

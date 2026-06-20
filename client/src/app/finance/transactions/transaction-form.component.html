@@ -1,0 +1,102 @@
+<form [formGroup]="transactionForm" (ngSubmit)="onSave()" class="details-form">
+    <!-- Amount -->
+    <div *ngIf="mode === 'readonly'" class="readonly-field amount">
+        <div class="label">Amount</div>
+        <div class="value" [ngClass]="{'amount-positive': transactionForm.value.amount! > 0, 'amount-negative': transactionForm.value.amount! < 0}">
+            {{Math.abs(transactionForm.value.amount!) | currency}}
+        </div>
+    </div>
+    <mat-form-field *ngIf="mode !== 'readonly'" appearance="outline" class="amount-field">
+        <mat-label>Amount</mat-label>
+        <input type="number" matInput formControlName="amount">
+    </mat-form-field>
+
+    <!-- Account -->
+    <div *ngIf="mode === 'readonly'" class="readonly-field">
+        <div class="label">Account</div>
+        <div class="value">
+            <a *ngIf="transactionForm.value.accountId" [routerLink]="['/accounts', transactionForm.value.accountId]" style="color: var(--mat-sys-primary); text-decoration: none;">{{getAccountName(transactionForm.value.accountId)}}</a>
+            <span *ngIf="!transactionForm.value.accountId">{{getAccountName(transactionForm.value.accountId)}}</span>
+        </div>
+    </div>
+    <mat-form-field *ngIf="mode !== 'readonly'" appearance="outline">
+        <mat-label>Account</mat-label>
+        <mat-select formControlName="accountId">
+            <mat-option *ngFor="let acc of accounts" [value]="acc.id">{{acc.name}}</mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <!-- Merchant -->
+    <div *ngIf="mode === 'readonly'" class="readonly-field">
+        <div class="label">Merchant</div>
+        <div class="value">{{transactionForm.value.merchant || '-'}}</div>
+    </div>
+    <mat-form-field *ngIf="mode !== 'readonly'" appearance="outline">
+        <mat-label>Merchant</mat-label>
+        <input type="text" matInput formControlName="merchant">
+    </mat-form-field>
+
+    <!-- Original Statement -->
+    <div *ngIf="mode === 'readonly'" class="readonly-field">
+        <div class="label">Original Statement</div>
+        <div class="value">{{transactionForm.value.originalStatement || '-'}}</div>
+    </div>
+    <mat-form-field *ngIf="mode !== 'readonly'" appearance="outline">
+        <mat-label>Original Statement</mat-label>
+        <input type="text" matInput formControlName="originalStatement">
+    </mat-form-field>
+
+    <!-- Category -->
+    <div *ngIf="mode === 'readonly'" class="readonly-field">
+        <div class="label">Category</div>
+        <div class="value">{{getCategoryName(transactionForm.value.category) || '-'}}</div>
+    </div>
+    <mat-form-field *ngIf="mode !== 'readonly'" appearance="outline">
+        <mat-label>Category</mat-label>
+        <input type="text" matInput formControlName="category" [matAutocomplete]="autoCategory">
+        <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
+            <mat-option *ngFor="let c of categories" [value]="c.id">
+                {{c.icon}} {{c.name}}
+            </mat-option>
+        </mat-autocomplete>
+    </mat-form-field>
+
+    <!-- Date -->
+    <div *ngIf="mode === 'readonly'" class="readonly-field">
+        <div class="label">Date</div>
+        <div class="value">{{transactionForm.value.date | date}}</div>
+    </div>
+    <mat-form-field *ngIf="mode !== 'readonly'" appearance="outline">
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="datePicker" formControlName="date">
+        <mat-datepicker-toggle matIconSuffix [for]="datePicker"></mat-datepicker-toggle>
+        <mat-datepicker #datePicker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- Notes -->
+    <div *ngIf="mode === 'readonly'" class="readonly-field">
+        <div class="label">Notes</div>
+        <div class="value">{{transactionForm.value.notes || '-'}}</div>
+    </div>
+    <mat-form-field *ngIf="mode !== 'readonly'" appearance="outline">
+        <mat-label>Notes</mat-label>
+        <textarea matInput formControlName="notes" rows="3"></textarea>
+    </mat-form-field>
+
+    <!-- Hide -->
+    <div *ngIf="mode === 'readonly'" class="readonly-field">
+        <div class="label">Hidden</div>
+        <div class="value">{{transactionForm.value.isHidden ? 'Yes' : 'No'}}</div>
+    </div>
+    <div *ngIf="mode !== 'readonly'" class="checkbox-container">
+        <mat-checkbox formControlName="isHidden">Hide Transaction</mat-checkbox>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="actions" *ngIf="mode !== 'readonly'">
+        <div class="right-actions">
+            <button mat-button type="button" (click)="onCancel()">Cancel</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="transactionForm.invalid">Save</button>
+        </div>
+    </div>
+</form>

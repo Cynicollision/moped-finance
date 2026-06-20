@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
 import { HistoryTimeframe } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
@@ -17,7 +18,7 @@ import { FinanceService } from './../finance.service';
 @Component({
     selector: 'app-finance-accounts',
     standalone: true,
-    imports: [CommonModule, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule],
+    imports: [CommonModule, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, MatDividerModule],
     templateUrl: './account-details.component.html',
     styleUrl: './account-details.component.scss'
 })

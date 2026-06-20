@@ -23,6 +23,7 @@ export class ApiService {
             return 'Network or server error encountered.';
         }
         if (error.status >= 400 && error.status < 500) {
+            // TODO: what is this
             if (error.error && error.error.error && error.error.error.message) {
                 return error.error.error.message;
             } else if (error.error && typeof error.error === 'string') {
