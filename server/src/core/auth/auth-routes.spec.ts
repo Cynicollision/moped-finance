@@ -5,7 +5,7 @@ import TestAgent from 'supertest/lib/agent';
 import { PGlite } from '@electric-sql/pglite';
 import { buildAuthRouter } from './auth-routes';
 import { buildAuthMiddleware } from './auth-middleware';
-import { DatabaseClient } from '@server-core/database';
+import { DatabaseClient } from '@server-core/data';
 import { UserData } from '@server-core/auth/user-data';
 import { TestDatabaseUtil, TestExpressUtil } from '@server-core/utility/testing';
 import { AuthController } from './auth-controller';

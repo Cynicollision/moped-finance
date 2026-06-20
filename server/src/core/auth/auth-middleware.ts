@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Result } from '@server-core/utility';
+import { Result } from '@server-core/routing';
 import { AuthController } from './auth-controller';
 import { UserContext } from './user-context';
 

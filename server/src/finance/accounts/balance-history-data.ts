@@ -3,7 +3,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
-import { IDatabaseClient } from '@server-core/database';
+import { IDatabaseClient } from '@server-core/data';
 import { DateTimeUtil } from '@server-core/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';

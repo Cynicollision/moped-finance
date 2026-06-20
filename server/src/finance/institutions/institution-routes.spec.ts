@@ -1,10 +1,9 @@
 import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
-import { AppLogger } from '@server-core/logger';
-import { DatabaseClient } from '@server-core/database';
+import { DatabaseClient, FinanceEntityFactory } from '@server-core/data';
+import { AppLogger } from '@server-core/logging';
 import { TestExpressUtil, TestDatabaseUtil } from '@server-core/utility/testing';
-import { FinanceEntityFactory } from './../common';
 import { FinanceInstitutionData } from './institution-data';
 import { createInstitutionRouter } from './institution-routes';
 

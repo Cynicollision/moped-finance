@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { AuthMiddleware } from '@server-core/auth';
-import { DatabaseClient } from '@server-core/database';
-import { IAppLogger } from '@server-core/logger';
+import { DatabaseClient } from '@server-core/data';
+import { IAppLogger } from '@server-core/logging';
 import { FinanceAccountData, FinanceBalanceHistoryData, createAccountRouter } from './accounts';
 import { FinanceBudgetStreamData, createBudgetStreamRouter } from './budget';
 import { FinanceCategoryData, FinanceCategoryGroupData, createCategoryRouter } from './categories';

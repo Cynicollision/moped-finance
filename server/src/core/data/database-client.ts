@@ -1,4 +1,4 @@
-import { Pool, Client } from 'pg';
+import { Pool } from 'pg';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 export interface IDatabaseClient {

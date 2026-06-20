@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Pool } from 'pg';
-import { FinanceEntityFactory, FinanceEntityIdPrefix } from './../src/finance/common';
+import { EntityId, FinanceEntityFactory, FinanceEntityIdPrefix } from './../src/core/data';
 
 const dbConfig = {
     user: process.env.PGUSER,
@@ -81,7 +81,7 @@ function parseCsvLine(line: string): string[] {
 
                 const [id, _csvUserId, name] = parseCsvLine(line);
                 if (id && name) {
-                    const generatedId = FinanceEntityFactory.generateId(FinanceEntityIdPrefix.Institution);
+                    const generatedId = EntityId.generate(FinanceEntityIdPrefix.Institution);
                     institutionIdMap.set(id.trim(), generatedId);
 
                     await client.query(
@@ -112,7 +112,7 @@ function parseCsvLine(line: string): string[] {
                 const [id, _csvUserId, institutionId, name, category, type, subtype, balance, hidden, retirement] = parseCsvLine(line);
 
                 if (id && name) {
-                    const generatedId = FinanceEntityFactory.generateId(FinanceEntityIdPrefix.Account);
+                    const generatedId = EntityId.generate(FinanceEntityIdPrefix.Account);
                     const mappedInstitutionId = institutionIdMap.get(institutionId?.trim()) || null;
                     accountsMap.set(name.trim(), generatedId);
 
@@ -161,7 +161,7 @@ function parseCsvLine(line: string): string[] {
                 if (id && type && group && icon && name && isActive) {
                     let groupId = categoryGroupsMap.get(group.trim());
                     if (!groupId) {
-                        groupId = FinanceEntityFactory.generateId(FinanceEntityIdPrefix.CategoryGroup);
+                        groupId = EntityId.generate(FinanceEntityIdPrefix.CategoryGroup);
                         categoryGroupsMap.set(group.trim(), groupId);
 
                         await client.query(
@@ -179,7 +179,7 @@ function parseCsvLine(line: string): string[] {
                         groupCount++;
                     }
 
-                    const generatedId = FinanceEntityFactory.generateId(FinanceEntityIdPrefix.Category);
+                    const generatedId = EntityId.generate(FinanceEntityIdPrefix.Category);
                     categoriesMap.set(name.trim(), generatedId);
 
                     await client.query(
@@ -232,7 +232,7 @@ function parseCsvLine(line: string): string[] {
                     if (accountId && date && amount) {
                         const categoryId = categoriesMap.get(categoryName?.trim()) || null;
                         transactionCount++;
-                        const txnId = FinanceEntityFactory.generateId(FinanceEntityIdPrefix.Transaction);
+                        const txnId = EntityId.generate(FinanceEntityIdPrefix.Transaction);
 
                         await client.query(
                             `INSERT INTO finance.transactions (
@@ -291,7 +291,7 @@ function parseCsvLine(line: string): string[] {
 
                     if (accountId && date && balance) {
                         balanceCount++;
-                        const bhId = FinanceEntityFactory.generateId(FinanceEntityIdPrefix.BalanceHistory);
+                        const bhId = EntityId.generate(FinanceEntityIdPrefix.BalanceHistory);
 
                         await client.query(
                             `INSERT INTO finance.balance_history (

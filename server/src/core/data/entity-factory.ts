@@ -1,28 +1,29 @@
 import { NewEntity } from '@shared/core/types';
 import { Account, BalanceHistory, BudgetStream, Category, CategoryGroup, Institution, Transaction } from '@shared/finance/types';
-import { DateTimeUtil, EntityIdUtil } from '@server-core/utility';
+import { DateTimeUtil } from '@server-core/utility';
+import { EntityId } from './entity-id';
+
+export enum CoreEntityIdPrefix {
+    User = 'U',
+    Log = 'LOG',
+}
 
 export enum FinanceEntityIdPrefix {
-    Account = '10',
-    BalanceHistory = '11',
-    Transaction = '12',
-    Institution = '13',
-    Category = '14',
-    CategoryGroup = '15',
-    BudgetStream = '16'
+    Account = 'AC',
+    BalanceHistory = 'BAL',
+    Transaction = 'TRX',
+    Institution = 'IN',
+    Category = 'CT',
+    CategoryGroup = 'CTG',
+    BudgetStream = 'BS',
 }
 
 export class FinanceEntityFactory {
 
-    // TODO: only used in seed script. Try to remove.
-    public static generateId(prefix: string): string {
-        return EntityIdUtil.generate(prefix);
-    }
-
     private static createEntity<T extends { id: string, createdAt: Date, updatedAt: Date }>(prefix: string, newEntity: NewEntity<T>): T {
         return {
             ...newEntity,
-            id: newEntity.id || FinanceEntityFactory.generateId(prefix),
+            id: newEntity.id || EntityId.generate(prefix),
             createdAt: DateTimeUtil.now(),
             updatedAt: DateTimeUtil.now()
         } as unknown as T;

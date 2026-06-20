@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { OperationResult } from '@shared/core/contracts';
 import { OperationStatus } from '@shared/core/enum'
-import { UserContext } from './auth';
-import { IAppLogger } from './logger';
-import { Result } from './utility';
+import { UserContext } from '@server-core/auth';
+import { IAppLogger } from '@server-core/logging';
+import { Result } from './result-factory';
 
 export type OperationDefinition = {
     domain: string;

@@ -1,6 +1,6 @@
 import { OperationResult } from '@shared/core/contracts';
 import { OperationStatus } from '@shared/core/enum';
-import { DateTimeUtil } from './date-time-util';
+import { DateTimeUtil } from '@server-core/utility';
 
 export class Result {
 

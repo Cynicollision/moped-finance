@@ -2,7 +2,7 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Account } from '@shared/finance/types';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
-import { IDatabaseClient, IOwnedResourceData } from '@server-core/database';
+import { IDatabaseClient, IOwnedResourceData } from '@server-core/data';
 import { DateTimeUtil } from '@server-core/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';

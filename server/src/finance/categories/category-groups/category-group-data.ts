@@ -2,8 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CategoryGroup } from '@shared/finance/types';
 import { CategoryClass } from '@shared/finance/enum';
-import { IDatabaseClient } from '@server-core/database';
-import { IOwnedResourceData } from '@server-core/database';
+import { IDatabaseClient, IOwnedResourceData } from '@server-core/data';
 import { DateTimeUtil } from '@server-core/utility';
 import { categoryGroupSchema } from './category-group-schema';
 

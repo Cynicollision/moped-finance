@@ -1,11 +1,6 @@
 import ShortUniqueId from 'short-unique-id';
 
-export enum CoreEntityIdPrefix {
-    User = '01',
-    Log = '02',
-}
-
-export class EntityIdUtil {
+export class EntityId {
     private static uid = new ShortUniqueId({ length: 16 });
 
     public static generate(prefix?: string): string {

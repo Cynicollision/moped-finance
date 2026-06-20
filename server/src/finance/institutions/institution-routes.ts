@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { Institution } from '@shared/finance/types';
-import { IAppLogger } from '@server-core/logger';
-import { OperationDefinition, OperationHandler } from '@server-core/operation-handler';
-import { RequestSchemaValidator } from '@server-core/validation';
+import { IAppLogger } from '@server-core/logging';
+import { OperationDefinition, OperationHandler, RequestSchemaValidator } from '@server-core/routing';
 import { InstitutionController } from './institution-controller';
 import { IFinanceInstitutionData } from './institution-data';
 import { createInstitutionSchema, updateInstitutionSchema } from './institution-schema';

@@ -1,1 +1,0 @@
-export { FinanceEntityFactory, FinanceEntityIdPrefix } from './finance-entity-factory';

@@ -4,7 +4,7 @@ import { SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
 import { CashflowStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
-import { IDatabaseClient, IOwnedResourceData } from '@server-core/database';
+import { IDatabaseClient, IOwnedResourceData } from '@server-core/data';
 import { DateTimeUtil } from '@server-core/utility';
 import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';

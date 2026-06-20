@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodError } from 'zod';
-import { UserContext } from './auth';
-import { IAppLogger } from './logger';
-import { Result } from './utility';
+import { UserContext } from '@server-core/auth';
+import { IAppLogger } from '@server-core/logging';
+import { Result } from '@server-core/routing';
 
 export class RequestSchemaValidator {
     constructor(private readonly logger: IAppLogger, private readonly schemaName: string) {

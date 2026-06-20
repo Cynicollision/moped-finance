@@ -1,14 +1,13 @@
 import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
-import { AccountCategory, AccountGroup, AccountType, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
+import { AccountCategory, AccountGroup, AccountType, TransactionsSortKey } from '@shared/finance/enum';
 import { SortDirection } from '@shared/core/enum';
-import { Account, BalanceHistory, Institution, Transaction } from '@shared/finance/types';
-import { IAppLogger } from '@server-core/logger';
+import { BalanceHistory } from '@shared/finance/types';
+import { DatabaseClient, FinanceEntityFactory } from '@server-core/data';
+import { IAppLogger } from '@server-core/logging';
 import { DateTimeUtil } from '@server-core/utility';
 import { TestExpressUtil, TestDatabaseUtil } from '@server-core/utility/testing';
-import { FinanceEntityFactory } from './../common';
-import { DatabaseClient } from '@server-core/database';
 import { FinanceAccountData } from './account-data';
 import { createAccountRouter } from './account-routes';
 import { FinanceBalanceHistoryData } from './balance-history-data';

@@ -1,7 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Category } from '@shared/finance/types';
-import { IDatabaseClient, IOwnedResourceData } from '@server-core/database';
+import { IDatabaseClient, IOwnedResourceData } from '@server-core/data';
 import { DateTimeUtil } from '@server-core/utility';
 import { categorySchema } from './category-schema';
 

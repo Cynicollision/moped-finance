@@ -1,13 +1,11 @@
 import { Router } from 'express';
 import { Category } from '@shared/finance/types';
-import { IAppLogger } from '@server-core/logger';
-import { OperationDefinition, OperationHandler } from '@server-core/operation-handler';
-import { RequestSchemaValidator } from '@server-core/validation';
+import { IAppLogger } from '@server-core/logging';
+import { OperationDefinition, OperationHandler, RequestSchemaValidator } from '@server-core/routing';
 import { CategoryController } from './category-controller';
 import { IFinanceCategoryData } from './category-data';
 import { createCategorySchema, updateCategorySchema } from './category-schema';
-import { IFinanceCategoryGroupData } from './category-groups/category-group-data';
-import { createCategoryGroupSchema, updateCategoryGroupSchema } from './category-groups/category-group-schema';
+import { IFinanceCategoryGroupData, createCategoryGroupSchema, updateCategoryGroupSchema } from './category-groups';
 
 const domain = 'Category';
 

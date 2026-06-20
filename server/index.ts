@@ -3,8 +3,8 @@ import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
 import { buildAuthRouter, buildAuthMiddleware, AuthController, UserData } from '@server-core/auth';
-import { AppLogger } from '@server-core/logger';
-import { DatabaseClient, DatabaseClientConfig } from '@server-core/database';
+import { AppLogger } from '@server-core/logging';
+import { DatabaseClient, DatabaseClientConfig } from '@server-core/data';
 import { buildFinanceRouter } from './src/finance';
 
 const app = express();

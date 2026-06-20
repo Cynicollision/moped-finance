@@ -1,10 +1,9 @@
 import { OperationResult } from '@shared/core/contracts';
 import { NewEntity } from '@shared/core/types';
 import { Institution } from '@shared/finance/types';
-import { IAppLogger } from '@server-core/logger';
-import { OperationContext } from '@server-core/operation-handler';
-import { Result } from '@server-core/utility';
-import { FinanceEntityFactory } from './../common';
+import { FinanceEntityFactory } from '@server-core/data';
+import { IAppLogger } from '@server-core/logging';
+import { OperationContext, Result } from '@server-core/routing';
 import { IFinanceInstitutionData } from './institution-data';
 
 export class InstitutionController {

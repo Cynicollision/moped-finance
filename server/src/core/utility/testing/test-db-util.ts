@@ -4,7 +4,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/pglite';
 import { User } from '@shared/core/types/user';
-import { DatabaseClient } from '@server-core/database';
+import { DatabaseClient } from '@server-core/data';
 
 export class TestDatabaseUtil {
     public static async createMockDatabase(): Promise<{ dbClient: DatabaseClient, pglite: PGlite }> {

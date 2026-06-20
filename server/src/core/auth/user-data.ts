@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { pgSchema, varchar, timestamp } from 'drizzle-orm/pg-core';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { User } from '@shared/core/types/user';
-import { IDatabaseClient } from '@server-core/database';
+import { IDatabaseClient } from '@server-core/data';
 import { DateTimeUtil } from '@server-core/utility';
 
 const coreSchema = pgSchema('core');

@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
-import { CoreEntityIdPrefix, EntityIdUtil } from '@server-core/utility';
+import { CoreEntityIdPrefix, EntityId } from '@server-core/data';
 const dbConfig = {
     user: process.env.PGUSER,
     password: process.env.PGPASSWORD,
@@ -24,7 +24,7 @@ if (!SEED_USER_USERNAME || !SEED_USER_DISPLAY_NAME || !SEED_USER_PASSWORD) {
         console.log(' 1. Inserting core.users: one demo user');
 
         const defaultHash = bcrypt.hashSync(SEED_USER_PASSWORD, 10);
-        const userId = EntityIdUtil.generate(CoreEntityIdPrefix.User);
+        const userId = EntityId.generate(CoreEntityIdPrefix.User);
 
         await client.query(
             'INSERT INTO core.users (id, display_name, username, password_hash) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING',
