@@ -2,10 +2,10 @@ import express, { Request, Response } from 'express';
 import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
-import { buildAuthRouter, buildAuthMiddleware, AuthController, UserData } from '@server-core/auth';
-import { AppLogger } from '@server-core/logging';
-import { DatabaseClient, DatabaseClientConfig } from '@server-core/data';
-import { buildFinanceRouter } from './src/finance';
+import { buildFinanceRouter } from '@server/api';
+import { buildAuthRouter, buildAuthMiddleware, AuthController, UserData } from '@server/auth';
+import { DatabaseClient, DatabaseClientConfig } from '@server/data';
+import { AppLogger } from '@server/logging';
 
 const app = express();
 app.use(express.json());

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Pool } from 'pg';
-import { EntityId, FinanceEntityFactory, FinanceEntityIdPrefix } from './../src/core/data';
+import { EntityId, FinanceEntityIdPrefix } from '@server/data';
 
 const dbConfig = {
     user: process.env.PGUSER,

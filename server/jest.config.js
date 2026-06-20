@@ -4,7 +4,7 @@ module.exports = {
     testEnvironment: 'node',
     moduleNameMapper: {
         '^@shared/(.*)$': '<rootDir>/../shared/$1',
-        '^@server-core/(.*)$': '<rootDir>/src/core/$1',
+        '^@server/(.*)$': '<rootDir>/src/$1',
     },
     testMatch: ['**/*.spec.ts'],
     verbose: true,

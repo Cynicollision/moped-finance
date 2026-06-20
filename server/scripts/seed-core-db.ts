@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
-import { CoreEntityIdPrefix, EntityId } from '@server-core/data';
+import { CoreEntityIdPrefix, EntityId } from '@server/data';
+
 const dbConfig = {
     user: process.env.PGUSER,
     password: process.env.PGPASSWORD,
