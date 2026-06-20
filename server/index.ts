@@ -2,12 +2,10 @@ import express, { Request, Response } from 'express';
 import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
-import { createAuthRouter } from '@server-core/auth/auth-routes';
-import { createAuthMiddleware } from '@server-core/auth/auth-middleware';
+import { createAuthRouter, createAuthMiddleware } from '@server-core/auth';
 import { CoreUserData } from '@server-core/data/user-data';
 import { AppLogger } from '@server-core/logger';
 import { DatabaseClient, DatabaseClientConfig } from '@server-core/db-client';
-import { ApiUtil } from '@server-core/utility';
 import { createFinanceModule } from './src/finance';
 
 const app = express();
@@ -55,7 +53,7 @@ app.use('/auth', authRoutes);
 const apiRouter = createFinanceModule(dbClient, logger);
 app.use('/api', resolveUser, requireAuth, apiRouter);
 app.all('/api/*', (req: Request, res: Response) => {
-    return ApiUtil.notFound(req, res);
+    res.status(404).send(`${req.originalUrl} not found.`);
 });
 
 // Frontend routes

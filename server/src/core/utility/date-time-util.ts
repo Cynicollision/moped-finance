@@ -26,6 +26,10 @@ export class DateTimeUtil {
         return this.now().toISOString();
     }
 
+    public static nowToISOSafeFilename(): string {
+        return this.nowToISOString().substring(0, 19).replace('T', '_').replace(/:/g, '-');
+    }
+
     public static getStartDateForTimeframe(timeframe: HistoryTimeframe, asOfDate: Date = new Date()): Date {
         const startDate = new Date(asOfDate.getTime());
 

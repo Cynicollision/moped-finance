@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodError } from 'zod';
-import { ApiUtil } from './utility/api-util';
 import { IAppLogger } from './logger';
+import { ApiUtil, Result } from './utility';
 
 export class RequestSchemaValidator {
     constructor(private readonly logger: IAppLogger, private readonly schemaName: string) {
@@ -12,10 +12,11 @@ export class RequestSchemaValidator {
             const userId = ApiUtil.getUserId(req);
             const result = schema.safeParse(req.params);
             if (!result.success) {
-                const context = `${this.schemaName}:params`
+                const context = `${this.schemaName}:params`;
                 const messages = (result.error as ZodError).issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
-                this.logger.warn(userId, context, `Invalid params: ${messages}`);
-                ApiUtil.badRequest(res, messages);
+                const errorMessage = `Invalid request params: ${messages}`;
+                this.logger.warn(userId, context, errorMessage);
+                ApiUtil.sendResult(res, Result.userError(errorMessage));
                 return;
             }
             next();
@@ -33,8 +34,9 @@ export class RequestSchemaValidator {
             if (!result.success) {
                 const context = `${this.schemaName}:body`;
                 const messages = (result.error as ZodError).issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
-                this.logger.warn(userId, context, `Invalid body: ${messages}`);
-                ApiUtil.badRequest(res, messages);
+                const errorMessage = `Invalid request body: ${messages}`;
+                this.logger.warn(userId, context, errorMessage);
+                ApiUtil.sendResult(res, Result.userError(errorMessage));
                 return;
             }
             req.body = result.data;

@@ -58,7 +58,7 @@ describe('Transaction Routes', () => {
         await pglite.exec('TRUNCATE finance.institutions, finance.accounts, finance.category_groups, finance.categories, finance.transactions CASCADE;');
 
         const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Bank' }));
-        const account = await accountsData.create(FinanceEntityFactory.createAccount(testUserId, {
+        const account = await accountsData.insert(FinanceEntityFactory.createAccount(testUserId, {
             institutionId: inst.id!, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, balance: 0
         }));
         testAccountId = account.id!;

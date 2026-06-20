@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ApiHandler } from '@server-core/api-handler';
+import { OperationHandler } from '@server-core/operation-handler';
 import { IAppLogger } from '@server-core/logger';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { InstitutionController } from './institution-controller';
@@ -9,7 +9,7 @@ import { createInstitutionSchema, updateInstitutionSchema } from './institution-
 export function createInstitutionRouter(logger: IAppLogger, institutionsData: IFinanceInstitutionData) {
     const router = Router();
     const controller = new InstitutionController(logger, institutionsData);
-    const handler = new ApiHandler(logger);
+    const handler = new OperationHandler(logger);
     const validator = new RequestSchemaValidator(logger, 'Institution');
 
     router.get('/', (req, res) => {

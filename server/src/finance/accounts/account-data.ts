@@ -10,9 +10,6 @@ import { balanceHistorySchema } from './balance-history-schema';
 
 export interface IFinanceAccountData extends IOwnedResourceData<Account> {
     retrieveAll(userId: string): Promise<Account[]>;
-    create(account: Account): Promise<Account>;
-    update(account: Account): Promise<Account | null>;
-    delete(accountId: string): Promise<boolean>;
 }
 
 function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number | string): Account {
@@ -50,10 +47,11 @@ export class FinanceAccountData implements IFinanceAccountData {
     }
 
     public async retrieveAll(userId: string): Promise<Account[]> {
-        const rows = await this.db.select({
-            account: accountSchema,
-            balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
-        })
+        const rows = await this.db
+            .select({
+                account: accountSchema,
+                balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
+            })
             .from(accountSchema)
             .where(eq(accountSchema.userId, userId));
 
@@ -61,10 +59,11 @@ export class FinanceAccountData implements IFinanceAccountData {
     }
 
     public async retrieveSingle(accountId: string): Promise<Account | null> {
-        const rows = await this.db.select({
-            account: accountSchema,
-            balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
-        })
+        const rows = await this.db
+            .select({
+                account: accountSchema,
+                balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
+            })
             .from(accountSchema)
             .where(eq(accountSchema.id, accountId));
 
@@ -75,7 +74,7 @@ export class FinanceAccountData implements IFinanceAccountData {
         return mapRowToAccount(rows[0].account, rows[0].balance);
     }
 
-    public async create(account: Account): Promise<Account> {
+    public async insert(account: Account): Promise<Account> {
         const rows = await this.db.insert(accountSchema)
             .values({
                 id: account.id,

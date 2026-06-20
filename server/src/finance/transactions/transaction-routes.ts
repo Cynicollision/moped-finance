@@ -1,11 +1,10 @@
 import { Router, Request } from 'express';
 import multer from 'multer';
-import { CalendarPeriod, SortDirection, OperationStatus } from '@shared/core/enum';
+import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
-import { ApiHandler } from '@server-core/api-handler';
-import { ApiUtil, DateTimeUtil } from '@server-core/utility';
+import { OperationHandler } from '@server-core/operation-handler';
 import { IAppLogger } from '@server-core/logger';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { IFinanceAccountData } from './../accounts/account-data';
@@ -19,7 +18,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 export function createTransactionRouter(logger: IAppLogger, accountData: IFinanceAccountData, categoryData: IFinanceCategoryData, transactionsData: IFinanceTransactionData) {
     const router = Router();
     const controller = new TransactionController(logger, accountData, categoryData, transactionsData);
-    const handler = new ApiHandler(logger);
+    const handler = new OperationHandler(logger);
     const validator = new RequestSchemaValidator(logger, 'Transaction');
 
     router.get('/', (req, res) => {
@@ -46,33 +45,17 @@ export function createTransactionRouter(logger: IAppLogger, accountData: IFinanc
         handler.execute(req, res, 'getTransactionCashflowByCategory', (context) => {
             const period = req.query.period as CalendarPeriod;
             const asOfDate = req.query.asOfDate as string;
+            // TODO validate params
             return controller.getTransactionCashflowByCategory(context.userId!, period, asOfDate);
         });
     });
 
-    router.get('/export', async (req, res) => {
-        // TODO needs to use handler
-        const userId = ApiUtil.getUserId(req);
-        logger.info(userId, 'exportTransactions', 'Starting export transactions');
-        try {
+    router.get('/export', (req, res) => {
+        handler.execute(req, res, 'exportTransactions', (context) => {
+            // TODO validate params
             const accountId = req.query.accountId as string;
-
-            const result = await controller.exportTransactions(userId, accountId);
-
-            if (result.status === OperationStatus.Success) {
-                const timestamp = DateTimeUtil.nowToISOString().substring(0, 19).replace('T', '_').replace(/:/g, '-');
-                res.setHeader('Content-Type', 'text/csv');
-                res.attachment(`Transactions_${timestamp}.csv`);
-                return res.send(result.data);
-            }
-            else {
-                return ApiUtil.sendResult(res, result);
-            }
-        }
-        catch (error: any) {
-            logger.error(userId, 'exportTransactions', `Error: ${error.message || error}`);
-            return ApiUtil.internalError(res, error);
-        }
+            return controller.exportTransactions(context.userId!, accountId);
+        });
     });
 
     router.post('/import', upload.single('file'), (req, res) => {

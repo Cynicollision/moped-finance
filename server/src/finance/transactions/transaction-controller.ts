@@ -90,8 +90,13 @@ export class TransactionController {
     public async exportTransactions(userId: string, accountId?: string): Promise<OperationResult<any>> {
         const transactions = await this.transactionData.exportSearch(userId, accountId);
 
+        const account = accountId ? await this.accountData.retrieveSingle(accountId) : undefined;
+        const accountName = account?.name?.replace(/[^a-zA-Z0-9]/g, '-');
+        const timestamp = DateTimeUtil.nowToISOSafeFilename();
+        const fileName = accountName ? `Transactions_${accountName}_${timestamp}.csv` : `Transactions_${timestamp}.csv`;
+
         if (!transactions || transactions.length === 0) {
-            return Result.success('Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n');
+            return Result.successFile('text/csv', fileName, 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n');
         }
 
         const csv = Papa.unparse(transactions, {
@@ -104,7 +109,7 @@ export class TransactionController {
             'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden'
         );
 
-        return Result.success(finalCsv);
+        return Result.successFile('text/csv', fileName, finalCsv);
     }
 
     public async importTransactions(userId: string, fileBuffer?: Buffer, dryRun: boolean = false, targetAccountId?: string): Promise<OperationResult<TransactionImportResult>> {

@@ -2,20 +2,18 @@ import { Request, Response } from 'express';
 import { OperationResult } from '@shared/core/contracts/operation-result';
 import { ApiUtil } from './utility/api-util';
 import { IAppLogger } from './logger';
+import { Result } from './utility';
 
 export type ExecutionContext = {
     userId?: string;
-    context: string;
+    context: string; // TODO: replace with: domain, operation
     req: Request;
 }
 
-export class ApiHandler {
+export class OperationHandler {
 
     constructor(private logger: IAppLogger) {
     }
-
-    // TODO: rename class OperationHandler (operation-handler.ts)
-    // TODO: better context object
 
     async execute<T>(req: Request, res: Response, context: string, operation: (context: ExecutionContext) => Promise<OperationResult<T>>): Promise<OperationResult<T>> {
         const userId = ApiUtil.getUserId(req);
@@ -23,7 +21,7 @@ export class ApiHandler {
         const executionContext: ExecutionContext = {
             userId: userId,
             context: context,
-            req
+            req: req
         };
 
         this.logger.info(userId, context, `Starting operation: ${context}`);
@@ -36,7 +34,7 @@ export class ApiHandler {
         }
         catch (error: any) {
             this.logger.error(userId, context, `Internal error: ${context}. Error: ${error.message || error}`);
-            return ApiUtil.internalError<T>(res, error);
+            return ApiUtil.sendResult(res, Result.internalError('An unexpected error occurred'));
         }
     }
 }

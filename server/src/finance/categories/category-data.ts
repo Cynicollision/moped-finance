@@ -8,9 +8,6 @@ import { categorySchema } from './category-schema';
 
 export interface IFinanceCategoryData extends IOwnedResourceData<Category> {
     retrieveAll(userId: string, activeOnly?: boolean): Promise<Category[]>;
-    delete(id: string): Promise<boolean>;
-    insert(category: Category): Promise<Category>;
-    update(category: Category): Promise<Category | null>;
 }
 
 function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
@@ -47,7 +44,8 @@ export class FinanceCategoryData implements IFinanceCategoryData {
     }
 
     public async retrieveSingle(id: string): Promise<Category | null> {
-        const rows = await this.db.select().from(categorySchema)
+        const rows = await this.db.select()
+            .from(categorySchema)
             .where(eq(categorySchema.id, id));
 
         if (rows.length === 0) {

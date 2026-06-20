@@ -42,14 +42,18 @@ export class Result {
         };
     }
 
-    // public static successAccepted<T>(data?: T): OperationResult<T> {
-    //     return {
-    //         success: true,
-    //         status: OperationStatus.SuccessAccepted,
-    //         timestamp: DateTimeUtil.getCurrentTimestamp(),
-    //         data
-    //     };
-    // }
+    public static successFile(conentType: string, fileName: string, data: string): OperationResult<string> {
+        return {
+            success: true,
+            status: OperationStatus.Success,
+            timestamp: DateTimeUtil.getCurrentTimestamp(),
+            data,
+            file: {
+                contentType: conentType,
+                fileName: fileName
+            }
+        };
+    }
 
     public static userError<T>(message: string, code: string = 'BAD_REQUEST'): OperationResult<T> {
         return {
@@ -75,34 +79,10 @@ export class Result {
         };
     }
 
-    public static forbidden<T>(message: string = 'Access denied', code: string = 'FORBIDDEN'): OperationResult<T> {
-        return {
-            success: false,
-            status: OperationStatus.Forbidden,
-            timestamp: DateTimeUtil.getCurrentTimestamp(),
-            error: {
-                code,
-                message
-            }
-        };
-    }
-
     public static unauthorized<T>(message: string = 'Not authorized', code: string = 'UNAUTHORIZED'): OperationResult<T> {
         return {
             success: false,
             status: OperationStatus.Unauthorized,
-            timestamp: DateTimeUtil.getCurrentTimestamp(),
-            error: {
-                code,
-                message
-            }
-        };
-    }
-
-    public static notFound<T>(message: string = 'Not found', code: string = 'NOT_FOUND'): OperationResult<T> {
-        return {
-            success: false,
-            status: OperationStatus.UserError,
             timestamp: DateTimeUtil.getCurrentTimestamp(),
             error: {
                 code,

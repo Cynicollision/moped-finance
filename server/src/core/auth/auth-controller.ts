@@ -11,7 +11,7 @@ export class AuthController {
         this.userData = userData;
     }
 
-    // TODO: use OperationHandler (fka ApiHandler) here to get logging
+    // TODO: use OperationHandler (fka OperationHandler) here to get logging
 
     async loginUser(username: string, password?: string): Promise<OperationResult<User>> {
         if (!password) {

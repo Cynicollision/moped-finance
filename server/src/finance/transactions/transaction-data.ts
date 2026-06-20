@@ -16,9 +16,6 @@ export interface IFinanceTransactionData extends IOwnedResourceData<Transaction>
     exportSearch(userId: string, accountId?: string): Promise<any[]>;
     retrieveMerchants(userId: string): Promise<string[]>;
     retrieveCashflowByCategory(userId: string, startDate: Date, endDate: Date): Promise<CashflowStream[]>;
-    insert(transaction: Transaction): Promise<Transaction>;
-    update(transaction: Transaction): Promise<Transaction | null>;
-    delete(id: string): Promise<boolean>;
 }
 
 function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transaction {
@@ -56,17 +53,18 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             conditions.push(eq(accountSchema.id, accountId));
         }
 
-        const rows = await this.db.select({
-            id: transactionSchema.id,
-            date: transactionSchema.date,
-            accountName: accountSchema.name,
-            merchant: transactionSchema.merchant,
-            categoryName: categorySchema.name,
-            amount: transactionSchema.amount,
-            originalStatement: transactionSchema.originalStatement,
-            notes: transactionSchema.notes,
-            isHidden: transactionSchema.isHidden
-        })
+        const rows = await this.db
+            .select({
+                id: transactionSchema.id,
+                date: transactionSchema.date,
+                accountName: accountSchema.name,
+                merchant: transactionSchema.merchant,
+                categoryName: categorySchema.name,
+                amount: transactionSchema.amount,
+                originalStatement: transactionSchema.originalStatement,
+                notes: transactionSchema.notes,
+                isHidden: transactionSchema.isHidden
+            })
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
             .leftJoin(categorySchema, eq(categorySchema.id, transactionSchema.categoryId))
@@ -132,9 +130,10 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             }
         }
 
-        let query = this.db.select({
-            transaction: transactionSchema
-        })
+        let query = this.db
+            .select({
+                transaction: transactionSchema
+            })
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
             .innerJoin(categorySchema, eq(categorySchema.id, transactionSchema.categoryId))

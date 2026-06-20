@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { OperationResult } from '@shared/core/contracts';
 import { ICoreUserData } from '@server-core/data/user-data';
-import { ApiHandler } from '@server-core/api-handler';
+import { OperationHandler } from '@server-core/operation-handler';
 import { IAppLogger } from '@server-core/logger';
 import { Result } from '@server-core/utility';
 import { AuthController } from './auth-controller';
@@ -17,7 +17,7 @@ type AuthRequest = {
 export function createAuthRouter(userData: ICoreUserData, logger: IAppLogger, requireAuthMiddleware: any, resolveUserMiddleware: any) {
     const router = Router();
     const controller = new AuthController(userData);
-    const handler = new ApiHandler(logger);
+    const handler = new OperationHandler(logger);
 
     router.post('/login', (req, res) => {
         handler.execute(req, res, 'login', async (context) => {

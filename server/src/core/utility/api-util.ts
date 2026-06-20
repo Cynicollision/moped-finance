@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { OperationResult } from '@shared/core/contracts';
 import { OperationStatus } from '@shared/core/enum';
 import { User } from '@shared/core/types';
-import { Result } from './result-util';
+import { Result } from './result-factory';
 
 export class ApiUtil {
 
@@ -47,44 +47,43 @@ export class ApiUtil {
                 statusCode = 400;
                 break;
             case OperationStatus.Unauthorized:
-                statusCode = 401;
+                statusCode = 401; // TODO not used?
                 break;
             case OperationStatus.Forbidden:
                 statusCode = 403; // TODO not used?
                 break;
             case OperationStatus.NotFound:
-                statusCode = 404;
+                statusCode = 404; // TODO not used?
                 break;
             case OperationStatus.UnhandledError:
             default:
-                statusCode = 500;
+                statusCode = 500; // TODO not used
                 break;
         }
 
-        res.status(statusCode).json(result);
+        if (result.success && result.file) {
+            res.setHeader('Content-Type', result.file.contentType);
+            res.attachment(result.file.fileName);
+            res.send(result.data);
+        }
+        else {
+            res.status(statusCode).json(result);
+        }
 
         return result;
     }
 
-    // public static success<T>(res: Response, data?: T): OperationResult<T> {
-    //     return this.sendResult(res, OperationResult.success(data));
+    // public static unauthorized<T>(res: Response): OperationResult<T> {
+    //     return this.sendResult(res, Result.unauthorized());
     // }
-
-    public static badRequest<T>(res: Response, message: string): OperationResult<T> {
-        return this.sendResult(res, Result.userError(message));
-    }
-
-    public static unauthorized<T>(res: Response): OperationResult<T> {
-        return this.sendResult(res, Result.unauthorized());
-    }
 
     // public static forbidden<T>(res: Response, message: string = 'Access denied'): OperationResult<T> {
     //     return this.sendResult(res, OperationResult.forbidden(message));
     // }
 
-    public static notFound<T>(req: Request, res: Response): OperationResult<T> {
-        return this.sendResult(res, Result.notFound(`${req.originalUrl} not found.`));
-    }
+    // public static notFound<T>(req: Request, res: Response): OperationResult<T> {
+    //     return this.sendResult(res, Result.notFound(`${req.originalUrl} not found.`));
+    // }
 
     public static internalError<T>(res: Response, error: unknown): OperationResult<T> {
         return this.sendResult(res, Result.internalError('An unexpected error occurred'));

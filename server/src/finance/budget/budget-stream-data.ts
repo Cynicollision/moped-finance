@@ -8,10 +8,6 @@ import { budgetStreamSchema } from './budget-stream-schema';
 
 export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStream> {
     retrieveAll(userId: string): Promise<BudgetStream[]>;
-    retrieveSingle(id: string): Promise<BudgetStream | null>;
-    delete(id: string): Promise<boolean>;
-    insert(stream: BudgetStream): Promise<BudgetStream>;
-    update(stream: BudgetStream): Promise<BudgetStream | null>;
 }
 
 function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect): BudgetStream {
@@ -36,14 +32,16 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
     }
 
     public async retrieveAll(userId: string): Promise<BudgetStream[]> {
-        const rows = await this.db.select().from(budgetStreamSchema)
+        const rows = await this.db.select()
+            .from(budgetStreamSchema)
             .where(eq(budgetStreamSchema.userId, userId));
 
         return rows.map(mapRowToBudgetStream);
     }
 
     public async retrieveSingle(id: string): Promise<BudgetStream | null> {
-        const rows = await this.db.select().from(budgetStreamSchema)
+        const rows = await this.db.select()
+            .from(budgetStreamSchema)
             .where(eq(budgetStreamSchema.id, id));
 
         if (rows.length === 0) {

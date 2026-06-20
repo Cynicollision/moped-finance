@@ -39,7 +39,7 @@ export class AccountController {
 
     public async createAccount(userId: string, newAccount: NewEntity<Account>): Promise<OperationResult<Account>> {
         const account = FinanceEntityFactory.createAccount(userId, newAccount);
-        const created = await this.accountData.create(account);
+        const created = await this.accountData.insert(account);
         return Result.successCreated(created);
     }
 
@@ -105,17 +105,21 @@ export class AccountController {
         return Result.success({ message: 'Sync account logic stub' });
     }
 
-    public async exportBalanceHistory(userId: string, accountId: string): Promise<OperationResult<any>> {
+    public async exportBalanceHistory(userId: string, accountId: string): Promise<OperationResult<string>> {
         const account = await this.accountData.retrieveSingle(accountId);
 
         if (!account || !ResourceAccess.validate(userId, account)) {
             return Result.userErrorNotFound();
         }
 
+        const accountName = account.name?.replace(/[^a-zA-Z0-9]/g, '-') || '';
+        const timestamp = DateTimeUtil.nowToISOSafeFilename();
+        const fileName = `Balances_${accountName}_${timestamp}.csv`;
+
         const history = await this.balanceHistoryData.exportSearch(accountId);
 
         if (!history || history.length === 0) {
-            return Result.success('Date,AccountName,Balance\n');
+            return Result.successFile('text/csv', fileName, 'Date,AccountName,Balance\n');
         }
 
         const csv = Papa.unparse(history, {
@@ -123,7 +127,8 @@ export class AccountController {
             columns: ['Date', 'AccountName', 'Balance']
         });
 
-        return Result.success(csv);
+
+        return Result.successFile('text/csv', fileName, csv);
     }
 
     public async importBalanceHistory(userId: string, accountId: string, fileBuffer: Buffer | undefined, dryRun: boolean): Promise<OperationResult<BalanceImportResult>> {

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ICoreUserData } from '@server-core/data/user-data';
-import { ApiUtil } from '@server-core/utility';
+import { ApiUtil, Result } from '@server-core/utility';
 import { AuthController } from './auth-controller';
 
 export function createAuthMiddleware(userData: ICoreUserData) {
@@ -30,7 +30,7 @@ export function createAuthMiddleware(userData: ICoreUserData) {
             next();
         }
         else {
-            ApiUtil.unauthorized(res);
+            ApiUtil.sendResult(res, Result.unauthorized());
         }
     };
 

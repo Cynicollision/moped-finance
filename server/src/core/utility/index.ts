@@ -1,4 +1,4 @@
 export { ApiUtil } from './api-util';
 export { DateTimeUtil } from './date-time-util';
 export { CoreEntityIdPrefix, EntityIdUtil } from './entity-id';
-export { Result } from './result-util';
+export { Result } from './result-factory';

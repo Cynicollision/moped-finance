@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ApiHandler } from '@server-core/api-handler';
+import { OperationHandler } from '@server-core/operation-handler';
 import { IAppLogger } from '@server-core/logger';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { CategoryController } from './category-controller';
@@ -11,7 +11,7 @@ import { createCategoryGroupSchema, updateCategoryGroupSchema } from './category
 export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanceCategoryData, groupsData: IFinanceCategoryGroupData) {
     const router = Router();
     const controller = new CategoryController(logger, categoriesData, groupsData);
-    const handler = new ApiHandler(logger);
+    const handler = new OperationHandler(logger);
     const categoryValidator = new RequestSchemaValidator(logger, 'Category');
     const groupValidator = new RequestSchemaValidator(logger, 'CategoryGroup');
 

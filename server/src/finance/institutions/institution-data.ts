@@ -8,9 +8,6 @@ import { institutionSchema } from './institution-schema';
 
 export interface IFinanceInstitutionData extends IOwnedResourceData<Institution> {
     retrieveAll(userId: string): Promise<Institution[]>;
-    delete(id: string): Promise<boolean>;
-    insert(institution: Institution): Promise<Institution>;
-    update(institution: Institution): Promise<Institution | null>;
 }
 
 function mapRowToInstitution(row: typeof institutionSchema.$inferSelect): Institution {
@@ -31,14 +28,16 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
     }
 
     public async retrieveAll(userId: string): Promise<Institution[]> {
-        const rows = await this.db.select().from(institutionSchema)
+        const rows = await this.db.select()
+            .from(institutionSchema)
             .where(eq(institutionSchema.userId, userId));
 
         return rows.map(mapRowToInstitution);
     }
 
     public async retrieveSingle(id: string): Promise<Institution | null> {
-        const rows = await this.db.select().from(institutionSchema)
+        const rows = await this.db.select()
+            .from(institutionSchema)
             .where(eq(institutionSchema.id, id));
 
         if (rows.length === 0) {

@@ -54,13 +54,14 @@ export class CoreUserData implements ICoreUserData {
     }
 
     public async retrieveSingle(id: string): Promise<User | null> {
-        const rows = await this.db.select({
-            id: userSchema.id,
-            createdAt: userSchema.createdAt,
-            updatedAt: userSchema.updatedAt,
-            username: userSchema.username,
-            displayName: userSchema.displayName
-        })
+        const rows = await this.db
+            .select({
+                id: userSchema.id,
+                createdAt: userSchema.createdAt,
+                updatedAt: userSchema.updatedAt,
+                username: userSchema.username,
+                displayName: userSchema.displayName
+            })
             .from(userSchema)
             .where(eq(userSchema.id, id));
 
@@ -71,14 +72,15 @@ export class CoreUserData implements ICoreUserData {
     }
 
     public async retrieveByUsername(username: string): Promise<UserWithPassword | null> {
-        const rows = await this.db.select({
-            id: userSchema.id,
-            createdAt: userSchema.createdAt,
-            updatedAt: userSchema.updatedAt,
-            username: userSchema.username,
-            passwordHash: userSchema.passwordHash,
-            displayName: userSchema.displayName
-        })
+        const rows = await this.db
+            .select({
+                id: userSchema.id,
+                createdAt: userSchema.createdAt,
+                updatedAt: userSchema.updatedAt,
+                username: userSchema.username,
+                passwordHash: userSchema.passwordHash,
+                displayName: userSchema.displayName
+            })
             .from(userSchema)
             .where(eq(userSchema.username, username));
 

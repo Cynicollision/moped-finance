@@ -4,9 +4,9 @@ import { HistoryTimeframe, OperationStatus, SortDirection } from '@shared/core/e
 import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
-import { ApiHandler } from '@server-core/api-handler';
+import { OperationHandler } from '@server-core/operation-handler';
 import { IAppLogger } from '@server-core/logger';
-import { DateTimeUtil, ApiUtil } from '@server-core/utility';
+import { DateTimeUtil } from '@server-core/utility';
 import { RequestSchemaValidator } from '@server-core/validation';
 import { IFinanceCategoryData } from './../categories';
 import { IFinanceTransactionData } from './../transactions';
@@ -20,7 +20,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAccountData, balanceHistoryData: IFinanceBalanceHistoryData, categoriesData: IFinanceCategoryData, transactionData: IFinanceTransactionData) {
     const router = Router();
     const controller = new AccountController(logger, accountData, balanceHistoryData, transactionData);
-    const handler = new ApiHandler(logger);
+    const handler = new OperationHandler(logger);
     const validator = new RequestSchemaValidator(logger, 'Account');
 
     router.get('/', (req, res) => {
@@ -106,27 +106,10 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
         });
     });
 
-    router.get('/:id/export-balances', validator.id(), async (req, res) => {
-        // TODO needs to use handler
-        const userId = ApiUtil.getUserId(req);
-        logger.info(userId, 'exportBalanceHistory', 'Starting balance history export');
-        try {
-            const result = await controller.exportBalanceHistory(userId, req.params.id);
-
-            if (result.status === OperationStatus.Success) {
-                const timestamp = new Date().toISOString().substring(0, 10);
-                res.setHeader('Content-Type', 'text/csv');
-                res.attachment(`Balances_${timestamp}.csv`);
-                return res.send(result.data);
-            }
-            else {
-                return ApiUtil.sendResult(res, result);
-            }
-        }
-        catch (error: any) {
-            logger.error(userId, 'exportBalanceHistory', `Error: ${error.message || error}`);
-            return ApiUtil.internalError(res, error);
-        }
+    router.get('/:id/export-balances', validator.id(), (req, res) => {
+        handler.execute(req, res, 'exportBalanceHistory', (context) => {
+            return controller.exportBalanceHistory(context.userId!, req.params.id);
+        });
     });
 
     router.post('/:id/import-balances', validator.id(), upload.single('file'), (req, res) => {
