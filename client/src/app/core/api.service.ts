@@ -1,7 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { OperationResult } from '@shared/core/contracts';
 import { Environment } from './../../environments/environment';
 import { LoadingService } from './loading/loading.service';
 import { NotificationService } from './notification.service';
@@ -23,25 +22,21 @@ export class ApiService {
             return 'Network or server error encountered.';
         }
         if (error.status >= 400 && error.status < 500) {
-            const opResult = error.error as OperationResult<any>;
-            if (opResult?.error?.message) {
-                return opResult.error.message;
-            } else if (typeof error.error === 'string') {
+            const errObj = error.error;
+            if (errObj?.message) {
+                return errObj.message;
+            }
+            else if (typeof error.error === 'string') {
                 return error.error;
             }
         }
         return error.message || `${error.status} - ${error.statusText}`;
     }
 
-    private async handleRequest<T>(request: Promise<OperationResult<T>>): Promise<T | undefined> {
+    private async handleRequest<T>(request: Promise<T>): Promise<T | undefined> {
         try {
             const result = await this.loader.withLoading(request);
-            if (result && result.success === false) {
-                const errMsg = result.error?.message || 'Operation failed';
-                this.notificationService.error(errMsg);
-                return undefined;
-            }
-            return result?.data as T;
+            return result;
         }
         catch (error: any) {
             this.notificationService.error(this.getErrorMessage(error));
@@ -51,33 +46,29 @@ export class ApiService {
 
     get<T>(path: string, params?: HttpParams | { [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean> }): Promise<T | undefined> {
         return this.handleRequest<T>(
-            firstValueFrom(this.http.get<OperationResult<T>>(`${this.baseUrl}/${path}`, { params, withCredentials: true }))
+            firstValueFrom(this.http.get<T>(`${this.baseUrl}/${path}`, { params, withCredentials: true }))
         );
     }
 
     post<T>(path: string, body: any): Promise<T | undefined> {
         return this.handleRequest<T>(
-            firstValueFrom(this.http.post<OperationResult<T>>(`${this.baseUrl}/${path}`, body, { withCredentials: true }))
+            firstValueFrom(this.http.post<T>(`${this.baseUrl}/${path}`, body, { withCredentials: true }))
         );
     }
 
     put<T>(path: string, body: any): Promise<T | undefined> {
         return this.handleRequest<T>(
-            firstValueFrom(this.http.put<OperationResult<T>>(`${this.baseUrl}/${path}`, body, { withCredentials: true }))
+            firstValueFrom(this.http.put<T>(`${this.baseUrl}/${path}`, body, { withCredentials: true }))
         );
     }
 
     async delete(path: string): Promise<boolean> {
         try {
-            const request = firstValueFrom(this.http.delete<OperationResult<void>>(`${this.baseUrl}/${path}`, { withCredentials: true }));
-            const response = await this.loader.withLoading(request);
-            if (response && response.success === false) {
-                const errMsg = response.error?.message || 'Operation failed';
-                this.notificationService.error(errMsg);
-                return false;
-            }
+            const request = firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${path}`, { withCredentials: true }));
+            await this.loader.withLoading(request);
             return true;
-        } catch (error: any) {
+        }
+        catch (error: any) {
             this.notificationService.error(this.getErrorMessage(error));
             return false;
         }

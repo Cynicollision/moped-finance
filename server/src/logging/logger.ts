@@ -98,6 +98,6 @@ export class AppLogger implements IAppLogger {
 
     private formatForConsole(entry: LogEntry): string {
         const timestamp = entry.createdAt.toISOString();
-        return `[${timestamp}] [${entry.level.toUpperCase()}] [${entry.context}] [${entry.contextUserId}]: ${entry.message}`;
+        return `[${timestamp}] [${entry.level.toUpperCase()}] [${entry.context}] [User: ${entry.contextUserId}]: ${entry.message}`;
     }
 }

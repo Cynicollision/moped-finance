@@ -50,13 +50,11 @@ describe('Account Routes', () => {
     });
 
     afterAll(async () => {
-        if (pglite) {
-            await pglite.close();
-        }
+        await TestDatabaseUtil.destroyMockDatabase(pglite);
     });
 
     beforeEach(async () => {
-        await pglite.exec('TRUNCATE finance.accounts, finance.balance_history, finance.transactions, finance.categories, finance.category_groups, finance.institutions CASCADE;');
+        await TestDatabaseUtil.clearFinanceData(pglite);
 
         const inst = await institutionData.insert(FinanceEntityFactory.createInstitution(testUserId, { id: 'inst1', name: 'Test Bank' }));
         testInstitutionId = inst.id!;
@@ -100,9 +98,8 @@ describe('Account Routes', () => {
             const response = await request(app).get('/accounts');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(2);
-            expect(response.body.data.map((a: any) => a.id)).toEqual(expect.arrayContaining([acc1.id, acc2.id]));
+            expect(response.body.length).toBe(2);
+            expect(response.body.map((a: any) => a.id)).toEqual(expect.arrayContaining([acc1.id, acc2.id]));
         });
     });
 
@@ -135,15 +132,13 @@ describe('Account Routes', () => {
             const response = await request(app).get('/accounts/total-value-history?type=NetWorth&timeframe=PastThirtyDays');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBeGreaterThan(0);
-            expect(response.body.data[0].amount).toBe(2500.00);
+            expect(response.body.length).toBeGreaterThan(0);
+            expect(response.body[0].amount).toBe(2500.00);
         });
 
         it('should use default timeframe and asOfDate when not provided', async () => {
             const response = await request(app).get('/accounts/total-value-history');
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
         });
     });
 
@@ -165,17 +160,15 @@ describe('Account Routes', () => {
             const response = await request(app).get(`/accounts/${acc1.id}`);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.id).toBe(acc1.id);
-            expect(response.body.data.name).toBe('Checking');
+            expect(response.body.id).toBe(acc1.id);
+            expect(response.body.name).toBe('Checking');
         });
 
         it('should return 404 when account is not found', async () => {
             const response = await request(app).get('/accounts/missing');
 
             expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('not found');
+            expect(response.body.message).toContain('not found');
         });
     });
 
@@ -198,11 +191,10 @@ describe('Account Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(201);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('New Account');
-            expect(response.body.data.category).toBe(AccountCategory.Asset);
+            expect(response.body.name).toBe('New Account');
+            expect(response.body.category).toBe(AccountCategory.Asset);
 
-            const account = await accountData.retrieveSingle(response.body.data.id);
+            const account = await accountData.retrieveSingle(response.body.id);
             expect(account).not.toBeNull();
             expect(account?.name).toBe('New Account');
         });
@@ -219,8 +211,7 @@ describe('Account Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(400);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('category:');
+            expect(response.body.message).toContain('category:');
         });
     });
 
@@ -249,8 +240,7 @@ describe('Account Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('Updated Checking');
+            expect(response.body.name).toBe('Updated Checking');
 
             const updatedAccount = await accountData.retrieveSingle(acc1.id!);
             expect(updatedAccount?.name).toBe('Updated Checking');
@@ -274,8 +264,7 @@ describe('Account Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('not found');
+            expect(response.body.message).toContain('not found');
         });
     });
 
@@ -306,8 +295,7 @@ describe('Account Routes', () => {
             const response = await request(app).delete('/accounts/unowned-acc');
 
             expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('not found');
+            expect(response.body.message).toContain('not found');
         });
     });
 
@@ -334,9 +322,8 @@ describe('Account Routes', () => {
             const response = await request(app).get(`/accounts/${acc1.id}/balance-history`);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(1);
-            expect(response.body.data[0].balance).toBe(500.00);
+            expect(response.body.length).toBe(1);
+            expect(response.body[0].balance).toBe(500.00);
         });
 
         it('should parse timeframe and asOfDate query parameters correctly', async () => {
@@ -361,7 +348,6 @@ describe('Account Routes', () => {
                 });
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
         });
     });
 
@@ -395,10 +381,9 @@ describe('Account Routes', () => {
             const response = await request(app).get(`/accounts/${acc1.id}/transactions`);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(1);
-            expect(response.body.data[0].amount).toBe(50.00);
-            expect(response.body.data[0].merchant).toBe('Store');
+            expect(response.body.length).toBe(1);
+            expect(response.body[0].amount).toBe(50.00);
+            expect(response.body[0].merchant).toBe('Store');
         });
 
         it('should pass search options to transaction search properly', async () => {
@@ -427,7 +412,6 @@ describe('Account Routes', () => {
                 });
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
         });
     });
 
@@ -482,8 +466,7 @@ describe('Account Routes', () => {
                 .attach('file', Buffer.from(csvContent), 'import.csv');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.createdCount).toBe(1);
+            expect(response.body.createdCount).toBe(1);
 
             const allHistory = await pglite.query('SELECT * FROM finance.balance_history');
             expect(allHistory.rows.length).toBeGreaterThan(0);
@@ -510,8 +493,7 @@ describe('Account Routes', () => {
                 .attach('file', Buffer.from(csvContent), 'import.csv');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.createdCount).toBe(2);
+            expect(response.body.createdCount).toBe(2);
 
             const allHistory = await pglite.query('SELECT * FROM finance.balance_history');
             expect(allHistory.rows.length).toBe(0);
@@ -538,9 +520,8 @@ describe('Account Routes', () => {
                 .attach('file', Buffer.from(csvContent), 'import.csv');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.failedRowMessages.length).toBe(2);
-            expect(response.body.data.createdCount).toBe(0);
+            expect(response.body.failedRowMessages.length).toBe(2);
+            expect(response.body.createdCount).toBe(0);
         });
     });
 
@@ -563,8 +544,7 @@ describe('Account Routes', () => {
                 .post(`/accounts/${acc1.id}/sync`);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.message).toContain('Sync account logic stub');
+            expect(response.body.message).toContain('Sync account logic stub');
         });
     });
 });

@@ -1,1 +1,0 @@
-export type { OperationResult } from './operation-result';

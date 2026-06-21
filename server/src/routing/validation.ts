@@ -17,7 +17,7 @@ export class RequestSchemaValidator {
                 const errorMessage = `Invalid ${this.schemaName} request params: ${messages}`;
 
                 this.logger.warn(userId, errorMessage);
-                res.status(400).json(Result.userError(errorMessage));
+                res.status(400).json(Result.userError(errorMessage).error);
                 return;
             }
             next();
@@ -37,7 +37,7 @@ export class RequestSchemaValidator {
                 const errorMessage = `Invalid ${this.schemaName} request body: ${messages}`;
 
                 this.logger.warn(userId, errorMessage);
-                res.status(400).json(Result.userError(errorMessage));
+                res.status(400).json(Result.userError(errorMessage).error);
                 return;
             }
             req.body = result.data;

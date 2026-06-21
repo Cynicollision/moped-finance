@@ -1,7 +1,6 @@
 import { Router } from 'express';
-import { OperationResult } from '@shared/core/contracts';
 import { IAppLogger } from '@server/logging';
-import { OperationDefinition, OperationHandler, Result } from '@server/routing';
+import { OperationDefinition, OperationHandler, OperationResult, Result } from '@server/routing';
 import { AuthController } from './auth-controller';
 import { AuthMiddleware } from './auth-middleware';
 

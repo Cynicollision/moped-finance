@@ -41,13 +41,11 @@ describe('Budget Stream Routes', () => {
     });
 
     afterAll(async () => {
-        if (pglite) {
-            await pglite.close();
-        }
+        await TestDatabaseUtil.destroyMockDatabase(pglite);
     });
 
     beforeEach(async () => {
-        await pglite.exec('TRUNCATE finance.category_groups, finance.categories, finance.budget_streams CASCADE;');
+        await TestDatabaseUtil.clearFinanceData(pglite);
 
         const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'General' }));
         const category = await categoriesData.insert(FinanceEntityFactory.createCategory(testUserId, { groupId: group.id, name: 'Misc', icon: 'star', isActive: true }));
@@ -74,9 +72,8 @@ describe('Budget Stream Routes', () => {
             const response = await request(app).get('/budget-streams');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(2);
-            expect(response.body.data.map((s: any) => s.id)).toEqual(expect.arrayContaining([stream1.id, stream2.id]));
+            expect(response.body.length).toBe(2);
+            expect(response.body.map((s: any) => s.id)).toEqual(expect.arrayContaining([stream1.id, stream2.id]));
         });
     });
 
@@ -95,10 +92,9 @@ describe('Budget Stream Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(201);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('Groceries');
+            expect(response.body.name).toBe('Groceries');
 
-            const dbStream = await budgetStreamData.retrieveSingle(response.body.data.id);
+            const dbStream = await budgetStreamData.retrieveSingle(response.body.id);
             expect(dbStream).not.toBeNull();
             expect(dbStream?.name).toBe('Groceries');
         });
@@ -116,8 +112,7 @@ describe('Budget Stream Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(400);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('name:');
+            expect(response.body.message).toContain('name:');
         });
     });
 
@@ -138,8 +133,7 @@ describe('Budget Stream Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.amount).toBe(180.00);
+            expect(response.body.amount).toBe(180.00);
 
             const dbStream = await budgetStreamData.retrieveSingle(stream.id!);
             expect(dbStream?.amount).toBe(180.00);

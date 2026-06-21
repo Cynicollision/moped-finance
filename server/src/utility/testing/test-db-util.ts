@@ -43,4 +43,24 @@ export class TestDatabaseUtil {
         await this.seedUser(dbClient, user, 'mock-hash');
         return user;
     }
+
+    public static async destroyMockDatabase(pglite: PGlite): Promise<void> {
+        try {
+            if (pglite && !pglite.closed) {
+                // Allow pending operations to drain to prevent worker hangs in Jest
+                await new Promise(resolve => setTimeout(resolve, 50));
+                await pglite.close();
+            }
+        } catch (error) {
+            console.error('Failed to close mock database:', error);
+        }
+    }
+
+    public static async clearFinanceData(pglite: PGlite): Promise<void> {
+        await pglite.exec('TRUNCATE finance.institutions, finance.accounts, finance.category_groups, finance.categories, finance.transactions, finance.budget_streams, finance.balance_history CASCADE;');
+    }
+
+    public static async clearCoreData(pglite: PGlite): Promise<void> {
+        await pglite.exec('DELETE FROM core.users;');
+    }
 }

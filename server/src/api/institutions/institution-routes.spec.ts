@@ -31,13 +31,11 @@ describe('Institution Routes', () => {
     });
 
     afterAll(async () => {
-        if (pglite) {
-            await pglite.close();
-        }
+        await TestDatabaseUtil.destroyMockDatabase(pglite);
     });
 
     beforeEach(async () => {
-        await pglite.exec('TRUNCATE finance.institutions CASCADE;');
+        await TestDatabaseUtil.clearFinanceData(pglite);
     });
 
     describe('GET /institutions', () => {
@@ -48,9 +46,8 @@ describe('Institution Routes', () => {
             const response = await request(app).get('/institutions');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(2);
-            expect(response.body.data.map((i: any) => i.id)).toEqual(expect.arrayContaining([inst1.id, inst2.id]));
+            expect(response.body.length).toBe(2);
+            expect(response.body.map((i: any) => i.id)).toEqual(expect.arrayContaining([inst1.id, inst2.id]));
         });
     });
 
@@ -61,17 +58,15 @@ describe('Institution Routes', () => {
             const response = await request(app).get(`/institutions/${institution.id}`);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.id).toBe(institution.id);
-            expect(response.body.data.name).toBe('Chase');
+            expect(response.body.id).toBe(institution.id);
+            expect(response.body.name).toBe('Chase');
         });
 
         it('should return 400 when institution is not found', async () => {
             const response = await request(app).get('/institutions/missing');
 
             expect(response.status).toBe(400);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('not found');
+            expect(response.body.message).toContain('not found');
         });
     });
 
@@ -86,10 +81,9 @@ describe('Institution Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(201);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('Chase');
+            expect(response.body.name).toBe('Chase');
 
-            const inst = await institutionsData.retrieveSingle(response.body.data.id);
+            const inst = await institutionsData.retrieveSingle(response.body.id);
             expect(inst).not.toBeNull();
             expect(inst?.name).toBe('Chase');
         });
@@ -102,9 +96,8 @@ describe('Institution Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(400);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('name:');
-            expect(response.body.error.message).toContain('expected string');
+            expect(response.body.message).toContain('name:');
+            expect(response.body.message).toContain('expected string');
         });
     });
 
@@ -121,8 +114,7 @@ describe('Institution Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('Updated Chase');
+            expect(response.body.name).toBe('Updated Chase');
 
             const dbInst = await institutionsData.retrieveSingle(institution.id!);
             expect(dbInst?.name).toBe('Updated Chase');
@@ -139,8 +131,7 @@ describe('Institution Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('not found or access denied');
+            expect(response.body.message).toContain('not found or access denied');
         });
     });
 
@@ -162,8 +153,7 @@ describe('Institution Routes', () => {
             const response = await request(app).delete(`/institutions/${institutionId}`);
 
             expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('not found or access denied');
+            expect(response.body.message).toContain('not found or access denied');
         });
     });
 
@@ -175,8 +165,7 @@ describe('Institution Routes', () => {
                 .post(`/institutions/${institution.id}/sync`);
 
             expect(response.status).toBe(201);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.message).toContain('Sync institution logic stub');
+            expect(response.body.message).toContain('Sync institution logic stub');
         });
     });
 });

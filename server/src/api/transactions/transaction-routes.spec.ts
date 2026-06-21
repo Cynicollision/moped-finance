@@ -47,13 +47,11 @@ describe('Transaction Routes', () => {
     });
 
     afterAll(async () => {
-        if (pglite) {
-            await pglite.close();
-        }
+        await TestDatabaseUtil.destroyMockDatabase(pglite);
     });
 
     beforeEach(async () => {
-        await pglite.exec('TRUNCATE finance.institutions, finance.accounts, finance.category_groups, finance.categories, finance.transactions CASCADE;');
+        await TestDatabaseUtil.clearFinanceData(pglite);
 
         const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Bank' }));
         const account = await accountsData.insert(FinanceEntityFactory.createAccount(testUserId, {
@@ -76,9 +74,8 @@ describe('Transaction Routes', () => {
             const response = await request(app).get('/transactions');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(2);
-            expect(response.body.data.map((t: any) => t.id)).toEqual(expect.arrayContaining([txn1.id, txn2.id]));
+            expect(response.body.length).toBe(2);
+            expect(response.body.map((t: any) => t.id)).toEqual(expect.arrayContaining([txn1.id, txn2.id]));
         });
 
         it('should parse and pass all search options correctly', async () => {
@@ -105,9 +102,8 @@ describe('Transaction Routes', () => {
                 });
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(1);
-            expect(response.body.data[0].id).toBe(txn.id);
+            expect(response.body.length).toBe(1);
+            expect(response.body[0].id).toBe(txn.id);
         });
     });
 
@@ -126,11 +122,10 @@ describe('Transaction Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(201);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.merchant).toBe('Groceries');
-            expect(response.body.data.amount).toBe(300);
+            expect(response.body.merchant).toBe('Groceries');
+            expect(response.body.amount).toBe(300);
 
-            const dbTxn = await transactionsData.retrieveSingle(response.body.data.id);
+            const dbTxn = await transactionsData.retrieveSingle(response.body.id);
             expect(dbTxn).not.toBeNull();
             expect(dbTxn?.merchant).toBe('Groceries');
         });
@@ -148,8 +143,7 @@ describe('Transaction Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(400);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('amount');
+            expect(response.body.message).toContain('amount');
         });
     });
 
@@ -161,8 +155,7 @@ describe('Transaction Routes', () => {
             const response = await request(app).get('/transactions/merchants');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data).toEqual(expect.arrayContaining(['Amazon', 'Walmart']));
+            expect(response.body).toEqual(expect.arrayContaining(['Amazon', 'Walmart']));
         });
     });
 
@@ -173,10 +166,9 @@ describe('Transaction Routes', () => {
             const response = await request(app).get('/transactions/cashflow?period=Monthly');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(1);
-            expect(response.body.data[0].categoryId).toBe(testCategoryId);
-            expect(response.body.data[0].amount).toBe(500);
+            expect(response.body.length).toBe(1);
+            expect(response.body[0].categoryId).toBe(testCategoryId);
+            expect(response.body[0].amount).toBe(500);
         });
     });
 
@@ -187,15 +179,13 @@ describe('Transaction Routes', () => {
             const response = await request(app).get(`/transactions/${txn.id}`);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.id).toBe(txn.id);
+            expect(response.body.id).toBe(txn.id);
         });
 
         it('should return 404 when transaction is not found', async () => {
             const response = await request(app).get('/transactions/missing-id');
 
             expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
         });
     });
 
@@ -214,9 +204,8 @@ describe('Transaction Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.amount).toBe(120);
-            expect(response.body.data.merchant).toBe('Updated Merchant');
+            expect(response.body.amount).toBe(120);
+            expect(response.body.merchant).toBe('Updated Merchant');
         });
 
         it('should return 404 when update fails because resource does not exist or user lacks ownership', async () => {
@@ -225,8 +214,7 @@ describe('Transaction Routes', () => {
                 .send({ amount: 100, merchant: 'Updated', date: '2026-06-06', accountId: testAccountId, categoryId: testCategoryId, isHidden: false, isSplit: false });
 
             expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('not found or access denied');
+            expect(response.body.message).toContain('not found or access denied');
         });
     });
 
@@ -246,8 +234,7 @@ describe('Transaction Routes', () => {
             const response = await request(app).delete('/transactions/missing');
 
             expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('not found or access denied');
+            expect(response.body.message).toContain('not found or access denied');
         });
     });
 
@@ -273,9 +260,8 @@ describe('Transaction Routes', () => {
                 .attach('file', Buffer.from(csvContent), 'import.csv');
 
             expect(response.status).toBe(201);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.createdCount).toBe(1);
-            expect(response.body.data.failedRowMessages.length).toBe(0);
+            expect(response.body.createdCount).toBe(1);
+            expect(response.body.failedRowMessages.length).toBe(0);
         });
 
         it('should perform a dry run without saving when dryRun=true', async () => {
@@ -286,8 +272,7 @@ describe('Transaction Routes', () => {
                 .attach('file', Buffer.from(csvContent), 'import.csv');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.createdCount).toBe(1);
+            expect(response.body.createdCount).toBe(1);
 
             const txns = await transactionsData.search(testUserId, { limit: 10, offset: 0, sortKey: TransactionsSortKey.Date, sortDirection: SortDirection.Desc, includeHidden: true });
             expect(txns.length).toBe(0);
@@ -301,9 +286,8 @@ describe('Transaction Routes', () => {
                 .attach('file', Buffer.from(csvContent), 'import.csv');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.failedRowMessages.length).toBe(1);
-            expect(response.body.data.createdCount).toBe(0);
+            expect(response.body.failedRowMessages.length).toBe(1);
+            expect(response.body.createdCount).toBe(0);
         });
     });
 });

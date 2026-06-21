@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { OperationResult } from '@shared/core/contracts';
 import { OperationStatus } from '@shared/core/enum'
 import { UserContext } from '@server/auth';
 import { IAppLogger } from '@server/logging';
@@ -8,6 +7,24 @@ import { Result } from './result-factory';
 export type OperationDefinition = {
     domain: string;
     operation: string;
+}
+
+export interface ResultFileMeta {
+    fileName: string;
+    contentType: string;
+}
+
+export interface OperationResult<T = void> {
+    success: boolean;
+    status: OperationStatus;
+    timestamp: string;
+    data?: T;
+    file?: ResultFileMeta;
+    error?: {
+        code: string;
+        message: string;
+        details?: unknown;
+    };
 }
 
 export class OperationContext {
@@ -39,8 +56,14 @@ export class OperationHandler {
 
         try {
             const result = await operation(context);
-            // TODO: check success and warn if not
-            this.logger.info(userId, 'Successfully completed operation', context);
+
+            if (!result.success) {
+                this.logger.warn(userId, `Operation failed: ${result.error?.message}`, context);
+            }
+            else {
+                this.logger.info(userId, 'Successfully completed operation', context);
+            }
+
             return this.sendResult(res, result);
         }
         catch (error: any) {
@@ -79,8 +102,16 @@ export class OperationHandler {
             res.attachment(result.file.fileName);
             res.send(result.data);
         }
+        else if (result.success) {
+            if (result.data !== undefined) {
+                res.status(statusCode).json(result.data);
+            }
+            else {
+                res.status(statusCode).send();
+            }
+        }
         else {
-            res.status(statusCode).json(result);
+            res.status(statusCode).json(result.error);
         }
 
         return result;

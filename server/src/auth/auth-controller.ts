@@ -1,8 +1,7 @@
 import * as bcrypt from 'bcrypt';
-import { OperationResult } from '@shared/core/contracts';
 import { User } from '@shared/core/types';
 import { CoreEntityIdPrefix, EntityId } from '@server/data';
-import { Result } from '@server/routing';
+import { OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IUserData } from './user-data';
 

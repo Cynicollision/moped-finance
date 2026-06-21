@@ -1,12 +1,11 @@
 import Papa from 'papaparse';
-import { OperationResult } from '@shared/core/contracts';
 import { NewEntity } from '@shared/core/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
-import { OperationContext, Result } from '@server/routing';
+import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';

@@ -1,9 +1,8 @@
-import { OperationResult } from '@shared/core/contracts';
 import { NewEntity } from '@shared/core/types';
 import { BudgetStream } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
-import { OperationContext, Result } from '@server/routing';
+import { OperationContext, OperationResult, Result } from '@server/routing';
 import { IFinanceBudgetStreamData } from './budget-stream-data';
 
 export class BudgetStreamController {

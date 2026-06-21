@@ -1,5 +1,4 @@
 import Papa from 'papaparse';
-import { OperationResult } from '@shared/core/contracts';
 import { NewEntity } from '@shared/core/types';
 import { HistoryTimeframe } from '@shared/core/enum';
 import { ValueHistoryType } from '@shared/finance/enum';
@@ -7,7 +6,7 @@ import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory
 import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
-import { OperationContext, Result } from '@server/routing';
+import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IFinanceTransactionData } from './../transactions';
 import { IFinanceAccountData } from './account-data';

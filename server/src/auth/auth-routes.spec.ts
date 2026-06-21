@@ -44,9 +44,7 @@ describe('Auth Routes', () => {
     });
 
     afterAll(async () => {
-        if (pglite) {
-            await pglite.close();
-        }
+        await TestDatabaseUtil.destroyMockDatabase(pglite);
     });
 
     // We will need an agent to retain session cookies between requests
@@ -54,7 +52,7 @@ describe('Auth Routes', () => {
 
     beforeEach(async () => {
         // Clear tables before each test
-        await pglite.exec('DELETE FROM core.users');
+        await TestDatabaseUtil.clearCoreData(pglite);
         agent = request.agent(app);
     });
 
@@ -72,8 +70,7 @@ describe('Auth Routes', () => {
             }
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.username).toBe('newuser');
+            expect(response.body.username).toBe('newuser');
 
             // Verify using data layer natively
             const user = await userData.retrieveByUsername('newuser');
@@ -87,7 +84,6 @@ describe('Auth Routes', () => {
             });
 
             expect(response.status).toBe(400);
-            expect(response.body.success).toBe(false);
 
             const user = await userData.retrieveByUsername('newuser');
             expect(user).toBeNull();
@@ -112,8 +108,7 @@ describe('Auth Routes', () => {
             });
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.username).toBe('loginuser');
+            expect(response.body.username).toBe('loginuser');
         });
 
         it('should fail login with invalid password', async () => {
@@ -123,8 +118,7 @@ describe('Auth Routes', () => {
             });
 
             expect(response.status).toBe(400);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('Invalid');
+            expect(response.body.message).toContain('Invalid');
         });
     });
 
@@ -145,7 +139,6 @@ describe('Auth Routes', () => {
             });
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
 
             // Test logging in with new password
             const newAgent = request.agent(app);
@@ -154,7 +147,6 @@ describe('Auth Routes', () => {
                 password: 'newpassword'
             });
             expect(loginRes.status).toBe(200);
-            expect(loginRes.body.success).toBe(true);
         });
 
         it('should fail to change password if old password is wrong', async () => {
@@ -164,8 +156,7 @@ describe('Auth Routes', () => {
             });
 
             expect(response.status).toBe(400);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('Invalid');
+            expect(response.body.message).toContain('Invalid');
         });
     });
 
@@ -179,15 +170,13 @@ describe('Auth Routes', () => {
 
             const response = await agent.get('/auth/me');
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.username).toBe('meuser');
+            expect(response.body.username).toBe('meuser');
         });
 
         it('should return null or not authenticated when not logged in', async () => {
             const response = await agent.get('/auth/me');
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data).toBeUndefined();
+            expect(response.body).toEqual({});
         });
     });
 
@@ -202,13 +191,13 @@ describe('Auth Routes', () => {
             expect(loginResponse.status).toBe(200);
 
             const meResponse = await agent.get('/auth/me');
-            expect(meResponse.body.data.username).toBe('logoutuser');
+            expect(meResponse.body.username).toBe('logoutuser');
 
             const logoutResponse = await agent.post('/auth/logout');
             expect(logoutResponse.status).toBe(200);
 
             const checkMeResponse = await agent.get('/auth/me');
-            expect(checkMeResponse.body.data).toBeUndefined();
+            expect(checkMeResponse.body).toEqual({});
         });
     });
 });

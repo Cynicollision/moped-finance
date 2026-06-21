@@ -35,13 +35,11 @@ describe('Category Routes', () => {
     });
 
     afterAll(async () => {
-        if (pglite) {
-            await pglite.close();
-        }
+        await TestDatabaseUtil.destroyMockDatabase(pglite);
     });
 
     beforeEach(async () => {
-        await pglite.exec('TRUNCATE finance.categories, finance.category_groups CASCADE;');
+        await TestDatabaseUtil.clearFinanceData(pglite);
     });
 
     // ---------------------------------------------------------
@@ -55,9 +53,8 @@ describe('Category Routes', () => {
             const response = await request(app).get('/categories/groups');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(2);
-            expect(response.body.data.map((g: any) => g.id)).toEqual(expect.arrayContaining([g1.id, g2.id]));
+            expect(response.body.length).toBe(2);
+            expect(response.body.map((g: any) => g.id)).toEqual(expect.arrayContaining([g1.id, g2.id]));
         });
     });
 
@@ -68,17 +65,15 @@ describe('Category Routes', () => {
             const response = await request(app).get(`/categories/groups/${group.id}`);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.id).toBe(group.id);
-            expect(response.body.data.name).toBe('Job');
+            expect(response.body.id).toBe(group.id);
+            expect(response.body.name).toBe('Job');
         });
 
         it('should return 404 when group not found', async () => {
             const response = await request(app).get('/categories/groups/missing');
 
             expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
-            expect(response.body.error.message).toContain('not found');
+            expect(response.body.message).toContain('not found');
         });
     });
 
@@ -92,11 +87,10 @@ describe('Category Routes', () => {
             const response = await request(app).post('/categories/groups').send(payload);
 
             expect(response.status).toBe(201);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('Housing');
-            expect(response.body.data.class).toBe(CategoryClass.Expense);
+            expect(response.body.name).toBe('Housing');
+            expect(response.body.class).toBe(CategoryClass.Expense);
 
-            const group = await groupsData.retrieveSingle(response.body.data.id);
+            const group = await groupsData.retrieveSingle(response.body.id);
             expect(group).not.toBeNull();
             expect(group?.name).toBe('Housing');
         });
@@ -110,8 +104,7 @@ describe('Category Routes', () => {
             const response = await request(app).put(`/categories/groups/${group.id}`).send(payload);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('New Name');
+            expect(response.body.name).toBe('New Name');
 
             const updated = await groupsData.retrieveSingle(group.id!);
             expect(updated?.name).toBe('New Name');
@@ -142,10 +135,9 @@ describe('Category Routes', () => {
             const response = await request(app).get('/categories');
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(1);
-            expect(response.body.data[0].id).toBe(category.id);
-            expect(response.body.data[0].name).toBe('Rent');
+            expect(response.body.length).toBe(1);
+            expect(response.body[0].id).toBe(category.id);
+            expect(response.body[0].name).toBe('Rent');
         });
     });
 
@@ -157,8 +149,7 @@ describe('Category Routes', () => {
             const response = await request(app).get(`/categories/${category.id}`);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.id).toBe(category.id);
+            expect(response.body.id).toBe(category.id);
         });
     });
 
@@ -176,10 +167,9 @@ describe('Category Routes', () => {
             const response = await request(app).post('/categories').send(payload);
 
             expect(response.status).toBe(201);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('Rent');
+            expect(response.body.name).toBe('Rent');
 
-            const category = await categoriesData.retrieveSingle(response.body.data.id);
+            const category = await categoriesData.retrieveSingle(response.body.id);
             expect(category).not.toBeNull();
             expect(category?.name).toBe('Rent');
         });
@@ -194,8 +184,7 @@ describe('Category Routes', () => {
             const response = await request(app).put(`/categories/${category.id}`).send(payload);
 
             expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('New Rent');
+            expect(response.body.name).toBe('New Rent');
 
             const updated = await categoriesData.retrieveSingle(category.id!);
             expect(updated?.name).toBe('New Rent');
