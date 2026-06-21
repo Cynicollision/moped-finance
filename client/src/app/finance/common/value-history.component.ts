@@ -104,12 +104,25 @@ export class FinanceValueHistoryComponent implements OnChanges {
         const type = this.selectedChartTypeSignal();
         const label = this.selectedChartLabel();
 
+        // Determine label format based on timeframe duration
+        const firstDate = new Date(ascendingData[0].date);
+        const lastDate = new Date(ascendingData[ascendingData.length - 1].date);
+        const diffDays = (lastDate.getTime() - firstDate.getTime()) / (1000 * 3600 * 24);
+        const isLongTimeframe = diffDays > 180; // More than 6 months
+
+        // Use Intl.DateTimeFormat for clean "Jun 12" displays
+        const shortFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
+        const shortMonthFormat = new Intl.DateTimeFormat('en-US', { month: 'short' });
+
         return {
             type: 'line',
             data: {
                 labels: ascendingData.map(d => {
                     const date = new Date(d.date);
-                    return `${date.getMonth() + 1}/${date.getDate()}`;
+                    if (isLongTimeframe) {
+                        return `${shortMonthFormat.format(date)} '${date.getFullYear().toString().slice(-2)}`;
+                    }
+                    return shortFormat.format(date);
                 }),
                 datasets: [
                     {
@@ -125,9 +138,15 @@ export class FinanceValueHistoryComponent implements OnChanges {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 elements: {
                     point: {
-                        radius: 0
+                        radius: 0,
+                        hitRadius: 10,
+                        hoverRadius: 4
                     }
                 },
                 plugins: {
@@ -135,8 +154,13 @@ export class FinanceValueHistoryComponent implements OnChanges {
                 },
                 scales: {
                     x: {
+                        grid: {
+                            display: false
+                        },
                         ticks: {
-                            maxTicksLimit: 20
+                            maxTicksLimit: window.innerWidth < 1000 ? 5 : 8,
+                            maxRotation: 0,
+                            autoSkip: true
                         }
                     },
                     y: {
@@ -149,9 +173,13 @@ export class FinanceValueHistoryComponent implements OnChanges {
                                 const sign = num < 0 ? '-' : '';
 
                                 if (absNum >= 1000000) {
-                                    return sign + '$' + (absNum / 1000000).toFixed(1) + 'M';
+                                    let formatted = (absNum / 1000000).toFixed(1);
+                                    if (formatted.endsWith('.0')) formatted = formatted.slice(0, -2);
+                                    return sign + '$' + formatted + 'M';
                                 } else if (absNum >= 1000) {
-                                    return sign + '$' + (absNum / 1000).toFixed(1) + 'K';
+                                    let formatted = (absNum / 1000).toFixed(1);
+                                    if (formatted.endsWith('.0')) formatted = formatted.slice(0, -2);
+                                    return sign + '$' + formatted + 'K';
                                 }
                                 return sign + '$' + absNum.toLocaleString();
                             }

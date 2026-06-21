@@ -36,14 +36,15 @@ export class ChartComponent implements OnInit, OnChanges, OnDestroy {
     @Input() width?: string;
 
     private chart: Chart | undefined;
+    private initialized = false;
 
     ngOnInit(): void {
+        this.initialized = true;
         this.createChart();
     }
 
     ngOnChanges(): void {
-        if (this.chart) {
-            this.chart.destroy();
+        if (this.initialized) {
             this.createChart();
         }
     }
@@ -55,11 +56,19 @@ export class ChartComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private createChart(): void {
-        if (!this.config) return;
+        if (!this.config || !this.initialized) return;
 
-        const ctx = this.chartCanvas.nativeElement.getContext('2d');
-        if (ctx) {
-            this.chart = new Chart(ctx, this.config);
-        }
+        // Use setTimeout to ensure the DOM is fully rendered and sized before Chart.js measures it
+        setTimeout(() => {
+            if (!this.chartCanvas) return; // Component might have been destroyed
+            
+            const ctx = this.chartCanvas.nativeElement.getContext('2d');
+            if (ctx) {
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+                this.chart = new Chart(ctx, this.config);
+            }
+        });
     }
 }
