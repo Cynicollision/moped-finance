@@ -7,7 +7,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { Institution } from '@shared/finance/types';
 import { InstitutionFormComponent } from './institution-form.component';
 import { FinanceService } from './../finance.service';
-import { ModalService } from './../../core/modal/modal.service';
 
 @Component({
     selector: 'app-finance-view-institution',
@@ -20,7 +19,6 @@ export class ViewInstitutionComponent implements OnInit {
     private financeService = inject(FinanceService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
-    private modalService = inject(ModalService);
 
     institutionId: string | null = null;
     institution = signal<Institution | null>(null);
@@ -39,24 +37,6 @@ export class ViewInstitutionComponent implements OnInit {
     onEdit() {
         if (this.institutionId) {
             this.router.navigate(['/institutions', this.institutionId, 'edit']);
-        }
-    }
-
-    async deleteInstitution() {
-        if (!this.institutionId) return;
-
-        const confirmDelete = await this.modalService.confirm({
-            title: 'Delete Institution',
-            message: 'Are you sure you want to delete this institution?',
-            confirmLabel: 'Delete',
-            isWarn: true
-        });
-
-        if (confirmDelete) {
-            const success = await this.financeService.deleteInstitution(this.institutionId);
-            if (success) {
-                this.router.navigate(['/institutions']);
-            }
         }
     }
 }

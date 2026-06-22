@@ -21,7 +21,7 @@ export class DatabaseClient implements IDatabaseClient {
     }
 
     public static fromConfig(config: DatabaseClientConfig): DatabaseClient {
-        const pool = new Pool(config as any);
+        const pool = new Pool(config);
         return new DatabaseClient(drizzle(pool));
     }
 }

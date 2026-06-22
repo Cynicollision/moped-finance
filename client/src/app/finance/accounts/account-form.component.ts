@@ -96,7 +96,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
             } else {
                 balanceControl.disable();
                 if (this.account) {
-                    balanceControl.setValue(this.account.balance);
+                    balanceControl.setValue(this.account.balance || 0);
                 } else {
                     balanceControl.setValue(0);
                 }

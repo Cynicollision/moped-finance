@@ -10,11 +10,11 @@ export type Account = Entity & {
     category: AccountCategory;
     group: AccountGroup;
     type: AccountType;
-    balance: number;
-    isHidden: boolean;
-    isManual: boolean;
-    isRetirement: boolean;
-    hideFromCashflow: boolean;
+    balance?: number;
+    isHidden?: boolean;
+    isManual?: boolean;
+    isRetirement?: boolean;
+    hideFromCashflow?: boolean;
 
     balanceHistory?: BalanceHistory[];
     transactions?: Transaction[];

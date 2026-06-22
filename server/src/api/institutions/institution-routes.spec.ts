@@ -4,14 +4,17 @@ import { PGlite } from '@electric-sql/pglite';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { AppLogger } from '@server/logging';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
+import { FinanceAccountData } from './../accounts';
 import { FinanceInstitutionData } from './institution-data';
 import { createInstitutionRouter } from './institution-routes';
+import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
 
 describe('Institution Routes', () => {
     let app: express.Express;
     let dbClient: DatabaseClient;
     let pglite: PGlite;
     let institutionsData: FinanceInstitutionData;
+    let accountData: FinanceAccountData;
     let mockLogger: jest.Mocked<AppLogger>;
     let testUserId: string;
 
@@ -24,9 +27,10 @@ describe('Institution Routes', () => {
         testUserId = user.id;
 
         institutionsData = new FinanceInstitutionData(dbClient);
+        accountData = new FinanceAccountData(dbClient);
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createInstitutionRouter(mockLogger, institutionsData);
+        const router = createInstitutionRouter(mockLogger, institutionsData, accountData);
         app = TestExpressUtil.createTestApp(router, '/institutions', testUserId);
     });
 
@@ -154,6 +158,23 @@ describe('Institution Routes', () => {
 
             expect(response.status).toBe(404);
             expect(response.body.message).toContain('not found or access denied');
+        });
+
+        it('should return 400 when deleting an institution with associated accounts', async () => {
+            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Chase' }));
+
+            await accountData.insert(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: institution.id,
+                name: 'Checking',
+                category: AccountCategory.Asset,
+                group: AccountGroup.Cash,
+                type: AccountType.Checking
+            }));
+
+            const response = await request(app).delete(`/institutions/${institution.id}`);
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('Cannot delete institution with associated accounts');
         });
     });
 

@@ -3,12 +3,14 @@ import { Institution } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
+import { IFinanceAccountData } from './../accounts';
 import { IFinanceInstitutionData } from './institution-data';
 
 export class InstitutionController {
     constructor(
         private logger: IAppLogger,
-        private institutionData: IFinanceInstitutionData
+        private institutionData: IFinanceInstitutionData,
+        private accountData: IFinanceAccountData
     ) {
     }
 
@@ -23,6 +25,16 @@ export class InstitutionController {
     public async getInstitutions(context: OperationContext): Promise<OperationResult<Institution[]>> {
         const institutions = await this.institutionData.retrieveAll(context.user.getId());
         return Result.success(institutions);
+    }
+
+    public async getInstitutionAccounts(context: OperationContext, institutionId: string): Promise<OperationResult<any[]>> {
+        const current = await this.institutionData.retrieveSingle(institutionId);
+        if (!current || !context.user.canAccess(current)) {
+            return Result.userErrorNotFound();
+        }
+
+        const accounts = await this.accountData.retrieveByInstitutionId(context.user.getId(), institutionId);
+        return Result.success(accounts);
     }
 
     public async createInstitution(context: OperationContext, newInsitution: NewEntity<Institution>): Promise<OperationResult<Institution>> {
@@ -49,6 +61,11 @@ export class InstitutionController {
         const current = await this.institutionData.retrieveSingle(institutionId);
         if (!context.user.canAccess(current)) {
             return Result.userErrorNotFound();
+        }
+
+        const accounts = await this.accountData.retrieveByInstitutionId(context.user.getId(), institutionId);
+        if (accounts.length > 0) {
+            return Result.userError('Cannot delete institution with associated accounts.');
         }
 
         const deleted = await this.institutionData.delete(institutionId);

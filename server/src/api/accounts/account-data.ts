@@ -9,6 +9,7 @@ import { balanceHistorySchema } from './balance-history-schema';
 
 export interface IFinanceAccountData extends IOwnedResourceData<Account> {
     retrieveAll(userId: string): Promise<Account[]>;
+    retrieveByInstitutionId(userId: string, institutionId: string): Promise<Account[]>;
 }
 
 function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number | string): Account {
@@ -53,6 +54,21 @@ export class FinanceAccountData implements IFinanceAccountData {
             })
             .from(accountSchema)
             .where(eq(accountSchema.userId, userId));
+
+        return rows.map(row => mapRowToAccount(row.account, row.balance));
+    }
+
+    public async retrieveByInstitutionId(userId: string, institutionId: string): Promise<Account[]> {
+        const rows = await this.db
+            .select({
+                account: accountSchema,
+                balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
+            })
+            .from(accountSchema)
+            .where(and(
+                eq(accountSchema.userId, userId),
+                eq(accountSchema.institutionId, institutionId)
+            ));
 
         return rows.map(row => mapRowToAccount(row.account, row.balance));
     }

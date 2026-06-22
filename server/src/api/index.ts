@@ -28,7 +28,7 @@ export function buildFinanceRouter(logger: IAppLogger, db: DatabaseClient, authM
     const categories = createCategoryRouter(logger, categoryData, categoryGroupData);
     router.use('/v1/categories', authMiddleware.resolveUser, authMiddleware.requireAuth, categories);
 
-    const institutions = createInstitutionRouter(logger, institutionData);
+    const institutions = createInstitutionRouter(logger, institutionData, accountData);
     router.use('/v1/institutions', authMiddleware.resolveUser, authMiddleware.requireAuth, institutions);
 
     const transactions = createTransactionRouter(logger, accountData, categoryData, transactionData);

@@ -38,6 +38,10 @@ export class FinanceService {
         return this.api.delete(`${API_BASE_PATH}/institutions/${id}`);
     }
 
+    fetchInstitutionAccounts(institutionId: string): Promise<Account[] | undefined> {
+        return this.api.get<Account[]>(`${API_BASE_PATH}/institutions/${institutionId}/accounts`);
+    }
+
     fetchCategories(activeOnly: boolean): Promise<Category[] | undefined> {
         return this.api.get<Category[]>(`${API_BASE_PATH}/categories?activeOnly=${activeOnly}`);
     }
