@@ -69,7 +69,6 @@ export class AccountController {
     }
 
     public async getAccountTransactions(context: OperationContext, accountId: string, options: TransactionSearchOptions): Promise<OperationResult<Transaction[]>> {
-        // TODO: validate options
         const tranactions = await this.transactionData.search(context.user.getId(), options, accountId);
         return Result.success(tranactions);
     }
@@ -87,13 +86,8 @@ export class AccountController {
     }
 
     public async getTotalValueHistory(context: OperationContext, options: TotalValueHistoryOptions): Promise<OperationResult<TotalValueHistory[]>> {
-        options.type = options.type || ValueHistoryType.NetWorth;
-        options.timeframe = options.timeframe || HistoryTimeframe.PastThirtyDays;
-        // TODO: validate options
-
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         const totalValueHistory = await this.balanceHistoryData.retrieveSumByDate(context.user.getId(), options.type, startDate, options.asOfDate);
-
         return Result.success(totalValueHistory);
     }
 

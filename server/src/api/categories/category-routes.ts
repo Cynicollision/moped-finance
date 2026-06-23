@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { Category } from '@shared/finance/types';
 import { IAppLogger } from '@server/logging';
 import { OperationDefinition, OperationHandler, RequestSchemaValidator } from '@server/routing';
@@ -17,6 +18,8 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
     const groupValidator = new RequestSchemaValidator(logger, 'CategoryGroup');
 
     // --- Category Groups ---
+    
+    // GET /groups - Get Category Groups
     router.get('/groups', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getGroups' };
         handler.execute(req, res, op, (context) => {
@@ -24,6 +27,7 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
         });
     });
 
+    // GET /groups/:id - Get Category Group
     router.get('/groups/:id', groupValidator.id(), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getGroup' };
         handler.execute(req, res, op, (context) => {
@@ -31,6 +35,7 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
         });
     });
 
+    // POST /groups - Create Category Group
     router.post('/groups', groupValidator.body(createCategoryGroupSchema), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'createGroup' };
         handler.execute(req, res, op, (context) => {
@@ -38,6 +43,7 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
         });
     });
 
+    // PUT /groups/:id - Update Category Group
     router.put('/groups/:id', groupValidator.id(), groupValidator.body(updateCategoryGroupSchema), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'updateGroup' };
         handler.execute(req, res, op, (context) => {
@@ -46,6 +52,7 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
         });
     });
 
+    // DELETE /groups/:id - Delete Category Group
     router.delete('/groups/:id', groupValidator.id(), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'deleteGroup' };
         handler.execute(req, res, op, (context) => {
@@ -54,14 +61,21 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
     });
 
     // --- Categories ---
-    router.get('/', (req, res) => {
+    
+    // GET / - Get Categories
+    const activeOnlyQuerySchema = z.object({
+        activeOnly: z.enum(['true', 'false']).transform(v => v === 'true').optional()
+    });
+
+    router.get('/', categoryValidator.query(activeOnlyQuerySchema), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getCategories' };
         handler.execute(req, res, op, (context) => {
-            const activeOnly = req.query.activeOnly === 'true';
+            const { activeOnly } = req.query as any;
             return controller.getCategories(context, activeOnly);
         });
     });
 
+    // GET /:id - Get Category
     router.get('/:id', categoryValidator.id(), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getCategory' };
         handler.execute(req, res, op, (context) => {
@@ -69,6 +83,7 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
         });
     });
 
+    // POST / - Create Category
     router.post('/', categoryValidator.body(createCategorySchema), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'createCategory' };
         handler.execute(req, res, op, (context) => {
@@ -76,6 +91,7 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
         });
     });
 
+    // PUT /:id - Update Category
     router.put('/:id', categoryValidator.id(), categoryValidator.body(updateCategorySchema), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'updateCategory' };
         handler.execute(req, res, op, (context) => {
@@ -85,6 +101,7 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
         });
     });
 
+    // DELETE /:id - Delete Category
     router.delete('/:id', categoryValidator.id(), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'deleteCategory' };
         handler.execute(req, res, op, (context) => {

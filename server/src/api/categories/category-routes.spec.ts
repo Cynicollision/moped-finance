@@ -139,6 +139,12 @@ describe('Category Routes', () => {
             expect(response.body[0].id).toBe(category.id);
             expect(response.body[0].name).toBe('Rent');
         });
+
+        it('should return 400 when activeOnly is invalid', async () => {
+            const response = await request(app).get('/categories?activeOnly=invalid');
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('activeOnly:');
+        });
     });
 
     describe('GET /categories/:id', () => {

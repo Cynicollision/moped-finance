@@ -14,6 +14,7 @@ export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: I
     const validator = new RequestSchemaValidator(logger, 'BudgetStream');
     const controller = new BudgetStreamController(logger, budgetStreamData);
 
+    // GET / - Get Budget Streams
     router.get('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getBudgetStreams' };
         handler.execute(req, res, op, (context) => {
@@ -21,6 +22,7 @@ export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: I
         });
     });
 
+    // POST / - Create Budget Stream
     router.post('/', validator.body(createBudgetStreamSchema), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'createBudgetStream' };
         handler.execute(req, res, op, (context) => {
@@ -29,6 +31,7 @@ export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: I
         });
     });
 
+    // PUT /:id - Update Budget Stream
     router.put('/:id', validator.id(), validator.body(updateBudgetStreamSchema), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'saveBudgetStream' };
         handler.execute(req, res, op, (context) => {
@@ -38,6 +41,7 @@ export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: I
         });
     });
 
+    // DELETE /:id - Delete Budget Stream
     router.delete('/:id', validator.id(), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'deleteBudgetStream' };
         handler.execute(req, res, op, (context) => {

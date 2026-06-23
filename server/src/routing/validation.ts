@@ -44,4 +44,21 @@ export class RequestSchemaValidator {
             next();
         };
     }
+
+    query(schema: z.ZodTypeAny): (req: Request, res: Response, next: NextFunction) => void {
+        return (req: Request, res: Response, next: NextFunction) => {
+            const result = schema.safeParse(req.query);
+            if (!result.success) {
+                const userId = UserContext.fromRequest(req).getId();
+                const messages = (result.error as ZodError).issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+                const errorMessage = `Invalid ${this.schemaName} request query params: ${messages}`;
+
+                this.logger.warn(userId, errorMessage);
+                res.status(400).json(Result.userError(errorMessage).error);
+                return;
+            }
+            req.query = result.data as any;
+            next();
+        };
+    }
 }

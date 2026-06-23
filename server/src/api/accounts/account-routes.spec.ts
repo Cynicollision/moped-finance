@@ -137,8 +137,20 @@ describe('Account Routes', () => {
         });
 
         it('should use default timeframe and asOfDate when not provided', async () => {
-            const response = await request(app).get('/accounts/total-value-history');
+            const response = await request(app).get('/accounts/total-value-history?type=NetWorth');
             expect(response.status).toBe(200);
+        });
+
+        it('should return 400 when type is missing', async () => {
+            const response = await request(app).get('/accounts/total-value-history');
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('type:');
+        });
+
+        it('should return 400 when timeframe is invalid', async () => {
+            const response = await request(app).get('/accounts/total-value-history?type=NetWorth&timeframe=InvalidValue');
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('timeframe:');
         });
     });
 
@@ -348,6 +360,28 @@ describe('Account Routes', () => {
                 });
 
             expect(response.status).toBe(200);
+        });
+
+        it('should return 400 when timeframe is invalid', async () => {
+            const acc1 = await accountData.insert(FinanceEntityFactory.createAccount(testUserId, {
+                institutionId: testInstitutionId,
+                name: 'Checking Account',
+                category: AccountCategory.Asset,
+                group: AccountGroup.Cash,
+                type: AccountType.Checking,
+                balance: 1000.00,
+                isHidden: false,
+                isManual: false,
+                isRetirement: false,
+                hideFromCashflow: false
+            }));
+
+            const response = await request(app)
+                .get(`/accounts/${acc1.id}/balance-history`)
+                .query({ timeframe: 'InvalidValue' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('timeframe:');
         });
     });
 
