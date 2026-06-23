@@ -49,6 +49,27 @@
                             ],
                             "outputHashing": "all"
                         },
+                        "demo": {
+                            "budgets": [
+                                {
+                                    "type": "initial",
+                                    "maximumWarning": "2MB",
+                                    "maximumError": "2MB"
+                                },
+                                {
+                                    "type": "anyComponentStyle",
+                                    "maximumWarning": "4kB",
+                                    "maximumError": "8kB"
+                                }
+                            ],
+                            "outputHashing": "all",
+                            "fileReplacements": [
+                                {
+                                    "replace": "src/environments/environment.ts",
+                                    "with": "src/environments/environment.demo.ts"
+                                }
+                            ]
+                        },
                         "development": {
                             "optimization": false,
                             "extractLicenses": false,
@@ -71,6 +92,9 @@
                     "configurations": {
                         "production": {
                             "buildTarget": "home-lab-client:build:production"
+                        },
+                        "demo": {
+                            "buildTarget": "home-lab-client:build:demo"
                         },
                         "development": {
                             "buildTarget": "home-lab-client:build:development"

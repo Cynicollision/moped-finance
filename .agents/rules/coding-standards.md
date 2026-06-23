@@ -35,7 +35,7 @@ Define your specific coding standard rules here. Antigravity IDE and other AI ag
   ```
 
 ## Server / Node Rules
-- **Unique IDs**: The `ShortUniqueId` package should never be used directly. All unique ID generation must go through the `EntityIdUtil` module (e.g., `EntityIdUtil.generate(...)`).
+- **Unique IDs**: The `ShortUniqueId` package should never be used directly. All unique ID generation must go through the `EntityId` module (e.g., `EntityId.generate(...)`).
 - **Date & Time**: Date/time operations must always use `DateTimeUtil`. Do not use native `Date` objects directly for parsing, formatting, or creating timestamps.
 
 ## Client / Angular Rules

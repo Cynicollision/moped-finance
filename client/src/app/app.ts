@@ -49,6 +49,7 @@ export class App implements OnInit {
     private loadingService = inject(LoadingService);
 
     isDebugMode = Environment.isDebugMode;
+    isDemoMode = Environment.demoMode;
 
     navItems: NavItem[] = [
         { label: 'Accounts', route: '/summary', icon: 'account_balance_wallet' },
