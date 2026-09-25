@@ -163,7 +163,7 @@ describe('Transaction Routes', () => {
         it('should return cashflow by category', async () => {
             await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 500, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
-            const response = await request(app).get('/transactions/cashflow?period=Monthly');
+            const response = await request(app).get('/transactions/cashflow?period=Monthly&asOfDate=2026-06-15');
 
             expect(response.status).toBe(200);
             expect(response.body.length).toBe(1);
