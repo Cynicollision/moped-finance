@@ -1,8 +1,10 @@
+name: moped-finance
+
 services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: home_lab_db
+    container_name: moped-finance-db
     restart: always
     environment:
       POSTGRES_USER: ${PGUSER}
@@ -18,7 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: server-deps
-    container_name: home_lab_api
+    container_name: moped-finance-api
     working_dir: /app/server
     ports:
       - "3000:3000"

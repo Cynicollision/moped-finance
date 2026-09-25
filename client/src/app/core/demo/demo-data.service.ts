@@ -6,7 +6,7 @@ import { User } from '@shared/core/types/user';
 })
 export class DemoDataService {
     
-    private readonly STORAGE_KEY = 'home_lab_demo_data';
+    private readonly STORAGE_KEY = 'moped_finance_demo_data';
     private data: any;
 
     constructor() {

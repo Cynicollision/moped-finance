@@ -1,7 +1,9 @@
+name: moped-finance
+
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: home_lab_db
+    container_name: moped-finance-db
     restart: always
     environment:
       POSTGRES_USER: ${PGUSER}
@@ -16,8 +18,8 @@ services:
       retries: 5
 
   api:
-    image: ${DOCKER_IMAGE:-home-lab-api:latest}
-    container_name: home_lab_api
+    image: ${DOCKER_IMAGE:-moped-finance:latest}
+    container_name: moped-finance-api
     restart: always
     ports:
       - "3000:3000"

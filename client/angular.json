@@ -6,7 +6,7 @@
     },
     "newProjectRoot": "projects",
     "projects": {
-        "home-lab-client": {
+        "moped-finance": {
             "projectType": "application",
             "schematics": {
                 "@schematics/angular:component": {
@@ -91,13 +91,13 @@
                     },
                     "configurations": {
                         "production": {
-                            "buildTarget": "home-lab-client:build:production"
+                            "buildTarget": "moped-finance:build:production"
                         },
                         "demo": {
-                            "buildTarget": "home-lab-client:build:demo"
+                            "buildTarget": "moped-finance:build:demo"
                         },
                         "development": {
-                            "buildTarget": "home-lab-client:build:development"
+                            "buildTarget": "moped-finance:build:development"
                         }
                     },
                     "defaultConfiguration": "development"

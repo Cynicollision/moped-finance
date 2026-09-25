@@ -114,16 +114,8 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         if (this.mode === 'readonly') {
             this.transactionForm.disable();
         } else {
+            // All fields stay editable in edit mode, including bank-provided ones (amount, merchant, account).
             this.transactionForm.enable();
-            // In edit mode, some fields might still be disabled if they shouldn't be edited
-            // Usually, only category, notes, date, and isHidden are editable for imported transactions.
-            // If it's a manual transaction, maybe everything is editable. For now, enable all and let user edit.
-            // Wait, for standard HomeLab, amount/merchant/account are often read-only on edit.
-            // But we will just leave them enabled if mode is 'create' or 'edit'.
-            if (this.mode === 'edit') {
-                 // For now, allow editing all fields, or we could disable amount/merchant/originalStatement/accountId
-                 // since those are usually set in stone by the bank. Let's let them be editable for flexibility.
-            }
         }
     }
 
