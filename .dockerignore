@@ -19,7 +19,7 @@ server/dist
 !.env.example
 
 # Documentation & misc
-_docs
+docs
 *.md
 LICENSE
 
@@ -27,5 +27,5 @@ LICENSE
 docker-compose*.yml
 
 # Agents / AI tooling
-.agents
-.gemini
+.claude
+**/CLAUDE.md

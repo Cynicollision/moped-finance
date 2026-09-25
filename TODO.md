@@ -11,24 +11,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Now
 
-### Rename to Moped Finance
-Do this before writing the new docs and CLAUDE.md files, so they use the new name from the start.
-
-Naming conventions by context:
-
-| Context | Name |
-|---|---|
-| Display name (UI title, README, docs) | Moped Finance |
-| GitHub repo | `moped-finance` |
-| Docker image | `ghcr.io/cynicollision/moped-finance` (GHCR requires lowercase) |
-| Compose containers | `moped-finance-db`, `moped-finance-api` |
-| npm packages | `moped-finance-client`, `moped-finance-server` |
-| Angular project | `moped-finance` (also changes the build output to `client/dist/moped-finance`) |
-| Postgres database / user examples | `moped_finance` (underscores, so identifiers don't need quoting) |
-| Browser storage keys | `moped_finance_*` |
-
-- [ ] Final check: `git grep -i -E "home[-_ ]?lab"` returns nothing. Only `_docs/` and `GEMINI.md` remain; both go away with the Docs and Claude Code setup items.
-
 ### Production build
 The production setup was written but never run; only the dev compose stack (API with nodemon hot reload + Postgres) has been used and is verified working. The production image builds but doesn't start: `docker build .` then `docker run` fails with `Cannot find module '/app/server/dist/index.js'`.
 - [ ] `CMD ["node", "dist/index.js"]` (and `main` in `server/package.json`) is wrong: because the server imports `../shared`, tsc emits to `dist/server/index.js` and `dist/shared/`.
@@ -44,27 +26,9 @@ The production setup was written but never run; only the dev compose stack (API 
 - [ ] Add client tests (`ng test --watch=false`) to `.github/workflows/ci.yml`.
 - [ ] Add a server type-check (`tsc --noEmit`) and a client production build (`ng build`) to CI.
 
-### Claude Code setup
-- [ ] Add a root `CLAUDE.md`: purpose, package layout, path aliases, commands, definition of done, conventions (`./../` imports, `else`/`catch` on a new line, `EntityId`, `DateTimeUtil`).
-- [ ] Add `server/CLAUDE.md`: route → controller → data → schema layering, `OperationHandler`/`Result`, ownership checks, PGlite test pattern.
-- [ ] Add `client/CLAUDE.md`: component conventions, signals, `DateProviderService`, Vitest patterns, and the rule that every new API call also needs a demo interceptor handler.
-- [ ] Add `.claude/settings.json` (permission allowlist for test/build/docker/git commands, deny reading `.env`); add `.claude/settings.local.json` and `CLAUDE.local.md` to `.gitignore`.
-- [ ] Add project skills: `new-finance-resource`, `verify`, `backlog` (and `schema-change` once migrations exist).
-- [ ] Remove `GEMINI.md` and `.agents/`.
-
 ### GitHub
-- [ ] Install the GitHub CLI and authenticate (`winget install GitHub.cli`, then `gh auth login`).
 - [ ] Optional: install the Claude GitHub App (`/install-github-app` from a `claude` terminal session).
 - [ ] Protect `main`: require CI to pass; work on feature branches through PRs.
-
-### Docs
-- [ ] Rename `_docs/` to `docs/` and rewrite everything from the actual code. The current docs are outdated: nonexistent `server/src/core` and `server/src/finance` paths, "grounds"/"home" schemas, a missing `logical.md`, and tests described as mocking the data layer.
-- [ ] Write `README.md` (currently just a title).
-- [ ] Write `docs/requirements.md`, `architecture.md`, `data-model.md`, `development.md`, `testing.md`, and `deployment.md`.
-- [ ] Deployment docs should describe a generic "private-network Docker host" workflow, not a specific NAS vendor. Merge `build.md` and `nas-deployment.md` into it.
-
-### Cleanup
-- [x] Delete the committed `scratch/refactor-tests.js`.
 
 ---
 
@@ -72,8 +36,8 @@ The production setup was written but never run; only the dev compose stack (API 
 
 ### Data & deployment
 - [ ] Add database migrations (e.g. drizzle-kit). Schema is currently applied with `CREATE TABLE IF NOT EXISTS` scripts, which can't upgrade an existing production database.
-- [ ] Give production a working database init/seed path. `ts-node` isn't in the production image, so the documented `docker exec ... ts-node` commands don't work. Options: compile scripts into the image, or run migrations on startup.
-- [ ] Remove the hardcoded bootstrap admin password hash (`admin`/`admin123`) from the deployment docs; replace it with a safe first-user bootstrap.
+- [ ] Give production a working database init path. The `db:*` scripts need `ts-node`, which isn't in the production image. Options: compile the scripts into the image, or run migrations on startup.
+- [ ] Safe first-user bootstrap for production. The old Gemini-era deployment docs inserted a hardcoded `admin`/`admin123` password hash; don't carry that approach forward.
 - [ ] Document backup and restore for the Postgres volume.
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
@@ -115,4 +79,4 @@ Manual entry and import/export come first. Constraints for when this gets picked
 
 ## Ideas
 
-<!-- Unsorted ideas go here. -->
+- Project Claude Code skills (e.g. `new-finance-resource`, `verify`, `schema-change` once migrations exist). Skipped for now; revisit if the same multi-step instructions keep getting repeated.

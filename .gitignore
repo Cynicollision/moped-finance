@@ -3,3 +3,6 @@
 server/dist/**
 server/public
 server/test_data
+# Claude Code personal overrides
+.claude/settings.local.json
+CLAUDE.local.md
