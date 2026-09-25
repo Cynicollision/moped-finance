@@ -34,6 +34,60 @@ The production setup was written but never run; only the dev compose stack (API 
 
 ## Next
 
+### Design decisions
+From a review of the code, the schema, and the requirements' Observations (2026-09-25). Decide these first, since they shape the refactors below. Record each decision in `docs/` (architecture or the relevant requirement) once it's made.
+- [ ] **Single user vs multi-user.** Recommendation: commit to "one owner per instance" (state it under AUTH) but keep `user_id` everywhere. Removing it would be churn for no gain. Multi-user is currently undermined by the reads-by-ID and referenced-ID ownership gaps (AUTH-6.3, AUTH-6.4), open registration, and foreign keys that allow cross-user references. Scoping every query in the data layer (see Server refactors) closes the gaps either way. After that, single-user only needs registration locked after the first user (see Security & auth).
+- [ ] **What "hidden" means.** Hidden accounts still count in totals (ACCT-1.9). Hidden transactions still count in Cashflow and can't be un-hidden in the UI (TXN, CASH observations). Pick one meaning per record type ("exclude from totals and reports" or "declutter the list"), apply it consistently, and add a "show hidden" toggle.
+- [ ] **Sign conventions.** Transactions are signed (money out is negative), liability balances are stored negative, and budget amounts are always positive with direction taken from their type. The UI mostly hides signs (TXN, DASH, BUD observations). Write down one rule set, and have forms and imports enforce it, e.g. an In/Out toggle instead of a signed amount field.
+- [ ] **Transfers and debt paydown.** Transfer groups don't show on the Categories screen (CAT-1.11), and extra mortgage principal counts as spending in Cashflow (CASH observations). Decide how transfers and principal payments are modeled before building budget-vs-actual.
+- [ ] **Where balances come from.** Balances only come from imported history. The account form's Balance field is discarded (ACCT-2.2), and transactions never change balances. Option 1: balance history is the source of truth, plus an "Update balance" action (simplest, fits manual tracking). Option 2: derive balances from transactions.
+- [ ] **Net-worth series.** The chart adds up whatever entries exist on each date, so accounts updated on different days make the total jump (DASH observations). Carry each account's last known balance forward into each day, week or month when building the series.
+- [ ] **Split transactions.** `is_split`/`split_parent_id` exist but have no UI or behavior. Design splits or drop the columns.
+- [ ] **Budget vs actual.** Budget and Cashflow are unconnected (BUD, CASH observations). Decide whether budgets are compared with actual spending per category and period; this drives the budget screen redesign below.
+- [ ] **Category lifecycle.** There's no delete in the UI. Deleting a category through the API orphans its transactions (which then vanish from the list) and its budget streams. Inactive categories still appear in pickers. New users start with no categories (CAT observations). Decide delete behavior (block, reassign, or archive only) and whether to seed default categories.
+
+### Schema cleanup
+Do this before adding migrations, while resetting the dev database is still cheap, so migrations start from a clean baseline.
+- [ ] The SQL scripts and Drizzle schemas have drifted: money columns are `DECIMAL(12,2)` in SQL but plain `numeric` in Drizzle (`transaction-schema.ts`, `balance-history-schema.ts`). When migrations arrive, generate the SQL from Drizzle (drizzle-kit) so there's one source.
+- [ ] Booleans (`is_hidden`, `is_manual`, `is_active`, …) are nullable with defaults; make them `NOT NULL`.
+- [ ] Enum-like columns (`account_category`, `account_group`, `account_type`, `category_class`, budget `type`/`recurrence`) are unconstrained `VARCHAR(50)`. Add `CHECK` constraints or Postgres enums that match `shared/finance/enum`.
+- [ ] Use `TIMESTAMPTZ` for `created_at`/`updated_at`. Document that `date` columns are calendar dates with no time zone (see the CASH period-boundary observation).
+- [ ] Indexes: transactions on `(user_id, date)`, `(account_id, date)` and `category_id`; `user_id` on the other finance tables.
+- [ ] Uniqueness: one balance per account per date (`UNIQUE (account_id, date)`, which also makes re-importing safe). Unique names per user for institutions and category groups, and per group for categories, since CSV import matches categories by name.
+- [ ] `accounts.institution_id` is `ON DELETE SET NULL`, but the app refuses to delete an institution that has accounts (INST-1.9). Use `RESTRICT`, plus `NOT NULL` if every account must have an institution.
+- [ ] `transactions.merchant` is nullable in the database but required by the server; make them agree.
+- [ ] Optional hardening: foreign keys that include `user_id` (e.g. `(account_id, user_id)` → `accounts (id, user_id)`), so the database itself rejects cross-user references.
+- [ ] Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Cashflow does, and round at the edges. Revisit integer cents only if totals ever drift.
+
+### Server refactors
+- [ ] Scope every data-layer query by user. `retrieveSingle`, `update` and `delete` should take `userId` and filter on it (`IOwnedResourceData` in `server/src/data/base-resource-data.ts`). Other users' rows then come back as "not found" automatically, and the per-controller `canAccess` checks can go. Check referenced IDs (account, category, institution) the same way. This closes AUTH-6.3/6.4; add cross-user tests.
+- [ ] Move CSV parsing, validation and export out of the account and transaction controllers into a small import/export module that reports row-level errors. Today a bad date causes a 500 and a non-numeric amount becomes 0. Do this together with the partial-import and bulk-insert items under Correctness.
+- [ ] Remove the `as any` casts in routes (e.g. `req.query as any` in `transaction-routes.ts`); have the validator return typed, parsed values.
+- [ ] The transaction list (`search` in `transaction-data.ts`) inner-joins categories, so uncategorized transactions disappear (TXN observations). Export already uses a left join; do the same here, and support sorting by category and account (TXN-1.2).
+
+### Client: mobile and dialogs
+- [ ] Define shared breakpoints: one SCSS partial or mixin plus `BreakpointObserver` in TypeScript. Components currently use ad hoc 599/600/768px media queries, and a ~800 px window with the side nav open overflows (APP observations).
+- [ ] Tables on phones: Transactions, Budget, Cashflow and Account Details use `mat-table`. At handset width, switch to a list or card layout (name and amount, with a second line for date and category) instead of a table that scrolls sideways.
+- [ ] Pick one pattern for create and edit. Today accounts, institutions and transactions use full pages, while budget streams, categories and groups use dialogs (`ModalService`: fixed 500px, `disableClose: true`). Suggested rule: full pages for records with many fields or that need their own URL; dialogs for small forms, full-screen on phones. Allow Esc and backdrop clicks to close unless the form has unsaved changes.
+- [ ] Budget screen redesign, together with the budget-vs-actual decision: consider inline add/edit rows or a side panel instead of a dialog per stream, an empty state (BUD observations), and a layout that works on phones.
+- [ ] On phones, collapse the Transactions filters into a panel or bottom sheet.
+
+### Client refactors
+- [ ] The app runs without zone.js, but component state is a mix of signals and plain fields, with manual `cdr.detectChanges()` calls in budget, cashflow, categories and transaction-form. Standardize on signals (with `OnPush`) so updates render without manual change detection.
+- [ ] Replace the global loading overlay on every request (APP-2.1) with loading states or skeletons per view, so screens don't flash empty or $0.00 values that look real.
+- [ ] Consistent success feedback (a snackbar) for create, save and delete (APP observations).
+- [ ] Move the ~80 inline `style="..."` attributes in templates (e.g. `app.html`) into component SCSS. The two category dialog components, `chart.component.ts` and `value-period-change.component.ts` also use inline templates or styles, against `docs/conventions.md`.
+- [ ] The `@client/*` path alias in `client/tsconfig.json` is unused; use it or remove it.
+
+### UX fixes from the requirements review
+- [ ] Credit-card accounts can't be created: the group has no account types, but Type is required (ACCT-1.10).
+- [ ] The transaction import screen lists the wrong CSV columns and doesn't say which rows failed (TXN-3.7, TXN-3.8).
+- [ ] The Settings menu item links to a route that doesn't exist (APP-1.5). Replace it with a Settings screen that has change password (AUTH-5.1) and display name.
+- [ ] Chart y-axis labels repeat because they round to thousands or millions (ACCT, DASH observations).
+- [ ] Choose a sort order for institutions, accounts within a group, and the category group picker (currently creation order).
+- [ ] The Cashflow year list is a fixed four-year window; derive it from the data (CASH observations).
+- [ ] Import breadcrumbs, the Accounts/Dashboard name mismatch, and the product name on Login/Register (APP, DASH observations).
+
 ### Data & deployment
 - [ ] Add database migrations (e.g. drizzle-kit). Schema is currently applied with `CREATE TABLE IF NOT EXISTS` scripts, which can't upgrade an existing production database.
 - [ ] Give production a working database init path. The `db:*` scripts need `ts-node`, which isn't in the production image. Options: compile the scripts into the image, or run migrations on startup.
