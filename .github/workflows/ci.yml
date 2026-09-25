@@ -51,5 +51,5 @@ jobs:
 #           context: .
 #           push: true
 #           tags: |
-#             ghcr.io/${{ github.repository_owner }}/homelab:latest
-#             ghcr.io/${{ github.repository_owner }}/homelab:${{ github.sha }}
+#             ghcr.io/${{ github.repository_owner }}/moped-finance:latest
+#             ghcr.io/${{ github.repository_owner }}/moped-finance:${{ github.sha }}

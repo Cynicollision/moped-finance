@@ -19,7 +19,7 @@ Naming conventions by context:
 | Context | Name |
 |---|---|
 | Display name (UI title, README, docs) | Moped Finance |
-| GitHub repo | `moped-finance` (lowercase kebab-case is the most common convention; `MopedFinance` also works) |
+| GitHub repo | `moped-finance` |
 | Docker image | `ghcr.io/cynicollision/moped-finance` (GHCR requires lowercase) |
 | Compose containers | `moped-finance-db`, `moped-finance-api` |
 | npm packages | `moped-finance-client`, `moped-finance-server` |
@@ -27,19 +27,15 @@ Naming conventions by context:
 | Postgres database / user examples | `moped_finance` (underscores, so identifiers don't need quoting) |
 | Browser storage keys | `moped_finance_*` |
 
-- [ ] Confirm the repo name (`moped-finance` vs `MopedFinance`).
-- [ ] Rename the GitHub repo in its settings (GitHub redirects the old URL), then update the local remote: `git remote set-url origin <new-url>`.
-- [ ] `client/angular.json`: project key and the three `buildTarget` references.
-- [ ] `client/package.json` and `server/package.json`: `name` (server is currently just `server`).
-- [ ] `Dockerfile`: the `COPY --from=client-builder /app/client/dist/home-lab-client` path must match the new Angular output folder.
-- [ ] `docker-compose.yml` and `docker-compose.prod.yml`: `container_name`s and the default image name; consider adding a top-level `name: moped-finance` so the compose project and volume names don't depend on the folder name.
-- [ ] `.github/workflows/ci.yml`: image tags in the (commented-out) GHCR job.
-- [ ] `client/src/index.html`: `<title>HomeLabClient</title>`.
-- [ ] `client/src/app/core/demo/demo-data.service.ts`: `STORAGE_KEY` (`home_lab_demo_data`).
-- [ ] `client/src/app/finance/transactions/transaction-form.component.ts:121`: remove the leftover AI-reasoning comment ("Wait, for standard HomeLab...").
-- [ ] README and docs: update names; the old `_docs/` files get rewritten anyway.
-- [ ] Existing deployment: the new container names and compose project name mean the Postgres volume gets a new name too. Plan a data migration (dump/restore, or point the new compose file at the existing volume) before redeploying.
-- [ ] Final check: `git grep -i -E "home[-_ ]?lab"` returns nothing.
+- [ ] Final check: `git grep -i -E "home[-_ ]?lab"` returns nothing. Only `_docs/` and `GEMINI.md` remain; both go away with the Docs and Claude Code setup items.
+
+### Production build
+The production setup was written but never run; only the dev compose stack (API with nodemon hot reload + Postgres) has been used and is verified working. The production image builds but doesn't start: `docker build .` then `docker run` fails with `Cannot find module '/app/server/dist/index.js'`.
+- [ ] `CMD ["node", "dist/index.js"]` (and `main` in `server/package.json`) is wrong: because the server imports `../shared`, tsc emits to `dist/server/index.js` and `dist/shared/`.
+- [ ] The `@server/*` / `@shared/*` path aliases aren't rewritten in the compiled output, so `node dist/server/index.js` fails with `Cannot find module '@server/api'`. Rewrite them at build time (e.g. `tsc-alias`) or bundle the server (e.g. esbuild).
+- [ ] Static files don't line up: Angular's application builder writes to `dist/moped-finance/browser/`, the Dockerfile copies `dist/moped-finance` to `server/public` (so `index.html` ends up in `server/public/browser/`), and Express serves `path.join(__dirname, 'public')`, which resolves to `dist/server/public`. Pick one location and make all three agree.
+- [ ] The client hardcodes `apiUrl: 'http://localhost:3000'` in both `environment.ts` (production) and `environment.development.ts`, so a production browser would call its own machine. Use relative URLs (`apiUrl: ''`) so the app talks to the origin that served it, and in development route through the dev-server proxy. `client/proxy.conf.json` exists but is unused, and it only covers `/api` while auth is mounted at `/auth`. With same-origin requests the server-side CORS setup can likely go.
+- [ ] Add a CI smoke test: build the image, start it, and check that `/` returns `index.html`.
 
 ### Tests
 - [ ] Fix the client test `App > should render sidenav container` in `client/src/app/app.spec.ts`. The hand-rolled Router mock is missing `createUrlTree`; use `provideRouter([])` instead of mocking `Router`.

@@ -63,7 +63,7 @@ COPY --from=server-builder /app/server/dist ./server/dist
 
 # Copy the built frontend from the client-builder stage
 # The Express server is configured to serve static files from 'server/public'
-COPY --from=client-builder /app/client/dist/home-lab-client ./server/public
+COPY --from=client-builder /app/client/dist/moped-finance ./server/public
 
 # Expose the API port
 EXPOSE 3000
