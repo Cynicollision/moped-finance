@@ -25,3 +25,4 @@ Read the doc that fits the task before starting:
 
 - Delete an item once it's done; git history is the changelog.
 - When you notice a bug, a deviation from standard practice, or other follow-up work that's out of scope for the current change, add it to the right section instead of fixing it on the side. Include file paths and what's wrong.
+- Point at code by file and function or symbol name (`account-controller.ts`, `importBalanceHistory`), not line numbers, which go stale.

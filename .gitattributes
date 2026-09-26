@@ -1,0 +1,8 @@
+# Store and check out text files with LF endings on every OS, so scripts and
+# config copied into Linux containers work as-is. Git detects binaries itself.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary

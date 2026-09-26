@@ -56,7 +56,7 @@ Screens: **Account Details** (`/accounts/:id`), **Add Account** (from an institu
 
 ## Observations
 
-- **Credit cards can't be added (ACCT-1.10).** Every other group has at least one type, so the required Type field only blocks this one. The sample credit cards exist with no type and show their group ("Credit Card") where the type would be. Either give the group a type, or make Type optional when a group has none.
+- **Credit cards can't be added (ACCT-1.10).** Every other group has at least one type, so the required Type field only blocks this one. The sample credit cards exist with no type and show their group ("Credit Card") where the type would be. Either give the group a type, or make Type optional when a group has none. The schema already allows no type (`account_type` is nullable, and the API accepts `null`), so the fix is in the form.
 - **Institution can't be changed** after an account is created (ACCT-1.5); moving an account means deleting it, which also deletes its history and transactions (ACCT-1.6).
 - **Chart axis labels lose precision.** On Account Details (and the summary chart) the y-axis rounds to thousands or millions, so neighbouring ticks repeat: "$34.3K, $34.3K, $34.3K, $34.2K, …" on a savings account, "$1.1M" six times on net worth. The line is right; the labels aren't readable.
 - **Balance import dry-run screen** (ACCT-3.7): the same summary-under-"Validation Error" pattern appears on the Transactions import (see TXN-3.3). The dry run shows the range from the *valid* rows only; a file with one bad row still reports the range of the others.

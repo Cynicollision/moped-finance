@@ -19,6 +19,16 @@ The production setup was written but never run; only the dev compose stack (API 
 - [ ] The client hardcodes `apiUrl: 'http://localhost:3000'` in both `environment.ts` (production) and `environment.development.ts`, so a production browser would call its own machine. Use relative URLs (`apiUrl: ''`) so the app talks to the origin that served it, and in development route through the dev-server proxy. `client/proxy.conf.json` exists but is unused, and it only covers `/api` while auth is mounted at `/auth`. With same-origin requests the server-side CORS setup can likely go.
 - [ ] Add a CI smoke test: build the image, start it, and check that `/` returns `index.html`.
 
+### Server hardening (before NAS)
+Robustness for a box that restarts and runs unattended.
+- [ ] Handle Postgres pool errors: `DatabaseClient.fromConfig` (`server/src/data/database-client.ts`) creates a `pg` `Pool` with no `'error'` listener, so an idle-client error (e.g. Postgres restarting) can crash the process. Add `pool.on('error', …)` that logs.
+- [ ] Graceful shutdown: on `SIGTERM`/`SIGINT`, stop accepting requests, let in-flight ones finish, then close the pool (`server/index.ts`), so `docker stop` and image updates don't cut off an import.
+- [ ] Health endpoint: `GET /health` that pings the database, plus a `healthcheck` for the `api` service in `docker-compose.prod.yml` (only `postgres` has one).
+- [ ] Upload limits: both `multer` instances (`account-routes.ts`, `transaction-routes.ts`) use unbounded memory storage. Cap file size (e.g. 5 MB) and file count.
+- [ ] Map foreign-key violations (Postgres `23503`) in `DatabaseErrorUtil` to a 400, as unique violations are. Deleting a category group that still has categories is a 500 today. Complements "Validate referenced IDs" under Server refactors.
+- [ ] Stop leaking database error text: `importBalanceHistory` (`account-controller.ts`) returns `'Database error during import: ' + err.message` and `importTransactions` (`transaction-controller.ts`) puts `err.message` in row messages. Drizzle's message includes the SQL. Let errors propagate per the conventions, or report a generic row error. Fold into the import/export refactor if that lands first.
+- [ ] Set `TZ` explicitly for both containers and document it. `date` handling and Cashflow period boundaries depend on the server's local time (CASH observations), and containers default to UTC.
+
 ### Tests
 - [ ] Fix the client test `App > should render sidenav container` in `client/src/app/app.spec.ts`. The hand-rolled Router mock is missing `createUrlTree`; use `provideRouter([])` instead of mocking `Router`.
 
@@ -78,26 +88,32 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 - [ ] Add database migrations (e.g. drizzle-kit). Schema is currently applied with `CREATE TABLE IF NOT EXISTS` scripts, which can't upgrade an existing production database. The Drizzle tables already declare everything the SQL scripts do (enforced by `server/src/data/schema-parity.spec.ts`), so generate the baseline migration from Drizzle, point `db:init` and `TestDatabaseUtil.createMockDatabase` at the migrations, and delete `schema_*.sql` and the parity spec.
 - [ ] Give production a working database init path. The `db:*` scripts need `ts-node`, which isn't in the production image. Options: compile the scripts into the image, or run migrations on startup.
 - [ ] Safe first-user bootstrap for production. Registration closes after the first user (AUTH-2.7), so a fresh instance belongs to whoever registers first; decide whether that's acceptable on the NAS or create the owner another way. The old Gemini-era deployment docs inserted a hardcoded `admin`/`admin123` password hash; don't carry that approach forward.
-- [ ] Document backup and restore for the Postgres volume.
+- [ ] Document backup and restore for the Postgres volume. Include retention for `core.logs`, which grows without bound (errors are logged to the database).
+- [ ] Commit a small synthetic seed dataset. `db:seed` reads the untracked `server/test_data/` (which also holds unrelated CSVs such as `plant_varieties.csv`), so a fresh clone, CI or the NAS can't seed. Shared sample data would also serve demo mode, a CI smoke test and UI work. Drop the unused `UserId` CSV column while at it.
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
 ### Security & auth
 - [ ] Use a persistent session store (e.g. `connect-pg-simple`). The default in-memory store logs everyone out on every restart.
 - [ ] Fail startup in production if `SESSION_SECRET` is unset; don't fall back to `'dev-secret-key'` (`server/index.ts`).
+- [ ] Rate-limit `POST /auth/login` (e.g. `express-rate-limit`) and set a minimum password length (AUTH observations).
+- [ ] Session cookie: set `sameSite: 'lax'`, and make logout's `clearCookie` options match the session cookie (it uses `NODE_ENV === 'production'` for `secure`, the session uses `COOKIE_SECURE`). Document `COOKIE_SECURE` and `TRUST_FIRST_PROXY` for plain HTTP on the LAN versus a reverse proxy with HTTPS.
+- [ ] Decide on HTTP Basic auth (AUTH-3.5). With one user it mainly sends the password on every request, in clear text over plain HTTP. Keep it (and state what it's for) or remove it.
+- [ ] Security headers with `helmet`. Check the Content-Security-Policy against the Angular production build before enabling it.
 
 ### Correctness
-- [ ] `syncAccount` and `syncInstitution` are stubs that return success (`account-controller.ts:95`, `institution-controller.ts:80`). Until real sync exists, return a not-implemented result and hide/disable the sync UI. Then replace the skipped `xit('should return sync stub success')` in `institution-routes.spec.ts`.
-- [ ] Balance CSV import returns `Result.success` when parsing fails; it should be a bad request (`account-controller.ts:145`).
-- [ ] Decide whether balance/transaction imports allow partial success (`account-controller.ts:220`, `:240`; `transaction-controller.ts:211`).
-- [ ] Bulk insert for transaction import instead of row-by-row (`transaction-controller.ts:198`).
+- [ ] `syncAccount` and `syncInstitution` are stubs that return success (`account-controller.ts`, `institution-controller.ts`). Until real sync exists, return a not-implemented result and hide/disable the sync UI. Then replace the skipped `xit('should return sync stub success')` in `institution-routes.spec.ts`.
+- [ ] Balance CSV import returns `Result.success` when parsing fails; it should be a bad request (`importBalanceHistory` in `account-controller.ts`).
+- [ ] Decide whether balance/transaction imports allow partial success (`importBalanceHistory` in `account-controller.ts`, `importTransactions` in `transaction-controller.ts`).
+- [ ] Bulk insert for transaction import instead of row-by-row (`importTransactions`).
+- [ ] Make imports atomic. Transaction import inserts row by row with no transaction. Balance import deletes the date range and then inserts, so a failed insert leaves the range empty. Wrap each in a database transaction.
 
 ### Testing
 - [ ] Frontend coverage: services (`api`, `finance`, `auth`, `modal`, `notification`), `auth.guard`, the demo interceptor, and key components (summary, transactions, imports).
 - [ ] Make server "now" injectable (via `DateTimeUtil`) so date-based logic is deterministic in tests.
-- [ ] `TestExpressUtil.createMockLogger` should mock `IAppLogger`, not `AppLogger` (`server/src/utility/testing/express-util.ts:23`).
+- [ ] `TestExpressUtil.createMockLogger` should mock `IAppLogger`, not `AppLogger` (`server/src/utility/testing/express-util.ts`).
 
 ### Tooling
-- [ ] Install Prettier (already configured in `client/package.json` but not a dependency) and apply it to both packages.
+- [ ] Install Prettier (already configured in `client/package.json` but not a dependency) and apply it to both packages. Its config doesn't set `tabWidth`, so it would default to 2 spaces; set 4 to match `docs/conventions.md` and `.editorconfig`, and move the config to a root `.prettierrc` so it covers the server too.
 - [ ] Add ESLint (angular-eslint on the client, typescript-eslint on the server) and run it in CI.
 
 ### Code cleanup
