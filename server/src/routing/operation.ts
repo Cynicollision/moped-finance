@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { z } from 'zod';
 import { OperationStatus } from '@shared/core/enum'
 import { UserContext } from '@server/auth';
 import { DatabaseErrorUtil } from '@server/data';
@@ -28,6 +29,32 @@ export interface OperationResult<T = void> {
     };
 }
 
+/** Zod schemas for the parts of a request an operation reads. Each one that's given is parsed before the operation runs. */
+export type RequestSchemas = {
+    params?: z.ZodType;
+    query?: z.ZodType;
+    body?: z.ZodType;
+};
+
+type ParsedPart<S, K extends keyof RequestSchemas> = S extends { [P in K]: infer Schema }
+    ? (Schema extends z.ZodType ? z.output<Schema> : undefined)
+    : undefined;
+
+/** The parsed, typed request parts handed to an operation; a part without a schema is `undefined`. */
+export type RequestInput<S extends RequestSchemas> = {
+    params: ParsedPart<S, 'params'>;
+    query: ParsedPart<S, 'query'>;
+    body: ParsedPart<S, 'body'>;
+};
+
+type Operation<T, S extends RequestSchemas> = (context: OperationContext, input: RequestInput<S>) => Promise<OperationResult<T>>;
+
+const requestPartNames: Record<keyof RequestSchemas, string> = {
+    params: 'params',
+    query: 'query params',
+    body: 'body',
+};
+
 export class OperationContext {
     public readonly user: UserContext;
     public readonly req: Request;
@@ -49,14 +76,30 @@ export class OperationHandler {
     constructor(private logger: IAppLogger) {
     }
 
-    async execute<T>(req: Request, res: Response, operationDef: OperationDefinition, operation: (context: OperationContext) => Promise<OperationResult<T>>): Promise<OperationResult<T>> {
+    /**
+     * Runs an operation and sends its result. When `schemas` are given, the matching request parts are
+     * parsed first: a failure is a 400 naming each invalid field, and the operation receives the parsed
+     * values (with coercions, defaults and transforms applied) as `input`. The request itself isn't modified.
+     */
+    execute<T>(req: Request, res: Response, operationDef: OperationDefinition, operation: Operation<T, {}>): Promise<OperationResult<T>>;
+    execute<T, S extends RequestSchemas>(req: Request, res: Response, operationDef: OperationDefinition, schemas: S, operation: Operation<T, S>): Promise<OperationResult<T>>;
+    async execute<T>(req: Request, res: Response, operationDef: OperationDefinition, schemasOrOperation: RequestSchemas | Operation<T, {}>, maybeOperation?: Operation<T, RequestSchemas>): Promise<OperationResult<T>> {
+        const schemas = typeof schemasOrOperation === 'function' ? {} : schemasOrOperation;
+        const operation = (typeof schemasOrOperation === 'function' ? schemasOrOperation : maybeOperation!) as Operation<T, RequestSchemas>;
+
         const context = new OperationContext(operationDef, req);
         const userId = context.user.getId();
 
         this.logger.info(userId, 'Starting operation', context);
 
+        const parsed = this.parseRequest(req, operationDef, schemas);
+        if (!parsed.success) {
+            this.logger.warn(userId, `Operation failed: ${parsed.message}`, context);
+            return this.sendResult(res, Result.userError<T>(parsed.message));
+        }
+
         try {
-            const result = await operation(context);
+            const result = await operation(context, parsed.input);
 
             if (!result.success) {
                 this.logger.warn(userId, `Operation failed: ${result.error?.message}`, context);
@@ -79,6 +122,27 @@ export class OperationHandler {
         }
     }
 
+    private parseRequest(req: Request, operationDef: OperationDefinition, schemas: RequestSchemas): { success: true, input: RequestInput<RequestSchemas> } | { success: false, message: string } {
+        const input: Record<string, unknown> = { params: undefined, query: undefined, body: undefined };
+
+        for (const part of Object.keys(requestPartNames) as (keyof RequestSchemas)[]) {
+            const schema = schemas[part];
+            if (!schema) {
+                continue;
+            }
+
+            const result = schema.safeParse(req[part]);
+            if (!result.success) {
+                const issues = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+                return { success: false, message: `Invalid ${operationDef.domain} request ${requestPartNames[part]}: ${issues}` };
+            }
+
+            input[part] = result.data;
+        }
+
+        return { success: true, input: input as RequestInput<RequestSchemas> };
+    }
+
     private sendResult<T>(res: Response, result: OperationResult<T>): OperationResult<T> {
         let statusCode = 200;
         switch (result.status) {
@@ -94,6 +158,9 @@ export class OperationHandler {
                 break;
             case OperationStatus.UserError:
                 statusCode = 400;
+                break;
+            case OperationStatus.Unauthorized:
+                statusCode = 401;
                 break;
             case OperationStatus.NotFound:
                 statusCode = 404;

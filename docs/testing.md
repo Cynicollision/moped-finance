@@ -18,7 +18,7 @@ The pattern, as used by every `server/src/**/*-routes.spec.ts`:
 3. Tests: make requests with `supertest` and assert on the status and body.
 4. `afterAll`: `TestDatabaseUtil.destroyMockDatabase(pglite)`.
 
-Finance data isn't scoped by user (AUTH-7), so there's no ownership to test. For endpoints that take an ID, test that a missing one returns 404. For a new unique constraint, test that a duplicate returns 400 with its message. `server/src/data/database-error-util.spec.ts` also checks that every unique index and foreign key in the schema has a message in `DatabaseErrorUtil`.
+Finance data isn't scoped by user (AUTH-7), so there's no ownership to test. For endpoints that take an ID, test that a missing one returns 404. For a new unique constraint, test that a duplicate returns 400 with its message. To test how an operation behaves when the database fails part way (for example that an import rolls back), add a PL/pgSQL trigger that raises on a chosen row, and drop it in a `finally` (see the import tests in `transaction-routes.spec.ts`). `server/src/data/database-error-util.spec.ts` also checks that every unique index and foreign key in the schema has a message in `DatabaseErrorUtil`.
 
 `server/src/data/schema-parity.spec.ts` isn't a route test: it compares the SQL scripts with the Drizzle tables (see [architecture.md](architecture.md#database)). Add new tables to its list.
 

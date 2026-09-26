@@ -1,15 +1,15 @@
-import Papa from 'papaparse';
-import { NewEntity } from '@shared/core/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
-import { DatabaseErrorUtil, FinanceEntityFactory } from '@server/data';
+import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
+import { TransactionCsv } from './transaction-csv';
 import { IFinanceTransactionData } from './transaction-data';
+import { CreateTransactionRequest, UpdateTransactionRequest } from './transaction-schema';
 
 export class TransactionController {
     constructor(
@@ -28,13 +28,13 @@ export class TransactionController {
         return Result.success(transaction);
     }
 
-    public async createTransaction(context: OperationContext, newTransaction: NewEntity<Transaction>): Promise<OperationResult<Transaction>> {
-        const transaction = FinanceEntityFactory.createTransaction(newTransaction);
-
-        const account = await this.accountData.retrieveSingle(transaction.accountId);
-        if (!account) {
-            return Result.userError('Invalid account specified.');
-        }
+    public async createTransaction(context: OperationContext, input: CreateTransactionRequest): Promise<OperationResult<Transaction>> {
+        // A missing account or category fails the insert's foreign key, which OperationHandler reports as a 400.
+        const transaction = FinanceEntityFactory.createTransaction({
+            ...input,
+            isHidden: input.isHidden ?? false,
+            isSplit: input.isSplit ?? false
+        });
 
         const created = await this.transactionData.insert(transaction);
         return Result.successCreated(created);
@@ -50,13 +50,13 @@ export class TransactionController {
         return Result.success(merchantNames);
     }
 
-    public async saveTransaction(context: OperationContext, transaction: Transaction): Promise<OperationResult<Transaction>> {
-        const current = await this.transactionData.retrieveSingle(transaction.id);
+    public async saveTransaction(context: OperationContext, transactionId: string, changes: UpdateTransactionRequest): Promise<OperationResult<Transaction>> {
+        const current = await this.transactionData.retrieveSingle(transactionId);
         if (!current) {
             return Result.userErrorNotFound();
         }
 
-        const updated = await this.transactionData.update(transaction);
+        const updated = await this.transactionData.update({ ...current, ...changes });
         if (!updated) {
             return Result.userErrorNotFound();
         }
@@ -65,11 +65,6 @@ export class TransactionController {
     }
 
     public async deleteTransaction(context: OperationContext, transactionId: string): Promise<OperationResult<void>> {
-        const current = await this.transactionData.retrieveSingle(transactionId);
-        if (!current) {
-            return Result.userErrorNotFound();
-        }
-
         const deleted = await this.transactionData.delete(transactionId);
         if (!deleted) {
             return Result.userErrorNotFound();
@@ -78,150 +73,67 @@ export class TransactionController {
         return Result.successDeleted();
     }
 
-    public async getTransactionCashflowByCategory(context: OperationContext, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<CashflowStream[]>> {
-        const asOf = asOfDate ? DateTimeUtil.parse(asOfDate) : DateTimeUtil.now();
-        const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
+    public async getTransactionCashflowByCategory(context: OperationContext, period: CalendarPeriod, asOfDate?: Date): Promise<OperationResult<CashflowStream[]>> {
+        const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOfDate ?? DateTimeUtil.now());
         const cashflow = await this.transactionData.retrieveCashflowByCategory(startDate, endDate);
         return Result.success(cashflow);
     }
 
-    public async exportTransactions(context: OperationContext, accountId?: string): Promise<OperationResult<any>> {
-        const transactions = await this.transactionData.retrieveForExport(accountId);
-
-        const account = accountId ? await this.accountData.retrieveSingle(accountId) : undefined;
-        const accountName = account?.name?.replace(/[^a-zA-Z0-9]/g, '-');
+    public async exportTransactions(context: OperationContext, accountId?: string): Promise<OperationResult<string>> {
         const timestamp = DateTimeUtil.nowToISOSafeFilename();
-        const fileName = accountName ? `Transactions_${accountName}_${timestamp}.csv` : `Transactions_${timestamp}.csv`;
+        let fileName = `Transactions_${timestamp}.csv`;
 
-        if (!transactions || transactions.length === 0) {
-            return Result.successFile('text/csv', fileName, 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n');
+        if (accountId) {
+            const account = await this.accountData.retrieveSingle(accountId);
+            if (!account) {
+                return Result.userErrorNotFound();
+            }
+            fileName = `Transactions_${account.name.replace(/[^a-zA-Z0-9]/g, '-')}_${timestamp}.csv`;
         }
 
-        const csv = Papa.unparse(transactions, {
-            header: true,
-            columns: ['date', 'accountName', 'merchant', 'categoryName', 'amount', 'originalStatement', 'notes', 'isHidden']
-        });
-
-        const finalCsv = csv.replace(
-            /^date,accountName,merchant,categoryName,amount,originalStatement,notes,isHidden/i,
-            'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden'
-        );
-
-        return Result.successFile('text/csv', fileName, finalCsv);
+        const transactions = await this.transactionData.retrieveForExport(accountId);
+        return Result.successFile('text/csv', fileName, TransactionCsv.write(transactions));
     }
 
-    public async importTransactions(context: OperationContext, fileBuffer?: Buffer, dryRun: boolean = false, targetAccountId?: string): Promise<OperationResult<TransactionImportResult>> {
-        if (!fileBuffer) {
-            return Result.userError('No file provided');
+    public async importTransactions(context: OperationContext, file: Buffer | undefined, dryRun: boolean, targetAccountId?: string): Promise<OperationResult<TransactionImportResult>> {
+        // Checked up front: a dry run inserts nothing, so the foreign key can't catch a bad account.
+        if (targetAccountId && !(await this.accountData.retrieveSingle(targetAccountId))) {
+            return Result.userError('Account not found.');
         }
 
-        const csvString = fileBuffer.toString('utf8');
-        const parsed = Papa.parse(csvString, {
-            header: true,
-            skipEmptyLines: true
-        });
-
-        if (parsed.errors.length > 0) {
-            return Result.userError('Failed to parse CSV file: ' + parsed.errors[0].message);
-        }
-
-        const headers = parsed.meta.fields || [];
-        const requiredHeaders = ['Date', 'AccountName', 'Merchant', 'CategoryName', 'Amount', 'OriginalStatement', 'Notes', 'IsHidden'];
-        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-
-        if (missingHeaders.length > 0) {
-            return Result.success({
-                createdCount: 0,
-                failedRowMessages: [],
-                isValidToImport: false,
-                resultMessage: 'Missing required CSV headers: ' + missingHeaders.join(', ')
-            } as TransactionImportResult);
-        }
-
-        const [accountsList, categoriesList] = await Promise.all([
+        const [accounts, categories] = await Promise.all([
             this.accountData.retrieveAll(),
             this.categoryData.retrieveAll()
         ]);
-        const accountMap = new Map<string, string>();
-        accountsList.forEach(a => accountMap.set(a.name.toLowerCase(), a.id!));
 
-        const categoryMap = new Map<string, string>();
-        categoriesList.forEach(c => categoryMap.set(c.name.toLowerCase(), c.id!));
+        const csv = TransactionCsv.read(file, {
+            accountIds: new Map(accounts.map(a => [a.name.toLowerCase(), a.id])),
+            categoryIds: new Map(categories.map(c => [c.name.toLowerCase(), c.id])),
+            targetAccountId
+        });
 
-        const failedRowMessages: string[] = [];
-        let createdCount = 0;
-
-        let rowIndex = 2;
-        for (const row of parsed.data as any[]) {
-            const accountName = (row['AccountName'] || '').trim().toLowerCase();
-            const categoryName = (row['CategoryName'] || '').trim().toLowerCase();
-
-            let accountId = '';
-            if (targetAccountId) {
-                accountId = targetAccountId;
-            } else {
-                accountId = accountMap.get(accountName) || '';
-            }
-
-            const categoryId = categoryName ? categoryMap.get(categoryName) : '';
-
-            if (!accountId) {
-                failedRowMessages.push(`Row ${rowIndex}: Account name '${row['AccountName']}' not found.`);
-                rowIndex++;
-                continue;
-            }
-            if (!categoryId) {
-                const error = categoryName
-                    ? `Category name '${row['CategoryName']}' not found.`
-                    : 'Category is required.';
-                failedRowMessages.push(`Row ${rowIndex}: ${error}`);
-                rowIndex++;
-                continue;
-            }
-
-            const transaction = FinanceEntityFactory.createTransaction({
-                accountId: accountId,
-                categoryId: categoryId,
-                date: DateTimeUtil.toISOString(row['Date'] || DateTimeUtil.now()),
-                amount: parseFloat(row['Amount']) || 0,
-                merchant: row['Merchant'] || '',
-                originalStatement: row['OriginalStatement'] || '',
-                notes: row['Notes'] || '',
-                isHidden: String(row['IsHidden']).toLowerCase() === 'true',
-                isSplit: false,
-                splitParentId: ''
-            });
-
-            try {
-                if (!dryRun) {
-                    // TODO: add bulk insert support
-                    await this.transactionData.insert(transaction);
-                }
-
-                createdCount++;
-            }
-            catch (err: any) {
-                // Keep going so the user sees every failed row. The database message can contain SQL,
-                // so it goes to the log; the row gets a mapped constraint message or a generic one.
-                this.logger.error(context.user.getId(), `Import row ${rowIndex} failed: ${err?.message ?? err}`, context);
-                const message = DatabaseErrorUtil.getConstraintViolation(err)?.message ?? 'Could not be saved.';
-                failedRowMessages.push(`Row ${rowIndex}: ${message}`);
-            }
-
-            rowIndex++;
+        if (!csv.success) {
+            return Result.userError(csv.message);
         }
 
-        // TODO: allow partial import? i.e createdCount > 0
-        const canImport = failedRowMessages.length === 0;
-        const msgType = dryRun ? 'Dry run: ' : 'Imported: ';
+        const { transactions, failedRowMessages } = csv;
+        const isValidToImport = failedRowMessages.length === 0;
 
-        const result: TransactionImportResult = {
-            createdCount: createdCount,
-            failedRowMessages: failedRowMessages,
-            isValidToImport: canImport,
-            resultMessage: `${msgType}Created ${createdCount} transactions.`
-        };
+        // All or nothing: a file with any bad row saves nothing. The dry run reports the rows so the user
+        // can fix the file; a real import of a bad file (which the client doesn't send) is a 400.
+        if (!isValidToImport) {
+            const summary = `Found errors in ${failedRowMessages.length} of ${transactions.length + failedRowMessages.length} rows.`;
+            const result: TransactionImportResult = { createdCount: 0, failedRowMessages, isValidToImport, resultMessage: summary };
+            return dryRun
+                ? Result.success(result)
+                : Result.userError(`Nothing was imported. ${summary}`, 'INVALID_IMPORT', result);
+        }
 
-        return dryRun ? Result.success(result) : Result.successCreated(result);
+        if (dryRun) {
+            return Result.success({ createdCount: transactions.length, failedRowMessages, isValidToImport, resultMessage: `Ready to import ${transactions.length} transactions.` });
+        }
+
+        await this.transactionData.insertBulk(transactions);
+        return Result.successCreated({ createdCount: transactions.length, failedRowMessages, isValidToImport, resultMessage: `Imported ${transactions.length} transactions.` });
     }
 }

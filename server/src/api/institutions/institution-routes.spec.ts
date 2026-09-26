@@ -171,7 +171,7 @@ describe('Institution Routes', () => {
             expect(response.body.message).toContain('not found');
         });
 
-        it('should return 400 when deleting an institution with associated accounts', async () => {
+        it('INST-1.9 should return 400 when deleting an institution with associated accounts', async () => {
             const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
 
             await accountData.insert(FinanceEntityFactory.createAccount({
@@ -185,7 +185,7 @@ describe('Institution Routes', () => {
             const response = await request(app).delete(`/institutions/${institution.id}`);
 
             expect(response.status).toBe(400);
-            expect(response.body.message).toContain('Cannot delete institution with associated accounts');
+            expect(response.body).toEqual({ code: 'IN_USE', message: 'Cannot delete an institution that still has accounts.' });
         });
     });
 

@@ -69,7 +69,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
                 name: this.account.name,
                 category: this.account.category,
                 group: this.account.group,
-                type: this.account.type,
+                type: this.account.type ?? undefined,
                 isHidden: this.account.isHidden,
                 isManual: this.account.isManual,
                 isRetirement: this.account.isRetirement,

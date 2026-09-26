@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { CalendarPeriod, HistoryTimeframe } from '@shared/core/enum';
+import { CalendarPeriod, HistoryTimeframe, SortDirection } from '@shared/core/enum';
 import { NewEntity } from '@shared/core/types';
 import { BalanceImportResult, CashflowStream, GetAccountBalanceHistoryOptions, TotalValueHistory, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
-import { ValueHistoryType } from '@shared/finance/enum';
+import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, CategoryGroup, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
 import { ApiService } from './../core/api.service';
 import { DateProviderService } from './../core/date-provider.service';
@@ -126,8 +126,8 @@ export class FinanceService {
 
     fetchAccountRecentTransactions(accountId: string): Promise<Transaction[] | undefined> {
         const params = this.getTransactionUrlParams({
-            sortKey: 'date',
-            sortDirection: 'desc',
+            sortKey: TransactionsSortKey.Date,
+            sortDirection: SortDirection.Desc,
             limit: 10
         });
         return this.api.get<Transaction[]>(`${API_BASE_PATH}/accounts/${accountId}/transactions?${params.toString()}`);

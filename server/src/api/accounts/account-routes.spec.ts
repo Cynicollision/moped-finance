@@ -68,6 +68,24 @@ describe('Account Routes', () => {
         testCategoryId = 'cat1';
     });
 
+    function insertAccount(name: string = 'Checking') {
+        return accountData.insert(FinanceEntityFactory.createAccount({
+            institutionId: testInstitutionId, name, category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking
+        }));
+    }
+
+    function importBalances(accountId: string, csv: string, query: string = ''): request.Test {
+        return request(app)
+            .post(`/accounts/${accountId}/import-balances${query}`)
+            .attach('file', Buffer.from(csv), 'import.csv');
+    }
+
+    async function balancesFor(accountId: string): Promise<[string, number][]> {
+        const result = await pglite.query<{ date: string, balance: string }>(
+            `SELECT to_char(date, 'YYYY-MM-DD') AS date, balance FROM finance.balance_history WHERE account_id = $1 ORDER BY date`, [accountId]);
+        return result.rows.map(r => [r.date, Number(r.balance)]);
+    }
+
     describe('GET /accounts', () => {
         it('should return a list of accounts when successful', async () => {
             const acc1 = await accountData.insert(FinanceEntityFactory.createAccount({
@@ -491,6 +509,18 @@ describe('Account Routes', () => {
             expect(response.text).toContain('Date,AccountName,Balance');
             expect(response.text).toContain('100');
         });
+
+        it('ACCT-3.1 should write dates as YYYY-MM-DD and balances with two decimals, newest first', async () => {
+            const account = await insertAccount();
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: 100.5, date: DateTimeUtil.parse('2026-06-01') }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: -3, date: DateTimeUtil.parse('2026-06-02') }),
+            ]);
+
+            const response = await request(app).get(`/accounts/${account.id}/export-balances`);
+
+            expect(response.text).toBe('Date,AccountName,Balance\n2026-06-02,Checking,-3.00\n2026-06-01,Checking,100.50\n');
+        });
     });
 
     describe('POST /:accountId/import-balances', () => {
@@ -514,7 +544,7 @@ describe('Account Routes', () => {
                 .post(`/accounts/${acc1.id}/import-balances`)
                 .attach('file', Buffer.from(csvContent), 'import.csv');
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(response.body.createdCount).toBe(1);
 
             const allHistory = await pglite.query('SELECT * FROM finance.balance_history');
@@ -598,29 +628,95 @@ describe('Account Routes', () => {
             expect(response.body.isValidToImport).toBe(false);
         });
 
-        it('APP-5.5 should not return the database error text when the insert fails', async () => {
-            const acc1 = await accountData.insert(FinanceEntityFactory.createAccount({
-                institutionId: testInstitutionId,
-                name: 'Checking',
-                category: AccountCategory.Asset,
-                group: AccountGroup.Cash,
-                type: AccountType.Checking,
-                balance: 1000.00,
-                isHidden: false,
-                isManual: false,
-                isRetirement: false,
-                hideFromCashflow: false
-            }));
+        it('ACCT-3.4 should save nothing and return 400 with the row errors when a confirmed import has a bad row', async () => {
+            const account = await insertAccount();
 
-            // DECIMAL(12, 2) can't hold this balance, so the insert fails with a numeric overflow.
-            const csvContent = 'Date,Balance,AccountName\n2026-06-06,1000000000000000,Checking';
+            const response = await importBalances(account.id, 'Date,Balance\n2026-06-06,100\n2026-06-07,lots');
 
-            const response = await request(app)
-                .post(`/accounts/${acc1.id}/import-balances`)
-                .attach('file', Buffer.from(csvContent), 'import.csv');
+            expect(response.status).toBe(400);
+            expect(response.body.code).toBe('INVALID_IMPORT');
+            expect(response.body.details.failedRowMessages).toEqual(["Row 3: Balance 'lots' is not a number."]);
+            expect(await balancesFor(account.id)).toEqual([]);
+        });
 
-            expect(response.status).toBe(500);
-            expect(response.body).toEqual({ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' });
+        it('ACCT-3.4 should refuse a file that is missing a column or has no rows with a 400', async () => {
+            const account = await insertAccount();
+
+            const missingColumn = await importBalances(account.id, 'Date,AccountName\n2026-06-06,Checking', '?dryRun=true');
+            const noRows = await importBalances(account.id, 'Date,Balance\n', '?dryRun=true');
+
+            expect(missingColumn.status).toBe(400);
+            expect(missingColumn.body.message).toBe('Missing required CSV headers: Balance');
+            expect(noRows.status).toBe(400);
+            expect(noRows.body.message).toBe('The CSV file has no data rows.');
+        });
+
+        it('ACCT-3.10 should report invalid dates and balances by row', async () => {
+            const account = await insertAccount();
+
+            const response = await importBalances(account.id, 'Date,Balance\n2026-13-01,1\n6/6/2026,10000000000\n6/7/2026,"$1,000.25"', '?dryRun=true');
+
+            expect(response.status).toBe(200);
+            expect(response.body.failedRowMessages).toEqual([
+                "Row 2: Date '2026-13-01' is not a valid date.",
+                "Row 3: Balance '10000000000' is too large.",
+            ]);
+            expect(response.body.isValidToImport).toBe(false);
+        });
+
+        it('ACCT-3.5 should replace existing balances in the file\'s date range and keep the rest', async () => {
+            const account = await insertAccount();
+            await importBalances(account.id, 'Date,Balance\n2026-06-01,1\n2026-06-02,2\n2026-06-03,3\n2026-06-04,4');
+
+            const response = await importBalances(account.id, 'Date,Balance\n2026-06-02,20\n2026-06-03,30');
+
+            expect(response.status).toBe(201);
+            expect(response.body).toEqual(expect.objectContaining({ startDate: '2026-06-02', endDate: '2026-06-03', createdCount: 2 }));
+            expect(await balancesFor(account.id)).toEqual([['2026-06-01', 1], ['2026-06-02', 20], ['2026-06-03', 30], ['2026-06-04', 4]]);
+        });
+
+        it('ACCT-3.10 should keep the existing balances when the database rejects part of an import', async () => {
+            const account = await insertAccount();
+            await importBalances(account.id, 'Date,Balance\n2026-06-01,1\n2026-06-02,2');
+
+            // A trigger stands in for any database failure after the old range has been deleted.
+            await pglite.exec(`
+                CREATE FUNCTION finance.reject_666() RETURNS trigger AS $$
+                BEGIN
+                    IF NEW.balance = 666 THEN RAISE EXCEPTION 'boom'; END IF;
+                    RETURN NEW;
+                END $$ LANGUAGE plpgsql;
+                CREATE TRIGGER reject_666 BEFORE INSERT ON finance.balance_history FOR EACH ROW EXECUTE FUNCTION finance.reject_666();
+            `);
+
+            try {
+                const response = await importBalances(account.id, 'Date,Balance\n2026-06-01,10\n2026-06-02,666');
+
+                expect(response.status).toBe(500);
+                expect(response.body).toEqual({ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' });
+                expect(await balancesFor(account.id)).toEqual([['2026-06-01', 1], ['2026-06-02', 2]]);
+            }
+            finally {
+                await pglite.exec('DROP TRIGGER reject_666 ON finance.balance_history; DROP FUNCTION finance.reject_666();');
+            }
+        });
+
+        it('ACCT-3.1 should re-import its own export unchanged', async () => {
+            const account = await insertAccount();
+            await importBalances(account.id, 'Date,Balance\n2026-06-01,1.5\n2026-06-02,-2');
+            const exported = await request(app).get(`/accounts/${account.id}/export-balances`);
+            await pglite.exec('DELETE FROM finance.balance_history');
+
+            const response = await importBalances(account.id, exported.text);
+
+            expect(response.status).toBe(201);
+            expect(await balancesFor(account.id)).toEqual([['2026-06-01', 1.5], ['2026-06-02', -2]]);
+        });
+
+        it('ACCT-3.2 should return 404 when importing into an account that does not exist', async () => {
+            const response = await importBalances('missing', 'Date,Balance\n2026-06-06,1', '?dryRun=true');
+
+            expect(response.status).toBe(404);
         });
     });
 
@@ -644,6 +740,55 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.message).toContain('Sync account logic stub');
+        });
+    });
+
+    describe('field rules and partial updates', () => {
+        it('ACCT-1.5 should change only the fields sent', async () => {
+            const account = await accountData.insert(FinanceEntityFactory.createAccount({
+                institutionId: testInstitutionId, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking, isHidden: true
+            }));
+
+            const response = await request(app).put(`/accounts/${account.id}`).send({ name: 'Renamed' });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual(expect.objectContaining({ name: 'Renamed', type: AccountType.Checking, isHidden: true }));
+        });
+
+        it('ACCT-1.5 should clear the type when it is sent as null', async () => {
+            const account = await insertAccount();
+
+            const response = await request(app).put(`/accounts/${account.id}`).send({ type: null });
+
+            expect(response.status).toBe(200);
+            expect(response.body.type).toBeNull();
+        });
+
+        it('APP-5.5 should reject an account whose institution does not exist', async () => {
+            const payload = { institutionId: 'missing', name: 'X', category: AccountCategory.Asset, group: AccountGroup.Cash };
+
+            const response = await request(app).post('/accounts').send(payload);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({ code: 'INVALID_REFERENCE', message: 'Institution not found.' });
+        });
+
+        it('APP-5.7 should reject an asOfDate that is not a date', async () => {
+            const account = await insertAccount();
+
+            const history = await request(app).get(`/accounts/${account.id}/balance-history?asOfDate=nope`);
+            const total = await request(app).get('/accounts/total-value-history?type=NetWorth&asOfDate=nope');
+
+            expect(history.status).toBe(400);
+            expect(history.body.message).toContain('asOfDate:');
+            expect(total.status).toBe(400);
+            expect(total.body.message).toContain('asOfDate:');
+        });
+
+        it('ACCT-2.7 should return 404 for the transactions of an account that does not exist', async () => {
+            const response = await request(app).get('/accounts/missing/transactions');
+
+            expect(response.status).toBe(404);
         });
     });
 });

@@ -53,6 +53,7 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 | APP-5.4 | Uploads shall be limited to one file of at most 5 MB. A larger file shall be refused with 400 "File is too large (maximum 5 MB)." | Implemented |
 | APP-5.5 | Error responses shall never contain database or internal error text. A request that refers to a record that doesn't exist, or deletes one that other records still need, shall get a 400 with a message naming it (for example "Category group not found." or "Cannot delete a category group that still has categories."). Malformed JSON shall get a 400. Anything else unexpected is a 500 "An unexpected error occurred". | Implemented |
 | APP-5.6 | The server shall work out "today" and calendar-period boundaries in the time zone set by `TZ` (UTC if unset). | Implemented |
+| APP-5.7 | The server shall check every request's route parameters, query string and body before acting on it, and refuse an invalid one with a 400 naming each bad field (for example "Invalid Transaction request body: amount: Too big…"). Unknown filter or sort keys, unparseable dates, and amounts beyond 9,999,999,999.99 are refused rather than ignored or passed to the database. An update may send only the fields it changes; the rest keep their values. | Implemented |
 
 ## Observations
 

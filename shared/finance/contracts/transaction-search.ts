@@ -1,4 +1,5 @@
-import { TransactionsFilterKey } from './../enum/transactions-filter-key';
+import { SortDirection } from './../../core/enum';
+import { TransactionsFilterKey, TransactionsSortKey } from './../enum';
 
 export type TransactionSearchFilterItem = {
     key: TransactionsFilterKey;
@@ -6,8 +7,8 @@ export type TransactionSearchFilterItem = {
 }
 
 export type TransactionSearchOptions = {
-    sortKey?: string;
-    sortDirection?: string;
+    sortKey?: TransactionsSortKey;
+    sortDirection?: SortDirection;
     offset?: number;
     limit?: number;
     minAmount?: number;

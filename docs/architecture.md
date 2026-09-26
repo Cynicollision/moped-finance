@@ -25,7 +25,8 @@ server/
   src/api/<domain>/ finance endpoints, one folder per domain
   src/auth/         login/register/session, auth middleware, users
   src/health/       GET /health (database ping), used by the Docker health check
-  src/data/         DatabaseClient, EntityId, entity factories
+  src/csv/          CSV reading/writing and cell parsing for imports and exports
+  src/data/         DatabaseClient, EntityId, entity factories, SchemaUtil
   src/routing/      OperationHandler, Result factory, request validation
   src/logging/      logger (console and/or core.logs table)
   src/utility/      DateTimeUtil, test helpers
@@ -36,12 +37,12 @@ server/
 
 Each finance domain (`accounts`, `budget`, `categories`, `institutions`, `transactions`) has the same layers:
 
-1. **`*-routes.ts`**: defines Express routes, validates the request with Zod (`validator.body/query`), and hands a callback to `OperationHandler.execute`.
-2. **`*-controller.ts`**: business rules, such as returning `Result.userErrorNotFound()` when a requested resource doesn't exist. Returns an `OperationResult` built with `Result.success(...)`, `Result.userErrorNotFound(...)` and similar; never touches `res`.
+1. **`*-routes.ts`**: defines Express routes and calls `OperationHandler.execute` with the request schemas (`{ params, query, body }`) and a callback. `execute` parses those parts with Zod, answers 400 naming the invalid fields, or passes the typed values to the callback.
+2. **`*-controller.ts`**: business rules, such as returning `Result.userErrorNotFound()` when a requested resource doesn't exist. Returns an `OperationResult` built with `Result.success(...)`, `Result.userErrorNotFound(...)` and similar; never touches `res`. Imports and exports use the domain's CSV format (`transaction-csv.ts`, `balance-history-csv.ts`), built on `src/csv/`.
 3. **`*-data.ts`**: Drizzle queries, mapping rows to `@shared` types. Each domain's `IFinance*Data` interface declares its own methods, typically `retrieveAll`, `retrieveSingle`, `insert`, `update` and `delete`.
 4. **`*-schema.ts`**: Drizzle table definitions and `drizzle-zod` validation schemas.
 
-`OperationHandler` logs the operation, maps the result's `OperationStatus` to an HTTP status code, and turns thrown errors into a 400 (constraint violations, via `DatabaseErrorUtil`) or a generic 500. Errors raised before an operation runs (malformed JSON, rejected uploads) reach `buildErrorHandler` (`src/routing/error-handler.ts`), registered last in `index.ts`, which answers in the same `{ code, message }` shape. Uploads go through `singleFileUpload` (`src/routing/upload.ts`): one file, at most 5 MB, held in memory.
+`OperationHandler` logs the operation, maps the result's `OperationStatus` to an HTTP status code, sends `data` or `{ code, message, details? }`, and turns thrown errors into a 400 (constraint violations, via `DatabaseErrorUtil`) or a generic 500. Errors raised before an operation runs (malformed JSON, rejected uploads) reach `buildErrorHandler` (`src/routing/error-handler.ts`), registered last in `index.ts`, which answers in the same `{ code, message }` shape. Uploads go through `singleFileUpload` (`src/routing/upload.ts`): one file, at most 5 MB, held in memory.
 
 Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>`, behind `resolveUser` + `requireAuth`. Auth is mounted separately at `/auth` (`login`, `register`, `registration`, `logout`, `me`, `password`) and uses a cookie session (`express-session`, in-memory store for now).
 

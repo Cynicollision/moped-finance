@@ -8,7 +8,8 @@ export type Account = Entity & {
     name: string;
     category: AccountCategory;
     group: AccountGroup;
-    type: AccountType;
+    // Null for groups that have no account types (e.g. Credit Card).
+    type: AccountType | null;
     balance?: number;
     isHidden?: boolean;
     isManual?: boolean;

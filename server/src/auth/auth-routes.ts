@@ -1,22 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { IAppLogger } from '@server/logging';
-import { OperationDefinition, OperationHandler, OperationResult, Result, RequestSchemaValidator } from '@server/routing';
+import { OperationDefinition, OperationHandler, OperationResult, Result } from '@server/routing';
 import { AuthController } from './auth-controller';
 import { AuthMiddleware } from './auth-middleware';
-
-type AuthRequest = {
-    username: string;
-    password?: string;
-    name?: string;
-    oldPassword?: string;
-    newPassword?: string;
-};
 
 export function buildAuthRouter(logger: IAppLogger, controller: AuthController, middleware: AuthMiddleware) {
     const domain = 'Auth';
     const handler = new OperationHandler(logger);
-    const validator = new RequestSchemaValidator(logger, domain);
     const router = Router();
 
     // POST /login - Login user
@@ -25,10 +16,10 @@ export function buildAuthRouter(logger: IAppLogger, controller: AuthController, 
         password: z.string().min(1)
     });
 
-    router.post('/login', validator.body(loginSchema), (req, res) => {
+    router.post('/login', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'login' };
-        handler.execute(req, res, op, async (context) => {
-            const { username, password } = req.body;
+        handler.execute(req, res, op, { body: loginSchema }, async (context, { body }) => {
+            const { username, password } = body;
             const result = await controller.loginUser(username, password);
 
             if (!result.success || !result.data) {
@@ -55,10 +46,10 @@ export function buildAuthRouter(logger: IAppLogger, controller: AuthController, 
         password: z.string().min(1)
     });
 
-    router.post('/register', validator.body(registerSchema), (req, res) => {
+    router.post('/register', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'register' };
-        handler.execute(req, res, op, async (context) => {
-            const { username, name, password } = req.body;
+        handler.execute(req, res, op, { body: registerSchema }, async (context, { body }) => {
+            const { username, name, password } = body;
 
             const result = await controller.createUser(username, name, password);
             if (!result.success || !result.data) {
@@ -77,10 +68,10 @@ export function buildAuthRouter(logger: IAppLogger, controller: AuthController, 
         newPassword: z.string().min(1)
     });
 
-    router.put('/password', middleware.requireAuth, validator.body(changePasswordSchema), (req, res) => {
+    router.put('/password', middleware.requireAuth, (req, res) => {
         const op: OperationDefinition = { domain, operation: 'changePassword' };
-        handler.execute(req, res, op, async (context) => {
-            const { oldPassword, newPassword } = req.body;
+        handler.execute(req, res, op, { body: changePasswordSchema }, async (context, { body }) => {
+            const { oldPassword, newPassword } = body;
 
             const userId = context.user.getId();
             return await controller.changePassword(userId, oldPassword, newPassword);

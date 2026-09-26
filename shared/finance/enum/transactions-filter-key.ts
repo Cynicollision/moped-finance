@@ -1,5 +1,5 @@
 export enum TransactionsFilterKey {
-    Merchant = 'mechant',
+    Merchant = 'merchant',
     Category = 'category_id',
     AccountId = 'account_id',
     Group = 'group'
