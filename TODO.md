@@ -21,13 +21,12 @@ Nothing right now.
 From a review of the code, the schema, and the requirements' known gaps and open questions (2026-09-25). Decide these first, since they shape the work below. Record each decision in `docs/` (architecture or the relevant requirement) once it's made.
 - [ ] **Sign conventions.** Transactions are signed (money out is negative), liability balances are stored negative, and budget amounts are always positive with direction taken from their type. The UI mostly hides signs (TXN known gaps, DASH notes, BUD open questions); balance adjustments (ACCT-5.4) rely on the same signs. Write down one rule set, and have forms and imports enforce it, e.g. an In/Out toggle instead of a signed amount field.
 - [ ] **Split transactions.** `is_split`/`split_parent_id` exist but have no UI or behavior. Design splits or drop the columns. Splitting a mortgage payment into principal (a transfer) and interest and escrow (expenses) is the main use (CASH open questions).
-- [ ] **Budget vs actual.** Budget and Cashflow are unconnected (BUD, CASH open questions). Decide whether budgets are compared with actual spending per category and period, and whether transfers such as planned savings can be budgeted; this drives the budget screen redesign below.
 
 ### Client: mobile and dialogs
 - [ ] Define shared breakpoints: one SCSS partial or mixin plus `BreakpointObserver` in TypeScript. Components currently use ad hoc 599/600/768px media queries, and a ~800 px window with the side nav open overflows (APP known gaps).
 - [ ] Tables on phones: Transactions, Budget, Cashflow and Account Details use `mat-table`. At handset width, switch to a list or card layout (name and amount, with a second line for date and category) instead of a table that scrolls sideways.
 - [ ] Pick one pattern for create and edit. Today accounts, institutions and transactions use full pages, while budget streams, categories and groups use dialogs (`ModalService`: fixed 500px, `disableClose: true`). Suggested rule: full pages for records with many fields or that need their own URL; dialogs for small forms, full-screen on phones. Allow Esc and backdrop clicks to close unless the form has unsaved changes.
-- [ ] Budget screen redesign, together with the budget-vs-actual decision: consider inline add/edit rows or a side panel instead of a dialog per stream, an empty state (BUD known gaps), and a layout that works on phones.
+- [ ] Budget screen redesign, together with BUD-1.2 and BUD-1.8 to BUD-1.10: consider inline add/edit rows or a side panel instead of a dialog per stream, an empty state (BUD known gaps), and a layout that works on phones.
 - [ ] On phones, collapse the Transactions filters into a panel or bottom sheet.
 
 ### Client refactors

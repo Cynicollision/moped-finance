@@ -32,7 +32,7 @@ Screen: **Categories** (`/categories`). Creating and editing happen in dialogs o
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-2.1 | A budget stream's type (Income or Expense) shall be its category's type. Budget stream forms shall only offer active categories of the matching type; Transfer categories and Uncategorized can't have streams. See BUD-1.1 and BUD-1.3. | Partial |
+| CAT-2.1 | A budget stream's type shall follow from its category's type: Income, Expense, or Savings for a Transfer category. Budget stream forms shall only offer active categories of the matching type; Uncategorized can't have streams. See BUD-1.1 and BUD-1.3. | Partial |
 | CAT-2.2 | Cashflow shall count categories of Income groups as income, ignore categories of Transfer groups, and count categories of Expense groups as expenses. Uncategorized amounts shall count by sign: money in as income, money out as expenses. See CASH-1.3. | Partial |
 | CAT-2.3 | Budget and Cashflow shall show how expenses split between Essential and Discretionary (BUD-1.7, CASH-1.8). | Planned |
 
@@ -120,7 +120,6 @@ Default categories (E = Essential, D = Discretionary):
 ## Open questions
 
 - **Automatic categorization rules (CAT-8).** What a rule matches (merchant contains, original statement, amount, account), which rule wins when several match, whether rules can be applied to existing transactions, and whether editing a transaction's category offers to create a rule.
-- **Budgeting transfers.** Planned savings ("$500 a month to savings") are Transfer categories, which can't have budget streams (CAT-2.1). See BUD open questions.
 
 ## Notes
 
