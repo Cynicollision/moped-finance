@@ -3,7 +3,7 @@ import { NewEntity } from '@shared/core/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
-import { FinanceEntityFactory } from '@server/data';
+import { DatabaseErrorUtil, FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
@@ -201,7 +201,11 @@ export class TransactionController {
                 createdCount++;
             }
             catch (err: any) {
-                failedRowMessages.push(`Row ${rowIndex}: ${err.message || 'Database error during save'}`);
+                // Keep going so the user sees every failed row. The database message can contain SQL,
+                // so it goes to the log; the row gets a mapped constraint message or a generic one.
+                this.logger.error(context.user.getId(), `Import row ${rowIndex} failed: ${err?.message ?? err}`, context);
+                const message = DatabaseErrorUtil.getConstraintViolation(err)?.message ?? 'Could not be saved.';
+                failedRowMessages.push(`Row ${rowIndex}: ${message}`);
             }
 
             rowIndex++;

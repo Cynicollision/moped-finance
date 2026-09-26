@@ -17,17 +17,8 @@ The production setup was written but never run; only the dev compose stack (API 
 - [ ] The `@server/*` / `@shared/*` path aliases aren't rewritten in the compiled output, so `node dist/server/index.js` fails with `Cannot find module '@server/api'`. Rewrite them at build time (e.g. `tsc-alias`) or bundle the server (e.g. esbuild).
 - [ ] Static files don't line up: Angular's application builder writes to `dist/moped-finance/browser/`, the Dockerfile copies `dist/moped-finance` to `server/public` (so `index.html` ends up in `server/public/browser/`), and Express serves `path.join(__dirname, 'public')`, which resolves to `dist/server/public`. Pick one location and make all three agree.
 - [ ] The client hardcodes `apiUrl: 'http://localhost:3000'` in both `environment.ts` (production) and `environment.development.ts`, so a production browser would call its own machine. Use relative URLs (`apiUrl: ''`) so the app talks to the origin that served it, and in development route through the dev-server proxy. `client/proxy.conf.json` exists but is unused, and it only covers `/api` while auth is mounted at `/auth`. With same-origin requests the server-side CORS setup can likely go.
-- [ ] Add a CI smoke test: build the image, start it, and check that `/` returns `index.html`.
-
-### Server hardening (before NAS)
-Robustness for a box that restarts and runs unattended.
-- [ ] Handle Postgres pool errors: `DatabaseClient.fromConfig` (`server/src/data/database-client.ts`) creates a `pg` `Pool` with no `'error'` listener, so an idle-client error (e.g. Postgres restarting) can crash the process. Add `pool.on('error', …)` that logs.
-- [ ] Graceful shutdown: on `SIGTERM`/`SIGINT`, stop accepting requests, let in-flight ones finish, then close the pool (`server/index.ts`), so `docker stop` and image updates don't cut off an import.
-- [ ] Health endpoint: `GET /health` that pings the database, plus a `healthcheck` for the `api` service in `docker-compose.prod.yml` (only `postgres` has one).
-- [ ] Upload limits: both `multer` instances (`account-routes.ts`, `transaction-routes.ts`) use unbounded memory storage. Cap file size (e.g. 5 MB) and file count.
-- [ ] Map foreign-key violations (Postgres `23503`) in `DatabaseErrorUtil` to a 400, as unique violations are. Deleting a category group that still has categories is a 500 today. Complements "Validate referenced IDs" under Server refactors.
-- [ ] Stop leaking database error text: `importBalanceHistory` (`account-controller.ts`) returns `'Database error during import: ' + err.message` and `importTransactions` (`transaction-controller.ts`) puts `err.message` in row messages. Drizzle's message includes the SQL. Let errors propagate per the conventions, or report a generic row error. Fold into the import/export refactor if that lands first.
-- [ ] Set `TZ` explicitly for both containers and document it. `date` handling and Cashflow period boundaries depend on the server's local time (CASH observations), and containers default to UTC.
+- [ ] Add a CI smoke test: build the image, start it, and check that `/` returns `index.html` and `/health` returns 200.
+- [ ] `server/tsconfig.prod.json` excludes `src/test-utils`, which doesn't exist; the test helpers live in `src/utility/testing` (they reference `jest`), so they and `scripts/` compile into the production `dist`. Exclude them, or give the production build an explicit `include` of `index.ts` and `src/`.
 
 ### Tests
 - [ ] Fix the client test `App > should render sidenav container` in `client/src/app/app.spec.ts`. The hand-rolled Router mock is missing `createUrlTree`; use `provideRouter([])` instead of mocking `Router`.
@@ -56,8 +47,8 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 - [ ] **Category lifecycle.** There's no delete in the UI. Deleting a category through the API orphans its transactions (which then vanish from the list) and its budget streams. Inactive categories still appear in pickers. New users start with no categories (CAT observations). Decide delete behavior (block, reassign, or archive only) and whether to seed default categories.
 
 ### Server refactors
-- [ ] Validate referenced IDs and return a 400 instead of a foreign-key 500: the institution on account create/update, the category on transaction and budget-stream create/update (ACCT, BUD, TXN observations).
-- [ ] Move CSV parsing, validation and export out of the account and transaction controllers into a small import/export module that reports row-level errors. Today a bad date causes a 500 and a non-numeric amount becomes 0. Do this together with the partial-import and bulk-insert items under Correctness.
+- [ ] Referenced IDs: foreign-key violations now return a 400 with a message from `DatabaseErrorUtil` (APP-5.5), so the remaining explicit checks are only for consistency. `createTransaction` (`transaction-controller.ts`) checks the account itself and says "Invalid account specified.", while the database path says "Account not found."; `deleteInstitution` (`institution-controller.ts`) checks for accounts with its own wording. Pick one approach and one wording.
+- [ ] Move CSV parsing, validation and export out of the account and transaction controllers into a small import/export module that reports row-level errors. Today a bad date causes a 500 and a non-numeric amount becomes 0. An amount too large for `DECIMAL(12, 2)` fails in the database: a generic 500 for balance import, "Row N: Could not be saved." for transaction import. Validate the range per row. Do this together with the partial-import and bulk-insert items under Correctness.
 - [ ] Remove the `as any` casts in routes (e.g. `req.query as any` in `transaction-routes.ts`); have the validator return typed, parsed values.
 - [ ] The transaction list (`search` in `transaction-data.ts`) inner-joins categories, so uncategorized transactions disappear (TXN observations). Export already uses a left join; do the same here, and support sorting by category and account (TXN-1.2).
 

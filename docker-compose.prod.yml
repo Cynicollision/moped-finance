@@ -9,6 +9,7 @@ services:
       POSTGRES_USER: ${PGUSER}
       POSTGRES_PASSWORD: ${PGPASSWORD}
       POSTGRES_DB: ${PGDATABASE}
+      TZ: ${TZ:-UTC}
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -29,9 +30,19 @@ services:
       - NODE_ENV=production
       - PGHOST=postgres
       - PORT=3000
+      - TZ=${TZ:-UTC}
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      # busybox wget exits non-zero on the 503 that /health returns when the database is unreachable
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    # Room for in-flight requests to finish on docker stop; the server's own shutdown timeout is 25s.
+    stop_grace_period: 30s
 
 volumes:
   db_data:

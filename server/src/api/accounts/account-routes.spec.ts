@@ -597,6 +597,31 @@ describe('Account Routes', () => {
             expect(response.body.failedRowMessages).toEqual(['Row 3: Duplicate date 2026-06-06']);
             expect(response.body.isValidToImport).toBe(false);
         });
+
+        it('APP-5.5 should not return the database error text when the insert fails', async () => {
+            const acc1 = await accountData.insert(FinanceEntityFactory.createAccount({
+                institutionId: testInstitutionId,
+                name: 'Checking',
+                category: AccountCategory.Asset,
+                group: AccountGroup.Cash,
+                type: AccountType.Checking,
+                balance: 1000.00,
+                isHidden: false,
+                isManual: false,
+                isRetirement: false,
+                hideFromCashflow: false
+            }));
+
+            // DECIMAL(12, 2) can't hold this balance, so the insert fails with a numeric overflow.
+            const csvContent = 'Date,Balance,AccountName\n2026-06-06,1000000000000000,Checking';
+
+            const response = await request(app)
+                .post(`/accounts/${acc1.id}/import-balances`)
+                .attach('file', Buffer.from(csvContent), 'import.csv');
+
+            expect(response.status).toBe(500);
+            expect(response.body).toEqual({ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' });
+        });
     });
 
     describe('POST /accounts/:accountId/sync', () => {

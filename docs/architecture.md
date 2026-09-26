@@ -21,9 +21,10 @@ Aliases are set in each package's `tsconfig.json`, and in `server/jest.config.js
 
 ```
 server/
-  index.ts          app setup: session, CORS, routers, static files
+  index.ts          app setup: session, CORS, routers, static files, graceful shutdown
   src/api/<domain>/ finance endpoints, one folder per domain
   src/auth/         login/register/session, auth middleware, users
+  src/health/       GET /health (database ping), used by the Docker health check
   src/data/         DatabaseClient, EntityId, entity factories
   src/routing/      OperationHandler, Result factory, request validation
   src/logging/      logger (console and/or core.logs table)
@@ -40,7 +41,7 @@ Each finance domain (`accounts`, `budget`, `categories`, `institutions`, `transa
 3. **`*-data.ts`**: Drizzle queries, mapping rows to `@shared` types. Each domain's `IFinance*Data` interface declares its own methods, typically `retrieveAll`, `retrieveSingle`, `insert`, `update` and `delete`.
 4. **`*-schema.ts`**: Drizzle table definitions and `drizzle-zod` validation schemas.
 
-`OperationHandler` logs the operation, maps the result's `OperationStatus` to an HTTP status code, and turns thrown errors into a 500.
+`OperationHandler` logs the operation, maps the result's `OperationStatus` to an HTTP status code, and turns thrown errors into a 400 (constraint violations, via `DatabaseErrorUtil`) or a generic 500. Errors raised before an operation runs (malformed JSON, rejected uploads) reach `buildErrorHandler` (`src/routing/error-handler.ts`), registered last in `index.ts`, which answers in the same `{ code, message }` shape. Uploads go through `singleFileUpload` (`src/routing/upload.ts`): one file, at most 5 MB, held in memory.
 
 Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>`, behind `resolveUser` + `requireAuth`. Auth is mounted separately at `/auth` (`login`, `register`, `registration`, `logout`, `me`, `password`) and uses a cookie session (`express-session`, in-memory store for now).
 
@@ -60,7 +61,7 @@ The schema is defined twice, and both copies must stay in sync:
 
 `server/src/data/schema-parity.spec.ts` loads the SQL into PGlite and fails if any column, constraint or index differs from Drizzle. Enum-like columns have `CHECK` constraints; the Drizzle side builds them from the `@shared` enums with `SchemaUtil.isOneOf`, so adding an enum value means updating the SQL too.
 
-Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates with no time zone; money is `DECIMAL(12, 2)`. Names of institutions, category groups and categories are unique ignoring case (unique indexes on `lower(name)`), and there's one balance per account per date. `OperationHandler` turns a unique-constraint violation into a 400 with a message from `DatabaseErrorUtil`.
+Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates with no time zone; money is `DECIMAL(12, 2)`. Names of institutions, category groups and categories are unique ignoring case (unique indexes on `lower(name)`), and there's one balance per account per date. `OperationHandler` turns unique and foreign-key violations into a 400 with a message from `DatabaseErrorUtil`.
 
 There are no migrations yet (see `TODO.md`), so changing an existing table means resetting the local database.
 

@@ -1,9 +1,10 @@
 import express, { Router } from 'express';
 import { AppLogger } from '@server/logging';
+import { buildErrorHandler } from '@server/routing';
 
 export class TestExpressUtil {
     /**
-     * Creates an Express app configured for testing a specific router.
+     * Creates an Express app configured for testing a specific router, with the app's error handler.
      * Injects a mock user into the request to simulate the auth middleware.
      */
     public static createTestApp(router: Router, routePath: string, mockUserId: string = 'test-user-id'): express.Express {
@@ -17,6 +18,7 @@ export class TestExpressUtil {
         });
 
         app.use(routePath, router);
+        app.use(buildErrorHandler(TestExpressUtil.createMockLogger()));
         return app;
     }
 
