@@ -1,0 +1,27 @@
+Class,Group,Icon,Name,IsActive
+income,Income,💼,Paycheck,true
+income,Income,💸,Interest,true
+income,Income,📊,Dividends,true
+income,Income,🎁,Other Income,true
+expense,Housing,🏠,Mortgage Payment,true
+expense,Housing,💡,Utilities,true
+expense,Housing,📱,Internet & Phone,true
+expense,Housing,🔧,Home Maintenance,true
+expense,Food,🛒,Groceries,true
+expense,Food,🍽️,Restaurants,true
+expense,Food,☕,Coffee,true
+expense,Transportation,⛽,Gas,true
+expense,Transportation,🚗,Auto Insurance,true
+expense,Transportation,🚇,Parking & Transit,true
+expense,Lifestyle,🛍️,Shopping,true
+expense,Lifestyle,🎬,Entertainment,true
+expense,Lifestyle,📺,Subscriptions,true
+expense,Lifestyle,✈️,Travel,true
+expense,Lifestyle,👔,Dry Cleaning,false
+expense,Health,🩺,Medical,true
+expense,Health,🏋️,Fitness,true
+expense,Giving,🎀,Gifts,true
+expense,Giving,❤️,Charity,true
+transfer,Transfers,💳,Credit Card Payment,true
+transfer,Transfers,🔁,Savings Transfer,true
+transfer,Transfers,📈,Investment Contribution,true

@@ -41,7 +41,7 @@ Run these inside the API container (`docker compose exec api npm run <script>`),
 |---|---|
 | `db:generate` | Writes a migration for Drizzle table changes to `server/migrations/` |
 | `db:migrate` | Applies pending migrations (the API also does this on startup) |
-| `db:seed` | Adds the `SEED_USER_*` user and sample finance data. `db:seed:core` and `db:seed:finance` do one part |
+| `db:seed` | Adds the `SEED_USER_*` user and the synthetic sample data in `server/seed-data/` (about two years up to the debug "today"). `db:seed:core` and `db:seed:finance` do one part; `db:seed:finance` needs an empty finance schema |
 | `db:drop` | Drops the `core`, `finance` and `drizzle` schemas: **all data** and the migration history |
 | `db:reset` | `drop`, then `migrate`, then `seed` |
 

@@ -1,0 +1,15 @@
+Type,Name,CategoryName,Recurrence,Amount
+income,Salary,Paycheck,Monthly,7200.00
+income,Savings interest,Interest,Monthly,40.00
+income,Brokerage dividends,Dividends,Quarterly,150.00
+expense,Mortgage,Mortgage Payment,Monthly,1850.00
+expense,Utilities,Utilities,Monthly,200.00
+expense,Internet and phone,Internet & Phone,Monthly,135.00
+expense,Groceries,Groceries,Monthly,700.00
+expense,Eating out,Restaurants,Monthly,250.00
+expense,Gas,Gas,Monthly,150.00
+expense,Car insurance,Auto Insurance,Quarterly,540.00
+expense,Streaming and apps,Subscriptions,Monthly,30.00
+expense,Gym,Fitness,Monthly,45.00
+expense,Vacations,Travel,Yearly,3000.00
+expense,Holiday gifts,Gifts,Yearly,1000.00

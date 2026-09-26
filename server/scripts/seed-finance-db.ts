@@ -1,308 +1,158 @@
 import fs from 'fs';
 import path from 'path';
-import { Pool } from 'pg';
-import { EntityId, FinanceEntityIdPrefix } from '@server/data';
+import { CalendarPeriod } from '@shared/core/enum';
+import { AccountCategory, AccountGroup, AccountType, BudgetStreamType, CategoryClass } from '@shared/finance/enum';
+import { FinanceAccountData } from '@server/api/accounts/account-data';
+import { FinanceBalanceHistoryData } from '@server/api/accounts/balance-history-data';
+import { FinanceBudgetStreamData } from '@server/api/budget/budget-stream-data';
+import { FinanceCategoryGroupData } from '@server/api/categories/category-groups/category-group-data';
+import { FinanceCategoryData } from '@server/api/categories/category-data';
+import { FinanceInstitutionData } from '@server/api/institutions/institution-data';
+import { TransactionCsv } from '@server/api/transactions/transaction-csv';
+import { FinanceTransactionData } from '@server/api/transactions/transaction-data';
+import { CsvFile, CsvRow, CsvValue, CsvValueResult } from '@server/csv';
+import { DatabaseClient, FinanceEntityFactory } from '@server/data';
+import { DateTimeUtil } from '@server/utility';
 
-const dbConfig = {
+// Imports come from the data files rather than the domain barrels, which load the routes and auth middleware.
+// Seeds the synthetic sample data in server/seed-data/ (see its README). Records are linked by name, and
+// transactions.csv goes through the same reader as a transaction import.
+const DATA_DIR = path.join(__dirname, './../seed-data');
+
+const dbClient = DatabaseClient.fromConfig({
     user: process.env.PGUSER,
     password: process.env.PGPASSWORD,
-    host: process.env.PGHOST,
+    host: process.env.PGHOST || 'localhost',
     database: process.env.PGDATABASE,
     port: parseInt(process.env.PGPORT || '5432'),
-};
+});
 
-const pool = new Pool(dbConfig);
-
-// Assuming structure: server/scripts/seed-finance-db.ts -> server/test-data/
-const DATA_DIR = path.join(__dirname, './../test_data');
-
-async function readCsv(fileName: string): Promise<string[]> {
-    const filePath = path.join(DATA_DIR, fileName);
-    const content = await fs.promises.readFile(filePath, 'utf-8');
-    return content.split(/\r?\n/);
+function readFile(fileName: string): Buffer {
+    return fs.readFileSync(path.join(DATA_DIR, fileName));
 }
 
-function parseCsvLine(line: string): string[] {
-    const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-
-        if (char === '"') {
-            if (inQuotes && line[i + 1] === '"') {
-                current += '"';
-                i++; // Skip next quote
-            } else {
-                inQuotes = !inQuotes;
-            }
-        } else if (char === ',' && !inQuotes) {
-            result.push(current);
-            current = '';
-        } else {
-            current += char;
-        }
+function readRows(fileName: string, headers: string[]): CsvRow[] {
+    const csv = CsvFile.read(readFile(fileName), headers);
+    if (!csv.success) {
+        throw new Error(`${fileName}: ${csv.message}`);
     }
-    result.push(current);
-    return result;
+    const badRow = csv.rows.find(row => row.error);
+    if (badRow) {
+        throw new Error(`${fileName} row ${badRow.rowNumber}: ${badRow.error}`);
+    }
+    return csv.rows;
+}
+
+function valueOf<T>(fileName: string, row: CsvRow, result: CsvValueResult<T>): T {
+    if (!result.success) {
+        throw new Error(`${fileName} row ${row.rowNumber}: ${result.message}`);
+    }
+    return result.value;
+}
+
+function idOf(ids: Map<string, string>, name: string, fileName: string, row: CsvRow): string {
+    const id = ids.get(name.toLowerCase());
+    if (!id) {
+        throw new Error(`${fileName} row ${row.rowNumber}: '${name}' not found.`);
+    }
+    return id;
 }
 
 (async () => {
-    const client = await pool.connect();
     try {
         console.log('🌱 Seeding finance data...');
 
-        // 1. Load Institutions
-        const institutionIdMap = new Map<string, string>();
-        console.log(' 1. Reading institutions.csv...');
-        const institutionLines = await readCsv('institutions.csv');
-
-        if (institutionLines.length > 0) {
-            let count = 0;
-            // Start at 1 to skip header row
-            for (let i = 1; i < institutionLines.length; i++) {
-                const line = institutionLines[i].trim();
-                if (!line) {
-                    continue;
-                }
-
-                const [id, _csvUserId, name] = parseCsvLine(line);
-                if (id && name) {
-                    const generatedId = EntityId.generate(FinanceEntityIdPrefix.Institution);
-                    institutionIdMap.set(id.trim(), generatedId);
-
-                    await client.query(
-                        `INSERT INTO finance.institutions (id, name)
-                         VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
-                        [generatedId, name.trim()]
-                    );
-                    count++;
-                }
+        // Institutions are created from the accounts' InstitutionName, like category groups from categories.
+        const institutionData = new FinanceInstitutionData(dbClient);
+        const accountData = new FinanceAccountData(dbClient);
+        const institutionIds = new Map<string, string>();
+        const accountIds = new Map<string, string>();
+        const accountsFile = 'accounts.csv';
+        for (const row of readRows(accountsFile, ['InstitutionName', 'Name', 'Category', 'Group', 'Type', 'IsHidden', 'IsRetirement'])) {
+            let institutionId = institutionIds.get(row.values['InstitutionName'].toLowerCase());
+            if (!institutionId) {
+                const institution = await institutionData.insert(FinanceEntityFactory.createInstitution({ name: row.values['InstitutionName'] }));
+                institutionId = institution.id;
+                institutionIds.set(institution.name.toLowerCase(), institution.id);
             }
-            console.log(`✅ Seeded ${count} finance.institutions.`);
+            const account = await accountData.insert(FinanceEntityFactory.createAccount({
+                institutionId,
+                name: row.values['Name'],
+                category: row.values['Category'] as AccountCategory,
+                group: row.values['Group'] as AccountGroup,
+                type: (row.values['Type'] || null) as AccountType | null,
+                isHidden: valueOf(accountsFile, row, CsvValue.boolean('IsHidden', row.values['IsHidden'])),
+                isManual: false,
+                isRetirement: valueOf(accountsFile, row, CsvValue.boolean('IsRetirement', row.values['IsRetirement'])),
+                hideFromCashflow: false,
+            }));
+            accountIds.set(account.name.toLowerCase(), account.id);
         }
+        console.log(`✅ ${institutionIds.size} institutions, ${accountIds.size} accounts`);
 
-        // 2. Load Finance Accounts
-        const accountsMap = new Map<string, string>();
-
-        console.log(' 2. Reading accounts.csv...');
-        const accountsLines = await readCsv('accounts.csv');
-        if (accountsLines.length > 0) {
-            let count = 0;
-            // Start at 1 to skip header row
-            for (let i = 1; i < accountsLines.length; i++) {
-                const line = accountsLines[i].trim();
-                if (!line) {
-                    continue;
-                }
-
-                const [id, _csvUserId, institutionId, name, category, type, subtype, balance, hidden, retirement] = parseCsvLine(line);
-
-                if (id && name) {
-                    const generatedId = EntityId.generate(FinanceEntityIdPrefix.Account);
-                    const mappedInstitutionId = institutionIdMap.get(institutionId?.trim()) || null;
-                    accountsMap.set(name.trim(), generatedId);
-
-                    await client.query(
-                        `INSERT INTO finance.accounts (
-                            id, institution_id, name, account_category, account_group, account_type, is_hidden, is_manual, is_retirement, hide_from_cashflow
-                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                         ON CONFLICT (id) DO NOTHING`,
-                        [
-                            generatedId,
-                            mappedInstitutionId,
-                            name.trim(),
-                            category.trim(),
-                            type.trim(),
-                            subtype?.trim() || null,
-                            hidden?.trim().toLowerCase() === 'true',
-                            false,
-                            retirement?.trim().toLowerCase() === 'true',
-                            false
-                        ]
-                    );
-                    count++;
-                }
+        const groupData = new FinanceCategoryGroupData(dbClient);
+        const categoryData = new FinanceCategoryData(dbClient);
+        const groupIds = new Map<string, string>();
+        const categoryIds = new Map<string, string>();
+        const categoriesFile = 'categories.csv';
+        for (const row of readRows(categoriesFile, ['Class', 'Group', 'Icon', 'Name', 'IsActive'])) {
+            let groupId = groupIds.get(row.values['Group'].toLowerCase());
+            if (!groupId) {
+                const group = await groupData.insert(FinanceEntityFactory.createCategoryGroup({
+                    class: row.values['Class'] as CategoryClass,
+                    name: row.values['Group'],
+                }));
+                groupId = group.id;
+                groupIds.set(group.name.toLowerCase(), group.id);
             }
-            console.log(`✅ Seeded ${count} finance.accounts.`);
+            const category = await categoryData.insert(FinanceEntityFactory.createCategory({
+                groupId,
+                icon: row.values['Icon'],
+                name: row.values['Name'],
+                isActive: valueOf(categoriesFile, row, CsvValue.boolean('IsActive', row.values['IsActive'])),
+            }));
+            categoryIds.set(category.name.toLowerCase(), category.id);
         }
+        console.log(`✅ ${groupIds.size} category groups, ${categoryIds.size} categories`);
 
-        // 3. Load Categories and Groups
-        const categoryGroupsMap = new Map<string, string>();
-        const categoriesMap = new Map<string, string>();
-        console.log(' 3. Reading categories.csv...');
-        const categoriesLines = await readCsv('categories.csv');
-        if (categoriesLines.length > 0) {
-            let catCount = 0;
-            let groupCount = 0;
-            // Start at 1 to skip header row
-            for (let i = 1; i < categoriesLines.length; i++) {
-                const line = categoriesLines[i].trim();
-                if (!line) {
-                    continue;
-                }
-
-                const [id, _csvUserId, type, group, icon, name, isActive] = parseCsvLine(line);
-
-                if (id && type && group && icon && name && isActive) {
-                    let groupId = categoryGroupsMap.get(group.trim());
-                    if (!groupId) {
-                        groupId = EntityId.generate(FinanceEntityIdPrefix.CategoryGroup);
-                        categoryGroupsMap.set(group.trim(), groupId);
-
-                        await client.query(
-                            `INSERT INTO finance.category_groups (
-                                id, category_class, name
-                             ) VALUES ($1, $2, $3)
-                             ON CONFLICT (id) DO NOTHING`,
-                            [
-                                groupId,
-                                type.trim(),
-                                group.trim()
-                            ]
-                        );
-                        groupCount++;
-                    }
-
-                    const generatedId = EntityId.generate(FinanceEntityIdPrefix.Category);
-                    categoriesMap.set(name.trim(), generatedId);
-
-                    await client.query(
-                        `INSERT INTO finance.categories (
-                            id, group_id, icon, name, is_active
-                         ) VALUES ($1, $2, $3, $4, $5)
-                         ON CONFLICT (id) DO NOTHING`,
-                        [
-                            generatedId,
-                            groupId!,
-                            icon.trim(),
-                            name.trim(),
-                            isActive?.trim().toLowerCase() === 'true'
-                        ]
-                    );
-                    catCount++;
-                }
-            }
-            console.log(`✅ Seeded ${groupCount} finance.category_groups and ${catCount} finance.categories.`);
+        const budgetStreamData = new FinanceBudgetStreamData(dbClient);
+        const streamsFile = 'budget-streams.csv';
+        const streamRows = readRows(streamsFile, ['Type', 'Name', 'CategoryName', 'Recurrence', 'Amount']);
+        for (const row of streamRows) {
+            await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
+                type: row.values['Type'] as BudgetStreamType,
+                name: row.values['Name'],
+                categoryId: idOf(categoryIds, row.values['CategoryName'], streamsFile, row),
+                recurrence: row.values['Recurrence'] as CalendarPeriod,
+                amount: valueOf(streamsFile, row, CsvValue.amount('Amount', row.values['Amount'])),
+            }));
         }
+        console.log(`✅ ${streamRows.length} budget streams`);
 
-        // 4. Load Transactions
-        console.log(' 4. Reading transactions...');
-        const transactionsDir = path.join(DATA_DIR, 'transactions');
-
-        if (fs.existsSync(transactionsDir)) {
-            const transactionFiles = fs.readdirSync(transactionsDir);
-            let transactionCount = 0;
-
-            for (const file of transactionFiles) {
-                if (!file.endsWith('.csv')) {
-                    continue;
-                }
-
-                console.log(`    Processing ${file}...`);
-                const lines = await readCsv(path.join('transactions', file));
-
-                // Start at 1 to skip header row
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) {
-                        continue;
-                    }
-
-                    const [date, merchant, categoryName, accountName, originalStatement, notes, amount] = parseCsvLine(line);
-
-                    const accountId = accountsMap.get(accountName?.trim());
-
-                    if (accountId && date && amount) {
-                        const categoryId = categoriesMap.get(categoryName?.trim()) || null;
-                        transactionCount++;
-                        const txnId = EntityId.generate(FinanceEntityIdPrefix.Transaction);
-
-                        await client.query(
-                            `INSERT INTO finance.transactions (
-                                id, account_id, category_id, date, amount, merchant,
-                                original_statement, notes, is_hidden, is_split
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                            ON CONFLICT (id) DO NOTHING`,
-                            [
-                                txnId,
-                                accountId,
-                                categoryId,
-                                date.trim(),
-                                parseFloat(amount.trim()),
-                                merchant?.trim() || '',
-                                originalStatement?.trim() || null,
-                                notes?.trim() || null,
-                                false,
-                                false
-                            ]
-                        );
-                    }
-                }
-            }
-            console.log(`✅ Seeded ${transactionCount} finance.transactions.`);
+        const transactions = TransactionCsv.read(readFile('transactions.csv'), { accountIds, categoryIds });
+        if (!transactions.success) {
+            throw new Error(`transactions.csv: ${transactions.message}`);
         }
-        else {
-            console.log('   No transactions directory found, skipping.');
+        if (transactions.failedRowMessages.length > 0) {
+            throw new Error(`transactions.csv: ${transactions.failedRowMessages.join('; ')}`);
         }
+        await new FinanceTransactionData(dbClient).insertBulk(transactions.transactions);
+        console.log(`✅ ${transactions.transactions.length} transactions`);
 
-        // 5. Load Balance History
-        console.log(' 5. Reading balance history...');
-        const balanceHistoryDir = path.join(DATA_DIR, 'balance_history');
-
-        if (fs.existsSync(balanceHistoryDir)) {
-            const balanceFiles = fs.readdirSync(balanceHistoryDir);
-            let balanceCount = 0;
-
-            for (const file of balanceFiles) {
-                if (!file.endsWith('.csv')) {
-                    continue;
-                }
-
-                console.log(`    Processing ${file}...`);
-                const lines = await readCsv(path.join('balance_history', file));
-
-                // Start at 1 to skip header row
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) {
-                        continue;
-                    }
-
-                    const [date, balance, accountName] = parseCsvLine(line);
-                    const accountId = accountsMap.get(accountName?.trim());
-
-                    if (accountId && date && balance) {
-                        balanceCount++;
-                        const bhId = EntityId.generate(FinanceEntityIdPrefix.BalanceHistory);
-
-                        await client.query(
-                            `INSERT INTO finance.balance_history (
-                                id, account_id, date, balance
-                            ) VALUES ($1, $2, $3, $4)
-                            ON CONFLICT (id) DO NOTHING`,
-                            [
-                                bhId,
-                                accountId,
-                                date.trim(),
-                                parseFloat(balance.trim())
-                            ]
-                        );
-                    }
-                }
-            }
-            console.log(`✅ Seeded ${balanceCount} finance.balance_history records.`);
-        } else {
-            console.log('   No balance_history directory found, skipping.');
-        }
+        const balancesFile = 'balance-history.csv';
+        const balances = readRows(balancesFile, ['Date', 'AccountName', 'Balance']).map(row => FinanceEntityFactory.createBalanceHistory({
+            accountId: idOf(accountIds, row.values['AccountName'], balancesFile, row),
+            date: DateTimeUtil.parse(valueOf(balancesFile, row, CsvValue.date('Date', row.values['Date']))),
+            balance: valueOf(balancesFile, row, CsvValue.amount('Balance', row.values['Balance'])),
+        }));
+        await new FinanceBalanceHistoryData(dbClient).insertBulk(balances);
+        console.log(`✅ ${balances.length} balance history entries`);
     }
     catch (err) {
-        console.error('❌ Finance seeding failed:', err);
-        process.exit(1);
+        console.error('❌ Finance seeding failed. It expects an empty finance schema; run db:reset to start over.', err);
+        process.exitCode = 1;
     }
     finally {
-        client.release();
-        await pool.end();
+        await dbClient.close();
     }
 })();
