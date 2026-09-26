@@ -1,12 +1,11 @@
 import { Router, Request } from 'express';
-import multer from 'multer';
 import { z } from 'zod';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { IAppLogger } from '@server/logging';
-import { OperationDefinition, OperationHandler, RequestSchemaValidator } from '@server/routing';
+import { OperationDefinition, OperationHandler, RequestSchemaValidator, singleFileUpload } from '@server/routing';
 import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
 import { TransactionController } from './transaction-controller';
@@ -14,7 +13,6 @@ import { IFinanceTransactionData } from './transaction-data';
 import { createTransactionSchema, updateTransactionSchema } from './transaction-schema';
 
 const domain = 'Transaction';
-const upload = multer({ storage: multer.memoryStorage() });
 
 export const transactionSearchQuerySchema = z.object({
     sortKey: z.enum(TransactionsSortKey).optional(),
@@ -97,7 +95,7 @@ export function createTransactionRouter(logger: IAppLogger, accountData: IFinanc
         accountId: z.string().optional()
     });
 
-    router.post('/import', upload.single('file'), validator.query(importQuerySchema), (req, res) => {
+    router.post('/import', singleFileUpload, validator.query(importQuerySchema), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'importTransactions' };
         handler.execute(req, res, op, (context) => {
             const { dryRun, accountId } = req.query as any;

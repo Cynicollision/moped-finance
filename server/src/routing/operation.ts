@@ -68,13 +68,13 @@ export class OperationHandler {
             return this.sendResult(res, result);
         }
         catch (error: any) {
-            const uniqueViolationMessage = DatabaseErrorUtil.getUniqueViolationMessage(error);
-            if (uniqueViolationMessage) {
-                this.logger.warn(userId, `Operation failed: ${uniqueViolationMessage}`, context);
-                return this.sendResult(res, Result.userError(uniqueViolationMessage, 'ALREADY_EXISTS'));
+            const constraintError = DatabaseErrorUtil.getConstraintViolation(error);
+            if (constraintError) {
+                this.logger.warn(userId, `Operation failed: ${constraintError.message}`, context);
+                return this.sendResult(res, Result.userError(constraintError.message, constraintError.code));
             }
 
-            this.logger.error(userId, 'Internal error: ' + error.message || error, context);
+            this.logger.error(userId, 'Internal error: ' + (error?.message ?? error), context);
             return this.sendResult(res, Result.internalError('An unexpected error occurred'));
         }
     }

@@ -122,6 +122,17 @@ describe('Category Routes', () => {
             const dbGroup = await groupsData.retrieveSingle(group.id!);
             expect(dbGroup).toBeNull();
         });
+
+        it('APP-5.5 should refuse to delete a group that still has categories', async () => {
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Food' }));
+            await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Groceries', icon: 'apple', isActive: true }));
+
+            const response = await request(app).delete(`/categories/groups/${group.id}`);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({ code: 'IN_USE', message: 'Cannot delete a category group that still has categories.' });
+            expect(await groupsData.retrieveSingle(group.id!)).not.toBeNull();
+        });
     });
 
     // ---------------------------------------------------------
@@ -178,6 +189,15 @@ describe('Category Routes', () => {
             const category = await categoriesData.retrieveSingle(response.body.id);
             expect(category).not.toBeNull();
             expect(category?.name).toBe('Rent');
+        });
+
+        it('APP-5.5 should reject a category whose group does not exist', async () => {
+            const payload = { groupId: 'no-such-group', icon: 'home', name: 'Rent', isActive: true };
+
+            const response = await request(app).post('/categories').send(payload);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({ code: 'INVALID_REFERENCE', message: 'Category group not found.' });
         });
     });
 

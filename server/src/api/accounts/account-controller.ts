@@ -231,14 +231,10 @@ export class AccountController {
             });
         }
 
+        // Database errors propagate to OperationHandler, which maps constraint violations and hides the rest.
         if (validRows.length > 0) {
-            try {
-                await this.balanceHistoryData.deleteRange(accountId, minDate, maxDate);
-                await this.balanceHistoryData.insertBulk(validRows);
-            }
-            catch (err: any) {
-                return Result.userError('Database error during import: ' + err.message);
-            }
+            await this.balanceHistoryData.deleteRange(accountId, minDate, maxDate);
+            await this.balanceHistoryData.insertBulk(validRows);
         }
 
         return Result.success({

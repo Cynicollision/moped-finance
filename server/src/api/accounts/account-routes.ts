@@ -1,12 +1,11 @@
 import { Router, Request } from 'express';
-import multer from 'multer';
 import { z } from 'zod';
 import { HistoryTimeframe, SortDirection } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { IAppLogger } from '@server/logging';
-import { OperationDefinition, OperationHandler, RequestSchemaValidator } from '@server/routing';
+import { OperationDefinition, OperationHandler, RequestSchemaValidator, singleFileUpload } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IFinanceTransactionData, transactionSearchQuerySchema } from './../transactions';
 import { AccountController } from './account-controller';
@@ -15,7 +14,6 @@ import { createAccountSchema, updateAccountSchema } from './account-schema';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 
 const domain = 'Account';
-const upload = multer({ storage: multer.memoryStorage() });
 
 export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAccountData, balanceHistoryData: IFinanceBalanceHistoryData, transactionData: IFinanceTransactionData) {
     const router = Router();
@@ -143,7 +141,7 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
         dryRun: z.enum(['true', 'false']).transform(v => v === 'true').optional()
     });
 
-    router.post('/:id/import-balances', validator.id(), upload.single('file'), validator.query(importBalancesQuerySchema), (req, res) => {
+    router.post('/:id/import-balances', validator.id(), singleFileUpload, validator.query(importBalancesQuerySchema), (req, res) => {
         const op: OperationDefinition = { domain, operation: 'importBalanceHistory' };
         handler.execute(req, res, op, (context) => {
             const { dryRun } = req.query as any;

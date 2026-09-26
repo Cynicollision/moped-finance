@@ -41,9 +41,21 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 | APP-4.2 | **Demo mode** (demo build): the app shall run entirely in the browser with no backend, shall show a "Demo Mode" badge in the side navigation, and shall let any Login or Register submission succeed as a fixed "Demo User", remembering signed-in state in browser storage across reloads. | Partial |
 | APP-4.3 | In demo mode, finance screens shall be populated with realistic sample data and support the same create/edit/delete flows as the real app. | Planned |
 
+## APP-5 The server runs unattended and fails safely
+
+Cross-cutting requirements for a self-hosted box that restarts and updates without anyone watching.
+
+| ID | Requirement | Status |
+|---|---|---|
+| APP-5.1 | The server shall keep running when the database restarts or drops connections, including when it can't write its own log entries, and shall serve requests again once the database is back. | Implemented |
+| APP-5.2 | On `SIGTERM` or `SIGINT` the server shall stop accepting connections, let in-flight requests finish (for up to 25 seconds), then close its database connections and exit. | Implemented |
+| APP-5.3 | `GET /health`, without signing in, shall return 200 `{"status":"ok"}` when the database is reachable, and 503 when it isn't (`database-unavailable`) or the server is shutting down (`shutting-down`). The production compose file uses it as the API container's health check. | Implemented |
+| APP-5.4 | Uploads shall be limited to one file of at most 5 MB. A larger file shall be refused with 400 "File is too large (maximum 5 MB)." | Implemented |
+| APP-5.5 | Error responses shall never contain database or internal error text. A request that refers to a record that doesn't exist, or deletes one that other records still need, shall get a 400 with a message naming it (for example "Category group not found." or "Cannot delete a category group that still has categories."). Malformed JSON shall get a 400. Anything else unexpected is a 500 "An unexpected error occurred". | Implemented |
+| APP-5.6 | The server shall work out "today" and calendar-period boundaries in the time zone set by `TZ` (UTC if unset). | Implemented |
+
 ## Observations
 
-- **Operational gaps before deployment.** The server has no health endpoint, doesn't shut down gracefully on `SIGTERM`, doesn't handle Postgres connection errors on idle clients, and accepts CSV uploads of any size. None of this is visible in normal use; `TODO.md` lists each under Server hardening. Promote to `APP` requirements if you want them tracked by ID.
 - **Login and Register show no product name.** The side navigation header and browser tab say "Moped Finance" (APP-3.1), but the Login and Register screens have no product name at all.
 - **Settings is a dead link** (APP-1.5). See the AUTH observations.
 - **Demo mode is a shell.** Every request other than auth returns an empty list, so the finance screens render empty (APP-4.3).

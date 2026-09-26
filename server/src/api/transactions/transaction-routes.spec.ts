@@ -289,5 +289,64 @@ describe('Transaction Routes', () => {
             expect(response.body.failedRowMessages.length).toBe(1);
             expect(response.body.createdCount).toBe(0);
         });
+
+        it('APP-5.5 should report a row the database rejects without the database error text', async () => {
+            // DECIMAL(12, 2) can't hold this amount, so the insert fails with a numeric overflow.
+            const csvContent = 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,Groceries,1000000000000000,,,false';
+
+            const response = await request(app)
+                .post('/transactions/import')
+                .attach('file', Buffer.from(csvContent), 'import.csv');
+
+            expect(response.status).toBe(201);
+            expect(response.body.createdCount).toBe(0);
+            expect(response.body.failedRowMessages).toEqual(['Row 2: Could not be saved.']);
+            expect(JSON.stringify(response.body)).not.toMatch(/insert|finance\./i);
+        });
+
+        it('APP-5.4 should reject a file larger than 5 MB', async () => {
+            const header = 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n';
+            const bigFile = Buffer.concat([Buffer.from(header), Buffer.alloc(5 * 1024 * 1024 + 1, 'a')]);
+
+            const response = await request(app)
+                .post('/transactions/import?dryRun=true')
+                .attach('file', bigFile, 'import.csv');
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({ code: 'BAD_REQUEST', message: 'File is too large (maximum 5 MB).' });
+        });
+
+        it('APP-5.4 should reject more than one file', async () => {
+            const csvContent = 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,Groceries,100,,,false';
+
+            const response = await request(app)
+                .post('/transactions/import?dryRun=true')
+                .attach('file', Buffer.from(csvContent), 'a.csv')
+                .attach('file', Buffer.from(csvContent), 'b.csv');
+
+            expect(response.status).toBe(400);
+            expect(response.body.code).toBe('BAD_REQUEST');
+        });
+    });
+
+    describe('POST / (invalid requests)', () => {
+        it('APP-5.5 should reject a transaction whose category does not exist', async () => {
+            const payload = { accountId: testAccountId, categoryId: 'no-such-category', date: '2026-06-06', amount: 10, merchant: 'Test', isHidden: false, isSplit: false, originalStatement: '', notes: '' };
+
+            const response = await request(app).post('/transactions').send(payload);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({ code: 'INVALID_REFERENCE', message: 'Category not found.' });
+        });
+
+        it('APP-5.5 should return a JSON 400 for a malformed JSON body', async () => {
+            const response = await request(app)
+                .post('/transactions')
+                .set('Content-Type', 'application/json')
+                .send('{"accountId": ');
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({ code: 'BAD_REQUEST', message: 'Malformed JSON in request body.' });
+        });
     });
 });
