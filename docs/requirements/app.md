@@ -56,15 +56,18 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 | APP-5.7 | The server shall check every request's route parameters, query string and body before acting on it, and refuse an invalid one with a 400 naming each bad field (for example "Invalid Transaction request body: amount: Too big…"). Unknown filter or sort keys, unparseable dates, and amounts beyond 9,999,999,999.99 are refused rather than ignored or passed to the database. An update may send only the fields it changes; the rest keep their values. | Implemented |
 | APP-5.8 | On startup, before accepting requests, the server shall bring the database schema up to date by applying any migrations it hasn't applied yet, creating every table on an empty database. Pending migrations shall apply all together or not at all; if they fail, or the database can't be reached, the server shall log the reason and exit with a non-zero status, leaving the database unchanged. | Implemented |
 
-## Observations
+## Known gaps
 
+- **Settings is a dead link** (APP-1.5). See the AUTH known gaps.
+- **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.
 - **Login and Register show no product name.** The side navigation header and browser tab say "Moped Finance" (APP-3.1), but the Login and Register screens have no product name at all.
-- **Settings is a dead link** (APP-1.5). See the AUTH observations.
-- **Demo mode is a shell.** Every request other than auth returns an empty list, so the finance screens render empty (APP-4.3).
-- **Debug date leaks into behavior.** In development builds the *client* uses 2026-05-17 as today, while the *server* uses the real date for anything it computes on its own (for example a cashflow request with no as-of date). That's fine while the client always sends an as-of date, but it is a difference to keep in mind.
 - **Success feedback is sparse.** Only imports announce success. Creating, saving and deleting records just navigate or refresh.
-- **Sync UI.** A disabled "Connect via (Coming Soon)" button appears when adding an account (see INST-2 and ACCT-4). The label has a gap where the institution's name was probably meant to go.
-- **Tab title flashes the app name.** On a full page load the tab reads "Moped Finance" until the screen finishes loading, then switches to the screen title alone (APP-1.9).
+- **The loading overlay shows fake zeros (APP-2.1).** Every navigation and every timeframe or filter change dims the screen behind a spinner, and the blurred backdrop briefly shows an empty or zero state (an empty Budget, a $0.00 net worth) that looks like real data.
+- **Layout at ~800 px.** With the side navigation visible in a window about 800 px wide, Budget and Categories scroll horizontally and the Budget row menu sits off-screen to the right (APP-1.2, APP-2.5).
 - **Breadcrumb roots aren't always right.** Import Transactions shows "Accounts / Import Transactions" even when it was opened from the Transactions menu, and its "Accounts" crumb isn't a link, unlike the other screens' trails.
-- **Loading overlay confirmed.** Every navigation and every timeframe/filter change dims the screen behind a spinner (APP-2.1). Combined with the blurred backdrop it briefly shows a blank/zero state (for example an empty Budget or a $0.00 net worth) before data arrives, which can look like real data.
-- **Layout at ~800 px.** With the side navigation visible in a window about 800 px wide, Budget and Categories scroll horizontally and the Budget row menu sits off-screen to the right. Worth a look at the breakpoint (APP-1.2, APP-2.5).
+- **Tab title flashes the app name.** On a full page load the tab reads "Moped Finance" until the screen finishes loading, then switches to the screen title alone (APP-1.9).
+- **Sync button label.** The disabled "Connect via (Coming Soon)" button on Add Account (INST-2, ACCT-4) has a gap where the institution's name was probably meant to go.
+
+## Notes
+
+- **Debug date and the server.** In development builds the client uses 2026-05-17 as today, while the server uses the real date for anything it computes on its own (for example a cashflow request with no as-of date). That's fine while the client always sends an as-of date.
