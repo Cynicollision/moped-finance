@@ -45,4 +45,4 @@ The same value-history chart component is reused on Account Details (see ACCT-2.
 
 ## Notes
 
-- **Liabilities are stored as negative balances.** Account Details and the Total Liabilities headline show them negative, while the summary lists and cards use absolute values. The favourable/unfavourable logic, the Net Worth series (a plain sum of all balances) and transactions that adjust a balance (ACCT-5.4) depend on it, so a liability's balance must be entered and imported as a negative number (ACCT-3).
+- **Liabilities are stored as negative balances.** Account Details and the Total Liabilities headline show them negative, while the summary lists and cards use absolute values. The favourable/unfavourable logic, the Net Worth series (a plain sum of all balances) and transactions that adjust a balance (ACCT-5.4) depend on it, so a liability's balance is imported as a negative number (ACCT-3), while forms ask for the amount owed and store it negative (APP-6.3).

@@ -62,9 +62,11 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 |---|---|---|
 | APP-6.1 | Red shall mean unfavourable: a value that's bad for the user, such as debt growing (DASH-1.3), negative savings (CASH-1.4) or spending over budget (CASH-1.10). A negative amount that's expected, such as a purchase, shall not be red. | Partial |
 | APP-6.2 | Transaction amounts (the Transactions list, View Transaction, Account Details' recent transactions) shall show money in with a "+" before the "$", in green, and money out with no sign, in the ordinary text color. | Partial |
+| APP-6.3 | Amounts shall be stored signed: money out and liability balances are negative. Forms shall not ask the user for a sign: transaction amounts use a Money out / Money in switch (TXN-2.13), and a liability's balance fields (starting balance, Update Balance, ACCT-2.2) ask for **Amount owed** as a positive number and store it negative. Budget amounts are positive, with direction from the category (BUD notes). CSV files keep signed amounts (TXN-3.10, ACCT-3.10). | Planned |
 
 ## Known gaps
 
+- **Red and signs aren't consistent yet (APP-6).** Cashflow shows expenses in red, transaction amounts have no "+", and forms take signed amounts (liabilities must be entered negative).
 - **Old navigation names (APP-1.1, APP-1.9).** The navigation says **Accounts** for the summary and **Institutions** for the institutions list, the institutions route is `/institutions`, and the summary's tab title is "Dashboard".
 - **Settings is a dead link** (APP-1.5). See the AUTH known gaps.
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.

@@ -21,12 +21,13 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-1.11 | Every transaction shall appear in the list and search, including those in Uncategorized (CAT-5.2), which can be filtered for like any other category. | Partial |
 | TXN-1.12 | Transactions in hidden accounts (ACCT-1.9) shall be left out of the list and search, and hidden accounts left out of the **Account** filter, unless the screen was opened filtered to that account (from its Account Details' **Go To Transactions**). Transactions in closed accounts (ACCT-6) are listed as usual. | Planned |
 | TXN-1.13 | The **Filters** panel shall have a **Show hidden transactions** checkbox, unchecked by default and reset by **Clear Filters**. When checked, hidden transactions are listed with the rest, dimmed, with a crossed-out eye icon. It's the only way to reach them in the app. | Planned |
+| TXN-1.14 | **Min Amount** and **Max Amount** shall compare the amount's size, ignoring its sign, and a **Direction** filter (**Any**, the default, **Money out**, **Money in**) shall narrow by sign, so "Min Amount 100, Money out" finds purchases of $100 or more. | Planned |
 
 ## TXN-2 The user can record and correct transactions by hand
 
 | ID | Requirement | Status |
 |---|---|---|
-| TXN-2.1 | **Add Transaction** (from the Transactions menu or an account's menu) shall show a form with: **Amount** (required, defaults to 0), **Account** (required; a select of the user's open, unhidden accounts, sorted by name, plus the transaction's current account when editing; pre-selected when opened from an account), **Merchant** (text, at most 255 characters), **Original Statement** (text), **Category** (searchable by name), **Date** (date picker, required, defaults to today), **Notes**, and a **Hide Transaction** checkbox. | Partial |
+| TXN-2.1 | **Add Transaction** (from the Transactions menu or an account's menu) shall show a form with: **Amount** (TXN-2.13), **Account** (required; a select of the user's open, unhidden accounts, sorted by name, plus the transaction's current account when editing; pre-selected when opened from an account), **Merchant** (text, at most 255 characters), **Original Statement** (text), **Category** (searchable by name), **Date** (date picker, required, defaults to today), **Notes**, and a **Hide Transaction** checkbox. | Partial |
 | TXN-2.2 | **View Transaction** (breadcrumb "Transactions / Transaction Details") shall show, read-only and in this order: **Amount** (large, signed and colored as in TXN-1.1), **Account** (a link to Account Details), **Merchant**, **Original Statement**, **Category** (icon and name), **Date**, **Notes** ("-" when empty) and **Hidden** ("Yes" or "No"). A menu offers **Edit** and **Delete**. | Partial |
 | TXN-2.3 | **Edit Transaction** shall allow changing every field, including the account and amount, except as limited for synced transactions (TXN-2.12) and split ones (TXN-4.7). | Implemented |
 | TXN-2.4 | The user can delete a transaction after confirming in a "Delete Transaction" dialog ("Are you sure you want to delete this transaction?", **Cancel** / **Delete**). | Implemented |
@@ -38,6 +39,7 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-2.10 | A hidden transaction shall not adjust its account's balance. Hiding a transaction that adjusts the balance undoes its effect, and un-hiding it applies it again (ACCT-5.3). | Planned |
 | TXN-2.11 | The user can un-hide a transaction by opening it (from the list with TXN-1.13) and clearing **Hide Transaction** in Edit Transaction. | Planned |
 | TXN-2.12 | For a transaction added by bank sync, **Date**, **Amount**, **Account** and **Original Statement** shall be read-only, in the form and the API; **Merchant**, **Category**, **Notes** and **Hide Transaction** stay editable, and it can be split (TXN-4.8). It can't be deleted, only hidden, since sync won't add it again (INST-2.12). | Planned |
+| TXN-2.13 | The form's **Amount** shall be entered as a positive number (required, more than 0) beside a **Money out** / **Money in** switch, which defaults to Money out and sets the stored sign (APP-6.3). Split parts (TXN-4.2) have the same switch, defaulting to the transaction's direction. | Planned |
 
 ## TXN-3 The user can move transactions in and out as CSV
 
@@ -81,8 +83,8 @@ A split divides one transaction into **parts**, each with its own amount and cat
 - **Inactive categories are offered in the form (TXN-2.7).**
 - **Every account is offered in the form (TXN-2.1),** in creation order, hidden ones included.
 - **Hidden transactions can't be seen again (TXN-1.13).** The API supports including them, but the UI has no toggle, so a transaction marked hidden is invisible in the app, though still exported and still counted in Cashflow (TXN-1.8).
-- **Nothing tells the user which sign to use.** The Add and Edit forms show **Amount** as a bare number (default 0). Outflows are negative and inflows positive, but the list and view screens hide the sign, so the rule is only discoverable from the data. Part of the "sign conventions" decision in `TODO.md`.
-- **Amount filters compare signed values,** so "Min Amount 100" finds income of 100 or more but no expenses; finding expenses over 100 means a maximum of -100. The table shows amounts unsigned, which makes this easy to trip over.
+- **The form asks for a signed amount (TXN-2.13).** Amount is a bare number (default 0), and money out must be typed as negative, which nothing on screen says.
+- **Amount filters compare signed values (TXN-1.14),** so "Min Amount 100" finds income of 100 or more but no expenses.
 - **Future-dated transactions are hidden by default (TXN-1.10).** The pre-filled End Date silently excludes anything after today, with no visual hint besides the date field itself. **Clear Filters** re-applies it.
 - **Import breadcrumb.** The screen reads "Accounts / Import Transactions" even when opened from the Transactions menu (APP known gaps).
 - **Splits don't exist (TXN-4).** The `is_split` and `split_parent_id` columns are there, and import writes `false` and blank to them, but nothing reads them.
