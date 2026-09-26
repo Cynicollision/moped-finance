@@ -79,7 +79,7 @@ Retired: the app committed to one owner per instance (AUTH-7), so finance record
 
 | ID | Requirement | Status |
 |---|---|---|
-| AUTH-8.1 | The profile menu's **Settings** (APP-1.5) shall open the Settings screen (`/settings`, page title "Settings"), with the sections **Profile**, **Change Password** (AUTH-5.2) and **Password Rules** (AUTH-9). | Planned |
+| AUTH-8.1 | The profile menu's **Settings** (APP-1.5) shall open the Settings screen (`/settings`, page title "Settings"), with the sections **Profile**, **Change Password** (AUTH-5.2), **Password Rules** (AUTH-9) and **Sign-in Protection** (AUTH-10). | Planned |
 | AUTH-8.2 | **Profile** shall show the username read-only (it can't be changed) and let the user edit **Display Name** (AUTH-2.10). Saving shall update the profile control's name and initials (APP-1.4) straight away. | Planned |
 
 ## AUTH-9 The owner decides how strong the password must be
@@ -93,11 +93,24 @@ The defaults are a sensible middle: long enough to resist guessing, without char
 | AUTH-9.3 | The rules shall be stored with the instance, so they apply after restarts and upgrades. Changing them doesn't affect the current password; they apply the next time it's set. | Planned |
 | AUTH-9.4 | Wherever a password is set (Register, Change Password), the form shall list the current rules under the field and mark each one met or unmet as the user types, and the server shall refuse a password that breaks any of them with a message naming each one (for example "Password must be at least 12 characters. Password must contain a number."). | Planned |
 
+## AUTH-10 Repeated wrong passwords are slowed down
+
+Guessing is limited per network address rather than by locking the account, so someone else on the network can't lock the owner out.
+
+| ID | Requirement | Status |
+|---|---|---|
+| AUTH-10.1 | After the maximum number of failed sign-ins (default 5) from one network address within the window (default 15 minutes), the server shall refuse further sign-in attempts from that address until the lockout (default 15 minutes) has passed, even with the right password, with 429 "Too many failed sign-in attempts. Try again in N minutes." | Planned |
+| AUTH-10.2 | Failed HTTP Basic credentials (AUTH-3.5) shall count toward the same limit, and a locked-out address shall be refused there too. | Planned |
+| AUTH-10.3 | A successful sign-in shall reset that address's count. | Planned |
+| AUTH-10.4 | **Sign-in Protection** in Settings shall let the user set **Maximum failed attempts** (3 to 10), **Window** (5 to 60 minutes) and **Lockout** (5 to 60 minutes). | Planned |
+| AUTH-10.5 | The server shall log each lockout with the address and time, without the username or password tried. | Planned |
+| AUTH-10.6 | Behind a reverse proxy, the address shall be the client's, not the proxy's, when the server is configured to trust the proxy (`TRUST_FIRST_PROXY`). | Planned |
+
 ## Known gaps
 
 - **Settings doesn't exist (AUTH-8, AUTH-5.2).** The profile menu's **Settings** links to `/system`, which isn't a route, so it lands on the Summary. Changing the password is API-only (AUTH-5.1), and the display name can't be edited.
 - **No password rules (AUTH-9).** A password only has to be non-empty, and usernames and display names have no length limits or space checks beyond the column size (AUTH-2.10).
-- **No lockout or rate limiting** on repeated failed logins (`TODO.md`).
+- **No limit on failed sign-ins (AUTH-10).**
 - **Sessions end 24 hours after sign-in (AUTH-3.2),** however active the user is.
 - **Cookie settings are inconsistent.** The session cookie's `secure` flag comes from `COOKIE_SECURE`, but logout clears the cookie with `secure` set from `NODE_ENV`. No `sameSite` is set. `TODO.md` lists the fix.
 - **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.
