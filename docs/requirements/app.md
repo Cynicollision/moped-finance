@@ -6,15 +6,15 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 
 | ID | Requirement | Status |
 |---|---|---|
-| APP-1.1 | Once signed in, the app shall show a side navigation with these entries, in this order: **Accounts**, **Transactions**, **Cashflow**, **Budget**, **Categories**, **Institutions**. The current section shall be highlighted. | Implemented |
+| APP-1.1 | Once signed in, the app shall show a side navigation with these entries, in this order: **Summary** (`/summary`, DASH), **Transactions**, **Cashflow**, **Budget**, **Categories**, **Accounts** (`/accounts`, the institutions and their accounts, INST-1). The current section shall be highlighted. | Partial |
 | APP-1.2 | The side navigation shall be permanently visible on desktop-width screens. On handset-width screens it shall be hidden behind a menu button, open over the content, and close when an entry is chosen. | Implemented |
 | APP-1.3 | On handset-width screens the label of the current top-level section shall appear next to the menu button. | Implemented |
 | APP-1.4 | The bottom of the side navigation shall show a profile control with the user's initials and display name. Initials are the first letters of the first two words of the display name, or the first letter if there is only one word. | Implemented |
-| APP-1.5 | The profile control shall open a menu with **Settings** and **Sign out** (see AUTH-4.1). | Partial |
-| APP-1.6 | The landing page after sign-in, and the target of any unknown URL, shall be the Accounts summary (DASH). | Implemented |
+| APP-1.5 | The profile control shall open a menu with **Settings** (AUTH-8.1) and **Sign out** (AUTH-4.1). | Partial |
+| APP-1.6 | The landing page after sign-in, and the target of any unknown URL, shall be the Summary (DASH). | Implemented |
 | APP-1.7 | Signed-out visitors shall see no navigation or profile control, only the Login or Register screen. | Implemented |
 | APP-1.8 | Screens below a top-level section (Account Details, Edit Account, Add Account, Import screens, View/Edit Transaction, Add/View/Edit Institution) shall show a breadcrumb trail above the content, and every crumb except the last shall be a link back. Top-level sections have none. | Implemented |
-| APP-1.9 | The browser tab title shall name the current screen (for example "Dashboard", "Transactions", "Account Details", "Edit Institution"). | Implemented |
+| APP-1.9 | The browser tab title shall name the current screen (for example "Summary", "Transactions", "Account Details", "Edit Institution"). | Partial |
 | APP-1.10 | The profile menu's **Sign out** entry shall be shown in a warning (red) color. | Implemented |
 
 ## APP-2 The user gets feedback on what the app is doing
@@ -56,8 +56,18 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 | APP-5.7 | The server shall check every request's route parameters, query string and body before acting on it, and refuse an invalid one with a 400 naming each bad field (for example "Invalid Transaction request body: amount: Too big…"). Unknown filter or sort keys, unparseable dates, and amounts beyond 9,999,999,999.99 are refused rather than ignored or passed to the database. An update may send only the fields it changes; the rest keep their values. | Implemented |
 | APP-5.8 | On startup, before accepting requests, the server shall bring the database schema up to date by applying any migrations it hasn't applied yet, creating every table on an empty database. Pending migrations shall apply all together or not at all; if they fail, or the database can't be reached, the server shall log the reason and exit with a non-zero status, leaving the database unchanged. | Implemented |
 
+## APP-6 Amounts read the same way everywhere
+
+| ID | Requirement | Status |
+|---|---|---|
+| APP-6.1 | Red shall mean unfavourable: a value that's bad for the user, such as debt growing (DASH-1.3), negative savings (CASH-1.4) or spending over budget (CASH-1.10). A negative amount that's expected, such as a purchase, shall not be red. | Partial |
+| APP-6.2 | Transaction amounts (the Transactions list, View Transaction, Account Details' recent transactions) shall show money in with a "+" before the "$", in green, and money out with no sign, in the ordinary text color. | Partial |
+| APP-6.3 | Amounts shall be stored signed: money out and liability balances are negative. Forms shall not ask the user for a sign: transaction amounts use a Money out / Money in switch (TXN-2.13), and a liability's balance fields (starting balance, Update Balance, ACCT-2.2) ask for **Amount owed** as a positive number and store it negative. Budget amounts are positive, with direction from the category (BUD notes). CSV files keep signed amounts (TXN-3.10, ACCT-3.10). | Planned |
+
 ## Known gaps
 
+- **Red and signs aren't consistent yet (APP-6).** Cashflow shows expenses in red, transaction amounts have no "+", and forms take signed amounts (liabilities must be entered negative).
+- **Old navigation names (APP-1.1, APP-1.9).** The navigation says **Accounts** for the summary and **Institutions** for the institutions list, the institutions route is `/institutions`, and the summary's tab title is "Dashboard".
 - **Settings is a dead link** (APP-1.5). See the AUTH known gaps.
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.
 - **Login and Register show no product name.** The side navigation header and browser tab say "Moped Finance" (APP-3.1), but the Login and Register screens have no product name at all.
@@ -66,7 +76,6 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 - **Layout at ~800 px.** With the side navigation visible in a window about 800 px wide, Budget and Categories scroll horizontally and the Budget row menu sits off-screen to the right (APP-1.2, APP-2.5).
 - **Breadcrumb roots aren't always right.** Import Transactions shows "Accounts / Import Transactions" even when it was opened from the Transactions menu, and its "Accounts" crumb isn't a link, unlike the other screens' trails.
 - **Tab title flashes the app name.** On a full page load the tab reads "Moped Finance" until the screen finishes loading, then switches to the screen title alone (APP-1.9).
-- **Sync button label.** The disabled "Connect via (Coming Soon)" button on Add Account (INST-2, ACCT-4) has a gap where the institution's name was probably meant to go.
 
 ## Notes
 

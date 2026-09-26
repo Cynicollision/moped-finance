@@ -17,20 +17,11 @@ Nothing right now.
 
 ## Next
 
-### Design decisions
-From a review of the code, the schema, and the requirements' known gaps and open questions (2026-09-25). Decide these first, since they shape the work below. Record each decision in `docs/` (architecture or the relevant requirement) once it's made.
-- [ ] **What "hidden" means.** Hidden accounts still count in totals (ACCT-1.9). Hidden transactions still count in Cashflow and can't be un-hidden in the UI (TXN, CASH known gaps). Pick one meaning per record type ("exclude from totals and reports" or "declutter the list"), apply it consistently, and add a "show hidden" toggle.
-- [ ] **Sign conventions.** Transactions are signed (money out is negative), liability balances are stored negative, and budget amounts are always positive with direction taken from their type. The UI mostly hides signs (TXN known gaps, DASH notes, BUD open questions). Write down one rule set, and have forms and imports enforce it, e.g. an In/Out toggle instead of a signed amount field.
-- [ ] **Where balances come from.** Balances only come from imported history. The account form's Balance field is discarded (ACCT-2.2), and transactions never change balances. Option 1: balance history is the source of truth, plus an "Update balance" action (simplest, fits manual tracking). Option 2: derive balances from transactions.
-- [ ] **Net-worth series.** The chart adds up whatever entries exist on each date, so accounts updated on different days make the total jump (DASH known gaps). Carry each account's last known balance forward into each day, week or month when building the series.
-- [ ] **Split transactions.** `is_split`/`split_parent_id` exist but have no UI or behavior. Design splits or drop the columns. Splitting a mortgage payment into principal (a transfer) and interest and escrow (expenses) is the main use (CASH open questions).
-- [ ] **Budget vs actual.** Budget and Cashflow are unconnected (BUD, CASH open questions). Decide whether budgets are compared with actual spending per category and period, and whether transfers such as planned savings can be budgeted; this drives the budget screen redesign below.
-
 ### Client: mobile and dialogs
 - [ ] Define shared breakpoints: one SCSS partial or mixin plus `BreakpointObserver` in TypeScript. Components currently use ad hoc 599/600/768px media queries, and a ~800 px window with the side nav open overflows (APP known gaps).
 - [ ] Tables on phones: Transactions, Budget, Cashflow and Account Details use `mat-table`. At handset width, switch to a list or card layout (name and amount, with a second line for date and category) instead of a table that scrolls sideways.
 - [ ] Pick one pattern for create and edit. Today accounts, institutions and transactions use full pages, while budget streams, categories and groups use dialogs (`ModalService`: fixed 500px, `disableClose: true`). Suggested rule: full pages for records with many fields or that need their own URL; dialogs for small forms, full-screen on phones. Allow Esc and backdrop clicks to close unless the form has unsaved changes.
-- [ ] Budget screen redesign, together with the budget-vs-actual decision: consider inline add/edit rows or a side panel instead of a dialog per stream, an empty state (BUD known gaps), and a layout that works on phones.
+- [ ] Budget screen redesign, together with BUD-1.2 and BUD-1.8 to BUD-1.10: consider inline add/edit rows or a side panel instead of a dialog per stream, an empty state (BUD known gaps), and a layout that works on phones.
 - [ ] On phones, collapse the Transactions filters into a panel or bottom sheet.
 
 ### Client refactors
@@ -42,13 +33,9 @@ From a review of the code, the schema, and the requirements' known gaps and open
 - [ ] `api.service.ts` passes `withCredentials: true` on every request; it's unneeded now that requests are same-origin (relative `apiUrl` plus the dev-server proxy).
 
 ### UX fixes from the requirements review
-- [ ] Credit-card accounts can't be created: the group has no account types, but Type is required (ACCT-1.10).
 - [ ] The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8).
-- [ ] The Settings menu item links to a route that doesn't exist (APP-1.5). Replace it with a Settings screen that has change password (AUTH-5.1) and display name.
-- [ ] Chart y-axis labels repeat because they round to thousands or millions (ACCT, DASH known gaps).
-- [ ] Choose a sort order for institutions and accounts within a group (currently creation order).
 - [ ] The Cashflow year list is a fixed four-year window; derive it from the data (CASH known gaps).
-- [ ] Import breadcrumbs, the Accounts/Dashboard name mismatch, and the product name on Login/Register (APP, DASH known gaps).
+- [ ] Import breadcrumbs and the product name on Login/Register (APP known gaps).
 - [ ] Register screen: explain that this creates the instance's only account, which owns all its data, and that Register won't be available again afterwards (AUTH-2.8). Add it to `register.component.html` above the form.
 
 ### Data & deployment
@@ -58,13 +45,11 @@ From a review of the code, the schema, and the requirements' known gaps and open
 ### Security & auth
 - [ ] Use a persistent session store (e.g. `connect-pg-simple`). The default in-memory store logs everyone out on every restart.
 - [ ] Fail startup in production if `SESSION_SECRET` is unset; don't fall back to `'dev-secret-key'` (`server/index.ts`).
-- [ ] Rate-limit `POST /auth/login` (e.g. `express-rate-limit`) and set a minimum password length (AUTH known gaps).
 - [ ] Session cookie: set `sameSite: 'lax'`, and make logout's `clearCookie` options match the session cookie (it uses `NODE_ENV === 'production'` for `secure`, the session uses `COOKIE_SECURE`). Document `COOKIE_SECURE` and `TRUST_FIRST_PROXY` for plain HTTP on the LAN versus a reverse proxy with HTTPS.
 - [ ] Decide on HTTP Basic auth (AUTH-3.5). With one user it mainly sends the password on every request, in clear text over plain HTTP. Keep it (and state what it's for) or remove it.
 - [ ] Security headers with `helmet`. Check the Content-Security-Policy against the Angular production build before enabling it.
 
 ### Correctness
-- [ ] `syncAccount` and `syncInstitution` are stubs that return success (`account-controller.ts`, `institution-controller.ts`). Until real sync exists, return a not-implemented result and hide/disable the sync UI. Then replace the skipped `xit('should return sync stub success')` in `institution-routes.spec.ts`.
 - [ ] Cashflow periods include the next period's first day west of UTC (APP-5.6). `DateTimeUtil.getDatesForPeriod` sets the boundaries with local-time setters (`setDate`, `setHours(23, 59, …)`), then `retrieveCashflowByCategory` formats them with `DateTimeUtil.toDateString`, which uses UTC. With `TZ=America/New_York`, April is `2026-04-01`..`2026-05-01`, so a May 1 mortgage payment counts in April too (seen with the seed data). Build the period as calendar date strings, and add a spec that runs under a non-UTC `TZ`.
 - [ ] Calendar dates are off by a day outside UTC. The API returns `date` columns as UTC-midnight timestamps (`mapRowToTransaction` in `transaction-data.ts` uses `DateTimeUtil.toISOString`; `BalanceHistory.date` and `TotalValueHistory.date` are `Date`s), so the client's date pipe and `new Date(...)` in `transaction-form.component.ts` show the previous day in US time zones. The client also sends dates with `toISOString()` (`transactions.component.ts` filters, `finance.service.ts` `fetchTotalValueHistory`, `cashflow.component.ts`), which gives the previous day east of UTC, and `fetchAccountBalanceHistory` sends `Date.toString()`. Make calendar dates plain `YYYY-MM-DD` strings in `shared/` types and both directions, and format them in the client without converting through UTC.
 
