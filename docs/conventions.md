@@ -47,4 +47,4 @@ Rules that apply across the codebase. Match the surrounding code for anything no
 
 ## Requirements
 
-- Functional requirements live in [requirements/](requirements/README.md) with stable IDs (`TXN-3.2`). Reference them by ID in test names, commits, PRs, and `TODO.md` items where it helps.
+- Requirements live in [requirements/](requirements/README.md) with stable IDs (`TXN-3.2`). Reference them by ID in test names, commits, PRs, and `TODO.md` items where it helps.

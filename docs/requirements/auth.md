@@ -26,6 +26,7 @@ Screens: **Login** (`/login`), **Register** (`/register`), and the **Sign out** 
 | AUTH-2.6 | Passwords shall be stored only as salted bcrypt hashes (10 rounds) and shall never be returned by any API. | Implemented |
 | AUTH-2.7 | Once a first user exists, registration shall be disabled: the API shall reject it with "Registration is closed.", the Login screen shall hide its Register link, and navigating to Register shall redirect to Login. | Implemented |
 | AUTH-2.8 | The Register screen shall explain, before the user submits, that they're creating the only account for this instance, that it will own all of the instance's data, and that registration closes once it's done, so the Register screen won't be available again. | Planned |
+| AUTH-2.9 | The Register screen shall ask whether to **Start with default categories** (selected) or **Start empty**, and registration shall set up categories accordingly (CAT-6). | Planned |
 
 ## AUTH-3 The user stays signed in, and only signed-in users see finance data
 
@@ -69,15 +70,19 @@ Retired: the app committed to one owner per instance (AUTH-7), so finance record
 | AUTH-7.1 | Finance records (institutions, accounts, balance entries, category groups, categories, transactions, budget streams) shall belong to the instance, not to a user. The signed-in user sees and changes all of them. | Implemented |
 | AUTH-7.2 | An instance shall have one user. Registration closes after the first one (AUTH-2.7). | Implemented |
 
-## Observations
-
-Things found while reading the code that the requirements above don't yet cover or that you may want to decide on.
+## Known gaps
 
 - **Settings menu item is a dead end.** The profile menu has **Settings**, linking to `/system`. No such route exists, so it lands on the Accounts summary. There is no screen for changing the password (AUTH-5.1 is API-only); it would be the obvious first inhabitant.
 - **No password rules.** A password only has to be non-empty (AUTH-2). No minimum length, no lockout or rate limiting on repeated failed logins.
-- **Sessions don't roll.** AUTH-3.2 as written: a session ends 24 hours after sign-in even if the user is active. Consider a rolling session (extended on each request) once sessions survive restarts (AUTH-3.6).
 - **Cookie settings are inconsistent.** The session cookie's `secure` flag comes from `COOKIE_SECURE`, but logout clears the cookie with `secure` set from `NODE_ENV`. No `sameSite` is set. `TODO.md` lists the fix.
-- **Username matching is case-sensitive**, so `Stn` and `stn` are different users.
 - **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.
-- **Fresh instances are claimable.** Whoever registers first on a fresh instance becomes its owner. Accepted (2026-09-26) for a LAN-only host: the owner registers right after the first start (see `docs/deployment.md`), and AUTH-2.8 makes the one-time nature clear on screen.
+
+## Open questions
+
+- **Rolling sessions.** AUTH-3.2 as written: a session ends 24 hours after sign-in even if the user is active. Consider a rolling session (extended on each request) once sessions survive restarts (AUTH-3.6).
+- **Username case.** Matching is case-sensitive, so `Stn` and `stn` are different users. With one user it only matters at login.
 - **Display name.** Collected at registration and shown in the profile menu; there's no way to edit it.
+
+## Notes
+
+- **Fresh instances are claimable.** Whoever registers first on a fresh instance becomes its owner. Accepted (2026-09-26) for a LAN-only host: the owner registers right after the first start (see `docs/deployment.md`), and AUTH-2.8 makes the one-time nature clear on screen.

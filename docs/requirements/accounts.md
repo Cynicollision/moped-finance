@@ -1,6 +1,6 @@
 # Accounts (`ACCT`)
 
-An account is one balance the user tracks. Its balance over time comes from **balance history** entries, and that is the *only* source of balances: transactions do not change an account's balance (see the observation below).
+An account is one balance the user tracks. Its balance over time comes from **balance history** entries, and that is the *only* source of balances: transactions do not change an account's balance (see the open questions below).
 
 Screens: **Account Details** (`/accounts/:id`), **Add Account** (from an institution), **Edit Account**, **Import Balance History**.
 
@@ -55,17 +55,18 @@ Screens: **Account Details** (`/accounts/:id`), **Add Account** (from an institu
 |---|---|---|
 | ACCT-4.1 | The user can refresh an account's balance from their bank on demand and on a schedule (see INST-2.1). | Planned |
 
-## Observations
+## Known gaps
 
-- **Credit cards can't be added (ACCT-1.10).** Every other group has at least one type, so the required Type field only blocks this one. The sample credit cards exist with no type and show their group ("Credit Card") where the type would be. Either give the group a type, or make Type optional when a group has none. The schema already allows no type (`account_type` is nullable, and the API accepts `null`), so the fix is in the form.
-- **Institution can't be changed** after an account is created (ACCT-1.5); moving an account means deleting it, which also deletes its history and transactions (ACCT-1.6).
-- **Chart axis labels lose precision.** On Account Details (and the summary chart) the y-axis rounds to thousands or millions, so neighbouring ticks repeat: "$34.3K, $34.3K, $34.3K, $34.2K, …" on a savings account, "$1.1M" six times on net worth. The line is right; the labels aren't readable.
-- **Balance import dry-run screen** (ACCT-3.7): the same summary-under-"Validation Error" pattern appears on the Transactions import (see TXN-3.3). A dry run with bad rows reports the date range of the valid rows only.
-
-- **Balance entered on the form is discarded (ACCT-2.2).** The form shows a Balance field for manual accounts, and the client sends it, but the server neither accepts nor stores it on create or edit. Balances only come from balance history, so a new account always shows $0.00 until history is imported. Either the field should write a balance-history entry, or it should be removed and manual balances entered another way (for example an "Update balance" action). This is the biggest functional gap in the domain.
-- **Hide Account has no effect (ACCT-1.9).** The flag is saved and editable, but no screen or total filters hidden accounts out. Decide whether it should.
-- **Manual vs. connected is only a flag.** *Manual* is a checkbox that also toggles the balance field. Nothing else depends on it yet; automated sync (ACCT-4.1) will need it to mean something.
-- **Transactions never change balances.** Adding, importing or deleting a transaction leaves every balance and the net-worth chart untouched. This may be intended (balances are reported by the bank or entered), but it's the kind of rule worth stating explicitly if you keep it.
-- **Account "last updated"** reflects edits to the account record, not the date of the latest balance. In the sample data it reads "Jun 20, 2026" on accounts whose newest balance is from May 2026 (and which is later than the development build's fixed "today").
-- **Sync is a stub** (see INST observations) and has no UI beyond the disabled button in ACCT-1.3.
+- **Balance entered on the form is discarded (ACCT-2.2).** The form shows a Balance field for manual accounts, and the client sends it, but the server neither accepts nor stores it. A new account shows $0.00 until history is imported. This is the biggest functional gap in the domain; see "where balances come from" in `TODO.md`.
+- **Credit cards can't be added (ACCT-1.10).** Every other group has at least one type, so the required Type field only blocks this one. The schema already allows no type, so the fix is in the form: give the group a type, or make Type optional when a group has none.
+- **Hide Account has no effect (ACCT-1.9).** The flag is saved and editable, but no screen or total filters hidden accounts out. See "what hidden means" in `TODO.md`.
+- **Import errors aren't listed (ACCT-3.7).** A dry run with bad rows also reports the date range of the valid rows only.
+- **Chart axis labels lose precision.** The y-axis rounds to thousands or millions, so neighbouring ticks repeat: "$34.3K, $34.3K, $34.2K, …" on a savings account.
+- **Account "last updated"** reflects edits to the account record, not the date of the latest balance, so it can be later than the newest balance.
 - **Institution ID isn't validated.** Saving an account with an institution ID that doesn't exist fails with a generic database error rather than a clear message.
+
+## Open questions
+
+- **Institution can't be changed** after an account is created (ACCT-1.5); moving an account means deleting it, which also deletes its history and transactions (ACCT-1.6).
+- **Transactions never change balances.** Adding, importing or deleting a transaction leaves every balance and the net-worth chart untouched. State it as a rule if it stays (`TODO.md`, "where balances come from").
+- **Manual vs. connected is only a flag.** *Manual* also toggles the balance field; nothing else depends on it. Automated sync (ACCT-4.1) will need it to mean something.

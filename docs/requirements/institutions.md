@@ -28,9 +28,10 @@ Screens: **Institutions** (`/institutions`), **Add Institution**, **View Institu
 
 INST-2.1 comes from the "Automated bank sync" item in `TODO.md`; the constraints are the ones written there. Detailed requirements belong in `docs/integrations/bank-sync.md` once the provider is chosen.
 
-## Observations
+## Known gaps
 
-- **Order is neither alphabetical nor by size.** Institutions (Bank of America, Charles Schwab, Fidelity, Optum, American Express, Chase, Citi, Zillow, AmeriHome, Ally) and the accounts inside each card (BofA Savings, BofA Checking, BofA Visa) appear in what looks like creation order. Say whether that is the intended order.
-- **Verified:** INST-1.1, INST-1.7 (card menu offers **Edit** and **Add account**) and INST-1.9 (Delete disabled with the exact message "Cannot delete this institution because it has 3 associated account(s). You must delete the associated accounts first." for Bank of America).
+- **Sync is a stub.** The API has a sync endpoint for institutions that reports success without doing anything, and nothing in the UI calls it. `TODO.md` plans to make it return "not implemented".
 
-- **Sync is a stub.** The API has a sync endpoint for institutions that reports success without doing anything, and nothing in the UI calls it. `TODO.md` already plans to make it return "not implemented".
+## Open questions
+
+- **Order.** Institutions, and the accounts inside each card, appear in creation order. Decide whether that's intended.

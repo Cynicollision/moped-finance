@@ -28,14 +28,20 @@ The same value-history chart component is reused on Account Details (see ACCT-2.
 | DASH-2.7 | Accounts whose group is not one of the five above shall be omitted from the lists and totals. | Implemented |
 | DASH-2.8 | The **Total Assets** and **Total Liabilities** cards shall show only totals and their group breakdown, with no change over time, and account rows shall show only name and balance. | Implemented |
 
-## Observations
+## Known gaps
 
-- **Liabilities are stored as negative balances (confirmed).** Account Details shows the mortgage as "-$132,516.44" and the Total Liabilities chart headline is negative, while the summary lists and cards use absolute values. The favourable/unfavourable logic and the server's Net Worth series (a plain sum of all balances) depend on it. It should be stated as a rule for balance import (ACCT-3): a liability's balance must be imported as a negative number.
-- **Chart y-axis labels repeat** because they round to the nearest thousand or million (ACCT observations); the net-worth axis reads "$1.1M" at every tick.
-- **Order inside a group is unspecified.** Accounts appear neither alphabetically nor by balance in every group (Credit Cards read $129.61, $161.48, $42.53, $70.83), which looks like creation order. Say whether it should be by name or by balance.
-- **The chart adds up whatever exists on each date.** If account A has an entry on the 1st and 15th and account B only on the 10th, the series has three points and the 1st and 10th omit the other account. It doesn't carry balances forward, so accounts updated on different days can make the total jump. This is the most likely cause of a "weird" net-worth line.
+- **The chart adds up whatever exists on each date (DASH-1.4).** If account A has entries on the 1st and 15th and account B only on the 10th, the series has three points and the 1st and 10th omit the other account. Balances aren't carried forward, so accounts updated on different days make the total jump. `TODO.md` has the fix.
 - **Chart total and card totals can disagree.** The big number uses the accounts' current balances; the chart's last point is the sum for its last *date*.
-- **Timeframes.** The API also supports 5-year and 10-year windows; the UI doesn't offer them.
+- **Chart y-axis labels repeat** because they round to the nearest thousand or million (ACCT known gaps).
 - **Hidden accounts** are included in totals (ACCT-1.9).
 - **Nav label vs. page title.** The navigation says "Accounts" and the browser tab says "Dashboard".
 - **Empty state.** A new user with no accounts sees an empty chart and no groups, with no prompt to add an institution.
+
+## Open questions
+
+- **Order inside a group.** Accounts appear in creation order. Decide whether it should be by name or by balance.
+- **Longer timeframes.** The API also supports 5-year and 10-year windows; the UI doesn't offer them.
+
+## Notes
+
+- **Liabilities are stored as negative balances.** Account Details and the Total Liabilities headline show them negative, while the summary lists and cards use absolute values. The favourable/unfavourable logic and the Net Worth series (a plain sum of all balances) depend on it, so a liability's balance must be imported as a negative number (ACCT-3).

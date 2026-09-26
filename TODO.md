@@ -20,27 +20,25 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 ## Next
 
 ### Design decisions
-From a review of the code, the schema, and the requirements' Observations (2026-09-25). Decide these first, since they shape the work below. Record each decision in `docs/` (architecture or the relevant requirement) once it's made.
-- [ ] **What "hidden" means.** Hidden accounts still count in totals (ACCT-1.9). Hidden transactions still count in Cashflow and can't be un-hidden in the UI (TXN, CASH observations). Pick one meaning per record type ("exclude from totals and reports" or "declutter the list"), apply it consistently, and add a "show hidden" toggle.
-- [ ] **Sign conventions.** Transactions are signed (money out is negative), liability balances are stored negative, and budget amounts are always positive with direction taken from their type. The UI mostly hides signs (TXN, DASH, BUD observations). Write down one rule set, and have forms and imports enforce it, e.g. an In/Out toggle instead of a signed amount field.
-- [ ] **Transfers and debt paydown.** Transfer groups don't show on the Categories screen (CAT-1.11), and extra mortgage principal counts as spending in Cashflow (CASH observations). Decide how transfers and principal payments are modeled before building budget-vs-actual.
+From a review of the code, the schema, and the requirements' known gaps and open questions (2026-09-25). Decide these first, since they shape the work below. Record each decision in `docs/` (architecture or the relevant requirement) once it's made.
+- [ ] **What "hidden" means.** Hidden accounts still count in totals (ACCT-1.9). Hidden transactions still count in Cashflow and can't be un-hidden in the UI (TXN, CASH known gaps). Pick one meaning per record type ("exclude from totals and reports" or "declutter the list"), apply it consistently, and add a "show hidden" toggle.
+- [ ] **Sign conventions.** Transactions are signed (money out is negative), liability balances are stored negative, and budget amounts are always positive with direction taken from their type. The UI mostly hides signs (TXN known gaps, DASH notes, BUD open questions). Write down one rule set, and have forms and imports enforce it, e.g. an In/Out toggle instead of a signed amount field.
 - [ ] **Where balances come from.** Balances only come from imported history. The account form's Balance field is discarded (ACCT-2.2), and transactions never change balances. Option 1: balance history is the source of truth, plus an "Update balance" action (simplest, fits manual tracking). Option 2: derive balances from transactions.
-- [ ] **Net-worth series.** The chart adds up whatever entries exist on each date, so accounts updated on different days make the total jump (DASH observations). Carry each account's last known balance forward into each day, week or month when building the series.
-- [ ] **Split transactions.** `is_split`/`split_parent_id` exist but have no UI or behavior. Design splits or drop the columns.
-- [ ] **Budget vs actual.** Budget and Cashflow are unconnected (BUD, CASH observations). Decide whether budgets are compared with actual spending per category and period; this drives the budget screen redesign below.
-- [ ] **Category lifecycle.** There's no delete in the UI. Deleting a category through the API leaves its transactions and budget streams uncategorized. Inactive categories still appear in pickers. New users start with no categories (CAT observations). Decide delete behavior (block, reassign, or archive only) and whether to seed default categories.
+- [ ] **Net-worth series.** The chart adds up whatever entries exist on each date, so accounts updated on different days make the total jump (DASH known gaps). Carry each account's last known balance forward into each day, week or month when building the series.
+- [ ] **Split transactions.** `is_split`/`split_parent_id` exist but have no UI or behavior. Design splits or drop the columns. Splitting a mortgage payment into principal (a transfer) and interest and escrow (expenses) is the main use (CASH open questions).
+- [ ] **Budget vs actual.** Budget and Cashflow are unconnected (BUD, CASH open questions). Decide whether budgets are compared with actual spending per category and period, and whether transfers such as planned savings can be budgeted; this drives the budget screen redesign below.
 
 ### Client: mobile and dialogs
-- [ ] Define shared breakpoints: one SCSS partial or mixin plus `BreakpointObserver` in TypeScript. Components currently use ad hoc 599/600/768px media queries, and a ~800 px window with the side nav open overflows (APP observations).
+- [ ] Define shared breakpoints: one SCSS partial or mixin plus `BreakpointObserver` in TypeScript. Components currently use ad hoc 599/600/768px media queries, and a ~800 px window with the side nav open overflows (APP known gaps).
 - [ ] Tables on phones: Transactions, Budget, Cashflow and Account Details use `mat-table`. At handset width, switch to a list or card layout (name and amount, with a second line for date and category) instead of a table that scrolls sideways.
 - [ ] Pick one pattern for create and edit. Today accounts, institutions and transactions use full pages, while budget streams, categories and groups use dialogs (`ModalService`: fixed 500px, `disableClose: true`). Suggested rule: full pages for records with many fields or that need their own URL; dialogs for small forms, full-screen on phones. Allow Esc and backdrop clicks to close unless the form has unsaved changes.
-- [ ] Budget screen redesign, together with the budget-vs-actual decision: consider inline add/edit rows or a side panel instead of a dialog per stream, an empty state (BUD observations), and a layout that works on phones.
+- [ ] Budget screen redesign, together with the budget-vs-actual decision: consider inline add/edit rows or a side panel instead of a dialog per stream, an empty state (BUD known gaps), and a layout that works on phones.
 - [ ] On phones, collapse the Transactions filters into a panel or bottom sheet.
 
 ### Client refactors
 - [ ] The app runs without zone.js, but component state is a mix of signals and plain fields, with manual `cdr.detectChanges()` calls in budget, cashflow, categories and transaction-form. Standardize on signals (with `OnPush`) so updates render without manual change detection.
 - [ ] Replace the global loading overlay on every request (APP-2.1) with loading states or skeletons per view, so screens don't flash empty or $0.00 values that look real.
-- [ ] Consistent success feedback (a snackbar) for create, save and delete (APP observations).
+- [ ] Consistent success feedback (a snackbar) for create, save and delete (APP known gaps).
 - [ ] Move the ~80 inline `style="..."` attributes in templates (e.g. `app.html`) into component SCSS. The two category dialog components, `chart.component.ts` and `value-period-change.component.ts` also use inline templates or styles, against `docs/conventions.md`.
 - [ ] The `@client/*` path alias in `client/tsconfig.json` is unused; use it or remove it.
 - [ ] `api.service.ts` passes `withCredentials: true` on every request; it's unneeded now that requests are same-origin (relative `apiUrl` plus the dev-server proxy).
@@ -49,10 +47,10 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 - [ ] Credit-card accounts can't be created: the group has no account types, but Type is required (ACCT-1.10).
 - [ ] The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8).
 - [ ] The Settings menu item links to a route that doesn't exist (APP-1.5). Replace it with a Settings screen that has change password (AUTH-5.1) and display name.
-- [ ] Chart y-axis labels repeat because they round to thousands or millions (ACCT, DASH observations).
-- [ ] Choose a sort order for institutions, accounts within a group, and the category group picker (currently creation order).
-- [ ] The Cashflow year list is a fixed four-year window; derive it from the data (CASH observations).
-- [ ] Import breadcrumbs, the Accounts/Dashboard name mismatch, and the product name on Login/Register (APP, DASH observations).
+- [ ] Chart y-axis labels repeat because they round to thousands or millions (ACCT, DASH known gaps).
+- [ ] Choose a sort order for institutions and accounts within a group (currently creation order).
+- [ ] The Cashflow year list is a fixed four-year window; derive it from the data (CASH known gaps).
+- [ ] Import breadcrumbs, the Accounts/Dashboard name mismatch, and the product name on Login/Register (APP, DASH known gaps).
 - [ ] Register screen: explain that this creates the instance's only account, which owns all its data, and that Register won't be available again afterwards (AUTH-2.8). Add it to `register.component.html` above the form.
 
 ### Data & deployment
@@ -62,7 +60,7 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 ### Security & auth
 - [ ] Use a persistent session store (e.g. `connect-pg-simple`). The default in-memory store logs everyone out on every restart.
 - [ ] Fail startup in production if `SESSION_SECRET` is unset; don't fall back to `'dev-secret-key'` (`server/index.ts`).
-- [ ] Rate-limit `POST /auth/login` (e.g. `express-rate-limit`) and set a minimum password length (AUTH observations).
+- [ ] Rate-limit `POST /auth/login` (e.g. `express-rate-limit`) and set a minimum password length (AUTH known gaps).
 - [ ] Session cookie: set `sameSite: 'lax'`, and make logout's `clearCookie` options match the session cookie (it uses `NODE_ENV === 'production'` for `secure`, the session uses `COOKIE_SECURE`). Document `COOKIE_SECURE` and `TRUST_FIRST_PROXY` for plain HTTP on the LAN versus a reverse proxy with HTTPS.
 - [ ] Decide on HTTP Basic auth (AUTH-3.5). With one user it mainly sends the password on every request, in clear text over plain HTTP. Keep it (and state what it's for) or remove it.
 - [ ] Security headers with `helmet`. Check the Content-Security-Policy against the Angular production build before enabling it.
