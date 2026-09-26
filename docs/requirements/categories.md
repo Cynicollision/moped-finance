@@ -2,7 +2,7 @@
 
 Transactions and budget streams are classified with **categories**. Categories are organized into **category groups**, and each group has a **type** (Income, Expense or Transfer) that decides how its categories count in Budget and Cashflow. Expense categories also have a **necessity**, Essential or Discretionary, so the user can see how much of their spending they could cut. One built-in category, **Uncategorized**, holds transactions that haven't been given a category yet.
 
-Screen: **Categories** (`/categories`). Creating and editing happen in dialogs on that screen.
+Screens: **Categories** (`/categories`), where creating and editing happen in dialogs, and **Rules** (`/categories/rules`, from the Categories menu).
 
 ## CAT-1 The user can organize categories into groups
 
@@ -65,7 +65,7 @@ A category the user has stopped using can be made **inactive**, which keeps it o
 | CAT-5.2 | Every transaction shall have a category. A transaction saved without one, an imported row with a blank category (TXN-3.4), and a transaction whose category is deleted (CAT-4.4) get Uncategorized. | Planned |
 | CAT-5.3 | Uncategorized can't be renamed, moved to a group, made inactive or deleted. The user can change its icon. | Planned |
 | CAT-5.4 | The Categories screen shall show Uncategorized above the three sections, with its icon, name, an edit button (icon only), and the explanation "Transactions stay here until you or a rule gives them a category." | Planned |
-| CAT-5.5 | When automatic categorization rules exist (CAT-8), a new or imported transaction that matches no rule and has no category shall get Uncategorized. | Planned |
+| CAT-5.5 | A new, imported or synced transaction with no category that neither learning (CAT-9) nor a rule (CAT-8) categorizes shall get Uncategorized. | Planned |
 
 ## CAT-6 A new instance starts with a useful set of categories
 
@@ -104,10 +104,26 @@ Default categories (E = Essential, D = Discretionary):
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-8.1 | The user can define rules that give a transaction a category from its details (for example its merchant or original statement), applied when transactions are added or imported. | Planned |
+| CAT-8.1 | The user can define rules that give a transaction a category from its details. A rule has a name (required, at most 100 characters), the category it sets (an active category), and one or more criteria from: **Original Statement** (*contains* or *is exactly* a term), **Merchant** (*contains* or *is exactly* a term) and **Amount** (*greater than*, *less than* or *equal to* an amount). | Planned |
+| CAT-8.2 | A rule shall match a transaction, in any account, only when every criterion it has matches. Text criteria ignore case. Amount criteria compare the amount's size, ignoring its sign, so "greater than 100" matches a $150 purchase and a $150 deposit. | Planned |
+| CAT-8.3 | The Rules screen shall list the rules in order, showing each one's criteria and category, with add, edit, delete (after confirming) and reorder. When several rules match, the first in the list wins. | Planned |
+| CAT-8.4 | Rules shall be applied to a transaction that's added without a chosen category, imported with a blank category (TXN-3.4), or synced (INST-2). They never replace a category the user chose or that the import file gave. | Planned |
+| CAT-8.5 | Saving a rule shall offer to apply it to the existing Uncategorized transactions it matches, saying how many ("Apply to 12 uncategorized transactions"). | Planned |
+| CAT-8.6 | View Transaction shall say how an automatic category was set: "Categorized by rule *rule name*" or "Categorized by learning" (CAT-9). The note goes away once the user changes the category. | Planned |
+| CAT-8.7 | Rules and learning shall categorize only transactions that aren't split (TXN-4). | Planned |
+
+## CAT-9 The app can learn categories from the user's own transactions
+
+| ID | Requirement | Status |
+|---|---|---|
+| CAT-9.1 | The Rules screen shall have a **Learn from my transactions** switch, off by default. | Planned |
+| CAT-9.2 | While it's on, a transaction that CAT-8.4 would categorize shall first get the category the user most often gave transactions with the same merchant (ignoring case), or, if the merchant is blank, the same original statement. It's used only when at least 3 such transactions were categorized by the user (not by rules or learning) and at least 80% of them have that category. | Planned |
+| CAT-9.3 | Rules run after learning, and a matching rule replaces the learned category, so the user's own rules always win. | Planned |
+| CAT-9.4 | Learning shall run inside the app on the instance's own data; no transaction data is sent anywhere. | Planned |
 
 ## Known gaps
 
+- **No automatic categorization (CAT-8, CAT-9).** Every transaction's category is chosen by hand or given in the import file.
 - **Transfer groups are invisible (CAT-1.3).** The screen only renders Income and Expenses, so a Transfer group and its categories never show, and can't be edited there. The category dialog's group picker does offer Transfer groups, so moving a category into one makes it disappear from the screen.
 - **Group type can still be changed (CAT-1.14).** The Edit Group dialog offers **Type**, which reclassifies every category in the group at once.
 - **The group picker isn't sorted (CAT-1.19)** and shows the type in lower case ("Income (income)").
@@ -116,10 +132,6 @@ Default categories (E = Essential, D = Discretionary):
 - **Uncategorized doesn't exist yet (CAT-5).** A transaction can have no category, and Cashflow labels those *Uncategorized* and counts them all as expenses. An instance that already has its own category named "Uncategorized" (the author's does) needs it merged into the built-in one when CAT-5 is built: its transactions move over and it's deleted. Transactions with no category move to it too.
 - **The code still says "class".** The type is `CategoryClass` in `shared/` and the `category_class` column; rename them to type when this domain is built.
 - **New users start empty (CAT-6).** The user must build the whole tree before they can add or import a transaction.
-
-## Open questions
-
-- **Automatic categorization rules (CAT-8).** What a rule matches (merchant contains, original statement, amount, account), which rule wins when several match, whether rules can be applied to existing transactions, and whether editing a transaction's category offers to create a rule.
 
 ## Notes
 
