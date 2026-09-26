@@ -45,7 +45,8 @@ Screens: **Account Details** (`/accounts/:id`), **Add Account** (from an institu
 | ACCT-3.7 | When validation finds errors, the screen shall list each row-level message so the user can fix the file, and shall not offer **Begin Import**. Today the confirm panel is correctly withheld, but the screen shows only a "Validation Error:" heading and the server's summary line (for example "Dry run: Will replace dates 2026-05-01 to 2026-05-03"); the row messages are never displayed and the summary line looks like a success message under an error heading. | Partial |
 | ACCT-3.8 | The Import Balance History screen shall show a breadcrumb "Accounts / *account name* / Import Balance History" and state the expected columns ("Date, AccountName, Balance"). | Implemented |
 | ACCT-3.5 | Confirming an import shall **replace** all existing balance entries for the account between the earliest and latest dates in the file, then insert the file's entries, and show "Successfully imported N records." | Implemented |
-| ACCT-3.6 | The import shall only be allowed for an account the user owns. | Implemented |
+| ACCT-3.6 | The import shall only be allowed for an account the user owns. | Retired (one owner per instance, AUTH-7) |
+| ACCT-3.9 | An account shall have at most one balance per date. The import shall refuse a file with two rows for the same date, reporting the later one (for example "Row 3: Duplicate date 2026-06-06"). | Implemented |
 
 ## ACCT-4 The user can have balances kept up to date automatically
 

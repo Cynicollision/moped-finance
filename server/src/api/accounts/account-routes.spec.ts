@@ -62,8 +62,8 @@ describe('Account Routes', () => {
         // Note: we need to use raw pglite exec because CategoryGroupData requires an import and we already have a long list.
         // It's simpler to just insert them directly via pglite.
         await pglite.exec(`
-            INSERT INTO finance.category_groups (id, name, category_class) VALUES ('g1', 'Test Group', 'Expense');
-            INSERT INTO finance.categories (id, group_id, name) VALUES ('cat1', 'g1', 'Test Category');
+            INSERT INTO finance.category_groups (id, name, category_class) VALUES ('g1', 'Test Group', 'expense');
+            INSERT INTO finance.categories (id, group_id, icon, name) VALUES ('cat1', 'g1', 'x', 'Test Category');
         `);
         testCategoryId = 'cat1';
     });
@@ -223,6 +223,22 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('category:');
+        });
+
+        it('should return 400 when group is not a known account group', async () => {
+            const payload = {
+                name: 'New Account',
+                institutionId: testInstitutionId,
+                category: AccountCategory.Asset,
+                group: 'Crypto'
+            };
+
+            const response = await request(app)
+                .post('/accounts')
+                .send(payload);
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('group:');
         });
     });
 
@@ -555,6 +571,31 @@ describe('Account Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.failedRowMessages.length).toBe(2);
             expect(response.body.createdCount).toBe(0);
+        });
+
+        it('should reject a second balance for the same date', async () => {
+            const acc1 = await accountData.insert(FinanceEntityFactory.createAccount({
+                institutionId: testInstitutionId,
+                name: 'Checking',
+                category: AccountCategory.Asset,
+                group: AccountGroup.Cash,
+                type: AccountType.Checking,
+                balance: 1000.00,
+                isHidden: false,
+                isManual: false,
+                isRetirement: false,
+                hideFromCashflow: false
+            }));
+
+            const csvContent = 'Date,Balance,AccountName\n2026-06-06,100,Checking\n2026-06-06,200,Checking';
+
+            const response = await request(app)
+                .post(`/accounts/${acc1.id}/import-balances?dryRun=true`)
+                .attach('file', Buffer.from(csvContent), 'import.csv');
+
+            expect(response.status).toBe(200);
+            expect(response.body.failedRowMessages).toEqual(['Row 3: Duplicate date 2026-06-06']);
+            expect(response.body.isValidToImport).toBe(false);
         });
     });
 

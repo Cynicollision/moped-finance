@@ -1,30 +1,39 @@
-import { pgSchema, varchar, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { pgSchema, varchar, timestamp, boolean, check, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
+import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
+import { SchemaUtil } from '@server/data';
+import { institutionSchema } from './../institutions/institution-schema';
 
 const financeSchema = pgSchema('finance');
 
 export const accountSchema = financeSchema.table('accounts', {
     id: varchar('id', { length: 50 }).primaryKey(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
-    institutionId: varchar('institution_id', { length: 50 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    institutionId: varchar('institution_id', { length: 50 }).notNull().references(() => institutionSchema.id, { onDelete: 'restrict' }),
     name: varchar('name', { length: 100 }).notNull(),
     category: varchar('account_category', { length: 50 }).notNull(),
     group: varchar('account_group', { length: 50 }).notNull(),
-    type: varchar('account_type', { length: 50 }).notNull(),
+    // Nullable: some groups (e.g. Credit Card) have no account types.
+    type: varchar('account_type', { length: 50 }),
     isHidden: boolean('is_hidden').notNull().default(false),
     isManual: boolean('is_manual').notNull().default(false),
     isRetirement: boolean('is_retirement').notNull().default(false),
     hideFromCashflow: boolean('hide_from_cashflow').notNull().default(false),
-});
+}, (table) => [
+    check('accounts_account_category_check', SchemaUtil.isOneOf(table.category, Object.values(AccountCategory))),
+    check('accounts_account_group_check', SchemaUtil.isOneOf(table.group, Object.values(AccountGroup))),
+    check('accounts_account_type_check', SchemaUtil.isOneOf(table.type, Object.values(AccountType))),
+    index('accounts_institution_id_idx').on(table.institutionId),
+]);
 
 export const createAccountSchema = createInsertSchema(accountSchema, {
     name: (schema) => schema.min(1).max(100),
-    category: (schema) => schema.min(1),
-    group: (schema) => schema.min(1),
-    institutionId: (schema) => schema.min(1).nullable(),
-    type: (schema) => schema.nullable(),
+    category: z.enum(AccountCategory),
+    group: z.enum(AccountGroup),
+    type: z.enum(AccountType).nullish(),
+    institutionId: (schema) => schema.min(1),
     isHidden: z.boolean().optional(),
     isManual: z.boolean().optional(),
     isRetirement: z.boolean().optional(),

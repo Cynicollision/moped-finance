@@ -45,18 +45,6 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 - [ ] **Budget vs actual.** Budget and Cashflow are unconnected (BUD, CASH observations). Decide whether budgets are compared with actual spending per category and period; this drives the budget screen redesign below.
 - [ ] **Category lifecycle.** There's no delete in the UI. Deleting a category through the API orphans its transactions (which then vanish from the list) and its budget streams. Inactive categories still appear in pickers. New users start with no categories (CAT observations). Decide delete behavior (block, reassign, or archive only) and whether to seed default categories.
 
-### Schema cleanup
-Do this before adding migrations, while resetting the dev database is still cheap, so migrations start from a clean baseline.
-- [ ] The SQL scripts and Drizzle schemas have drifted: money columns are `DECIMAL(12,2)` in SQL but plain `numeric` in Drizzle (`transaction-schema.ts`, `balance-history-schema.ts`). When migrations arrive, generate the SQL from Drizzle (drizzle-kit) so there's one source.
-- [ ] Booleans (`is_hidden`, `is_manual`, `is_active`, …) are nullable with defaults; make them `NOT NULL`.
-- [ ] Enum-like columns (`account_category`, `account_group`, `account_type`, `category_class`, budget `type`/`recurrence`) are unconstrained `VARCHAR(50)`. Add `CHECK` constraints or Postgres enums that match `shared/finance/enum`.
-- [ ] Use `TIMESTAMPTZ` for `created_at`/`updated_at`. Document that `date` columns are calendar dates with no time zone (see the CASH period-boundary observation).
-- [ ] Indexes: transactions on `date`, `(account_id, date)` and `category_id`.
-- [ ] Uniqueness: one balance per account per date (`UNIQUE (account_id, date)`, which also makes re-importing safe). Unique names for institutions and category groups, and per group for categories, since CSV import matches categories by name.
-- [ ] `accounts.institution_id` is `ON DELETE SET NULL`, but the app refuses to delete an institution that has accounts (INST-1.9). Use `RESTRICT`, plus `NOT NULL` if every account must have an institution.
-- [ ] `transactions.merchant` is nullable in the database but required by the server; make them agree.
-- [ ] Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Cashflow does, and round at the edges. Revisit integer cents only if totals ever drift.
-
 ### Server refactors
 - [ ] Validate referenced IDs and return a 400 instead of a foreign-key 500: the institution on account create/update, the category on transaction and budget-stream create/update (ACCT, BUD, TXN observations).
 - [ ] Move CSV parsing, validation and export out of the account and transaction controllers into a small import/export module that reports row-level errors. Today a bad date causes a 500 and a non-numeric amount becomes 0. Do this together with the partial-import and bulk-insert items under Correctness.
@@ -87,7 +75,7 @@ Do this before adding migrations, while resetting the dev database is still chea
 - [ ] Import breadcrumbs, the Accounts/Dashboard name mismatch, and the product name on Login/Register (APP, DASH observations).
 
 ### Data & deployment
-- [ ] Add database migrations (e.g. drizzle-kit). Schema is currently applied with `CREATE TABLE IF NOT EXISTS` scripts, which can't upgrade an existing production database.
+- [ ] Add database migrations (e.g. drizzle-kit). Schema is currently applied with `CREATE TABLE IF NOT EXISTS` scripts, which can't upgrade an existing production database. The Drizzle tables already declare everything the SQL scripts do (enforced by `server/src/data/schema-parity.spec.ts`), so generate the baseline migration from Drizzle, point `db:init` and `TestDatabaseUtil.createMockDatabase` at the migrations, and delete `schema_*.sql` and the parity spec.
 - [ ] Give production a working database init path. The `db:*` scripts need `ts-node`, which isn't in the production image. Options: compile the scripts into the image, or run migrations on startup.
 - [ ] Safe first-user bootstrap for production. Registration closes after the first user (AUTH-2.7), so a fresh instance belongs to whoever registers first; decide whether that's acceptable on the NAS or create the owner another way. The old Gemini-era deployment docs inserted a hardcoded `admin`/`admin123` password hash; don't carry that approach forward.
 - [ ] Document backup and restore for the Postgres volume.
@@ -130,4 +118,5 @@ Manual entry and import/export come first. Constraints for when this gets picked
 
 ## Ideas
 
+- Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Cashflow does, and round at the edges. Revisit integer cents only if totals ever drift.
 - Project Claude Code skills (e.g. `new-finance-resource`, `verify`, `schema-change` once migrations exist). Skipped for now; revisit if the same multi-step instructions keep getting repeated.

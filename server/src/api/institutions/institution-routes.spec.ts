@@ -92,6 +92,17 @@ describe('Institution Routes', () => {
             expect(inst?.name).toBe('Chase');
         });
 
+        it('should return 400 when the name is already taken, ignoring case', async () => {
+            await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
+
+            const response = await request(app)
+                .post('/institutions')
+                .send({ name: 'CHASE' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe('An institution with that name already exists.');
+        });
+
         it('should return 400 when schema validation fails (missing name)', async () => {
             const payload = {};
 

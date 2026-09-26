@@ -1,14 +1,17 @@
-import { pgSchema, varchar, timestamp } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { pgSchema, varchar, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 
 const financeSchema = pgSchema('finance');
 
 export const institutionSchema = financeSchema.table('institutions', {
     id: varchar('id', { length: 50 }).primaryKey(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     name: varchar('name', { length: 100 }).notNull(),
-});
+}, (table) => [
+    uniqueIndex('institutions_name_unique_idx').on(sql`lower(${table.name})`),
+]);
 
 export const createInstitutionSchema = createInsertSchema(institutionSchema, {
     name: (schema) => schema.min(1).max(100),

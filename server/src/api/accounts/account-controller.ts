@@ -185,6 +185,7 @@ export class AccountController {
 
         const validRows: BalanceHistory[] = [];
         const failedRowMessages: string[] = [];
+        const seenDates = new Set<string>();
 
         let rowIndex = 2;
         for (const row of records) {
@@ -199,6 +200,14 @@ export class AccountController {
 
             const parsedDate = DateTimeUtil.parse(dateStr);
             const isoDate = DateTimeUtil.toDateString(dateStr);
+
+            // One balance per account per date (enforced by the database too).
+            if (seenDates.has(isoDate)) {
+                failedRowMessages.push(`Row ${rowIndex}: Duplicate date ${isoDate}`);
+                rowIndex++;
+                continue;
+            }
+            seenDates.add(isoDate);
 
             if (!minDate || isoDate < minDate) minDate = isoDate;
             if (!maxDate || isoDate > maxDate) maxDate = isoDate;

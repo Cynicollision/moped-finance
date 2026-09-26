@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { OperationStatus } from '@shared/core/enum'
 import { UserContext } from '@server/auth';
+import { DatabaseErrorUtil } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { Result } from './result-factory';
 
@@ -67,6 +68,12 @@ export class OperationHandler {
             return this.sendResult(res, result);
         }
         catch (error: any) {
+            const uniqueViolationMessage = DatabaseErrorUtil.getUniqueViolationMessage(error);
+            if (uniqueViolationMessage) {
+                this.logger.warn(userId, `Operation failed: ${uniqueViolationMessage}`, context);
+                return this.sendResult(res, Result.userError(uniqueViolationMessage, 'ALREADY_EXISTS'));
+            }
+
             this.logger.error(userId, 'Internal error: ' + error.message || error, context);
             return this.sendResult(res, Result.internalError('An unexpected error occurred'));
         }

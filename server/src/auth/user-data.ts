@@ -7,11 +7,11 @@ import { DateTimeUtil } from '@server/utility';
 
 const coreSchema = pgSchema('core');
 
-const userSchema = coreSchema.table('users', {
+export const userSchema = coreSchema.table('users', {
     id: varchar('id', { length: 50 }).primaryKey(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
-    username: varchar('username', { length: 255 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    username: varchar('username', { length: 255 }).notNull().unique(),
     passwordHash: varchar('password_hash', { length: 255 }).notNull(),
     displayName: varchar('display_name', { length: 255 }).notNull()
 });
