@@ -8,7 +8,7 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 
 | ID | Requirement | Status |
 |---|---|---|
-| TXN-1.1 | The Transactions screen shall list transactions in a table with columns, in this order, **Date**, **Account**, **Merchant**, **Category** (icon and name) and **Amount**. The amount shall be shown without a sign: green for money in and the ordinary text color for money out (it is not red). Selecting a row opens that transaction (TXN-2.2). | Implemented |
+| TXN-1.1 | The Transactions screen shall list transactions in a table with columns, in this order, **Date**, **Account**, **Merchant**, **Category** (icon and name) and **Amount**. The amount shall follow APP-6.2: money in as "+$1,250.00" in green, money out as "$45.12" with no sign in the ordinary text color. Selecting a row opens that transaction (TXN-2.2). | Partial |
 | TXN-1.2 | The default order shall be newest first (Date, descending arrow). The user can sort by clicking the **Date**, **Account**, **Merchant**, **Category** and **Amount** column headers. Account and Category sort by name, ignoring case, with uncategorized transactions last in ascending order. Ties sort newest first. The first click on Merchant sorts A to Z; the first click on Amount sorts by the signed amount ascending, so the largest outflows come first. | Implemented |
 | TXN-1.3 | The list shall load 25 transactions at a time, and a **Load More** button shall append the next 25 while more exist. | Implemented |
 | TXN-1.4 | When nothing matches, the screen shall say "No transactions found". | Implemented |
@@ -27,8 +27,8 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | ID | Requirement | Status |
 |---|---|---|
 | TXN-2.1 | **Add Transaction** (from the Transactions menu or an account's menu) shall show a form with: **Amount** (required, defaults to 0), **Account** (required; a select of the user's open, unhidden accounts, sorted by name, plus the transaction's current account when editing; pre-selected when opened from an account), **Merchant** (text, at most 255 characters), **Original Statement** (text), **Category** (searchable by name), **Date** (date picker, required, defaults to today), **Notes**, and a **Hide Transaction** checkbox. | Partial |
-| TXN-2.2 | **View Transaction** (breadcrumb "Transactions / Transaction Details") shall show, read-only and in this order: **Amount** (large, unsigned, colored as in TXN-1.1), **Account** (a link to Account Details), **Merchant**, **Original Statement**, **Category** (icon and name), **Date**, **Notes** ("-" when empty) and **Hidden** ("Yes" or "No"). A menu offers **Edit** and **Delete**. | Implemented |
-| TXN-2.3 | **Edit Transaction** shall allow changing every field, including the account and amount. | Implemented |
+| TXN-2.2 | **View Transaction** (breadcrumb "Transactions / Transaction Details") shall show, read-only and in this order: **Amount** (large, signed and colored as in TXN-1.1), **Account** (a link to Account Details), **Merchant**, **Original Statement**, **Category** (icon and name), **Date**, **Notes** ("-" when empty) and **Hidden** ("Yes" or "No"). A menu offers **Edit** and **Delete**. | Partial |
+| TXN-2.3 | **Edit Transaction** shall allow changing every field, including the account and amount, except as limited for synced transactions (TXN-2.12) and split ones (TXN-4.7). | Implemented |
 | TXN-2.4 | The user can delete a transaction after confirming in a "Delete Transaction" dialog ("Are you sure you want to delete this transaction?", **Cancel** / **Delete**). | Implemented |
 | TXN-2.5 | The server shall reject a new transaction for an account that doesn't exist ("Account not found."), or without a merchant. | Implemented |
 | TXN-2.6 | The user shall be told which required fields are missing before saving (merchant and category included). | Partial |
@@ -37,6 +37,7 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-2.9 | View Transaction shall show **Adjusts balance** ("Yes" or "No") for a transaction in a manual account. | Planned |
 | TXN-2.10 | A hidden transaction shall not adjust its account's balance. Hiding a transaction that adjusts the balance undoes its effect, and un-hiding it applies it again (ACCT-5.3). | Planned |
 | TXN-2.11 | The user can un-hide a transaction by opening it (from the list with TXN-1.13) and clearing **Hide Transaction** in Edit Transaction. | Planned |
+| TXN-2.12 | For a transaction added by bank sync, **Date**, **Amount**, **Account** and **Original Statement** shall be read-only, in the form and the API; **Merchant**, **Category**, **Notes** and **Hide Transaction** stay editable, and it can be split (TXN-4.8). It can't be deleted, only hidden, since sync won't add it again (INST-2.12). | Planned |
 
 ## TXN-3 The user can move transactions in and out as CSV
 
@@ -72,6 +73,7 @@ A split divides one transaction into **parts**, each with its own amount and cat
 
 ## Known gaps
 
+- **Money in has no "+" (TXN-1.1, TXN-2.2).** Amounts are shown unsigned, so money in is told apart only by its green color.
 - **Import screen text and errors are wrong or missing (TXN-3.7, TXN-3.8).** A user following the on-screen column list gets "Missing required CSV headers: OriginalStatement, IsHidden" (as an error toast, since file-level problems are a 400), and a user whose file has bad rows gets no indication of which rows.
 - **Transactions with no category are missing from the list (TXN-1.11).** The list only returns transactions that have a category, so one whose category was deleted through the API disappears from it (while still counting in Cashflow). CAT-5 removes the case.
 - **A blank category fails import (TXN-3.4)** instead of going to Uncategorized.
@@ -85,8 +87,3 @@ A split divides one transaction into **parts**, each with its own amount and cat
 - **Import breadcrumb.** The screen reads "Accounts / Import Transactions" even when opened from the Transactions menu (APP known gaps).
 - **Splits don't exist (TXN-4).** The `is_split` and `split_parent_id` columns are there, and import writes `false` and blank to them, but nothing reads them.
 - **No duplicate detection on import.** Importing the same file twice creates every transaction twice.
-
-## Open questions
-
-- **Should money out be red?** Cashflow colors expenses red, but the Transactions list and View Transaction show money out in the ordinary text color and only color money in (TXN-1.1).
-- **Read-only fields for synced transactions.** Once bank sync exists, decide which fields of a bank-imported transaction can be edited. Today every field is editable (TXN-2.3).

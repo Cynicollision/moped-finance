@@ -56,6 +56,13 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 | APP-5.7 | The server shall check every request's route parameters, query string and body before acting on it, and refuse an invalid one with a 400 naming each bad field (for example "Invalid Transaction request body: amount: Too big…"). Unknown filter or sort keys, unparseable dates, and amounts beyond 9,999,999,999.99 are refused rather than ignored or passed to the database. An update may send only the fields it changes; the rest keep their values. | Implemented |
 | APP-5.8 | On startup, before accepting requests, the server shall bring the database schema up to date by applying any migrations it hasn't applied yet, creating every table on an empty database. Pending migrations shall apply all together or not at all; if they fail, or the database can't be reached, the server shall log the reason and exit with a non-zero status, leaving the database unchanged. | Implemented |
 
+## APP-6 Amounts read the same way everywhere
+
+| ID | Requirement | Status |
+|---|---|---|
+| APP-6.1 | Red shall mean unfavourable: a value that's bad for the user, such as debt growing (DASH-1.3), negative savings (CASH-1.4) or spending over budget (CASH-1.10). A negative amount that's expected, such as a purchase, shall not be red. | Partial |
+| APP-6.2 | Transaction amounts (the Transactions list, View Transaction, Account Details' recent transactions) shall show money in with a "+" before the "$", in green, and money out with no sign, in the ordinary text color. | Partial |
+
 ## Known gaps
 
 - **Old navigation names (APP-1.1, APP-1.9).** The navigation says **Accounts** for the summary and **Institutions** for the institutions list, the institutions route is `/institutions`, and the summary's tab title is "Dashboard".
