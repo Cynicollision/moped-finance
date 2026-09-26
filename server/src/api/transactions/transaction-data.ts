@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, ilike, sum, gte, lte, SQL } from 'drizzle-orm';
+import { AnyColumn, eq, and, desc, asc, ilike, sum, gte, lte, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
@@ -10,13 +10,13 @@ import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';
 import { transactionSchema } from './transaction-schema';
 
+/** A transaction as written to CSV: the date as YYYY-MM-DD and the amount exactly as stored. */
 export type TransactionExport = {
-    id: string;
     date: string;
     accountName: string;
     merchant: string;
     categoryName: string;
-    amount: number;
+    amount: string;
     originalStatement: string;
     notes: string;
     isHidden: boolean;
@@ -29,6 +29,8 @@ export interface IFinanceTransactionData {
     retrieveCashflowByCategory(startDate: Date, endDate: Date): Promise<CashflowStream[]>;
     retrieveSingle(id: string): Promise<Transaction | null>;
     insert(transaction: Transaction): Promise<Transaction>;
+    /** Inserts all of the transactions or, if any insert fails, none of them. */
+    insertBulk(transactions: Transaction[]): Promise<void>;
     update(transaction: Transaction): Promise<Transaction | null>;
     delete(id: string): Promise<boolean>;
 }
@@ -51,6 +53,44 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
     };
 }
 
+// Sorting by name ignores case. Ties (same day, same merchant, ...) fall back to newest first, then id, so paging is stable.
+function getSearchOrder(sortKey: TransactionsSortKey, direction: SortDirection): SQL[] {
+    const columns: Record<TransactionsSortKey, SQL | AnyColumn> = {
+        [TransactionsSortKey.Date]: transactionSchema.date,
+        [TransactionsSortKey.Amount]: transactionSchema.amount,
+        [TransactionsSortKey.Merchant]: transactionSchema.merchant,
+        [TransactionsSortKey.Account]: sql`lower(${accountSchema.name})`,
+        [TransactionsSortKey.Category]: sql`lower(${categorySchema.name})`,
+    };
+
+    const primary = direction === SortDirection.Asc ? asc(columns[sortKey]) : desc(columns[sortKey]);
+    const tiebreakers = sortKey === TransactionsSortKey.Date ? [] : [desc(transactionSchema.date)];
+    return [primary, ...tiebreakers, asc(transactionSchema.id)];
+}
+
+// ILIKE treats % and _ as wildcards; escape them (and the escape character) so they match literally.
+function escapeLikePattern(value: string): string {
+    return value.replace(/[\\%_]/g, c => '\\' + c);
+}
+
+const bulkInsertChunkSize = 1000;
+
+function mapTransactionToRow(transaction: Transaction): typeof transactionSchema.$inferInsert {
+    return {
+        id: transaction.id,
+        accountId: transaction.accountId,
+        categoryId: transaction.categoryId || null,
+        date: DateTimeUtil.toDateString(transaction.date),
+        amount: transaction.amount.toString(),
+        merchant: transaction.merchant,
+        originalStatement: transaction.originalStatement || null,
+        notes: transaction.notes || null,
+        isHidden: transaction.isHidden,
+        isSplit: transaction.isSplit,
+        splitParentId: transaction.splitParentId || null
+    };
+}
+
 export class FinanceTransactionData implements IFinanceTransactionData {
     private readonly db: NodePgDatabase;
 
@@ -67,7 +107,6 @@ export class FinanceTransactionData implements IFinanceTransactionData {
 
         const rows = await this.db
             .select({
-                id: transactionSchema.id,
                 date: transactionSchema.date,
                 accountName: accountSchema.name,
                 merchant: transactionSchema.merchant,
@@ -84,12 +123,11 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .orderBy(asc(transactionSchema.date), asc(transactionSchema.id));
 
         return rows.map(row => ({
-            id: row.id,
-            date: DateTimeUtil.toISOString(row.date),
+            date: row.date,
             accountName: row.accountName,
             merchant: row.merchant,
             categoryName: row.categoryName ?? '',
-            amount: Number(row.amount),
+            amount: row.amount,
             originalStatement: row.originalStatement ?? '',
             notes: row.notes ?? '',
             isHidden: row.isHidden
@@ -126,7 +164,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         if (options.filters) {
             for (const filter of options.filters) {
                 if (filter.key === TransactionsFilterKey.Merchant) {
-                    conditions.push(ilike(transactionSchema.merchant, `%${filter.value}%`));
+                    conditions.push(ilike(transactionSchema.merchant, `%${escapeLikePattern(filter.value)}%`));
                 }
                 else if (filter.key === TransactionsFilterKey.Category) {
                     conditions.push(eq(transactionSchema.categoryId, filter.value));
@@ -140,46 +178,24 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             }
         }
 
-        let query = this.db
+        // Left join: a transaction whose category was deleted is uncategorized, not gone.
+        const query = this.db
             .select({
                 transaction: transactionSchema
             })
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
-            .innerJoin(categorySchema, eq(categorySchema.id, transactionSchema.categoryId))
-            .where(and(...conditions));
-
-        const sort = Object.values(TransactionsSortKey).includes(options.sortKey as TransactionsSortKey)
-            ? options.sortKey
-            : TransactionsSortKey.Date;
-
-        const dirInput = (options.sortDirection || '').toUpperCase();
-        const dir = Object.values(SortDirection).includes(dirInput as SortDirection) ? dirInput : SortDirection.Desc;
-
-        // Apply sorting
-        let orderFn;
-        switch (sort) {
-            case TransactionsSortKey.Date:
-                orderFn = dir === SortDirection.Asc ? asc(transactionSchema.date) : desc(transactionSchema.date);
-                break;
-            case TransactionsSortKey.Amount:
-                orderFn = dir === SortDirection.Asc ? asc(transactionSchema.amount) : desc(transactionSchema.amount);
-                break;
-            case TransactionsSortKey.Merchant:
-                orderFn = dir === SortDirection.Asc ? asc(transactionSchema.merchant) : desc(transactionSchema.merchant);
-                break;
-            default:
-                orderFn = desc(transactionSchema.date);
-        }
-
-        query = query.orderBy(orderFn, asc(transactionSchema.id)) as any;
+            .leftJoin(categorySchema, eq(categorySchema.id, transactionSchema.categoryId))
+            .where(and(...conditions))
+            .orderBy(...getSearchOrder(options.sortKey ?? TransactionsSortKey.Date, options.sortDirection ?? SortDirection.Desc))
+            .$dynamic();
 
         if (options.limit !== undefined) {
-            query = query.limit(options.limit) as any;
+            query.limit(options.limit);
         }
 
         if (options.offset !== undefined) {
-            query = query.offset(options.offset) as any;
+            query.offset(options.offset);
         }
 
         const rows = await query;
@@ -230,29 +246,29 @@ export class FinanceTransactionData implements IFinanceTransactionData {
 
     public async insert(transaction: Transaction): Promise<Transaction> {
         const rows = await this.db.insert(transactionSchema)
-            .values({
-                id: transaction.id,
-                accountId: transaction.accountId,
-                categoryId: transaction.categoryId,
-                date: DateTimeUtil.toDateString(transaction.date),
-                amount: transaction.amount.toString(),
-                merchant: transaction.merchant,
-                originalStatement: transaction.originalStatement || null,
-                notes: transaction.notes || null,
-                isHidden: transaction.isHidden,
-                isSplit: transaction.isSplit,
-                splitParentId: transaction.splitParentId || null
-            })
+            .values(mapTransactionToRow(transaction))
             .returning();
 
         return mapRowToTransaction(rows[0]);
     }
 
+    public async insertBulk(transactions: Transaction[]): Promise<void> {
+        // One transaction, so a failure in any chunk rolls back the earlier ones. Chunks keep each
+        // statement under Postgres's 65,535 bind-parameter limit (11 columns per row).
+        await this.db.transaction(async (tx) => {
+            for (let i = 0; i < transactions.length; i += bulkInsertChunkSize) {
+                const chunk = transactions.slice(i, i + bulkInsertChunkSize);
+                await tx.insert(transactionSchema).values(chunk.map(mapTransactionToRow));
+            }
+        });
+    }
+
     public async update(transaction: Transaction): Promise<Transaction | null> {
         const rows = await this.db.update(transactionSchema)
             .set({
+                accountId: transaction.accountId,
                 merchant: transaction.merchant,
-                categoryId: transaction.categoryId,
+                categoryId: transaction.categoryId || null,
                 amount: transaction.amount.toString(),
                 date: DateTimeUtil.toDateString(transaction.date),
                 originalStatement: transaction.originalStatement || null,

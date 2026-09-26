@@ -1,11 +1,9 @@
-import { Router, Request } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
-import { HistoryTimeframe, SortDirection } from '@shared/core/enum';
-import { GetAccountBalanceHistoryOptions, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
-import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
-import { Account } from '@shared/finance/types';
+import { HistoryTimeframe } from '@shared/core/enum';
+import { ValueHistoryType } from '@shared/finance/enum';
 import { IAppLogger } from '@server/logging';
-import { OperationDefinition, OperationHandler, RequestSchemaValidator, singleFileUpload } from '@server/routing';
+import { idParamsSchema, OperationDefinition, OperationHandler, QueryField, singleFileUpload } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IFinanceTransactionData, transactionSearchQuerySchema } from './../transactions';
 import { AccountController } from './account-controller';
@@ -19,7 +17,6 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
     const router = Router();
     const controller = new AccountController(logger, accountData, balanceHistoryData, transactionData);
     const handler = new OperationHandler(logger);
-    const validator = new RequestSchemaValidator(logger, domain);
 
     // GET / - Get all accounts
     router.get('/', (req, res) => {
@@ -33,119 +30,101 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
     const totalValueHistoryQuerySchema = z.object({
         type: z.enum(ValueHistoryType),
         timeframe: z.enum(HistoryTimeframe).optional().default(HistoryTimeframe.PastThirtyDays),
-        asOfDate: z.string().optional()
+        asOfDate: QueryField.date().optional()
     });
 
-    router.get('/total-value-history', validator.query(totalValueHistoryQuerySchema), (req, res) => {
+    router.get('/total-value-history', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getTotalValueHistory' };
-        handler.execute(req, res, op, (context) => {
-            const { type, timeframe, asOfDate: asOfDateStr } = req.query as any;
-
-            const asOfDate = asOfDateStr
-                ? DateTimeUtil.parse(asOfDateStr)
-                : DateTimeUtil.now();
-
-            const options: TotalValueHistoryOptions = {
-                asOfDate,
-                type,
-                timeframe
-            };
-
-            return controller.getTotalValueHistory(context, options);
+        handler.execute(req, res, op, { query: totalValueHistoryQuerySchema }, (context, { query }) => {
+            return controller.getTotalValueHistory(context, {
+                type: query.type,
+                timeframe: query.timeframe,
+                asOfDate: query.asOfDate ?? DateTimeUtil.now()
+            });
         });
     });
 
     // GET /:id - Get Account
-    router.get('/:id', validator.id(), (req, res) => {
+    router.get('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getAccount' };
-        handler.execute(req, res, op, (context) => {
-            return controller.getAccount(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.getAccount(context, params.id);
         });
     });
 
     // POST / - Create Account
-    router.post('/', validator.body(createAccountSchema), (req, res) => {
+    router.post('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'createAccount' };
-        handler.execute(req, res, op, (context) => {
-            const account: Account = req.body;
-            return controller.createAccount(context, account);
+        handler.execute(req, res, op, { body: createAccountSchema }, (context, { body }) => {
+            return controller.createAccount(context, body);
         });
     });
 
     // PUT /:id - Update Account
-    router.put('/:id', validator.id(), validator.body(updateAccountSchema), (req, res) => {
+    router.put('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'saveAccount' };
-        handler.execute(req, res, op, (context) => {
-            const account: Account = req.body;
-            account.id = req.params.id;
-            return controller.updateAccount(context, account);
+        handler.execute(req, res, op, { params: idParamsSchema, body: updateAccountSchema }, (context, { params, body }) => {
+            return controller.updateAccount(context, params.id, body);
         });
     });
 
     // DELETE /:id - Delete Account
-    router.delete('/:id', validator.id(), (req, res) => {
+    router.delete('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'deleteAccount' };
-        handler.execute(req, res, op, (context) => {
-            return controller.deleteAccount(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.deleteAccount(context, params.id);
         });
     });
 
     // GET /:id/balance-history - Get Balance History
     const balanceHistoryQuerySchema = z.object({
         timeframe: z.enum(HistoryTimeframe).optional().default(HistoryTimeframe.PastThirtyDays),
-        asOfDate: z.string().optional()
+        asOfDate: QueryField.date().optional()
     });
 
-    router.get('/:id/balance-history', validator.id(), validator.query(balanceHistoryQuerySchema), (req, res) => {
+    router.get('/:id/balance-history', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getAccountBalanceHistory' };
-        handler.execute(req, res, op, (context) => {
-            const { timeframe, asOfDate: asOfDateStr } = req.query as any;
-            const asOfDate = asOfDateStr ? DateTimeUtil.parse(asOfDateStr) : DateTimeUtil.now();
-
-            const options: GetAccountBalanceHistoryOptions = {
-                asOfDate,
-                timeframe
-            };
-
-            return controller.getAccountBalanceHistory(context, req.params.id, options);
+        handler.execute(req, res, op, { params: idParamsSchema, query: balanceHistoryQuerySchema }, (context, { params, query }) => {
+            return controller.getAccountBalanceHistory(context, params.id, {
+                timeframe: query.timeframe,
+                asOfDate: query.asOfDate ?? DateTimeUtil.now()
+            });
         });
     });
 
     // GET /:id/transactions - Get Account Transactions
-    router.get('/:id/transactions', validator.id(), validator.query(transactionSearchQuerySchema), (req, res) => {
+    router.get('/:id/transactions', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getTransactions' };
-        handler.execute(req, res, op, (context) => {
-            const options = req.query as unknown as TransactionSearchOptions;
-            return controller.getAccountTransactions(context, req.params.id, options);
+        handler.execute(req, res, op, { params: idParamsSchema, query: transactionSearchQuerySchema }, (context, { params, query }) => {
+            return controller.getAccountTransactions(context, params.id, query);
         });
     });
 
     // POST /:id/sync - Sync Account
-    router.post('/:id/sync', validator.id(), (req, res) => {
+    router.post('/:id/sync', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'syncAccount' };
-        handler.execute(req, res, op, (context) => {
-            return controller.syncAccount(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.syncAccount(context, params.id);
         });
     });
 
     // GET /:id/export-balances - Export Balances
-    router.get('/:id/export-balances', validator.id(), (req, res) => {
+    router.get('/:id/export-balances', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'exportBalanceHistory' };
-        handler.execute(req, res, op, (context) => {
-            return controller.exportBalanceHistory(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.exportBalanceHistory(context, params.id);
         });
     });
 
     // POST /:id/import-balances - Import Balances
     const importBalancesQuerySchema = z.object({
-        dryRun: z.enum(['true', 'false']).transform(v => v === 'true').optional()
+        dryRun: QueryField.boolean().optional().default(false)
     });
 
-    router.post('/:id/import-balances', validator.id(), singleFileUpload, validator.query(importBalancesQuerySchema), (req, res) => {
+    router.post('/:id/import-balances', singleFileUpload, (req, res) => {
         const op: OperationDefinition = { domain, operation: 'importBalanceHistory' };
-        handler.execute(req, res, op, (context) => {
-            const { dryRun } = req.query as any;
-            return controller.importBalanceHistory(context, req.params.id, req.file?.buffer, dryRun);
+        handler.execute(req, res, op, { params: idParamsSchema, query: importBalancesQuerySchema }, (context, { params, query }) => {
+            return controller.importBalanceHistory(context, params.id, req.file?.buffer, query.dryRun);
         });
     });
 

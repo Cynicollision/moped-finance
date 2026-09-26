@@ -1,7 +1,3 @@
-import Papa from 'papaparse';
-import { NewEntity } from '@shared/core/types';
-import { HistoryTimeframe } from '@shared/core/enum';
-import { ValueHistoryType } from '@shared/finance/enum';
 import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
@@ -10,6 +6,8 @@ import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IFinanceTransactionData } from './../transactions';
 import { IFinanceAccountData } from './account-data';
+import { CreateAccountRequest, UpdateAccountRequest } from './account-schema';
+import { BalanceHistoryCsv } from './balance-history-csv';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 
 export class AccountController {
@@ -34,19 +32,24 @@ export class AccountController {
         return Result.success(accounts);
     }
 
-    public async createAccount(context: OperationContext, newAccount: NewEntity<Account>): Promise<OperationResult<Account>> {
-        const account = FinanceEntityFactory.createAccount(newAccount);
+    public async createAccount(context: OperationContext, input: CreateAccountRequest): Promise<OperationResult<Account>> {
+        // A missing institution fails the insert's foreign key, which OperationHandler reports as a 400.
+        const account = FinanceEntityFactory.createAccount({
+            ...input,
+            type: input.type ?? null
+        });
+
         const created = await this.accountData.insert(account);
         return Result.successCreated(created);
     }
 
-    public async updateAccount(context: OperationContext, account: Account): Promise<OperationResult<Account>> {
-        const current = await this.accountData.retrieveSingle(account.id);
+    public async updateAccount(context: OperationContext, accountId: string, changes: UpdateAccountRequest): Promise<OperationResult<Account>> {
+        const current = await this.accountData.retrieveSingle(accountId);
         if (!current) {
             return Result.userErrorNotFound();
         }
 
-        const updated = await this.accountData.update(account);
+        const updated = await this.accountData.update({ ...current, ...changes });
         if (!updated) {
             return Result.userErrorNotFound();
         }
@@ -55,11 +58,6 @@ export class AccountController {
     }
 
     public async deleteAccount(context: OperationContext, accountId: string): Promise<OperationResult<void>> {
-        const current = await this.accountData.retrieveSingle(accountId);
-        if (!current) {
-            return Result.userErrorNotFound();
-        }
-
         const deleted = await this.accountData.delete(accountId);
         if (!deleted) {
             return Result.userErrorNotFound();
@@ -69,18 +67,22 @@ export class AccountController {
     }
 
     public async getAccountTransactions(context: OperationContext, accountId: string, options: TransactionSearchOptions): Promise<OperationResult<Transaction[]>> {
-        const tranactions = await this.transactionData.search(options, accountId);
-        return Result.success(tranactions);
-    }
-
-    public async getAccountBalanceHistory(context: OperationContext, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<OperationResult<BalanceHistory[]>> {
-        const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         const account = await this.accountData.retrieveSingle(accountId);
-
         if (!account) {
             return Result.userErrorNotFound();
         }
 
+        const transactions = await this.transactionData.search(options, accountId);
+        return Result.success(transactions);
+    }
+
+    public async getAccountBalanceHistory(context: OperationContext, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<OperationResult<BalanceHistory[]>> {
+        const account = await this.accountData.retrieveSingle(accountId);
+        if (!account) {
+            return Result.userErrorNotFound();
+        }
+
+        const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         const history = await this.balanceHistoryData.retrieveForAccount(accountId, startDate.toISOString(), options.asOfDate.toISOString());
         return Result.success(history);
     }
@@ -98,152 +100,45 @@ export class AccountController {
 
     public async exportBalanceHistory(context: OperationContext, accountId: string): Promise<OperationResult<string>> {
         const account = await this.accountData.retrieveSingle(accountId);
-
         if (!account) {
             return Result.userErrorNotFound();
         }
 
-        const accountName = account.name?.replace(/[^a-zA-Z0-9]/g, '-') || '';
-        const timestamp = DateTimeUtil.nowToISOSafeFilename();
-        const fileName = `Balances_${accountName}_${timestamp}.csv`;
+        const accountName = account.name.replace(/[^a-zA-Z0-9]/g, '-');
+        const fileName = `Balances_${accountName}_${DateTimeUtil.nowToISOSafeFilename()}.csv`;
 
         const history = await this.balanceHistoryData.retrieveForExport(accountId);
-
-        if (!history || history.length === 0) {
-            return Result.successFile('text/csv', fileName, 'Date,AccountName,Balance\n');
-        }
-
-        const csv = Papa.unparse(history, {
-            header: true,
-            columns: ['date', 'accountName', 'balance']
-        });
-
-        const finalCsv = csv.replace(
-            /^date,accountName,balance/i,
-            'Date,AccountName,Balance'
-        );
-
-        return Result.successFile('text/csv', fileName, finalCsv);
+        return Result.successFile('text/csv', fileName, BalanceHistoryCsv.write(history));
     }
 
-    public async importBalanceHistory(context: OperationContext, accountId: string, fileBuffer: Buffer | undefined, dryRun: boolean): Promise<OperationResult<BalanceImportResult>> {
-        if (!fileBuffer) {
-            return Result.userError('No file provided');
-        }
-
+    public async importBalanceHistory(context: OperationContext, accountId: string, file: Buffer | undefined, dryRun: boolean): Promise<OperationResult<BalanceImportResult>> {
         const account = await this.accountData.retrieveSingle(accountId);
         if (!account) {
             return Result.userErrorNotFound();
         }
 
-        const csvString = fileBuffer.toString('utf8');
-        const parsed = Papa.parse(csvString, {
-            header: true,
-            skipEmptyLines: true
-        });
-
-        // TODO: bad request
-        if (parsed.errors.length > 0) {
-            return Result.success({
-                startDate: '',
-                endDate: '',
-                createdCount: 0,
-                failedRowMessages: [],
-                isValidToImport: false,
-                resultMessage: 'Failed to parse CSV file: ' + parsed.errors[0].message
-            });
+        const csv = BalanceHistoryCsv.read(file, accountId);
+        if (!csv.success) {
+            return Result.userError(csv.message);
         }
 
-        const headers = parsed.meta.fields || [];
-        const requiredHeaders = ['Date', 'Balance'];
-        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-        if (missingHeaders.length > 0) {
-            return Result.success({
-                startDate: '',
-                endDate: '',
-                createdCount: 0,
-                failedRowMessages: [],
-                isValidToImport: false,
-                resultMessage: 'Missing required CSV headers: ' + missingHeaders.join(', ')
-            });
-        }
+        const { records, failedRowMessages, startDate, endDate } = csv;
+        const isValidToImport = failedRowMessages.length === 0;
 
-        const records = parsed.data as any[];
-        if (records.length === 0) {
-            return Result.success({
-                startDate: '',
-                endDate: '',
-                createdCount: 0,
-                failedRowMessages: [],
-                isValidToImport: false,
-                resultMessage: 'CSV is empty'
-            });
-        }
-
-        let minDate = '';
-        let maxDate = '';
-
-        const validRows: BalanceHistory[] = [];
-        const failedRowMessages: string[] = [];
-        const seenDates = new Set<string>();
-
-        let rowIndex = 2;
-        for (const row of records) {
-            const dateStr = (row['Date'] || '').trim();
-            const balanceStr = (row['Balance'] || '').trim();
-
-            if (!dateStr || !balanceStr) {
-                failedRowMessages.push(`Row ${rowIndex}: Date and Balance are required`);
-                rowIndex++;
-                continue;
-            }
-
-            const parsedDate = DateTimeUtil.parse(dateStr);
-            const isoDate = DateTimeUtil.toDateString(dateStr);
-
-            // One balance per account per date (enforced by the database too).
-            if (seenDates.has(isoDate)) {
-                failedRowMessages.push(`Row ${rowIndex}: Duplicate date ${isoDate}`);
-                rowIndex++;
-                continue;
-            }
-            seenDates.add(isoDate);
-
-            if (!minDate || isoDate < minDate) minDate = isoDate;
-            if (!maxDate || isoDate > maxDate) maxDate = isoDate;
-
-            validRows.push(FinanceEntityFactory.createBalanceHistory({
-                accountId: accountId,
-                date: parsedDate,
-                balance: parseFloat(balanceStr) || 0
-            }));
-            rowIndex++;
+        // All or nothing, as for transaction import: a file with any bad row saves nothing.
+        if (!isValidToImport) {
+            const summary = `Found errors in ${failedRowMessages.length} of ${records.length + failedRowMessages.length} rows.`;
+            const result: BalanceImportResult = { startDate, endDate, createdCount: 0, failedRowMessages, isValidToImport, resultMessage: summary };
+            return dryRun
+                ? Result.success(result)
+                : Result.userError(`Nothing was imported. ${summary}`, 'INVALID_IMPORT', result);
         }
 
         if (dryRun) {
-            return Result.success({
-                startDate: minDate,
-                endDate: maxDate,
-                createdCount: validRows.length,
-                failedRowMessages: failedRowMessages,
-                isValidToImport: failedRowMessages.length === 0, // TODO: allow partial import?
-                resultMessage: `Dry run: Will replace dates ${minDate} to ${maxDate}`
-            });
+            return Result.success({ startDate, endDate, createdCount: records.length, failedRowMessages, isValidToImport, resultMessage: `Will replace balances from ${startDate} to ${endDate}.` });
         }
 
-        // Database errors propagate to OperationHandler, which maps constraint violations and hides the rest.
-        if (validRows.length > 0) {
-            await this.balanceHistoryData.deleteRange(accountId, minDate, maxDate);
-            await this.balanceHistoryData.insertBulk(validRows);
-        }
-
-        return Result.success({
-            startDate: minDate,
-            endDate: maxDate,
-            createdCount: validRows.length,
-            failedRowMessages: failedRowMessages,
-            isValidToImport: failedRowMessages.length === 0, // TODO: allow partial import?
-            resultMessage: `Imported ${validRows.length} balance records.`
-        });
+        await this.balanceHistoryData.replaceRange(accountId, startDate, endDate, records);
+        return Result.successCreated({ startDate, endDate, createdCount: records.length, failedRowMessages, isValidToImport, resultMessage: `Imported ${records.length} balance records.` });
     }
 }

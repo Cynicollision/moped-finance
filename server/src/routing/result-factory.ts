@@ -40,27 +40,28 @@ export class Result {
         };
     }
 
-    public static successFile(conentType: string, fileName: string, data: string): OperationResult<string> {
+    public static successFile(contentType: string, fileName: string, data: string): OperationResult<string> {
         return {
             success: true,
             status: OperationStatus.Success,
             timestamp: DateTimeUtil.getCurrentTimestamp(),
             data,
             file: {
-                contentType: conentType,
+                contentType,
                 fileName: fileName
             }
         };
     }
 
-    public static userError<T>(message: string, code: string = 'BAD_REQUEST'): OperationResult<T> {
+    public static userError<T>(message: string, code: string = 'BAD_REQUEST', details?: unknown): OperationResult<T> {
         return {
             success: false,
             status: OperationStatus.UserError,
             timestamp: DateTimeUtil.getCurrentTimestamp(),
             error: {
                 code,
-                message
+                message,
+                ...(details !== undefined && { details })
             }
         };
     }

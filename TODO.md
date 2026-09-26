@@ -20,7 +20,7 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 ## Next
 
 ### Design decisions
-From a review of the code, the schema, and the requirements' Observations (2026-09-25). Decide these first, since they shape the refactors below. Record each decision in `docs/` (architecture or the relevant requirement) once it's made.
+From a review of the code, the schema, and the requirements' Observations (2026-09-25). Decide these first, since they shape the work below. Record each decision in `docs/` (architecture or the relevant requirement) once it's made.
 - [ ] **What "hidden" means.** Hidden accounts still count in totals (ACCT-1.9). Hidden transactions still count in Cashflow and can't be un-hidden in the UI (TXN, CASH observations). Pick one meaning per record type ("exclude from totals and reports" or "declutter the list"), apply it consistently, and add a "show hidden" toggle.
 - [ ] **Sign conventions.** Transactions are signed (money out is negative), liability balances are stored negative, and budget amounts are always positive with direction taken from their type. The UI mostly hides signs (TXN, DASH, BUD observations). Write down one rule set, and have forms and imports enforce it, e.g. an In/Out toggle instead of a signed amount field.
 - [ ] **Transfers and debt paydown.** Transfer groups don't show on the Categories screen (CAT-1.11), and extra mortgage principal counts as spending in Cashflow (CASH observations). Decide how transfers and principal payments are modeled before building budget-vs-actual.
@@ -28,13 +28,7 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 - [ ] **Net-worth series.** The chart adds up whatever entries exist on each date, so accounts updated on different days make the total jump (DASH observations). Carry each account's last known balance forward into each day, week or month when building the series.
 - [ ] **Split transactions.** `is_split`/`split_parent_id` exist but have no UI or behavior. Design splits or drop the columns.
 - [ ] **Budget vs actual.** Budget and Cashflow are unconnected (BUD, CASH observations). Decide whether budgets are compared with actual spending per category and period; this drives the budget screen redesign below.
-- [ ] **Category lifecycle.** There's no delete in the UI. Deleting a category through the API orphans its transactions (which then vanish from the list) and its budget streams. Inactive categories still appear in pickers. New users start with no categories (CAT observations). Decide delete behavior (block, reassign, or archive only) and whether to seed default categories.
-
-### Server refactors
-- [ ] Referenced IDs: foreign-key violations now return a 400 with a message from `DatabaseErrorUtil` (APP-5.5), so the remaining explicit checks are only for consistency. `createTransaction` (`transaction-controller.ts`) checks the account itself and says "Invalid account specified.", while the database path says "Account not found."; `deleteInstitution` (`institution-controller.ts`) checks for accounts with its own wording. Pick one approach and one wording.
-- [ ] Move CSV parsing, validation and export out of the account and transaction controllers into a small import/export module that reports row-level errors. Today a bad date causes a 500 and a non-numeric amount becomes 0. An amount too large for `DECIMAL(12, 2)` fails in the database: a generic 500 for balance import, "Row N: Could not be saved." for transaction import. Validate the range per row. Do this together with the partial-import and bulk-insert items under Correctness.
-- [ ] Remove the `as any` casts in routes (e.g. `req.query as any` in `transaction-routes.ts`); have the validator return typed, parsed values.
-- [ ] The transaction list (`search` in `transaction-data.ts`) inner-joins categories, so uncategorized transactions disappear (TXN observations). Export already uses a left join; do the same here, and support sorting by category and account (TXN-1.2).
+- [ ] **Category lifecycle.** There's no delete in the UI. Deleting a category through the API leaves its transactions and budget streams uncategorized. Inactive categories still appear in pickers. New users start with no categories (CAT observations). Decide delete behavior (block, reassign, or archive only) and whether to seed default categories.
 
 ### Client: mobile and dialogs
 - [ ] Define shared breakpoints: one SCSS partial or mixin plus `BreakpointObserver` in TypeScript. Components currently use ad hoc 599/600/768px media queries, and a ~800 px window with the side nav open overflows (APP observations).
@@ -53,7 +47,7 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 
 ### UX fixes from the requirements review
 - [ ] Credit-card accounts can't be created: the group has no account types, but Type is required (ACCT-1.10).
-- [ ] The transaction import screen lists the wrong CSV columns and doesn't say which rows failed (TXN-3.7, TXN-3.8).
+- [ ] The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8).
 - [ ] The Settings menu item links to a route that doesn't exist (APP-1.5). Replace it with a Settings screen that has change password (AUTH-5.1) and display name.
 - [ ] Chart y-axis labels repeat because they round to thousands or millions (ACCT, DASH observations).
 - [ ] Choose a sort order for institutions, accounts within a group, and the category group picker (currently creation order).
@@ -78,10 +72,7 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 
 ### Correctness
 - [ ] `syncAccount` and `syncInstitution` are stubs that return success (`account-controller.ts`, `institution-controller.ts`). Until real sync exists, return a not-implemented result and hide/disable the sync UI. Then replace the skipped `xit('should return sync stub success')` in `institution-routes.spec.ts`.
-- [ ] Balance CSV import returns `Result.success` when parsing fails; it should be a bad request (`importBalanceHistory` in `account-controller.ts`).
-- [ ] Decide whether balance/transaction imports allow partial success (`importBalanceHistory` in `account-controller.ts`, `importTransactions` in `transaction-controller.ts`).
-- [ ] Bulk insert for transaction import instead of row-by-row (`importTransactions`).
-- [ ] Make imports atomic. Transaction import inserts row by row with no transaction. Balance import deletes the date range and then inserts, so a failed insert leaves the range empty. Wrap each in a database transaction.
+- [ ] Calendar dates are off by a day outside UTC. The API returns `date` columns as UTC-midnight timestamps (`mapRowToTransaction` in `transaction-data.ts` uses `DateTimeUtil.toISOString`; `BalanceHistory.date` and `TotalValueHistory.date` are `Date`s), so the client's date pipe and `new Date(...)` in `transaction-form.component.ts` show the previous day in US time zones. The client also sends dates with `toISOString()` (`transactions.component.ts` filters, `finance.service.ts` `fetchTotalValueHistory`, `cashflow.component.ts`), which gives the previous day east of UTC, and `fetchAccountBalanceHistory` sends `Date.toString()`. Make calendar dates plain `YYYY-MM-DD` strings in `shared/` types and both directions, and format them in the client without converting through UTC.
 
 ### Testing
 - [ ] Frontend coverage: services (`api`, `finance`, `auth`, `modal`, `notification`), `auth.guard`, the demo interceptor, and key components (summary, transactions, imports).

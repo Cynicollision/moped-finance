@@ -32,3 +32,6 @@ export const createCategorySchema = createInsertSchema(categorySchema, {
 });
 
 export const updateCategorySchema = createCategorySchema.partial();
+
+export type CreateCategoryRequest = z.output<typeof createCategorySchema>;
+export type UpdateCategoryRequest = z.output<typeof updateCategorySchema>;

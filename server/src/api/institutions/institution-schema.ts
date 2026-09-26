@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { pgSchema, varchar, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
+import { z } from 'zod';
 
 const financeSchema = pgSchema('finance');
 
@@ -20,3 +21,6 @@ export const createInstitutionSchema = createInsertSchema(institutionSchema, {
 });
 
 export const updateInstitutionSchema = createInstitutionSchema.partial();
+
+export type CreateInstitutionRequest = z.output<typeof createInstitutionSchema>;
+export type UpdateInstitutionRequest = z.output<typeof updateInstitutionSchema>;

@@ -1,10 +1,10 @@
-import { NewEntity } from '@shared/core/types';
-import { Institution } from '@shared/finance/types';
+import { Account, Institution } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
 import { IFinanceAccountData } from './../accounts';
 import { IFinanceInstitutionData } from './institution-data';
+import { CreateInstitutionRequest, UpdateInstitutionRequest } from './institution-schema';
 
 export class InstitutionController {
     constructor(
@@ -27,7 +27,7 @@ export class InstitutionController {
         return Result.success(institutions);
     }
 
-    public async getInstitutionAccounts(context: OperationContext, institutionId: string): Promise<OperationResult<any[]>> {
+    public async getInstitutionAccounts(context: OperationContext, institutionId: string): Promise<OperationResult<Account[]>> {
         const current = await this.institutionData.retrieveSingle(institutionId);
         if (!current) {
             return Result.userErrorNotFound();
@@ -37,19 +37,19 @@ export class InstitutionController {
         return Result.success(accounts);
     }
 
-    public async createInstitution(context: OperationContext, newInsitution: NewEntity<Institution>): Promise<OperationResult<Institution>> {
-        const institution = FinanceEntityFactory.createInstitution(newInsitution);
+    public async createInstitution(context: OperationContext, input: CreateInstitutionRequest): Promise<OperationResult<Institution>> {
+        const institution = FinanceEntityFactory.createInstitution(input);
         const created = await this.institutionData.insert(institution);
         return Result.successCreated(created);
     }
 
-    public async updateInstitution(context: OperationContext, institution: Institution): Promise<OperationResult<Institution>> {
-        const current = await this.institutionData.retrieveSingle(institution.id);
+    public async updateInstitution(context: OperationContext, institutionId: string, changes: UpdateInstitutionRequest): Promise<OperationResult<Institution>> {
+        const current = await this.institutionData.retrieveSingle(institutionId);
         if (!current) {
             return Result.userErrorNotFound();
         }
 
-        const updated = await this.institutionData.update(institution);
+        const updated = await this.institutionData.update({ ...current, ...changes });
         if (!updated) {
             return Result.userErrorNotFound();
         }
@@ -57,17 +57,9 @@ export class InstitutionController {
         return Result.successUpdated(updated);
     }
 
-    public async deleteInstitution(context: OperationContext, institutionId: string): Promise<OperationResult<boolean>> {
-        const current = await this.institutionData.retrieveSingle(institutionId);
-        if (!current) {
-            return Result.userErrorNotFound();
-        }
-
-        const accounts = await this.accountData.retrieveByInstitutionId(institutionId);
-        if (accounts.length > 0) {
-            return Result.userError('Cannot delete institution with associated accounts.');
-        }
-
+    public async deleteInstitution(context: OperationContext, institutionId: string): Promise<OperationResult<void>> {
+        // An institution that still has accounts fails the delete's foreign key (ON DELETE RESTRICT),
+        // which OperationHandler reports as a 400.
         const deleted = await this.institutionData.delete(institutionId);
         if (!deleted) {
             return Result.userErrorNotFound();

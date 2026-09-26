@@ -1,11 +1,10 @@
-import { Router, Request } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
-import { TransactionSearchOptions } from '@shared/finance/contracts';
-import { TransactionsSortKey } from '@shared/finance/enum';
-import { Transaction } from '@shared/finance/types';
+import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { SchemaUtil } from '@server/data';
 import { IAppLogger } from '@server/logging';
-import { OperationDefinition, OperationHandler, RequestSchemaValidator, singleFileUpload } from '@server/routing';
+import { idParamsSchema, OperationDefinition, OperationHandler, QueryField, singleFileUpload } from '@server/routing';
 import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
 import { TransactionController } from './transaction-controller';
@@ -14,6 +13,11 @@ import { createTransactionSchema, updateTransactionSchema } from './transaction-
 
 const domain = 'Transaction';
 
+const searchFiltersSchema = z.array(z.object({
+    key: z.enum(TransactionsFilterKey),
+    value: z.string()
+}));
+
 export const transactionSearchQuerySchema = z.object({
     sortKey: z.enum(TransactionsSortKey).optional(),
     sortDirection: z.preprocess((val) => typeof val === 'string' ? val.toUpperCase() : val, z.enum(SortDirection)).optional(),
@@ -21,36 +25,51 @@ export const transactionSearchQuerySchema = z.object({
     limit: z.coerce.number().int().min(1).max(500).optional().default(50),
     minAmount: z.coerce.number().optional(),
     maxAmount: z.coerce.number().optional(),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
-    filters: z.string().optional().transform(v => {
-        if (!v) return undefined;
-        try { return JSON.parse(v); } catch { return undefined; }
+    startDate: SchemaUtil.date().optional(),
+    endDate: SchemaUtil.date().optional(),
+    // A JSON array of { key, value }.
+    filters: z.string().optional().transform((v, ctx) => {
+        if (!v) {
+            return undefined;
+        }
+
+        let json: unknown;
+        try {
+            json = JSON.parse(v);
+        }
+        catch {
+            ctx.addIssue({ code: 'custom', message: 'Invalid JSON' });
+            return z.NEVER;
+        }
+
+        const filters = searchFiltersSchema.safeParse(json);
+        if (!filters.success) {
+            ctx.addIssue({ code: 'custom', message: 'Expected an array of { key, value } filters' });
+            return z.NEVER;
+        }
+        return filters.data;
     }),
-    includeHidden: z.enum(['true', 'false']).transform(v => v === 'true').optional()
+    includeHidden: QueryField.boolean().optional()
 });
 
 export function createTransactionRouter(logger: IAppLogger, accountData: IFinanceAccountData, categoryData: IFinanceCategoryData, transactionsData: IFinanceTransactionData) {
     const router = Router();
     const controller = new TransactionController(logger, accountData, categoryData, transactionsData);
     const handler = new OperationHandler(logger);
-    const validator = new RequestSchemaValidator(logger, 'Transaction');
 
     // GET / - Search Transactions
-    router.get('/', validator.query(transactionSearchQuerySchema), (req, res) => {
+    router.get('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getTransactions' };
-        handler.execute(req, res, op, (context) => {
-            const options = req.query as unknown as TransactionSearchOptions;
-            return controller.getTransactions(context, options);
+        handler.execute(req, res, op, { query: transactionSearchQuerySchema }, (context, { query }) => {
+            return controller.getTransactions(context, query);
         });
     });
 
     // POST / - Create Transaction
-    router.post('/', validator.body(createTransactionSchema), (req, res) => {
+    router.post('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'createTransaction' };
-        handler.execute(req, res, op, (context) => {
-            const transaction: Transaction = req.body;
-            return controller.createTransaction(context, transaction);
+        handler.execute(req, res, op, { body: createTransactionSchema }, (context, { body }) => {
+            return controller.createTransaction(context, body);
         });
     });
 
@@ -65,67 +84,62 @@ export function createTransactionRouter(logger: IAppLogger, accountData: IFinanc
     // GET /cashflow - Get Cashflow by Category
     const cashflowQuerySchema = z.object({
         period: z.enum(CalendarPeriod),
-        asOfDate: z.string().optional()
+        asOfDate: QueryField.date().optional()
     });
 
-    router.get('/cashflow', validator.query(cashflowQuerySchema), (req, res) => {
+    router.get('/cashflow', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getTransactionCashflowByCategory' };
-        handler.execute(req, res, op, (context) => {
-            const { period, asOfDate } = req.query as any;
-            return controller.getTransactionCashflowByCategory(context, period, asOfDate);
+        handler.execute(req, res, op, { query: cashflowQuerySchema }, (context, { query }) => {
+            return controller.getTransactionCashflowByCategory(context, query.period, query.asOfDate);
         });
     });
 
     // GET /export - Export Transactions
     const exportQuerySchema = z.object({
-        accountId: z.string().optional()
+        accountId: z.string().min(1).optional()
     });
 
-    router.get('/export', validator.query(exportQuerySchema), (req, res) => {
+    router.get('/export', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'exportTransactions' };
-        handler.execute(req, res, op, (context) => {
-            const { accountId } = req.query as any;
-            return controller.exportTransactions(context, accountId);
+        handler.execute(req, res, op, { query: exportQuerySchema }, (context, { query }) => {
+            return controller.exportTransactions(context, query.accountId);
         });
     });
 
     // POST /import - Import Transactions
     const importQuerySchema = z.object({
-        dryRun: z.enum(['true', 'false']).transform(v => v === 'true').optional(),
-        accountId: z.string().optional()
+        dryRun: QueryField.boolean().optional().default(false),
+        accountId: z.string().min(1).optional()
     });
 
-    router.post('/import', singleFileUpload, validator.query(importQuerySchema), (req, res) => {
+    router.post('/import', singleFileUpload, (req, res) => {
         const op: OperationDefinition = { domain, operation: 'importTransactions' };
-        handler.execute(req, res, op, (context) => {
-            const { dryRun, accountId } = req.query as any;
-            return controller.importTransactions(context, req.file?.buffer, dryRun, accountId);
+        handler.execute(req, res, op, { query: importQuerySchema }, (context, { query }) => {
+            return controller.importTransactions(context, req.file?.buffer, query.dryRun, query.accountId);
         });
     });
 
     // GET /:id - Get Transaction
-    router.get('/:id', validator.id(), (req, res) => {
+    router.get('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getTransaction' };
-        handler.execute(req, res, op, (context) => {
-            return controller.getTransaction(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.getTransaction(context, params.id);
         });
     });
 
     // PUT /:id - Update Transaction
-    router.put('/:id', validator.id(), validator.body(updateTransactionSchema), (req, res) => {
+    router.put('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'saveTransaction' };
-        handler.execute(req, res, op, (context) => {
-            const transaction: Transaction = req.body;
-            transaction.id = req.params.id; // ensure ID holds
-            return controller.saveTransaction(context, transaction);
+        handler.execute(req, res, op, { params: idParamsSchema, body: updateTransactionSchema }, (context, { params, body }) => {
+            return controller.saveTransaction(context, params.id, body);
         });
     });
 
     // DELETE /:id - Delete Transaction
-    router.delete('/:id', validator.id(), (req, res) => {
+    router.delete('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'deleteTransaction' };
-        handler.execute(req, res, op, (context) => {
-            return controller.deleteTransaction(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.deleteTransaction(context, params.id);
         });
     });
 

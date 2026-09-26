@@ -51,3 +51,6 @@ export const createAccountSchema = createInsertSchema(accountSchema, {
 });
 
 export const updateAccountSchema = createAccountSchema.partial();
+
+export type CreateAccountRequest = z.output<typeof createAccountSchema>;
+export type UpdateAccountRequest = z.output<typeof updateAccountSchema>;

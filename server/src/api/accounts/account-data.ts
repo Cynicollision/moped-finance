@@ -25,7 +25,7 @@ function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number
         name: row.name,
         category: row.category as AccountCategory,
         group: row.group as AccountGroup,
-        type: (row.type as AccountType) ?? undefined,
+        type: (row.type as AccountType | null),
         isHidden: row.isHidden,
         isManual: row.isManual,
         isRetirement: row.isRetirement,

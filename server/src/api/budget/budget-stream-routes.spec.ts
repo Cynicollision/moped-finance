@@ -138,6 +138,39 @@ describe('Budget Stream Routes', () => {
             const dbStream = await budgetStreamData.retrieveSingle(stream.id!);
             expect(dbStream?.amount).toBe(180.00);
         });
+
+        it('BUD-1.4 should change only the fields sent', async () => {
+            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
+                categoryId: testCategoryId, name: 'Utilities', type: BudgetStreamType.Expense, recurrence: CalendarPeriod.Quarterly, amount: 150
+            }));
+
+            const response = await request(app).put(`/budget-streams/${stream.id}`).send({ name: 'Power' });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual(expect.objectContaining({ name: 'Power', amount: 150, recurrence: CalendarPeriod.Quarterly, categoryId: testCategoryId }));
+        });
+
+        it('BUD-1.4 should return 404 when update target does not exist', async () => {
+            const response = await request(app).put('/budget-streams/missing').send({ name: 'Power' });
+
+            expect(response.status).toBe(404);
+        });
+    });
+
+    describe('field rules', () => {
+        it.each([
+            [{ amount: -1 }, 'amount:'],
+            [{ amount: 1e10 }, 'amount:'],
+            [{ categoryId: '' }, 'categoryId:'],
+            [{ categoryId: undefined }, 'categoryId:'],
+        ])('BUD-1.1 should reject %p', async (override, message) => {
+            const payload = { categoryId: testCategoryId, name: 'Rent', type: BudgetStreamType.Expense, recurrence: CalendarPeriod.Monthly, amount: 100, ...override };
+
+            const response = await request(app).post('/budget-streams').send(payload);
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain(message);
+        });
     });
 
     describe('DELETE /:id', () => {

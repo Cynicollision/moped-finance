@@ -8,17 +8,35 @@ import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
 
+/** A balance as written to CSV: the date as YYYY-MM-DD and the balance exactly as stored. */
 export type BalanceHistoryExport = {
     date: string;
     accountName: string;
-    balance: number;
+    balance: string;
 };
+
+type Transaction = Parameters<Parameters<NodePgDatabase['transaction']>[0]>[0];
+
+const bulkInsertChunkSize = 1000;
+
+function mapBalanceHistoryToRow(record: BalanceHistory): typeof balanceHistorySchema.$inferInsert {
+    return {
+        id: record.id,
+        accountId: record.accountId,
+        date: DateTimeUtil.toDateString(record.date),
+        balance: record.balance.toString(),
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt
+    };
+}
 
 export interface IFinanceBalanceHistoryData {
     retrieveForAccount(accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;
     retrieveSumByDate(type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]>;
-    deleteRange(accountId: string, startDate: string, endDate: string): Promise<boolean>;
-    insertBulk(records: BalanceHistory[]): Promise<boolean>;
+    /** Inserts all of the records or, if any insert fails, none of them. */
+    insertBulk(records: BalanceHistory[]): Promise<void>;
+    /** Replaces the account's balances from startDate to endDate (YYYY-MM-DD, inclusive) with the records, atomically. */
+    replaceRange(accountId: string, startDate: string, endDate: string, records: BalanceHistory[]): Promise<void>;
     retrieveForExport(accountId: string): Promise<BalanceHistoryExport[]>;
 }
 
@@ -90,31 +108,32 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         }));
     }
 
-    public async deleteRange(accountId: string, startDate: string, endDate: string): Promise<boolean> {
-        await this.db.delete(balanceHistorySchema)
-            .where(and(
-                eq(balanceHistorySchema.accountId, accountId),
-                gte(balanceHistorySchema.date, DateTimeUtil.toDateString(startDate)),
-                lte(balanceHistorySchema.date, DateTimeUtil.toDateString(endDate))
-            ));
-
-        return true;
+    public async insertBulk(records: BalanceHistory[]): Promise<void> {
+        await this.db.transaction(async (tx) => {
+            await this.insertChunks(tx, records);
+        });
     }
 
-    public async insertBulk(records: BalanceHistory[]): Promise<boolean> {
-        if (records.length === 0) return true;
+    public async replaceRange(accountId: string, startDate: string, endDate: string, records: BalanceHistory[]): Promise<void> {
+        // One transaction, so a failed insert leaves the old balances in place.
+        await this.db.transaction(async (tx) => {
+            await tx.delete(balanceHistorySchema)
+                .where(and(
+                    eq(balanceHistorySchema.accountId, accountId),
+                    gte(balanceHistorySchema.date, startDate),
+                    lte(balanceHistorySchema.date, endDate)
+                ));
 
-        const values = records.map(r => ({
-            id: r.id,
-            accountId: r.accountId,
-            date: DateTimeUtil.toDateString(r.date),
-            balance: r.balance.toString(),
-            createdAt: r.createdAt,
-            updatedAt: r.updatedAt
-        }));
+            await this.insertChunks(tx, records);
+        });
+    }
 
-        await this.db.insert(balanceHistorySchema).values(values);
-        return true;
+    // Chunks keep each statement well under Postgres's 65,535 bind-parameter limit.
+    private async insertChunks(tx: Transaction, records: BalanceHistory[]): Promise<void> {
+        for (let i = 0; i < records.length; i += bulkInsertChunkSize) {
+            const chunk = records.slice(i, i + bulkInsertChunkSize);
+            await tx.insert(balanceHistorySchema).values(chunk.map(mapBalanceHistoryToRow));
+        }
     }
 
     public async retrieveForExport(accountId: string): Promise<BalanceHistoryExport[]> {
@@ -130,9 +149,9 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
             .orderBy(desc(balanceHistorySchema.date));
 
         return rows.map(row => ({
-            date: DateTimeUtil.toISOString(row.date),
+            date: row.date,
             accountName: row.accountName,
-            balance: Number(row.balance)
+            balance: row.balance
         }));
     }
 }

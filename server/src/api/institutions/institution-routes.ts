@@ -1,7 +1,6 @@
 import { Router } from 'express';
-import { Institution } from '@shared/finance/types';
 import { IAppLogger } from '@server/logging';
-import { OperationDefinition, OperationHandler, RequestSchemaValidator } from '@server/routing';
+import { idParamsSchema, OperationDefinition, OperationHandler } from '@server/routing';
 import { IFinanceAccountData } from './../accounts';
 import { InstitutionController } from './institution-controller';
 import { IFinanceInstitutionData } from './institution-data';
@@ -13,7 +12,6 @@ export function createInstitutionRouter(logger: IAppLogger, institutionsData: IF
     const router = Router();
     const controller = new InstitutionController(logger, institutionsData, accountData);
     const handler = new OperationHandler(logger);
-    const validator = new RequestSchemaValidator(logger, 'Institution');
 
     // GET / - Get Institutions
     router.get('/', (req, res) => {
@@ -24,52 +22,50 @@ export function createInstitutionRouter(logger: IAppLogger, institutionsData: IF
     });
 
     // GET /:id - Get Institution
-    router.get('/:id', validator.id(), (req, res) => {
+    router.get('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getInstitution' };
-        handler.execute(req, res, op, (context) => {
-            return controller.getInstitution(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.getInstitution(context, params.id);
         });
     });
 
     // GET /:id/accounts - Get Institution Accounts
-    router.get('/:id/accounts', validator.id(), (req, res) => {
+    router.get('/:id/accounts', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getInstitutionAccounts' };
-        handler.execute(req, res, op, (context) => {
-            return controller.getInstitutionAccounts(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.getInstitutionAccounts(context, params.id);
         });
     });
 
     // POST / - Create Institution
-    router.post('/', validator.body(createInstitutionSchema), (req, res) => {
+    router.post('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'createInstitution' };
-        handler.execute(req, res, op, (context) => {
-            return controller.createInstitution(context, req.body);
+        handler.execute(req, res, op, { body: createInstitutionSchema }, (context, { body }) => {
+            return controller.createInstitution(context, body);
         });
     });
 
     // PUT /:id - Update Institution
-    router.put('/:id', validator.id(), validator.body(updateInstitutionSchema), (req, res) => {
+    router.put('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'updateInstitution' };
-        handler.execute(req, res, op, (context) => {
-            const institution: Institution = req.body;
-            institution.id = req.params.id;
-            return controller.updateInstitution(context, institution);
+        handler.execute(req, res, op, { params: idParamsSchema, body: updateInstitutionSchema }, (context, { params, body }) => {
+            return controller.updateInstitution(context, params.id, body);
         });
     });
 
     // DELETE /:id - Delete Institution
-    router.delete('/:id', validator.id(), (req, res) => {
+    router.delete('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'deleteInstitution' };
-        handler.execute(req, res, op, (context) => {
-            return controller.deleteInstitution(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.deleteInstitution(context, params.id);
         });
     });
 
     // POST /:id/sync - Sync Institution
-    router.post('/:id/sync', validator.id(), (req, res) => {
+    router.post('/:id/sync', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'syncInstitution' };
-        handler.execute(req, res, op, (context) => {
-            return controller.syncInstitution(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.syncInstitution(context, params.id);
         });
     });
 

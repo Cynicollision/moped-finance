@@ -27,3 +27,6 @@ export const createCategoryGroupSchema = createInsertSchema(categoryGroupSchema,
 });
 
 export const updateCategoryGroupSchema = createCategoryGroupSchema.partial();
+
+export type CreateCategoryGroupRequest = z.output<typeof createCategoryGroupSchema>;
+export type UpdateCategoryGroupRequest = z.output<typeof updateCategoryGroupSchema>;

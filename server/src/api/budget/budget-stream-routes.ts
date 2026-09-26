@@ -1,7 +1,6 @@
 import { Router } from 'express';
-import { BudgetStream } from '@shared/finance/types';
 import { IAppLogger } from '@server/logging';
-import { OperationDefinition, OperationHandler, RequestSchemaValidator } from '@server/routing';
+import { idParamsSchema, OperationDefinition, OperationHandler } from '@server/routing';
 import { BudgetStreamController } from './budget-stream-controller';
 import { IFinanceBudgetStreamData } from './budget-stream-data';
 import { createBudgetStreamSchema, updateBudgetStreamSchema } from './budget-stream-schema';
@@ -11,7 +10,6 @@ const domain = 'BudgetStream';
 export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: IFinanceBudgetStreamData) {
     const router = Router();
     const handler = new OperationHandler(logger);
-    const validator = new RequestSchemaValidator(logger, 'BudgetStream');
     const controller = new BudgetStreamController(logger, budgetStreamData);
 
     // GET / - Get Budget Streams
@@ -23,29 +21,26 @@ export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: I
     });
 
     // POST / - Create Budget Stream
-    router.post('/', validator.body(createBudgetStreamSchema), (req, res) => {
+    router.post('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'createBudgetStream' };
-        handler.execute(req, res, op, (context) => {
-            const stream: BudgetStream = req.body;
-            return controller.createBudgetStream(context, stream);
+        handler.execute(req, res, op, { body: createBudgetStreamSchema }, (context, { body }) => {
+            return controller.createBudgetStream(context, body);
         });
     });
 
     // PUT /:id - Update Budget Stream
-    router.put('/:id', validator.id(), validator.body(updateBudgetStreamSchema), (req, res) => {
+    router.put('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'saveBudgetStream' };
-        handler.execute(req, res, op, (context) => {
-            const stream: BudgetStream = req.body;
-            stream.id = req.params.id;
-            return controller.saveBudgetStream(context, stream);
+        handler.execute(req, res, op, { params: idParamsSchema, body: updateBudgetStreamSchema }, (context, { params, body }) => {
+            return controller.saveBudgetStream(context, params.id, body);
         });
     });
 
     // DELETE /:id - Delete Budget Stream
-    router.delete('/:id', validator.id(), (req, res) => {
+    router.delete('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'deleteBudgetStream' };
-        handler.execute(req, res, op, (context) => {
-            return controller.deleteBudgetStream(context, req.params.id);
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.deleteBudgetStream(context, params.id);
         });
     });
 

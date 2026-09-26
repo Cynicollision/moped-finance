@@ -27,10 +27,13 @@ export const budgetStreamSchema = financeSchema.table('budget_streams', {
 // Pick only user-supplied fields (server generates id and timestamps).
 export const createBudgetStreamSchema = createInsertSchema(budgetStreamSchema, {
     name: (schema) => schema.min(1).max(100),
-    categoryId: (schema) => schema.min(1),
+    categoryId: z.string().min(1),
     type: z.enum(BudgetStreamType),
     recurrence: z.enum(CalendarPeriod),
-    amount: z.number().finite(),
+    amount: SchemaUtil.money().min(0),
 }).pick({ name: true, categoryId: true, type: true, recurrence: true, amount: true });
 
 export const updateBudgetStreamSchema = createBudgetStreamSchema.partial();
+
+export type CreateBudgetStreamRequest = z.output<typeof createBudgetStreamSchema>;
+export type UpdateBudgetStreamRequest = z.output<typeof updateBudgetStreamSchema>;

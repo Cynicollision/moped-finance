@@ -67,7 +67,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
             .values({
                 id: stream.id,
                 name: stream.name,
-                categoryId: stream.categoryId,
+                categoryId: stream.categoryId || null,
                 type: stream.type,
                 recurrence: stream.recurrence,
                 amount: String(stream.amount),
@@ -81,7 +81,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
         const rows = await this.db.update(budgetStreamSchema)
             .set({
                 name: stream.name,
-                categoryId: stream.categoryId,
+                categoryId: stream.categoryId || null,
                 type: stream.type,
                 recurrence: stream.recurrence,
                 amount: String(stream.amount),

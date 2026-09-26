@@ -207,8 +207,8 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             filters.push({ key: TransactionsFilterKey.Group, value: formValues.group });
         }
 
-        let sortKey: string | undefined;
-        let sortDirection: string | undefined;
+        let sortKey: TransactionsSortKey | undefined;
+        let sortDirection: SortDirection | undefined;
 
         if (this.sort) {
             if (this.sort.direction === 'asc') {
@@ -228,10 +228,10 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
                     sortKey = TransactionsSortKey.Amount;
                     break;
                 case 'account':
-                    sortKey = TransactionsSortKey.AccountId;
+                    sortKey = TransactionsSortKey.Account;
                     break;
                 case 'category':
-                    sortKey = TransactionsSortKey.CategoryId;
+                    sortKey = TransactionsSortKey.Category;
                     break;
             }
         }

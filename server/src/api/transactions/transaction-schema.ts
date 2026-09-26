@@ -1,6 +1,7 @@
 import { AnyPgColumn, pgSchema, varchar, timestamp, numeric, boolean, text, date, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
+import { SchemaUtil } from '@server/data';
 import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';
 
@@ -29,10 +30,14 @@ export const transactionSchema = financeSchema.table('transactions', {
 
 export const createTransactionSchema = createInsertSchema(transactionSchema, {
     categoryId: z.string().min(1),
-    amount: z.number().finite(),
+    date: SchemaUtil.date(),
+    amount: SchemaUtil.money(),
     merchant: (schema) => schema.min(1).max(255),
+    originalStatement: SchemaUtil.optionalText(),
+    notes: SchemaUtil.optionalText(),
     isHidden: z.boolean().optional(),
     isSplit: z.boolean().optional(),
+    splitParentId: SchemaUtil.optionalText(50),
 }).pick({
     accountId: true,
     categoryId: true,
@@ -46,4 +51,11 @@ export const createTransactionSchema = createInsertSchema(transactionSchema, {
     splitParentId: true,
 });
 
-export const updateTransactionSchema = createTransactionSchema.partial();
+// Split fields can't be changed after creation.
+export const updateTransactionSchema = createTransactionSchema.omit({
+    isSplit: true,
+    splitParentId: true,
+}).partial();
+
+export type CreateTransactionRequest = z.output<typeof createTransactionSchema>;
+export type UpdateTransactionRequest = z.output<typeof updateTransactionSchema>;

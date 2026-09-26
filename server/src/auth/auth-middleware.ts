@@ -33,7 +33,7 @@ export function buildAuthMiddleware(controller: AuthController): AuthMiddleware 
             next();
         }
         else {
-            res.status(401).json(Result.unauthorized());
+            res.status(401).json(Result.unauthorized().error);
         }
     };
 
