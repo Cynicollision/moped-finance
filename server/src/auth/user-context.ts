@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Entity, User } from '@shared/core/types';
+import { User } from '@shared/core/types';
 
 export class UserContext {
 
@@ -9,10 +9,6 @@ export class UserContext {
 
     static fromRequest(req: Request): UserContext {
         return new UserContext(req);
-    }
-
-    public canAccess(resource: Entity | null): boolean {
-        return resource ? this.getId() === resource.userId : false;
     }
 
     public getUser(): User | undefined {

@@ -24,7 +24,7 @@ server/
   index.ts          app setup: session, CORS, routers, static files
   src/api/<domain>/ finance endpoints, one folder per domain
   src/auth/         login/register/session, auth middleware, users
-  src/data/         DatabaseClient, EntityId, entity factories, IOwnedResourceData
+  src/data/         DatabaseClient, EntityId, entity factories
   src/routing/      OperationHandler, Result factory, request validation
   src/logging/      logger (console and/or core.logs table)
   src/utility/      DateTimeUtil, test helpers
@@ -36,13 +36,13 @@ server/
 Each finance domain (`accounts`, `budget`, `categories`, `institutions`, `transactions`) has the same layers:
 
 1. **`*-routes.ts`**: defines Express routes, validates the request with Zod (`validator.body/query`), and hands a callback to `OperationHandler.execute`.
-2. **`*-controller.ts`**: business rules, including ownership. After loading a resource, `if (!resource || !context.user.canAccess(resource))` returns `Result.userErrorNotFound()`, so another user's data looks the same as missing data. Returns an `OperationResult` built with `Result.success(...)`, `Result.userErrorNotFound(...)` and similar; never touches `res`.
-3. **`*-data.ts`**: Drizzle queries, mapping rows to `@shared` types. Classes implement `IOwnedResourceData<T>` (`retrieveSingle`, `insert`, `update`, `delete`).
+2. **`*-controller.ts`**: business rules, such as returning `Result.userErrorNotFound()` when a requested resource doesn't exist. Returns an `OperationResult` built with `Result.success(...)`, `Result.userErrorNotFound(...)` and similar; never touches `res`.
+3. **`*-data.ts`**: Drizzle queries, mapping rows to `@shared` types. Each domain's `IFinance*Data` interface declares its own methods, typically `retrieveAll`, `retrieveSingle`, `insert`, `update` and `delete`.
 4. **`*-schema.ts`**: Drizzle table definitions and `drizzle-zod` validation schemas.
 
 `OperationHandler` logs the operation, maps the result's `OperationStatus` to an HTTP status code, and turns thrown errors into a 500.
 
-Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>`, behind `resolveUser` + `requireAuth`. Auth is mounted separately at `/auth` (`login`, `register`, `logout`, `me`, `password`) and uses a cookie session (`express-session`, in-memory store for now).
+Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>`, behind `resolveUser` + `requireAuth`. Auth is mounted separately at `/auth` (`login`, `register`, `registration`, `logout`, `me`, `password`) and uses a cookie session (`express-session`, in-memory store for now).
 
 ## Database
 
@@ -51,7 +51,7 @@ One Postgres 16 database with two schemas:
 - `core`: `users`, `logs`
 - `finance`: `institutions`, `accounts`, `balance_history`, `category_groups`, `categories`, `transactions`, `budget_streams`
 
-Every finance row carries a `user_id`; all finance queries are scoped to the signed-in user.
+Each instance has one owner (AUTH-7). `core.users` exists for login, and registration closes after the first user. Finance tables have no `user_id`: every signed-in request sees all finance data. `core.logs.user_id` records who performed an operation.
 
 The schema is defined twice, and both copies must stay in sync:
 

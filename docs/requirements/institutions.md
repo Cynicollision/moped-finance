@@ -35,4 +35,3 @@ INST-2.1 comes from the "Automated bank sync" item in `TODO.md`; the constraints
 - **Sync is a stub.** The API has a sync endpoint for institutions that reports success without doing anything, and nothing in the UI calls it. `TODO.md` already plans to make it return "not implemented".
 - **Names needn't be unique.** Two institutions can share a name.
 - **The database doesn't back up INST-1.9.** If an institution that accounts reference were deleted, the database would blank those accounts' institution rather than refuse, so the application-level check is the only thing preventing orphaned accounts.
-- **Ownership on read.** See the AUTH-6.3 observation: fetching one institution by ID doesn't check who owns it.

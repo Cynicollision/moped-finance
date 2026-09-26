@@ -24,4 +24,4 @@ Screen: **Budget** (`/budget`). Adding and editing happen in a dialog.
 - **Budget and Cashflow are unconnected.** The budget is a standalone plan. Nothing compares it with real transactions, and Cashflow doesn't show budget figures. The obvious next step is a budget-versus-actual view per category and period.
 - **A stream's amount is always positive.** Its direction comes from its type, whereas transactions use signs. Any future comparison has to reconcile the two (CASH observations).
 - **Category deleted, stream kept.** Deleting a category leaves the stream with no category; the table shows a blank group and category for it.
-- **Ownership.** Deleting a stream doesn't verify the owner, and creating or editing one doesn't verify the category is the user's (AUTH-6.3, AUTH-6.4).
+- **Category ID isn't validated.** Saving a stream with a category ID that doesn't exist fails with a generic database error rather than a clear message.

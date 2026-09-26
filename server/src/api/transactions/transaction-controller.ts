@@ -22,17 +22,17 @@ export class TransactionController {
 
     public async getTransaction(context: OperationContext, transactionId: string): Promise<OperationResult<Transaction>> {
         const transaction = await this.transactionData.retrieveSingle(transactionId);
-        if (!transaction || !context.user.canAccess(transaction)) {
+        if (!transaction) {
             return Result.userErrorNotFound();
         }
         return Result.success(transaction);
     }
 
     public async createTransaction(context: OperationContext, newTransaction: NewEntity<Transaction>): Promise<OperationResult<Transaction>> {
-        const transaction = FinanceEntityFactory.createTransaction(context.user.getId(), newTransaction);
+        const transaction = FinanceEntityFactory.createTransaction(newTransaction);
 
         const account = await this.accountData.retrieveSingle(transaction.accountId);
-        if (!account || !context.user.canAccess(account)) {
+        if (!account) {
             return Result.userError('Invalid account specified.');
         }
 
@@ -41,24 +41,24 @@ export class TransactionController {
     }
 
     public async getTransactions(context: OperationContext, options: TransactionSearchOptions, accountId?: string): Promise<OperationResult<Transaction[]>> {
-        const transactions = await this.transactionData.search(context.user.getId(), options, accountId);
+        const transactions = await this.transactionData.search(options, accountId);
         return Result.success(transactions);
     }
 
     public async getTransactionMerchants(context: OperationContext): Promise<OperationResult<string[]>> {
-        const merchantNames = await this.transactionData.retrieveMerchants(context.user.getId());
+        const merchantNames = await this.transactionData.retrieveMerchants();
         return Result.success(merchantNames);
     }
 
     public async saveTransaction(context: OperationContext, transaction: Transaction): Promise<OperationResult<Transaction>> {
         const current = await this.transactionData.retrieveSingle(transaction.id);
-        if (!current || !context.user.canAccess(current)) {
+        if (!current) {
             return Result.userErrorNotFound();
         }
 
         const updated = await this.transactionData.update(transaction);
         if (!updated) {
-            return Result.userError('Transaction not found or access denied');
+            return Result.userErrorNotFound();
         }
 
         return Result.successUpdated(updated);
@@ -66,7 +66,7 @@ export class TransactionController {
 
     public async deleteTransaction(context: OperationContext, transactionId: string): Promise<OperationResult<void>> {
         const current = await this.transactionData.retrieveSingle(transactionId);
-        if (!current || !context.user.canAccess(current)) {
+        if (!current) {
             return Result.userErrorNotFound();
         }
 
@@ -81,12 +81,12 @@ export class TransactionController {
     public async getTransactionCashflowByCategory(context: OperationContext, period: CalendarPeriod, asOfDate: string): Promise<OperationResult<CashflowStream[]>> {
         const asOf = asOfDate ? DateTimeUtil.parse(asOfDate) : DateTimeUtil.now();
         const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOf);
-        const cashflow = await this.transactionData.retrieveCashflowByCategory(context.user.getId(), startDate, endDate);
+        const cashflow = await this.transactionData.retrieveCashflowByCategory(startDate, endDate);
         return Result.success(cashflow);
     }
 
     public async exportTransactions(context: OperationContext, accountId?: string): Promise<OperationResult<any>> {
-        const transactions = await this.transactionData.retrieveForExport(context.user.getId(), accountId);
+        const transactions = await this.transactionData.retrieveForExport(accountId);
 
         const account = accountId ? await this.accountData.retrieveSingle(accountId) : undefined;
         const accountName = account?.name?.replace(/[^a-zA-Z0-9]/g, '-');
@@ -138,10 +138,9 @@ export class TransactionController {
             } as TransactionImportResult);
         }
 
-        const userId = context.user.getId();
         const [accountsList, categoriesList] = await Promise.all([
-            this.accountData.retrieveAll(userId),
-            this.categoryData.retrieveAll(userId)
+            this.accountData.retrieveAll(),
+            this.categoryData.retrieveAll()
         ]);
         const accountMap = new Map<string, string>();
         accountsList.forEach(a => accountMap.set(a.name.toLowerCase(), a.id!));
@@ -180,7 +179,7 @@ export class TransactionController {
                 continue;
             }
 
-            const transaction = FinanceEntityFactory.createTransaction(userId, {
+            const transaction = FinanceEntityFactory.createTransaction({
                 accountId: accountId,
                 categoryId: categoryId,
                 date: DateTimeUtil.toISOString(row['Date'] || DateTimeUtil.now()),

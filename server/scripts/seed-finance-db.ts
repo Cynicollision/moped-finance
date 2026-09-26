@@ -53,18 +53,6 @@ function parseCsvLine(line: string): string[] {
     try {
         console.log('🌱 Seeding finance data...');
 
-        const { SEED_USER_USERNAME } = process.env;
-        if (!SEED_USER_USERNAME) {
-            throw new Error('❌ Missing required environment variable: SEED_USER_USERNAME must be defined in your .env file.');
-        }
-
-        const userResult = await client.query('SELECT id FROM core.users WHERE username = $1', [SEED_USER_USERNAME]);
-        if (userResult.rows.length === 0) {
-            throw new Error(`❌ Seed user "${SEED_USER_USERNAME}" not found in core.users. Please run seed-core-db.ts first.`);
-        }
-        const sampleUserId = userResult.rows[0].id;
-        console.log(`👤 Using user ID: ${sampleUserId} (${SEED_USER_USERNAME})`);
-
         // 1. Load Institutions
         const institutionIdMap = new Map<string, string>();
         console.log(' 1. Reading institutions.csv...');
@@ -85,9 +73,9 @@ function parseCsvLine(line: string): string[] {
                     institutionIdMap.set(id.trim(), generatedId);
 
                     await client.query(
-                        `INSERT INTO finance.institutions (id, user_id, name) 
-                         VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
-                        [generatedId, sampleUserId, name.trim()]
+                        `INSERT INTO finance.institutions (id, name)
+                         VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+                        [generatedId, name.trim()]
                     );
                     count++;
                 }
@@ -118,12 +106,11 @@ function parseCsvLine(line: string): string[] {
 
                     await client.query(
                         `INSERT INTO finance.accounts (
-                            id, user_id, institution_id, name, account_category, account_group, account_type, is_hidden, is_manual, is_retirement, hide_from_cashflow
-                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                            id, institution_id, name, account_category, account_group, account_type, is_hidden, is_manual, is_retirement, hide_from_cashflow
+                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                          ON CONFLICT (id) DO NOTHING`,
                         [
                             generatedId,
-                            sampleUserId,
                             mappedInstitutionId,
                             name.trim(),
                             category.trim(),
@@ -166,12 +153,11 @@ function parseCsvLine(line: string): string[] {
 
                         await client.query(
                             `INSERT INTO finance.category_groups (
-                                id, user_id, category_class, name
-                             ) VALUES ($1, $2, $3, $4)
+                                id, category_class, name
+                             ) VALUES ($1, $2, $3)
                              ON CONFLICT (id) DO NOTHING`,
                             [
                                 groupId,
-                                sampleUserId,
                                 type.trim(),
                                 group.trim()
                             ]
@@ -184,12 +170,11 @@ function parseCsvLine(line: string): string[] {
 
                     await client.query(
                         `INSERT INTO finance.categories (
-                            id, user_id, group_id, icon, name, is_active
-                         ) VALUES ($1, $2, $3, $4, $5, $6)
+                            id, group_id, icon, name, is_active
+                         ) VALUES ($1, $2, $3, $4, $5)
                          ON CONFLICT (id) DO NOTHING`,
                         [
                             generatedId,
-                            sampleUserId,
                             groupId!,
                             icon.trim(),
                             name.trim(),
@@ -236,13 +221,12 @@ function parseCsvLine(line: string): string[] {
 
                         await client.query(
                             `INSERT INTO finance.transactions (
-                                id, user_id, account_id, category_id, date, amount, merchant, 
+                                id, account_id, category_id, date, amount, merchant,
                                 original_statement, notes, is_hidden, is_split
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                             ON CONFLICT (id) DO NOTHING`,
                             [
                                 txnId,
-                                sampleUserId,
                                 accountId,
                                 categoryId,
                                 date.trim(),
@@ -295,12 +279,11 @@ function parseCsvLine(line: string): string[] {
 
                         await client.query(
                             `INSERT INTO finance.balance_history (
-                                id, user_id, account_id, date, balance
-                            ) VALUES ($1, $2, $3, $4, $5)
+                                id, account_id, date, balance
+                            ) VALUES ($1, $2, $3, $4)
                             ON CONFLICT (id) DO NOTHING`,
                             [
                                 bhId,
-                                sampleUserId,
                                 accountId,
                                 date.trim(),
                                 parseFloat(balance.trim())

@@ -36,7 +36,6 @@ The production setup was written but never run; only the dev compose stack (API 
 
 ### Design decisions
 From a review of the code, the schema, and the requirements' Observations (2026-09-25). Decide these first, since they shape the refactors below. Record each decision in `docs/` (architecture or the relevant requirement) once it's made.
-- [ ] **Single user vs multi-user.** Recommendation: commit to "one owner per instance" (state it under AUTH) but keep `user_id` everywhere. Removing it would be churn for no gain. Multi-user is currently undermined by the reads-by-ID and referenced-ID ownership gaps (AUTH-6.3, AUTH-6.4), open registration, and foreign keys that allow cross-user references. Scoping every query in the data layer (see Server refactors) closes the gaps either way. After that, single-user only needs registration locked after the first user (see Security & auth).
 - [ ] **What "hidden" means.** Hidden accounts still count in totals (ACCT-1.9). Hidden transactions still count in Cashflow and can't be un-hidden in the UI (TXN, CASH observations). Pick one meaning per record type ("exclude from totals and reports" or "declutter the list"), apply it consistently, and add a "show hidden" toggle.
 - [ ] **Sign conventions.** Transactions are signed (money out is negative), liability balances are stored negative, and budget amounts are always positive with direction taken from their type. The UI mostly hides signs (TXN, DASH, BUD observations). Write down one rule set, and have forms and imports enforce it, e.g. an In/Out toggle instead of a signed amount field.
 - [ ] **Transfers and debt paydown.** Transfer groups don't show on the Categories screen (CAT-1.11), and extra mortgage principal counts as spending in Cashflow (CASH observations). Decide how transfers and principal payments are modeled before building budget-vs-actual.
@@ -52,15 +51,14 @@ Do this before adding migrations, while resetting the dev database is still chea
 - [ ] Booleans (`is_hidden`, `is_manual`, `is_active`, …) are nullable with defaults; make them `NOT NULL`.
 - [ ] Enum-like columns (`account_category`, `account_group`, `account_type`, `category_class`, budget `type`/`recurrence`) are unconstrained `VARCHAR(50)`. Add `CHECK` constraints or Postgres enums that match `shared/finance/enum`.
 - [ ] Use `TIMESTAMPTZ` for `created_at`/`updated_at`. Document that `date` columns are calendar dates with no time zone (see the CASH period-boundary observation).
-- [ ] Indexes: transactions on `(user_id, date)`, `(account_id, date)` and `category_id`; `user_id` on the other finance tables.
-- [ ] Uniqueness: one balance per account per date (`UNIQUE (account_id, date)`, which also makes re-importing safe). Unique names per user for institutions and category groups, and per group for categories, since CSV import matches categories by name.
+- [ ] Indexes: transactions on `date`, `(account_id, date)` and `category_id`.
+- [ ] Uniqueness: one balance per account per date (`UNIQUE (account_id, date)`, which also makes re-importing safe). Unique names for institutions and category groups, and per group for categories, since CSV import matches categories by name.
 - [ ] `accounts.institution_id` is `ON DELETE SET NULL`, but the app refuses to delete an institution that has accounts (INST-1.9). Use `RESTRICT`, plus `NOT NULL` if every account must have an institution.
 - [ ] `transactions.merchant` is nullable in the database but required by the server; make them agree.
-- [ ] Optional hardening: foreign keys that include `user_id` (e.g. `(account_id, user_id)` → `accounts (id, user_id)`), so the database itself rejects cross-user references.
 - [ ] Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Cashflow does, and round at the edges. Revisit integer cents only if totals ever drift.
 
 ### Server refactors
-- [ ] Scope every data-layer query by user. `retrieveSingle`, `update` and `delete` should take `userId` and filter on it (`IOwnedResourceData` in `server/src/data/base-resource-data.ts`). Other users' rows then come back as "not found" automatically, and the per-controller `canAccess` checks can go. Check referenced IDs (account, category, institution) the same way. This closes AUTH-6.3/6.4; add cross-user tests.
+- [ ] Validate referenced IDs and return a 400 instead of a foreign-key 500: the institution on account create/update, the category on transaction and budget-stream create/update (ACCT, BUD, TXN observations).
 - [ ] Move CSV parsing, validation and export out of the account and transaction controllers into a small import/export module that reports row-level errors. Today a bad date causes a 500 and a non-numeric amount becomes 0. Do this together with the partial-import and bulk-insert items under Correctness.
 - [ ] Remove the `as any` casts in routes (e.g. `req.query as any` in `transaction-routes.ts`); have the validator return typed, parsed values.
 - [ ] The transaction list (`search` in `transaction-data.ts`) inner-joins categories, so uncategorized transactions disappear (TXN observations). Export already uses a left join; do the same here, and support sorting by category and account (TXN-1.2).
@@ -91,14 +89,13 @@ Do this before adding migrations, while resetting the dev database is still chea
 ### Data & deployment
 - [ ] Add database migrations (e.g. drizzle-kit). Schema is currently applied with `CREATE TABLE IF NOT EXISTS` scripts, which can't upgrade an existing production database.
 - [ ] Give production a working database init path. The `db:*` scripts need `ts-node`, which isn't in the production image. Options: compile the scripts into the image, or run migrations on startup.
-- [ ] Safe first-user bootstrap for production. The old Gemini-era deployment docs inserted a hardcoded `admin`/`admin123` password hash; don't carry that approach forward.
+- [ ] Safe first-user bootstrap for production. Registration closes after the first user (AUTH-2.7), so a fresh instance belongs to whoever registers first; decide whether that's acceptable on the NAS or create the owner another way. The old Gemini-era deployment docs inserted a hardcoded `admin`/`admin123` password hash; don't carry that approach forward.
 - [ ] Document backup and restore for the Postgres volume.
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
 ### Security & auth
 - [ ] Use a persistent session store (e.g. `connect-pg-simple`). The default in-memory store logs everyone out on every restart.
 - [ ] Fail startup in production if `SESSION_SECRET` is unset; don't fall back to `'dev-secret-key'` (`server/index.ts`).
-- [ ] Single-user app: disable or lock down `POST /auth/register` after the first user exists (and hide the register page).
 
 ### Correctness
 - [ ] `syncAccount` and `syncInstitution` are stubs that return success (`account-controller.ts:95`, `institution-controller.ts:80`). Until real sync exists, return a not-implemented result and hide/disable the sync UI. Then replace the skipped `xit('should return sync stub success')` in `institution-routes.spec.ts`.

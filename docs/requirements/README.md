@@ -7,7 +7,7 @@ This folder captures what Moped Finance does today, and what it is planned to do
 | Prefix | Domain | File |
 |---|---|---|
 | `APP` | Application shell, navigation, feedback, demo mode | [app.md](app.md) |
-| `AUTH` | Registration, login, sessions, data isolation | [auth.md](auth.md) |
+| `AUTH` | Registration, login, sessions, single owner | [auth.md](auth.md) |
 | `INST` | Institutions | [institutions.md](institutions.md) |
 | `ACCT` | Accounts, balances, balance-history import/export | [accounts.md](accounts.md) |
 | `DASH` | Accounts summary, net worth and value-history chart | [dashboard.md](dashboard.md) |
@@ -22,7 +22,7 @@ The drafts were refined on 2026-09-25 by walking the running app (development bu
 
 Covered: Accounts summary, Account Details and its menus, Edit Account, Add Account, Institutions (list, view, edit, delete rule), Transactions (list, filters, sorting, add form, view, delete dialog, import validation), Cashflow (all periods, Category/Group toggle, drill-down), Budget (screen and add dialog), Categories (screen and dialogs), the profile menu, and the handset-width navigation.
 
-Not exercised, so still as first drafted from the code: Login and Register screens (the session was already signed in and Sign out was left alone), demo mode, saving any form, confirming an import, downloading CSVs, and the API-only rules (AUTH-3.4 to AUTH-3.5, AUTH-5.1, ownership checks).
+Not exercised, so still as first drafted from the code: Login and Register screens (the session was already signed in and Sign out was left alone), demo mode, saving any form, confirming an import, downloading CSVs, and the API-only rules (AUTH-3.4 to AUTH-3.5, AUTH-5.1).
 
 ## Numbering
 

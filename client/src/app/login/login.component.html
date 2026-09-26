@@ -20,9 +20,11 @@
         </div>
       </form>
 
-      <div class="register-prompt">
-        Don't have an account? <a routerLink="/register">Register here</a>
-      </div>
+      @if (registrationOpen()) {
+        <div class="register-prompt">
+          Don't have an account? <a routerLink="/register">Register here</a>
+        </div>
+      }
     </mat-card-content>
   </mat-card>
 </div>

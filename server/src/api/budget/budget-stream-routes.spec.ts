@@ -47,21 +47,21 @@ describe('Budget Stream Routes', () => {
     beforeEach(async () => {
         await TestDatabaseUtil.clearFinanceData(pglite);
 
-        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'General' }));
-        const category = await categoriesData.insert(FinanceEntityFactory.createCategory(testUserId, { groupId: group.id, name: 'Misc', icon: 'star', isActive: true }));
+        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'General' }));
+        const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id, name: 'Misc', icon: 'star', isActive: true }));
         testCategoryId = category.id!;
     });
 
     describe('GET /', () => {
         it('should return a list of budget streams when successful', async () => {
-            const stream1 = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream(testUserId, {
+            const stream1 = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
                 categoryId: testCategoryId,
                 name: 'Utilities',
                 type: BudgetStreamType.Expense,
                 recurrence: CalendarPeriod.Monthly,
                 amount: 150.00
             }));
-            const stream2 = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream(testUserId, {
+            const stream2 = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
                 categoryId: testCategoryId,
                 name: 'Salary',
                 type: BudgetStreamType.Income,
@@ -117,8 +117,8 @@ describe('Budget Stream Routes', () => {
     });
 
     describe('PUT /:id', () => {
-        it('should update a budget stream when valid and resource belongs to the user', async () => {
-            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream(testUserId, {
+        it('should update a budget stream when valid', async () => {
+            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
                 categoryId: testCategoryId,
                 name: 'Utilities',
                 type: BudgetStreamType.Expense,
@@ -141,8 +141,8 @@ describe('Budget Stream Routes', () => {
     });
 
     describe('DELETE /:id', () => {
-        it('should delete a budget stream when resource belongs to the user', async () => {
-            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream(testUserId, {
+        it('should delete a budget stream', async () => {
+            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
                 categoryId: testCategoryId,
                 name: 'Utilities',
                 type: BudgetStreamType.Expense,
@@ -156,6 +156,13 @@ describe('Budget Stream Routes', () => {
 
             const dbStream = await budgetStreamData.retrieveSingle(stream.id!);
             expect(dbStream).toBeNull();
+        });
+
+        it('should return 404 when delete target does not exist', async () => {
+            const response = await request(app).delete('/budget-streams/missing-stream');
+
+            expect(response.status).toBe(404);
+            expect(response.body.message).toContain('not found');
         });
     });
 });

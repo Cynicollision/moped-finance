@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -22,11 +22,16 @@ import { AuthService } from './../core/auth.service';
     templateUrl: './login.component.html',
     styleUrl: './login.component.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
     username = Environment.devUsername;
     password = Environment.devPassword;
     private authService = inject(AuthService);
     private route = inject(ActivatedRoute);
+    registrationOpen = signal(false);
+
+    async ngOnInit() {
+        this.registrationOpen.set(await this.authService.isRegistrationOpen());
+    }
 
     onLogin() {
         if (this.username) {

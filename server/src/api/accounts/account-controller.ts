@@ -23,26 +23,26 @@ export class AccountController {
 
     public async getAccount(context: OperationContext, accountId: string): Promise<OperationResult<Account>> {
         const account = await this.accountData.retrieveSingle(accountId);
-        if (!account || !context.user.canAccess(account)) {
+        if (!account) {
             return Result.userErrorNotFound();
         }
         return Result.success(account);
     }
 
     public async getAccounts(context: OperationContext): Promise<OperationResult<Account[]>> {
-        const accounts = await this.accountData.retrieveAll(context.user.getId());
+        const accounts = await this.accountData.retrieveAll();
         return Result.success(accounts);
     }
 
     public async createAccount(context: OperationContext, newAccount: NewEntity<Account>): Promise<OperationResult<Account>> {
-        const account = FinanceEntityFactory.createAccount(context.user.getId(), newAccount);
+        const account = FinanceEntityFactory.createAccount(newAccount);
         const created = await this.accountData.insert(account);
         return Result.successCreated(created);
     }
 
     public async updateAccount(context: OperationContext, account: Account): Promise<OperationResult<Account>> {
         const current = await this.accountData.retrieveSingle(account.id);
-        if (!current || !context.user.canAccess(current)) {
+        if (!current) {
             return Result.userErrorNotFound();
         }
 
@@ -56,7 +56,7 @@ export class AccountController {
 
     public async deleteAccount(context: OperationContext, accountId: string): Promise<OperationResult<void>> {
         const current = await this.accountData.retrieveSingle(accountId);
-        if (!current || !context.user.canAccess(current)) {
+        if (!current) {
             return Result.userErrorNotFound();
         }
 
@@ -69,7 +69,7 @@ export class AccountController {
     }
 
     public async getAccountTransactions(context: OperationContext, accountId: string, options: TransactionSearchOptions): Promise<OperationResult<Transaction[]>> {
-        const tranactions = await this.transactionData.search(context.user.getId(), options, accountId);
+        const tranactions = await this.transactionData.search(options, accountId);
         return Result.success(tranactions);
     }
 
@@ -77,7 +77,7 @@ export class AccountController {
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
         const account = await this.accountData.retrieveSingle(accountId);
 
-        if (!account || !context.user.canAccess(account)) {
+        if (!account) {
             return Result.userErrorNotFound();
         }
 
@@ -87,7 +87,7 @@ export class AccountController {
 
     public async getTotalValueHistory(context: OperationContext, options: TotalValueHistoryOptions): Promise<OperationResult<TotalValueHistory[]>> {
         const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        const totalValueHistory = await this.balanceHistoryData.retrieveSumByDate(context.user.getId(), options.type, startDate, options.asOfDate);
+        const totalValueHistory = await this.balanceHistoryData.retrieveSumByDate(options.type, startDate, options.asOfDate);
         return Result.success(totalValueHistory);
     }
 
@@ -99,7 +99,7 @@ export class AccountController {
     public async exportBalanceHistory(context: OperationContext, accountId: string): Promise<OperationResult<string>> {
         const account = await this.accountData.retrieveSingle(accountId);
 
-        if (!account || !context.user.canAccess(account)) {
+        if (!account) {
             return Result.userErrorNotFound();
         }
 
@@ -132,7 +132,7 @@ export class AccountController {
         }
 
         const account = await this.accountData.retrieveSingle(accountId);
-        if (!account || !context.user.canAccess(account)) {
+        if (!account) {
             return Result.userErrorNotFound();
         }
 
@@ -203,7 +203,7 @@ export class AccountController {
             if (!minDate || isoDate < minDate) minDate = isoDate;
             if (!maxDate || isoDate > maxDate) maxDate = isoDate;
 
-            validRows.push(FinanceEntityFactory.createBalanceHistory(context.user.getId(), {
+            validRows.push(FinanceEntityFactory.createBalanceHistory({
                 accountId: accountId,
                 date: parsedDate,
                 balance: parseFloat(balanceStr) || 0

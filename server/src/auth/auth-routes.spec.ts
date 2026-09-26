@@ -88,6 +88,48 @@ describe('Auth Routes', () => {
             const user = await userData.retrieveByUsername('newuser');
             expect(user).toBeNull();
         });
+
+        it('AUTH-2.7 should reject registration once a user exists', async () => {
+            await agent.post('/auth/register').send({
+                username: 'firstuser',
+                name: 'First User',
+                password: 'password123'
+            });
+
+            const response = await request(app).post('/auth/register').send({
+                username: 'seconduser',
+                name: 'Second User',
+                password: 'password123'
+            });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe('Registration is closed.');
+
+            const user = await userData.retrieveByUsername('seconduser');
+            expect(user).toBeNull();
+        });
+    });
+
+    describe('GET /auth/registration', () => {
+        it('AUTH-2.7 should report registration open when no user exists', async () => {
+            const response = await agent.get('/auth/registration');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ isOpen: true });
+        });
+
+        it('AUTH-2.7 should report registration closed once a user exists', async () => {
+            await agent.post('/auth/register').send({
+                username: 'firstuser',
+                name: 'First User',
+                password: 'password123'
+            });
+
+            const response = await request(app).get('/auth/registration');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ isOpen: false });
+        });
     });
 
     describe('POST /auth/login', () => {

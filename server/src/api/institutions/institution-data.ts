@@ -1,12 +1,16 @@
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Institution } from '@shared/finance/types';
-import { IDatabaseClient, IOwnedResourceData } from '@server/data';
+import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { institutionSchema } from './institution-schema';
 
-export interface IFinanceInstitutionData extends IOwnedResourceData<Institution> {
-    retrieveAll(userId: string): Promise<Institution[]>;
+export interface IFinanceInstitutionData {
+    retrieveAll(): Promise<Institution[]>;
+    retrieveSingle(id: string): Promise<Institution | null>;
+    insert(institution: Institution): Promise<Institution>;
+    update(institution: Institution): Promise<Institution | null>;
+    delete(id: string): Promise<boolean>;
 }
 
 function mapRowToInstitution(row: typeof institutionSchema.$inferSelect): Institution {
@@ -14,7 +18,6 @@ function mapRowToInstitution(row: typeof institutionSchema.$inferSelect): Instit
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-        userId: row.userId,
         name: row.name,
     };
 }
@@ -26,10 +29,9 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
         this.db = dbClient.drizzle;
     }
 
-    public async retrieveAll(userId: string): Promise<Institution[]> {
+    public async retrieveAll(): Promise<Institution[]> {
         const rows = await this.db.select()
-            .from(institutionSchema)
-            .where(eq(institutionSchema.userId, userId));
+            .from(institutionSchema);
 
         return rows.map(mapRowToInstitution);
     }
@@ -58,7 +60,6 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
         const rows = await this.db.insert(institutionSchema)
             .values({
                 id: institution.id,
-                userId: institution.userId,
                 name: institution.name,
             })
             .returning();

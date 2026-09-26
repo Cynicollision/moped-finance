@@ -4,7 +4,6 @@ import { BalanceHistory } from './balance-history';
 import { Transaction } from './transaction';
 
 export type Account = Entity & {
-    userId: string;
     institutionId: string;
     name: string;
     category: AccountCategory;

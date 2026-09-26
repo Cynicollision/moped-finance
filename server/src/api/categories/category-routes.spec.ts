@@ -47,8 +47,8 @@ describe('Category Routes', () => {
     // ---------------------------------------------------------
     describe('GET /categories/groups', () => {
         it('should return a list of category groups', async () => {
-            const g1 = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Income, name: 'Job' }));
-            const g2 = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'Bills' }));
+            const g1 = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Income, name: 'Job' }));
+            const g2 = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Bills' }));
 
             const response = await request(app).get('/categories/groups');
 
@@ -60,7 +60,7 @@ describe('Category Routes', () => {
 
     describe('GET /categories/groups/:id', () => {
         it('should return a single category group', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Income, name: 'Job' }));
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Income, name: 'Job' }));
 
             const response = await request(app).get(`/categories/groups/${group.id}`);
 
@@ -98,7 +98,7 @@ describe('Category Routes', () => {
 
     describe('PUT /categories/groups/:id', () => {
         it('should update a category group', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Income, name: 'Old Name' }));
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Income, name: 'Old Name' }));
 
             const payload = { ...group, name: 'New Name' };
             const response = await request(app).put(`/categories/groups/${group.id}`).send(payload);
@@ -113,7 +113,7 @@ describe('Category Routes', () => {
 
     describe('DELETE /categories/groups/:id', () => {
         it('should delete a category group', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Income, name: 'Job' }));
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Income, name: 'Job' }));
 
             const response = await request(app).delete(`/categories/groups/${group.id}`);
 
@@ -129,8 +129,8 @@ describe('Category Routes', () => {
     // ---------------------------------------------------------
     describe('GET /categories', () => {
         it('should return a list of categories', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'Housing' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory(testUserId, { groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Housing' }));
+            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
 
             const response = await request(app).get('/categories');
 
@@ -149,8 +149,8 @@ describe('Category Routes', () => {
 
     describe('GET /categories/:id', () => {
         it('should return a single category', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'Housing' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory(testUserId, { groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Housing' }));
+            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
 
             const response = await request(app).get(`/categories/${category.id}`);
 
@@ -161,7 +161,7 @@ describe('Category Routes', () => {
 
     describe('POST /categories', () => {
         it('should create a new category', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'Housing' }));
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Housing' }));
 
             const payload = {
                 groupId: group.id,
@@ -183,8 +183,8 @@ describe('Category Routes', () => {
 
     describe('PUT /categories/:id', () => {
         it('should update a category', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'Housing' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory(testUserId, { groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Housing' }));
+            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
 
             const payload = { ...category, name: 'New Rent' };
             const response = await request(app).put(`/categories/${category.id}`).send(payload);
@@ -199,8 +199,8 @@ describe('Category Routes', () => {
 
     describe('DELETE /categories/:id', () => {
         it('should delete a category', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'Housing' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory(testUserId, { groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Housing' }));
+            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
 
             const response = await request(app).delete(`/categories/${category.id}`);
 

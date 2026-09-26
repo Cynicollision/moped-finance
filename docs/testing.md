@@ -16,7 +16,7 @@ The pattern, as used by every `server/src/**/*-routes.spec.ts`:
 3. Tests: make requests with `supertest` and assert on the status and body.
 4. `afterAll`: `TestDatabaseUtil.destroyMockDatabase(pglite)`.
 
-When adding endpoints, also test ownership: a resource that belongs to another user should return 404. The existing specs mostly cover only the owner's side.
+Finance data isn't scoped by user (AUTH-7), so there's no ownership to test. For endpoints that take an ID, test that a missing one returns 404.
 
 Dates: server code gets "now" from `DateTimeUtil.now()`, which isn't injectable yet. Tests that depend on the current period should pass an explicit date (for example the `asOfDate` query param) instead of relying on the real clock.
 

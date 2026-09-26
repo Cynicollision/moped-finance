@@ -8,7 +8,6 @@ export const accountSchema = financeSchema.table('accounts', {
     id: varchar('id', { length: 50 }).primaryKey(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
-    userId: varchar('user_id', { length: 50 }).notNull(),
     institutionId: varchar('institution_id', { length: 50 }).notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     category: varchar('account_category', { length: 50 }).notNull(),

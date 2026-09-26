@@ -53,14 +53,14 @@ describe('Transaction Routes', () => {
     beforeEach(async () => {
         await TestDatabaseUtil.clearFinanceData(pglite);
 
-        const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Bank' }));
-        const account = await accountsData.insert(FinanceEntityFactory.createAccount(testUserId, {
+        const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Bank' }));
+        const account = await accountsData.insert(FinanceEntityFactory.createAccount({
             institutionId: inst.id!, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, balance: 0
         }));
         testAccountId = account.id!;
 
-        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup(testUserId, { class: CategoryClass.Expense, name: 'Food' }));
-        const category = await categoriesData.insert(FinanceEntityFactory.createCategory(testUserId, {
+        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Food' }));
+        const category = await categoriesData.insert(FinanceEntityFactory.createCategory({
             groupId: group.id!, name: 'Groceries', icon: 'apple', isActive: true
         }));
         testCategoryId = category.id!;
@@ -68,8 +68,8 @@ describe('Transaction Routes', () => {
 
     describe('GET /', () => {
         it('should return a list of transactions when successful with default options', async () => {
-            const txn1 = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant 1', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
-            const txn2 = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-07', amount: 200, merchant: 'Test Merchant 2', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn1 = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant 1', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn2 = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-07', amount: 200, merchant: 'Test Merchant 2', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions');
 
@@ -79,7 +79,7 @@ describe('Transaction Routes', () => {
         });
 
         it('should parse and pass all search options correctly', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const filters = [
                 { key: 'categoryId', value: testCategoryId },
@@ -149,8 +149,8 @@ describe('Transaction Routes', () => {
 
     describe('GET /merchants', () => {
         it('should return a list of merchants', async () => {
-            await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Amazon', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
-            await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Walmart', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Amazon', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Walmart', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions/merchants');
 
@@ -161,7 +161,7 @@ describe('Transaction Routes', () => {
 
     describe('GET /cashflow', () => {
         it('should return cashflow by category', async () => {
-            await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 500, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 500, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions/cashflow?period=Monthly&asOfDate=2026-06-15');
 
@@ -174,7 +174,7 @@ describe('Transaction Routes', () => {
 
     describe('GET /:id', () => {
         it('should return a single transaction when found', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get(`/transactions/${txn.id}`);
 
@@ -190,8 +190,8 @@ describe('Transaction Routes', () => {
     });
 
     describe('PUT /:id', () => {
-        it('should update a transaction when valid and resource belongs to user', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+        it('should update a transaction when valid', async () => {
+            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const payload = {
                 ...txn,
@@ -208,19 +208,19 @@ describe('Transaction Routes', () => {
             expect(response.body.merchant).toBe('Updated Merchant');
         });
 
-        it('should return 404 when update fails because resource does not exist or user lacks ownership', async () => {
+        it('should return 404 when update target does not exist', async () => {
             const response = await request(app)
                 .put('/transactions/txn-1')
                 .send({ amount: 100, merchant: 'Updated', date: '2026-06-06', accountId: testAccountId, categoryId: testCategoryId, isHidden: false, isSplit: false });
 
             expect(response.status).toBe(404);
-            expect(response.body.message).toContain('not found or access denied');
+            expect(response.body.message).toContain('not found');
         });
     });
 
     describe('DELETE /:id', () => {
-        it('should delete a transaction when resource belongs to user', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+        it('should delete a transaction', async () => {
+            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).delete(`/transactions/${txn.id}`);
 
@@ -230,17 +230,17 @@ describe('Transaction Routes', () => {
             expect(dbTxn).toBeNull();
         });
 
-        it('should return 404 when delete fails because resource does not exist or user lacks ownership', async () => {
+        it('should return 404 when delete target does not exist', async () => {
             const response = await request(app).delete('/transactions/missing');
 
             expect(response.status).toBe(404);
-            expect(response.body.message).toContain('not found or access denied');
+            expect(response.body.message).toContain('not found');
         });
     });
 
     describe('GET /export', () => {
         it('should return a CSV file of exported transactions', async () => {
-            await transactionsData.insert(FinanceEntityFactory.createTransaction(testUserId, { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
             const response = await request(app).get('/transactions/export');
 
@@ -274,7 +274,7 @@ describe('Transaction Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.createdCount).toBe(1);
 
-            const txns = await transactionsData.search(testUserId, { limit: 10, offset: 0, sortKey: TransactionsSortKey.Date, sortDirection: SortDirection.Desc, includeHidden: true });
+            const txns = await transactionsData.search({ limit: 10, offset: 0, sortKey: TransactionsSortKey.Date, sortDirection: SortDirection.Desc, includeHidden: true });
             expect(txns.length).toBe(0);
         });
 

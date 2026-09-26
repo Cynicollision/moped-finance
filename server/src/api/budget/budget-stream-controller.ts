@@ -12,19 +12,19 @@ export class BudgetStreamController {
     }
 
     public async getBudgetStreams(context: OperationContext): Promise<OperationResult<BudgetStream[]>> {
-        const streams = await this.budgetStreamData.retrieveAll(context.user.getId());
+        const streams = await this.budgetStreamData.retrieveAll();
         return Result.success(streams);
     }
 
     public async createBudgetStream(context: OperationContext, newBudgetStream: NewEntity<BudgetStream>): Promise<OperationResult<BudgetStream>> {
-        const budgetStream = FinanceEntityFactory.createBudgetStream(context.user.getId(), newBudgetStream);
+        const budgetStream = FinanceEntityFactory.createBudgetStream(newBudgetStream);
         const created = await this.budgetStreamData.insert(budgetStream);
         return Result.successCreated(created);
     }
 
     public async saveBudgetStream(context: OperationContext, budgetStream: BudgetStream): Promise<OperationResult<BudgetStream>> {
         const current = await this.budgetStreamData.retrieveSingle(budgetStream.id);
-        if (!current || !context.user.canAccess(current)) {
+        if (!current) {
             return Result.userErrorNotFound();
         }
 
@@ -39,7 +39,7 @@ export class BudgetStreamController {
     public async deleteBudgetStream(context: OperationContext, budgetStreamId: string): Promise<OperationResult<void>> {
         const deleted = await this.budgetStreamData.delete(budgetStreamId);
         if (!deleted) {
-            return Result.userError('Budget stream not found or access denied');
+            return Result.userErrorNotFound();
         }
         return Result.successDeleted();
     }

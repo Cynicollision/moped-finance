@@ -18,6 +18,11 @@ export const demoInterceptor: HttpInterceptorFn = (req, next) => {
         }
     }
     
+    // Check before 'auth/register', which is a prefix of this URL.
+    if (req.url.includes('auth/registration')) {
+        return of(new HttpResponse({ status: 200, body: { isOpen: true } })).pipe(delay(simulateDelay));
+    }
+
     if (req.url.includes('auth/login') || req.url.includes('auth/register')) {
         const user = demoData.login();
         return of(new HttpResponse({ status: 200, body: user })).pipe(delay(simulateDelay));

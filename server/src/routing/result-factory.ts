@@ -65,7 +65,7 @@ export class Result {
         };
     }
 
-    public static userErrorNotFound<T>(message: string = 'Resource not found or access denied', code: string = 'NOT_FOUND'): OperationResult<T> {
+    public static userErrorNotFound<T>(message: string = 'Resource not found', code: string = 'NOT_FOUND'): OperationResult<T> {
         return {
             success: false,
             status: OperationStatus.NotFound,

@@ -39,5 +39,4 @@ Screen: **Categories** (`/categories`). Creating and editing happen in dialogs o
 - **"Inactive" only affects the Categories screen.** Inactive categories still appear in the transaction category pickers, filters and budget forms. The API can return active categories only, but nothing asks it to.
 - **Moving a category between groups** changes its class, and therefore how its past transactions appear in Cashflow. That's expected but may be surprising.
 - **Names needn't be unique.** This matters for CSV import, which matches categories by name (TXN-3.4): with duplicate names, one wins arbitrarily.
-- **Ownership.** Fetching one category or group by ID doesn't check the owner (AUTH-6.3).
 - **New users start empty.** No default groups or categories are created; the user must build the whole tree before they can import or add a transaction.

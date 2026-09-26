@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
+import { registrationGuard } from './core/registration.guard';
 import { FinanceAccountDetailsComponent } from './finance/accounts/account-details.component';
 import { FinanceAddAccountComponent } from './finance/accounts/add-account.component';
 import { BalanceImportComponent } from './finance/accounts/balance-import.component';
@@ -27,6 +28,7 @@ export const routes: Routes = [
     },
     {
         path: 'register', component: RegisterComponent,
+        canActivate: [registrationGuard],
         title: 'Register'
     },
     {

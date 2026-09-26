@@ -40,6 +40,14 @@ export function buildAuthRouter(logger: IAppLogger, controller: AuthController, 
         });
     });
 
+    // GET /registration - Whether registration is open (only until the first user exists)
+    router.get('/registration', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'registrationStatus' };
+        handler.execute(req, res, op, async () => {
+            return await controller.getRegistrationStatus();
+        });
+    });
+
     // POST /register - Register user
     const registerSchema = z.object({
         username: z.string().min(1),

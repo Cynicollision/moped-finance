@@ -17,35 +17,35 @@ export class InstitutionController {
     public async getInstitution(context: OperationContext, institutionId: string): Promise<OperationResult<Institution>> {
         const institution = await this.institutionData.retrieveSingle(institutionId);
         if (!institution) {
-            return Result.userError('Institution not found or access denied');
+            return Result.userErrorNotFound();
         }
         return Result.success(institution);
     }
 
     public async getInstitutions(context: OperationContext): Promise<OperationResult<Institution[]>> {
-        const institutions = await this.institutionData.retrieveAll(context.user.getId());
+        const institutions = await this.institutionData.retrieveAll();
         return Result.success(institutions);
     }
 
     public async getInstitutionAccounts(context: OperationContext, institutionId: string): Promise<OperationResult<any[]>> {
         const current = await this.institutionData.retrieveSingle(institutionId);
-        if (!current || !context.user.canAccess(current)) {
+        if (!current) {
             return Result.userErrorNotFound();
         }
 
-        const accounts = await this.accountData.retrieveByInstitutionId(context.user.getId(), institutionId);
+        const accounts = await this.accountData.retrieveByInstitutionId(institutionId);
         return Result.success(accounts);
     }
 
     public async createInstitution(context: OperationContext, newInsitution: NewEntity<Institution>): Promise<OperationResult<Institution>> {
-        const institution = FinanceEntityFactory.createInstitution(context.user.getId(), newInsitution);
+        const institution = FinanceEntityFactory.createInstitution(newInsitution);
         const created = await this.institutionData.insert(institution);
         return Result.successCreated(created);
     }
 
     public async updateInstitution(context: OperationContext, institution: Institution): Promise<OperationResult<Institution>> {
         const current = await this.institutionData.retrieveSingle(institution.id);
-        if (!context.user.canAccess(current)) {
+        if (!current) {
             return Result.userErrorNotFound();
         }
 
@@ -59,11 +59,11 @@ export class InstitutionController {
 
     public async deleteInstitution(context: OperationContext, institutionId: string): Promise<OperationResult<boolean>> {
         const current = await this.institutionData.retrieveSingle(institutionId);
-        if (!context.user.canAccess(current)) {
+        if (!current) {
             return Result.userErrorNotFound();
         }
 
-        const accounts = await this.accountData.retrieveByInstitutionId(context.user.getId(), institutionId);
+        const accounts = await this.accountData.retrieveByInstitutionId(institutionId);
         if (accounts.length > 0) {
             return Result.userError('Cannot delete institution with associated accounts.');
         }

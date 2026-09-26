@@ -1,15 +1,19 @@
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Account } from '@shared/finance/types';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
-import { IDatabaseClient, IOwnedResourceData } from '@server/data';
+import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
 
-export interface IFinanceAccountData extends IOwnedResourceData<Account> {
-    retrieveAll(userId: string): Promise<Account[]>;
-    retrieveByInstitutionId(userId: string, institutionId: string): Promise<Account[]>;
+export interface IFinanceAccountData {
+    retrieveAll(): Promise<Account[]>;
+    retrieveByInstitutionId(institutionId: string): Promise<Account[]>;
+    retrieveSingle(id: string): Promise<Account | null>;
+    insert(account: Account): Promise<Account>;
+    update(account: Account): Promise<Account | null>;
+    delete(id: string): Promise<boolean>;
 }
 
 function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number | string): Account {
@@ -17,7 +21,6 @@ function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-        userId: row.userId,
         institutionId: row.institutionId,
         name: row.name,
         category: row.category as AccountCategory,
@@ -46,29 +49,25 @@ export class FinanceAccountData implements IFinanceAccountData {
             .limit(1);
     }
 
-    public async retrieveAll(userId: string): Promise<Account[]> {
+    public async retrieveAll(): Promise<Account[]> {
         const rows = await this.db
             .select({
                 account: accountSchema,
                 balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
             })
-            .from(accountSchema)
-            .where(eq(accountSchema.userId, userId));
+            .from(accountSchema);
 
         return rows.map(row => mapRowToAccount(row.account, row.balance));
     }
 
-    public async retrieveByInstitutionId(userId: string, institutionId: string): Promise<Account[]> {
+    public async retrieveByInstitutionId(institutionId: string): Promise<Account[]> {
         const rows = await this.db
             .select({
                 account: accountSchema,
                 balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
             })
             .from(accountSchema)
-            .where(and(
-                eq(accountSchema.userId, userId),
-                eq(accountSchema.institutionId, institutionId)
-            ));
+            .where(eq(accountSchema.institutionId, institutionId));
 
         return rows.map(row => mapRowToAccount(row.account, row.balance));
     }
@@ -93,7 +92,6 @@ export class FinanceAccountData implements IFinanceAccountData {
         const rows = await this.db.insert(accountSchema)
             .values({
                 id: account.id,
-                userId: account.userId,
                 institutionId: account.institutionId,
                 name: account.name,
                 category: account.category,

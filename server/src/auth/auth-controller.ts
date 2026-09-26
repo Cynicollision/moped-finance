@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { RegistrationStatus } from '@shared/core/contracts';
 import { User } from '@shared/core/types';
 import { CoreEntityIdPrefix, EntityId } from '@server/data';
 import { OperationResult, Result } from '@server/routing';
@@ -30,7 +31,16 @@ export class AuthController {
         return Result.userError('Invalid username or password.');
     }
 
+    async getRegistrationStatus(): Promise<OperationResult<RegistrationStatus>> {
+        return Result.success({ isOpen: await this.isRegistrationOpen() });
+    }
+
     async createUser(username: string, name: string, password: string): Promise<OperationResult<User>> {
+        // Single-user app: only the first user can register (AUTH-2.7).
+        if (!await this.isRegistrationOpen()) {
+            return Result.userError('Registration is closed.', 'REGISTRATION_CLOSED');
+        }
+
         const existingUser = await this.userData.retrieveByUsername(username);
         if (existingUser) {
             return Result.userError('Username already taken.');
@@ -72,5 +82,9 @@ export class AuthController {
         const newHash = await bcrypt.hash(newPassword, this.saltRounds);
         await this.userData.updatePassword(userId, newHash);
         return Result.success();
+    }
+
+    private async isRegistrationOpen(): Promise<boolean> {
+        return await this.userData.retrieveCount() === 0;
     }
 }
