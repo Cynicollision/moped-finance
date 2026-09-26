@@ -61,6 +61,10 @@ RUN npm ci --prefix server --omit=dev
 # Copy compiled backend from the server-builder stage
 COPY --from=server-builder /app/server/dist ./server/dist
 
+# Copy the database migrations next to the compiled index.js (dist/server/migrations). The server
+# applies any pending ones on startup.
+COPY server/migrations ./server/dist/server/migrations
+
 # Copy the built frontend from the client-builder stage. Express serves static files from
 # 'public' next to the compiled index.js (dist/server/public).
 COPY --from=client-builder /app/client/dist/moped-finance/browser ./server/dist/server/public

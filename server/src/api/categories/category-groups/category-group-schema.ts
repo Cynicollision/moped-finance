@@ -1,11 +1,9 @@
 import { sql } from 'drizzle-orm';
-import { pgSchema, varchar, timestamp, check, uniqueIndex } from 'drizzle-orm/pg-core';
+import { varchar, timestamp, check, uniqueIndex } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { CategoryClass } from '@shared/finance/enum';
-import { SchemaUtil } from '@server/data';
-
-const financeSchema = pgSchema('finance');
+import { financeSchema, SchemaUtil } from '@server/data';
 
 export const categoryGroupSchema = financeSchema.table('category_groups', {
     id: varchar('id', { length: 50 }).primaryKey(),

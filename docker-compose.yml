@@ -15,6 +15,11 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   api:
     build:
@@ -39,7 +44,9 @@ services:
       - /app/server/node_modules  # Prevents host node_modules from overriding container's
     command: npm run dev
     depends_on:
-      - postgres
+      # The API migrates the database on startup, so it has to wait until Postgres accepts connections.
+      postgres:
+        condition: service_healthy
 
 volumes:
   db_data:

@@ -1,9 +1,7 @@
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { pgSchema, varchar, timestamp, text } from 'drizzle-orm/pg-core';
+import { varchar, timestamp, text } from 'drizzle-orm/pg-core';
 import { LogEntry } from '@shared/core/types';
-import { IDatabaseClient } from '@server/data';
-
-const coreSchema = pgSchema('core');
+import { coreSchema, IDatabaseClient } from '@server/data';
 
 export const logSchema = coreSchema.table('logs', {
     id: varchar('id', { length: 50 }).primaryKey(),

@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { sql } from 'drizzle-orm';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { DateTimeUtil } from '@server/utility';
 
 export interface IDatabaseClient {
@@ -40,6 +41,14 @@ export class DatabaseClient implements IDatabaseClient {
     /** Runs a trivial query; throws if the database can't be reached. */
     public async ping(): Promise<void> {
         await this.drizzle.execute(sql`SELECT 1`);
+    }
+
+    /**
+     * Applies the migrations in `migrationsFolder` that haven't run yet, each in its own transaction.
+     * Drizzle records applied migrations in `drizzle.__drizzle_migrations`.
+     */
+    public async migrate(migrationsFolder: string): Promise<void> {
+        await migrate(this.drizzle, { migrationsFolder });
     }
 
     /** Closes the pool once its checked-out clients are released. */

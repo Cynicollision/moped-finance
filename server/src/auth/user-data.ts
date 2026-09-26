@@ -1,11 +1,9 @@
 import { count, eq } from 'drizzle-orm';
-import { pgSchema, varchar, timestamp } from 'drizzle-orm/pg-core';
+import { varchar, timestamp } from 'drizzle-orm/pg-core';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { User } from '@shared/core/types/user';
-import { IDatabaseClient } from '@server/data';
+import { coreSchema, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
-
-const coreSchema = pgSchema('core');
 
 export const userSchema = coreSchema.table('users', {
     id: varchar('id', { length: 50 }).primaryKey(),

@@ -14,7 +14,7 @@ Any OS works. Development has mostly happened on Windows with Docker Desktop's W
 1. Copy `.env.example` to `.env` and fill in the Postgres credentials, `SESSION_SECRET`, and the `SEED_USER_*` values. The compose file sets `PGHOST` inside the container, so `.env` only needs it for running scripts from the host.
 2. Install dependencies: `npm ci` in both `client/` and `server/`. The API container installs its own, but the host copies are needed for editor support and tests.
 3. Start the stack: `docker compose up -d`.
-4. Create the tables and seed a user plus sample data: `docker compose exec api npm run db:reset`.
+4. Seed a user plus sample data: `docker compose exec api npm run db:seed`. The API creates the tables itself when it starts.
 
 ## Day to day
 
@@ -29,22 +29,31 @@ Any OS works. Development has mostly happened on Windows with Docker Desktop's W
 
 **Hot reload:** nodemon polls `server/` and `shared/` inside the container (`server/nodemon.json`) and restarts on `.ts` changes. Each restart takes about 15 seconds because ts-node type-checks on startup. A compile error leaves the API down until the next save; check the logs.
 
-The container runs whatever is in your working tree, so switching branches switches the running API too. If the branch changes the schema, the API runs against the old tables until you `db:reset`.
+The container runs whatever is in your working tree, so switching branches switches the running API too. On restart it applies any migrations the branch adds (APP-5.8). Migrations only go forward, so switching back to a branch without them leaves the newer tables in place; `db:reset` if that gets in the way.
 
 **Debugging the API:** the container exposes the Node inspector on :9229. In VS Code, use the "Attach to Node.js (Docker)" launch configuration.
 
 ## Database scripts
 
-Run these inside the API container (`docker compose exec api npm run <script>`). Each has `:core` and `:finance` variants, such as `db:reset:finance`.
+Run these inside the API container (`docker compose exec api npm run <script>`), except `db:generate`, which doesn't need a database and runs anywhere.
 
 | Script | Does |
 |---|---|
-| `db:init` | Creates schemas and tables from `server/scripts/schema_*.sql` |
-| `db:seed` | Adds the `SEED_USER_*` user and sample finance data |
-| `db:drop` | Drops the schemas and **all data** |
-| `db:reset` | `drop`, then `init`, then `seed` |
+| `db:generate` | Writes a migration for Drizzle table changes to `server/migrations/` |
+| `db:migrate` | Applies pending migrations (the API also does this on startup) |
+| `db:seed` | Adds the `SEED_USER_*` user and sample finance data. `db:seed:core` and `db:seed:finance` do one part |
+| `db:drop` | Drops the `core`, `finance` and `drizzle` schemas: **all data** and the migration history |
+| `db:reset` | `drop`, then `migrate`, then `seed` |
 
-There are no migrations yet. After changing a table, update both the SQL file and the Drizzle `*-schema.ts`, then reset (see [architecture.md](architecture.md#database)).
+A database created before migrations existed (by the old `db:init`) can't be migrated, since its tables already exist; run `db:reset` once.
+
+### Changing the schema
+
+1. Change the Drizzle table in `*-schema.ts` (see [architecture.md](architecture.md#schema-and-migrations)).
+2. `npm run db:generate -- --name <what_changed>` in `server/`. Read the SQL it writes; drizzle-kit asks interactively when it can't tell a rename from a drop and add.
+3. Commit the SQL file and the updated `migrations/meta/`. The API restarts on the new `.sql` file and applies it.
+
+Don't edit a migration once it's merged: databases that already ran it won't run it again. Fix mistakes with a new migration. If `main` gained a migration while your branch had one, delete yours, merge `main`, and generate again, since migrations are numbered and applied in order.
 
 ## Before opening a PR
 
