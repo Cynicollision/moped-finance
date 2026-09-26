@@ -20,7 +20,6 @@ Nothing right now.
 ### Design decisions
 From a review of the code, the schema, and the requirements' known gaps and open questions (2026-09-25). Decide these first, since they shape the work below. Record each decision in `docs/` (architecture or the relevant requirement) once it's made.
 - [ ] **Sign conventions.** Transactions are signed (money out is negative), liability balances are stored negative, and budget amounts are always positive with direction taken from their type. The UI mostly hides signs (TXN known gaps, DASH notes, BUD open questions); balance adjustments (ACCT-5.4) rely on the same signs. Write down one rule set, and have forms and imports enforce it, e.g. an In/Out toggle instead of a signed amount field.
-- [ ] **Split transactions.** `is_split`/`split_parent_id` exist but have no UI or behavior. Design splits or drop the columns. Splitting a mortgage payment into principal (a transfer) and interest and escrow (expenses) is the main use (CASH open questions).
 
 ### Client: mobile and dialogs
 - [ ] Define shared breakpoints: one SCSS partial or mixin plus `BreakpointObserver` in TypeScript. Components currently use ad hoc 599/600/768px media queries, and a ~800 px window with the side nav open overflows (APP known gaps).

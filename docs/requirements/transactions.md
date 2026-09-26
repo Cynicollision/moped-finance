@@ -42,7 +42,7 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 
 | ID | Requirement | Status |
 |---|---|---|
-| TXN-3.1 | **Download Transactions** (Transactions menu, or an account's menu) shall produce a CSV named `Transactions_<timestamp>.csv`, or `Transactions_<account name>_<timestamp>.csv` for one account, with the header `Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden`, oldest first. Dates shall be written as YYYY-MM-DD and amounts with two decimals, so the file re-imports unchanged. It shall include hidden transactions and shall have only the header row when there are none. | Implemented |
+| TXN-3.1 | **Download Transactions** (Transactions menu, or an account's menu) shall produce a CSV named `Transactions_<timestamp>.csv`, or `Transactions_<account name>_<timestamp>.csv` for one account, with the header `Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden`, oldest first. Dates shall be written as YYYY-MM-DD and amounts with two decimals, so the file re-imports unchanged. Split transactions are written as in TXN-4.9. It shall include hidden transactions and shall have only the header row when there are none. | Partial |
 | TXN-3.2 | **Import Transactions** shall accept a CSV with all eight columns from TXN-3.1 present (`Id` is not needed). A file missing any column shall be refused with "Missing required CSV headers: …" listing them (for example "OriginalStatement, IsHidden"). A file that can't be parsed or has no data rows shall also be refused. | Implemented |
 | TXN-3.3 | The user chooses a CSV file with **Choose CSV File**, then **Validate Import**, which checks it without saving ("dry run"). When the file is clean, a **Confirm Import** panel says "Please review the validated results before finalizing the import.", shows "Transactions to create: N" and "Rows with errors: 0", and offers **Begin Import** and **Cancel**. The user can confirm only when the dry run found no errors. Confirming shall show "Successfully created N transactions." | Implemented |
 | TXN-3.7 | When validation finds errors, the screen shall list each row's message so the user can fix the file (the server returns them, for example "Row 2: Category name 'Nope Category' not found." and "Row 3: Account name 'Nope Account' not found.", counting the header as row 1). Today the screen shows only a "Validation Error:" heading with the server's summary ("Found errors in 2 of 5 rows.") and no row messages, and no way to proceed. | Partial |
@@ -53,6 +53,22 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-3.9 | An import shall be all-or-nothing. If any row has an error, nothing is saved: a confirmed import of such a file shall be refused with "Nothing was imported. Found errors in N of M rows." and the row messages. The rows are saved in one database transaction, so a failure part way through saves none of them. | Implemented |
 | TXN-3.10 | Each row shall be checked, and every problem in a row reported in one message ("Row 4: Date '2026-02-30' is not a valid date. Amount 'abc' is not a number."). **Date** is required and must be a real calendar date written as YYYY-MM-DD, M/D/YYYY, or an ISO timestamp (its date part is used). **Amount** is required: a number with an optional sign, `$` and thousands separators, at most two decimal places, and at most 9,999,999,999.99 either way. **IsHidden** must be true, false (any case) or blank (false). **Merchant** is at most 255 characters. A row with the wrong number of columns is an error. | Implemented |
 | TXN-3.11 | When the import targets a manual account (TXN-3.5), the screen shall offer **Adjust balances**, unchecked by default. With it checked, each imported transaction adjusts the balance as in ACCT-5.2, in the same database transaction as the import (TXN-3.9). Without it, imported transactions don't adjust balances, so a history imported alongside its balance history isn't counted twice (ACCT-3.11). | Planned |
+
+## TXN-4 The user can split a transaction across categories
+
+A split divides one transaction into **parts**, each with its own amount and category, for example a store receipt covering groceries and household supplies, or a loan payment with extra principal. The transaction itself (account, date, total amount, original statement) doesn't change; the parts decide how it's categorized.
+
+| ID | Requirement | Status |
+|---|---|---|
+| TXN-4.1 | The user can split any transaction that isn't already split, with **Split** on View Transaction's menu, into 2 to 20 parts. | Planned |
+| TXN-4.2 | Each part shall have an amount (not 0), a category, a merchant (defaulting to the transaction's) and notes. The parts' amounts shall add up exactly to the transaction's amount; the split dialog shows "Remaining: *amount*" and keeps **Save** disabled until it's $0.00. | Planned |
+| TXN-4.3 | The split dialog shall open with two parts. The last part's amount shall fill itself with the remainder as the user types the others, until the user edits it. **Add part** adds a new last part that takes over the remainder, so splitting in two needs only the first amount. | Planned |
+| TXN-4.4 | The Transactions list shall show each part as its own row, with the transaction's date and account, the part's merchant, category and amount, and a split icon. Filters and sorting apply to parts, so a category filter (and a Cashflow drill-down, CASH-1.6) finds just the matching part. Selecting a part opens the transaction. | Planned |
+| TXN-4.5 | View Transaction shall show a split transaction's total and list its parts. **Edit split** reopens the split dialog; **Unsplit** (after confirming) turns it back into one transaction with the first part's category, merchant and notes. | Planned |
+| TXN-4.6 | Cashflow (CASH-1.2) and budget averages (BUD-1.8) shall count each part under its own category. | Planned |
+| TXN-4.7 | A split transaction's amount, date and account can't be changed while it's split; Unsplit first. Hiding it hides all its parts, and it adjusts the balance (ACCT-5) once, by its total. | Planned |
+| TXN-4.8 | A synced transaction (TXN-2.12) can be split like any other; its parts belong to the user and sync doesn't change them. | Planned |
+| TXN-4.9 | **Download Transactions** shall write each part as its own row, with the transaction's date, account, original statement and hidden flag, and a `SplitId` column that's the same for every part of one transaction (blank otherwise). Import shall accept the column as optional and rebuild the split from rows sharing a `SplitId`, refusing a group whose rows don't share a date, account, original statement and hidden flag. | Planned |
 
 ## Known gaps
 
@@ -67,10 +83,10 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 - **Amount filters compare signed values,** so "Min Amount 100" finds income of 100 or more but no expenses; finding expenses over 100 means a maximum of -100. The table shows amounts unsigned, which makes this easy to trip over.
 - **Future-dated transactions are hidden by default (TXN-1.10).** The pre-filled End Date silently excludes anything after today, with no visual hint besides the date field itself. **Clear Filters** re-applies it.
 - **Import breadcrumb.** The screen reads "Accounts / Import Transactions" even when opened from the Transactions menu (APP known gaps).
+- **Splits don't exist (TXN-4).** The `is_split` and `split_parent_id` columns are there, and import writes `false` and blank to them, but nothing reads them.
 - **No duplicate detection on import.** Importing the same file twice creates every transaction twice.
 
 ## Open questions
 
 - **Should money out be red?** Cashflow colors expenses red, but the Transactions list and View Transaction show money out in the ordinary text color and only color money in (TXN-1.1).
-- **Split transactions.** The data model has `isSplit` and `splitParentId`, and import writes `false`/blank, but there is no UI or behavior for splits (`TODO.md`).
 - **Read-only fields for synced transactions.** Once bank sync exists, decide which fields of a bank-imported transaction can be edited. Today every field is editable (TXN-2.3).
