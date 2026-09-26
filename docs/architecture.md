@@ -56,7 +56,11 @@ Each instance has one owner (AUTH-7). `core.users` exists for login, and registr
 The schema is defined twice, and both copies must stay in sync:
 
 - `server/scripts/schema_core.sql` and `schema_finance.sql` create the tables (`CREATE TABLE IF NOT EXISTS`). They're used by `npm run db:init` and by the in-memory test database.
-- `server/src/**/*-schema.ts` are the Drizzle definitions the app queries through.
+- `server/src/**/*-schema.ts` (plus the `users` and `logs` tables in `user-data.ts` and `log-data.ts`) are the Drizzle definitions the app queries through. They declare everything the SQL does (foreign keys, indexes, unique and check constraints), so drizzle-kit can generate the first migration from them.
+
+`server/src/data/schema-parity.spec.ts` loads the SQL into PGlite and fails if any column, constraint or index differs from Drizzle. Enum-like columns have `CHECK` constraints; the Drizzle side builds them from the `@shared` enums with `SchemaUtil.isOneOf`, so adding an enum value means updating the SQL too.
+
+Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates with no time zone; money is `DECIMAL(12, 2)`. Names of institutions, category groups and categories are unique ignoring case (unique indexes on `lower(name)`), and there's one balance per account per date. `OperationHandler` turns a unique-constraint violation into a 400 with a message from `DatabaseErrorUtil`.
 
 There are no migrations yet (see `TODO.md`), so changing an existing table means resetting the local database.
 

@@ -39,7 +39,7 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         accountId: row.accountId,
-        categoryId: row.categoryId,
+        categoryId: row.categoryId ?? '',
         date: DateTimeUtil.toISOString(row.date),
         amount: Number(row.amount),
         merchant: row.merchant,
@@ -223,7 +223,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .groupBy(transactionSchema.categoryId);
 
         return rows.map(row => ({
-            categoryId: row.categoryId,
+            categoryId: row.categoryId ?? '',
             amount: Number(row.amount)
         }));
     }

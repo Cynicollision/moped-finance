@@ -231,7 +231,7 @@ function parseCsvLine(line: string): string[] {
                                 categoryId,
                                 date.trim(),
                                 parseFloat(amount.trim()),
-                                merchant?.trim() || null,
+                                merchant?.trim() || '',
                                 originalStatement?.trim() || null,
                                 notes?.trim() || null,
                                 false,

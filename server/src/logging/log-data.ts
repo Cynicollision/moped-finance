@@ -5,10 +5,10 @@ import { IDatabaseClient } from '@server/data';
 
 const coreSchema = pgSchema('core');
 
-const logSchema = coreSchema.table('logs', {
+export const logSchema = coreSchema.table('logs', {
     id: varchar('id', { length: 50 }).primaryKey(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     userId: varchar('user_id', { length: 50 }).notNull(),
     level: varchar('level', { length: 50 }).notNull(),
     context: varchar('context', { length: 255 }).notNull(),

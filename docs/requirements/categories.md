@@ -19,6 +19,8 @@ Screen: **Categories** (`/categories`). Creating and editing happen in dialogs o
 | CAT-1.9 | The user can edit a category's name, icon, group and Active flag from its row. | Implemented |
 | CAT-1.10 | The user can delete a category or a category group. | Partial |
 | CAT-1.11 | Groups of class **Transfer** shall be shown and manageable on the Categories screen. | Partial |
+| CAT-1.12 | Category group names shall be unique, ignoring case. Saving a duplicate shall be rejected with "A category group with that name already exists." | Implemented |
+| CAT-1.13 | Category names shall be unique across all groups, ignoring case, so CSV import (TXN-3.4) matches exactly one category. Saving a duplicate shall be rejected with "A category with that name already exists." | Implemented |
 
 ## CAT-2 Categories drive how money is reported
 
@@ -38,5 +40,4 @@ Screen: **Categories** (`/categories`). Creating and editing happen in dialogs o
 - **No delete in the UI (CAT-1.10).** The API can delete both, but the screen offers no button. Behavior if it did: deleting a group that still has categories would be refused by the database with an unfriendly error; deleting a category leaves its transactions and budget streams with no category. Those transactions would then count as *Uncategorized* expenses in Cashflow but would no longer appear in the Transactions list at all, because the list only returns transactions that have a category (see TXN observations).
 - **"Inactive" only affects the Categories screen.** Inactive categories still appear in the transaction category pickers, filters and budget forms. The API can return active categories only, but nothing asks it to.
 - **Moving a category between groups** changes its class, and therefore how its past transactions appear in Cashflow. That's expected but may be surprising.
-- **Names needn't be unique.** This matters for CSV import, which matches categories by name (TXN-3.4): with duplicate names, one wins arbitrarily.
 - **New users start empty.** No default groups or categories are created; the user must build the whole tree before they can import or add a transaction.

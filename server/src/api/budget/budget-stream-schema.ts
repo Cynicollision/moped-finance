@@ -1,25 +1,35 @@
-import { pgSchema, varchar, timestamp, decimal } from 'drizzle-orm/pg-core';
+import { pgSchema, varchar, timestamp, decimal, check, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
+import { CalendarPeriod } from '@shared/core/enum';
+import { BudgetStreamType } from '@shared/finance/enum';
+import { SchemaUtil } from '@server/data';
+import { categorySchema } from './../categories/category-schema';
 
 const financeSchema = pgSchema('finance');
 
 export const budgetStreamSchema = financeSchema.table('budget_streams', {
     id: varchar('id', { length: 50 }).primaryKey(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     name: varchar('name', { length: 100 }).notNull(),
-    categoryId: varchar('category_id', { length: 50 }),
+    categoryId: varchar('category_id', { length: 50 }).references(() => categorySchema.id, { onDelete: 'set null' }),
     type: varchar('type', { length: 50 }).notNull(),
     recurrence: varchar('recurrence', { length: 50 }).notNull(),
     amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
-});
+}, (table) => [
+    check('budget_streams_type_check', SchemaUtil.isOneOf(table.type, Object.values(BudgetStreamType))),
+    check('budget_streams_recurrence_check', SchemaUtil.isOneOf(table.recurrence, Object.values(CalendarPeriod))),
+    index('budget_streams_category_id_idx').on(table.categoryId),
+]);
 
 // Validation — auto-derived from the Drizzle table definition.
 // Pick only user-supplied fields (server generates id and timestamps).
 export const createBudgetStreamSchema = createInsertSchema(budgetStreamSchema, {
     name: (schema) => schema.min(1).max(100),
     categoryId: (schema) => schema.min(1),
+    type: z.enum(BudgetStreamType),
+    recurrence: z.enum(CalendarPeriod),
     amount: z.number().finite(),
 }).pick({ name: true, categoryId: true, type: true, recurrence: true, amount: true });
 

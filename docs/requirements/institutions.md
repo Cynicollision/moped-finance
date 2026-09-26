@@ -18,6 +18,7 @@ Screens: **Institutions** (`/institutions`), **Add Institution**, **View Institu
 | INST-1.7 | The card menu on the Institutions screen shall offer **Edit** and **Add account** (see ACCT-1.3). | Implemented |
 | INST-1.8 | The user can delete an institution from a "Danger Zone" on the Edit screen, after confirming. | Implemented |
 | INST-1.9 | An institution that still has accounts cannot be deleted. The Delete button shall be disabled with the explanation "Cannot delete this institution because it has N associated account(s). You must delete the associated accounts first.", and the server shall reject the request with the same rule. | Implemented |
+| INST-1.10 | Institution names shall be unique, ignoring case. Saving a duplicate shall be rejected with "An institution with that name already exists." | Implemented |
 
 ## INST-2 The user can have institution data kept up to date automatically
 
@@ -33,5 +34,3 @@ INST-2.1 comes from the "Automated bank sync" item in `TODO.md`; the constraints
 - **Verified:** INST-1.1, INST-1.7 (card menu offers **Edit** and **Add account**) and INST-1.9 (Delete disabled with the exact message "Cannot delete this institution because it has 3 associated account(s). You must delete the associated accounts first." for Bank of America).
 
 - **Sync is a stub.** The API has a sync endpoint for institutions that reports success without doing anything, and nothing in the UI calls it. `TODO.md` already plans to make it return "not implemented".
-- **Names needn't be unique.** Two institutions can share a name.
-- **The database doesn't back up INST-1.9.** If an institution that accounts reference were deleted, the database would blank those accounts' institution rather than refuse, so the application-level check is the only thing preventing orphaned accounts.
