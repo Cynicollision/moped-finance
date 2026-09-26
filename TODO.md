@@ -57,7 +57,7 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 ### Data & deployment
 - [ ] Add database migrations (e.g. drizzle-kit). Schema is currently applied with `CREATE TABLE IF NOT EXISTS` scripts, which can't upgrade an existing production database. The Drizzle tables already declare everything the SQL scripts do (enforced by `server/src/data/schema-parity.spec.ts`), so generate the baseline migration from Drizzle, point `db:init` and `TestDatabaseUtil.createMockDatabase` at the migrations, and delete `schema_*.sql` and the parity spec.
 - [ ] Give production a working database init path. The `db:*` scripts need `ts-node`, which isn't in the production image. Options: compile the scripts into the image, or run migrations on startup.
-- [ ] Safe first-user bootstrap for production. Registration closes after the first user (AUTH-2.7), so a fresh instance belongs to whoever registers first; decide whether that's acceptable on the NAS or create the owner another way. The old Gemini-era deployment docs inserted a hardcoded `admin`/`admin123` password hash; don't carry that approach forward.
+- [ ] Safe first-user bootstrap for production. Registration closes after the first user (AUTH-2.7), so a fresh instance belongs to whoever registers first; decide whether that's acceptable on the NAS or create the owner another way. Older deployment docs inserted a hardcoded `admin`/`admin123` password hash; don't carry that approach forward.
 - [ ] Document backup and restore for the Postgres volume. Include retention for `core.logs`, which grows without bound (errors are logged to the database).
 - [ ] Commit a small synthetic seed dataset. `db:seed` reads the untracked `server/test_data/` (which also holds unrelated CSVs such as `plant_varieties.csv`), so a fresh clone, CI or the NAS can't seed. Shared sample data would also serve demo mode, a CI smoke test and UI work. Drop the unused `UserId` CSV column while at it.
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
@@ -82,9 +82,6 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 ### Tooling
 - [ ] Install Prettier (already configured in `client/package.json` but not a dependency) and apply it to both packages. Its config doesn't set `tabWidth`, so it would default to 2 spaces; set 4 to match `docs/conventions.md` and `.editorconfig`, and move the config to a root `.prettierrc` so it covers the server too.
 - [ ] Add ESLint (angular-eslint on the client, typescript-eslint on the server) and run it in CI.
-
-### Code cleanup
-- [ ] Decide whether to keep or remove the unused Gemini gateway (`server/src/gateways/`) and its `GEMINI_*` env vars.
 
 ---
 
