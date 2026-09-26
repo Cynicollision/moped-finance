@@ -1,0 +1,10 @@
+InstitutionName,Name,Category,Group,Type,IsHidden,IsRetirement
+Harbor Community Bank,Everyday Checking,Asset,Cash,Checking,false,false
+Harbor Community Bank,High-Yield Savings,Asset,Cash,Savings,false,false
+Summit Credit Union,Rewards Visa,Liability,Credit Card,,false,false
+Summit Credit Union,Old Savings,Asset,Cash,Savings,true,false
+Northwind Investments,Workplace 401k,Asset,Investment,401k,false,true
+Northwind Investments,Roth IRA,Asset,Investment,IRA,false,true
+Northwind Investments,Brokerage,Asset,Investment,Brokerage,false,false
+Self-Tracked,Home,Asset,Real Estate,Primary Residence,false,false
+Lakeside Home Loans,Mortgage,Liability,Loan,Home Mortgage,false,false

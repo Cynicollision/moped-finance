@@ -1,0 +1,486 @@
+Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden
+2025-06-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2025-06-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2025-06-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2025-06-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2025-06-02,Rewards Visa,Starlight Cinemas,Entertainment,-33.09,,,false
+2025-06-03,Rewards Visa,Green Basket Market,Groceries,-166.72,,,false
+2025-06-04,Rewards Visa,Daily Grind Coffee,Coffee,-8.62,,,false
+2025-06-06,Rewards Visa,Sakura Sushi,Restaurants,-46.84,,,false
+2025-06-07,Rewards Visa,Daily Grind Coffee,Coffee,-6.71,,,false
+2025-06-08,Everyday Checking,City Power & Light,Utilities,-139.48,CITY PWR&LT AUTOPAY,,false
+2025-06-08,Rewards Visa,Taco Loco,Restaurants,-46.55,,,false
+2025-06-08,Rewards Visa,Everything Store,Shopping,-122.53,,,false
+2025-06-09,Rewards Visa,FreshMart,Groceries,-117.91,,,false
+2025-06-09,Rewards Visa,QuickFuel,Gas,-45.71,,,false
+2025-06-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2025-06-11,Rewards Visa,Daily Grind Coffee,Coffee,-4.60,,,false
+2025-06-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2025-06-13,Rewards Visa,QuickFuel,Gas,-45.02,,,false
+2025-06-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2025-06-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-06-15,Rewards Visa,Daily Grind Coffee,Coffee,-4.86,,,false
+2025-06-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2025-06-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2025-06-16,Rewards Visa,Riverside Clinic,Medical,-25.00,,Copay,false
+2025-06-17,Rewards Visa,Green Basket Market,Groceries,-90.35,,,false
+2025-06-18,Everyday Checking,Metro Water,Utilities,-46.90,METRO WATER UTIL,,false
+2025-06-18,Rewards Visa,Sakura Sushi,Restaurants,-51.67,,,false
+2025-06-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2025-06-20,Rewards Visa,Daily Grind Coffee,Coffee,-5.03,,,false
+2025-06-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2025-06-23,Rewards Visa,Taco Loco,Restaurants,-73.97,,,false
+2025-06-24,Rewards Visa,Daily Grind Coffee,Coffee,-8.78,,,false
+2025-06-25,Rewards Visa,FreshMart,Groceries,-77.66,,,false
+2025-06-25,Rewards Visa,Daily Grind Coffee,Coffee,-9.39,,,false
+2025-06-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-2458.78,SUMMIT CU CARD PMT,,false
+2025-06-25,Rewards Visa,Payment - Thank You,Credit Card Payment,2458.78,,,false
+2025-06-27,Rewards Visa,Daily Grind Coffee,Coffee,-7.11,,,false
+2025-06-28,Brokerage,Northwind Investments,Dividends,157.32,DIVIDEND REINVEST,,false
+2025-06-30,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-06-30,High-Yield Savings,Harbor Community Bank,Interest,46.33,INTEREST PAYMENT,,false
+2025-07-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2025-07-01,Rewards Visa,Burger Barn,Restaurants,-82.94,,,false
+2025-07-01,Rewards Visa,Metro Transit,Parking & Transit,-12.11,,,false
+2025-07-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2025-07-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2025-07-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2025-07-03,Rewards Visa,FreshMart,Groceries,-141.76,,,false
+2025-07-03,Rewards Visa,Daily Grind Coffee,Coffee,-8.36,,,false
+2025-07-04,Rewards Visa,Sakura Sushi,Restaurants,-34.06,,,false
+2025-07-05,Everyday Checking,Shieldline Auto Insurance,Auto Insurance,-538.50,SHIELDLINE INS PREM,,false
+2025-07-05,Rewards Visa,Daily Grind Coffee,Coffee,-9.06,,,false
+2025-07-08,Everyday Checking,City Power & Light,Utilities,-159.99,CITY PWR&LT AUTOPAY,,false
+2025-07-08,Rewards Visa,Daily Grind Coffee,Coffee,-8.42,,,false
+2025-07-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2025-07-11,Rewards Visa,FreshMart,Groceries,-121.01,,,false
+2025-07-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2025-07-12,Rewards Visa,Daily Grind Coffee,Coffee,-7.07,,,false
+2025-07-13,Rewards Visa,Bookworm Books,Shopping,-57.78,,,false
+2025-07-14,Rewards Visa,Taco Loco,Restaurants,-90.68,,,false
+2025-07-14,Rewards Visa,Daily Grind Coffee,Coffee,-7.70,,,false
+2025-07-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2025-07-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-07-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2025-07-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2025-07-17,Rewards Visa,Green Basket Market,Groceries,-80.77,,,false
+2025-07-18,Everyday Checking,Metro Water,Utilities,-46.39,METRO WATER UTIL,,false
+2025-07-18,Rewards Visa,Daily Grind Coffee,Coffee,-6.52,,,false
+2025-07-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2025-07-22,Rewards Visa,Corner Hardware,Home Maintenance,-49.50,,,false
+2025-07-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2025-07-24,Rewards Visa,Green Basket Market,Groceries,-107.90,,,false
+2025-07-24,Rewards Visa,Taco Loco,Restaurants,-75.13,,,false
+2025-07-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-1069.40,SUMMIT CU CARD PMT,,false
+2025-07-25,Rewards Visa,Payment - Thank You,Credit Card Payment,1069.40,,,false
+2025-07-26,Rewards Visa,Corner Gas,Gas,-56.74,,,false
+2025-07-26,Rewards Visa,QuickFuel,Gas,-54.13,,,false
+2025-07-28,Rewards Visa,QuickFuel,Gas,-56.30,,,false
+2025-07-31,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-07-31,High-Yield Savings,Harbor Community Bank,Interest,35.93,INTEREST PAYMENT,,false
+2025-07-31,Rewards Visa,FreshMart,Groceries,-108.20,,,false
+2025-07-31,Rewards Visa,Starlight Cinemas,Entertainment,-40.79,,,false
+2025-08-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2025-08-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2025-08-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2025-08-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2025-08-02,Rewards Visa,Metro Transit,Parking & Transit,-19.76,,,false
+2025-08-03,Rewards Visa,FreshMart,Groceries,-81.06,,,false
+2025-08-04,Rewards Visa,Target Outfitters,Shopping,-137.87,,,false
+2025-08-06,Rewards Visa,Daily Grind Coffee,Coffee,-8.89,,,false
+2025-08-06,Rewards Visa,Daily Grind Coffee,Coffee,-5.66,,,false
+2025-08-07,Rewards Visa,Burger Barn,Restaurants,-33.88,,,false
+2025-08-08,Everyday Checking,City Power & Light,Utilities,-169.87,CITY PWR&LT AUTOPAY,,false
+2025-08-08,Rewards Visa,Taco Loco,Restaurants,-78.17,,,false
+2025-08-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2025-08-09,Rewards Visa,SkyHigh Airlines,Travel,-684.20,SKYHIGH AIR 0162345,Beach trip flights,false
+2025-08-10,Rewards Visa,City Concert Hall,Entertainment,-37.73,,,false
+2025-08-11,Rewards Visa,Green Basket Market,Groceries,-82.43,,,false
+2025-08-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2025-08-12,Rewards Visa,Daily Grind Coffee,Coffee,-6.56,,,false
+2025-08-12,Everyday Checking,Food Bank Donation,Charity,-50.00,,,false
+2025-08-13,Rewards Visa,QuickFuel,Gas,-53.29,,,false
+2025-08-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2025-08-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-08-15,Rewards Visa,Daily Grind Coffee,Coffee,-5.93,,,false
+2025-08-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2025-08-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2025-08-16,Rewards Visa,Riverside Clinic,Medical,-40.00,,Copay,false
+2025-08-18,Everyday Checking,Metro Water,Utilities,-40.13,METRO WATER UTIL,,false
+2025-08-18,Rewards Visa,FreshMart,Groceries,-182.29,,,false
+2025-08-18,Rewards Visa,QuickFuel,Gas,-58.05,,,false
+2025-08-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2025-08-20,Rewards Visa,Sakura Sushi,Restaurants,-40.24,,,false
+2025-08-20,Rewards Visa,Daily Grind Coffee,Coffee,-8.23,,,false
+2025-08-20,Rewards Visa,Bookworm Books,Shopping,-97.65,,,false
+2025-08-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2025-08-22,Rewards Visa,Seaside Inn,Travel,-912.40,,Beach trip,false
+2025-08-22,Rewards Visa,Seaside Inn,Travel,-912.40,,"Duplicate charge, refunded",true
+2025-08-23,Rewards Visa,Seaside Inn,Travel,912.40,,Refund of duplicate charge,true
+2025-08-24,Rewards Visa,Daily Grind Coffee,Coffee,-5.10,,,false
+2025-08-25,Rewards Visa,Sakura Sushi,Restaurants,-58.63,,,false
+2025-08-25,Rewards Visa,Corner Gas,Gas,-46.93,,,false
+2025-08-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-2970.02,SUMMIT CU CARD PMT,,false
+2025-08-25,Rewards Visa,Payment - Thank You,Credit Card Payment,2970.02,,,false
+2025-08-26,Rewards Visa,FreshMart,Groceries,-95.20,,,false
+2025-08-29,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-08-30,Rewards Visa,Taco Loco,Restaurants,-26.17,,,false
+2025-08-30,Rewards Visa,Daily Grind Coffee,Coffee,-8.53,,,false
+2025-08-30,Rewards Visa,Corner Gas,Gas,-40.79,,,false
+2025-08-31,High-Yield Savings,Harbor Community Bank,Interest,47.91,INTEREST PAYMENT,,false
+2025-09-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2025-09-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2025-09-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2025-09-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2025-09-03,Rewards Visa,FreshMart,Groceries,-152.12,,,false
+2025-09-03,Rewards Visa,Taco Loco,Restaurants,-68.61,,,false
+2025-09-03,Rewards Visa,Luigi's Trattoria,Restaurants,-82.07,,,false
+2025-09-05,Rewards Visa,Daily Grind Coffee,Coffee,-6.49,,,false
+2025-09-05,Rewards Visa,Daily Grind Coffee,Coffee,-5.93,,,false
+2025-09-08,Everyday Checking,City Power & Light,Utilities,-105.31,CITY PWR&LT AUTOPAY,,false
+2025-09-08,Rewards Visa,Daily Grind Coffee,Coffee,-9.09,,,false
+2025-09-09,Rewards Visa,QuickFuel,Gas,-53.36,,,false
+2025-09-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2025-09-11,Rewards Visa,FreshMart,Groceries,-157.60,,,false
+2025-09-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2025-09-12,Rewards Visa,Metro Transit,Parking & Transit,-10.40,,,false
+2025-09-13,Rewards Visa,Sakura Sushi,Restaurants,-81.49,,,false
+2025-09-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2025-09-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-09-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2025-09-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2025-09-17,Rewards Visa,FreshMart,Groceries,-143.83,,,false
+2025-09-17,Rewards Visa,Daily Grind Coffee,Coffee,-8.77,,,false
+2025-09-17,Rewards Visa,Corner Gas,Gas,-50.48,,,false
+2025-09-17,Everyday Checking,Riverside Plumbing,Home Maintenance,-385.00,,Water heater valve,false
+2025-09-18,Everyday Checking,Metro Water,Utilities,-42.08,METRO WATER UTIL,,false
+2025-09-19,Rewards Visa,Daily Grind Coffee,Coffee,-7.16,,,false
+2025-09-19,Rewards Visa,City Concert Hall,Entertainment,-34.94,,,false
+2025-09-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2025-09-21,Rewards Visa,Riverside Clinic,Medical,-40.00,,Copay,false
+2025-09-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2025-09-23,Rewards Visa,Luigi's Trattoria,Restaurants,-73.84,,,false
+2025-09-23,Rewards Visa,Daily Grind Coffee,Coffee,-5.96,,,false
+2025-09-24,Rewards Visa,FreshMart,Groceries,-177.19,,,false
+2025-09-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-1520.05,SUMMIT CU CARD PMT,,false
+2025-09-25,Rewards Visa,Payment - Thank You,Credit Card Payment,1520.05,,,false
+2025-09-26,Rewards Visa,Sakura Sushi,Restaurants,-55.55,,,false
+2025-09-27,Rewards Visa,Daily Grind Coffee,Coffee,-6.33,,,false
+2025-09-27,Rewards Visa,Target Outfitters,Shopping,-123.39,,,false
+2025-09-28,Brokerage,Northwind Investments,Dividends,165.85,DIVIDEND REINVEST,,false
+2025-09-30,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-09-30,High-Yield Savings,Harbor Community Bank,Interest,31.96,INTEREST PAYMENT,,false
+2025-09-30,Rewards Visa,Daily Grind Coffee,Coffee,-7.18,,,false
+2025-10-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2025-10-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2025-10-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2025-10-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2025-10-03,Rewards Visa,FreshMart,Groceries,-177.02,,,false
+2025-10-03,Rewards Visa,QuickFuel,Gas,-35.97,,,false
+2025-10-04,Rewards Visa,Luigi's Trattoria,Restaurants,-75.36,,,false
+2025-10-04,Rewards Visa,Daily Grind Coffee,Coffee,-8.38,,,false
+2025-10-04,Rewards Visa,Daily Grind Coffee,Coffee,-7.94,,,false
+2025-10-05,Everyday Checking,Shieldline Auto Insurance,Auto Insurance,-538.50,SHIELDLINE INS PREM,,false
+2025-10-08,Everyday Checking,City Power & Light,Utilities,-88.80,CITY PWR&LT AUTOPAY,,false
+2025-10-08,Rewards Visa,Everything Store,Shopping,-73.87,,,false
+2025-10-08,Rewards Visa,Corner Hardware,Home Maintenance,-112.73,,,false
+2025-10-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2025-10-10,Rewards Visa,Green Basket Market,Groceries,-86.58,,,false
+2025-10-10,Rewards Visa,Daily Grind Coffee,Coffee,-9.30,,,false
+2025-10-11,Rewards Visa,Corner Gas,Gas,-52.85,,,false
+2025-10-11,Rewards Visa,Everything Store,Shopping,64.99,,Returned jacket,false
+2025-10-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2025-10-12,Rewards Visa,Daily Grind Coffee,Coffee,-8.16,,,false
+2025-10-13,Rewards Visa,Daily Grind Coffee,Coffee,-8.91,,,false
+2025-10-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2025-10-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-10-15,Rewards Visa,Taco Loco,Restaurants,-28.40,,,false
+2025-10-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2025-10-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2025-10-17,Rewards Visa,FreshMart,Groceries,-78.95,,,false
+2025-10-17,Rewards Visa,Sakura Sushi,Restaurants,-89.56,,,false
+2025-10-17,Rewards Visa,Target Outfitters,Shopping,-114.78,,,false
+2025-10-18,Everyday Checking,Metro Water,Utilities,-38.50,METRO WATER UTIL,,false
+2025-10-18,Rewards Visa,Daily Grind Coffee,Coffee,-5.29,,,false
+2025-10-19,Rewards Visa,The Noodle Bar,Restaurants,-47.67,,,false
+2025-10-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2025-10-20,Rewards Visa,Corner Gas,Gas,-50.57,,,false
+2025-10-22,Rewards Visa,Burger Barn,Restaurants,-63.47,,,false
+2025-10-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2025-10-23,Rewards Visa,Green Basket Market,Groceries,-165.06,,,false
+2025-10-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-1502.75,SUMMIT CU CARD PMT,,false
+2025-10-25,Rewards Visa,Payment - Thank You,Credit Card Payment,1502.75,,,false
+2025-10-27,Rewards Visa,QuickFuel,Gas,-37.68,,,false
+2025-10-27,Rewards Visa,Bookworm Books,Shopping,-103.56,,,false
+2025-10-27,Rewards Visa,City Concert Hall,Entertainment,-82.76,,,false
+2025-10-29,Rewards Visa,FreshMart,Groceries,-168.96,,,false
+2025-10-31,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-10-31,High-Yield Savings,Harbor Community Bank,Interest,42.96,INTEREST PAYMENT,,false
+2025-11-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2025-11-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2025-11-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2025-11-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2025-11-02,Rewards Visa,The Noodle Bar,Restaurants,-34.83,,,false
+2025-11-03,Rewards Visa,Green Basket Market,Groceries,-119.51,,,false
+2025-11-04,Everyday Checking,Food Bank Donation,Charity,-50.00,,,false
+2025-11-06,Rewards Visa,QuickFuel,Gas,-58.90,,,false
+2025-11-08,Everyday Checking,City Power & Light,Utilities,-164.45,CITY PWR&LT AUTOPAY,,false
+2025-11-08,Rewards Visa,Burger Barn,Restaurants,-52.22,,,false
+2025-11-08,Rewards Visa,Daily Grind Coffee,Coffee,-6.16,,,false
+2025-11-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2025-11-10,Rewards Visa,Green Basket Market,Groceries,-133.42,,,false
+2025-11-10,Rewards Visa,Daily Grind Coffee,Coffee,-8.04,,,false
+2025-11-10,Rewards Visa,Bowl-a-Rama,Entertainment,-75.13,,,false
+2025-11-11,Rewards Visa,Daily Grind Coffee,Coffee,-7.95,,,false
+2025-11-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2025-11-12,Rewards Visa,Sakura Sushi,Restaurants,-82.37,,,false
+2025-11-12,Rewards Visa,Daily Grind Coffee,Coffee,-7.70,,,false
+2025-11-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2025-11-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-11-15,Rewards Visa,Daily Grind Coffee,Coffee,-6.24,,,false
+2025-11-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2025-11-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2025-11-16,Rewards Visa,Daily Grind Coffee,Coffee,-5.67,,,false
+2025-11-16,Rewards Visa,QuickFuel,Gas,-56.79,,,false
+2025-11-17,Rewards Visa,FreshMart,Groceries,-175.61,,,false
+2025-11-17,Rewards Visa,Target Outfitters,Shopping,-121.48,,,false
+2025-11-17,Rewards Visa,Corner Hardware,Home Maintenance,-36.87,,,false
+2025-11-18,Everyday Checking,Metro Water,Utilities,-58.12,METRO WATER UTIL,,false
+2025-11-18,Rewards Visa,Daily Grind Coffee,Coffee,-6.41,,,false
+2025-11-18,Rewards Visa,QuickFuel,Gas,-54.19,,,false
+2025-11-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2025-11-22,Rewards Visa,Daily Grind Coffee,Coffee,-6.45,,,false
+2025-11-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2025-11-25,Rewards Visa,FreshMart,Groceries,-158.48,,,false
+2025-11-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-1523.37,SUMMIT CU CARD PMT,,false
+2025-11-25,Rewards Visa,Payment - Thank You,Credit Card Payment,1523.37,,,false
+2025-11-27,Rewards Visa,Metro Transit,Parking & Transit,-24.13,,,false
+2025-11-28,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-11-28,Rewards Visa,Everything Store,Gifts,-236.45,,Black Friday,false
+2025-11-30,High-Yield Savings,Harbor Community Bank,Interest,46.94,INTEREST PAYMENT,,false
+2025-11-30,Rewards Visa,Corner Gas,Gas,-48.17,,,false
+2025-12-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2025-12-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2025-12-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2025-12-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2025-12-02,Rewards Visa,Starlight Cinemas,Entertainment,-82.23,,,false
+2025-12-03,Rewards Visa,FreshMart,Groceries,-183.62,,,false
+2025-12-06,Rewards Visa,Bookworm Books,Gifts,-88.20,,,false
+2025-12-07,Rewards Visa,Daily Grind Coffee,Coffee,-7.67,,,false
+2025-12-07,Rewards Visa,Daily Grind Coffee,Coffee,-7.97,,,false
+2025-12-07,Rewards Visa,Metro Transit,Parking & Transit,-17.16,,,false
+2025-12-08,Everyday Checking,City Power & Light,Utilities,-163.57,CITY PWR&LT AUTOPAY,,false
+2025-12-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2025-12-10,Rewards Visa,Daily Grind Coffee,Coffee,-4.66,,,false
+2025-12-11,Rewards Visa,FreshMart,Groceries,-155.10,,,false
+2025-12-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2025-12-13,Everyday Checking,Food Bank Donation,Charity,-50.00,,,false
+2025-12-13,Rewards Visa,Target Outfitters,Gifts,-312.60,,,false
+2025-12-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2025-12-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-12-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2025-12-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2025-12-18,Everyday Checking,Metro Water,Utilities,-40.87,METRO WATER UTIL,,false
+2025-12-18,Rewards Visa,Green Basket Market,Groceries,-91.49,,,false
+2025-12-19,Rewards Visa,Sakura Sushi,Restaurants,-46.33,,,false
+2025-12-19,Rewards Visa,Luigi's Trattoria,Restaurants,-69.11,,,false
+2025-12-19,Rewards Visa,Toy Chest,Gifts,-154.30,,,false
+2025-12-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2025-12-20,Everyday Checking,Acme Robotics,Other Income,1500.00,ACME ROBOTICS BONUS,Year-end bonus,false
+2025-12-22,Rewards Visa,Taco Loco,Restaurants,-94.25,,,false
+2025-12-22,Rewards Visa,Daily Grind Coffee,Coffee,-7.11,,,false
+2025-12-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2025-12-24,Rewards Visa,QuickFuel,Gas,-52.00,,,false
+2025-12-24,Rewards Visa,Riverside Clinic,Medical,-25.00,,Copay,false
+2025-12-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-1940.50,SUMMIT CU CARD PMT,,false
+2025-12-25,Rewards Visa,Payment - Thank You,Credit Card Payment,1940.50,,,false
+2025-12-26,Rewards Visa,Green Basket Market,Groceries,-171.04,,,false
+2025-12-26,Rewards Visa,Target Outfitters,Shopping,-61.81,,,false
+2025-12-28,Brokerage,Northwind Investments,Dividends,133.00,DIVIDEND REINVEST,,false
+2025-12-29,Rewards Visa,Daily Grind Coffee,Coffee,-7.48,,,false
+2025-12-31,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2025-12-31,High-Yield Savings,Harbor Community Bank,Interest,43.86,INTEREST PAYMENT,,false
+2025-12-31,Rewards Visa,Corner Gas,Gas,-41.91,,,false
+2025-12-31,Everyday Checking,Food Bank Donation,Charity,-250.00,,Year-end gift,false
+2026-01-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2026-01-01,Rewards Visa,Corner Gas,Gas,-59.29,,,false
+2026-01-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2026-01-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2026-01-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2026-01-03,Rewards Visa,FreshMart,Groceries,-80.21,,,false
+2026-01-04,Rewards Visa,Burger Barn,Restaurants,-92.73,,,false
+2026-01-05,Everyday Checking,Shieldline Auto Insurance,Auto Insurance,-538.50,SHIELDLINE INS PREM,,false
+2026-01-08,Everyday Checking,City Power & Light,Utilities,-155.52,CITY PWR&LT AUTOPAY,,false
+2026-01-08,Rewards Visa,Burger Barn,Restaurants,-61.36,,,false
+2026-01-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2026-01-10,Rewards Visa,FreshMart,Groceries,-161.68,,,false
+2026-01-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2026-01-13,Rewards Visa,Burger Barn,Restaurants,-20.52,,,false
+2026-01-13,Rewards Visa,Daily Grind Coffee,Coffee,-7.22,,,false
+2026-01-14,Rewards Visa,Daily Grind Coffee,Coffee,-9.36,,,false
+2026-01-14,Rewards Visa,Daily Grind Coffee,Coffee,-9.07,,,false
+2026-01-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2026-01-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2026-01-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2026-01-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2026-01-16,Rewards Visa,Green Basket Market,Groceries,-171.84,,,false
+2026-01-17,Rewards Visa,Luigi's Trattoria,Restaurants,-28.12,,,false
+2026-01-18,Everyday Checking,Metro Water,Utilities,-46.56,METRO WATER UTIL,,false
+2026-01-18,Rewards Visa,Daily Grind Coffee,Coffee,-7.28,,,false
+2026-01-18,Rewards Visa,Bookworm Books,Shopping,-60.68,,,false
+2026-01-19,Rewards Visa,City Concert Hall,Entertainment,-61.98,,,false
+2026-01-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2026-01-20,Rewards Visa,Luigi's Trattoria,Restaurants,-51.75,,,false
+2026-01-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2026-01-24,Rewards Visa,FreshMart,Groceries,-82.01,,,false
+2026-01-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-1321.81,SUMMIT CU CARD PMT,,false
+2026-01-25,Rewards Visa,Payment - Thank You,Credit Card Payment,1321.81,,,false
+2026-01-28,Rewards Visa,QuickFuel,Gas,-55.25,,,false
+2026-01-29,Rewards Visa,Daily Grind Coffee,Coffee,-5.17,,,false
+2026-01-29,Rewards Visa,Everything Store,Shopping,-62.04,,,false
+2026-01-30,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2026-01-31,High-Yield Savings,Harbor Community Bank,Interest,37.69,INTEREST PAYMENT,,false
+2026-02-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2026-02-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2026-02-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2026-02-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2026-02-03,Rewards Visa,FreshMart,Groceries,-111.98,,,false
+2026-02-03,Everyday Checking,State Tax Refund,Other Income,412.00,STATE TREAS TAX REF,,false
+2026-02-05,Rewards Visa,Corner Gas,Gas,-42.61,,,false
+2026-02-08,Everyday Checking,City Power & Light,Utilities,-164.42,CITY PWR&LT AUTOPAY,,false
+2026-02-09,Rewards Visa,The Noodle Bar,Restaurants,-92.60,,,false
+2026-02-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2026-02-10,Rewards Visa,Corner Gas,Gas,-47.48,,,false
+2026-02-11,Rewards Visa,FreshMart,Groceries,-74.33,,,false
+2026-02-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2026-02-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2026-02-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2026-02-15,Rewards Visa,Daily Grind Coffee,Coffee,-6.57,,,false
+2026-02-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2026-02-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2026-02-17,Rewards Visa,Daily Grind Coffee,Coffee,-7.43,,,false
+2026-02-18,Everyday Checking,Metro Water,Utilities,-45.97,METRO WATER UTIL,,false
+2026-02-18,Rewards Visa,Green Basket Market,Groceries,-103.23,,,false
+2026-02-19,Rewards Visa,Daily Grind Coffee,Coffee,-6.30,,,false
+2026-02-19,Rewards Visa,Daily Grind Coffee,Coffee,-8.20,,,false
+2026-02-19,Rewards Visa,Target Outfitters,Shopping,-61.41,,,false
+2026-02-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2026-02-22,Rewards Visa,Daily Grind Coffee,Coffee,-6.72,,,false
+2026-02-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2026-02-23,Rewards Visa,The Noodle Bar,Restaurants,-26.07,,,false
+2026-02-23,Rewards Visa,Starlight Cinemas,Entertainment,-65.08,,,false
+2026-02-25,Rewards Visa,Burger Barn,Restaurants,-21.68,,,false
+2026-02-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-856.94,SUMMIT CU CARD PMT,,false
+2026-02-25,Rewards Visa,Payment - Thank You,Credit Card Payment,856.94,,,false
+2026-02-26,Rewards Visa,Green Basket Market,Groceries,-153.02,,,false
+2026-02-27,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2026-02-27,Rewards Visa,Daily Grind Coffee,Coffee,-8.26,,,false
+2026-02-28,High-Yield Savings,Harbor Community Bank,Interest,33.41,INTEREST PAYMENT,,false
+2026-02-28,Rewards Visa,Daily Grind Coffee,Coffee,-8.70,,,false
+2026-03-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2026-03-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2026-03-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2026-03-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2026-03-03,Rewards Visa,FreshMart,Groceries,-142.41,,,false
+2026-03-03,Rewards Visa,Daily Grind Coffee,Coffee,-5.86,,,false
+2026-03-04,Rewards Visa,Daily Grind Coffee,Coffee,-6.35,,,false
+2026-03-05,Rewards Visa,QuickFuel,Gas,-40.85,,,false
+2026-03-08,Everyday Checking,City Power & Light,Utilities,-99.95,CITY PWR&LT AUTOPAY,,false
+2026-03-09,Rewards Visa,Luigi's Trattoria,Restaurants,-69.69,,,false
+2026-03-09,Rewards Visa,Corner Gas,Gas,-50.49,,,false
+2026-03-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2026-03-10,Rewards Visa,Green Basket Market,Groceries,-83.15,,,false
+2026-03-11,Rewards Visa,Target Outfitters,Shopping,-134.73,,,false
+2026-03-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2026-03-12,Rewards Visa,Daily Grind Coffee,Coffee,-5.46,,,false
+2026-03-13,Rewards Visa,City Concert Hall,Entertainment,-71.52,,,false
+2026-03-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2026-03-14,Rewards Visa,SkyHigh Airlines,Travel,-455.80,SKYHIGH AIR 0171190,Spring break,false
+2026-03-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2026-03-15,Rewards Visa,Daily Grind Coffee,Coffee,-6.14,,,false
+2026-03-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2026-03-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2026-03-16,Rewards Visa,Daily Grind Coffee,Coffee,-4.87,,,false
+2026-03-18,Everyday Checking,Metro Water,Utilities,-58.12,METRO WATER UTIL,,false
+2026-03-18,Rewards Visa,Green Basket Market,Groceries,-136.08,,,false
+2026-03-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2026-03-20,Rewards Visa,Taco Loco,Restaurants,-48.93,,,false
+2026-03-20,Rewards Visa,Sakura Sushi,Restaurants,-64.59,,,false
+2026-03-20,Rewards Visa,Mountain View Lodge,Travel,-620.00,,,false
+2026-03-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2026-03-23,Rewards Visa,Target Outfitters,Shopping,-54.16,,,false
+2026-03-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-2267.21,SUMMIT CU CARD PMT,,false
+2026-03-25,Rewards Visa,Payment - Thank You,Credit Card Payment,2267.21,,,false
+2026-03-26,Rewards Visa,FreshMart,Groceries,-165.20,,,false
+2026-03-28,Brokerage,Northwind Investments,Dividends,162.19,DIVIDEND REINVEST,,false
+2026-03-28,Rewards Visa,Burger Barn,Restaurants,-45.69,,,false
+2026-03-31,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2026-03-31,High-Yield Savings,Harbor Community Bank,Interest,35.79,INTEREST PAYMENT,,false
+2026-04-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2026-04-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2026-04-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2026-04-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2026-04-02,Rewards Visa,The Noodle Bar,Restaurants,-46.85,,,false
+2026-04-02,Rewards Visa,Riverside Clinic,Medical,-40.00,,Copay,false
+2026-04-03,Rewards Visa,Green Basket Market,Groceries,-83.15,,,false
+2026-04-03,Rewards Visa,Taco Loco,Restaurants,-42.51,,,false
+2026-04-04,Rewards Visa,Daily Grind Coffee,Coffee,-8.01,,,false
+2026-04-05,Everyday Checking,Shieldline Auto Insurance,Auto Insurance,-538.50,SHIELDLINE INS PREM,,false
+2026-04-05,Rewards Visa,Burger Barn,Restaurants,-61.97,,,false
+2026-04-05,Rewards Visa,Everything Store,Shopping,-35.25,,,false
+2026-04-08,Everyday Checking,City Power & Light,Utilities,-105.83,CITY PWR&LT AUTOPAY,,false
+2026-04-08,Rewards Visa,Daily Grind Coffee,Coffee,-5.38,,,false
+2026-04-08,Rewards Visa,Everything Store,Shopping,-124.30,,,false
+2026-04-09,Rewards Visa,Taco Loco,Restaurants,-47.25,,,false
+2026-04-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2026-04-10,Rewards Visa,FreshMart,Groceries,-172.05,,,false
+2026-04-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2026-04-12,Rewards Visa,Daily Grind Coffee,Coffee,-7.43,,,false
+2026-04-13,Rewards Visa,Daily Grind Coffee,Coffee,-7.25,,,false
+2026-04-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2026-04-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2026-04-16,Everyday Checking,Transfer to Savings,Savings Transfer,-1200.00,ONLINE TRANSFER TO SAV ...4471,,false
+2026-04-16,High-Yield Savings,Transfer from Checking,Savings Transfer,1200.00,ONLINE TRANSFER FROM CHK ...9023,,false
+2026-04-17,Rewards Visa,Green Basket Market,Groceries,-177.79,,,false
+2026-04-17,Rewards Visa,Burger Barn,Restaurants,-54.64,,,false
+2026-04-18,Everyday Checking,Metro Water,Utilities,-46.09,METRO WATER UTIL,,false
+2026-04-19,Rewards Visa,QuickFuel,Gas,-47.03,,,false
+2026-04-20,Everyday Checking,Nimbus Mobile,Internet & Phone,-65.00,NIMBUS MOBILE AUTOPAY,,false
+2026-04-20,Rewards Visa,Daily Grind Coffee,Coffee,-8.73,,,false
+2026-04-20,Rewards Visa,Daily Grind Coffee,Coffee,-9.34,,,false
+2026-04-22,Rewards Visa,QuickFuel,Gas,-44.92,,,false
+2026-04-22,Rewards Visa,CloudDrive,Subscriptions,-2.99,CLOUDDRIVE STORAGE,,false
+2026-04-23,Rewards Visa,Bookworm Books,Shopping,-99.38,,,false
+2026-04-23,Rewards Visa,Starlight Cinemas,Entertainment,-37.72,,,false
+2026-04-24,Rewards Visa,The Noodle Bar,Restaurants,-24.92,,,false
+2026-04-24,Rewards Visa,Daily Grind Coffee,Coffee,-6.86,,,false
+2026-04-25,Rewards Visa,Green Basket Market,Groceries,-82.93,,,false
+2026-04-25,Everyday Checking,Summit Visa Payment,Credit Card Payment,-1478.09,SUMMIT CU CARD PMT,,false
+2026-04-25,Rewards Visa,Payment - Thank You,Credit Card Payment,1478.09,,,false
+2026-04-26,Rewards Visa,QuickFuel,Gas,-35.45,,,false
+2026-04-27,Rewards Visa,Daily Grind Coffee,Coffee,-6.81,,,false
+2026-04-30,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2026-04-30,High-Yield Savings,Harbor Community Bank,Interest,40.23,INTEREST PAYMENT,,false
+2026-05-01,Everyday Checking,Lakeside Home Loans,Mortgage Payment,-1850.00,LAKESIDE HOME LN PMT,,false
+2026-05-01,Rewards Visa,Peak Fitness,Fitness,-45.00,PEAK FITNESS MEMBERSHIP,,false
+2026-05-02,Everyday Checking,Northwind Investments,Investment Contribution,-500.00,NORTHWIND INV ACH,,false
+2026-05-02,Brokerage,Contribution,Investment Contribution,500.00,,,false
+2026-05-03,Rewards Visa,FreshMart,Groceries,-179.38,,,false
+2026-05-03,Rewards Visa,Daily Grind Coffee,Coffee,-7.82,,,false
+2026-05-04,Rewards Visa,Bookworm Books,Shopping,-86.27,,,false
+2026-05-08,Everyday Checking,City Power & Light,Utilities,-95.53,CITY PWR&LT AUTOPAY,,false
+2026-05-08,Rewards Visa,Bowl-a-Rama,Entertainment,-47.70,,,false
+2026-05-09,Rewards Visa,Luigi's Trattoria,Restaurants,-69.72,,,false
+2026-05-09,Rewards Visa,Burger Barn,Restaurants,-43.09,,,false
+2026-05-09,Rewards Visa,Daily Grind Coffee,Coffee,-6.36,,,false
+2026-05-09,Rewards Visa,StreamFlix,Subscriptions,-15.49,STREAMFLIX.COM,,false
+2026-05-11,Rewards Visa,FreshMart,Groceries,-108.75,,,false
+2026-05-11,Rewards Visa,Daily Grind Coffee,Coffee,-7.78,,,false
+2026-05-12,Everyday Checking,Bluewave Internet,Internet & Phone,-69.99,BLUEWAVE INTERNET,,false
+2026-05-14,Rewards Visa,TuneBox,Subscriptions,-10.99,TUNEBOX MUSIC,,false
+2026-05-15,Everyday Checking,Acme Robotics,Paycheck,3600.00,ACME ROBOTICS DIR DEP PPD,,false
+2026-05-15,Rewards Visa,Daily Grind Coffee,Coffee,-7.31,,,false
+2026-05-15,Rewards Visa,Corner Gas,Gas,-61.44,,,false
+2026-05-15,Rewards Visa,Corner Gas,Gas,-55.07,,,false
+2026-05-15,Rewards Visa,Everything Store,Shopping,-114.55,,,false
+2026-05-15,Rewards Visa,Target Outfitters,Shopping,-129.88,,,false

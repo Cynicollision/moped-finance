@@ -2,6 +2,7 @@
 .env
 server/dist/**
 server/public
+# Old local seed data (no longer used; db:seed reads the committed server/seed-data/). Kept ignored in case it holds real data.
 server/test_data
 # Claude Code personal overrides
 .claude/settings.local.json

@@ -57,7 +57,6 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 
 ### Data & deployment
 - [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
-- [ ] Commit a small synthetic seed dataset. `db:seed` reads the untracked `server/test_data/` (which also holds unrelated CSVs such as `plant_varieties.csv`), so a fresh clone, CI or the NAS can't seed. Shared sample data would also serve demo mode, a CI smoke test and UI work. Drop the unused `UserId` CSV column while at it.
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
 ### Security & auth
@@ -70,6 +69,7 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 
 ### Correctness
 - [ ] `syncAccount` and `syncInstitution` are stubs that return success (`account-controller.ts`, `institution-controller.ts`). Until real sync exists, return a not-implemented result and hide/disable the sync UI. Then replace the skipped `xit('should return sync stub success')` in `institution-routes.spec.ts`.
+- [ ] Cashflow periods include the next period's first day west of UTC (APP-5.6). `DateTimeUtil.getDatesForPeriod` sets the boundaries with local-time setters (`setDate`, `setHours(23, 59, …)`), then `retrieveCashflowByCategory` formats them with `DateTimeUtil.toDateString`, which uses UTC. With `TZ=America/New_York`, April is `2026-04-01`..`2026-05-01`, so a May 1 mortgage payment counts in April too (seen with the seed data). Build the period as calendar date strings, and add a spec that runs under a non-UTC `TZ`.
 - [ ] Calendar dates are off by a day outside UTC. The API returns `date` columns as UTC-midnight timestamps (`mapRowToTransaction` in `transaction-data.ts` uses `DateTimeUtil.toISOString`; `BalanceHistory.date` and `TotalValueHistory.date` are `Date`s), so the client's date pipe and `new Date(...)` in `transaction-form.component.ts` show the previous day in US time zones. The client also sends dates with `toISOString()` (`transactions.component.ts` filters, `finance.service.ts` `fetchTotalValueHistory`, `cashflow.component.ts`), which gives the previous day east of UTC, and `fetchAccountBalanceHistory` sends `Date.toString()`. Make calendar dates plain `YYYY-MM-DD` strings in `shared/` types and both directions, and format them in the client without converting through UTC.
 
 ### Testing
@@ -91,6 +91,9 @@ Manual entry and import/export come first. Constraints for when this gets picked
 - **Polling only.** The host isn't reachable from the internet, so no webhooks. Sync on a schedule and/or on demand.
 - [ ] Write `docs/integrations/bank-sync.md` before coding: provider choice and cost, link flow, encrypted storage of access tokens, cursor-based incremental sync, mapping provider items/accounts to institutions/accounts, de-duplicating against CSV imports, and sandbox → production.
 - [ ] Implement behind the existing sync endpoints.
+
+### Demo mode
+- [ ] Populate demo mode from `server/seed-data/` (APP-4.3): `demo.interceptor.ts` answers everything but auth with an empty list. Needs the CSVs turned into client-side data (a build step or JSON) and in-browser create/edit/delete.
 
 ---
 
