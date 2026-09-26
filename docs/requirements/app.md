@@ -10,7 +10,7 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 | APP-1.2 | The side navigation shall be permanently visible on desktop-width screens. On handset-width screens it shall be hidden behind a menu button, open over the content, and close when an entry is chosen. | Implemented |
 | APP-1.3 | On handset-width screens the label of the current top-level section shall appear next to the menu button. | Implemented |
 | APP-1.4 | The bottom of the side navigation shall show a profile control with the user's initials and display name. Initials are the first letters of the first two words of the display name, or the first letter if there is only one word. | Implemented |
-| APP-1.5 | The profile control shall open a menu with **Settings** and **Sign out** (see AUTH-4.1). | Partial |
+| APP-1.5 | The profile control shall open a menu with **Settings** (AUTH-8.1) and **Sign out** (AUTH-4.1). | Partial |
 | APP-1.6 | The landing page after sign-in, and the target of any unknown URL, shall be the Summary (DASH). | Implemented |
 | APP-1.7 | Signed-out visitors shall see no navigation or profile control, only the Login or Register screen. | Implemented |
 | APP-1.8 | Screens below a top-level section (Account Details, Edit Account, Add Account, Import screens, View/Edit Transaction, Add/View/Edit Institution) shall show a breadcrumb trail above the content, and every crumb except the last shall be a link back. Top-level sections have none. | Implemented |

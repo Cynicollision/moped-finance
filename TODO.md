@@ -40,7 +40,6 @@ From a review of the code, the schema, and the requirements' known gaps and open
 
 ### UX fixes from the requirements review
 - [ ] The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8).
-- [ ] The Settings menu item links to a route that doesn't exist (APP-1.5). Replace it with a Settings screen that has change password (AUTH-5.1) and display name.
 - [ ] The Cashflow year list is a fixed four-year window; derive it from the data (CASH known gaps).
 - [ ] Import breadcrumbs and the product name on Login/Register (APP known gaps).
 - [ ] Register screen: explain that this creates the instance's only account, which owns all its data, and that Register won't be available again afterwards (AUTH-2.8). Add it to `register.component.html` above the form.
@@ -52,7 +51,7 @@ From a review of the code, the schema, and the requirements' known gaps and open
 ### Security & auth
 - [ ] Use a persistent session store (e.g. `connect-pg-simple`). The default in-memory store logs everyone out on every restart.
 - [ ] Fail startup in production if `SESSION_SECRET` is unset; don't fall back to `'dev-secret-key'` (`server/index.ts`).
-- [ ] Rate-limit `POST /auth/login` (e.g. `express-rate-limit`) and set a minimum password length (AUTH known gaps).
+- [ ] Rate-limit `POST /auth/login` (e.g. `express-rate-limit`) (AUTH known gaps). Password rules are now AUTH-9.
 - [ ] Session cookie: set `sameSite: 'lax'`, and make logout's `clearCookie` options match the session cookie (it uses `NODE_ENV === 'production'` for `secure`, the session uses `COOKIE_SECURE`). Document `COOKIE_SECURE` and `TRUST_FIRST_PROXY` for plain HTTP on the LAN versus a reverse proxy with HTTPS.
 - [ ] Decide on HTTP Basic auth (AUTH-3.5). With one user it mainly sends the password on every request, in clear text over plain HTTP. Keep it (and state what it's for) or remove it.
 - [ ] Security headers with `helmet`. Check the Content-Security-Policy against the Angular production build before enabling it.
