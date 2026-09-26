@@ -7,7 +7,6 @@ export const institutionSchema = financeSchema.table('institutions', {
     id: varchar('id', { length: 50 }).primaryKey(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
-    userId: varchar('user_id', { length: 50 }).notNull(),
     name: varchar('name', { length: 100 }).notNull(),
 });
 

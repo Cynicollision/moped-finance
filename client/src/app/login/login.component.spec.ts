@@ -13,7 +13,8 @@ describe('LoginComponent', () => {
     beforeEach(async () => {
         mockAuthService = {
             currentUser: signal(null),
-            login: vi.fn().mockResolvedValue(undefined)
+            login: vi.fn().mockResolvedValue(undefined),
+            isRegistrationOpen: vi.fn().mockResolvedValue(false)
         };
 
         mockActivatedRoute = {
@@ -55,5 +56,20 @@ describe('LoginComponent', () => {
         await component.onLogin();
 
         expect(mockAuthService.login).not.toHaveBeenCalled();
+    });
+
+    it('AUTH-2.7 should hide the register link when registration is closed', async () => {
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.register-prompt')).toBeNull();
+    });
+
+    it('AUTH-2.7 should show the register link when registration is open', async () => {
+        mockAuthService.isRegistrationOpen.mockResolvedValue(true);
+        await component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.register-prompt')).not.toBeNull();
     });
 });

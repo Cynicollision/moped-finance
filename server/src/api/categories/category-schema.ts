@@ -8,7 +8,6 @@ export const categorySchema = financeSchema.table('categories', {
     id: varchar('id', { length: 50 }).primaryKey(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
-    userId: varchar('user_id', { length: 50 }).notNull(),
     groupId: varchar('group_id', { length: 50 }).notNull(),
     icon: varchar('icon', { length: 50 }).notNull(),
     name: varchar('name', { length: 100 }).notNull(),

@@ -1,14 +1,18 @@
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CalendarPeriod } from '@shared/core/enum';
 import { BudgetStreamType } from '@shared/finance/enum';
 import { BudgetStream } from '@shared/finance/types';
-import { IDatabaseClient, IOwnedResourceData } from '@server/data';
+import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { budgetStreamSchema } from './budget-stream-schema';
 
-export interface IFinanceBudgetStreamData extends IOwnedResourceData<BudgetStream> {
-    retrieveAll(userId: string): Promise<BudgetStream[]>;
+export interface IFinanceBudgetStreamData {
+    retrieveAll(): Promise<BudgetStream[]>;
+    retrieveSingle(id: string): Promise<BudgetStream | null>;
+    insert(stream: BudgetStream): Promise<BudgetStream>;
+    update(stream: BudgetStream): Promise<BudgetStream | null>;
+    delete(id: string): Promise<boolean>;
 }
 
 function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect): BudgetStream {
@@ -16,7 +20,6 @@ function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect): Budg
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-        userId: row.userId,
         name: row.name,
         categoryId: row.categoryId ?? '',
         type: row.type as BudgetStreamType,
@@ -32,10 +35,9 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
         this.db = dbClient.drizzle;
     }
 
-    public async retrieveAll(userId: string): Promise<BudgetStream[]> {
+    public async retrieveAll(): Promise<BudgetStream[]> {
         const rows = await this.db.select()
-            .from(budgetStreamSchema)
-            .where(eq(budgetStreamSchema.userId, userId));
+            .from(budgetStreamSchema);
 
         return rows.map(mapRowToBudgetStream);
     }
@@ -64,7 +66,6 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
         const rows = await this.db.insert(budgetStreamSchema)
             .values({
                 id: stream.id,
-                userId: stream.userId,
                 name: stream.name,
                 categoryId: stream.categoryId,
                 type: stream.type,

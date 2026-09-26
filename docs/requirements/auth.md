@@ -1,6 +1,6 @@
 # Authentication (`AUTH`)
 
-Moped Finance is a single-user-oriented app: one person keeps their finances in it, behind a login. The data model is multi-user (every record has an owner), which is why isolation between users is still specified here.
+Moped Finance is a single-user app: one person keeps their finances in it, behind a login. Each instance has one owner (AUTH-7), so finance data isn't partitioned by user; the login only decides whether you get in.
 
 Screens: **Login** (`/login`), **Register** (`/register`), and the **Sign out** action in the profile menu.
 
@@ -8,7 +8,7 @@ Screens: **Login** (`/login`), **Register** (`/register`), and the **Sign out** 
 
 | ID | Requirement | Status |
 |---|---|---|
-| AUTH-1.1 | The Login screen shall show a **Username** field, a **Password** field, a **Login** button, and a link "Register here" to the Register screen. | Implemented |
+| AUTH-1.1 | The Login screen shall show a **Username** field, a **Password** field, a **Login** button, and, while registration is open (AUTH-2.7), a link "Register here" to the Register screen. | Implemented |
 | AUTH-1.2 | The Login button shall be disabled until both Username and Password are non-empty. | Implemented |
 | AUTH-1.3 | Submitting valid credentials shall sign the user in and navigate to the page they originally requested (`returnUrl`), or to the Accounts summary if there was none. | Implemented |
 | AUTH-1.4 | Submitting an unknown username or a wrong password shall not sign the user in and shall show the error "Invalid username or password." The message shall be identical for both cases so it doesn't reveal which usernames exist. | Implemented |
@@ -24,7 +24,7 @@ Screens: **Login** (`/login`), **Register** (`/register`), and the **Sign out** 
 | AUTH-2.4 | Usernames shall be unique. Registering an existing username shall be rejected with "Username already taken." | Implemented |
 | AUTH-2.5 | Successful registration shall sign the user in immediately and navigate the same way as AUTH-1.3. | Implemented |
 | AUTH-2.6 | Passwords shall be stored only as salted bcrypt hashes (10 rounds) and shall never be returned by any API. | Implemented |
-| AUTH-2.7 | Once a first user exists, registration shall be disabled and the Register screen and link hidden. | Planned |
+| AUTH-2.7 | Once a first user exists, registration shall be disabled: the API shall reject it with "Registration is closed.", the Login screen shall hide its Register link, and navigating to Register shall redirect to Login. | Implemented |
 
 ## AUTH-3 The user stays signed in, and only signed-in users see finance data
 
@@ -52,21 +52,29 @@ Screens: **Login** (`/login`), **Register** (`/register`), and the **Sign out** 
 
 ## AUTH-6 A user can only see and change their own data
 
+Retired: the app committed to one owner per instance (AUTH-7), so finance records no longer belong to a user.
+
 | ID | Requirement | Status |
 |---|---|---|
-| AUTH-6.1 | Every institution, account, balance entry, category group, category, transaction and budget stream shall belong to exactly one user. | Implemented |
-| AUTH-6.2 | List and search endpoints shall return only the signed-in user's records. | Implemented |
-| AUTH-6.3 | Requesting, changing or deleting another user's record by ID shall behave as though the record does not exist ("Resource not found or access denied"). | Partial |
-| AUTH-6.4 | A record shall only be linked to records the same user owns (for example an account to an institution, a transaction to a category). | Partial |
+| AUTH-6.1 | Every institution, account, balance entry, category group, category, transaction and budget stream shall belong to exactly one user. | Retired (see AUTH-7.1) |
+| AUTH-6.2 | List and search endpoints shall return only the signed-in user's records. | Retired (see AUTH-7.1) |
+| AUTH-6.3 | Requesting, changing or deleting another user's record by ID shall behave as though the record does not exist. | Retired (see AUTH-7.1) |
+| AUTH-6.4 | A record shall only be linked to records the same user owns. | Retired (see AUTH-7.1) |
+
+## AUTH-7 One owner per instance
+
+| ID | Requirement | Status |
+|---|---|---|
+| AUTH-7.1 | Finance records (institutions, accounts, balance entries, category groups, categories, transactions, budget streams) shall belong to the instance, not to a user. The signed-in user sees and changes all of them. | Implemented |
+| AUTH-7.2 | An instance shall have one user. Registration closes after the first one (AUTH-2.7). | Implemented |
 
 ## Observations
 
 Things found while reading the code that the requirements above don't yet cover or that you may want to decide on.
 
-- **AUTH-6.3 gaps.** Fetching a single institution, category or category group by ID does not check ownership, so any signed-in user who knows an ID can read it. Deleting a budget stream by ID also skips the ownership check. Update and delete of the other record types do check.
-- **AUTH-6.4 gaps.** Creating or updating an account doesn't verify the institution belongs to the user; creating or updating a transaction doesn't verify the category (or, on update, the new account); the transaction import's optional target account isn't verified. These matter little with one user and a lot if a second is ever added.
 - **Settings menu item is a dead end.** The profile menu has **Settings**, linking to `/system`. No such route exists, so it lands on the Accounts summary. There is no screen for changing the password (AUTH-5.1 is API-only); it would be the obvious first inhabitant.
 - **No password rules.** A password only has to be non-empty (AUTH-2). No minimum length, no lockout or rate limiting on repeated failed logins.
 - **Username matching is case-sensitive**, so `Stn` and `stn` are different users.
-- **Registration is open to anyone who can reach the server** until AUTH-2.7 is done. `TODO.md` lists this under Next.
+- **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.
+- **Fresh instances are claimable.** Until `TODO.md`'s first-user bootstrap item is done, whoever reaches a fresh instance first becomes its owner.
 - **Display name.** Collected at registration and shown in the profile menu; there's no way to edit it.

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
 import { pgSchema, varchar, timestamp } from 'drizzle-orm/pg-core';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { User } from '@shared/core/types/user';
@@ -25,6 +25,7 @@ export interface IUserData {
     retrieveSingle(id: string): Promise<User | null>;
     retrieveByUsername(username: string): Promise<UserWithPassword | null>;
     updatePassword(id: string, passwordHash: string): Promise<void>;
+    retrieveCount(): Promise<number>;
 }
 
 export class UserData implements IUserData {
@@ -102,5 +103,10 @@ export class UserData implements IUserData {
         if (rows.length === 0) {
             throw new Error('User not found.');
         }
+    }
+
+    public async retrieveCount(): Promise<number> {
+        const rows = await this.db.select({ count: count() }).from(userSchema);
+        return rows[0].count;
     }
 }

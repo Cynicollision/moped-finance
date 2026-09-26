@@ -44,8 +44,8 @@ describe('Institution Routes', () => {
 
     describe('GET /institutions', () => {
         it('should return a list of institutions when successful', async () => {
-            const inst1 = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Chase' }));
-            const inst2 = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Vanguard' }));
+            const inst1 = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
+            const inst2 = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Vanguard' }));
 
             const response = await request(app).get('/institutions');
 
@@ -57,7 +57,7 @@ describe('Institution Routes', () => {
 
     describe('GET /institutions/:id', () => {
         it('should return a single institution when found', async () => {
-            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Chase' }));
+            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
 
             const response = await request(app).get(`/institutions/${institution.id}`);
 
@@ -66,10 +66,10 @@ describe('Institution Routes', () => {
             expect(response.body.name).toBe('Chase');
         });
 
-        it('should return 400 when institution is not found', async () => {
+        it('should return 404 when institution is not found', async () => {
             const response = await request(app).get('/institutions/missing');
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             expect(response.body.message).toContain('not found');
         });
     });
@@ -106,8 +106,8 @@ describe('Institution Routes', () => {
     });
 
     describe('PUT /institutions/:id', () => {
-        it('should update an institution when input is valid and resource belongs to user', async () => {
-            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Old Chase' }));
+        it('should update an institution when input is valid', async () => {
+            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Old Chase' }));
 
             const payload = {
                 name: 'Updated Chase'
@@ -124,8 +124,8 @@ describe('Institution Routes', () => {
             expect(dbInst?.name).toBe('Updated Chase');
         });
 
-        it('should return 400 when update fails because resource does not exist or user lacks ownership', async () => {
-            const institutionId = 'unowned-inst';
+        it('should return 404 when update target does not exist', async () => {
+            const institutionId = 'missing-inst';
             const payload = {
                 name: 'Updated Chase'
             };
@@ -135,13 +135,13 @@ describe('Institution Routes', () => {
                 .send(payload);
 
             expect(response.status).toBe(404);
-            expect(response.body.message).toContain('not found or access denied');
+            expect(response.body.message).toContain('not found');
         });
     });
 
     describe('DELETE /institutions/:id', () => {
-        it('should delete an institution when resource belongs to user', async () => {
-            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Chase' }));
+        it('should delete an institution', async () => {
+            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
 
             const response = await request(app).delete(`/institutions/${institution.id}`);
 
@@ -151,19 +151,19 @@ describe('Institution Routes', () => {
             expect(dbInst).toBeNull();
         });
 
-        it('should return 400 when delete fails because resource does not exist or user lacks ownership', async () => {
-            const institutionId = 'unowned-inst';
+        it('should return 404 when delete target does not exist', async () => {
+            const institutionId = 'missing-inst';
 
             const response = await request(app).delete(`/institutions/${institutionId}`);
 
             expect(response.status).toBe(404);
-            expect(response.body.message).toContain('not found or access denied');
+            expect(response.body.message).toContain('not found');
         });
 
         it('should return 400 when deleting an institution with associated accounts', async () => {
-            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Chase' }));
+            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
 
-            await accountData.insert(FinanceEntityFactory.createAccount(testUserId, {
+            await accountData.insert(FinanceEntityFactory.createAccount({
                 institutionId: institution.id,
                 name: 'Checking',
                 category: AccountCategory.Asset,
@@ -180,7 +180,7 @@ describe('Institution Routes', () => {
 
     describe('POST /institutions/:id/sync', () => {
         xit('should return sync stub success', async () => {
-            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution(testUserId, { name: 'Chase' }));
+            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
 
             const response = await request(app)
                 .post(`/institutions/${institution.id}/sync`);

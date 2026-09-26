@@ -58,7 +58,7 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 - **Amount filters compare signed values,** so "Min Amount 100" finds income of 100 or more but no expenses; finding expenses over 100 means a maximum of -100. The table shows amounts unsigned, which makes this easy to trip over.
 - **Bad dates crash import.** A `Date` that isn't a valid date makes the server fail with a generic error rather than reporting the row.
 - **Import isn't atomic.** Rows insert one at a time; the dry-run gate is what protects the user. `TODO.md` lists bulk insert and the partial-success decision.
-- **Account and category IDs on save aren't fully checked (AUTH-6.4):** categories on create and update, and the account on update.
+- **Category IDs on save aren't validated** on create or update. One that doesn't exist fails with a generic database error rather than a clear message.
 - **Split transactions.** The data model has `isSplit` and `splitParentId`, and import writes `false`/blank, but there is no UI or behavior for splits.
 - **No duplicate detection on import.** Importing the same file twice creates every transaction twice. (`TODO.md` mentions de-duplicating for bank sync; nothing exists for CSV.)
 - **The Edit form's leftover reasoning** about which fields should be read-only for bank-imported transactions is a design question for when sync exists: today every field is editable (TXN-2.3).

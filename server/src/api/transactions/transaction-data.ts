@@ -1,10 +1,10 @@
-import { eq, and, desc, asc, ilike, sum, gte, lte } from 'drizzle-orm';
+import { eq, and, desc, asc, ilike, sum, gte, lte, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { Transaction } from '@shared/finance/types';
 import { CashflowStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
-import { IDatabaseClient, IOwnedResourceData } from '@server/data';
+import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';
@@ -22,11 +22,15 @@ export type TransactionExport = {
     isHidden: boolean;
 };
 
-export interface IFinanceTransactionData extends IOwnedResourceData<Transaction> {
-    search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
-    retrieveForExport(userId: string, accountId?: string): Promise<TransactionExport[]>;
-    retrieveMerchants(userId: string): Promise<string[]>;
-    retrieveCashflowByCategory(userId: string, startDate: Date, endDate: Date): Promise<CashflowStream[]>;
+export interface IFinanceTransactionData {
+    search(options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
+    retrieveForExport(accountId?: string): Promise<TransactionExport[]>;
+    retrieveMerchants(): Promise<string[]>;
+    retrieveCashflowByCategory(startDate: Date, endDate: Date): Promise<CashflowStream[]>;
+    retrieveSingle(id: string): Promise<Transaction | null>;
+    insert(transaction: Transaction): Promise<Transaction>;
+    update(transaction: Transaction): Promise<Transaction | null>;
+    delete(id: string): Promise<boolean>;
 }
 
 function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transaction {
@@ -34,7 +38,6 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-        userId: row.userId,
         accountId: row.accountId,
         categoryId: row.categoryId,
         date: DateTimeUtil.toISOString(row.date),
@@ -55,10 +58,8 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         this.db = dbClient.drizzle;
     }
 
-    public async retrieveForExport(userId: string, accountId?: string): Promise<TransactionExport[]> {
-        const conditions = [
-            eq(accountSchema.userId, userId)
-        ];
+    public async retrieveForExport(accountId?: string): Promise<TransactionExport[]> {
+        const conditions: SQL[] = [];
 
         if (accountId) {
             conditions.push(eq(accountSchema.id, accountId));
@@ -95,10 +96,8 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         }));
     }
 
-    public async search(userId: string, options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]> {
-        const conditions = [
-            eq(accountSchema.userId, userId)
-        ];
+    public async search(options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]> {
+        const conditions: SQL[] = [];
 
         if (accountId) {
             conditions.push(eq(accountSchema.id, accountId));
@@ -187,11 +186,9 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         return rows.map(row => mapRowToTransaction(row.transaction));
     }
 
-    public async retrieveMerchants(userId: string): Promise<string[]> {
+    public async retrieveMerchants(): Promise<string[]> {
         const rows = await this.db.select({ merchant: transactionSchema.merchant })
             .from(transactionSchema)
-            .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
-            .where(eq(accountSchema.userId, userId))
             .groupBy(transactionSchema.merchant)
             .orderBy(transactionSchema.merchant);
 
@@ -199,19 +196,18 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     }
 
     public async retrieveSingle(id: string): Promise<Transaction | null> {
-        const rows = await this.db.select({ transaction: transactionSchema })
+        const rows = await this.db.select()
             .from(transactionSchema)
-            .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
             .where(eq(transactionSchema.id, id));
 
         if (rows.length === 0) {
             return null;
         }
 
-        return mapRowToTransaction(rows[0].transaction);
+        return mapRowToTransaction(rows[0]);
     }
 
-    public async retrieveCashflowByCategory(userId: string, startDate: Date, endDate: Date): Promise<CashflowStream[]> {
+    public async retrieveCashflowByCategory(startDate: Date, endDate: Date): Promise<CashflowStream[]> {
         const rows = await this.db
             .select({
                 categoryId: transactionSchema.categoryId,
@@ -220,7 +216,6 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
             .where(and(
-                eq(accountSchema.userId, userId),
                 gte(transactionSchema.date, DateTimeUtil.toDateString(startDate)),
                 lte(transactionSchema.date, DateTimeUtil.toDateString(endDate)),
                 eq(accountSchema.hideFromCashflow, false)
@@ -237,7 +232,6 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         const rows = await this.db.insert(transactionSchema)
             .values({
                 id: transaction.id,
-                userId: transaction.userId,
                 accountId: transaction.accountId,
                 categoryId: transaction.categoryId,
                 date: DateTimeUtil.toDateString(transaction.date),

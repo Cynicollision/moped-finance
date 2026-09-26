@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { RegistrationStatus } from '@shared/core/contracts';
 import { User } from '@shared/core/types/user';
 import { ApiService } from './api.service';
 
@@ -25,6 +26,11 @@ export class AuthService {
             this.currentUser.set(response);
             this.router.navigate([returnUrl || '/']);
         }
+    }
+
+    async isRegistrationOpen(): Promise<boolean> {
+        const status = await this.api.get<RegistrationStatus>('auth/registration');
+        return status?.isOpen ?? false;
     }
 
     async register(username: string, displayName: string, password?: string, returnUrl?: string): Promise<void> {

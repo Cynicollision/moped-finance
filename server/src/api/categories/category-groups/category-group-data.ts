@@ -1,16 +1,17 @@
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CategoryGroup } from '@shared/finance/types';
 import { CategoryClass } from '@shared/finance/enum';
-import { IDatabaseClient, IOwnedResourceData } from '@server/data';
+import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { categoryGroupSchema } from './category-group-schema';
 
-export interface IFinanceCategoryGroupData extends IOwnedResourceData<CategoryGroup> {
-    retrieveAll(userId: string): Promise<CategoryGroup[]>;
-    delete(id: string): Promise<boolean>;
+export interface IFinanceCategoryGroupData {
+    retrieveAll(): Promise<CategoryGroup[]>;
+    retrieveSingle(id: string): Promise<CategoryGroup | null>;
     insert(group: CategoryGroup): Promise<CategoryGroup>;
     update(group: CategoryGroup): Promise<CategoryGroup | null>;
+    delete(id: string): Promise<boolean>;
 }
 
 function mapRowToCategoryGroup(row: typeof categoryGroupSchema.$inferSelect): CategoryGroup {
@@ -18,7 +19,6 @@ function mapRowToCategoryGroup(row: typeof categoryGroupSchema.$inferSelect): Ca
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-        userId: row.userId,
         class: row.class as CategoryClass,
         name: row.name,
     };
@@ -31,9 +31,8 @@ export class FinanceCategoryGroupData implements IFinanceCategoryGroupData {
         this.db = dbClient.drizzle;
     }
 
-    public async retrieveAll(userId: string): Promise<CategoryGroup[]> {
-        const rows = await this.db.select().from(categoryGroupSchema)
-            .where(eq(categoryGroupSchema.userId, userId));
+    public async retrieveAll(): Promise<CategoryGroup[]> {
+        const rows = await this.db.select().from(categoryGroupSchema);
         return rows.map(mapRowToCategoryGroup);
     }
 
@@ -60,7 +59,6 @@ export class FinanceCategoryGroupData implements IFinanceCategoryGroupData {
         const rows = await this.db.insert(categoryGroupSchema)
             .values({
                 id: group.id,
-                userId: group.userId,
                 class: group.class,
                 name: group.name
             })

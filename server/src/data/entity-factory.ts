@@ -29,45 +29,31 @@ export class FinanceEntityFactory {
         } as unknown as T;
     }
 
-    public static createAccount(userId: string, account: NewEntity<Account>): Account {
-        const entity = FinanceEntityFactory.createEntity<Account>(FinanceEntityIdPrefix.Account, account);
-        entity.userId = userId;
-        return entity;
+    public static createAccount(account: NewEntity<Account>): Account {
+        return FinanceEntityFactory.createEntity<Account>(FinanceEntityIdPrefix.Account, account);
     }
 
-    public static createBalanceHistory(userId: string, history: NewEntity<BalanceHistory>): BalanceHistory {
-        const entity = FinanceEntityFactory.createEntity<BalanceHistory>(FinanceEntityIdPrefix.BalanceHistory, history);
-        entity.userId = userId;
-        return entity;
+    public static createBalanceHistory(history: NewEntity<BalanceHistory>): BalanceHistory {
+        return FinanceEntityFactory.createEntity<BalanceHistory>(FinanceEntityIdPrefix.BalanceHistory, history);
     }
 
-    public static createTransaction(userId: string, transaction: NewEntity<Transaction>): Transaction {
-        const entity = FinanceEntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, transaction);
-        entity.userId = userId;
-        return entity;
+    public static createTransaction(transaction: NewEntity<Transaction>): Transaction {
+        return FinanceEntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, transaction);
     }
 
-    public static createInstitution(userId: string, institution: NewEntity<Institution>): Institution {
-        const entity = FinanceEntityFactory.createEntity<Institution>(FinanceEntityIdPrefix.Institution, institution);
-        entity.userId = userId;
-        return entity;
+    public static createInstitution(institution: NewEntity<Institution>): Institution {
+        return FinanceEntityFactory.createEntity<Institution>(FinanceEntityIdPrefix.Institution, institution);
     }
 
-    public static createCategory(userId: string, category: NewEntity<Category>): Category {
-        const entity = FinanceEntityFactory.createEntity<Category>(FinanceEntityIdPrefix.Category, category);
-        entity.userId = userId;
-        return entity;
+    public static createCategory(category: NewEntity<Category>): Category {
+        return FinanceEntityFactory.createEntity<Category>(FinanceEntityIdPrefix.Category, category);
     }
 
-    public static createCategoryGroup(userId: string, group: NewEntity<CategoryGroup>): CategoryGroup {
-        const entity = FinanceEntityFactory.createEntity<CategoryGroup>(FinanceEntityIdPrefix.CategoryGroup, group);
-        entity.userId = userId;
-        return entity;
+    public static createCategoryGroup(group: NewEntity<CategoryGroup>): CategoryGroup {
+        return FinanceEntityFactory.createEntity<CategoryGroup>(FinanceEntityIdPrefix.CategoryGroup, group);
     }
 
-    public static createBudgetStream(userId: string, stream: NewEntity<BudgetStream>): BudgetStream {
-        const entity = FinanceEntityFactory.createEntity<BudgetStream>(FinanceEntityIdPrefix.BudgetStream, stream);
-        entity.userId = userId;
-        return entity;
+    public static createBudgetStream(stream: NewEntity<BudgetStream>): BudgetStream {
+        return FinanceEntityFactory.createEntity<BudgetStream>(FinanceEntityIdPrefix.BudgetStream, stream);
     }
 }

@@ -1,4 +1,4 @@
-import { eq, and, desc, sum, gte, lte, inArray } from 'drizzle-orm';
+import { eq, and, desc, sum, gte, lte } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
@@ -16,7 +16,7 @@ export type BalanceHistoryExport = {
 
 export interface IFinanceBalanceHistoryData {
     retrieveForAccount(accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;
-    retrieveSumByDate(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]>;
+    retrieveSumByDate(type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]>;
     deleteRange(accountId: string, startDate: string, endDate: string): Promise<boolean>;
     insertBulk(records: BalanceHistory[]): Promise<boolean>;
     retrieveForExport(accountId: string): Promise<BalanceHistoryExport[]>;
@@ -47,13 +47,11 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
                 id: balanceHistorySchema.id,
                 createdAt: balanceHistorySchema.createdAt,
                 updatedAt: balanceHistorySchema.updatedAt,
-                userId: balanceHistorySchema.userId,
                 accountId: balanceHistorySchema.accountId,
                 date: balanceHistorySchema.date,
                 balance: balanceHistorySchema.balance
             })
             .from(balanceHistorySchema)
-            .innerJoin(accountSchema, eq(accountSchema.id, balanceHistorySchema.accountId))
             .where(and(...conditions));
 
         return rows.map(row => ({
@@ -63,9 +61,8 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         }));
     }
 
-    public async retrieveSumByDate(userId: string, type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]> {
+    public async retrieveSumByDate(type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]> {
         const conditions = [
-            eq(accountSchema.userId, userId),
             gte(balanceHistorySchema.date, DateTimeUtil.toDateString(startDate)),
             lte(balanceHistorySchema.date, DateTimeUtil.toDateString(endDate))
         ];
@@ -94,14 +91,9 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
     }
 
     public async deleteRange(accountId: string, startDate: string, endDate: string): Promise<boolean> {
-        const userAccountsQuery = this.db.select({ id: accountSchema.id })
-            .from(accountSchema)
-            .where(eq(accountSchema.id, accountId));
-
         await this.db.delete(balanceHistorySchema)
             .where(and(
                 eq(balanceHistorySchema.accountId, accountId),
-                inArray(balanceHistorySchema.accountId, userAccountsQuery),
                 gte(balanceHistorySchema.date, DateTimeUtil.toDateString(startDate)),
                 lte(balanceHistorySchema.date, DateTimeUtil.toDateString(endDate))
             ));
@@ -114,7 +106,6 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
 
         const values = records.map(r => ({
             id: r.id,
-            userId: r.userId,
             accountId: r.accountId,
             date: DateTimeUtil.toDateString(r.date),
             balance: r.balance.toString(),

@@ -1,12 +1,16 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Category } from '@shared/finance/types';
-import { IDatabaseClient, IOwnedResourceData } from '@server/data';
+import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { categorySchema } from './category-schema';
 
-export interface IFinanceCategoryData extends IOwnedResourceData<Category> {
-    retrieveAll(userId: string, activeOnly?: boolean): Promise<Category[]>;
+export interface IFinanceCategoryData {
+    retrieveAll(activeOnly?: boolean): Promise<Category[]>;
+    retrieveSingle(id: string): Promise<Category | null>;
+    insert(category: Category): Promise<Category>;
+    update(category: Category): Promise<Category | null>;
+    delete(id: string): Promise<boolean>;
 }
 
 function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
@@ -14,7 +18,6 @@ function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-        userId: row.userId,
         groupId: row.groupId,
         icon: row.icon,
         name: row.name,
@@ -29,10 +32,8 @@ export class FinanceCategoryData implements IFinanceCategoryData {
         this.db = dbClient.drizzle;
     }
 
-    public async retrieveAll(userId: string, activeOnly?: boolean): Promise<Category[]> {
-        const conditions = [
-            eq(categorySchema.userId, userId)
-        ];
+    public async retrieveAll(activeOnly?: boolean): Promise<Category[]> {
+        const conditions: SQL[] = [];
 
         if (activeOnly) {
             conditions.push(eq(categorySchema.isActive, true));
@@ -66,7 +67,6 @@ export class FinanceCategoryData implements IFinanceCategoryData {
         const rows = await this.db.insert(categorySchema)
             .values({
                 id: category.id,
-                userId: category.userId,
                 groupId: category.groupId,
                 icon: category.icon,
                 name: category.name,

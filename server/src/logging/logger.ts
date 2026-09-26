@@ -86,7 +86,6 @@ export class AppLogger implements IAppLogger {
     private createLogEntry(contextUserId: string, context: string, level: LogLevel, message: string): LogEntry {
         return {
             id: EntityId.generate(CoreEntityIdPrefix.Log),
-            userId: contextUserId,
             createdAt: DateTimeUtil.now(),
             updatedAt: DateTimeUtil.now(),
             contextUserId,
