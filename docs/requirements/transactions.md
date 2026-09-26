@@ -16,10 +16,11 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-1.10 | The **End Date** filter shall start out set to today, and the list request sends it, so transactions dated after today are hidden until the user clears or changes it. **Clear Filters** puts End Date back to today rather than blank. Start Date starts empty. | Implemented |
 | TXN-1.6 | The merchant filter shall match any merchant *containing* the text, ignoring case, and suggest merchants the user has used before. The category and group filters shall suggest matching names as the user types. | Implemented |
 | TXN-1.7 | The screen shall accept pre-set filters from the link that opened it: account, category, group, start date and end date. Account Details' **Go To Transactions** and every row of Cashflow (CASH-1.6) use this. | Implemented |
-| TXN-1.8 | Transactions marked **hidden** shall be left out of the list, search and Account Details' recent transactions. | Implemented |
+| TXN-1.8 | Transactions marked **hidden** shall be left out of everything by default: the list and search (unless shown with TXN-1.13), Account Details' recent transactions, Cashflow (CASH-1.2), and balance adjustments (TXN-2.10). Exports still include them, with `IsHidden` (TXN-3.1). | Partial |
 | TXN-1.9 | On handset-width screens the category shall appear under the merchant instead of in its own column. | Implemented |
 | TXN-1.11 | Every transaction shall appear in the list and search, including those in Uncategorized (CAT-5.2), which can be filtered for like any other category. | Partial |
 | TXN-1.12 | Transactions in hidden accounts (ACCT-1.9) shall be left out of the list and search, and hidden accounts left out of the **Account** filter, unless the screen was opened filtered to that account (from its Account Details' **Go To Transactions**). Transactions in closed accounts (ACCT-6) are listed as usual. | Planned |
+| TXN-1.13 | The **Filters** panel shall have a **Show hidden transactions** checkbox, unchecked by default and reset by **Clear Filters**. When checked, hidden transactions are listed with the rest, dimmed, with a crossed-out eye icon. It's the only way to reach them in the app. | Planned |
 
 ## TXN-2 The user can record and correct transactions by hand
 
@@ -34,6 +35,8 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-2.7 | The **Category** field shall default to Uncategorized (CAT-5.2) and offer only active categories (CAT-4.1), plus the transaction's current category when editing (CAT-4.2). | Planned |
 | TXN-2.8 | For a manual account (ACCT-4.3), Add and Edit Transaction shall show an **Adjust balance** checkbox, checked by default on Add. Saving with it checked changes the account's balance history as in ACCT-5.2 and ACCT-5.3. The checkbox isn't shown for a connected account. | Planned |
 | TXN-2.9 | View Transaction shall show **Adjusts balance** ("Yes" or "No") for a transaction in a manual account. | Planned |
+| TXN-2.10 | A hidden transaction shall not adjust its account's balance. Hiding a transaction that adjusts the balance undoes its effect, and un-hiding it applies it again (ACCT-5.3). | Planned |
+| TXN-2.11 | The user can un-hide a transaction by opening it (from the list with TXN-1.13) and clearing **Hide Transaction** in Edit Transaction. | Planned |
 
 ## TXN-3 The user can move transactions in and out as CSV
 
@@ -59,7 +62,7 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 - **Required fields (TXN-2.6).** The form only marks Account, Amount and Date as required. A missing Merchant or category fails at the server with a validation error toast rather than a message on the field.
 - **Inactive categories are offered in the form (TXN-2.7).**
 - **Every account is offered in the form (TXN-2.1),** in creation order, hidden ones included.
-- **Hidden transactions can't be seen again.** The API supports including them, but the UI has no toggle, so a transaction marked hidden is invisible in the app (though still exported, and still counted in Cashflow). Part of the "what a hidden transaction means" decision in `TODO.md`.
+- **Hidden transactions can't be seen again (TXN-1.13).** The API supports including them, but the UI has no toggle, so a transaction marked hidden is invisible in the app, though still exported and still counted in Cashflow (TXN-1.8).
 - **Nothing tells the user which sign to use.** The Add and Edit forms show **Amount** as a bare number (default 0). Outflows are negative and inflows positive, but the list and view screens hide the sign, so the rule is only discoverable from the data. Part of the "sign conventions" decision in `TODO.md`.
 - **Amount filters compare signed values,** so "Min Amount 100" finds income of 100 or more but no expenses; finding expenses over 100 means a maximum of -100. The table shows amounts unsigned, which makes this easy to trip over.
 - **Future-dated transactions are hidden by default (TXN-1.10).** The pre-filled End Date silently excludes anything after today, with no visual hint besides the date field itself. **Clear Filters** re-applies it.

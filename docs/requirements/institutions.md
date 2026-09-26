@@ -33,8 +33,13 @@ Screens: **Accounts** (`/accounts`, listing institutions and their accounts), **
 | INST-2.5 | **Disconnect** shall, after confirming, remove the bank connection and make every connected account at the institution manual, keeping their balance history and transactions. | Planned |
 | INST-2.6 | A skipped bank account shall be offered again the next time the user reconnects. | Planned |
 | INST-2.7 | Deleting a connected institution (INST-1.8) shall also remove its bank connection. | Planned |
+| INST-2.8 | When a bank account is linked to an existing manual account that already has transactions or balance entries (INST-2.3), the user shall choose how the two histories combine: **Combine** (the default), **Use the bank's history**, or **Keep my history only**. The choice applies to both transactions and balance entries. | Planned |
+| INST-2.9 | **Combine** shall keep each side's entries on dates the other side doesn't cover, and on the overlapping dates (from the later of the two earliest dates to the earlier of the two latest) keep only the winning side's, which the user picks: **Bank** (the default) or **Mine**. | Planned |
+| INST-2.10 | **Use the bank's history** shall delete the account's existing transactions and balance entries and keep everything the bank returns. **Keep my history only** shall keep the existing ones and ignore the bank's history, so sync only adds what's new from the moment of linking. | Planned |
+| INST-2.11 | Before the user confirms, the link dialog shall say, per linked account, how many transactions and balance entries will be removed and added. Confirming applies every account's choice in one database transaction, or none. | Planned |
+| INST-2.12 | After linking, each sync shall add only transactions it hasn't added before, so repeated syncs never duplicate them. | Planned |
 
-INST-2.1 comes from the "Automated bank sync" item in `TODO.md`; the constraints are the ones written there. Provider details (link flow, token storage, incremental sync) belong in `docs/integrations/bank-sync.md` once the provider is chosen.
+INST-2.1 comes from the "Automated bank sync" item in `TODO.md`; the constraints are the ones written there. Everything the user sees or decides about sync is a requirement here (INST-2) or in ACCT-4. How it's built (provider choice, link flow, token storage, how "added before" is recognized for INST-2.12) goes in `docs/integrations/bank-sync.md`, written when the provider is chosen.
 
 ## Known gaps
 
@@ -45,7 +50,3 @@ INST-2.1 comes from the "Automated bank sync" item in `TODO.md`; the constraints
 ## Housekeeping
 
 - **Sync endpoints are stubs.** `POST /institutions/:id/sync` and `POST /accounts/:id/sync` (`syncInstitution` in `institution-controller.ts`, `syncAccount` in `account-controller.ts`) report success without doing anything, and nothing in the UI calls them. Until INST-2 is built, return a not-implemented result, then replace the skipped `xit('should return sync stub success')` in `institution-routes.spec.ts`.
-
-## Open questions
-
-- **Duplicates when linking (INST-2.3).** Linking a manual account that already has hand-entered or imported transactions means sync may bring the same transactions again. Decide how they're matched (date, amount, merchant) in `docs/integrations/bank-sync.md`, together with de-duplicating against CSV imports.
