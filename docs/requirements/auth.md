@@ -25,6 +25,7 @@ Screens: **Login** (`/login`), **Register** (`/register`), and the **Sign out** 
 | AUTH-2.5 | Successful registration shall sign the user in immediately and navigate the same way as AUTH-1.3. | Implemented |
 | AUTH-2.6 | Passwords shall be stored only as salted bcrypt hashes (10 rounds) and shall never be returned by any API. | Implemented |
 | AUTH-2.7 | Once a first user exists, registration shall be disabled: the API shall reject it with "Registration is closed.", the Login screen shall hide its Register link, and navigating to Register shall redirect to Login. | Implemented |
+| AUTH-2.8 | The Register screen shall explain, before the user submits, that they're creating the only account for this instance, that it will own all of the instance's data, and that registration closes once it's done, so the Register screen won't be available again. | Planned |
 
 ## AUTH-3 The user stays signed in, and only signed-in users see finance data
 
@@ -78,5 +79,5 @@ Things found while reading the code that the requirements above don't yet cover 
 - **Cookie settings are inconsistent.** The session cookie's `secure` flag comes from `COOKIE_SECURE`, but logout clears the cookie with `secure` set from `NODE_ENV`. No `sameSite` is set. `TODO.md` lists the fix.
 - **Username matching is case-sensitive**, so `Stn` and `stn` are different users.
 - **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.
-- **Fresh instances are claimable.** Until `TODO.md`'s first-user bootstrap item is done, whoever reaches a fresh instance first becomes its owner.
+- **Fresh instances are claimable.** Whoever registers first on a fresh instance becomes its owner. Accepted (2026-09-26) for a LAN-only host: the owner registers right after the first start (see `docs/deployment.md`), and AUTH-2.8 makes the one-time nature clear on screen.
 - **Display name.** Collected at registration and shown in the profile menu; there's no way to edit it.

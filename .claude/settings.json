@@ -12,7 +12,7 @@
       "Bash(docker compose config*)",
       "Bash(docker compose up*)",
       "Bash(docker compose exec api npm test*)",
-      "Bash(docker compose exec api npm run db:init*)",
+      "Bash(docker compose exec api npm run db:migrate*)",
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",

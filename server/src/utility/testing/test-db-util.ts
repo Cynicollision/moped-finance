@@ -1,25 +1,19 @@
-import fs from 'fs';
 import path from 'path';
 import { PGlite } from '@electric-sql/pglite';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/pglite';
+import { migrate } from 'drizzle-orm/pglite/migrator';
 import { User } from '@shared/core/types/user';
 import { DatabaseClient } from '@server/data';
 
 export class TestDatabaseUtil {
     public static async createMockDatabase(): Promise<{ dbClient: DatabaseClient, pglite: PGlite }> {
         const pglite = new PGlite();
-
-        // Initialize schema
-        const coreSqlPath = path.join(__dirname, '../../../scripts/schema_core.sql');
-        const coreSql = fs.readFileSync(coreSqlPath, 'utf8');
-        await pglite.exec(coreSql);
-
-        const financeSqlPath = path.join(__dirname, '../../../scripts/schema_finance.sql');
-        const financeSql = fs.readFileSync(financeSqlPath, 'utf8');
-        await pglite.exec(financeSql);
-
         const memoryDrizzle = drizzle(pglite);
+
+        // Same migrations the server applies on startup
+        await migrate(memoryDrizzle, { migrationsFolder: path.join(__dirname, '../../../migrations') });
+
         const dbClient = new DatabaseClient(memoryDrizzle as any);
 
         return { dbClient, pglite };

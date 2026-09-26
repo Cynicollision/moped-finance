@@ -53,12 +53,10 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 - [ ] Choose a sort order for institutions, accounts within a group, and the category group picker (currently creation order).
 - [ ] The Cashflow year list is a fixed four-year window; derive it from the data (CASH observations).
 - [ ] Import breadcrumbs, the Accounts/Dashboard name mismatch, and the product name on Login/Register (APP, DASH observations).
+- [ ] Register screen: explain that this creates the instance's only account, which owns all its data, and that Register won't be available again afterwards (AUTH-2.8). Add it to `register.component.html` above the form.
 
 ### Data & deployment
-- [ ] Add database migrations (e.g. drizzle-kit). Schema is currently applied with `CREATE TABLE IF NOT EXISTS` scripts, which can't upgrade an existing production database. The Drizzle tables already declare everything the SQL scripts do (enforced by `server/src/data/schema-parity.spec.ts`), so generate the baseline migration from Drizzle, point `db:init` and `TestDatabaseUtil.createMockDatabase` at the migrations, and delete `schema_*.sql` and the parity spec.
-- [ ] Give production a working database init path. The `db:*` scripts need `ts-node`, which isn't in the production image. Options: compile the scripts into the image, or run migrations on startup.
-- [ ] Safe first-user bootstrap for production. Registration closes after the first user (AUTH-2.7), so a fresh instance belongs to whoever registers first; decide whether that's acceptable on the NAS or create the owner another way. Older deployment docs inserted a hardcoded `admin`/`admin123` password hash; don't carry that approach forward.
-- [ ] Document backup and restore for the Postgres volume. Include retention for `core.logs`, which grows without bound (errors are logged to the database).
+- [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
 - [ ] Commit a small synthetic seed dataset. `db:seed` reads the untracked `server/test_data/` (which also holds unrelated CSVs such as `plant_varieties.csv`), so a fresh clone, CI or the NAS can't seed. Shared sample data would also serve demo mode, a CI smoke test and UI work. Drop the unused `UserId` CSV column while at it.
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 

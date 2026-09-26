@@ -1,12 +1,10 @@
-import { pgSchema, varchar, timestamp, decimal, check, index } from 'drizzle-orm/pg-core';
+import { varchar, timestamp, decimal, check, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { CalendarPeriod } from '@shared/core/enum';
 import { BudgetStreamType } from '@shared/finance/enum';
-import { SchemaUtil } from '@server/data';
+import { financeSchema, SchemaUtil } from '@server/data';
 import { categorySchema } from './../categories/category-schema';
-
-const financeSchema = pgSchema('finance');
 
 export const budgetStreamSchema = financeSchema.table('budget_streams', {
     id: varchar('id', { length: 50 }).primaryKey(),

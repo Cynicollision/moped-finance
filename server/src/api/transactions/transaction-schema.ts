@@ -1,11 +1,9 @@
-import { AnyPgColumn, pgSchema, varchar, timestamp, numeric, boolean, text, date, index } from 'drizzle-orm/pg-core';
+import { AnyPgColumn, varchar, timestamp, numeric, boolean, text, date, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
-import { SchemaUtil } from '@server/data';
+import { financeSchema, SchemaUtil } from '@server/data';
 import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';
-
-const financeSchema = pgSchema('finance');
 
 export const transactionSchema = financeSchema.table('transactions', {
     id: varchar('id', { length: 50 }).primaryKey(),

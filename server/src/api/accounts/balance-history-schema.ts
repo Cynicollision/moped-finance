@@ -1,8 +1,7 @@
-import { pgSchema, varchar, timestamp, numeric, date, index, unique } from 'drizzle-orm/pg-core';
+import { varchar, timestamp, numeric, date, index, unique } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
+import { financeSchema } from '@server/data';
 import { accountSchema } from './account-schema';
-
-const financeSchema = pgSchema('finance');
 
 export const balanceHistorySchema = financeSchema.table('balance_history', {
     id: varchar('id', { length: 50 }).primaryKey(),

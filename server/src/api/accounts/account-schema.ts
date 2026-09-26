@@ -1,11 +1,9 @@
-import { pgSchema, varchar, timestamp, boolean, check, index } from 'drizzle-orm/pg-core';
+import { varchar, timestamp, boolean, check, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
-import { SchemaUtil } from '@server/data';
+import { financeSchema, SchemaUtil } from '@server/data';
 import { institutionSchema } from './../institutions/institution-schema';
-
-const financeSchema = pgSchema('finance');
 
 export const accountSchema = financeSchema.table('accounts', {
     id: varchar('id', { length: 50 }).primaryKey(),

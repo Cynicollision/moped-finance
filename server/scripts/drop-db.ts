@@ -13,12 +13,13 @@ const pool = new Pool(dbConfig);
 (async () => {
     const client = await pool.connect();
     try {
-        console.log('🗑️  Dropping core schema...');
-        await client.query('DROP SCHEMA IF EXISTS core CASCADE;');
-        console.log('✅ Core schema dropped.');
+        // `drizzle` holds the record of applied migrations; dropping it lets db:migrate start from scratch.
+        console.log('🗑️  Dropping core, finance and drizzle schemas...');
+        await client.query('DROP SCHEMA IF EXISTS core, finance, drizzle CASCADE;');
+        console.log('✅ Schemas dropped.');
     }
     catch (err) {
-        console.error('❌ Core reset failed:', err);
+        console.error('❌ Drop failed:', err);
         process.exit(1);
     }
     finally {

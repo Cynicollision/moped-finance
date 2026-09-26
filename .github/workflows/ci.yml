@@ -27,6 +27,16 @@ jobs:
         run: npx tsc --noEmit
         working-directory: server
 
+      - name: Check migrations match the Drizzle schema
+        run: |
+          npx drizzle-kit generate
+          if [ -n "$(git status --porcelain -- migrations)" ]; then
+            git status --porcelain -- migrations
+            echo "The Drizzle tables changed without a migration. Run 'npm run db:generate' in server/ and commit the result."
+            exit 1
+          fi
+        working-directory: server
+
       - name: Run server tests
         run: npm test
         working-directory: server
@@ -93,6 +103,9 @@ jobs:
           done
           echo "/health did not return 200 within 60s"
           exit 1
+
+      - name: Check migrations ran (registration is open on an empty database)
+        run: curl -fsS http://127.0.0.1:3000/auth/registration | grep -q '"isOpen":true'
 
       - name: Check / serves index.html
         run: curl -fsS http://127.0.0.1:3000/ | grep -q '<app-root'
