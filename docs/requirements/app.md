@@ -43,6 +43,7 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 
 ## Observations
 
+- **Operational gaps before deployment.** The server has no health endpoint, doesn't shut down gracefully on `SIGTERM`, doesn't handle Postgres connection errors on idle clients, and accepts CSV uploads of any size. None of this is visible in normal use; `TODO.md` lists each under Server hardening. Promote to `APP` requirements if you want them tracked by ID.
 - **Login and Register show no product name.** The side navigation header and browser tab say "Moped Finance" (APP-3.1), but the Login and Register screens have no product name at all.
 - **Settings is a dead link** (APP-1.5). See the AUTH observations.
 - **Demo mode is a shell.** Every request other than auth returns an empty list, so the finance screens render empty (APP-4.3).

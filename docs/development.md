@@ -29,6 +29,8 @@ Any OS works. Development has mostly happened on Windows with Docker Desktop's W
 
 **Hot reload:** nodemon polls `server/` and `shared/` inside the container (`server/nodemon.json`) and restarts on `.ts` changes. Each restart takes about 15 seconds because ts-node type-checks on startup. A compile error leaves the API down until the next save; check the logs.
 
+The container runs whatever is in your working tree, so switching branches switches the running API too. If the branch changes the schema, the API runs against the old tables until you `db:reset`.
+
 **Debugging the API:** the container exposes the Node inspector on :9229. In VS Code, use the "Attach to Node.js (Docker)" launch configuration.
 
 ## Database scripts

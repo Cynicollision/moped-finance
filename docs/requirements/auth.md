@@ -74,6 +74,8 @@ Things found while reading the code that the requirements above don't yet cover 
 
 - **Settings menu item is a dead end.** The profile menu has **Settings**, linking to `/system`. No such route exists, so it lands on the Accounts summary. There is no screen for changing the password (AUTH-5.1 is API-only); it would be the obvious first inhabitant.
 - **No password rules.** A password only has to be non-empty (AUTH-2). No minimum length, no lockout or rate limiting on repeated failed logins.
+- **Sessions don't roll.** AUTH-3.2 as written: a session ends 24 hours after sign-in even if the user is active. Consider a rolling session (extended on each request) once sessions survive restarts (AUTH-3.6).
+- **Cookie settings are inconsistent.** The session cookie's `secure` flag comes from `COOKIE_SECURE`, but logout clears the cookie with `secure` set from `NODE_ENV`. No `sameSite` is set. `TODO.md` lists the fix.
 - **Username matching is case-sensitive**, so `Stn` and `stn` are different users.
 - **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.
 - **Fresh instances are claimable.** Until `TODO.md`'s first-user bootstrap item is done, whoever reaches a fresh instance first becomes its owner.
