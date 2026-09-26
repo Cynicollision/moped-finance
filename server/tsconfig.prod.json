@@ -3,10 +3,14 @@
     "compilerOptions": {
         "sourceMap": false
     },
+    "include": [
+        "index.ts",
+        "src/**/*.ts"
+    ],
     "exclude": [
         "node_modules",
         "dist",
         "**/*.spec.ts",
-        "src/test-utils"
+        "src/utility/testing"
     ]
 }

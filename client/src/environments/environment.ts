@@ -5,7 +5,7 @@ export const Environment = {
     production: true,
     isDebugMode: false,
     demoMode: false,
-    apiUrl: 'http://localhost:3000',
+    apiUrl: '',
     devUsername: '',
     devPassword: ''
 };

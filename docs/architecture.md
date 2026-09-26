@@ -15,13 +15,13 @@ Moped Finance is a single-user personal finance app: an Angular client, a Node/E
 | `@shared/*` | `shared/*` | client and server |
 | `@server/*` | `server/src/*` | server |
 
-Aliases are set in each package's `tsconfig.json`, and in `server/jest.config.js` for tests.
+Aliases are set in each package's `tsconfig.json`, and in `server/jest.config.js` for tests. The server build runs `tsc-alias` after `tsc` to rewrite them to relative paths in `dist/`. Because the server imports `../shared`, `tsc` emits to `dist/server/` and `dist/shared/`, so the entry point is `dist/server/index.js`.
 
 ## Server
 
 ```
 server/
-  index.ts          app setup: session, CORS, routers, static files, graceful shutdown
+  index.ts          app setup: session, routers, static files, graceful shutdown
   src/api/<domain>/ finance endpoints, one folder per domain
   src/auth/         login/register/session, auth middleware, users
   src/health/       GET /health (database ping), used by the Docker health check
@@ -76,7 +76,7 @@ client/src/app/
 ```
 
 - Standalone components, routes in `app.routes.ts`.
-- All HTTP goes through `core/api.service.ts`, which prefixes `Environment.apiUrl`.
+- All HTTP goes through `core/api.service.ts`, which prefixes `Environment.apiUrl`. It's empty, so requests go to the origin that served the app: Express in production, and the dev server in development, which forwards `/api`, `/auth` and `/health` to the API on :3000 (`client/proxy.conf.json`). No CORS is needed.
 - Build configurations (`client/angular.json`, `client/src/environments/`):
   - `development`: debug mode (fixed "today" of 2026-05-17 plus a badge), dev login prefilled.
   - `production`: default for `ng build`.
@@ -84,4 +84,4 @@ client/src/app/
 
 ## Production shape
 
-In production a single container runs the API and serves the built client from Express, next to a Postgres container. See [deployment.md](deployment.md) for status; it hasn't been run yet.
+In production a single container runs the API and serves the built client from Express, next to a Postgres container. The Dockerfile copies Angular's `dist/moped-finance/browser/` to `server/dist/server/public/`, which Express serves as `public` next to the compiled `index.js`. In development (ts-node) the same code resolves to `server/public/`, which is gitignored and normally empty. See [deployment.md](deployment.md) for status.

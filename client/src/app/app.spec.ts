@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { of } from 'rxjs';
 import { App } from './app';
@@ -12,7 +12,6 @@ describe('App', () => {
     let mockAuthService: any;
     let mockDateProvider: any;
     let mockLoadingService: any;
-    let mockRouter: any;
     let mockBreakpointObserver: any;
 
     beforeEach(async () => {
@@ -29,11 +28,6 @@ describe('App', () => {
             isLoading: signal(false)
         };
 
-        mockRouter = {
-            events: of(),
-            navigate: vi.fn()
-        };
-
         mockBreakpointObserver = {
             observe: vi.fn().mockReturnValue(of({ matches: false }))
         };
@@ -44,14 +38,8 @@ describe('App', () => {
                 { provide: AuthService, useValue: mockAuthService },
                 { provide: DateProviderService, useValue: mockDateProvider },
                 { provide: LoadingService, useValue: mockLoadingService },
-                { provide: Router, useValue: mockRouter },
-                { provide: BreakpointObserver, useValue: mockBreakpointObserver },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        snapshot: { queryParams: {} }
-                    }
-                }
+                provideRouter([]),
+                { provide: BreakpointObserver, useValue: mockBreakpointObserver }
             ]
         }).compileComponents();
     });

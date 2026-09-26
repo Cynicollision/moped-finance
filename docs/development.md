@@ -24,7 +24,7 @@ Any OS works. Development has mostly happened on Windows with Docker Desktop's W
 | Rebuild after dependency or Dockerfile changes | `docker compose up -d --build` | |
 | API logs | `docker compose logs -f api` | |
 | Stop | `docker compose down` | Data stays in the `moped-finance_db_data` volume |
-| Client | `npm start` in `client/` | http://localhost:4200, `development` configuration |
+| Client | `npm start` in `client/` | http://localhost:4200, `development` configuration; proxies API calls to :3000 |
 | Client in demo mode | `npx ng serve --configuration demo` in `client/` | No API needed |
 
 **Hot reload:** nodemon polls `server/` and `shared/` inside the container (`server/nodemon.json`) and restarts on `.ts` changes. Each restart takes about 15 seconds because ts-node type-checks on startup. A compile error leaves the API down until the next save; check the logs.
