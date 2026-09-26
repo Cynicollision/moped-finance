@@ -61,3 +61,5 @@ Don't edit a migration once it's merged: databases that already ran it won't run
 - `npx ng test --watch=false` and `npx ng build` in `client/`
 
 See [testing.md](testing.md) for how the tests are set up.
+
+`main` has a ruleset ("Protect main": pull request required, CI passing, branch up to date, no force pushes). GitHub doesn't enforce rulesets on a private repository on the free plan, so it only takes effect if the repository becomes public or moves to GitHub Pro. Follow it anyway.

@@ -11,9 +11,7 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Now
 
-### GitHub
-- [ ] Optional: install the Claude GitHub App (`/install-github-app` from a `claude` terminal session).
-- [ ] Protect `main`: require CI to pass; work on feature branches through PRs.
+Nothing right now.
 
 ---
 
