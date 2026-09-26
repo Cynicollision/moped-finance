@@ -1,6 +1,6 @@
 # Deployment
 
-> **Status: not deployed, and the production path doesn't work yet.** The production image builds but doesn't start, and the client points at `localhost`. See **Production build** in `TODO.md`. This page describes the intended setup; fill in the steps once it's been run end to end.
+> **Status: not deployed yet.** The production image builds, starts, serves the client and answers `/health`; CI checks this on every PR (the smoke test in `.github/workflows/ci.yml`). There's no way yet to create the schema or the first user in production (see below), so it isn't usable end to end. This page describes the intended setup; fill in the steps once it's been run end to end.
 
 ## Target
 

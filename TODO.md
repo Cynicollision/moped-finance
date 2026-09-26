@@ -11,22 +11,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Now
 
-### Production build
-The production setup was written but never run; only the dev compose stack (API with nodemon hot reload + Postgres) has been used and is verified working. The production image builds but doesn't start: `docker build .` then `docker run` fails with `Cannot find module '/app/server/dist/index.js'`.
-- [ ] `CMD ["node", "dist/index.js"]` (and `main` in `server/package.json`) is wrong: because the server imports `../shared`, tsc emits to `dist/server/index.js` and `dist/shared/`.
-- [ ] The `@server/*` / `@shared/*` path aliases aren't rewritten in the compiled output, so `node dist/server/index.js` fails with `Cannot find module '@server/api'`. Rewrite them at build time (e.g. `tsc-alias`) or bundle the server (e.g. esbuild).
-- [ ] Static files don't line up: Angular's application builder writes to `dist/moped-finance/browser/`, the Dockerfile copies `dist/moped-finance` to `server/public` (so `index.html` ends up in `server/public/browser/`), and Express serves `path.join(__dirname, 'public')`, which resolves to `dist/server/public`. Pick one location and make all three agree.
-- [ ] The client hardcodes `apiUrl: 'http://localhost:3000'` in both `environment.ts` (production) and `environment.development.ts`, so a production browser would call its own machine. Use relative URLs (`apiUrl: ''`) so the app talks to the origin that served it, and in development route through the dev-server proxy. `client/proxy.conf.json` exists but is unused, and it only covers `/api` while auth is mounted at `/auth`. With same-origin requests the server-side CORS setup can likely go.
-- [ ] Add a CI smoke test: build the image, start it, and check that `/` returns `index.html` and `/health` returns 200.
-- [ ] `server/tsconfig.prod.json` excludes `src/test-utils`, which doesn't exist; the test helpers live in `src/utility/testing` (they reference `jest`), so they and `scripts/` compile into the production `dist`. Exclude them, or give the production build an explicit `include` of `index.ts` and `src/`.
-
-### Tests
-- [ ] Fix the client test `App > should render sidenav container` in `client/src/app/app.spec.ts`. The hand-rolled Router mock is missing `createUrlTree`; use `provideRouter([])` instead of mocking `Router`.
-
-### CI
-- [ ] Add client tests (`ng test --watch=false`) to `.github/workflows/ci.yml`.
-- [ ] Add a server type-check (`tsc --noEmit`) and a client production build (`ng build`) to CI.
-
 ### GitHub
 - [ ] Optional: install the Claude GitHub App (`/install-github-app` from a `claude` terminal session).
 - [ ] Protect `main`: require CI to pass; work on feature branches through PRs.
@@ -65,6 +49,7 @@ From a review of the code, the schema, and the requirements' Observations (2026-
 - [ ] Consistent success feedback (a snackbar) for create, save and delete (APP observations).
 - [ ] Move the ~80 inline `style="..."` attributes in templates (e.g. `app.html`) into component SCSS. The two category dialog components, `chart.component.ts` and `value-period-change.component.ts` also use inline templates or styles, against `docs/conventions.md`.
 - [ ] The `@client/*` path alias in `client/tsconfig.json` is unused; use it or remove it.
+- [ ] `api.service.ts` passes `withCredentials: true` on every request; it's unneeded now that requests are same-origin (relative `apiUrl` plus the dev-server proxy).
 
 ### UX fixes from the requirements review
 - [ ] Credit-card accounts can't be created: the group has no account types, but Type is required (ACCT-1.10).

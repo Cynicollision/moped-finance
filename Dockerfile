@@ -61,9 +61,9 @@ RUN npm ci --prefix server --omit=dev
 # Copy compiled backend from the server-builder stage
 COPY --from=server-builder /app/server/dist ./server/dist
 
-# Copy the built frontend from the client-builder stage
-# The Express server is configured to serve static files from 'server/public'
-COPY --from=client-builder /app/client/dist/moped-finance ./server/public
+# Copy the built frontend from the client-builder stage. Express serves static files from
+# 'public' next to the compiled index.js (dist/server/public).
+COPY --from=client-builder /app/client/dist/moped-finance/browser ./server/dist/server/public
 
 # Expose the API port
 EXPOSE 3000
@@ -71,7 +71,7 @@ EXPOSE 3000
 # Switch to non-root user
 USER appuser
 
-# The command to start the server. We set the working directory to the server
-# so we can use a relative path.
+# The command to start the server. tsc emits to dist/server and dist/shared because the
+# server imports ../shared.
 WORKDIR /app/server
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/server/index.js"]

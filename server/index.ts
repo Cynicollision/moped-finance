@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import session from 'express-session';
-import cors from 'cors';
 import path from 'path';
 import { buildFinanceRouter } from '@server/api';
 import { buildAuthRouter, buildAuthMiddleware, AuthController, UserData } from '@server/auth';
@@ -23,13 +22,6 @@ app.use(session({
 
 if (process.env.TRUST_FIRST_PROXY === 'true') {
     app.set('trust proxy', 1);
-}
-
-if (process.env.NODE_ENV === 'development') {
-    app.use(cors({
-        origin: 'http://localhost:4200',
-        credentials: true
-    }));
 }
 
 // Core services

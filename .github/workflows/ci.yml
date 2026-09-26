@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    name: Run Tests
+  server:
+    name: Server
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,13 +23,87 @@ jobs:
         run: npm ci
         working-directory: server
 
+      - name: Type-check server
+        run: npx tsc --noEmit
+        working-directory: server
+
       - name: Run server tests
         run: npm test
         working-directory: server
 
+  client:
+    name: Client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install client dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Run client tests
+        run: npx ng test --watch=false
+        working-directory: client
+
+      - name: Build client (production)
+        run: npx ng build
+        working-directory: client
+
+  smoke:
+    name: Production image smoke test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: moped
+          POSTGRES_PASSWORD: moped
+          POSTGRES_DB: moped
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U moped"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t moped-finance:ci .
+
+      - name: Start container
+        run: >-
+          docker run -d --name app --network host
+          -e PGHOST=127.0.0.1 -e PGUSER=moped -e PGPASSWORD=moped -e PGDATABASE=moped
+          -e SESSION_SECRET=ci-smoke-test
+          moped-finance:ci
+
+      - name: Wait for /health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/health; then exit 0; fi
+            sleep 2
+          done
+          echo "/health did not return 200 within 60s"
+          exit 1
+
+      - name: Check / serves index.html
+        run: curl -fsS http://127.0.0.1:3000/ | grep -q '<app-root'
+
+      - name: Container logs
+        if: always()
+        run: docker logs app
+
 #   build-and-push:
 #     name: Build & Push Docker Image
-#     needs: test
+#     needs: [server, client, smoke]
 #     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 #     runs-on: ubuntu-latest
 #     permissions:
