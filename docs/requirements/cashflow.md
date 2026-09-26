@@ -9,7 +9,7 @@ Screen: **Cashflow** (`/cashflow`).
 | ID | Requirement | Status |
 |---|---|---|
 | CASH-1.1 | The user can choose the period to view: a **Year** (from two years ago to next year, so 2024 to 2027 when the current year is 2026), a **Period** type (**Monthly**, **Quarterly**, **Yearly**), and, for Monthly, a **Month**, or, for Quarterly, a **Quarter** (Q1 to Q4). It shall open on the current year and month; switching to Quarterly selects the current quarter. | Implemented |
-| CASH-1.2 | The figures shall be built from the sum of transaction amounts per category for every transaction dated within the chosen period (both ends included). Transactions in an account flagged **Hide from Cashflow** shall be left out. | Implemented |
+| CASH-1.2 | The figures shall be built from the sum of transaction amounts per category for every transaction dated within the chosen period (both ends included). Transactions in an account flagged **Hide from Cashflow**, or in a hidden account (ACCT-1.9), shall be left out. Transactions in closed accounts (ACCT-6) count. | Partial |
 | CASH-1.3 | Amounts in categories of Income groups shall count as **income**, amounts in categories of Transfer groups shall be ignored, and amounts in categories of Expense groups shall count as **expenses**. Uncategorized amounts (CAT-5) shall count by sign: money in as income, money out as expenses. | Partial |
 | CASH-1.4 | Four summary cards shall show, in whole dollars: **Income** (green); **Expenses** (as a positive number, red); **Total Savings** (income minus expenses, green when zero or more, red when negative, shown as "-$3,734"); **Savings Rate** (savings as a percentage of income, 0% when there is no income, in plain text without red/green coloring). | Implemented |
 | CASH-1.5 | An **Income** card and an **Expenses** card shall list amounts, to the cent, by category (icon and name) or by category group (name only), largest amount first, in green for income and red for expenses. A single **Category / Group** toggle on each card switches *both* cards together. | Implemented |
@@ -20,7 +20,8 @@ Screen: **Cashflow** (`/cashflow`).
 ## Known gaps
 
 - **Uncategorized counts as expense regardless of sign (CASH-1.3).** Transactions with no category are all treated as expenses today.
-- **Hidden transactions are counted.** Transactions marked hidden are excluded from the Transactions list (TXN-1.8) but included in Cashflow. Whether that's right depends on the "what hidden means" decision in `TODO.md`.
+- **Hidden accounts are counted (CASH-1.2).** Only **Hide from Cashflow** is checked today.
+- **Hidden transactions are counted.** Transactions marked hidden are excluded from the Transactions list (TXN-1.8) but included in Cashflow. Whether that's right depends on the "what a hidden transaction means" decision in `TODO.md`.
 - **Period boundaries and time zones.** Periods include the next period's first day west of UTC, and the browser and server can disagree about the as-of date east of UTC. `TODO.md` has the fix.
 - **Year list is fixed** to a window of four years around the current one, so older data can't be viewed here (it can via the Transactions filters). The seed data starts in February 2024, so 2027 is offered and empty.
 - **The Category/Group toggle is shared** by the Income and Expenses cards (CASH-1.5); switching it on one card changes the other, which isn't obvious from two separately labelled toggles.

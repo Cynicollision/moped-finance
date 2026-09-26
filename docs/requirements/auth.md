@@ -10,7 +10,7 @@ Screens: **Login** (`/login`), **Register** (`/register`), and the **Sign out** 
 |---|---|---|
 | AUTH-1.1 | The Login screen shall show a **Username** field, a **Password** field, a **Login** button, and, while registration is open (AUTH-2.7), a link "Register here" to the Register screen. | Implemented |
 | AUTH-1.2 | The Login button shall be disabled until both Username and Password are non-empty. | Implemented |
-| AUTH-1.3 | Submitting valid credentials shall sign the user in and navigate to the page they originally requested (`returnUrl`), or to the Accounts summary if there was none. | Implemented |
+| AUTH-1.3 | Submitting valid credentials shall sign the user in and navigate to the page they originally requested (`returnUrl`), or to the Summary if there was none. | Implemented |
 | AUTH-1.4 | Submitting an unknown username or a wrong password shall not sign the user in and shall show the error "Invalid username or password." The message shall be identical for both cases so it doesn't reveal which usernames exist. | Implemented |
 | AUTH-1.5 | In development builds only, the Login form shall be pre-filled with a configured developer username and password. Production and demo builds shall show empty fields. | Implemented |
 
@@ -72,7 +72,7 @@ Retired: the app committed to one owner per instance (AUTH-7), so finance record
 
 ## Known gaps
 
-- **Settings menu item is a dead end.** The profile menu has **Settings**, linking to `/system`. No such route exists, so it lands on the Accounts summary. There is no screen for changing the password (AUTH-5.1 is API-only); it would be the obvious first inhabitant.
+- **Settings menu item is a dead end.** The profile menu has **Settings**, linking to `/system`. No such route exists, so it lands on the Summary. There is no screen for changing the password (AUTH-5.1 is API-only); it would be the obvious first inhabitant.
 - **No password rules.** A password only has to be non-empty (AUTH-2). No minimum length, no lockout or rate limiting on repeated failed logins.
 - **Cookie settings are inconsistent.** The session cookie's `secure` flag comes from `COOKIE_SECURE`, but logout clears the cookie with `secure` set from `NODE_ENV`. No `sameSite` is set. `TODO.md` lists the fix.
 - **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.

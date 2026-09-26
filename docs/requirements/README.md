@@ -2,7 +2,7 @@
 
 This folder is Moped Finance's requirements: what it does and what it's planned to do, as numbered requirements grouped by domain. It's also the feature backlog: every `Planned` or `Partial` sub-requirement is work to do. `TODO.md` holds the rest (technical work, tooling, security hardening, and decisions not yet written up as requirements).
 
-The first set was written by reading the running app and its code, so domains not yet revisited still mostly describe current behavior. Categories (`CAT`) has been reworked into the intended design.
+The first set was written by reading the running app and its code, so domains not yet revisited still mostly describe current behavior. Categories (`CAT`), Institutions (`INST`), Accounts (`ACCT`) and the Summary (`DASH`) have been reworked into the intended design.
 
 ## Domains
 
@@ -10,9 +10,9 @@ The first set was written by reading the running app and its code, so domains no
 |---|---|---|
 | `APP` | Application shell, navigation, feedback, demo mode | [app.md](app.md) |
 | `AUTH` | Registration, login, sessions, single owner | [auth.md](auth.md) |
-| `INST` | Institutions | [institutions.md](institutions.md) |
+| `INST` | Institutions, manual and connected, and the Accounts screen that lists them | [institutions.md](institutions.md) |
 | `ACCT` | Accounts, balances, balance-history import/export | [accounts.md](accounts.md) |
-| `DASH` | Accounts summary, net worth and value-history chart | [dashboard.md](dashboard.md) |
+| `DASH` | Summary, net worth and value-history chart | [dashboard.md](dashboard.md) |
 | `CAT` | Categories and category groups | [categories.md](categories.md) |
 | `TXN` | Transactions, import/export | [transactions.md](transactions.md) |
 | `BUD` | Budget (recurring income and expense streams) | [budget.md](budget.md) |
@@ -54,9 +54,10 @@ Rules:
 
 ## Domain files
 
-Each domain file has an introduction, then one table per requirement, then up to three sections:
+Each domain file has an introduction, then one table per requirement, then up to four sections:
 
 - **Known gaps**: where the app falls short of a sub-requirement or of standard practice, with enough detail to fix it.
+- **Housekeeping**: code cleanup in the domain that no requirement asks for (dead fields, stubs, workarounds to remove). Cross-cutting technical work stays in `TODO.md`.
 - **Open questions**: things not decided yet. Once decided, they become sub-requirements (or `TODO.md` items for technical work) and leave this list.
 - **Notes**: context that isn't a requirement, such as design reasoning or facts about the data.
 
@@ -72,9 +73,14 @@ Each domain file has an introduction, then one table per requirement, then up to
 |---|---|
 | Institution | A bank, brokerage, lender, or other place that holds accounts. |
 | Account | A single balance the user tracks: a checking account, credit card, mortgage, property, and so on. |
+| Type (account) | What kind of account it is: Checking, Credit Card, Mortgage, and so on (ACCT-1.2). Decides the group. |
+| Group (account) | `Cash`, `Investments`, `Real Estate`, `Other Assets`, `Credit Cards`, `Loans`. Decides the account category. |
 | Category (account) | `Asset` or `Liability`. Determines which totals an account contributes to. |
-| Group (account) | `Cash`, `Investment`, `Real Estate`, `Credit Card`, `Loan`. |
-| Balance history | Dated balance entries for an account. An account's current balance is its latest entry. |
+| Manual / connected | A connected institution has a bank connection; a connected account is linked to an account at it and gets its balances and transactions from sync. Everything else is manual (INST-2, ACCT-4). |
+| Balance history | Dated balance entries for an account, at most one per date. An account's current balance is its latest entry on or before today. |
+| Set / adjusted entry | A set balance entry is one the user entered or imported, or sync recorded; it's a checkpoint. An adjusted entry exists only because of transactions that adjust the balance (ACCT-5.1). |
+| Hidden account | Left out of everything but the Accounts screen and its own details, past included (ACCT-1.9). |
+| Closed account | No longer held: off the Summary lists, but its past still counts (ACCT-6). |
 | Category group / category | Two-level classification of transactions and budget streams. A category group has a type (`Income`, `Expense`, `Transfer`) and contains categories. |
 | Necessity | Whether an expense category is `Essential` or `Discretionary`. |
 | Uncategorized | The built-in category for transactions that haven't been given one. |
