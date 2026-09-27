@@ -1,7 +1,6 @@
 import { BalanceHistory } from '@shared/finance/types';
 import { CsvColumn, CsvFile, CsvValue } from '@server/csv';
 import { FinanceEntityFactory } from '@server/data';
-import { DateTimeUtil } from '@server/utility';
 import { BalanceHistoryExport } from './balance-history-data';
 
 const columns: CsvColumn<BalanceHistoryExport>[] = [
@@ -68,7 +67,7 @@ export class BalanceHistoryCsv {
 
             records.push(FinanceEntityFactory.createBalanceHistory({
                 accountId,
-                date: DateTimeUtil.parse(date.value),
+                date: date.value,
                 balance: balance.value
             }));
         }

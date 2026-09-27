@@ -6,7 +6,7 @@ Moped Finance is a single-user personal finance app: an Angular client, a Node/E
 |---|---|---|
 | `client/` | Web UI | Angular 21, Angular Material, Vitest |
 | `server/` | REST API; also serves the built client in production | Express 4, Drizzle ORM, express-session, Jest + PGlite |
-| `shared/` | Types, enums and API contracts used by both | Plain TypeScript, no runtime dependencies |
+| `shared/` | Types, enums, API contracts and calendar-date helpers used by both | Plain TypeScript, no runtime dependencies |
 
 ## Path aliases
 
@@ -67,7 +67,7 @@ The server applies pending migrations on startup, before it listens (APP-5.8), u
 
 Migrations run on startup rather than as a separate step because there's one instance and one owner: updating means pulling a new image and restarting, with nothing to run by hand. If this ever runs as more than one instance, move migrations to a one-off job so two servers don't race.
 
-Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates with no time zone; money is `DECIMAL(12, 2)`. Names of institutions, category groups and categories are unique ignoring case (unique indexes on `lower(name)`), and there's one balance per account per date. `OperationHandler` turns unique and foreign-key violations into a 400 with a message from `DatabaseErrorUtil`.
+Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates with no time zone, read and written as `YYYY-MM-DD` strings (Drizzle's `mode: 'string'`) and passed through the API unchanged; money is `DECIMAL(12, 2)`. Names of institutions, category groups and categories are unique ignoring case (unique indexes on `lower(name)`), and there's one balance per account per date. `OperationHandler` turns unique and foreign-key violations into a 400 with a message from `DatabaseErrorUtil`.
 
 ## Client
 

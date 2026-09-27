@@ -1,3 +1,4 @@
+import { CalendarDateUtil } from '@shared/core/util';
 import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
@@ -82,13 +83,13 @@ export class AccountController {
             return Result.userErrorNotFound();
         }
 
-        const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
-        const history = await this.balanceHistoryData.retrieveForAccount(accountId, startDate.toISOString(), options.asOfDate.toISOString());
+        const startDate = CalendarDateUtil.getTimeframeStart(options.timeframe, options.asOfDate);
+        const history = await this.balanceHistoryData.retrieveForAccount(accountId, startDate, options.asOfDate);
         return Result.success(history);
     }
 
     public async getTotalValueHistory(context: OperationContext, options: TotalValueHistoryOptions): Promise<OperationResult<TotalValueHistory[]>> {
-        const startDate = DateTimeUtil.getStartDateForTimeframe(options.timeframe, options.asOfDate);
+        const startDate = CalendarDateUtil.getTimeframeStart(options.timeframe, options.asOfDate);
         const totalValueHistory = await this.balanceHistoryData.retrieveSumByDate(options.type, startDate, options.asOfDate);
         return Result.success(totalValueHistory);
     }

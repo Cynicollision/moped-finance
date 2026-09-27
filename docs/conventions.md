@@ -22,10 +22,15 @@ Rules that apply across the codebase. Match the surrounding code for anything no
   }
   ```
 
+## Dates
+
+- **Calendar dates are `YYYY-MM-DD` strings** (`CalendarDate`): transaction and balance dates, as-of dates, filter and period bounds. They mean the same day in every time zone, so they cross the API as strings and never go through a UTC `Date` (`toISOString()`, `new Date('2026-05-01')`), which lands on the previous day on one side of UTC or the other. `CalendarDateUtil` (`shared/core/util`) validates them, does the arithmetic, works out periods and timeframes, and converts to and from a local `Date` for date pickers and formatting. The request schemas refuse anything else with a 400.
+- **Timestamps** (`createdAt`, token expiry) are `Date`s, sent as ISO strings by JSON.
+
 ## Server
 
 - Generate IDs with `EntityId` (`server/src/data/entity-id.ts`); don't use `short-unique-id` directly.
-- Use `DateTimeUtil` (`server/src/utility/date-time-util.ts`) for "now", parsing and formatting dates, rather than constructing `Date` directly.
+- Use `DateTimeUtil` (`server/src/utility/date-time-util.ts`) for "now", "today" and timestamps, rather than constructing `Date` directly.
 - **Database errors propagate.** Data classes and controllers don't catch them. `OperationHandler` catches everything at the boundary: a unique or foreign-key violation becomes a 400 with a message from `DatabaseErrorUtil` (add an entry there when you add a constraint; `database-error-util.spec.ts` fails otherwise), and anything else is logged and returned as a generic 500. Never put a caught error's `message` in a response; it can contain SQL.
 - **Routes read requests only through `execute`'s schemas.** Pass the schemas to `handler.execute(req, res, op, { params, query, body }, (context, { params, query, body }) => ...)` and use the parsed, typed values it hands back. Don't read `req.body`, `req.query` or `req.params` directly or cast them (`req.file` from `singleFileUpload` is the exception). Use `idParamsSchema` for `/:id`, and `QueryField.boolean()` / `QueryField.date()` for query strings.
 - **Request validation comes from the Drizzle tables** (drizzle-zod `createInsertSchema`). A callback refinement (`name: (s) => s.min(1).max(100)`) adds rules and keeps the column's nullability. A Zod schema (`categoryId: z.string().min(1)`) replaces the column's schema entirely, nullability included; use it when the API is stricter than the database. Use `z.enum(SharedEnum)` for enum-like columns, and `SchemaUtil.money()`, `SchemaUtil.date()` and `SchemaUtil.optionalText()` for money, `date` and optional text columns, so bad values are a 400 rather than a database error. Export `z.output<>` request types from the `*-schema.ts` file for controllers to accept.
@@ -39,7 +44,7 @@ Rules that apply across the codebase. Match the surrounding code for anything no
 
 - Components use separate `.html` and `.scss` files; no inline templates or styles.
 - **Components are `OnPush`, and their state is signals**: `signal()` and `computed()` for state, `input()`, `output()` and `viewChild()` for the component API, and `inject()` for dependencies. The app is zoneless, so a plain field set after an `await` never shows. Templates use built-in control flow (`@if`, `@for` tracking an ID) and `[class.x]` bindings, and components import the pipes they use (`CurrencyPipe`) rather than `CommonModule`.
-- Get "today" from `DateProviderService`, never `new Date()`, so debug mode's fixed date applies everywhere.
+- Get "today" from `DateProviderService` (`today()` for a calendar date, `now()` for a date picker's `Date`), never `new Date()`, so debug mode's fixed date applies everywhere. Angular's `date` pipe reads a `YYYY-MM-DD` string as that local day, so pass calendar dates to it as they are.
 - **Breakpoints** are Material 3's window size classes (compact below 600px, medium, expanded from 840px, large from 1200px), defined once in `src/styles/_breakpoints.scss` and `LayoutService` (`core/layout/layout.service.ts`). Lay out a screen's content with `@use 'breakpoints' as bp;` and the `bp.content-below(...)` / `bp.content-from(...)` mixins, which query the width of the page area rather than the window, so the side navigation can't make a screen overflow. Use `LayoutService` only for decisions that need TypeScript; don't write raw `@media` widths or use `BreakpointObserver` directly.
 - **Colours** come from the tokens in `src/styles.scss` (`--bg-card`, `--text-muted`, `--color-positive`, ...) or Material's `--mat-sys-*` variables, never literal values, so a light theme only has to change the theme. `color="warn"` does nothing under Material 3; a destructive button uses the `danger-button` class.
 - `npx ng lint` (angular-eslint) checks these conventions where a rule exists, including TypeScript indentation and `else`/`catch` placement.

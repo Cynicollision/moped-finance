@@ -140,7 +140,7 @@ describe('Account Routes', () => {
                 id: 'bh1',
                 accountId: acc1.id!,
                 balance: 2500.00,
-                date: DateTimeUtil.now(),
+                date: DateTimeUtil.today(),
                 createdAt: DateTimeUtil.now(),
                 updatedAt: DateTimeUtil.now()
             }];
@@ -360,7 +360,7 @@ describe('Account Routes', () => {
             }));
 
             const balanceHistory: BalanceHistory[] = [
-                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id!, balance: 500.00, date: DateTimeUtil.now() })
+                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id!, balance: 500.00, date: DateTimeUtil.today() })
             ];
             await balanceHistoryData.insertBulk(balanceHistory);
 
@@ -371,7 +371,7 @@ describe('Account Routes', () => {
             expect(response.body[0].balance).toBe(500.00);
         });
 
-        it('should parse timeframe and asOfDate query parameters correctly', async () => {
+        it('ACCT-2.4 should return the entries from 30 days before asOfDate through asOfDate, dated YYYY-MM-DD', async () => {
             const acc1 = await accountData.insert(FinanceEntityFactory.createAccount({
                 institutionId: testInstitutionId,
                 name: 'Checking Account',
@@ -384,6 +384,8 @@ describe('Account Routes', () => {
                 isRetirement: false,
                 hideFromCashflow: false
             }));
+            await balanceHistoryData.insertBulk(['2026-05-01', '2026-05-02', '2026-06-01', '2026-06-02'].map(date =>
+                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 1, date })));
 
             const response = await request(app)
                 .get(`/accounts/${acc1.id}/balance-history`)
@@ -393,6 +395,29 @@ describe('Account Routes', () => {
                 });
 
             expect(response.status).toBe(200);
+            expect(response.body.map((b: BalanceHistory) => b.date).sort()).toEqual(['2026-05-02', '2026-06-01']);
+        });
+
+        it('DASH-1.2 should total balances by date over the timeframe, dated YYYY-MM-DD', async () => {
+            const acc1 = await accountData.insert(FinanceEntityFactory.createAccount({
+                institutionId: testInstitutionId, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking
+            }));
+            const acc2 = await accountData.insert(FinanceEntityFactory.createAccount({
+                institutionId: testInstitutionId, name: 'Savings', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Savings
+            }));
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 100, date: '2026-05-31' }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 100, date: '2026-06-01' }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: acc2.id, balance: 50, date: '2026-06-01' }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 999, date: '2026-06-02' })
+            ]);
+
+            const response = await request(app).get('/accounts/total-value-history?type=Assets&timeframe=PastThirtyDays&asOfDate=2026-06-01');
+
+            expect(response.body).toEqual([
+                { date: '2026-06-01', amount: 150, type: 'Assets' },
+                { date: '2026-05-31', amount: 100, type: 'Assets' }
+            ]);
         });
 
         it('should return 400 when timeframe is invalid', async () => {
@@ -435,7 +460,7 @@ describe('Account Routes', () => {
 
             await transactionsData.insert(FinanceEntityFactory.createTransaction({
                 accountId: acc1.id, categoryId: testCategoryId,
-                date: DateTimeUtil.nowToISOString(),
+                date: DateTimeUtil.today(),
                 amount: 50.00,
                 merchant: 'Store',
                 originalStatement: '',
@@ -498,7 +523,7 @@ describe('Account Routes', () => {
             }));
 
             const balanceHistory: BalanceHistory[] = [
-                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id!, balance: 100.00, date: DateTimeUtil.now() })
+                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id!, balance: 100.00, date: DateTimeUtil.today() })
             ];
             await balanceHistoryData.insertBulk(balanceHistory);
 
@@ -513,8 +538,8 @@ describe('Account Routes', () => {
         it('ACCT-3.1 should write dates as YYYY-MM-DD and balances with two decimals, newest first', async () => {
             const account = await insertAccount();
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: 100.5, date: DateTimeUtil.parse('2026-06-01') }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: -3, date: DateTimeUtil.parse('2026-06-02') }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: 100.5, date: '2026-06-01' }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: -3, date: '2026-06-02' }),
             ]);
 
             const response = await request(app).get(`/accounts/${account.id}/export-balances`);

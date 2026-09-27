@@ -1,10 +1,10 @@
 import { eq, and, desc, sum, gte, lte } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { CalendarDate } from '@shared/core/types';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
 import { IDatabaseClient } from '@server/data';
-import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
 
@@ -23,7 +23,7 @@ function mapBalanceHistoryToRow(record: BalanceHistory): typeof balanceHistorySc
     return {
         id: record.id,
         accountId: record.accountId,
-        date: DateTimeUtil.toDateString(record.date),
+        date: record.date,
         balance: record.balance.toString(),
         createdAt: record.createdAt,
         updatedAt: record.updatedAt
@@ -31,12 +31,12 @@ function mapBalanceHistoryToRow(record: BalanceHistory): typeof balanceHistorySc
 }
 
 export interface IFinanceBalanceHistoryData {
-    retrieveForAccount(accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]>;
-    retrieveSumByDate(type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]>;
+    retrieveForAccount(accountId: string, startDate: CalendarDate, endDate: CalendarDate): Promise<BalanceHistory[]>;
+    retrieveSumByDate(type: ValueHistoryType, startDate: CalendarDate, endDate: CalendarDate): Promise<TotalValueHistory[]>;
     /** Inserts all of the records or, if any insert fails, none of them. */
     insertBulk(records: BalanceHistory[]): Promise<void>;
-    /** Replaces the account's balances from startDate to endDate (YYYY-MM-DD, inclusive) with the records, atomically. */
-    replaceRange(accountId: string, startDate: string, endDate: string, records: BalanceHistory[]): Promise<void>;
+    /** Replaces the account's balances from startDate to endDate (inclusive) with the records, atomically. */
+    replaceRange(accountId: string, startDate: CalendarDate, endDate: CalendarDate, records: BalanceHistory[]): Promise<void>;
     retrieveForExport(accountId: string): Promise<BalanceHistoryExport[]>;
 }
 
@@ -47,19 +47,7 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         this.db = dbClient.drizzle;
     }
 
-    public async retrieveForAccount(accountId: string, startDate: string, endDate: string): Promise<BalanceHistory[]> {
-        const conditions = [
-            eq(balanceHistorySchema.accountId, accountId)
-        ];
-
-        if (startDate) {
-            conditions.push(gte(balanceHistorySchema.date, DateTimeUtil.toDateString(startDate)));
-        }
-
-        if (endDate) {
-            conditions.push(lte(balanceHistorySchema.date, DateTimeUtil.toDateString(endDate)));
-        }
-
+    public async retrieveForAccount(accountId: string, startDate: CalendarDate, endDate: CalendarDate): Promise<BalanceHistory[]> {
         const rows = await this.db
             .select({
                 id: balanceHistorySchema.id,
@@ -70,19 +58,22 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
                 balance: balanceHistorySchema.balance
             })
             .from(balanceHistorySchema)
-            .where(and(...conditions));
+            .where(and(
+                eq(balanceHistorySchema.accountId, accountId),
+                gte(balanceHistorySchema.date, startDate),
+                lte(balanceHistorySchema.date, endDate)
+            ));
 
         return rows.map(row => ({
             ...row,
-            date: DateTimeUtil.parse(row.date),
             balance: Number(row.balance)
         }));
     }
 
-    public async retrieveSumByDate(type: ValueHistoryType, startDate: Date, endDate: Date): Promise<TotalValueHistory[]> {
+    public async retrieveSumByDate(type: ValueHistoryType, startDate: CalendarDate, endDate: CalendarDate): Promise<TotalValueHistory[]> {
         const conditions = [
-            gte(balanceHistorySchema.date, DateTimeUtil.toDateString(startDate)),
-            lte(balanceHistorySchema.date, DateTimeUtil.toDateString(endDate))
+            gte(balanceHistorySchema.date, startDate),
+            lte(balanceHistorySchema.date, endDate)
         ];
 
         if (type === ValueHistoryType.Assets) {
@@ -102,7 +93,7 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
             .orderBy(desc(balanceHistorySchema.date));
 
         return rows.map(row => ({
-            date: DateTimeUtil.parse(row.date),
+            date: row.date,
             type,
             amount: Number(row.amount)
         }));
@@ -114,7 +105,7 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         });
     }
 
-    public async replaceRange(accountId: string, startDate: string, endDate: string, records: BalanceHistory[]): Promise<void> {
+    public async replaceRange(accountId: string, startDate: CalendarDate, endDate: CalendarDate, records: BalanceHistory[]): Promise<void> {
         // One transaction, so a failed insert leaves the old balances in place.
         await this.db.transaction(async (tx) => {
             await tx.delete(balanceHistorySchema)

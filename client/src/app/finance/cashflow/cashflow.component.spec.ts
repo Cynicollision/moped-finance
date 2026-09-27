@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { CalendarPeriod } from '@shared/core/enum';
 import { CashflowStream } from '@shared/finance/contracts';
 import { CategoryClass } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
+import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 import { FinanceCashflowComponent } from './cashflow.component';
 
@@ -38,12 +40,16 @@ describe('FinanceCashflowComponent', () => {
         };
         TestBed.configureTestingModule({
             imports: [FinanceCashflowComponent],
-            providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }]
+            providers: [
+                provideRouter([]),
+                { provide: DateProviderService, useValue: { now: () => new Date(2026, 4, 17) } },
+                { provide: FinanceService, useValue: financeService }
+            ]
         });
 
         const fixture = TestBed.createComponent(FinanceCashflowComponent);
         await fixture.whenStable();
-        return fixture;
+        return Object.assign(fixture, { financeService });
     }
 
     function summaryCards(element: HTMLElement): string[] {
@@ -76,5 +82,33 @@ describe('FinanceCashflowComponent', () => {
         await fixture.whenStable();
 
         expect(sectionRows(fixture.nativeElement, 'Expenses')).toEqual(['Housing $1,700.00', 'Food $300.00']);
+    });
+
+    it('CASH-1.2 should ask for each period by its first day', async () => {
+        const fixture = await render();
+        const { componentInstance: cashflow, financeService } = fixture;
+
+        cashflow.selectedPeriod.set(CalendarPeriod.Quarterly);
+        await cashflow.loadData();
+        cashflow.selectedPeriod.set(CalendarPeriod.Yearly);
+        await cashflow.loadData();
+
+        expect(financeService.fetchCashflowStreams.mock.calls).toEqual([
+            [CalendarPeriod.Monthly, '2026-05-01'],
+            [CalendarPeriod.Quarterly, '2026-04-01'],
+            [CalendarPeriod.Yearly, '2026-01-01']
+        ]);
+    });
+
+    it('CASH-1.6 should open Transactions filtered to the row and every day of the period', async () => {
+        const fixture = await render();
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+        fixture.componentInstance.selectedPeriod.set(CalendarPeriod.Quarterly);
+        fixture.componentInstance.onRowClick({ id: 'rent', name: 'Rent', amount: -1500 });
+
+        expect(navigate).toHaveBeenCalledWith(['/transactions'], {
+            queryParams: { categoryId: 'rent', startDate: '2026-04-01', endDate: '2026-06-30' }
+        });
     });
 });

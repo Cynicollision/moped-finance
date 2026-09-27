@@ -86,7 +86,7 @@ export class FinanceSummaryComponent implements OnInit {
 
     async updateGroupPeriodChanges() {
         const timeframe = this.selectedTimeframe();
-        const asOfDate = this.dateProvider.now();
+        const asOfDate = this.dateProvider.today();
 
         const accounts = this.accounts();
         if (accounts.length === 0) {
@@ -112,7 +112,7 @@ export class FinanceSummaryComponent implements OnInit {
             await Promise.all(groupAccounts.map(async account => {
                 const history = await this.financeService.fetchAccountBalanceHistory(account.id, { asOfDate, timeframe });
                 if (history && history.length > 0) {
-                    const sorted = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                    const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date));
                     startTotal += Number(sorted[0].balance);
                     endTotal += Number(sorted[sorted.length - 1].balance);
                     hasData = true;

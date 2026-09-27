@@ -11,6 +11,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
+import { CalendarDateUtil } from '@shared/core/util';
 import { Category, Transaction, Account } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
@@ -93,7 +94,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
                 merchant: transaction.merchant || '',
                 originalStatement: transaction.originalStatement || '',
                 category: transaction.categoryId || '',
-                date: new Date(transaction.date),
+                date: CalendarDateUtil.toDate(transaction.date),
                 notes: transaction.notes || '',
                 isHidden: transaction.isHidden || false
             });
@@ -148,7 +149,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
             merchant: formValue.merchant,
             originalStatement: formValue.originalStatement,
             categoryId: formValue.category,
-            date: formValue.date.toISOString(),
+            date: CalendarDateUtil.fromDate(formValue.date),
             notes: formValue.notes,
             isHidden: formValue.isHidden
         };

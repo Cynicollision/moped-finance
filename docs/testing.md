@@ -2,7 +2,7 @@
 
 | Package | Runner | Command | CI |
 |---|---|---|---|
-| `server/` | Jest + Supertest | `npm test` (`npm run test:watch` to watch) | Yes |
+| `server/` and `shared/` | Jest + Supertest | `npm test` in `server/` (`npm run test:watch` to watch) | Yes |
 | `client/` | Vitest (via `ng test`) | `npx ng test --watch=false` | Yes |
 
 ## Server
@@ -20,7 +20,13 @@ The pattern, as used by every `server/src/**/*-routes.spec.ts`:
 
 Finance data isn't scoped by user (AUTH-7), so there's no ownership to test. For endpoints that take an ID, test that a missing one returns 404. For a new unique constraint, test that a duplicate returns 400 with its message. To test how an operation behaves when the database fails part way (for example that an import rolls back), add a PL/pgSQL trigger that raises on a chosen row, and drop it in a `finally` (see the import tests in `transaction-routes.spec.ts`). `server/src/data/database-error-util.spec.ts` also checks that every unique index and foreign key in the schema has a message in `DatabaseErrorUtil`.
 
-Dates: server code gets "now" from `DateTimeUtil.now()`, which isn't injectable yet. Tests that depend on the current period should pass an explicit date (for example the `asOfDate` query param) instead of relying on the real clock.
+Dates: server code gets "now" from `DateTimeUtil.now()`, which isn't injectable yet. Tests that depend on the current period should pass an explicit date (for example the `asOfDate` query param) instead of relying on the real clock, or use Jest's fake timers (`date-time-util.spec.ts`).
+
+`shared/` has no runner of its own: its specs (`shared/**/*.spec.ts`) run with the server's Jest.
+
+## Time zone
+
+Both test runs set `TZ=America/New_York` before any test starts (`server/jest.config.js`, `client/vitest-base.config.mjs`), so they run west of UTC wherever they run, CI included. A calendar date read as UTC midnight is the previous day there, and a server day boundary built in local time spills into the next day, so those mistakes fail tests. Set it there, not in a test: Jest gives each test file its own copy of `process.env`, so a test can't change the zone. The matching mistake east of UTC, `toISOString()` on a local date, is caught by client lint instead.
 
 ## Client
 

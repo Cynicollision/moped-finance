@@ -62,13 +62,7 @@ export class App {
         { initialValue: null }
     );
 
-    readonly debugDateLabel = computed(() => {
-        const now = this.dateProvider.now();
-        const y = now.getFullYear();
-        const m = (now.getMonth() + 1).toString().padStart(2, '0');
-        const d = now.getDate().toString().padStart(2, '0');
-        return `${y}${m}${d}`;
-    });
+    readonly debugDateLabel = computed(() => this.dateProvider.today().replace(/-/g, ''));
 
     readonly userInitials = computed(() => {
         const name = this.authService.currentUser()?.displayName || '';

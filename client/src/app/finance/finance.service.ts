@@ -109,7 +109,7 @@ export class FinanceService {
     }
 
     fetchTotalValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<TotalValueHistory[] | undefined> {
-        const asOfDate = this.dateProvider.now().toISOString().split('T')[0];
+        const asOfDate = this.dateProvider.today();
         const url = `${API_BASE_PATH}/accounts/total-value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
         return this.api.get<TotalValueHistory[]>(url);
     }

@@ -18,7 +18,8 @@ describe('App', () => {
         };
 
         mockDateProvider = {
-            now: vi.fn().mockReturnValue(new Date('2026-01-01'))
+            now: vi.fn().mockReturnValue(new Date(2026, 0, 1)),
+            today: vi.fn().mockReturnValue('2026-01-01')
         };
 
         mockLoadingService = {

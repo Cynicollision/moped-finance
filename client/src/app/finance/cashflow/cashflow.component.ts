@@ -10,6 +10,8 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { CalendarPeriod } from '@shared/core/enum';
+import { CalendarDate } from '@shared/core/types';
+import { CalendarDateUtil } from '@shared/core/util';
 import { CashflowStream } from '@shared/finance/contracts';
 import { CategoryClass } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
@@ -135,18 +137,19 @@ export class FinanceCashflowComponent implements OnInit {
 
     async loadData() {
         const asOfDate = this.getAsOfDate();
-        const streams = await this.financeService.fetchCashflowStreams(this.selectedPeriod(), asOfDate.toISOString().split('T')[0]);
+        const streams = await this.financeService.fetchCashflowStreams(this.selectedPeriod(), asOfDate);
         this.cashflowStreams.set(streams || []);
     }
 
-    private getAsOfDate(): Date {
+    /** The first day of the selected period. */
+    private getAsOfDate(): CalendarDate {
         switch (this.selectedPeriod()) {
             case CalendarPeriod.Monthly:
-                return new Date(this.selectedYear(), this.selectedMonth(), 1);
+                return CalendarDateUtil.fromDate(new Date(this.selectedYear(), this.selectedMonth(), 1));
             case CalendarPeriod.Quarterly:
-                return new Date(this.selectedYear(), (this.selectedQuarter() - 1) * 3, 1);
+                return CalendarDateUtil.fromDate(new Date(this.selectedYear(), (this.selectedQuarter() - 1) * 3, 1));
             default:
-                return new Date(this.selectedYear(), 0, 1);
+                return CalendarDateUtil.fromDate(new Date(this.selectedYear(), 0, 1));
         }
     }
 
@@ -160,27 +163,10 @@ export class FinanceCashflowComponent implements OnInit {
             queryParams['group'] = row.id;
         }
 
-        const asOfDate = this.getAsOfDate();
-        const startDate = new Date(asOfDate.getTime());
-        const endDate = new Date(asOfDate.getTime());
-
-        switch (this.selectedPeriod()) {
-            case CalendarPeriod.Monthly:
-                startDate.setDate(1);
-                endDate.setMonth(endDate.getMonth() + 1, 0);
-                break;
-            case CalendarPeriod.Quarterly:
-                startDate.setDate(1);
-                endDate.setMonth(endDate.getMonth() + 3, 0);
-                break;
-            case CalendarPeriod.Yearly:
-                startDate.setMonth(0, 1);
-                endDate.setMonth(11, 31);
-                break;
-        }
-
-        queryParams['startDate'] = startDate.toISOString().split('T')[0];
-        queryParams['endDate'] = endDate.toISOString().split('T')[0];
+        // The same period the server totalled (CASH-1.6).
+        const { startDate, endDate } = CalendarDateUtil.getPeriod(this.selectedPeriod(), this.getAsOfDate());
+        queryParams['startDate'] = startDate;
+        queryParams['endDate'] = endDate;
 
         this.router.navigate(['/transactions'], { queryParams });
     }

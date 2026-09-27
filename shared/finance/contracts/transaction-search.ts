@@ -1,4 +1,5 @@
 import { SortDirection } from './../../core/enum';
+import { CalendarDate } from './../../core/types';
 import { TransactionsFilterKey, TransactionsSortKey } from './../enum';
 
 export type TransactionSearchFilterItem = {
@@ -13,8 +14,8 @@ export type TransactionSearchOptions = {
     limit?: number;
     minAmount?: number;
     maxAmount?: number;
-    startDate?: string;
-    endDate?: string;
+    startDate?: CalendarDate;
+    endDate?: CalendarDate;
     filters?: TransactionSearchFilterItem[];
     includeHidden?: boolean;
 };
