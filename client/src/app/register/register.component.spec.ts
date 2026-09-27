@@ -40,38 +40,50 @@ describe('RegisterComponent', () => {
     });
 
     it('should show error if passwords do not match', async () => {
-        component.username = 'testuser';
-        component.displayName = 'Test User';
-        component.password = 'password123';
-        component.confirmPassword = 'password456';
+        component.username.set('testuser');
+        component.displayName.set('Test User');
+        component.password.set('password123');
+        component.confirmPassword.set('password456');
 
         await component.onRegister();
 
-        expect(component.errorMessage).toBe('Passwords do not match.');
+        expect(component.errorMessage()).toBe('Passwords do not match.');
         expect(mockAuthService.register).not.toHaveBeenCalled();
     });
 
+    it('should render the error message', async () => {
+        component.username.set('testuser');
+        component.displayName.set('Test User');
+        component.password.set('password123');
+        component.confirmPassword.set('password456');
+
+        await component.onRegister();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('.error-message')?.textContent).toContain('Passwords do not match.');
+    });
+
     it('should show error if fields are missing', async () => {
-        component.username = '';
-        component.displayName = 'Test User';
-        component.password = 'password123';
-        component.confirmPassword = 'password123';
+        component.username.set('');
+        component.displayName.set('Test User');
+        component.password.set('password123');
+        component.confirmPassword.set('password123');
 
         await component.onRegister();
 
-        expect(component.errorMessage).toBe('All fields are required.');
+        expect(component.errorMessage()).toBe('All fields are required.');
         expect(mockAuthService.register).not.toHaveBeenCalled();
     });
 
     it('should call AuthService.register if validations pass', async () => {
-        component.username = 'testuser';
-        component.displayName = 'Test User';
-        component.password = 'password123';
-        component.confirmPassword = 'password123';
+        component.username.set('testuser');
+        component.displayName.set('Test User');
+        component.password.set('password123');
+        component.confirmPassword.set('password123');
 
         await component.onRegister();
 
-        expect(component.errorMessage).toBe('');
+        expect(component.errorMessage()).toBe('');
         expect(mockAuthService.register).toHaveBeenCalledWith('testuser', 'Test User', 'password123', undefined);
     });
 });

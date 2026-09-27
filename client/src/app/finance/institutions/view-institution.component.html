@@ -1,10 +1,10 @@
-@if (institution()) {
+@if (institution(); as institution) {
     <div class="container">
         <div class="page-header">
             <div class="breadcrumb-nav">
                 <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
                 <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-current">{{institution()!.name}}</span>
+                <span class="breadcrumb-current">{{institution.name}}</span>
             </div>
             <div class="top-actions">
                 <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
@@ -19,7 +19,7 @@
             </div>
         </div>
         <app-institution-form
-            [institution]="institution()"
+            [institution]="institution"
             mode="readonly">
         </app-institution-form>
     </div>

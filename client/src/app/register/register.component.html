@@ -25,15 +25,15 @@
                     <input matInput type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required>
                 </mat-form-field>
 
-                @if (errorMessage) {
+                @if (errorMessage()) {
                     <div class="error-message">
-                        {{ errorMessage }}
+                        {{ errorMessage() }}
                     </div>
                 }
 
                 <div class="actions">
                     <button mat-raised-button color="primary" type="submit"
-                        [disabled]="!username || !displayName || !password || !confirmPassword">
+                        [disabled]="!username() || !displayName() || !password() || !confirmPassword()">
                         Register
                     </button>
                 </div>

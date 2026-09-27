@@ -17,6 +17,10 @@
             font-weight: 500;
         }
 
+        .spacer {
+            flex: 1 1 auto;
+        }
+
         .actions {
             display: flex;
             gap: 16px;
@@ -54,6 +58,7 @@
         .group-header {
             display: flex;
             align-items: center;
+            gap: 16px;
             padding: 16px 24px 8px;
 
             h3 {

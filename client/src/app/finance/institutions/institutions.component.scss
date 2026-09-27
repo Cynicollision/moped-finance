@@ -9,6 +9,29 @@
     margin-bottom: 2rem;
 }
 
+.actions-container {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.add-institution-link {
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--color-link);
+    text-decoration: none;
+}
+
+.title-link {
+    color: inherit;
+    text-decoration: none;
+}
+
 .title-container {
     h1 {
         margin: 0 0 0.5rem 0;
@@ -42,8 +65,8 @@
     align-items: center;
 
     .institution-avatar {
-        background-color: var(--primary-color-alpha);
-        color: var(--primary-color);
+        background-color: color-mix(in srgb, var(--mat-sys-primary) 12%, transparent);
+        color: var(--mat-sys-primary);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -76,7 +99,7 @@
     }
 
     &:hover {
-        background-color: var(--bg-card-hover);
+        background-color: var(--bg-hover);
     }
 }
 

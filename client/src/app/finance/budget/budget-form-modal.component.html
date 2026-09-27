@@ -10,7 +10,7 @@
                 <mat-label>Category</mat-label>
                 <input type="text" matInput formControlName="categoryId" [matAutocomplete]="autoCategory">
                 <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
-                    @for (cat of filteredCategories(); track cat) {
+                    @for (cat of filteredCategories(); track cat.id) {
                         <mat-option [value]="cat.id">
                             {{cat.icon}} {{cat.name}}
                         </mat-option>

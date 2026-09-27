@@ -5,27 +5,27 @@
         <span class="breadcrumb-current">Add Account</span>
     </div>
 
-    <div class="header-section" style="margin-bottom: 24px;">
-        <h1 class="desktop-page-title">Add Account {{ institution ? 'to ' + institution.name : '' }}</h1>
+    <div class="header-section">
+        <h1 class="desktop-page-title">Add Account {{ institution() ? 'to ' + institution()!.name : '' }}</h1>
     </div>
 
-    @if (mode === 'selection') {
-    <div class="selection-mode"
-        style="background-color: var(--bg-card); border-radius: 8px; padding: 2rem; display: flex; flex-direction: column; gap: 16px;">
-        <p class="description" style="margin: 0;">How would you like to add this account?</p>
-        <div class="options-container" style="display: flex; gap: 16px; flex-wrap: wrap;">
-            <button mat-stroked-button class="option-btn" disabled>
-                <mat-icon>link</mat-icon>
-                <span>Connect via {{ institution?.name }} (Coming Soon)</span>
-            </button>
-            <button mat-stroked-button color="primary" class="option-btn" (click)="setMode('manual')">
-                <mat-icon>edit</mat-icon>
-                <span>Add manually</span>
-            </button>
+    @if (mode() === 'selection') {
+        <div class="selection-mode">
+            <p class="description">How would you like to add this account?</p>
+            <div class="options-container">
+                <button mat-stroked-button class="option-btn" disabled>
+                    <mat-icon>link</mat-icon>
+                    <span>Connect via {{ institution()?.name }} (Coming Soon)</span>
+                </button>
+                <button mat-stroked-button color="primary" class="option-btn" (click)="mode.set('manual')">
+                    <mat-icon>edit</mat-icon>
+                    <span>Add manually</span>
+                </button>
+            </div>
         </div>
-    </div>
-    } @else if (mode === 'manual') {
-    <app-account-form mode="create" (save)="onSave($event)" (cancel)="setMode('selection')">
-    </app-account-form>
+    }
+    @else {
+        <app-account-form mode="create" (save)="onSave($event)" (cancelled)="mode.set('selection')">
+        </app-account-form>
     }
 </div>

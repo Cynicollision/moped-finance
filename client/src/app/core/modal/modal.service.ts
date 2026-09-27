@@ -17,7 +17,7 @@ export class ModalService {
      * @param config Optional MatDialog configuration overrides
      * @returns Promise resolving to the result data when the modal closes
      */
-    async open<T, D = any, R = any>(component: Type<T>, data?: D, config?: MatDialogConfig<D>): Promise<R | undefined> {
+    async open<T, D = unknown, R = unknown>(component: Type<T>, data?: D, config?: MatDialogConfig<D>): Promise<R | undefined> {
         const dialogConfig: MatDialogConfig<D> = {
             width: '500px',
             disableClose: true, // Requires user to explicitly click close or an action

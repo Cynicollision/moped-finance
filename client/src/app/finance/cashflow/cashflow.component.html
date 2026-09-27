@@ -1,7 +1,6 @@
 <div class="spending-container">
 
-    <div class="header-section"
-        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div class="header-section">
         <div class="title-container hide-on-mobile">
             <h1 class="desktop-page-title">Cashflow</h1>
         </div>
@@ -10,7 +9,7 @@
             <div class="primary-controls">
                 <mat-form-field appearance="outline" subscriptSizing="dynamic">
                     <mat-label>Year</mat-label>
-                    <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChange()">
+                    <mat-select [(ngModel)]="selectedYear" (selectionChange)="loadData()">
                         @for (y of years; track y) {
                             <mat-option [value]="y">{{y}}</mat-option>
                         }
@@ -19,7 +18,7 @@
 
                 <mat-form-field appearance="outline" subscriptSizing="dynamic">
                     <mat-label>Period</mat-label>
-                    <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="onPeriodChange()">
+                    <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="loadData()">
                         @for (p of periods; track p) {
                             <mat-option [value]="p">{{p}}</mat-option>
                         }
@@ -27,24 +26,22 @@
                 </mat-form-field>
             </div>
 
-            @if (selectedPeriod === CalendarPeriod.Monthly) {
-                <mat-form-field appearance="outline" subscriptSizing="dynamic"
-                    >
+            @if (selectedPeriod() === CalendarPeriod.Monthly) {
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
                     <mat-label>Month</mat-label>
-                    <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
-                        @for (m of months; track m) {
+                    <mat-select [(ngModel)]="selectedMonth" (selectionChange)="loadData()">
+                        @for (m of months; track m.value) {
                             <mat-option [value]="m.value">{{m.label}}</mat-option>
                         }
                     </mat-select>
                 </mat-form-field>
             }
 
-            @if (selectedPeriod === CalendarPeriod.Quarterly) {
-                <mat-form-field appearance="outline" subscriptSizing="dynamic"
-                    >
+            @if (selectedPeriod() === CalendarPeriod.Quarterly) {
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
                     <mat-label>Quarter</mat-label>
-                    <mat-select [(ngModel)]="selectedQuarter" (selectionChange)="onPeriodChange()">
-                        @for (q of quarters; track q) {
+                    <mat-select [(ngModel)]="selectedQuarter" (selectionChange)="loadData()">
+                        @for (q of quarters; track q.value) {
                             <mat-option [value]="q.value">{{q.label}}</mat-option>
                         }
                     </mat-select>
@@ -57,112 +54,70 @@
     <div class="summary-cards">
         <mat-card class="summary-card">
             <mat-card-content>
-                <div class="value amount-positive">{{ totalIncome | currency:'USD':'symbol':'1.0-0' }}</div>
+                <div class="value amount-positive">{{ totalIncome() | currency:'USD':'symbol':'1.0-0' }}</div>
                 <div class="label">INCOME</div>
             </mat-card-content>
         </mat-card>
         <mat-card class="summary-card">
             <mat-card-content>
-                <div class="value" style="color: #d32f2f !important;">{{ totalExpenses | currency:'USD':'symbol':'1.0-0'
-                }}</div>
+                <div class="value expense-value">{{ totalExpenses() | currency:'USD':'symbol':'1.0-0' }}</div>
                 <div class="label">EXPENSES</div>
             </mat-card-content>
         </mat-card>
         <mat-card class="summary-card">
             <mat-card-content>
-                <div class="value"
-                    [ngClass]="{'amount-positive': totalSavings >= 0, 'amount-negative': totalSavings < 0}">{{
-                totalSavings | currency:'USD':'symbol':'1.0-0' }}</div>
+                <div class="value" [class.amount-positive]="totalSavings() >= 0" [class.amount-negative]="totalSavings() < 0">
+                    {{ totalSavings() | currency:'USD':'symbol':'1.0-0' }}
+                </div>
                 <div class="label">TOTAL SAVINGS</div>
             </mat-card-content>
         </mat-card>
         <mat-card class="summary-card">
             <mat-card-content>
-                <div class="value">{{ savingsRate | percent:'1.0-0' }}</div>
+                <div class="value">{{ savingsRate() | percent:'1.0-0' }}</div>
                 <div class="label">SAVINGS RATE</div>
             </mat-card-content>
         </mat-card>
     </div>
 
-    <!-- Income Section -->
-    <mat-card class="section-card" style="margin-bottom: 24px;">
-        <div class="card-header">
-            <h2 class="income-title" style="margin: 0; font-size: 1.25rem; font-weight: 500;">Income</h2>
-            <mat-button-toggle-group [(ngModel)]="viewMode" (change)="onViewModeChange()" aria-label="View Mode"
-                class="compact-toggle">
-                <mat-button-toggle value="category">Category</mat-button-toggle>
-                <mat-button-toggle value="group">Group</mat-button-toggle>
-            </mat-button-toggle-group>
-        </div>
+    @for (section of sections(); track section.title) {
+        <mat-card class="section-card">
+            <div class="card-header">
+                <h2 class="card-title">{{ section.title }}</h2>
+                <mat-button-toggle-group [(ngModel)]="viewMode" aria-label="View Mode" class="compact-toggle">
+                    <mat-button-toggle value="category">Category</mat-button-toggle>
+                    <mat-button-toggle value="group">Group</mat-button-toggle>
+                </mat-button-toggle-group>
+            </div>
 
-        <mat-card-content>
-            <table mat-table [dataSource]="incomeStreams" class="spending-table" style="width: 100%;">
-                <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef> Name </th>
-                    <td mat-cell *matCellDef="let s">
-                        <div class="name-primary">{{s.name}}</div>
-                    </td>
-                </ng-container>
+            <mat-card-content>
+                <table mat-table [dataSource]="section.rows" class="spending-table">
+                    <ng-container matColumnDef="name">
+                        <th mat-header-cell *matHeaderCellDef> Name </th>
+                        <td mat-cell *matCellDef="let s">
+                            <div class="name-primary">{{s.name}}</div>
+                        </td>
+                    </ng-container>
 
-                <ng-container matColumnDef="amount">
-                    <th mat-header-cell *matHeaderCellDef> Amount </th>
-                    <td mat-cell *matCellDef="let s">
-                        <span [ngClass]="{'amount-positive': s.amount > 0, 'amount-negative': s.amount < 0}">
-                            {{Math.abs(s.amount) | currency}}
-                        </span>
-                    </td>
-                </ng-container>
+                    <ng-container matColumnDef="amount">
+                        <th mat-header-cell *matHeaderCellDef> Amount </th>
+                        <td mat-cell *matCellDef="let s">
+                            <span [class.amount-positive]="s.amount > 0" [class.amount-negative]="s.amount < 0">
+                                {{Math.abs(s.amount) | currency}}
+                            </span>
+                        </td>
+                    </ng-container>
 
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="onRowClick(row)"
-                class="clickable-row"></tr>
-            </table>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="onRowClick(row)"
+                        class="clickable-row"></tr>
+                </table>
 
-            @if (incomeStreams.length === 0) {
-                <div class="no-data">
-                    No income data for the selected period.
-                </div>
-            }
-        </mat-card-content>
-    </mat-card>
-
-    <!-- Expenses Section -->
-    <mat-card class="section-card">
-        <div class="card-header">
-            <h2 class="expense-title" style="margin: 0; font-size: 1.25rem; font-weight: 500;">Expenses</h2>
-            <mat-button-toggle-group [(ngModel)]="viewMode" (change)="onViewModeChange()" aria-label="View Mode"
-                class="compact-toggle">
-                <mat-button-toggle value="category">Category</mat-button-toggle>
-                <mat-button-toggle value="group">Group</mat-button-toggle>
-            </mat-button-toggle-group>
-        </div>
-
-        <mat-card-content>
-            <table mat-table [dataSource]="expenseStreams" class="spending-table" style="width: 100%;">
-                <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef> Name </th>
-                    <td mat-cell *matCellDef="let s">
-                        <div class="name-primary">{{s.name}}</div>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="amount">
-                    <th mat-header-cell *matHeaderCellDef> Amount </th>
-                    <td mat-cell *matCellDef="let s">
-                        <span [ngClass]="{'amount-positive': s.amount > 0, 'amount-negative': s.amount < 0}">
-                            {{Math.abs(s.amount) | currency}}
-                        </span>
-                    </td>
-                </ng-container>
-
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="onRowClick(row)"
-                class="clickable-row"></tr>
-            </table>
-
-            @if (expenseStreams.length === 0) {
-                <div class="no-data">
-                    No expense data for the selected period.
-                </div>
-            }
-        </mat-card-content>
-    </mat-card>
+                @if (section.rows.length === 0) {
+                    <div class="no-data">
+                        No {{ section.title | lowercase }} data for the selected period.
+                    </div>
+                }
+            </mat-card-content>
+        </mat-card>
+    }
 </div>

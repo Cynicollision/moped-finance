@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,7 +10,7 @@ import { AuthService } from './../core/auth.service';
 
 @Component({
     selector: 'app-login',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         MatCardModule,
@@ -23,10 +23,11 @@ import { AuthService } from './../core/auth.service';
     styleUrl: './login.component.scss'
 })
 export class LoginComponent implements OnInit {
-    username = Environment.devUsername;
-    password = Environment.devPassword;
     private authService = inject(AuthService);
     private route = inject(ActivatedRoute);
+
+    readonly username = signal(Environment.devUsername);
+    readonly password = signal(Environment.devPassword);
     readonly registrationOpen = signal(false);
 
     async ngOnInit() {
@@ -34,9 +35,9 @@ export class LoginComponent implements OnInit {
     }
 
     onLogin() {
-        if (this.username) {
+        if (this.username()) {
             const returnUrl = this.route.snapshot.queryParams['returnUrl'];
-            this.authService.login(this.username, this.password, returnUrl);
+            this.authService.login(this.username(), this.password(), returnUrl);
         }
     }
 }

@@ -6,7 +6,7 @@
             <div class="value">{{institutionForm.value.name}}</div>
         </div>
     }
-    @if (mode() !== 'readonly') {
+    @else {
         <mat-form-field appearance="outline">
             <mat-label>Name</mat-label>
             <input type="text" matInput formControlName="name">

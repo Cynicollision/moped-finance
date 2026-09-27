@@ -38,10 +38,11 @@ Rules that apply across the codebase. Match the surrounding code for anything no
 ## Client
 
 - Components use separate `.html` and `.scss` files; no inline templates or styles.
+- **Components are `OnPush`, and their state is signals**: `signal()` and `computed()` for state, `input()`, `output()` and `viewChild()` for the component API, and `inject()` for dependencies. The app is zoneless, so a plain field set after an `await` never shows. Templates use built-in control flow (`@if`, `@for` tracking an ID) and `[class.x]` bindings, and components import the pipes they use (`CurrencyPipe`) rather than `CommonModule`.
 - Get "today" from `DateProviderService`, never `new Date()`, so debug mode's fixed date applies everywhere.
 - **Breakpoints** are Material 3's window size classes (compact below 600px, medium, expanded from 840px, large from 1200px), defined once in `src/styles/_breakpoints.scss` and `LayoutService` (`core/layout/layout.service.ts`). Lay out a screen's content with `@use 'breakpoints' as bp;` and the `bp.content-below(...)` / `bp.content-from(...)` mixins, which query the width of the page area rather than the window, so the side navigation can't make a screen overflow. Use `LayoutService` only for decisions that need TypeScript; don't write raw `@media` widths or use `BreakpointObserver` directly.
 - **Colours** come from the tokens in `src/styles.scss` (`--bg-card`, `--text-muted`, `--color-positive`, ...) or Material's `--mat-sys-*` variables, never literal values, so a light theme only has to change the theme. `color="warn"` does nothing under Material 3; a destructive button uses the `danger-button` class.
-- `npx ng lint` (angular-eslint) checks these conventions where a rule exists. `client/eslint.config.js` lists the rules that only warn until existing code is migrated.
+- `npx ng lint` (angular-eslint) checks these conventions where a rule exists, including TypeScript indentation and `else`/`catch` placement.
 
 ## Tests
 

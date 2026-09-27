@@ -12,130 +12,34 @@
 <div class="summary-container">
     <mat-card appearance="outlined" class="full-width-card">
         <mat-card-content class="accounts-list-content">
-            <!-- Cash -->
-            @if (summary().cashAccounts.length > 0) {
-            <div class="account-group">
-                <div class="group-header" style="flex-direction: column; align-items: flex-start; gap: 0.25rem;">
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <span class="header-label">Cash</span>
-                        <span class="header-total">{{ summary().cash | currency }}</span>
+            @for (group of summary().groups; track group.group) {
+                <div class="account-group">
+                    <div class="group-header stacked">
+                        <div class="group-header-row">
+                            <span class="header-label">{{ group.label }}</span>
+                            <span class="header-total">{{ (group.isLiability ? Math.abs(group.total) : group.total) | currency }}</span>
+                        </div>
+                        @if (groupPeriodChanges().get(group.group); as change) {
+                            <app-value-period-change [change]="change" [label]="selectedTimeframeLabel()">
+                            </app-value-period-change>
+                        }
                     </div>
-                    @if (groupPeriodChanges().get(AccountGroup.Cash); as change) {
-                    <app-value-period-change [amount]="change.amount" [percentage]="change.percentage"
-                        [isPositive]="change.isPositive" [isGood]="change.isGood" [label]="selectedTimeframeLabel()">
-                    </app-value-period-change>
+                    @for (account of group.accounts; track account.id) {
+                        <div class="row-item indented">
+                            <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
+                            <span>{{ (group.isLiability ? Math.abs(account.balance ?? 0) : account.balance) | currency }}</span>
+                        </div>
+                        @if (!$last) {
+                            <mat-divider></mat-divider>
+                        }
                     }
                 </div>
-                @for (account of summary().cashAccounts; track account) {
-                <div class="row-item indented">
-                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
-                    <span>{{ account.balance | currency }}</span>
-                </div>
-                @if (!$last) { <mat-divider></mat-divider> }
-                }
-            </div>
-            }
-
-            <!-- Investments -->
-            @if (summary().investmentAccounts.length > 0) {
-            <div class="account-group">
-                <div class="group-header" style="flex-direction: column; align-items: flex-start; gap: 0.25rem;">
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <span class="header-label">Investments</span>
-                        <span class="header-total">{{ summary().investments | currency }}</span>
-                    </div>
-                    @if (groupPeriodChanges().get(AccountGroup.Investment); as change) {
-                    <app-value-period-change [amount]="change.amount" [percentage]="change.percentage"
-                        [isPositive]="change.isPositive" [isGood]="change.isGood" [label]="selectedTimeframeLabel()">
-                    </app-value-period-change>
-                    }
-                </div>
-                @for (account of summary().investmentAccounts; track account) {
-                <div class="row-item indented">
-                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
-                    <span>{{ account.balance | currency }}</span>
-                </div>
-                @if (!$last) { <mat-divider></mat-divider> }
-                }
-            </div>
-            }
-
-            <!-- Credit Cards -->
-            @if (summary().creditCardAccounts.length > 0) {
-            <div class="account-group">
-                <div class="group-header" style="flex-direction: column; align-items: flex-start; gap: 0.25rem;">
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <span class="header-label">Credit Cards</span>
-                        <span class="header-total">{{ Math.abs(summary().creditCards) | currency }}</span>
-                    </div>
-                    @if (groupPeriodChanges().get(AccountGroup.CreditCard); as change) {
-                    <app-value-period-change [amount]="change.amount" [percentage]="change.percentage"
-                        [isPositive]="change.isPositive" [isGood]="change.isGood" [label]="selectedTimeframeLabel()">
-                    </app-value-period-change>
-                    }
-                </div>
-                @for (account of summary().creditCardAccounts; track account) {
-                <div class="row-item indented">
-                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
-                    <span>{{ Math.abs(account.balance) | currency }}</span>
-                </div>
-                @if (!$last) { <mat-divider></mat-divider> }
-                }
-            </div>
-            }
-
-            <!-- Loans -->
-            @if (summary().loanAccounts.length > 0) {
-            <div class="account-group">
-                <div class="group-header" style="flex-direction: column; align-items: flex-start; gap: 0.25rem;">
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <span class="header-label">Loans</span>
-                        <span class="header-total">{{ Math.abs(summary().loans) | currency }}</span>
-                    </div>
-                    @if (groupPeriodChanges().get(AccountGroup.Loan); as change) {
-                    <app-value-period-change [amount]="change.amount" [percentage]="change.percentage"
-                        [isPositive]="change.isPositive" [isGood]="change.isGood" [label]="selectedTimeframeLabel()">
-                    </app-value-period-change>
-                    }
-                </div>
-                @for (account of summary().loanAccounts; track account) {
-                <div class="row-item indented">
-                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
-                    <span>{{ Math.abs(account.balance) | currency }}</span>
-                </div>
-                @if (!$last) { <mat-divider></mat-divider> }
-                }
-            </div>
-            }
-
-            <!-- Real Estate -->
-            @if (summary().realEstateAccounts.length > 0) {
-            <div class="account-group">
-                <div class="group-header" style="flex-direction: column; align-items: flex-start; gap: 0.25rem;">
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <span class="header-label">Real Estate</span>
-                        <span class="header-total">{{ summary().realEstate | currency }}</span>
-                    </div>
-                    @if (groupPeriodChanges().get(AccountGroup.RealEstate); as change) {
-                    <app-value-period-change [amount]="change.amount" [percentage]="change.percentage"
-                        [isPositive]="change.isPositive" [isGood]="change.isGood" [label]="selectedTimeframeLabel()">
-                    </app-value-period-change>
-                    }
-                </div>
-                @for (account of summary().realEstateAccounts; track account) {
-                <div class="row-item indented">
-                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
-                    <span>{{ account.balance | currency }}</span>
-                </div>
-                @if (!$last) { <mat-divider></mat-divider> }
-                }
-            </div>
             }
         </mat-card-content>
     </mat-card>
 
     <!-- Assets Card -->
-    <mat-card appearance="outlined" class="summary-card" style="overflow: hidden;">
+    <mat-card appearance="outlined" class="summary-card">
         <div class="group-header">
             <span class="header-label">TOTAL ASSETS</span>
             <span class="header-total">{{ summary().totalAssets | currency }}</span>
@@ -159,7 +63,7 @@
     </mat-card>
 
     <!-- Liabilities Card -->
-    <mat-card appearance="outlined" class="summary-card" style="overflow: hidden;">
+    <mat-card appearance="outlined" class="summary-card">
         <div class="group-header">
             <span class="header-label">TOTAL LIABILITIES</span>
             <span class="header-total">{{ Math.abs(summary().totalLiabilities) | currency }}</span>

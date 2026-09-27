@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, SimpleChanges, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnChanges, SimpleChanges, input, output, signal } from '@angular/core';
 import { FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,7 +10,7 @@ import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum
 
 @Component({
     selector: 'app-account-form',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         ReactiveFormsModule,
         MatButtonModule,
@@ -26,17 +26,18 @@ export class AccountFormComponent implements OnInit, OnChanges {
     readonly account = input<Account | null>(null);
     readonly mode = input<'create' | 'edit'>('create');
     readonly save = output<Partial<Account>>();
-    readonly cancel = output<void>();
+    readonly cancelled = output<void>();
 
-    categories = Object.values(AccountCategory);
-    groups: AccountGroup[] = [];
-    types: AccountType[] = [];
+    readonly categories = Object.values(AccountCategory);
+    readonly groups = signal<AccountGroup[]>([]);
+    readonly types = signal<AccountType[]>([]);
 
-    accountForm = new FormGroup({
+    readonly accountForm = new FormGroup({
         name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
         category: new FormControl<AccountCategory>(AccountCategory.Asset, { nonNullable: true, validators: [Validators.required] }),
-        group: new FormControl<AccountGroup>(AccountGroup.Cash, { nonNullable: true, validators: [Validators.required] }),
-        type: new FormControl<AccountType>(AccountType.Checking, { nonNullable: true, validators: [Validators.required] }),
+        group: new FormControl<AccountGroup | null>(AccountGroup.Cash, { validators: [Validators.required] }),
+        // Null for groups that have no account types (credit cards).
+        type: new FormControl<AccountType | null>(AccountType.Checking),
         isHidden: new FormControl<boolean>(false, { nonNullable: true }),
         isManual: new FormControl<boolean>(true, { nonNullable: true }),
         isRetirement: new FormControl<boolean>(false, { nonNullable: true }),
@@ -68,7 +69,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
                 name: account.name,
                 category: account.category,
                 group: account.group,
-                type: account.type ?? undefined,
+                type: account.type,
                 isHidden: account.isHidden,
                 isManual: account.isManual,
                 isRetirement: account.isRetirement,
@@ -78,10 +79,12 @@ export class AccountFormComponent implements OnInit, OnChanges {
 
             if (account.isManual) {
                 this.accountForm.controls.balance.enable({ emitEvent: false });
-            } else {
+            }
+            else {
                 this.accountForm.controls.balance.disable({ emitEvent: false });
             }
-        } else {
+        }
+        else {
             this.updateAvailableGroups(AccountCategory.Asset);
             this.updateAvailableTypes(AccountGroup.Cash);
         }
@@ -92,79 +95,90 @@ export class AccountFormComponent implements OnInit, OnChanges {
             const balanceControl = this.accountForm.controls.balance;
             if (isManual) {
                 balanceControl.enable();
-            } else {
+            }
+            else {
                 balanceControl.disable();
                 const account = this.account();
                 if (account) {
                     balanceControl.setValue(account.balance || 0);
-                } else {
+                }
+                else {
                     balanceControl.setValue(0);
                 }
             }
         });
 
         this.accountForm.controls.category.valueChanges.subscribe(category => {
-            this.updateAvailableGroups(category as AccountCategory);
-            if (this.groups.length > 0 && !this.groups.includes(this.accountForm.controls.group.value as AccountGroup)) {
-                this.accountForm.controls.group.setValue(this.groups[0]);
-            } else if (this.groups.length === 0) {
-                this.accountForm.controls.group.setValue(null as any);
+            this.updateAvailableGroups(category);
+            const groups = this.groups();
+            const group = this.accountForm.controls.group.value;
+            if (groups.length === 0) {
+                this.accountForm.controls.group.setValue(null);
+            }
+            else if (!group || !groups.includes(group)) {
+                this.accountForm.controls.group.setValue(groups[0]);
             }
         });
 
         this.accountForm.controls.group.valueChanges.subscribe(group => {
-            this.updateAvailableTypes(group as AccountGroup);
-            if (this.types.length > 0 && !this.types.includes(this.accountForm.controls.type.value as AccountType)) {
-                this.accountForm.controls.type.setValue(this.types[0]);
-            } else if (this.types.length === 0) {
-                this.accountForm.controls.type.setValue(null as any);
+            this.updateAvailableTypes(group);
+            const types = this.types();
+            const type = this.accountForm.controls.type.value;
+            if (types.length === 0) {
+                this.accountForm.controls.type.setValue(null);
+            }
+            else if (!type || !types.includes(type)) {
+                this.accountForm.controls.type.setValue(types[0]);
             }
         });
     }
 
     private updateAvailableGroups(category: AccountCategory) {
         if (category === AccountCategory.Asset) {
-            this.groups = [AccountGroup.Cash, AccountGroup.Investment, AccountGroup.RealEstate];
-        } else if (category === AccountCategory.Liability) {
-            this.groups = [AccountGroup.CreditCard, AccountGroup.Loan];
-        } else {
-            this.groups = [];
+            this.groups.set([AccountGroup.Cash, AccountGroup.Investment, AccountGroup.RealEstate]);
+        }
+        else if (category === AccountCategory.Liability) {
+            this.groups.set([AccountGroup.CreditCard, AccountGroup.Loan]);
+        }
+        else {
+            this.groups.set([]);
         }
     }
 
-    private updateAvailableTypes(group: AccountGroup) {
+    private updateAvailableTypes(group: AccountGroup | null) {
+        this.types.set(this.typesForGroup(group));
+    }
+
+    private typesForGroup(group: AccountGroup | null): AccountType[] {
         switch (group) {
             case AccountGroup.Cash:
-                this.types = [AccountType.Checking, AccountType.Savings];
-                break;
+                return [AccountType.Checking, AccountType.Savings];
             case AccountGroup.Investment:
-                this.types = [AccountType.Retirement_401k, AccountType.Retirement_IRA, AccountType.Brokerage, AccountType.HSA];
-                break;
+                return [AccountType.Retirement_401k, AccountType.Retirement_IRA, AccountType.Brokerage, AccountType.HSA];
             case AccountGroup.RealEstate:
-                this.types = [AccountType.PrimaryResidence];
-                break;
+                return [AccountType.PrimaryResidence];
             case AccountGroup.Loan:
-                this.types = [AccountType.Mortgage];
-                break;
+                return [AccountType.Mortgage];
             case AccountGroup.CreditCard:
-                this.types = [];
-                break;
+                return [];
             default:
-                this.types = [];
+                return [];
         }
     }
 
     onSubmit() {
-        if (this.accountForm.valid) {
-            const rawValue = this.accountForm.getRawValue();
+        const rawValue = this.accountForm.getRawValue();
+        // The group's required validator means it's set whenever the form is valid.
+        if (this.accountForm.valid && rawValue.group) {
             this.save.emit({
                 ...rawValue,
+                group: rawValue.group,
                 balance: typeof rawValue.balance === 'string' ? parseFloat(rawValue.balance) : rawValue.balance
             });
         }
     }
 
     onCancelClick() {
-        this.cancel.emit();
+        this.cancelled.emit();
     }
 }

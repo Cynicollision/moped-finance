@@ -1,11 +1,11 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
+import { BudgetStreamType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { ModalService } from './../../core/modal/modal.service';
@@ -20,9 +20,9 @@ export interface BudgetTotals {
 
 @Component({
     selector: 'app-finance-budget',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CommonModule,
+        CurrencyPipe,
         MatCardModule,
         MatTableModule,
         MatButtonModule,
@@ -34,24 +34,23 @@ export interface BudgetTotals {
 })
 export class FinanceBudgetComponent implements OnInit {
     private financeService = inject(FinanceService);
-    private cdr = inject(ChangeDetectorRef);
     private modalService = inject(ModalService);
 
-    categories: Category[] = [];
-    categoryMap = new Map<string, Category>();
-    groups: CategoryGroup[] = [];
-    groupMap = new Map<string, CategoryGroup>();
-    budgetStreams: BudgetStream[] = [];
+    readonly BudgetStreamType = BudgetStreamType;
+    readonly displayedColumns: string[] = ['name', 'group', 'category', 'amount', 'recurrence', 'actions'];
 
-    BudgetStreamType = BudgetStreamType;
+    private readonly categories = signal<Category[]>([]);
+    private readonly groups = signal<CategoryGroup[]>([]);
+    private readonly budgetStreams = signal<BudgetStream[]>([]);
 
-    incomeStreams: BudgetStream[] = [];
-    expenseStreams: BudgetStream[] = [];
+    private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
+    private readonly groupMap = computed(() => new Map(this.groups().map(g => [g.id, g])));
 
-    displayedColumns: string[] = ['name', 'group', 'category', 'amount', 'recurrence', 'actions'];
+    readonly incomeStreams = computed(() => this.streamsOfType(BudgetStreamType.Income));
+    readonly expenseStreams = computed(() => this.streamsOfType(BudgetStreamType.Expense));
 
-    incomeTotals: BudgetTotals = { monthly: 0, quarterly: 0, yearly: 0 };
-    expenseTotals: BudgetTotals = { monthly: 0, quarterly: 0, yearly: 0 };
+    readonly incomeTotals = computed(() => this.getTotals(this.incomeStreams()));
+    readonly expenseTotals = computed(() => this.getTotals(this.expenseStreams()));
 
     async ngOnInit() {
         await this.loadData();
@@ -64,33 +63,15 @@ export class FinanceBudgetComponent implements OnInit {
             this.financeService.fetchBudgetStreams()
         ]);
 
-        this.categories = categories || [];
-        this.categoryMap.clear();
-        this.categories.forEach(c => this.categoryMap.set(c.id, c));
-
-        this.groups = groups || [];
-        this.groupMap.clear();
-        this.groups.forEach(g => this.groupMap.set(g.id, g));
-
-        this.budgetStreams = budgetStreams || [];
-        this.splitStreams();
-        this.calculateTotals();
-        this.cdr.detectChanges();
+        this.categories.set(categories || []);
+        this.groups.set(groups || []);
+        this.budgetStreams.set(budgetStreams || []);
     }
 
-    private splitStreams() {
-        this.incomeStreams = this.budgetStreams
-            .filter(s => s.type === BudgetStreamType.Income)
+    private streamsOfType(type: BudgetStreamType): BudgetStream[] {
+        return this.budgetStreams()
+            .filter(s => s.type === type)
             .sort((a, b) => this.compareStreams(a, b));
-
-        this.expenseStreams = this.budgetStreams
-            .filter(s => s.type === BudgetStreamType.Expense)
-            .sort((a, b) => this.compareStreams(a, b));
-    }
-
-    private calculateTotals() {
-        this.incomeTotals = this.getTotals(this.incomeStreams);
-        this.expenseTotals = this.getTotals(this.expenseStreams);
     }
 
     private getTotals(streams: BudgetStream[]): BudgetTotals {
@@ -118,13 +99,13 @@ export class FinanceBudgetComponent implements OnInit {
     }
 
     private compareStreams(a: BudgetStream, b: BudgetStream): number {
-        const catA = this.categoryMap.get(a.categoryId);
-        const catB = this.categoryMap.get(b.categoryId);
+        const catA = this.categoryMap().get(a.categoryId);
+        const catB = this.categoryMap().get(b.categoryId);
 
-        const groupA = catA ? this.groupMap.get(catA.groupId)?.name || '' : '';
-        const groupB = catB ? this.groupMap.get(catB.groupId)?.name || '' : '';
+        const groupA = catA ? this.groupMap().get(catA.groupId)?.name || '' : '';
+        const groupB = catB ? this.groupMap().get(catB.groupId)?.name || '' : '';
 
-        // Sort by Reccurence first: Monthly, Quarterly, Yearly
+        // Sort by recurrence first: Monthly, Quarterly, Yearly
         const periodOrder: Record<CalendarPeriod, number> = {
             [CalendarPeriod.Monthly]: 1,
             [CalendarPeriod.Quarterly]: 2,
@@ -134,45 +115,43 @@ export class FinanceBudgetComponent implements OnInit {
         const orderA = periodOrder[a.recurrence] || 99;
         const orderB = periodOrder[b.recurrence] || 99;
 
-        if (orderA !== orderB) return orderA - orderB;
+        if (orderA !== orderB) {
+            return orderA - orderB;
+        }
 
-        if (groupA < groupB) return -1;
-        if (groupA > groupB) return 1;
+        if (groupA !== groupB) {
+            return groupA < groupB ? -1 : 1;
+        }
 
         const nameA = catA?.name || '';
         const nameB = catB?.name || '';
 
-        if (nameA < nameB) return -1;
-        if (nameA > nameB) return 1;
+        if (nameA !== nameB) {
+            return nameA < nameB ? -1 : 1;
+        }
 
         return 0;
     }
 
-    getCategoriesByType(type: BudgetStreamType) {
-        const targetClass = type === BudgetStreamType.Income ? CategoryClass.Income : CategoryClass.Expense;
-        return this.categories.filter(c => {
-            const group = this.groupMap.get(c.groupId);
-            return group?.class === targetClass;
-        });
-    }
-
     getCategoryName(id: string) {
-        const cat = this.categoryMap.get(id);
+        const cat = this.categoryMap().get(id);
         return cat ? `${cat.icon} ${cat.name}` : id;
     }
 
     getCategoryGroup(id: string) {
-        const cat = this.categoryMap.get(id);
-        if (!cat) return '';
-        const group = this.groupMap.get(cat.groupId);
+        const cat = this.categoryMap().get(id);
+        if (!cat) {
+            return '';
+        }
+        const group = this.groupMap().get(cat.groupId);
         return group ? group.name : '';
     }
 
     async startAdd(type: BudgetStreamType) {
         const result = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, BudgetStream>(FinanceBudgetFormModalComponent, {
             type,
-            categories: this.categories,
-            groups: this.groups
+            categories: this.categories(),
+            groups: this.groups()
         });
 
         if (result) {
@@ -184,8 +163,8 @@ export class FinanceBudgetComponent implements OnInit {
         const result = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, BudgetStream>(FinanceBudgetFormModalComponent, {
             stream,
             type: stream.type,
-            categories: this.categories,
-            groups: this.groups
+            categories: this.categories(),
+            groups: this.groups()
         });
 
         if (result) {

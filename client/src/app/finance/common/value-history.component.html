@@ -4,23 +4,23 @@
 
         <div class="chart-controls">
             <!-- Value Type Selector -->
-            @if (chartTypeOptions.length > 1) {
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>View Type</mat-label>
-                <mat-select [value]="selectedChartType()" (selectionChange)="onChartTypeChange($event.value)">
-                    @for (option of chartTypeOptions; track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                    }
-                </mat-select>
-            </mat-form-field>
+            @if (chartTypeOptions().length > 1) {
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>View Type</mat-label>
+                    <mat-select [value]="selectedChartType()" (selectionChange)="chartTypeChange.emit($event.value)">
+                        @for (option of chartTypeOptions(); track option.value) {
+                            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
             }
 
             <!-- Timeframe Selector -->
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>Timeframe</mat-label>
-                <mat-select [value]="selectedTimeframe()" (selectionChange)="onTimeframeChange($event.value)">
+                <mat-select [value]="selectedTimeframe()" (selectionChange)="timeframeChange.emit($event.value)">
                     @for (option of timeframeOptions(); track option.value) {
-                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
                     }
                 </mat-select>
             </mat-form-field>
@@ -33,21 +33,20 @@
         </div>
 
         @if (periodChange(); as change) {
-        <app-value-period-change [amount]="change.amount" [percentage]="change.percentage"
-            [isPositive]="change.isPositive" [isGood]="change.isGood" [label]="change.timeframeLabel"
-            style="margin: 1rem 0 0.5rem 0; display: block;">
-        </app-value-period-change>
+            <app-value-period-change class="period-change" [change]="change" [label]="change.timeframeLabel">
+            </app-value-period-change>
         }
 
         <div class="chart-wrapper">
             @if (chartConfig(); as config) {
-            <app-chart [config]="config" height="100%"></app-chart>
-            } @else {
-            <div class="no-data-message">
-                <mat-icon>insights</mat-icon>
-                <p>No data available for the selected timeframe.</p>
-                <span class="sub-message">Try adjusting the timeframe or historical view type.</span>
-            </div>
+                <app-chart [config]="config" height="100%"></app-chart>
+            }
+            @else {
+                <div class="no-data-message">
+                    <mat-icon>insights</mat-icon>
+                    <p>No data available for the selected timeframe.</p>
+                    <span class="sub-message">Try adjusting the timeframe or historical view type.</span>
+                </div>
             }
         </div>
     </mat-card-content>

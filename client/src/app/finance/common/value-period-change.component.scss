@@ -1,0 +1,27 @@
+.change-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 500;
+
+    mat-icon {
+        font-size: 20px;
+        height: 20px;
+        width: 20px;
+    }
+
+    &.good {
+        color: var(--color-positive);
+    }
+
+    &.bad {
+        color: var(--color-negative);
+    }
+
+    .change-label {
+        color: var(--text-muted);
+        font-weight: normal;
+        font-size: 0.9em;
+        margin-left: 0.25rem;
+    }
+}

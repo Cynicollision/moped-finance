@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,9 +16,9 @@ export interface CategoryGroupFormModalData {
 
 @Component({
     selector: 'app-category-group-form-modal',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CommonModule,
+        TitleCasePipe,
         ReactiveFormsModule,
         MatDialogModule,
         MatButtonModule,
@@ -27,63 +27,24 @@ export interface CategoryGroupFormModalData {
         MatSelectModule,
         ModalLayoutComponent
     ],
-    template: `
-        <app-modal-layout [title]="isEditing ? 'Edit Group' : 'Create Group'">
-          <form [formGroup]="form" (ngSubmit)="save()">
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="e.g. Auto & Transport">
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Type</mat-label>
-                <mat-select formControlName="class">
-                  @for (opt of classOptions; track opt) {
-                    <mat-option [value]="opt">
-                      {{ opt | titlecase }}
-                    </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-            </div>
-
-            <div modal-actions>
-              <button mat-button type="button" mat-dialog-close>Cancel</button>
-              <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
-                Save
-              </button>
-            </div>
-          </form>
-        </app-modal-layout>
-        `,
-    styles: [`
-        .form-row {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            padding-top: 8px;
-        }
-    `]
+    templateUrl: './category-group-form-modal.component.html',
+    styleUrl: './category-group-form-modal.component.scss'
 })
 export class CategoryGroupFormModalComponent {
     private fb = inject(FormBuilder);
-    dialogRef = inject<MatDialogRef<CategoryGroupFormModalComponent>>(MatDialogRef);
-    data = inject<CategoryGroupFormModalData>(MAT_DIALOG_DATA);
+    private dialogRef = inject<MatDialogRef<CategoryGroupFormModalComponent>>(MatDialogRef);
+    readonly data = inject<CategoryGroupFormModalData>(MAT_DIALOG_DATA);
 
-    form: FormGroup;
-    isEditing = false;
-    classOptions = Object.values(CategoryClass);
+    readonly form = this.fb.group({
+        id: [null as string | null],
+        name: ['', Validators.required],
+        class: [CategoryClass.Expense, Validators.required]
+    });
+    readonly isEditing = !!this.data.group;
+    readonly classOptions = Object.values(CategoryClass);
 
     constructor() {
-        this.form = this.fb.group({
-            id: [null],
-            name: ['', Validators.required],
-            class: [CategoryClass.Expense, Validators.required]
-        });
-
         if (this.data.group) {
-            this.isEditing = true;
             this.form.patchValue(this.data.group);
         }
     }

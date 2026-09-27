@@ -60,3 +60,8 @@
         gap: 16px;
     }
 }
+
+.delete-item,
+.delete-item mat-icon {
+    color: var(--color-negative);
+}

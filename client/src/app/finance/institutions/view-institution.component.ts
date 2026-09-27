@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,7 +9,7 @@ import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-view-institution',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, InstitutionFormComponent],
     templateUrl: './view-institution.component.html',
     styleUrl: './view-institution.component.scss'
@@ -19,7 +19,7 @@ export class ViewInstitutionComponent implements OnInit {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
 
-    institutionId: string | null = null;
+    private institutionId: string | null = null;
     readonly institution = signal<Institution | null>(null);
 
     async ngOnInit() {

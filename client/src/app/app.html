@@ -3,97 +3,75 @@
     <mat-sidenav #drawer class="sidenav" fixedInViewport [attr.role]="isHandset() ? 'dialog' : 'navigation'"
         [mode]="isHandset() ? 'over' : 'side'" [opened]="!isHandset()">
 
-        <div style="display: flex; flex-direction: column; height: 100%;">
+        <div class="sidenav-body">
             @if (authService.currentUser()) {
-                <div
-                    style="padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="brand">
+                    <div class="brand-name">
                         <mat-icon color="primary">attach_money</mat-icon>
-                        <span
-                        style="font-size: 18px; font-weight: 500; letter-spacing: 0.5px; color: var(--text-main);">Moped Finance</span>
+                        <span class="brand-title">Moped Finance</span>
                     </div>
                     @if (isDemoMode) {
-                        <div style="display: flex; align-items: center; gap: 4px; background: rgba(156, 39, 176, 0.1); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(156, 39, 176, 0.2);"
-                            title="Demo Mode">
-                            <mat-icon
-                            style="color: #9c27b0; font-size: 16px; width: 16px; height: 16px; margin: 0;">science</mat-icon>
-                            <span style="font-size: 11px; color: #9c27b0; font-weight: bold; line-height: 1;">Demo Mode</span>
+                        <div class="mode-badge demo" title="Demo Mode">
+                            <mat-icon>science</mat-icon>
+                            <span>Demo Mode</span>
                         </div>
                     }
                     @else if (isDebugMode) {
-                    <div style="display: flex; align-items: center; gap: 4px; background: rgba(255, 152, 0, 0.1); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(255, 152, 0, 0.2);"
-                        title="Debug Mode: {{ debugDateLabel }}">
-                        <mat-icon
-                        style="color: #ff9800; font-size: 16px; width: 16px; height: 16px; margin: 0;">bug_report</mat-icon>
-                        <span style="font-size: 11px; color: #ff9800; font-weight: bold; line-height: 1;">{{ debugDateLabel
-                        }}</span>
-                    </div>
-                }
-            </div>
-        }
-
-        @if (authService.currentUser()) {
-            <mat-nav-list>
-                @for (item of navItems; track item) {
-                    <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link"
-                        [routerLinkActiveOptions]="{exact: true}" (click)="drawer.mode === 'over' && drawer.close()">
-                        <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
-                        <span matListItemTitle>{{item.label}}</span>
-                    </a>
-                }
-            </mat-nav-list>
-        }
-
-        <span style="flex: 1 1 auto;"></span>
-
-        <!-- Profile Button and Dropdown Menu -->
-        @if (authService.currentUser()) {
-            <div>
-                <div style="padding: 12px 16px; margin: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px; background-color: var(--bg-card); border: 1px solid var(--border-color); transition: background-color 0.2s;"
-                    [matMenuTriggerFor]="profileMenu" class="profile-trigger">
-                    <div
-                        style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--mat-sys-primary); color: var(--mat-sys-on-primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
-                        {{ getUserInitials() }}
-                    </div>
-                    <span
-                        style="font-weight: 500; font-size: 14px; color: var(--text-main); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        {{ authService.currentUser()?.displayName }}
-                    </span>
-                    <mat-icon
-                    style="color: var(--text-muted); font-size: 20px; width: 20px; height: 20px; margin: 0;">keyboard_arrow_up</mat-icon>
+                        <div class="mode-badge debug" title="Debug Mode: {{ debugDateLabel() }}">
+                            <mat-icon>bug_report</mat-icon>
+                            <span>{{ debugDateLabel() }}</span>
+                        </div>
+                    }
                 </div>
+
+                <mat-nav-list>
+                    @for (item of navItems; track item.route) {
+                        <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link"
+                            [routerLinkActiveOptions]="{exact: true}" (click)="drawer.mode === 'over' && drawer.close()">
+                            <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
+                            <span matListItemTitle>{{item.label}}</span>
+                        </a>
+                    }
+                </mat-nav-list>
+
+                <span class="spacer"></span>
+
+                <!-- Profile Button and Dropdown Menu -->
+                <button type="button" class="profile-trigger" [matMenuTriggerFor]="profileMenu">
+                    <span class="avatar">{{ userInitials() }}</span>
+                    <span class="profile-name">{{ authService.currentUser()?.displayName }}</span>
+                    <mat-icon class="profile-arrow">keyboard_arrow_up</mat-icon>
+                </button>
                 <mat-menu #profileMenu="matMenu" xPosition="after" yPosition="above">
                     <a mat-menu-item routerLink="/settings" (click)="drawer.mode === 'over' && drawer.close()">
                         <mat-icon>settings</mat-icon>
                         <span>Settings</span>
                     </a>
-                    <button mat-menu-item (click)="logout()">
-                        <mat-icon style="color: var(--color-negative);">logout</mat-icon>
-                        <span style="color: var(--color-negative);">Sign out</span>
+                    <button mat-menu-item class="sign-out" (click)="logout()">
+                        <mat-icon>logout</mat-icon>
+                        <span>Sign out</span>
                     </button>
                 </mat-menu>
-            </div>
-        }
-    </div>
-</mat-sidenav>
+            }
+        </div>
+    </mat-sidenav>
 
-<!-- Main Content Area -->
-<mat-sidenav-content>
-    <div class="content-container">
-        @if (isHandset()) {
-            <div style="display: flex; align-items: center; margin-bottom: 16px;">
-                <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()">
-                    <mat-icon>menu</mat-icon>
-                </button>
-                @if (currentNavItem) {
-                    <span style="font-size: 20px; font-weight: 500; margin-left: 8px;">{{
-                    currentNavItem.label }}</span>
-                }
-            </div>
-        }
-        <router-outlet></router-outlet>
-    </div>
-</mat-sidenav-content>
+    <!-- Main Content Area -->
+    <mat-sidenav-content>
+        <div class="content-container">
+            @if (isHandset()) {
+                <div class="handset-header">
+                    <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()">
+                        <mat-icon>menu</mat-icon>
+                    </button>
+                    @if (currentNavItem(); as item) {
+                        <span class="handset-title">{{ item.label }}</span>
+                    }
+                </div>
+            }
+            <router-outlet></router-outlet>
+        </div>
+    </mat-sidenav-content>
 </mat-sidenav-container>
 
 <app-loading-overlay></app-loading-overlay>

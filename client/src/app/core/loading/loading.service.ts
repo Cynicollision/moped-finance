@@ -26,7 +26,8 @@ export class LoadingService {
         try {
             this.show();
             return await promise;
-        } finally {
+        }
+        finally {
             this.hide();
         }
     }

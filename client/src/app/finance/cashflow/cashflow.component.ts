@@ -1,5 +1,5 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { CurrencyPipe, LowerCasePipe, PercentPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -16,11 +16,20 @@ import { Category, CategoryGroup } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 
+interface CashflowRow {
+    /** The category or group ID, depending on the view mode; undefined for uncategorized transactions. */
+    id?: string;
+    name: string;
+    amount: number;
+}
+
 @Component({
     selector: 'app-finance-cashflow',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CommonModule,
+        CurrencyPipe,
+        PercentPipe,
+        LowerCasePipe,
         FormsModule,
         MatCardModule,
         MatFormFieldModule,
@@ -35,17 +44,15 @@ import { FinanceService } from './../finance.service';
 })
 export class FinanceCashflowComponent implements OnInit {
     private financeService = inject(FinanceService);
-    private cdr = inject(ChangeDetectorRef);
     private router = inject(Router);
     private dateProvider = inject(DateProviderService);
 
-    CalendarPeriod = CalendarPeriod;
-    periods = [CalendarPeriod.Monthly, CalendarPeriod.Quarterly, CalendarPeriod.Yearly];
+    readonly CalendarPeriod = CalendarPeriod;
+    readonly Math = Math;
+    readonly periods = [CalendarPeriod.Monthly, CalendarPeriod.Quarterly, CalendarPeriod.Yearly];
+    readonly displayedColumns: string[] = ['name', 'amount'];
 
-    selectedPeriod: CalendarPeriod = CalendarPeriod.Monthly;
-    viewMode: 'category' | 'group' = 'category';
-
-    months = [
+    readonly months = [
         { value: 0, label: 'January' }, { value: 1, label: 'February' },
         { value: 2, label: 'March' }, { value: 3, label: 'April' },
         { value: 4, label: 'May' }, { value: 5, label: 'June' },
@@ -53,149 +60,111 @@ export class FinanceCashflowComponent implements OnInit {
         { value: 8, label: 'September' }, { value: 9, label: 'October' },
         { value: 10, label: 'November' }, { value: 11, label: 'December' }
     ];
-    quarters = [
+    readonly quarters = [
         { value: 1, label: 'Q1' }, { value: 2, label: 'Q2' },
         { value: 3, label: 'Q3' }, { value: 4, label: 'Q4' }
     ];
 
-    currentYear = this.dateProvider.now().getFullYear();
-    years = [this.currentYear - 2, this.currentYear - 1, this.currentYear, this.currentYear + 1];
+    private readonly today = this.dateProvider.now();
+    readonly years = [this.today.getFullYear() - 2, this.today.getFullYear() - 1, this.today.getFullYear(), this.today.getFullYear() + 1];
 
-    selectedMonth = this.dateProvider.now().getMonth();
-    selectedQuarter = Math.floor(this.dateProvider.now().getMonth() / 3) + 1;
-    selectedYear = this.currentYear;
+    readonly selectedPeriod = signal(CalendarPeriod.Monthly);
+    readonly selectedYear = signal(this.today.getFullYear());
+    readonly selectedMonth = signal(this.today.getMonth());
+    readonly selectedQuarter = signal(Math.floor(this.today.getMonth() / 3) + 1);
+    readonly viewMode = signal<'category' | 'group'>('category');
 
-    categories: Category[] = [];
-    categoryMap = new Map<string, Category>();
-    groupMap = new Map<string, CategoryGroup>();
+    private readonly categoryMap = signal(new Map<string, Category>());
+    private readonly groupMap = signal(new Map<string, CategoryGroup>());
+    private readonly cashflowStreams = signal<CashflowStream[]>([]);
 
-    cashflowStreams: CashflowStream[] = [];
-    incomeStreams: { id?: string, name: string, amount: number }[] = [];
-    expenseStreams: { id?: string, name: string, amount: number }[] = [];
+    private readonly rows = computed(() => {
+        const viewMode = this.viewMode();
+        const income = new Map<string, CashflowRow>();
+        const expense = new Map<string, CashflowRow>();
 
-    totalIncome = 0;
-    totalExpenses = 0;
-    totalSavings = 0;
-    savingsRate = 0;
+        for (const stream of this.cashflowStreams()) {
+            const cat = stream.categoryId ? this.categoryMap().get(stream.categoryId) : undefined;
+            const group = cat ? this.groupMap().get(cat.groupId) : undefined;
 
-    Math = Math;
+            if (group?.class === CategoryClass.Transfer) {
+                continue;
+            }
 
-    displayedColumns: string[] = ['name', 'amount'];
+            const id = viewMode === 'category' ? cat?.id : group?.id;
+            const name = viewMode === 'category'
+                ? (cat ? `${cat.icon} ${cat.name}` : 'Uncategorized')
+                : (group?.name || 'Uncategorized');
+
+            const rows = group?.class === CategoryClass.Income ? income : expense;
+            const row = rows.get(id ?? '') ?? { id, name, amount: 0 };
+            row.amount += stream.amount;
+            rows.set(id ?? '', row);
+        }
+
+        const sortByAmountDesc = (a: CashflowRow, b: CashflowRow) => Math.abs(b.amount) - Math.abs(a.amount);
+        return {
+            income: [...income.values()].sort(sortByAmountDesc),
+            expense: [...expense.values()].sort(sortByAmountDesc)
+        };
+    });
+
+    private readonly incomeStreams = computed(() => this.rows().income);
+    private readonly expenseStreams = computed(() => this.rows().expense);
+
+    readonly sections = computed(() => [
+        { title: 'Income', rows: this.incomeStreams() },
+        { title: 'Expenses', rows: this.expenseStreams() }
+    ]);
+
+    readonly totalIncome = computed(() => this.incomeStreams().reduce((sum, row) => sum + row.amount, 0));
+    readonly totalExpenses = computed(() => this.expenseStreams().reduce((sum, row) => sum + Math.abs(row.amount), 0));
+    readonly totalSavings = computed(() => this.totalIncome() - this.totalExpenses());
+    readonly savingsRate = computed(() => this.totalIncome() > 0 ? this.totalSavings() / this.totalIncome() : 0);
 
     async ngOnInit() {
         const [categories, groups] = await Promise.all([
             this.financeService.fetchCategories(false),
             this.financeService.fetchCategoryGroups()
         ]);
-        this.categories = categories || [];
-        this.categories.forEach(c => this.categoryMap.set(c.id, c));
-        
-        const groupArray = groups || [];
-        groupArray.forEach(g => this.groupMap.set(g.id, g));
+        this.categoryMap.set(new Map((categories || []).map(c => [c.id, c])));
+        this.groupMap.set(new Map((groups || []).map(g => [g.id, g])));
 
         await this.loadData();
     }
 
     async loadData() {
         const asOfDate = this.getAsOfDate();
-        const streams = await this.financeService.fetchCashflowStreams(this.selectedPeriod, asOfDate.toISOString().split('T')[0]);
-        this.cashflowStreams = streams || [];
-        this.processData();
-        this.cdr.detectChanges();
+        const streams = await this.financeService.fetchCashflowStreams(this.selectedPeriod(), asOfDate.toISOString().split('T')[0]);
+        this.cashflowStreams.set(streams || []);
     }
 
-    getAsOfDate(): Date {
-        if (this.selectedPeriod === CalendarPeriod.Monthly) {
-            return new Date(this.selectedYear, this.selectedMonth, 1);
-        } else if (this.selectedPeriod === CalendarPeriod.Quarterly) {
-            const firstMonthOfQuarter = (this.selectedQuarter - 1) * 3;
-            return new Date(this.selectedYear, firstMonthOfQuarter, 1);
-        } else {
-            return new Date(this.selectedYear, 0, 1);
+    private getAsOfDate(): Date {
+        switch (this.selectedPeriod()) {
+            case CalendarPeriod.Monthly:
+                return new Date(this.selectedYear(), this.selectedMonth(), 1);
+            case CalendarPeriod.Quarterly:
+                return new Date(this.selectedYear(), (this.selectedQuarter() - 1) * 3, 1);
+            default:
+                return new Date(this.selectedYear(), 0, 1);
         }
     }
 
-    processData() {
-        const incomeMap = new Map<string, number>();
-        const expenseMap = new Map<string, number>();
+    onRowClick(row: CashflowRow) {
+        const queryParams: Record<string, string> = {};
 
-        this.cashflowStreams.forEach(s => {
-            const cat = s.categoryId ? this.categoryMap.get(s.categoryId) : undefined;
-            const group = cat ? this.groupMap.get(cat.groupId) : undefined;
-
-            if (group?.class === CategoryClass.Transfer) {
-                return;
-            }
-
-            const nameKey = this.viewMode === 'category'
-                ? (cat ? `${cat.icon} ${cat.name}` : 'Uncategorized')
-                : (group?.name || 'Uncategorized');
-
-            if (group?.class === CategoryClass.Income) {
-                incomeMap.set(nameKey, (incomeMap.get(nameKey) || 0) + s.amount);
-            }
-            else {
-                expenseMap.set(nameKey, (expenseMap.get(nameKey) || 0) + s.amount);
-            }
-        });
-
-        const sortByAmountDesc = (a: { amount: number }, b: { amount: number }) => Math.abs(b.amount) - Math.abs(a.amount);
-
-        let inc = 0;
-        this.incomeStreams = Array.from(incomeMap.entries()).map(([name, amount]) => {
-            inc += amount;
-            let id: string | undefined;
-            if (this.viewMode === 'category') {
-                id = Array.from(this.categoryMap.values()).find(c => `${c.icon} ${c.name}` === name)?.id;
-            } else if (this.viewMode === 'group') {
-                id = Array.from(this.groupMap.values()).find(g => g.name === name)?.id;
-            }
-            return { id, name, amount };
-        }).sort(sortByAmountDesc);
-
-        let exp = 0;
-        this.expenseStreams = Array.from(expenseMap.entries()).map(([name, amount]) => {
-            exp += Math.abs(amount);
-            let id: string | undefined;
-            if (this.viewMode === 'category') {
-                id = Array.from(this.categoryMap.values()).find(c => `${c.icon} ${c.name}` === name)?.id;
-            } else if (this.viewMode === 'group') {
-                id = Array.from(this.groupMap.values()).find(g => g.name === name)?.id;
-            }
-            return { id, name, amount };
-        }).sort(sortByAmountDesc);
-
-        this.totalIncome = inc;
-        this.totalExpenses = exp;
-        this.totalSavings = this.totalIncome - this.totalExpenses;
-        this.savingsRate = this.totalIncome > 0 ? (this.totalSavings / this.totalIncome) : 0;
-
-        this.cdr.detectChanges();
-    }
-
-    onPeriodChange() {
-        this.loadData();
-    }
-
-    onViewModeChange() {
-        this.processData();
-    }
-
-    onRowClick(row: { id?: string, name: string }) {
-        const queryParams: any = {};
-
-        if (this.viewMode === 'category' && row.id) {
-            queryParams.categoryId = row.id;
+        if (this.viewMode() === 'category' && row.id) {
+            queryParams['categoryId'] = row.id;
         }
-        else if (this.viewMode === 'group' && row.id) {
-            queryParams.group = row.id;
+        else if (this.viewMode() === 'group' && row.id) {
+            queryParams['group'] = row.id;
         }
 
         const asOfDate = this.getAsOfDate();
         const startDate = new Date(asOfDate.getTime());
         const endDate = new Date(asOfDate.getTime());
 
-        switch (this.selectedPeriod) {
+        switch (this.selectedPeriod()) {
             case CalendarPeriod.Monthly:
                 startDate.setDate(1);
                 endDate.setMonth(endDate.getMonth() + 1, 0);
@@ -210,8 +179,8 @@ export class FinanceCashflowComponent implements OnInit {
                 break;
         }
 
-        queryParams.startDate = startDate.toISOString().split('T')[0];
-        queryParams.endDate = endDate.toISOString().split('T')[0];
+        queryParams['startDate'] = startDate.toISOString().split('T')[0];
+        queryParams['endDate'] = endDate.toISOString().split('T')[0];
 
         this.router.navigate(['/transactions'], { queryParams });
     }

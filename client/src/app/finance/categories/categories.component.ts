@@ -1,5 +1,5 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,9 +20,9 @@ interface GroupedCategories {
 
 @Component({
     selector: 'app-finance-categories',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CommonModule,
+        LowerCasePipe,
         MatCardModule,
         MatButtonModule,
         MatIconModule,
@@ -34,15 +34,16 @@ interface GroupedCategories {
 })
 export class FinanceCategoriesComponent implements OnInit {
     private financeService = inject(FinanceService);
-    private cdr = inject(ChangeDetectorRef);
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
 
-    groups: CategoryGroup[] = [];
-    categories: Category[] = [];
+    private readonly groups = signal<CategoryGroup[]>([]);
+    private readonly categories = signal<Category[]>([]);
 
-    expenseGroups: GroupedCategories[] = [];
-    incomeGroups: GroupedCategories[] = [];
+    readonly sections = computed(() => [
+        { title: 'Income', groupedCategories: this.buildGrouped(CategoryClass.Income) },
+        { title: 'Expenses', groupedCategories: this.buildGrouped(CategoryClass.Expense) }
+    ]);
 
     async ngOnInit() {
         await this.loadData();
@@ -54,33 +55,25 @@ export class FinanceCategoriesComponent implements OnInit {
             this.financeService.fetchCategories(false)
         ]);
 
-        this.groups = groups || [];
-        this.categories = categories || [];
-
-        this.groupData();
-        this.cdr.detectChanges();
+        this.groups.set(groups || []);
+        this.categories.set(categories || []);
     }
 
-    private groupData() {
-        const buildGrouped = (targetClass: CategoryClass) => {
-            return this.groups
-                .filter(g => g.class === targetClass)
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map(group => ({
-                    group,
-                    categories: this.categories
-                        .filter(c => c.groupId === group.id)
-                        .sort((a, b) => {
-                            if (a.isActive !== b.isActive) {
-                                return a.isActive ? -1 : 1;
-                            }
-                            return a.name.localeCompare(b.name);
-                        })
-                }));
-        };
-
-        this.expenseGroups = buildGrouped(CategoryClass.Expense);
-        this.incomeGroups = buildGrouped(CategoryClass.Income);
+    private buildGrouped(targetClass: CategoryClass): GroupedCategories[] {
+        return this.groups()
+            .filter(g => g.class === targetClass)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(group => ({
+                group,
+                categories: this.categories()
+                    .filter(c => c.groupId === group.id)
+                    .sort((a, b) => {
+                        if (a.isActive !== b.isActive) {
+                            return a.isActive ? -1 : 1;
+                        }
+                        return a.name.localeCompare(b.name);
+                    })
+            }));
     }
 
     async startAddGroup() {
@@ -104,13 +97,13 @@ export class FinanceCategoriesComponent implements OnInit {
     }
 
     async startAddCategory(groupId?: string) {
-        if (this.groups.length === 0) {
+        if (this.groups().length === 0) {
             this.notificationService.error('Please create a group first.');
             return;
         }
 
         const result = await this.modalService.open<CategoryFormModalComponent, CategoryFormModalData, Category>(
-            CategoryFormModalComponent, { groups: this.groups, initialGroupId: groupId }
+            CategoryFormModalComponent, { groups: this.groups(), initialGroupId: groupId }
         );
         if (result) {
             await this.financeService.createCategory(result);
@@ -120,7 +113,7 @@ export class FinanceCategoriesComponent implements OnInit {
 
     async editCategory(category: Category) {
         const result = await this.modalService.open<CategoryFormModalComponent, CategoryFormModalData, Category>(
-            CategoryFormModalComponent, { category, groups: this.groups }
+            CategoryFormModalComponent, { category, groups: this.groups() }
         );
         if (result) {
             await this.financeService.saveCategory(result);

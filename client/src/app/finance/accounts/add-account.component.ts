@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -10,7 +10,7 @@ import { AccountFormComponent } from './account-form.component';
 
 @Component({
     selector: 'app-finance-add-account',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         RouterLink,
         MatButtonModule,
@@ -26,16 +26,17 @@ export class FinanceAddAccountComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
-    mode: 'selection' | 'manual' = 'selection';
+    readonly mode = signal<'selection' | 'manual'>('selection');
+    readonly institution = signal<Institution | undefined>(undefined);
 
-    institutionId?: string;
-    institution?: Institution;
+    private institutionId?: string;
 
     async ngOnInit() {
         this.institutionId = this.route.snapshot.paramMap.get('id') || undefined;
         if (this.institutionId) {
-            this.institution = await this.financeService.fetchInstitution(this.institutionId);
-            if (!this.institution) {
+            const institution = await this.financeService.fetchInstitution(this.institutionId);
+            this.institution.set(institution);
+            if (!institution) {
                 this.router.navigate(['/institutions']);
                 return;
             }
@@ -43,10 +44,6 @@ export class FinanceAddAccountComponent implements OnInit {
         else {
             this.router.navigate(['/institutions']);
         }
-    }
-
-    setMode(mode: 'selection' | 'manual') {
-        this.mode = mode;
     }
 
     async onSave(accountData: Partial<Account>) {

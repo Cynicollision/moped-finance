@@ -1,7 +1,7 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
-import { MatToolbarModule } from '@angular/material/toolbar';
+import { filter, map } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
@@ -21,12 +21,11 @@ interface NavItem {
 
 @Component({
     selector: 'app-root',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         RouterOutlet,
         RouterLink,
         RouterLinkActive,
-        MatToolbarModule,
         MatButtonModule,
         MatSidenavModule,
         MatListModule,
@@ -37,16 +36,16 @@ interface NavItem {
     templateUrl: './app.html',
     styleUrl: './app.scss'
 })
-export class App implements OnInit {
+export class App {
     private layout = inject(LayoutService);
     authService = inject(AuthService);
     private dateProvider = inject(DateProviderService);
     private router = inject(Router);
 
-    isDebugMode = Environment.isDebugMode;
-    isDemoMode = Environment.demoMode;
+    readonly isDebugMode = Environment.isDebugMode;
+    readonly isDemoMode = Environment.demoMode;
 
-    navItems: NavItem[] = [
+    readonly navItems: NavItem[] = [
         { label: 'Accounts', route: '/summary', icon: 'account_balance_wallet' },
         { label: 'Transactions', route: '/transactions', icon: 'credit_card' },
         { label: 'Cashflow', route: '/cashflow', icon: 'bar_chart' },
@@ -55,37 +54,36 @@ export class App implements OnInit {
         { label: 'Institutions', route: '/institutions', icon: 'account_balance' }
     ];
 
-    currentNavItem: NavItem | null = null;
+    readonly currentNavItem = toSignal(
+        this.router.events.pipe(
+            filter(event => event instanceof NavigationEnd),
+            map(event => this.navItems.find(item => item.route === event.urlAfterRedirects) ?? null)
+        ),
+        { initialValue: null }
+    );
 
-    get debugDateLabel(): string {
+    readonly debugDateLabel = computed(() => {
         const now = this.dateProvider.now();
         const y = now.getFullYear();
         const m = (now.getMonth() + 1).toString().padStart(2, '0');
         const d = now.getDate().toString().padStart(2, '0');
         return `${y}${m}${d}`;
-    }
+    });
 
-    getUserInitials(): string {
+    readonly userInitials = computed(() => {
         const name = this.authService.currentUser()?.displayName || '';
-        if (!name) return '?';
+        if (!name) {
+            return '?';
+        }
         const parts = name.split(' ');
         if (parts.length > 1) {
             return (parts[0][0] + parts[1][0]).toUpperCase();
         }
         return name[0].toUpperCase();
-    }
+    });
 
     // Below the expanded size class the side navigation opens over the content from a menu button.
     readonly isHandset = computed(() => !this.layout.atLeast('expanded'));
-
-    ngOnInit() {
-        this.router.events.pipe(
-            filter(event => event instanceof NavigationEnd)
-        ).subscribe((event: any) => {
-            const url = event.urlAfterRedirects;
-            this.currentNavItem = this.navItems.find(item => item.route === url) || null;
-        });
-    }
 
     logout() {
         this.authService.logout();

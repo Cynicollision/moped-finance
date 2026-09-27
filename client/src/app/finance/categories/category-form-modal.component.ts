@@ -1,5 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,7 +17,7 @@ export interface CategoryFormModalData {
 
 @Component({
     selector: 'app-category-form-modal',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         ReactiveFormsModule,
         MatDialogModule,
@@ -28,78 +28,28 @@ export interface CategoryFormModalData {
         MatCheckboxModule,
         ModalLayoutComponent
     ],
-    template: `
-        <app-modal-layout [title]="isEditing ? 'Edit Category' : 'Create Category'">
-          <form [formGroup]="form" (ngSubmit)="save()">
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="e.g. Fuel">
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Icon (Emoji)</mat-label>
-                <input matInput formControlName="icon" placeholder="⛽">
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Group</mat-label>
-                <mat-select formControlName="groupId">
-                  @for (group of groups; track group) {
-                    <mat-option [value]="group.id">
-                      {{group.name}} ({{group.class}})
-                    </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-
-              <mat-checkbox formControlName="isActive">Active</mat-checkbox>
-            </div>
-
-            <div modal-actions>
-              <button mat-button type="button" mat-dialog-close>Cancel</button>
-              <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
-                Save
-              </button>
-            </div>
-          </form>
-        </app-modal-layout>
-        `,
-    styles: [`
-        .form-row {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            padding-top: 8px;
-        }
-    `]
+    templateUrl: './category-form-modal.component.html',
+    styleUrl: './category-form-modal.component.scss'
 })
 export class CategoryFormModalComponent implements OnInit {
     private fb = inject(FormBuilder);
-    dialogRef = inject<MatDialogRef<CategoryFormModalComponent>>(MatDialogRef);
-    data = inject<CategoryFormModalData>(MAT_DIALOG_DATA);
+    private dialogRef = inject<MatDialogRef<CategoryFormModalComponent>>(MatDialogRef);
+    readonly data = inject<CategoryFormModalData>(MAT_DIALOG_DATA);
 
-    form: FormGroup;
-    isEditing = false;
-    groups: CategoryGroup[] = [];
-
-    constructor() {
-        this.form = this.fb.group({
-            id: [null],
-            name: ['', Validators.required],
-            icon: ['', Validators.required],
-            groupId: ['', Validators.required],
-            isActive: [true]
-        });
-    }
+    readonly form = this.fb.group({
+        id: [null as string | null],
+        name: ['', Validators.required],
+        icon: ['', Validators.required],
+        groupId: ['', Validators.required],
+        isActive: [true]
+    });
+    readonly isEditing = !!this.data.category;
 
     ngOnInit() {
-        this.groups = this.data.groups;
-
         if (this.data.category) {
-            this.isEditing = true;
             this.form.patchValue(this.data.category);
-        } else if (this.data.initialGroupId) {
+        }
+        else if (this.data.initialGroupId) {
             this.form.patchValue({ groupId: this.data.initialGroupId });
         }
     }

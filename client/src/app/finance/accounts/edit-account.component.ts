@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,7 +9,7 @@ import { AccountFormComponent } from './account-form.component';
 
 @Component({
     selector: 'app-edit-account',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         MatButtonModule,
         MatIconModule,
@@ -25,7 +25,7 @@ export class FinanceEditAccountComponent implements OnInit {
     private modalService = inject(ModalService);
     private financeService = inject(FinanceService);
 
-    accountId?: string;
+    private accountId?: string;
     readonly accountData = signal<Account | undefined>(undefined);
 
     async ngOnInit() {
@@ -34,7 +34,8 @@ export class FinanceEditAccountComponent implements OnInit {
             const data = await this.financeService.fetchAccount(this.accountId);
             if (!data) {
                 this.router.navigate(['/']); // fallback if not found
-            } else {
+            }
+            else {
                 this.accountData.set(data);
             }
         }
@@ -46,7 +47,7 @@ export class FinanceEditAccountComponent implements OnInit {
             const updatedAccount: Account = {
                 ...currentData,
                 ...updatedData,
-                balance: parseFloat(updatedData.balance as any || 0)
+                balance: Number(updatedData.balance) || 0
             };
             const result = await this.financeService.saveAccount(updatedAccount);
             if (result) {
@@ -57,7 +58,9 @@ export class FinanceEditAccountComponent implements OnInit {
 
     async onDelete() {
         const currentData = this.accountData();
-        if (!currentData) return;
+        if (!currentData) {
+            return;
+        }
 
         const confirmed = await this.modalService.confirm({
             title: 'Delete Account',
@@ -78,7 +81,8 @@ export class FinanceEditAccountComponent implements OnInit {
         const currentData = this.accountData();
         if (currentData) {
             this.router.navigate(['/accounts', currentData.id]);
-        } else {
+        }
+        else {
             this.router.navigate(['/']);
         }
     }

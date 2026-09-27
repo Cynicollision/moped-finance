@@ -1,17 +1,18 @@
 
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { TransactionImportResult } from '@shared/finance/contracts';
 import { Account } from '@shared/finance/types';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-import-transactions',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule, RouterModule],
     templateUrl: './import-transactions.component.html',
     styleUrl: './import-transactions.component.scss'
@@ -26,7 +27,7 @@ export class ImportTransactionsComponent implements OnInit {
     readonly account = signal<Account | null>(null);
     readonly selectedFile = signal<File | null>(null);
     readonly isProcessing = signal<boolean>(false);
-    readonly dryRunResults = signal<any>(null);
+    readonly dryRunResults = signal<TransactionImportResult | null>(null);
     readonly validationError = signal<string | null>(null);
 
     ngOnInit() {
@@ -44,8 +45,8 @@ export class ImportTransactionsComponent implements OnInit {
         }
     }
 
-    onFileSelected(event: any) {
-        const file = event.target.files[0];
+    onFileSelected(event: Event) {
+        const file = (event.target as HTMLInputElement).files?.[0];
         if (file) {
             this.selectedFile.set(file);
             this.dryRunResults.set(null); // Reset results when a new file is chosen
@@ -68,12 +69,8 @@ export class ImportTransactionsComponent implements OnInit {
         if (response) {
             if (response.isValidToImport) {
                 this.dryRunResults.set(response);
-                const failureMessages = response.failedRowMessages || [];
-                const failureCount = failureMessages.length;
-                if (failureCount > 0) {
-                    console.warn('Import Validation Failures:', failureMessages);
-                }
-            } else {
+            }
+            else {
                 this.validationError.set(response.resultMessage || 'An unknown validation error occurred.');
             }
         }
@@ -103,7 +100,8 @@ export class ImportTransactionsComponent implements OnInit {
                 else {
                     this.router.navigate(['/transactions']);
                 }
-            } else {
+            }
+            else {
                 this.validationError.set(response.resultMessage || 'An unknown error occurred during import.');
             }
         }

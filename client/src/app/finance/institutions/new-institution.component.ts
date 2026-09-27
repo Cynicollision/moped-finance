@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { NewEntity } from '@shared/core/types';
 import { Institution } from '@shared/finance/types';
@@ -7,7 +7,7 @@ import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-new-institution',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [RouterLink, InstitutionFormComponent],
     templateUrl: './new-institution.component.html',
     styleUrl: './new-institution.component.scss'

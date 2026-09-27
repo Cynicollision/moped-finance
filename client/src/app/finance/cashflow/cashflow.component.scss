@@ -18,7 +18,15 @@
     border-bottom: 1px solid var(--border-color);
 }
 
-.spending-title {
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.card-title {
     margin: 0;
     font-size: 1.25rem;
     font-weight: 500;
@@ -106,6 +114,10 @@ mat-form-field {
             font-size: 1.75rem;
             font-weight: 500;
             margin-bottom: 8px;
+
+            &.expense-value {
+                color: var(--color-negative);
+            }
         }
 
         .label {

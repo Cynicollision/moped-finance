@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { Transaction } from '@shared/finance/types';
 import { TransactionFormComponent } from './transaction-form.component';
@@ -6,7 +6,7 @@ import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-edit-transaction',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [RouterLink, TransactionFormComponent],
     templateUrl: './edit-transaction.component.html',
     styleUrl: './edit-transaction.component.scss'
@@ -16,7 +16,7 @@ export class EditTransactionComponent implements OnInit {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
 
-    transactionId: string | null = null;
+    private transactionId: string | null = null;
     readonly transaction = signal<Transaction | null>(null);
 
     async ngOnInit() {
@@ -31,7 +31,9 @@ export class EditTransactionComponent implements OnInit {
     }
 
     async onSave(updatedTransaction: Partial<Transaction>) {
-        if (!this.transactionId) return;
+        if (!this.transactionId) {
+            return;
+        }
 
         const success = await this.financeService.saveTransaction(updatedTransaction as Transaction);
         if (success) {
@@ -42,7 +44,8 @@ export class EditTransactionComponent implements OnInit {
     onCancel() {
         if (this.transactionId) {
             this.router.navigate(['/transactions', this.transactionId]);
-        } else {
+        }
+        else {
             this.router.navigate(['/transactions']);
         }
     }

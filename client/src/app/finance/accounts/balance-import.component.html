@@ -2,9 +2,8 @@
     <div class="breadcrumb-nav">
         <a [routerLink]="['/']" class="breadcrumb-link">Accounts</a>
         <span class="breadcrumb-separator">/</span>
-        @if (account()) {
-            <a [routerLink]="['/accounts', account()?.id]" class="breadcrumb-link">{{ account()?.name
-            }}</a>
+        @if (account(); as account) {
+            <a [routerLink]="['/accounts', account.id]" class="breadcrumb-link">{{ account.name }}</a>
         }
         <span class="breadcrumb-separator">/</span>
         <span class="breadcrumb-current">Import Balance History</span>
@@ -25,56 +24,52 @@
                     <mat-icon>attach_file</mat-icon>
                     Choose CSV File
                 </button>
-                @if (selectedFile()) {
-                    <span class="file-name">{{ selectedFile()?.name }}</span>
+                @if (selectedFile(); as file) {
+                    <span class="file-name">{{ file.name }}</span>
                 }
             </div>
 
-            @if (validationError()) {
-                <div class="validation-error error-list mt-16 mb-24">
-                    <strong style="display: flex; align-items: center;"><mat-icon color="warn"
-                    style="margin-right: 4px;">error_outline</mat-icon> Validation Error:</strong>
-                    <p style="margin-top: 8px;">{{ validationError() }}</p>
+            @if (validationError(); as error) {
+                <div class="validation-error">
+                    <strong class="icon-heading"><mat-icon color="warn">error_outline</mat-icon> Validation Error:</strong>
+                    <p>{{ error }}</p>
                 </div>
             }
 
-            @if (dryRunResults()) {
+            @if (dryRunResults(); as results) {
                 <div class="dry-run-results">
-                    <h3 class="mt-0" style="display: flex; align-items: center;">
-                        <mat-icon color="warn" style="margin-right: 8px;">warning</mat-icon> Confirm Import
+                    <h3 class="icon-heading">
+                        <mat-icon color="warn">warning</mat-icon> Confirm Import
                     </h3>
-                    <p>This import will replace all existing balance history for this account between <strong>{{
-                        dryRunResults()?.startDate }}</strong> and <strong>{{ dryRunResults()?.endDate }}</strong>.</p>
-                        <ul>
-                            <li>Days of history to import: {{ dryRunResults()?.createdCount || 0 }}</li>
-                            <li>Rows with errors: {{ dryRunResults()?.failedRowMessages?.length || 0 }}</li>
-                        </ul>
-                        @if (dryRunResults()?.failedRowMessages?.length > 0) {
-                            <div class="error-list mt-8">
-                                <strong>Errors:</strong>
-                                <ul>
-                                    @for (msg of dryRunResults()?.failedRowMessages; track msg) {
-                                        <li class="error-item">
-                                            {{ msg }}
-                                        </li>
-                                    }
-                                </ul>
-                            </div>
-                        }
-                        <div class="actions mt-24">
-                            <button mat-raised-button color="primary" (click)="confirmImport()"
-                            [disabled]="isProcessing()">Begin Import</button>
-                            <button mat-button (click)="cancelImport()" [disabled]="isProcessing()">Cancel</button>
+                    <p>This import will replace all existing balance history for this account between
+                        <strong>{{ results.startDate }}</strong> and <strong>{{ results.endDate }}</strong>.</p>
+                    <ul>
+                        <li>Days of history to import: {{ results.createdCount || 0 }}</li>
+                        <li>Rows with errors: {{ results.failedRowMessages.length }}</li>
+                    </ul>
+                    @if (results.failedRowMessages.length > 0) {
+                        <div>
+                            <strong>Errors:</strong>
+                            <ul>
+                                @for (msg of results.failedRowMessages; track $index) {
+                                    <li class="error-item">{{ msg }}</li>
+                                }
+                            </ul>
                         </div>
-                    </div>
-                }
-
-                @if (!dryRunResults()) {
+                    }
                     <div class="actions mt-24">
-                        <button mat-raised-button color="primary" (click)="validateImport()"
-                        [disabled]="!selectedFile() || isProcessing()">Validate Import</button>
+                        <button mat-raised-button color="primary" (click)="confirmImport()"
+                            [disabled]="isProcessing()">Begin Import</button>
+                        <button mat-button (click)="cancelImport()" [disabled]="isProcessing()">Cancel</button>
                     </div>
-                }
-            </mat-card-content>
-        </mat-card>
-    </div>
+                </div>
+            }
+            @else {
+                <div class="actions mt-24">
+                    <button mat-raised-button color="primary" (click)="validateImport()"
+                        [disabled]="!selectedFile() || isProcessing()">Validate Import</button>
+                </div>
+            }
+        </mat-card-content>
+    </mat-card>
+</div>

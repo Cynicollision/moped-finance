@@ -1,0 +1,35 @@
+<app-modal-layout [title]="isEditing ? 'Edit Category' : 'Create Category'">
+    <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="form-row">
+            <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="e.g. Fuel">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Icon (Emoji)</mat-label>
+                <input matInput formControlName="icon" placeholder="⛽">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Group</mat-label>
+                <mat-select formControlName="groupId">
+                    @for (group of data.groups; track group.id) {
+                        <mat-option [value]="group.id">
+                            {{group.name}} ({{group.class}})
+                        </mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+
+            <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+        </div>
+
+        <div modal-actions>
+            <button mat-button type="button" mat-dialog-close>Cancel</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+                Save
+            </button>
+        </div>
+    </form>
+</app-modal-layout>

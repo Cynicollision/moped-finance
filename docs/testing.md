@@ -24,4 +24,4 @@ Dates: server code gets "now" from `DateTimeUtil.now()`, which isn't injectable 
 
 ## Client
 
-Specs sit next to components and services and run in Vitest through the Angular builder. Coverage is thin so far (see `TODO.md`). Prefer Angular's real providers (`provideRouter([])`, `provideHttpClient()` + `provideHttpClientTesting()`) over hand-written mocks of framework classes.
+Specs sit next to components and services and run in Vitest through the Angular builder. Coverage is thin so far (see `TODO.md`). Prefer Angular's real providers (`provideRouter([])`, `provideHttpClient()` + `provideHttpClientTesting()`) over hand-written mocks of framework classes. To test a screen, provide a `FinanceService` stub whose methods resolve with data, create the component and `await fixture.whenStable()`, then check the rendered DOM, which is what the user sees once the screen loads (`summary.component.spec.ts`, `cashflow.component.spec.ts`).

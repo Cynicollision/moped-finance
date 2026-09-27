@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,7 +9,7 @@ import { AuthService } from './../core/auth.service';
 
 @Component({
     selector: 'app-register',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         MatCardModule,
@@ -22,34 +22,35 @@ import { AuthService } from './../core/auth.service';
     styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
-    username = '';
-    displayName = '';
-    password = '';
-    confirmPassword = '';
-    errorMessage = '';
-
     private authService = inject(AuthService);
     private route = inject(ActivatedRoute);
 
-    async onRegister() {
-        this.errorMessage = '';
+    readonly username = signal('');
+    readonly displayName = signal('');
+    readonly password = signal('');
+    readonly confirmPassword = signal('');
+    readonly errorMessage = signal('');
 
-        if (!this.username || !this.displayName || !this.password) {
-            this.errorMessage = 'All fields are required.';
+    async onRegister() {
+        this.errorMessage.set('');
+
+        if (!this.username() || !this.displayName() || !this.password()) {
+            this.errorMessage.set('All fields are required.');
             return;
         }
 
-        if (this.password !== this.confirmPassword) {
-            this.errorMessage = 'Passwords do not match.';
+        if (this.password() !== this.confirmPassword()) {
+            this.errorMessage.set('Passwords do not match.');
             return;
         }
 
         try {
             const returnUrl = this.route.snapshot.queryParams['returnUrl'];
-            await this.authService.register(this.username, this.displayName, this.password, returnUrl);
-        } catch (error: any) {
+            await this.authService.register(this.username(), this.displayName(), this.password(), returnUrl);
+        }
+        catch (error) {
             // API service handles showing notifications, but we can set local error if needed.
-            this.errorMessage = error.message || 'An error occurred during registration.';
+            this.errorMessage.set(error instanceof Error ? error.message : 'An error occurred during registration.');
         }
     }
 }

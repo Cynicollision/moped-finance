@@ -3,14 +3,13 @@
         <div class="title-container hide-on-mobile">
             <h1 class="desktop-page-title">Institutions</h1>
         </div>
-        <div class="actions-container" style="flex: 1; display: flex; justify-content: flex-end;">
+        <div class="actions-container">
             <button mat-flat-button color="primary" class="add-institution-btn hide-on-mobile"
                 [routerLink]="['/institutions/new']">
                 <mat-icon>add</mat-icon>
                 Add institution
             </button>
-            <a class="show-on-mobile" [routerLink]="['/institutions/new']"
-                style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.1rem; font-weight: 500; color: var(--color-link); text-decoration: none; padding: 8px 0; width: 100%;">
+            <a class="show-on-mobile add-institution-link" [routerLink]="['/institutions/new']">
                 <mat-icon>add</mat-icon>
                 Add institution
             </a>
@@ -25,12 +24,11 @@
                     <mat-icon>account_balance</mat-icon>
                 </div>
                 <mat-card-title>
-                    <a [routerLink]="['/institutions', group.institution.id]" style="color: inherit; text-decoration: none;">
+                    <a [routerLink]="['/institutions', group.institution.id]" class="title-link">
                         {{ group.institution.name }}
                     </a>
                 </mat-card-title>
-                <mat-card-subtitle>{{ group.accounts.length }} account{{ group.accounts.length === 1 ? '' : 's'
-                    }}</mat-card-subtitle>
+                <mat-card-subtitle>{{ group.accounts.length }} account{{ group.accounts.length === 1 ? '' : 's' }}</mat-card-subtitle>
                 <span class="spacer"></span>
                 <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
                     <mat-icon>more_vert</mat-icon>
@@ -74,8 +72,7 @@
         @if (institutionGroups().length === 0) {
         <div class="empty-state">
             <p>You haven't added any institutions yet.</p>
-            <button mat-raised-button color="primary" [routerLink]="['/institutions/new']">Add your first
-                institution</button>
+            <button mat-raised-button color="primary" [routerLink]="['/institutions/new']">Add your first institution</button>
         </div>
         }
     </div>

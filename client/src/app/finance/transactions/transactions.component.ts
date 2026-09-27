@@ -1,8 +1,8 @@
-import { Component, AfterViewInit, inject, OnInit, signal, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, AfterViewInit, computed, inject, OnInit, signal, viewChild } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -24,9 +24,10 @@ import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-transactions',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CommonModule,
+        CurrencyPipe,
+        DatePipe,
         ReactiveFormsModule,
         MatTableModule,
         MatSortModule,
@@ -50,17 +51,17 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private dateProvider = inject(DateProviderService);
-    protected readonly Math = Math;
+    readonly Math = Math;
 
-    displayedColumns: string[] = ['date', 'account', 'merchant', 'category', 'amount'];
-    dataSource = new MatTableDataSource<Transaction>([]);
-    pageSize = 25;
-    hasMoreData = true;
-    loaded = false;
+    readonly displayedColumns: string[] = ['date', 'account', 'merchant', 'category', 'amount'];
+    private readonly pageSize = 25;
+    readonly transactions = signal<Transaction[]>([]);
+    readonly hasMoreData = signal(true);
+    readonly loaded = signal(false);
 
     readonly sort = viewChild.required(MatSort);
 
-    filterForm = new FormGroup({
+    readonly filterForm = new FormGroup({
         minAmount: new FormControl<number | null>(null),
         maxAmount: new FormControl<number | null>(null),
         startDate: new FormControl<Date | null>(null),
@@ -74,10 +75,10 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
     readonly merchants = signal<string[]>([]);
     readonly categories = signal<Category[]>([]);
     readonly groups = signal<CategoryGroup[]>([]);
-    categoryMap = new Map<string, Category>();
-    groupMap = new Map<string, CategoryGroup>();
     readonly accounts = signal<Account[]>([]);
-    accountMap = new Map<string, Account>();
+    private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
+    private readonly groupMap = computed(() => new Map(this.groups().map(g => [g.id, g])));
+    private readonly accountMap = computed(() => new Map(this.accounts().map(a => [a.id, a])));
 
     readonly filteredMerchants = signal<string[]>([]);
     readonly filteredCategories = signal<Category[]>([]);
@@ -93,11 +94,8 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
 
         this.merchants.set(merchants || []);
         this.categories.set(categories || []);
-        this.categories().forEach(c => this.categoryMap.set(c.id, c));
         this.groups.set(groups || []);
-        this.groups().forEach(g => this.groupMap.set(g.id, g));
         this.accounts.set(accounts || []);
-        this.accounts().forEach(a => this.accountMap.set(a.id, a));
 
         // Setup filter observers
         this.setupTypeaheadFilters();
@@ -148,7 +146,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         const startDateStr = queryParams.get('startDate');
         const endDateStr = queryParams.get('endDate');
 
-        const patch: any = {};
+        const patch: Partial<typeof this.filterForm.value> = {};
         if (accountId) {
             patch.account = accountId;
         }
@@ -176,7 +174,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         }
 
         this.sort().sortChange.subscribe(() => this.loadData(true));
-        
+
         Promise.resolve().then(() => {
             this.sort().sort({ id: 'date', start: 'desc', disableClear: false });
         });
@@ -184,8 +182,8 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
 
     async loadData(reset = false) {
         if (reset) {
-            this.dataSource.data = [];
-            this.hasMoreData = true;
+            this.transactions.set([]);
+            this.hasMoreData.set(true);
         }
 
         const formValues = this.filterForm.value;
@@ -208,35 +206,34 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         let sortDirection: SortDirection | undefined;
 
         const sort = this.sort();
-        if (sort) {
-            if (sort.direction === 'asc') {
-                sortDirection = SortDirection.Asc;
-            } else if (sort.direction === 'desc') {
-                sortDirection = SortDirection.Desc;
-            }
+        if (sort.direction === 'asc') {
+            sortDirection = SortDirection.Asc;
+        }
+        else if (sort.direction === 'desc') {
+            sortDirection = SortDirection.Desc;
+        }
 
-            switch (sort.active) {
-                case 'date':
-                    sortKey = TransactionsSortKey.Date;
-                    break;
-                case 'merchant':
-                    sortKey = TransactionsSortKey.Merchant;
-                    break;
-                case 'amount':
-                    sortKey = TransactionsSortKey.Amount;
-                    break;
-                case 'account':
-                    sortKey = TransactionsSortKey.Account;
-                    break;
-                case 'category':
-                    sortKey = TransactionsSortKey.Category;
-                    break;
-            }
+        switch (sort.active) {
+            case 'date':
+                sortKey = TransactionsSortKey.Date;
+                break;
+            case 'merchant':
+                sortKey = TransactionsSortKey.Merchant;
+                break;
+            case 'amount':
+                sortKey = TransactionsSortKey.Amount;
+                break;
+            case 'account':
+                sortKey = TransactionsSortKey.Account;
+                break;
+            case 'category':
+                sortKey = TransactionsSortKey.Category;
+                break;
         }
 
         const options: TransactionSearchOptions = {
             limit: this.pageSize,
-            offset: this.dataSource.data.length,
+            offset: this.transactions().length,
             minAmount: formValues.minAmount ?? undefined,
             maxAmount: formValues.maxAmount ?? undefined,
             startDate: formValues.startDate?.toISOString(),
@@ -248,15 +245,9 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
 
         const newTransactions: Transaction[] = await this.financeService.fetchTransactions(options) || [];
 
-        this.hasMoreData = newTransactions.length === this.pageSize;
-
-        if (reset) {
-            this.dataSource.data = newTransactions;
-        } else {
-            this.dataSource.data = [...this.dataSource.data, ...newTransactions];
-        }
-
-        this.loaded = true;
+        this.hasMoreData.set(newTransactions.length === this.pageSize);
+        this.transactions.update(current => reset ? newTransactions : [...current, ...newTransactions]);
+        this.loaded.set(true);
     }
 
     async loadMore() {
@@ -268,19 +259,19 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
     }
 
     getCategoryName(id: string): string {
-        const category = this.categoryMap.get(id);
+        const category = this.categoryMap().get(id);
         return category ? `${category.icon} ${category.name}` : id;
     }
 
     getAccountName(id: string): string {
-        const account = this.accountMap.get(id);
+        const account = this.accountMap().get(id);
         return account ? account.name : id;
     }
 
     readonly displayCategory = (id: string): string => this.getCategoryName(id);
 
     readonly displayGroup = (id: string): string => {
-        const group = this.groupMap.get(id);
+        const group = this.groupMap().get(id);
         return group ? group.name : '';
     };
 
