@@ -1,3 +1,6 @@
+export { ApiTokenController } from './api-token-controller';
+export { ApiTokenData } from './api-token-data';
+export { buildApiTokenRouter } from './api-token-routes';
 export { AuthController } from './auth-controller';
 export { AuthMiddleware, buildAuthMiddleware } from './auth-middleware';
 export { buildAuthRouter } from './auth-routes';

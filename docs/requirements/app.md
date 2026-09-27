@@ -10,7 +10,7 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 | APP-1.2 | The side navigation shall be permanently visible on desktop-width screens. On handset-width screens it shall be hidden behind a menu button, open over the content, and close when an entry is chosen. | Implemented |
 | APP-1.3 | On handset-width screens the label of the current top-level section shall appear next to the menu button. | Implemented |
 | APP-1.4 | The bottom of the side navigation shall show a profile control with the user's initials and display name. Initials are the first letters of the first two words of the display name, or the first letter if there is only one word. | Implemented |
-| APP-1.5 | The profile control shall open a menu with **Settings** (AUTH-8.1) and **Sign out** (AUTH-4.1). | Partial |
+| APP-1.5 | The profile control shall open a menu with **Settings** (SET-1.1) and **Sign out** (AUTH-4.1). | Implemented |
 | APP-1.6 | The landing page after sign-in, and the target of any unknown URL, shall be the Summary (DASH). | Implemented |
 | APP-1.7 | Signed-out visitors shall see no navigation or profile control, only the Login or Register screen. | Implemented |
 | APP-1.8 | Screens below a top-level section (Account Details, Edit Account, Add Account, Import screens, View/Edit Transaction, Add/View/Edit Institution) shall show a breadcrumb trail above the content, and every crumb except the last shall be a link back. Top-level sections have none. | Implemented |
@@ -69,7 +69,6 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 
 - **Red and signs aren't consistent yet (APP-6).** Cashflow shows expenses in red, transaction amounts have no "+", and forms take signed amounts (liabilities must be entered negative).
 - **Old navigation names (APP-1.1, APP-1.9).** The navigation says **Accounts** for the summary and **Institutions** for the institutions list, the institutions route is `/institutions`, and the summary's tab title is "Dashboard".
-- **Settings is a dead link** (APP-1.5). See the AUTH known gaps.
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.
 - **Login and Register show no product name.** The side navigation header and browser tab say "Moped Finance" (APP-3.1), but the Login and Register screens have no product name at all.
 - **Success feedback is sparse.** Only imports announce success. Creating, saving and deleting records just navigate or refresh.

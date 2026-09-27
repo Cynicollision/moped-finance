@@ -2,7 +2,7 @@
 
 Moped Finance is a single-user app: one person keeps their finances in it, behind a login. Each instance has one owner (AUTH-7), so finance data isn't partitioned by user; the login only decides whether you get in.
 
-Screens: **Login** (`/login`), **Register** (`/register`), **Settings** (`/settings`), and the **Sign out** action in the profile menu.
+Screens: **Login** (`/login`), **Register** (`/register`), the **Sign out** action in the profile menu, and sections of **Settings** (`/settings`, SET-1.1): **Change Password**, **API Tokens**, **Password Rules** and **Sign-in Protection**.
 
 ## AUTH-1 The user can sign in to reach their finances
 
@@ -38,8 +38,8 @@ Screens: **Login** (`/login`), **Register** (`/register`), **Settings** (`/setti
 | AUTH-3.1 | When the app loads, it shall ask the server who the current user is and restore the signed-in state, so a page reload does not require signing in again. | Implemented |
 | AUTH-3.2 | Sessions shall be server-side, identified by an HTTP-only cookie, and expire after 24 hours without a request. Each request restarts the 24 hours, so a user who keeps using the app stays signed in. | Implemented |
 | AUTH-3.3 | A signed-out visitor requesting any page other than Login or Register shall be redirected to Login, with the requested URL preserved for AUTH-1.3. | Implemented |
-| AUTH-3.4 | Every finance API endpoint shall respond `401 Unauthorized` to a request with no valid session. | Implemented |
-| AUTH-3.5 | The API shall also accept HTTP Basic credentials on finance endpoints (for scripts and tools), treated as a sign-in for that request only. | Implemented |
+| AUTH-3.4 | Every finance API endpoint shall respond `401 Unauthorized` to a request with no valid session or API token (AUTH-11). | Implemented |
+| AUTH-3.5 | The API shall also accept HTTP Basic credentials on finance endpoints (for scripts and tools), treated as a sign-in for that request only. | Retired (see AUTH-11): scripts use API tokens instead of sending the password |
 | AUTH-3.6 | Sessions shall survive a server restart. | Implemented |
 | AUTH-3.7 | Sessions shall be signed with a secret that can't be guessed: `SESSION_SECRET` if it's set, otherwise a random one the server generates on first start and keeps in the database. There shall be no built-in fallback value. | Implemented |
 | AUTH-3.8 | The session cookie shall be `SameSite=Lax`, and HTTPS-only when the app is served over HTTPS (`USE_HTTPS`). Signing out shall clear it with the same attributes, so the browser drops it. | Implemented |
@@ -78,10 +78,12 @@ Retired: the app committed to one owner per instance (AUTH-7), so finance record
 
 ## AUTH-8 The user can manage their profile in Settings
 
+Retired: the Settings screen and Profile moved to their own domain (SET), since Settings also holds settings that aren't about authentication.
+
 | ID | Requirement | Status |
 |---|---|---|
-| AUTH-8.1 | The profile menu's **Settings** (APP-1.5) shall open the Settings screen (`/settings`, page title "Settings"), with the sections **Profile**, **Change Password** (AUTH-5.2), **Password Rules** (AUTH-9) and **Sign-in Protection** (AUTH-10). | Planned |
-| AUTH-8.2 | **Profile** shall show the username read-only (it can't be changed) and let the user edit **Display Name** (AUTH-2.10). Saving shall update the profile control's name and initials (APP-1.4) straight away. | Planned |
+| AUTH-8.1 | The profile menu's **Settings** (APP-1.5) shall open the Settings screen (`/settings`, page title "Settings"), with the sections **Profile**, **Change Password** (AUTH-5.2), **Password Rules** (AUTH-9) and **Sign-in Protection** (AUTH-10). | Retired (see SET-1.1) |
+| AUTH-8.2 | **Profile** shall show the username read-only (it can't be changed) and let the user edit **Display Name** (AUTH-2.10). Saving shall update the profile control's name and initials (APP-1.4) straight away. | Retired (see SET-2.1) |
 
 ## AUTH-9 The owner decides how strong the password must be
 
@@ -101,19 +103,39 @@ Guessing is limited per network address rather than by locking the account, so s
 | ID | Requirement | Status |
 |---|---|---|
 | AUTH-10.1 | After the maximum number of failed sign-ins (default 5) from one network address within the window (default 15 minutes), the server shall refuse further sign-in attempts from that address until the lockout (default 15 minutes) has passed, even with the right password, with 429 "Too many failed sign-in attempts. Try again in N minutes." | Planned |
-| AUTH-10.2 | Failed HTTP Basic credentials (AUTH-3.5) shall count toward the same limit, and a locked-out address shall be refused there too. | Planned |
+| AUTH-10.2 | Failed HTTP Basic credentials (AUTH-3.5) shall count toward the same limit, and a locked-out address shall be refused there too. | Retired: HTTP Basic was removed. API tokens (AUTH-11) are 256-bit random values that can't practically be guessed, so they need no limit |
 | AUTH-10.3 | A successful sign-in shall reset that address's count. | Planned |
 | AUTH-10.4 | **Sign-in Protection** in Settings shall let the user set **Maximum failed attempts** (3 to 10), **Window** (5 to 60 minutes) and **Lockout** (5 to 60 minutes). | Planned |
 | AUTH-10.5 | The server shall log each lockout with the address and time, without the username or password tried. | Planned |
 | AUTH-10.6 | Behind a reverse proxy, the address shall be the client's, not the proxy's, when the server is configured to trust the proxy (`TRUST_FIRST_PROXY`). | Planned |
 
+## AUTH-11 The user can let scripts and tools use the API with tokens
+
+Personal API tokens let a script, a scheduled job, or a tool like `curl` call the finance API (`/api`) without signing in. They work like personal access tokens in other apps: the token is shown once, only a hash of it is kept, and it can be revoked at any time. Signing in, the password and the tokens themselves need a signed-in browser session.
+
+| ID | Requirement | Status |
+|---|---|---|
+| AUTH-11.1 | Settings shall have an **API Tokens** section (SET-1.1) listing every token with its **Name**, **Access**, **Created**, **Last used** ("Never" if unused) and **Expires** ("Never", or "Expired" once past), newest first. With no tokens it shall say "No API tokens yet." | Implemented |
+| AUTH-11.2 | **New Token** shall ask for a **Name** (1 to 100 characters), **Access** (**Read-only**, selected, or **Read & write**) and **Expiration** (**30 days**, **90 days**, selected, **1 year**, or **No expiration**). **Create** stays disabled until Name is filled in. | Implemented |
+| AUTH-11.3 | After a token is created, the screen shall show it once, with a **Copy** button and the warning "Copy this token now. You won't be able to see it again." The server shall keep only a SHA-256 hash of it, so no screen or API can show it again. | Implemented |
+| AUTH-11.4 | A token shall be `mf_` followed by 43 characters: 32 random bytes, base64url-encoded. | Implemented |
+| AUTH-11.5 | **Revoke** on a token shall ask for confirmation, naming the token, then delete it. Requests using it fail from then on. | Implemented |
+| AUTH-11.6 | A request to a finance API endpoint with the header `Authorization: Bearer <token>` shall be treated as signed in for that request only. No session or cookie is created. | Implemented |
+| AUTH-11.7 | A request with an unknown, revoked or expired token shall get 401 "Invalid or expired API token.", even if it also carries a valid session cookie. | Implemented |
+| AUTH-11.8 | A **Read-only** token shall be allowed only `GET` requests. Any other method shall get 403 "This API token is read-only." | Implemented |
+| AUTH-11.9 | Tokens shall not work on the sign-in, registration, password and token endpoints (`/auth`): there they're ignored, so only a browser session can manage the account and its tokens. | Implemented |
+| AUTH-11.10 | **Last used** shall be updated when a token is used successfully, accurate to the minute. | Implemented |
+| AUTH-11.11 | Changing the password shall not affect tokens. Each stays valid until it's revoked or expires. | Implemented |
+
 ## Known gaps
 
-- **Settings doesn't exist (AUTH-8, AUTH-5.2).** The profile menu's **Settings** links to `/system`, which isn't a route, so it lands on the Summary. Changing the password is API-only (AUTH-5.1), and the display name can't be edited.
+- **No Change Password section (AUTH-5.2).** Changing the password is API-only (AUTH-5.1). See SET for the rest of Settings.
 - **No password rules (AUTH-9).** A password only has to be non-empty, and usernames and display names have no length limits or space checks beyond the column size (AUTH-2.10).
 - **No limit on failed sign-ins (AUTH-10).**
 - **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.
 
 ## Notes
+
+- **API tokens over plain HTTP.** Like the session cookie, a token crosses the network in clear text unless the app is served over HTTPS (see `docs/deployment.md`). Unlike the password, a token can be revoked on its own, expires, can be limited to reading, and isn't reused on other sites.
 
 - **Fresh instances are claimable.** Whoever registers first on a fresh instance becomes its owner. Accepted (2026-09-26) for a LAN-only host: the owner registers right after the first start (see `docs/deployment.md`), and AUTH-2.8 makes the one-time nature clear on screen.

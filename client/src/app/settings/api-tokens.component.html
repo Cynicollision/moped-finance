@@ -1,0 +1,55 @@
+<mat-card class="settings-section">
+    <mat-card-header class="section-header">
+        <mat-card-title>API Tokens</mat-card-title>
+        <span class="spacer"></span>
+        <button mat-stroked-button (click)="newToken()">
+            <mat-icon>add</mat-icon>
+            New Token
+        </button>
+    </mat-card-header>
+
+    <mat-card-content class="section-content">
+        <p class="section-description">
+            Let scripts and tools call the API without signing in. Send the token in the header
+            <code>Authorization: Bearer &lt;token&gt;</code>.
+        </p>
+
+        @if (isLoaded()) {
+            @if (tokens().length === 0) {
+            <p class="empty-state">No API tokens yet.</p>
+            }
+            @else {
+            <div class="token-list">
+                @for (token of tokens(); track token.id) {
+                <div class="token-row">
+                    <div class="token-main">
+                        <span class="token-name">{{ token.name }}</span>
+                        <span class="token-access">{{ accessLabel(token.access) }}</span>
+                    </div>
+                    <dl class="token-dates">
+                        <div>
+                            <dt>Created</dt>
+                            <dd>{{ token.createdAt | date: 'mediumDate' }}</dd>
+                        </div>
+                        <div>
+                            <dt>Last used</dt>
+                            <dd>{{ token.lastUsedAt ? (token.lastUsedAt | date: 'medium') : 'Never' }}</dd>
+                        </div>
+                        <div>
+                            <dt>Expires</dt>
+                            @if (isExpired(token)) {
+                            <dd class="expired">Expired</dd>
+                            }
+                            @else {
+                            <dd>{{ token.expiresAt ? (token.expiresAt | date: 'mediumDate') : 'Never' }}</dd>
+                            }
+                        </div>
+                    </dl>
+                    <button mat-button class="revoke-button" (click)="revoke(token)">Revoke</button>
+                </div>
+                }
+            </div>
+            }
+        }
+    </mat-card-content>
+</mat-card>

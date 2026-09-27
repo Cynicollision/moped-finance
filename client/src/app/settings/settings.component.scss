@@ -1,0 +1,13 @@
+.settings-container {
+    padding: 16px;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 500;
+    }
+}

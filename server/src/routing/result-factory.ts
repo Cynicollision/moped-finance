@@ -90,6 +90,18 @@ export class Result {
         };
     }
 
+    public static forbidden<T>(message: string = 'Forbidden', code: string = 'FORBIDDEN'): OperationResult<T> {
+        return {
+            success: false,
+            status: OperationStatus.Forbidden,
+            timestamp: DateTimeUtil.getCurrentTimestamp(),
+            error: {
+                code,
+                message
+            }
+        };
+    }
+
     public static internalError<T>(message: string = 'An unexpected error occurred', code: string = 'INTERNAL_ERROR'): OperationResult<T> {
         return {
             success: false,

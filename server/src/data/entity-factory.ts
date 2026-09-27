@@ -6,6 +6,7 @@ import { EntityId } from './entity-id';
 export enum CoreEntityIdPrefix {
     User = 'U',
     Log = 'LOG',
+    ApiToken = 'TOK',
 }
 
 export enum FinanceEntityIdPrefix {

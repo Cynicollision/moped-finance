@@ -7,6 +7,8 @@ import { buildAuthMiddleware } from './auth-middleware';
 import { DatabaseClient } from '@server/data';
 import { UserData } from '@server/auth/user-data';
 import { TestDatabaseUtil, TestExpressUtil } from '@server/utility/testing';
+import { ApiTokenController } from './api-token-controller';
+import { ApiTokenData } from './api-token-data';
 import { AuthController } from './auth-controller';
 import { SecretData } from './secret-data';
 import { SESSION_COOKIE_NAME, SessionUtil } from './session';
@@ -25,7 +27,7 @@ describe('Auth Routes', () => {
     // server process as far as sessions go: only the database is shared.
     function buildApp(options: { secureCookie: boolean } = { secureCookie: false }): express.Express {
         const controller = new AuthController(userData);
-        const middleware = buildAuthMiddleware(controller);
+        const middleware = buildAuthMiddleware(new ApiTokenController(new ApiTokenData(dbClient)));
         const authRoutes = buildAuthRouter(mockLogger, controller, middleware, SessionUtil.cookieOptions(options.secureCookie));
 
         const testApp = express();
@@ -37,9 +39,6 @@ describe('Auth Routes', () => {
             secureCookie: options.secureCookie,
             store: SessionUtil.createStore(dbClient, false)
         }));
-
-        // Expose resolveUser middleware for testing /me globally
-        testApp.use(middleware.resolveUser);
         testApp.use('/auth', authRoutes);
         return testApp;
     }

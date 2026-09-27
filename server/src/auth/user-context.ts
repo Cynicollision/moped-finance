@@ -1,4 +1,5 @@
 import { Request } from 'express';
+import { ApiTokenAccess } from '@shared/core/enum';
 import { User } from '@shared/core/types';
 
 export class UserContext {
@@ -11,17 +12,24 @@ export class UserContext {
         return new UserContext(req);
     }
 
-    public getUser(): User | undefined {
-        if (this.req.session?.user) {
-            return this.req.session.user;
-        }
+    /** Signs this request in with an API token (AUTH-11.6). Nothing is stored in the session. */
+    static setApiTokenUser(req: Request, user: User, access: ApiTokenAccess): void {
+        (req as any).user = user;
+        (req as any).apiTokenAccess = access;
+    }
 
-        // Check if user was already resolved and attached to request (e.g. by middleware)
+    public getUser(): User | undefined {
+        // An API token takes precedence over the session (AUTH-11.7)
         if ((this.req as any).user) {
             return (this.req as any).user;
         }
 
-        return undefined;
+        return this.req.session?.user;
+    }
+
+    /** The access of the API token this request was signed in with, or undefined for a browser session. */
+    public getApiTokenAccess(): ApiTokenAccess | undefined {
+        return (this.req as any).apiTokenAccess;
     }
 
     public getId(): string {

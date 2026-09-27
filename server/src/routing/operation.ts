@@ -162,6 +162,9 @@ export class OperationHandler {
             case OperationStatus.Unauthorized:
                 statusCode = 401;
                 break;
+            case OperationStatus.Forbidden:
+                statusCode = 403;
+                break;
             case OperationStatus.NotFound:
                 statusCode = 404;
                 break;

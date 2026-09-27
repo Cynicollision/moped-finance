@@ -5,6 +5,7 @@ const RESTRICT_VIOLATION = '23001';
 
 const uniqueViolationMessages: Record<string, string> = {
     users_username_unique: 'Username already taken.',
+    api_tokens_token_hash_unique_idx: 'That API token already exists.',
     institutions_name_unique_idx: 'An institution with that name already exists.',
     category_groups_name_unique_idx: 'A category group with that name already exists.',
     categories_name_unique_idx: 'A category with that name already exists.',
@@ -19,6 +20,9 @@ const uniqueViolationMessages: Record<string, string> = {
 type ForeignKeyMessages = { missingReference: string, stillReferenced?: string };
 
 const foreignKeyViolationMessages: Record<string, ForeignKeyMessages> = {
+    api_tokens_user_id_users_id_fk: {
+        missingReference: 'User not found.',
+    },
     accounts_institution_id_institutions_id_fk: {
         missingReference: 'Institution not found.',
         stillReferenced: 'Cannot delete an institution that still has accounts.',
