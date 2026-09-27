@@ -31,6 +31,7 @@ Nothing right now.
 - [ ] Move the ~80 inline `style="..."` attributes in templates (e.g. `app.html`) into component SCSS. The two category dialog components, `chart.component.ts` and `value-period-change.component.ts` also use inline templates or styles, against `docs/conventions.md`.
 - [ ] The `@client/*` path alias in `client/tsconfig.json` is unused; use it or remove it.
 - [ ] `api.service.ts` passes `withCredentials: true` on every request; it's unneeded now that requests are same-origin (relative `apiUrl` plus the dev-server proxy).
+- [ ] Serve the Roboto and Material Icons fonts from the app instead of Google Fonts (`client/src/index.html`), so it looks right on a LAN without internet access and doesn't call a third party on every load. Then drop the Google hosts from the Content-Security-Policy in `security-headers.ts` (`buildSecurityHeaders`).
 
 ### UX fixes from the requirements review
 - [ ] The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8).
@@ -43,11 +44,7 @@ Nothing right now.
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
 ### Security & auth
-- [ ] Use a persistent session store (e.g. `connect-pg-simple`). The default in-memory store logs everyone out on every restart.
-- [ ] Fail startup in production if `SESSION_SECRET` is unset; don't fall back to `'dev-secret-key'` (`server/index.ts`).
-- [ ] Session cookie: set `sameSite: 'lax'`, and make logout's `clearCookie` options match the session cookie (it uses `NODE_ENV === 'production'` for `secure`, the session uses `COOKIE_SECURE`). Document `COOKIE_SECURE` and `TRUST_FIRST_PROXY` for plain HTTP on the LAN versus a reverse proxy with HTTPS.
-- [ ] Decide on HTTP Basic auth (AUTH-3.5). With one user it mainly sends the password on every request, in clear text over plain HTTP. Keep it (and state what it's for) or remove it.
-- [ ] Security headers with `helmet`. Check the Content-Security-Policy against the Angular production build before enabling it.
+- [ ] Replace HTTP Basic auth (AUTH-3.5) with personal API tokens, for scripts, manual testing and scheduled bank sync. Decided 2026-09-27. Basic sends the password itself on every request (irrevocable, reusable elsewhere, a bcrypt compare per call), and `resolveUser` in `auth-middleware.ts` splits the credentials on every `:`, so a password containing one fails. Plan: Settings gets an **API Tokens** section (name, optional expiry, Read-only or Read & write; the token is shown once, stored as a SHA-256 hash, and can be revoked; list shows last used). Requests send `Authorization: Bearer mf_…` to the existing `/api` routes; tokens can't use `/auth` (password, tokens, sign-in). Write the requirements as AUTH-11, retire AUTH-3.5, and reword AUTH-10.2 for tokens.
 
 ### Correctness
 - [ ] Cashflow periods include the next period's first day west of UTC (APP-5.6). `DateTimeUtil.getDatesForPeriod` sets the boundaries with local-time setters (`setDate`, `setHours(23, 59, …)`), then `retrieveCashflowByCategory` formats them with `DateTimeUtil.toDateString`, which uses UTC. With `TZ=America/New_York`, April is `2026-04-01`..`2026-05-01`, so a May 1 mortgage payment counts in April too (seen with the seed data). Build the period as calendar date strings, and add a spec that runs under a non-UTC `TZ`.

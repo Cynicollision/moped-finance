@@ -36,12 +36,13 @@ Screens: **Login** (`/login`), **Register** (`/register`), **Settings** (`/setti
 | ID | Requirement | Status |
 |---|---|---|
 | AUTH-3.1 | When the app loads, it shall ask the server who the current user is and restore the signed-in state, so a page reload does not require signing in again. | Implemented |
-| AUTH-3.2 | Sessions shall be server-side, identified by an HTTP-only cookie, and expire after 24 hours without a request. Each request restarts the 24 hours, so a user who keeps using the app stays signed in. | Partial |
+| AUTH-3.2 | Sessions shall be server-side, identified by an HTTP-only cookie, and expire after 24 hours without a request. Each request restarts the 24 hours, so a user who keeps using the app stays signed in. | Implemented |
 | AUTH-3.3 | A signed-out visitor requesting any page other than Login or Register shall be redirected to Login, with the requested URL preserved for AUTH-1.3. | Implemented |
 | AUTH-3.4 | Every finance API endpoint shall respond `401 Unauthorized` to a request with no valid session. | Implemented |
 | AUTH-3.5 | The API shall also accept HTTP Basic credentials on finance endpoints (for scripts and tools), treated as a sign-in for that request only. | Implemented |
-| AUTH-3.6 | Sessions shall survive a server restart. | Planned |
-| AUTH-3.7 | In production, the server shall refuse to start without a configured session secret. | Planned |
+| AUTH-3.6 | Sessions shall survive a server restart. | Implemented |
+| AUTH-3.7 | Sessions shall be signed with a secret that can't be guessed: `SESSION_SECRET` if it's set, otherwise a random one the server generates on first start and keeps in the database. There shall be no built-in fallback value. | Implemented |
+| AUTH-3.8 | The session cookie shall be `SameSite=Lax`, and HTTPS-only when the app is served over HTTPS (`USE_HTTPS`). Signing out shall clear it with the same attributes, so the browser drops it. | Implemented |
 
 ## AUTH-4 The user can sign out
 
@@ -111,8 +112,6 @@ Guessing is limited per network address rather than by locking the account, so s
 - **Settings doesn't exist (AUTH-8, AUTH-5.2).** The profile menu's **Settings** links to `/system`, which isn't a route, so it lands on the Summary. Changing the password is API-only (AUTH-5.1), and the display name can't be edited.
 - **No password rules (AUTH-9).** A password only has to be non-empty, and usernames and display names have no length limits or space checks beyond the column size (AUTH-2.10).
 - **No limit on failed sign-ins (AUTH-10).**
-- **Sessions end 24 hours after sign-in (AUTH-3.2),** however active the user is.
-- **Cookie settings are inconsistent.** The session cookie's `secure` flag comes from `COOKIE_SECURE`, but logout clears the cookie with `secure` set from `NODE_ENV`. No `sameSite` is set. `TODO.md` lists the fix.
 - **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.
 
 ## Notes

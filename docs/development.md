@@ -11,7 +11,7 @@ Any OS works. Development has mostly happened on Windows with Docker Desktop's W
 
 ## First-time setup
 
-1. Copy `.env.example` to `.env` and fill in the Postgres credentials, `SESSION_SECRET`, and the `SEED_USER_*` values. The compose file sets `PGHOST` inside the container, so `.env` only needs it for running scripts from the host.
+1. Copy `.env.example` to `.env` and fill in the Postgres credentials and the `SEED_USER_*` values. `SESSION_SECRET` is optional; without it the server generates one and keeps it in the database. The compose file sets `PGHOST` inside the container, so `.env` only needs it for running scripts from the host.
 2. Install dependencies: `npm ci` in both `client/` and `server/`. The API container installs its own, but the host copies are needed for editor support and tests.
 3. Start the stack: `docker compose up -d`.
 4. Seed a user plus sample data: `docker compose exec api npm run db:seed`. The API creates the tables itself when it starts.

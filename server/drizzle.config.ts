@@ -6,7 +6,7 @@ export default defineConfig({
     dialect: 'postgresql',
     schema: [
         './src/data/database-schemas.ts',
-        './src/auth/user-data.ts',
+        './src/auth/*-data.ts',
         './src/logging/log-data.ts',
         './src/api/**/*-schema.ts',
     ],

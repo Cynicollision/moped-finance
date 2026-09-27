@@ -55,6 +55,7 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 | APP-5.6 | The server shall work out "today" and calendar-period boundaries in the time zone set by `TZ` (UTC if unset). | Implemented |
 | APP-5.7 | The server shall check every request's route parameters, query string and body before acting on it, and refuse an invalid one with a 400 naming each bad field (for example "Invalid Transaction request body: amount: Too big…"). Unknown filter or sort keys, unparseable dates, and amounts beyond 9,999,999,999.99 are refused rather than ignored or passed to the database. An update may send only the fields it changes; the rest keep their values. | Implemented |
 | APP-5.8 | On startup, before accepting requests, the server shall bring the database schema up to date by applying any migrations it hasn't applied yet, creating every table on an empty database. Pending migrations shall apply all together or not at all; if they fail, or the database can't be reached, the server shall log the reason and exit with a non-zero status, leaving the database unchanged. | Implemented |
+| APP-5.9 | Every response shall carry browser security headers: a Content-Security-Policy that runs scripts only from the app itself, and protection against framing, content-type sniffing and referrer leaks. Headers that need HTTPS (HSTS, `upgrade-insecure-requests`) shall be sent only when the app is served over HTTPS (`USE_HTTPS`), so it keeps working over plain HTTP. | Implemented |
 
 ## APP-6 Amounts read the same way everywhere
 
