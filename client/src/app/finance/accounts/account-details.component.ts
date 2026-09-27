@@ -29,13 +29,13 @@ export class FinanceAccountDetailsComponent implements OnInit {
     private dateProvider = inject(DateProviderService);
     protected readonly Math = Math;
 
-    account = signal<Account | undefined>(undefined);
-    balanceHistory = signal<BalanceHistory[]>([]);
-    transactions = signal<Transaction[]>([]);
+    readonly account = signal<Account | undefined>(undefined);
+    readonly balanceHistory = signal<BalanceHistory[]>([]);
+    readonly transactions = signal<Transaction[]>([]);
     categoryMap = new Map<string, Category>();
     institutionMap = new Map<string, Institution>();
 
-    selectedTimeframe = signal<HistoryTimeframe>(HistoryTimeframe.PastThirtyDays);
+    readonly selectedTimeframe = signal<HistoryTimeframe>(HistoryTimeframe.PastThirtyDays);
     displayedColumns: string[] = ['date', 'merchant', 'category', 'amount'];
 
     async ngOnInit() {
@@ -87,7 +87,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
     }
 
     // Map the raw BalanceHistory to the generic TotalValueHistory expected by ValueHistoryComponent
-    historyData = computed<TotalValueHistory[]>(() => {
+    readonly historyData = computed<TotalValueHistory[]>(() => {
         return this.balanceHistory().map(b => ({
             date: b.date,
             amount: b.balance,
@@ -96,7 +96,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
     });
 
     // Provide the chart with the layout context so that liability charts can invert the axis gracefully
-    derivedChartType = computed<ValueHistoryType>(() => {
+    readonly derivedChartType = computed<ValueHistoryType>(() => {
         const category = this.account()?.category;
         if (category === AccountCategory.Liability) {
             return ValueHistoryType.Liabilities;
@@ -104,7 +104,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
         return ValueHistoryType.Assets;
     });
 
-    chartTypeOptions = computed(() => {
+    readonly chartTypeOptions = computed(() => {
         const type = this.derivedChartType();
         return [{
             value: type,
@@ -117,7 +117,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
         return category ? `${category.icon} ${category.name}` : id;
     }
 
-    accountTypeDisplay = computed(() => {
+    readonly accountTypeDisplay = computed(() => {
         const acc = this.account();
         if (!acc) {
             return '';
@@ -130,7 +130,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
         return display;
     });
 
-    institutionNameDisplay = computed(() => {
+    readonly institutionNameDisplay = computed(() => {
         const institutionId = this.account()?.institutionId;
         if (!institutionId) {
             return '';

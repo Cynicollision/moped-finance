@@ -55,10 +55,10 @@ export class NewApiTokenDialogComponent {
         expiresInDays: [90 as number | null]
     });
 
-    isSaving = signal(false);
-    createdToken = signal<string | null>(null);
+    readonly isSaving = signal(false);
+    readonly createdToken = signal<string | null>(null);
 
-    private tokenInput = viewChild<ElementRef<HTMLInputElement>>('tokenInput');
+    private readonly tokenInput = viewChild<ElementRef<HTMLInputElement>>('tokenInput');
 
     async create(): Promise<void> {
         const name = this.form.controls.name.value.trim();

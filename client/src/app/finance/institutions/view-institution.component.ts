@@ -21,7 +21,7 @@ export class ViewInstitutionComponent implements OnInit {
     private route = inject(ActivatedRoute);
 
     institutionId: string | null = null;
-    institution = signal<Institution | null>(null);
+    readonly institution = signal<Institution | null>(null);
 
     async ngOnInit() {
         this.institutionId = this.route.snapshot.paramMap.get('id');

@@ -3,7 +3,7 @@
 | Package | Runner | Command | CI |
 |---|---|---|---|
 | `server/` | Jest + Supertest | `npm test` (`npm run test:watch` to watch) | Yes |
-| `client/` | Vitest (via `ng test`) | `npx ng test --watch=false` | Not yet (see `TODO.md`) |
+| `client/` | Vitest (via `ng test`) | `npx ng test --watch=false` | Yes |
 
 ## Server
 

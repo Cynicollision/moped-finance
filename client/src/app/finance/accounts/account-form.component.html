@@ -1,7 +1,7 @@
 <form *ngIf="accountForm" [formGroup]="accountForm" (ngSubmit)="onSubmit()" class="manual-form">
     <mat-form-field appearance="outline" class="full-width">
         <mat-label>Account Name</mat-label>
-        <input matInput formControlName="name" placeholder="e.g. Checking 1234" autofocus>
+        <input matInput formControlName="name" placeholder="e.g. Checking 1234">
         <mat-error *ngIf="accountForm.get('name')?.hasError('required')">
             Name is required
         </mat-error>

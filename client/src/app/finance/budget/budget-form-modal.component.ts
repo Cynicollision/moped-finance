@@ -41,8 +41,8 @@ export class FinanceBudgetFormModalComponent implements OnInit {
     budgetForm: FormGroup;
     isEditing = false;
     recurrenceOptions = Object.values(CalendarPeriod);
-    categories = signal<Category[]>([]);
-    filteredCategories = signal<Category[]>([]);
+    readonly categories = signal<Category[]>([]);
+    readonly filteredCategories = signal<Category[]>([]);
 
     get typeString(): string {
         return this.data.type === BudgetStreamType.Income ? 'Income' : 'Expense';

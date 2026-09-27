@@ -1,9 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Observable } from 'rxjs';
-import { map, shareReplay, filter } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -14,7 +12,7 @@ import { Environment } from './../environments/environment';
 import { AuthService } from './core/auth.service';
 import { LoadingOverlayComponent } from './core/loading/loading-overlay.component';
 import { DateProviderService } from './core/date-provider.service';
-import { LoadingService } from './core/loading/loading.service';
+import { LayoutService } from './core/layout/layout.service';
 
 interface NavItem {
     label: string;
@@ -42,11 +40,10 @@ interface NavItem {
     styleUrl: './app.scss'
 })
 export class App implements OnInit {
-    private breakpointObserver = inject(BreakpointObserver);
+    private layout = inject(LayoutService);
     authService = inject(AuthService);
     private dateProvider = inject(DateProviderService);
     private router = inject(Router);
-    private loadingService = inject(LoadingService);
 
     isDebugMode = Environment.isDebugMode;
     isDemoMode = Environment.demoMode;
@@ -80,12 +77,8 @@ export class App implements OnInit {
         return name[0].toUpperCase();
     }
 
-    // Observable to detect handset/mobile view
-    isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
-        .pipe(
-            map(result => result.matches),
-            shareReplay()
-        );
+    // Below the expanded size class the side navigation opens over the content from a menu button.
+    readonly isHandset = computed(() => !this.layout.atLeast('expanded'));
 
     ngOnInit() {
         this.router.events.pipe(

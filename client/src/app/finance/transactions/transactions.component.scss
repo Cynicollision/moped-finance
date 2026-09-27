@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 .container {
     display: flex;
     flex-direction: column;
@@ -18,7 +20,7 @@ table {
         display: none;
     }
 
-    @media (max-width: 768px) {
+    @include bp.content-below(bp.$expanded) {
         .mat-column-account,
         .mat-column-category {
             display: none !important;
@@ -73,7 +75,7 @@ table {
     }
 
     &.responsive-filter-row {
-        @media (max-width: 600px) {
+        @include bp.content-below(bp.$medium) {
             mat-form-field {
                 flex: 1 1 calc(50% - 6px);
                 min-width: 0;
@@ -95,7 +97,7 @@ mat-expansion-panel {
     overflow: hidden;
 
     &:hover {
-        border-color: rgba(255, 255, 255, 0.2);
+        border-color: var(--mat-sys-outline);
     }
 }
 

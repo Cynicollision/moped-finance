@@ -1,0 +1,45 @@
+// Shared breakpoints: Material 3 window size classes. Keep in sync with `Breakpoint` in
+// src/app/core/layout/layout.service.ts.
+//
+//   compact   below 600px (phones)
+//   medium    600px to 839px
+//   expanded  840px to 1199px
+//   large     1200px and up
+//
+// The viewport mixins are for the app shell (navigation). Screens lay out their content by the width of
+// the page area instead, with the `content-*` mixins, so the side navigation can never push a layout
+// that fits the window out of the space it actually has.
+//
+//   @use 'breakpoints' as bp;
+//   @include bp.content-below(bp.$medium) { ... }
+
+$medium: 600px;
+$expanded: 840px;
+$large: 1200px;
+
+// The container the `content-*` mixins query, set on the page area in app.scss.
+$page-container: page;
+
+@mixin viewport-below($min-width) {
+    @media (max-width: ($min-width - 0.02px)) {
+        @content;
+    }
+}
+
+@mixin viewport-from($min-width) {
+    @media (min-width: $min-width) {
+        @content;
+    }
+}
+
+@mixin content-below($min-width) {
+    @container #{$page-container} (max-width: #{$min-width - 0.02px}) {
+        @content;
+    }
+}
+
+@mixin content-from($min-width) {
+    @container #{$page-container} (min-width: #{$min-width}) {
+        @content;
+    }
+}

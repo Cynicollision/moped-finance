@@ -11,14 +11,14 @@ describe('buildSecurityHeaders', () => {
         return response.headers;
     }
 
-    it('APP-5.9 should allow only same-origin scripts and Google Fonts styles and fonts', async () => {
-        const csp = (await headersFor(false))['content-security-policy'];
+    it('APP-5.9 should allow only same-origin scripts, styles and fonts', async () => {
+        const directives = (await headersFor(false))['content-security-policy'].split(';');
 
-        expect(csp).toContain("script-src 'self'");
-        expect(csp).toContain("script-src-attr 'none'");
-        expect(csp).toContain("style-src 'self' 'unsafe-inline' https://fonts.googleapis.com");
-        expect(csp).toContain("font-src 'self' data: https://fonts.gstatic.com");
-        expect(csp).toContain("frame-ancestors 'self'");
+        expect(directives).toContain("script-src 'self'");
+        expect(directives).toContain("script-src-attr 'none'");
+        expect(directives).toContain("style-src 'self' 'unsafe-inline'");
+        expect(directives).toContain("font-src 'self' data:");
+        expect(directives).toContain("frame-ancestors 'self'");
     });
 
     it('APP-5.9 should send the headers that work over plain HTTP', async () => {

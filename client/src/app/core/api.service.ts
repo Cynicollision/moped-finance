@@ -44,27 +44,27 @@ export class ApiService {
         }
     }
 
-    get<T>(path: string, params?: HttpParams | { [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean> }): Promise<T | undefined> {
+    get<T>(path: string, params?: HttpParams | Record<string, string | number | boolean | readonly (string | number | boolean)[]>): Promise<T | undefined> {
         return this.handleRequest<T>(
-            firstValueFrom(this.http.get<T>(`${this.baseUrl}/${path}`, { params, withCredentials: true }))
+            firstValueFrom(this.http.get<T>(`${this.baseUrl}/${path}`, { params }))
         );
     }
 
     post<T>(path: string, body: any): Promise<T | undefined> {
         return this.handleRequest<T>(
-            firstValueFrom(this.http.post<T>(`${this.baseUrl}/${path}`, body, { withCredentials: true }))
+            firstValueFrom(this.http.post<T>(`${this.baseUrl}/${path}`, body))
         );
     }
 
     put<T>(path: string, body: any): Promise<T | undefined> {
         return this.handleRequest<T>(
-            firstValueFrom(this.http.put<T>(`${this.baseUrl}/${path}`, body, { withCredentials: true }))
+            firstValueFrom(this.http.put<T>(`${this.baseUrl}/${path}`, body))
         );
     }
 
     async delete(path: string): Promise<boolean> {
         try {
-            const request = firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${path}`, { withCredentials: true }));
+            const request = firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${path}`));
             await this.loader.withLoading(request);
             return true;
         }

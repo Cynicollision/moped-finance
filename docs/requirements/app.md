@@ -7,8 +7,8 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 | ID | Requirement | Status |
 |---|---|---|
 | APP-1.1 | Once signed in, the app shall show a side navigation with these entries, in this order: **Summary** (`/summary`, DASH), **Transactions**, **Cashflow**, **Budget**, **Categories**, **Accounts** (`/accounts`, the institutions and their accounts, INST-1). The current section shall be highlighted. | Partial |
-| APP-1.2 | The side navigation shall be permanently visible on desktop-width screens. On handset-width screens it shall be hidden behind a menu button, open over the content, and close when an entry is chosen. | Implemented |
-| APP-1.3 | On handset-width screens the label of the current top-level section shall appear next to the menu button. | Implemented |
+| APP-1.2 | The side navigation shall be permanently visible on screens 840px wide and wider. On narrower screens it shall be hidden behind a menu button, open over the content, and close when an entry is chosen. | Implemented |
+| APP-1.3 | While the navigation is behind the menu button (APP-1.2), the label of the current top-level section shall appear next to the menu button. | Implemented |
 | APP-1.4 | The bottom of the side navigation shall show a profile control with the user's initials and display name. Initials are the first letters of the first two words of the display name, or the first letter if there is only one word. | Implemented |
 | APP-1.5 | The profile control shall open a menu with **Settings** (SET-1.1) and **Sign out** (AUTH-4.1). | Implemented |
 | APP-1.6 | The landing page after sign-in, and the target of any unknown URL, shall be the Summary (DASH). | Implemented |
@@ -24,8 +24,8 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 | APP-2.1 | While any request to the server is in flight, the app shall show a loading overlay. | Implemented |
 | APP-2.2 | When a request fails, the app shall show an error message in a dismissible notification for 5 seconds. For client errors it shall use the server's message; if the server can't be reached it shall say "Network or server error encountered." | Implemented |
 | APP-2.3 | After a successful bulk import (balances or transactions) the app shall show a success notification with the number of records created. | Implemented |
-| APP-2.4 | Deleting an account, institution, transaction or budget stream shall first ask for confirmation in a dialog that names the action and can be cancelled. | Implemented |
-| APP-2.5 | Screens shall adapt to handset-width viewports, for example by hiding secondary table columns and showing that detail under the primary column. | Implemented |
+| APP-2.4 | Deleting an account, institution, transaction or budget stream shall first ask for confirmation in a dialog that names the action and can be cancelled. The confirm button of a destructive action (Delete, Revoke) shall be shown in the error (red) color. | Implemented |
+| APP-2.5 | Screens shall adapt to the width available to them, for example by hiding secondary table columns and showing that detail under the primary column, and shall not scroll sideways at any window width. | Implemented |
 
 ## APP-3 The app is identifiable as Moped Finance
 
@@ -73,7 +73,6 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 - **Login and Register show no product name.** The side navigation header and browser tab say "Moped Finance" (APP-3.1), but the Login and Register screens have no product name at all.
 - **Success feedback is sparse.** Only imports announce success. Creating, saving and deleting records just navigate or refresh.
 - **The loading overlay shows fake zeros (APP-2.1).** Every navigation and every timeframe or filter change dims the screen behind a spinner, and the blurred backdrop briefly shows an empty or zero state (an empty Budget, a $0.00 net worth) that looks like real data.
-- **Layout at ~800 px.** With the side navigation visible in a window about 800 px wide, Budget and Categories scroll horizontally and the Budget row menu sits off-screen to the right (APP-1.2, APP-2.5).
 - **Breadcrumb roots aren't always right.** Import Transactions shows "Accounts / Import Transactions" even when it was opened from the Transactions menu, and its "Accounts" crumb isn't a link, unlike the other screens' trails.
 - **Tab title flashes the app name.** On a full page load the tab reads "Moped Finance" until the screen finishes loading, then switches to the screen title alone (APP-1.9).
 

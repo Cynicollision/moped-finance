@@ -4,6 +4,7 @@
 // Learn more about theming and how to use it for your application's
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
+@use 'breakpoints' as bp;
 
 html {
     height: 100%;
@@ -17,16 +18,18 @@ html {
 }
 
 :root {
-    --bg-main: #121212;
-    --bg-card: #1e1e1e;
-    --bg-highlight: rgba(255, 255, 255, 0.05);
-    --bg-hover: rgba(255, 255, 255, 0.08);
-    --text-main: #efefef;
-    --text-muted: #a0a0a0;
-    --border-color: rgba(255, 255, 255, 0.12);
-    --color-positive: #81c784; // Light pastel green
-    --color-negative: #e57373; // Light pastel red
-    --color-link: #90caf9;
+    // App colour tokens. Use these (or Material's --mat-sys-* variables) in component styles rather than
+    // literal colours, so a light theme (SET-3.1) only has to change the theme above.
+    --bg-main: var(--mat-sys-surface);
+    --bg-card: var(--mat-sys-surface-container-low);
+    --bg-highlight: color-mix(in srgb, var(--mat-sys-on-surface) 5%, transparent);
+    --bg-hover: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
+    --text-main: var(--mat-sys-on-surface);
+    --text-muted: var(--mat-sys-on-surface-variant);
+    --border-color: var(--mat-sys-outline-variant);
+    --color-positive: #81c784; // Material 3 has no "success" role.
+    --color-negative: var(--mat-sys-error);
+    --color-link: var(--mat-sys-primary);
 }
 
 body {
@@ -71,8 +74,10 @@ mat-card.mat-mdc-card table.mat-mdc-table {
     font-weight: 500;
 }
 
+// Below the expanded size class the app shell shows the screen's name beside the menu button, so screens
+// hide their own title (APP-1.3).
 .hide-on-mobile {
-    @media (max-width: 768px) {
+    @include bp.viewport-below(bp.$expanded) {
         display: none !important;
     }
 }
@@ -80,9 +85,17 @@ mat-card.mat-mdc-card table.mat-mdc-table {
 .show-on-mobile {
     display: none !important;
 
-    @media (max-width: 768px) {
+    @include bp.viewport-below(bp.$expanded) {
         display: inline-flex !important;
     }
+}
+
+// A filled button for a destructive action, such as Delete or Revoke in a confirmation (APP-2.4).
+.danger-button {
+    @include mat.button-overrides((
+        filled-container-color: var(--mat-sys-error),
+        filled-label-text-color: var(--mat-sys-on-error)
+    ));
 }
 
 .amount-positive {

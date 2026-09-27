@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -21,14 +21,13 @@ export class ImportTransactionsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private notificationService = inject(NotificationService);
-    //private location = inject(Location);
 
-    accountId = signal<string | null>(null);
-    account = signal<Account | null>(null);
-    selectedFile = signal<File | null>(null);
-    isProcessing = signal<boolean>(false);
-    dryRunResults = signal<any>(null);
-    validationError = signal<string | null>(null);
+    readonly accountId = signal<string | null>(null);
+    readonly account = signal<Account | null>(null);
+    readonly selectedFile = signal<File | null>(null);
+    readonly isProcessing = signal<boolean>(false);
+    readonly dryRunResults = signal<any>(null);
+    readonly validationError = signal<string | null>(null);
 
     ngOnInit() {
         const id = this.route.snapshot.queryParamMap.get('accountId');

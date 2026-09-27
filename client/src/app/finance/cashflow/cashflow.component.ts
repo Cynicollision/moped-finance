@@ -73,10 +73,10 @@ export class FinanceCashflowComponent implements OnInit {
     incomeStreams: { id?: string, name: string, amount: number }[] = [];
     expenseStreams: { id?: string, name: string, amount: number }[] = [];
 
-    totalIncome: number = 0;
-    totalExpenses: number = 0;
-    totalSavings: number = 0;
-    savingsRate: number = 0;
+    totalIncome = 0;
+    totalExpenses = 0;
+    totalSavings = 0;
+    savingsRate = 0;
 
     Math = Math;
 
@@ -127,13 +127,9 @@ export class FinanceCashflowComponent implements OnInit {
                 return;
             }
 
-            let nameKey = 'Uncategorized';
-            if (this.viewMode === 'category') {
-                nameKey = cat ? `${cat.icon} ${cat.name}` : 'Uncategorized';
-            }
-            else {
-                nameKey = group?.name || 'Uncategorized';
-            }
+            const nameKey = this.viewMode === 'category'
+                ? (cat ? `${cat.icon} ${cat.name}` : 'Uncategorized')
+                : (group?.name || 'Uncategorized');
 
             if (group?.class === CategoryClass.Income) {
                 incomeMap.set(nameKey, (incomeMap.get(nameKey) || 0) + s.amount);
