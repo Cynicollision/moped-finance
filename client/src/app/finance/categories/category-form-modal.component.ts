@@ -1,5 +1,4 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,7 +19,6 @@ export interface CategoryFormModalData {
     selector: 'app-category-form-modal',
     standalone: true,
     imports: [
-        CommonModule,
         ReactiveFormsModule,
         MatDialogModule,
         MatButtonModule,
@@ -34,37 +32,39 @@ export interface CategoryFormModalData {
         <app-modal-layout [title]="isEditing ? 'Edit Category' : 'Create Category'">
           <form [formGroup]="form" (ngSubmit)="save()">
             <div class="form-row">
-                <mat-form-field appearance="outline">
-                    <mat-label>Name</mat-label>
-                    <input matInput formControlName="name" placeholder="e.g. Fuel">
-                </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="e.g. Fuel">
+              </mat-form-field>
 
-                <mat-form-field appearance="outline">
-                    <mat-label>Icon (Emoji)</mat-label>
-                    <input matInput formControlName="icon" placeholder="⛽">
-                </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Icon (Emoji)</mat-label>
+                <input matInput formControlName="icon" placeholder="⛽">
+              </mat-form-field>
 
-                <mat-form-field appearance="outline">
-                    <mat-label>Group</mat-label>
-                    <mat-select formControlName="groupId">
-                        <mat-option *ngFor="let group of groups" [value]="group.id">
-                            {{group.name}} ({{group.class}})
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Group</mat-label>
+                <mat-select formControlName="groupId">
+                  @for (group of groups; track group) {
+                    <mat-option [value]="group.id">
+                      {{group.name}} ({{group.class}})
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
 
-                <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+              <mat-checkbox formControlName="isActive">Active</mat-checkbox>
             </div>
 
             <div modal-actions>
-                <button mat-button type="button" mat-dialog-close>Cancel</button>
-                <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
-                    Save
-                </button>
+              <button mat-button type="button" mat-dialog-close>Cancel</button>
+              <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+                Save
+              </button>
             </div>
           </form>
         </app-modal-layout>
-    `,
+        `,
     styles: [`
         .form-row {
             display: flex;

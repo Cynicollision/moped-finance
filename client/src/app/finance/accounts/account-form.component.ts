@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,7 +12,6 @@ import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum
     selector: 'app-account-form',
     standalone: true,
     imports: [
-        CommonModule,
         ReactiveFormsModule,
         MatButtonModule,
         MatFormFieldModule,

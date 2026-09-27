@@ -1,20 +1,20 @@
-<div class="container" *ngIf="transaction()">
-    <div class="breadcrumb-nav">
-        <a [routerLink]="['/transactions']" class="breadcrumb-link">Transactions</a>
-        <span class="breadcrumb-separator">/</span>
-        <a [routerLink]="['/transactions', transactionId]" class="breadcrumb-link">Transaction Details</a>
-        <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">Edit Transaction</span>
+@if (transaction()) {
+    <div class="container">
+        <div class="breadcrumb-nav">
+            <a [routerLink]="['/transactions']" class="breadcrumb-link">Transactions</a>
+            <span class="breadcrumb-separator">/</span>
+            <a [routerLink]="['/transactions', transactionId]" class="breadcrumb-link">Transaction Details</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">Edit Transaction</span>
+        </div>
+        <div class="header-section" style="margin-bottom: 24px;">
+            <h1 class="desktop-page-title">Edit Transaction</h1>
+        </div>
+        <app-transaction-form
+            [transaction]="transaction()"
+            mode="edit"
+            (save)="onSave($event)"
+            (cancel)="onCancel()">
+        </app-transaction-form>
     </div>
-
-    <div class="header-section" style="margin-bottom: 24px;">
-        <h1 class="desktop-page-title">Edit Transaction</h1>
-    </div>
-
-    <app-transaction-form 
-        [transaction]="transaction()"
-        mode="edit"
-        (save)="onSave($event)"
-        (cancel)="onCancel()">
-    </app-transaction-form>
-</div>
+}

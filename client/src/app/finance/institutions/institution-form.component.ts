@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,7 +11,6 @@ export type InstitutionFormMode = 'create' | 'edit' | 'readonly';
     selector: 'app-institution-form',
     standalone: true,
     imports: [
-        CommonModule,
         ReactiveFormsModule,
         MatButtonModule,
         MatFormFieldModule,

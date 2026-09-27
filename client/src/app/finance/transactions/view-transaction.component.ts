@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,7 +12,6 @@ import { ModalService } from './../../core/modal/modal.service';
     selector: 'app-finance-view-transaction',
     standalone: true,
     imports: [
-        CommonModule,
         RouterLink,
         MatButtonModule,
         MatIconModule,

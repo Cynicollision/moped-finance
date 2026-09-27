@@ -1,5 +1,4 @@
 import { Component, computed, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -24,7 +23,6 @@ interface NavItem {
     selector: 'app-root',
     standalone: true,
     imports: [
-        CommonModule,
         RouterOutlet,
         RouterLink,
         RouterLinkActive,

@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 @Component({
     selector: 'app-modal-layout',
     standalone: true,
-    imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+    imports: [MatDialogModule, MatButtonModule, MatIconModule],
     templateUrl: './modal-layout.component.html',
     styleUrl: './modal-layout.component.scss'
 })

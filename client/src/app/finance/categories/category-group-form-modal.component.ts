@@ -31,30 +31,32 @@ export interface CategoryGroupFormModalData {
         <app-modal-layout [title]="isEditing ? 'Edit Group' : 'Create Group'">
           <form [formGroup]="form" (ngSubmit)="save()">
             <div class="form-row">
-                <mat-form-field appearance="outline">
-                    <mat-label>Name</mat-label>
-                    <input matInput formControlName="name" placeholder="e.g. Auto & Transport">
-                </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="e.g. Auto & Transport">
+              </mat-form-field>
 
-                <mat-form-field appearance="outline">
-                    <mat-label>Type</mat-label>
-                    <mat-select formControlName="class">
-                        <mat-option *ngFor="let opt of classOptions" [value]="opt">
-                            {{ opt | titlecase }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Type</mat-label>
+                <mat-select formControlName="class">
+                  @for (opt of classOptions; track opt) {
+                    <mat-option [value]="opt">
+                      {{ opt | titlecase }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
             </div>
 
             <div modal-actions>
-                <button mat-button type="button" mat-dialog-close>Cancel</button>
-                <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
-                    Save
-                </button>
+              <button mat-button type="button" mat-dialog-close>Cancel</button>
+              <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+                Save
+              </button>
             </div>
           </form>
         </app-modal-layout>
-    `,
+        `,
     styles: [`
         .form-row {
             display: flex;

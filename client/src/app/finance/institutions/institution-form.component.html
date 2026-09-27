@@ -1,19 +1,25 @@
 <form [formGroup]="institutionForm" (ngSubmit)="onSave()" class="details-form">
     <!-- Name -->
-    <div *ngIf="mode === 'readonly'" class="readonly-field">
-        <div class="label">Name</div>
-        <div class="value">{{institutionForm.value.name}}</div>
-    </div>
-    <mat-form-field *ngIf="mode !== 'readonly'" appearance="outline">
-        <mat-label>Name</mat-label>
-        <input type="text" matInput formControlName="name">
-    </mat-form-field>
+    @if (mode === 'readonly') {
+        <div class="readonly-field">
+            <div class="label">Name</div>
+            <div class="value">{{institutionForm.value.name}}</div>
+        </div>
+    }
+    @if (mode !== 'readonly') {
+        <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <input type="text" matInput formControlName="name">
+        </mat-form-field>
+    }
 
     <!-- Form Actions -->
-    <div class="actions" *ngIf="mode !== 'readonly'">
-        <div class="right-actions">
-            <button mat-button type="button" (click)="onCancel()">Cancel</button>
-            <button mat-raised-button color="primary" type="submit" [disabled]="institutionForm.invalid">Save</button>
+    @if (mode !== 'readonly') {
+        <div class="actions">
+            <div class="right-actions">
+                <button mat-button type="button" (click)="onCancel()">Cancel</button>
+                <button mat-raised-button color="primary" type="submit" [disabled]="institutionForm.invalid">Save</button>
+            </div>
         </div>
-    </div>
+    }
 </form>

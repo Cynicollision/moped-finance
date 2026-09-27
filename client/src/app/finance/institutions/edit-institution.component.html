@@ -1,30 +1,30 @@
-<div class="container" *ngIf="institution()">
-    <div class="breadcrumb-nav">
-        <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
-        <span class="breadcrumb-separator">/</span>
-        <a [routerLink]="['/institutions', institutionId]" class="breadcrumb-link">{{institution()!.name}}</a>
-        <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">Edit Institution</span>
-    </div>
-
-    <app-institution-form [institution]="institution()" mode="edit" (save)="onSave($event)" (cancel)="onCancel()">
-    </app-institution-form>
-
-    <div class="danger-zone"
-        style="background-color: var(--bg-card); border-radius: 8px; padding: 2rem; margin-top: 24px; display: flex; flex-direction: column; align-items: flex-start;">
-        <h3 style="color: var(--color-negative); margin-top: 0; display: flex; align-items: center; font-size: 16px;">
-            <mat-icon style="vertical-align: middle; margin-right: 4px;">warning</mat-icon>
-            Danger Zone
-        </h3>
-        <p style="color: var(--text-muted); margin-top: 0;">Once you delete an institution, there is no going back. Please
-            be certain.</p>
-            
-        <div *ngIf="associatedAccountsCount() !== null && associatedAccountsCount()! > 0" style="margin-bottom: 16px; color: var(--color-warn);">
-            Cannot delete this institution because it has {{ associatedAccountsCount() }} associated account(s). You must delete the associated accounts first.
+@if (institution()) {
+    <div class="container">
+        <div class="breadcrumb-nav">
+            <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
+            <span class="breadcrumb-separator">/</span>
+            <a [routerLink]="['/institutions', institutionId]" class="breadcrumb-link">{{institution()!.name}}</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">Edit Institution</span>
         </div>
-
-        <button mat-stroked-button color="warn" type="button" (click)="onDelete()" [disabled]="associatedAccountsCount() === null || associatedAccountsCount()! > 0">
-            Delete Institution
-        </button>
+        <app-institution-form [institution]="institution()" mode="edit" (save)="onSave($event)" (cancel)="onCancel()">
+        </app-institution-form>
+        <div class="danger-zone"
+            style="background-color: var(--bg-card); border-radius: 8px; padding: 2rem; margin-top: 24px; display: flex; flex-direction: column; align-items: flex-start;">
+            <h3 style="color: var(--color-negative); margin-top: 0; display: flex; align-items: center; font-size: 16px;">
+                <mat-icon style="vertical-align: middle; margin-right: 4px;">warning</mat-icon>
+                Danger Zone
+            </h3>
+            <p style="color: var(--text-muted); margin-top: 0;">Once you delete an institution, there is no going back. Please
+            be certain.</p>
+            @if (associatedAccountsCount() !== null && associatedAccountsCount()! > 0) {
+                <div style="margin-bottom: 16px; color: var(--color-warn);">
+                    Cannot delete this institution because it has {{ associatedAccountsCount() }} associated account(s). You must delete the associated accounts first.
+                </div>
+            }
+            <button mat-stroked-button color="warn" type="button" (click)="onDelete()" [disabled]="associatedAccountsCount() === null || associatedAccountsCount()! > 0">
+                Delete Institution
+            </button>
+        </div>
     </div>
-</div>
+}

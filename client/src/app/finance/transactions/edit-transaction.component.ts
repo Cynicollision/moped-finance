@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { Transaction } from '@shared/finance/types';
 import { TransactionFormComponent } from './transaction-form.component';
@@ -8,7 +7,7 @@ import { FinanceService } from './../finance.service';
 @Component({
     selector: 'app-finance-edit-transaction',
     standalone: true,
-    imports: [CommonModule, RouterLink, TransactionFormComponent],
+    imports: [RouterLink, TransactionFormComponent],
     templateUrl: './edit-transaction.component.html',
     styleUrl: './edit-transaction.component.scss'
 })

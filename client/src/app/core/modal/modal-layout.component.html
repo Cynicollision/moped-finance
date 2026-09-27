@@ -1,11 +1,15 @@
 <h2 mat-dialog-title class="modal-header">
     <div class="header-content">
-        <ng-container *ngIf="title">{{ title }}</ng-container>
+        @if (title) {
+            {{ title }}
+        }
         <ng-content select="[modal-title]"></ng-content>
     </div>
-    <button mat-icon-button mat-dialog-close class="close-button" *ngIf="showClose" aria-label="Close dialog">
-        <mat-icon>close</mat-icon>
-    </button>
+    @if (showClose) {
+        <button mat-icon-button mat-dialog-close class="close-button" aria-label="Close dialog">
+            <mat-icon>close</mat-icon>
+        </button>
+    }
 </h2>
 
 <mat-dialog-content class="modal-content">

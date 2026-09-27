@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,7 +11,6 @@ import { AccountFormComponent } from './account-form.component';
     selector: 'app-edit-account',
     standalone: true,
     imports: [
-        CommonModule,
         MatButtonModule,
         MatIconModule,
         RouterLink,

@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +10,7 @@ import { ModalService } from './../../core/modal/modal.service';
 @Component({
     selector: 'app-finance-edit-institution',
     standalone: true,
-    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, InstitutionFormComponent],
+    imports: [RouterLink, MatButtonModule, MatIconModule, InstitutionFormComponent],
     templateUrl: './edit-institution.component.html',
     styleUrl: './edit-institution.component.scss'
 })

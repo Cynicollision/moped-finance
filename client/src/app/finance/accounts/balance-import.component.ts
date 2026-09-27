@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -12,7 +12,7 @@ import { FinanceService } from './../finance.service';
 @Component({
     selector: 'app-balance-import',
     standalone: true,
-    imports: [CommonModule, MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule, RouterModule],
+    imports: [MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule, RouterModule],
     templateUrl: './balance-import.component.html',
     styleUrl: './balance-import.component.scss'
 })

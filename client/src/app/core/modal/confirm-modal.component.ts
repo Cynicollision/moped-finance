@@ -1,5 +1,4 @@
 import { Component, Inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { ModalLayoutComponent } from './modal-layout.component';
@@ -15,7 +14,7 @@ export interface ConfirmModalData {
 @Component({
     selector: 'app-confirm-modal',
     standalone: true,
-    imports: [CommonModule, MatDialogModule, MatButtonModule, ModalLayoutComponent],
+    imports: [MatDialogModule, MatButtonModule, ModalLayoutComponent],
     templateUrl: './confirm-modal.component.html',
     styleUrl: './confirm-modal.component.scss'
 })

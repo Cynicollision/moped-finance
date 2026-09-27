@@ -4,45 +4,51 @@
         [mode]="isHandset() ? 'over' : 'side'" [opened]="!isHandset()">
 
         <div style="display: flex; flex-direction: column; height: 100%;">
-            <div *ngIf="authService.currentUser()"
-                style="padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <mat-icon color="primary">attach_money</mat-icon>
-                    <span
+            @if (authService.currentUser()) {
+                <div
+                    style="padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <mat-icon color="primary">attach_money</mat-icon>
+                        <span
                         style="font-size: 18px; font-weight: 500; letter-spacing: 0.5px; color: var(--text-main);">Moped Finance</span>
-                </div>
-
-                @if (isDemoMode) {
-                <div style="display: flex; align-items: center; gap: 4px; background: rgba(156, 39, 176, 0.1); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(156, 39, 176, 0.2);"
-                    title="Demo Mode">
-                    <mat-icon
-                        style="color: #9c27b0; font-size: 16px; width: 16px; height: 16px; margin: 0;">science</mat-icon>
-                    <span style="font-size: 11px; color: #9c27b0; font-weight: bold; line-height: 1;">Demo Mode</span>
-                </div>
-                }
-                @else if (isDebugMode) {
-                <div style="display: flex; align-items: center; gap: 4px; background: rgba(255, 152, 0, 0.1); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(255, 152, 0, 0.2);"
-                    title="Debug Mode: {{ debugDateLabel }}">
-                    <mat-icon
+                    </div>
+                    @if (isDemoMode) {
+                        <div style="display: flex; align-items: center; gap: 4px; background: rgba(156, 39, 176, 0.1); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(156, 39, 176, 0.2);"
+                            title="Demo Mode">
+                            <mat-icon
+                            style="color: #9c27b0; font-size: 16px; width: 16px; height: 16px; margin: 0;">science</mat-icon>
+                            <span style="font-size: 11px; color: #9c27b0; font-weight: bold; line-height: 1;">Demo Mode</span>
+                        </div>
+                    }
+                    @else if (isDebugMode) {
+                    <div style="display: flex; align-items: center; gap: 4px; background: rgba(255, 152, 0, 0.1); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(255, 152, 0, 0.2);"
+                        title="Debug Mode: {{ debugDateLabel }}">
+                        <mat-icon
                         style="color: #ff9800; font-size: 16px; width: 16px; height: 16px; margin: 0;">bug_report</mat-icon>
-                    <span style="font-size: 11px; color: #ff9800; font-weight: bold; line-height: 1;">{{ debugDateLabel
+                        <span style="font-size: 11px; color: #ff9800; font-weight: bold; line-height: 1;">{{ debugDateLabel
                         }}</span>
-                </div>
+                    </div>
                 }
             </div>
+        }
 
-            <mat-nav-list *ngIf="authService.currentUser()">
-                <a mat-list-item *ngFor="let item of navItems" [routerLink]="item.route" routerLinkActive="active-link"
-                    [routerLinkActiveOptions]="{exact: true}" (click)="drawer.mode === 'over' && drawer.close()">
-                    <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
-                    <span matListItemTitle>{{item.label}}</span>
-                </a>
+        @if (authService.currentUser()) {
+            <mat-nav-list>
+                @for (item of navItems; track item) {
+                    <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link"
+                        [routerLinkActiveOptions]="{exact: true}" (click)="drawer.mode === 'over' && drawer.close()">
+                        <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
+                        <span matListItemTitle>{{item.label}}</span>
+                    </a>
+                }
             </mat-nav-list>
+        }
 
-            <span style="flex: 1 1 auto;"></span>
+        <span style="flex: 1 1 auto;"></span>
 
-            <!-- Profile Button and Dropdown Menu -->
-            <div *ngIf="authService.currentUser()">
+        <!-- Profile Button and Dropdown Menu -->
+        @if (authService.currentUser()) {
+            <div>
                 <div style="padding: 12px 16px; margin: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px; background-color: var(--bg-card); border: 1px solid var(--border-color); transition: background-color 0.2s;"
                     [matMenuTriggerFor]="profileMenu" class="profile-trigger">
                     <div
@@ -54,9 +60,8 @@
                         {{ authService.currentUser()?.displayName }}
                     </span>
                     <mat-icon
-                        style="color: var(--text-muted); font-size: 20px; width: 20px; height: 20px; margin: 0;">keyboard_arrow_up</mat-icon>
+                    style="color: var(--text-muted); font-size: 20px; width: 20px; height: 20px; margin: 0;">keyboard_arrow_up</mat-icon>
                 </div>
-
                 <mat-menu #profileMenu="matMenu" xPosition="after" yPosition="above">
                     <a mat-menu-item routerLink="/settings" (click)="drawer.mode === 'over' && drawer.close()">
                         <mat-icon>settings</mat-icon>
@@ -68,22 +73,27 @@
                     </button>
                 </mat-menu>
             </div>
-        </div>
-    </mat-sidenav>
+        }
+    </div>
+</mat-sidenav>
 
-    <!-- Main Content Area -->
-    <mat-sidenav-content>
-        <div class="content-container">
-            <div *ngIf="isHandset()" style="display: flex; align-items: center; margin-bottom: 16px;">
+<!-- Main Content Area -->
+<mat-sidenav-content>
+    <div class="content-container">
+        @if (isHandset()) {
+            <div style="display: flex; align-items: center; margin-bottom: 16px;">
                 <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()">
                     <mat-icon>menu</mat-icon>
                 </button>
-                <span *ngIf="currentNavItem" style="font-size: 20px; font-weight: 500; margin-left: 8px;">{{
+                @if (currentNavItem) {
+                    <span style="font-size: 20px; font-weight: 500; margin-left: 8px;">{{
                     currentNavItem.label }}</span>
+                }
             </div>
-            <router-outlet></router-outlet>
-        </div>
-    </mat-sidenav-content>
+        }
+        <router-outlet></router-outlet>
+    </div>
+</mat-sidenav-content>
 </mat-sidenav-container>
 
 <app-loading-overlay></app-loading-overlay>

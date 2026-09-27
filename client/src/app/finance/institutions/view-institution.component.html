@@ -1,25 +1,26 @@
-<div class="container" *ngIf="institution()">
-    <div class="page-header">
-        <div class="breadcrumb-nav">
-            <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-current">{{institution()!.name}}</span>
-        </div>
-        <div class="top-actions">
-            <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
-                <mat-icon>more_vert</mat-icon>
-            </button>
-            <mat-menu #menu="matMenu">
-                <button mat-menu-item (click)="onEdit()">
-                    <mat-icon>edit</mat-icon>
-                    <span>Edit</span>
+@if (institution()) {
+    <div class="container">
+        <div class="page-header">
+            <div class="breadcrumb-nav">
+                <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-current">{{institution()!.name}}</span>
+            </div>
+            <div class="top-actions">
+                <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
+                    <mat-icon>more_vert</mat-icon>
                 </button>
-            </mat-menu>
+                <mat-menu #menu="matMenu">
+                    <button mat-menu-item (click)="onEdit()">
+                        <mat-icon>edit</mat-icon>
+                        <span>Edit</span>
+                    </button>
+                </mat-menu>
+            </div>
         </div>
+        <app-institution-form
+            [institution]="institution()"
+            mode="readonly">
+        </app-institution-form>
     </div>
-
-    <app-institution-form 
-        [institution]="institution()"
-        mode="readonly">
-    </app-institution-form>
-</div>
+}

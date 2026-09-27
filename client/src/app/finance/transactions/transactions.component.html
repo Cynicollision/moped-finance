@@ -56,16 +56,20 @@
                         <mat-label>Group</mat-label>
                         <input type="text" matInput formControlName="group" [matAutocomplete]="autoGroup">
                         <mat-autocomplete #autoGroup="matAutocomplete" [displayWith]="displayGroup">
-                            <mat-option *ngFor="let g of filteredGroups()" [value]="g.id">{{g.name}}</mat-option>
+                            @for (g of filteredGroups(); track g) {
+                                <mat-option [value]="g.id">{{g.name}}</mat-option>
+                            }
                         </mat-autocomplete>
                     </mat-form-field>
                     <mat-form-field appearance="outline">
                         <mat-label>Category</mat-label>
                         <input type="text" matInput formControlName="category" [matAutocomplete]="autoCategory">
                         <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
-                            <mat-option *ngFor="let c of filteredCategories()" [value]="c.id">
-                                {{c.icon}} {{c.name}}
-                            </mat-option>
+                            @for (c of filteredCategories(); track c) {
+                                <mat-option [value]="c.id">
+                                    {{c.icon}} {{c.name}}
+                                </mat-option>
+                            }
                         </mat-autocomplete>
                     </mat-form-field>
                 </div>
@@ -74,16 +78,20 @@
                         <mat-label>Account</mat-label>
                         <mat-select formControlName="account">
                             <mat-option>-- None --</mat-option>
-                            <mat-option *ngFor="let account of accounts()" [value]="account.id">
-                                {{account.name}}
-                            </mat-option>
+                            @for (account of accounts(); track account) {
+                                <mat-option [value]="account.id">
+                                    {{account.name}}
+                                </mat-option>
+                            }
                         </mat-select>
                     </mat-form-field>
                     <mat-form-field appearance="outline">
                         <mat-label>Merchant</mat-label>
                         <input type="text" matInput formControlName="merchant" [matAutocomplete]="autoMerchant">
                         <mat-autocomplete #autoMerchant="matAutocomplete">
-                            <mat-option *ngFor="let m of filteredMerchants()" [value]="m">{{m}}</mat-option>
+                            @for (m of filteredMerchants(); track m) {
+                                <mat-option [value]="m">{{m}}</mat-option>
+                            }
                         </mat-autocomplete>
                     </mat-form-field>
                 </div>
@@ -141,11 +149,15 @@
         </tr>
     </table>
 
-    <div *ngIf="loaded && dataSource.data.length === 0" class="no-transactions-message">
-        No transactions found
-    </div>
+    @if (loaded && dataSource.data.length === 0) {
+        <div class="no-transactions-message">
+            No transactions found
+        </div>
+    }
 
-    <div class="footer" *ngIf="hasMoreData">
-        <button mat-raised-button color="primary" (click)="loadMore()">Load More</button>
-    </div>
+    @if (hasMoreData) {
+        <div class="footer">
+            <button mat-raised-button color="primary" (click)="loadMore()">Load More</button>
+        </div>
+    }
 </div>

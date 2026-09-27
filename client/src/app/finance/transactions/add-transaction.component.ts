@@ -1,5 +1,4 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { NewEntity } from '@shared/core/types';
 import { Transaction } from '@shared/finance/types';
@@ -9,7 +8,7 @@ import { FinanceService } from './../finance.service';
 @Component({
     selector: 'app-add-transaction',
     standalone: true,
-    imports: [CommonModule, RouterLink, TransactionFormComponent],
+    imports: [RouterLink, TransactionFormComponent],
     templateUrl: './add-transaction.component.html',
     styleUrl: './add-transaction.component.scss'
 })

@@ -18,50 +18,58 @@
     </div>
 
     <ng-container
-        *ngTemplateOutlet="categorySection; context: { title: 'Income', groupedCategories: incomeGroups }"></ng-container>
+    *ngTemplateOutlet="categorySection; context: { title: 'Income', groupedCategories: incomeGroups }"></ng-container>
     <ng-container
-        *ngTemplateOutlet="categorySection; context: { title: 'Expenses', groupedCategories: expenseGroups }"></ng-container>
+    *ngTemplateOutlet="categorySection; context: { title: 'Expenses', groupedCategories: expenseGroups }"></ng-container>
 
 </div>
 
 <ng-template #categorySection let-title="title" let-groupedCategories="groupedCategories">
     <div class="category-section-wrapper">
         <div class="section-header">
-        <h2>{{title}}</h2>
-    </div>
-
-    <div class="group-list">
-        <mat-card *ngFor="let item of groupedCategories" class="group-card">
-            <div class="group-header" style="gap: 16px;">
-                <h3>{{item.group.name}}</h3>
-                <button mat-button class="edit-btn" (click)="editGroup(item.group)">Edit</button>
-            </div>
-            <mat-card-content>
-                <div class="category-list">
-                    <div class="category-row" *ngFor="let cat of item.categories" [class.inactive]="!cat.isActive">
-                        <div class="category-info">
-                            <span class="icon">{{cat.icon}}</span>
-                            <span class="name">{{cat.name}}</span>
-                        </div>
-                        <div class="category-actions">
-                            <mat-icon *ngIf="!cat.isActive" class="hidden-icon"
-                                matTooltip="Hidden Category">visibility_off</mat-icon>
-                            <button mat-icon-button (click)="editCategory(cat)" matTooltip="Edit Category"
-                                class="edit-category-btn">
-                                <mat-icon>edit</mat-icon>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="add-category-row">
-                    <button mat-button (click)="startAddCategory(item.group.id)">Create Category</button>
-                </div>
-            </mat-card-content>
-        </mat-card>
-
-        <div *ngIf="groupedCategories.length === 0" class="empty-state">
-            No {{title | lowercase}} groups found.
+            <h2>{{title}}</h2>
         </div>
-    </div>
+
+        <div class="group-list">
+            @for (item of groupedCategories; track item) {
+                <mat-card class="group-card">
+                    <div class="group-header" style="gap: 16px;">
+                        <h3>{{item.group.name}}</h3>
+                        <button mat-button class="edit-btn" (click)="editGroup(item.group)">Edit</button>
+                    </div>
+                    <mat-card-content>
+                        <div class="category-list">
+                            @for (cat of item.categories; track cat) {
+                                <div class="category-row" [class.inactive]="!cat.isActive">
+                                    <div class="category-info">
+                                        <span class="icon">{{cat.icon}}</span>
+                                        <span class="name">{{cat.name}}</span>
+                                    </div>
+                                    <div class="category-actions">
+                                        @if (!cat.isActive) {
+                                            <mat-icon class="hidden-icon"
+                                            matTooltip="Hidden Category">visibility_off</mat-icon>
+                                        }
+                                        <button mat-icon-button (click)="editCategory(cat)" matTooltip="Edit Category"
+                                            class="edit-category-btn">
+                                            <mat-icon>edit</mat-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="add-category-row">
+                            <button mat-button (click)="startAddCategory(item.group.id)">Create Category</button>
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+            }
+
+            @if (groupedCategories.length === 0) {
+                <div class="empty-state">
+                    No {{title | lowercase}} groups found.
+                </div>
+            }
+        </div>
     </div>
 </ng-template>

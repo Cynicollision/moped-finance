@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -13,7 +12,6 @@ import { AccountFormComponent } from './account-form.component';
     selector: 'app-finance-add-account',
     standalone: true,
     imports: [
-        CommonModule,
         RouterLink,
         MatButtonModule,
         MatCardModule,

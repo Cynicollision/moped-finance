@@ -1,55 +1,63 @@
-<form *ngIf="accountForm" [formGroup]="accountForm" (ngSubmit)="onSubmit()" class="manual-form">
-    <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Account Name</mat-label>
-        <input matInput formControlName="name" placeholder="e.g. Checking 1234">
-        <mat-error *ngIf="accountForm.get('name')?.hasError('required')">
-            Name is required
-        </mat-error>
-    </mat-form-field>
-
-    <div class="row">
-        <mat-form-field appearance="outline">
-            <mat-label>Category</mat-label>
-            <mat-select formControlName="category">
-                <mat-option *ngFor="let cat of categories" [value]="cat">{{cat}}</mat-option>
-            </mat-select>
+@if (accountForm) {
+    <form [formGroup]="accountForm" (ngSubmit)="onSubmit()" class="manual-form">
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Account Name</mat-label>
+            <input matInput formControlName="name" placeholder="e.g. Checking 1234">
+            @if (accountForm.get('name')?.hasError('required')) {
+                <mat-error>
+                    Name is required
+                </mat-error>
+            }
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
-            <mat-label>Group</mat-label>
-            <mat-select formControlName="group">
-                <mat-option *ngFor="let grp of groups" [value]="grp">{{grp}}</mat-option>
-            </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-            <mat-label>Type</mat-label>
-            <mat-select formControlName="type">
-                <mat-option *ngFor="let typ of types" [value]="typ">{{typ}}</mat-option>
-            </mat-select>
-        </mat-form-field>
-    </div>
-
-    <div class="toggles-grid">
-        <mat-checkbox formControlName="isHidden">Hide Account</mat-checkbox>
-        <mat-checkbox formControlName="isManual">Manual Account</mat-checkbox>
-        <mat-checkbox formControlName="isRetirement">Retirement Account</mat-checkbox>
-        <mat-checkbox formControlName="hideFromCashflow">Hide from Cashflow</mat-checkbox>
-    </div>
-
-    <mat-form-field appearance="outline" class="full-width" *ngIf="accountForm.get('isManual')?.value">
-        <mat-label>Balance</mat-label>
-        <input matInput formControlName="balance" type="number" step="0.01">
-        <mat-error *ngIf="accountForm.get('balance')?.hasError('pattern')">
-            Invalid decimal format
-        </mat-error>
-    </mat-form-field>
-
-    <div class="actions-row">
-        <button mat-button type="button" (click)="onCancelClick()">Cancel</button>
-        <span class="spacer"></span>
-        <button mat-raised-button color="primary" type="submit" [disabled]="!accountForm.valid">
-            {{ mode === 'create' ? 'Save Account' : 'Save Changes' }}
-        </button>
-    </div>
-</form>
+        <div class="row">
+            <mat-form-field appearance="outline">
+                <mat-label>Category</mat-label>
+                <mat-select formControlName="category">
+                    @for (cat of categories; track cat) {
+                        <mat-option [value]="cat">{{cat}}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+                <mat-label>Group</mat-label>
+                <mat-select formControlName="group">
+                    @for (grp of groups; track grp) {
+                        <mat-option [value]="grp">{{grp}}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+                <mat-label>Type</mat-label>
+                <mat-select formControlName="type">
+                    @for (typ of types; track typ) {
+                        <mat-option [value]="typ">{{typ}}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        </div>
+        <div class="toggles-grid">
+            <mat-checkbox formControlName="isHidden">Hide Account</mat-checkbox>
+            <mat-checkbox formControlName="isManual">Manual Account</mat-checkbox>
+            <mat-checkbox formControlName="isRetirement">Retirement Account</mat-checkbox>
+            <mat-checkbox formControlName="hideFromCashflow">Hide from Cashflow</mat-checkbox>
+        </div>
+        @if (accountForm.get('isManual')?.value) {
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Balance</mat-label>
+                <input matInput formControlName="balance" type="number" step="0.01">
+                @if (accountForm.get('balance')?.hasError('pattern')) {
+                    <mat-error>
+                        Invalid decimal format
+                    </mat-error>
+                }
+            </mat-form-field>
+        }
+        <div class="actions-row">
+            <button mat-button type="button" (click)="onCancelClick()">Cancel</button>
+            <span class="spacer"></span>
+            <button mat-raised-button color="primary" type="submit" [disabled]="!accountForm.valid">
+                {{ mode === 'create' ? 'Save Account' : 'Save Changes' }}
+            </button>
+        </div>
+    </form>
+}

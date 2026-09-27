@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { NewEntity } from '@shared/core/types';
 import { Institution } from '@shared/finance/types';
@@ -9,7 +8,7 @@ import { FinanceService } from './../finance.service';
 @Component({
     selector: 'app-finance-new-institution',
     standalone: true,
-    imports: [CommonModule, RouterLink, InstitutionFormComponent],
+    imports: [RouterLink, InstitutionFormComponent],
     templateUrl: './new-institution.component.html',
     styleUrl: './new-institution.component.scss'
 })

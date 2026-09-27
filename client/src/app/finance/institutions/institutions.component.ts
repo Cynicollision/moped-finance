@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -16,7 +15,7 @@ interface InstitutionGroup {
 @Component({
     selector: 'app-finance-institutions',
     standalone: true,
-    imports: [CommonModule, RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule],
+    imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule],
     templateUrl: './institutions.component.html',
     styleUrl: './institutions.component.scss'
 })

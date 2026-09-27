@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +10,7 @@ import { FinanceService } from './../finance.service';
 @Component({
     selector: 'app-finance-view-institution',
     standalone: true,
-    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatMenuModule, InstitutionFormComponent],
+    imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, InstitutionFormComponent],
     templateUrl: './view-institution.component.html',
     styleUrl: './view-institution.component.scss'
 })

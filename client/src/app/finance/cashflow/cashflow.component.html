@@ -11,33 +11,45 @@
                 <mat-form-field appearance="outline" subscriptSizing="dynamic">
                     <mat-label>Year</mat-label>
                     <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChange()">
-                        <mat-option *ngFor="let y of years" [value]="y">{{y}}</mat-option>
+                        @for (y of years; track y) {
+                            <mat-option [value]="y">{{y}}</mat-option>
+                        }
                     </mat-select>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" subscriptSizing="dynamic">
                     <mat-label>Period</mat-label>
                     <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="onPeriodChange()">
-                        <mat-option *ngFor="let p of periods" [value]="p">{{p}}</mat-option>
+                        @for (p of periods; track p) {
+                            <mat-option [value]="p">{{p}}</mat-option>
+                        }
                     </mat-select>
                 </mat-form-field>
             </div>
 
-            <mat-form-field appearance="outline" subscriptSizing="dynamic"
-                *ngIf="selectedPeriod === CalendarPeriod.Monthly">
-                <mat-label>Month</mat-label>
-                <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
-                    <mat-option *ngFor="let m of months" [value]="m.value">{{m.label}}</mat-option>
-                </mat-select>
-            </mat-form-field>
+            @if (selectedPeriod === CalendarPeriod.Monthly) {
+                <mat-form-field appearance="outline" subscriptSizing="dynamic"
+                    >
+                    <mat-label>Month</mat-label>
+                    <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
+                        @for (m of months; track m) {
+                            <mat-option [value]="m.value">{{m.label}}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+            }
 
-            <mat-form-field appearance="outline" subscriptSizing="dynamic"
-                *ngIf="selectedPeriod === CalendarPeriod.Quarterly">
-                <mat-label>Quarter</mat-label>
-                <mat-select [(ngModel)]="selectedQuarter" (selectionChange)="onPeriodChange()">
-                    <mat-option *ngFor="let q of quarters" [value]="q.value">{{q.label}}</mat-option>
-                </mat-select>
-            </mat-form-field>
+            @if (selectedPeriod === CalendarPeriod.Quarterly) {
+                <mat-form-field appearance="outline" subscriptSizing="dynamic"
+                    >
+                    <mat-label>Quarter</mat-label>
+                    <mat-select [(ngModel)]="selectedQuarter" (selectionChange)="onPeriodChange()">
+                        @for (q of quarters; track q) {
+                            <mat-option [value]="q.value">{{q.label}}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+            }
         </div>
     </div>
 
@@ -52,7 +64,7 @@
         <mat-card class="summary-card">
             <mat-card-content>
                 <div class="value" style="color: #d32f2f !important;">{{ totalExpenses | currency:'USD':'symbol':'1.0-0'
-                    }}</div>
+                }}</div>
                 <div class="label">EXPENSES</div>
             </mat-card-content>
         </mat-card>
@@ -60,7 +72,7 @@
             <mat-card-content>
                 <div class="value"
                     [ngClass]="{'amount-positive': totalSavings >= 0, 'amount-negative': totalSavings < 0}">{{
-                    totalSavings | currency:'USD':'symbol':'1.0-0' }}</div>
+                totalSavings | currency:'USD':'symbol':'1.0-0' }}</div>
                 <div class="label">TOTAL SAVINGS</div>
             </mat-card-content>
         </mat-card>
@@ -102,12 +114,14 @@
                 </ng-container>
 
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="onRowClick(row)"
-                    class="clickable-row"></tr>
+                class="clickable-row"></tr>
             </table>
 
-            <div *ngIf="incomeStreams.length === 0" class="no-data">
-                No income data for the selected period.
-            </div>
+            @if (incomeStreams.length === 0) {
+                <div class="no-data">
+                    No income data for the selected period.
+                </div>
+            }
         </mat-card-content>
     </mat-card>
 
@@ -141,12 +155,14 @@
                 </ng-container>
 
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="onRowClick(row)"
-                    class="clickable-row"></tr>
+                class="clickable-row"></tr>
             </table>
 
-            <div *ngIf="expenseStreams.length === 0" class="no-data">
-                No expense data for the selected period.
-            </div>
+            @if (expenseStreams.length === 0) {
+                <div class="no-data">
+                    No expense data for the selected period.
+                </div>
+            }
         </mat-card-content>
     </mat-card>
 </div>

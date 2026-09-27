@@ -1,5 +1,4 @@
 import { Component, Inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,7 +23,6 @@ export interface BudgetFormModalData {
     selector: 'app-budget-form-modal',
     standalone: true,
     imports: [
-        CommonModule,
         ReactiveFormsModule,
         MatDialogModule,
         MatButtonModule,
@@ -90,7 +88,7 @@ export class FinanceBudgetFormModalComponent implements OnInit {
             startWith(''),
             map(value => {
                 if (typeof value === 'string') return value;
-                // If it's an ID (from patchValue), we need to find the name if we want to filter, 
+                // If it's an ID (from patchValue), we need to find the name if we want to filter,
                 // but since we display name in the input, usually value is the name or empty.
                 const cat = this.categories().find(c => c.id === value);
                 return cat ? cat.name : '';
