@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,8 +14,8 @@ interface InstitutionGroup {
 
 @Component({
     selector: 'app-finance-institutions',
-    standalone: true,
-    imports: [CommonModule, RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule],
     templateUrl: './institutions.component.html',
     styleUrl: './institutions.component.scss'
 })

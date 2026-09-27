@@ -13,7 +13,6 @@ import { NewApiTokenDialogComponent } from './new-api-token-dialog.component';
 // The API Tokens section of Settings (AUTH-11.1, AUTH-11.5)
 @Component({
     selector: 'app-api-tokens',
-    standalone: true,
     imports: [DatePipe, MatButtonModule, MatCardModule, MatIconModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './api-tokens.component.html',

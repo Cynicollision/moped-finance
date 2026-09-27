@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,8 +17,8 @@ import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-accounts',
-    standalone: true,
-    imports: [CommonModule, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, MatDividerModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CurrencyPipe, DatePipe, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, MatDividerModule],
     templateUrl: './account-details.component.html',
     styleUrl: './account-details.component.scss'
 })
@@ -27,16 +27,16 @@ export class FinanceAccountDetailsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private dateProvider = inject(DateProviderService);
-    protected readonly Math = Math;
+    readonly Math = Math;
 
     readonly account = signal<Account | undefined>(undefined);
     readonly balanceHistory = signal<BalanceHistory[]>([]);
     readonly transactions = signal<Transaction[]>([]);
-    categoryMap = new Map<string, Category>();
-    institutionMap = new Map<string, Institution>();
+    private readonly categoryMap = signal(new Map<string, Category>());
+    private readonly institutionMap = signal(new Map<string, Institution>());
 
     readonly selectedTimeframe = signal<HistoryTimeframe>(HistoryTimeframe.PastThirtyDays);
-    displayedColumns: string[] = ['date', 'merchant', 'category', 'amount'];
+    readonly displayedColumns: string[] = ['date', 'merchant', 'category', 'amount'];
 
     async ngOnInit() {
         const accountId = this.route.snapshot.paramMap.get('accountId');
@@ -50,15 +50,8 @@ export class FinanceAccountDetailsComponent implements OnInit {
             ]);
 
             this.account.set(account);
-
-            if (categories) {
-                categories.forEach(c => this.categoryMap.set(c.id, c));
-            }
-
-            if (institutions) {
-                institutions.forEach(i => this.institutionMap.set(i.id, i));
-            }
-
+            this.categoryMap.set(new Map((categories || []).map(c => [c.id, c])));
+            this.institutionMap.set(new Map((institutions || []).map(i => [i.id, i])));
             this.transactions.set(transactions || []);
 
             await this.updateChartData(accountId);
@@ -113,7 +106,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
     });
 
     getCategoryName(id: string): string {
-        const category = this.categoryMap.get(id);
+        const category = this.categoryMap().get(id);
         return category ? `${category.icon} ${category.name}` : id;
     }
 
@@ -136,7 +129,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
             return '';
         }
 
-        return this.institutionMap.get(institutionId)?.name || institutionId;
+        return this.institutionMap().get(institutionId)?.name || institutionId;
     });
 
     onRowClick(row: Transaction) {

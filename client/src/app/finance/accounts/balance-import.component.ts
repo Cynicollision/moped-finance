@@ -1,18 +1,19 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, signal, OnInit } from '@angular/core';
+
+import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { BalanceImportResult } from '@shared/finance/contracts';
 import { Account } from '@shared/finance/types';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-balance-import',
-    standalone: true,
-    imports: [CommonModule, MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule, RouterModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule, RouterModule],
     templateUrl: './balance-import.component.html',
     styleUrl: './balance-import.component.scss'
 })
@@ -26,7 +27,7 @@ export class BalanceImportComponent implements OnInit {
     readonly account = signal<Account | null>(null);
     readonly selectedFile = signal<File | null>(null);
     readonly isProcessing = signal<boolean>(false);
-    readonly dryRunResults = signal<any>(null);
+    readonly dryRunResults = signal<BalanceImportResult | null>(null);
     readonly validationError = signal<string | null>(null);
 
     ngOnInit() {
@@ -44,8 +45,8 @@ export class BalanceImportComponent implements OnInit {
         }
     }
 
-    onFileSelected(event: any) {
-        const file = event.target.files[0];
+    onFileSelected(event: Event) {
+        const file = (event.target as HTMLInputElement).files?.[0];
         if (file) {
             this.selectedFile.set(file);
             this.dryRunResults.set(null); // Reset results when a new file is chosen
@@ -69,7 +70,8 @@ export class BalanceImportComponent implements OnInit {
         if (response) {
             if (response.isValidToImport) {
                 this.dryRunResults.set(response);
-            } else {
+            }
+            else {
                 this.validationError.set(response.resultMessage || 'An unknown validation error occurred.');
             }
         }
@@ -94,7 +96,8 @@ export class BalanceImportComponent implements OnInit {
             if (response.isValidToImport) {
                 this.notificationService.success(`Successfully imported ${response.createdCount || 0} records.`);
                 this.router.navigate(['/accounts', id]);
-            } else {
+            }
+            else {
                 this.validationError.set(response.resultMessage || 'An unknown error occurred during import.');
             }
         }

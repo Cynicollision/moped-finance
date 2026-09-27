@@ -44,6 +44,7 @@
     "@angular/compiler-cli": "^21.1.0",
     "@angular/material": "^21.1.5",
     "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "angular-eslint": "21.4.0",
     "eslint": "^10.3.0",
     "jsdom": "^27.1.0",

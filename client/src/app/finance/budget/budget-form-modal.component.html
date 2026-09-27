@@ -1,41 +1,45 @@
 <app-modal-layout [title]="isEditing ? 'Edit ' + typeString : 'Add ' + typeString">
-  <form [formGroup]="budgetForm" (ngSubmit)="save()" class="budget-form">
-    <div class="form-row">
-        <mat-form-field appearance="outline">
-            <mat-label>Name</mat-label>
-            <input matInput formControlName="name" placeholder="e.g. Salary, Rent">
-        </mat-form-field>
+    <form [formGroup]="budgetForm" (ngSubmit)="save()" class="budget-form">
+        <div class="form-row">
+            <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="e.g. Salary, Rent">
+            </mat-form-field>
 
-        <mat-form-field appearance="outline">
-            <mat-label>Category</mat-label>
-            <input type="text" matInput formControlName="categoryId" [matAutocomplete]="autoCategory">
-            <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
-                <mat-option *ngFor="let cat of filteredCategories()" [value]="cat.id">
-                    {{cat.icon}} {{cat.name}}
-                </mat-option>
-            </mat-autocomplete>
-        </mat-form-field>
+            <mat-form-field appearance="outline">
+                <mat-label>Category</mat-label>
+                <input type="text" matInput formControlName="categoryId" [matAutocomplete]="autoCategory">
+                <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
+                    @for (cat of filteredCategories(); track cat.id) {
+                        <mat-option [value]="cat.id">
+                            {{cat.icon}} {{cat.name}}
+                        </mat-option>
+                    }
+                </mat-autocomplete>
+            </mat-form-field>
 
-        <mat-form-field appearance="outline">
-            <mat-label>Amount</mat-label>
-            <input matInput type="number" formControlName="amount" prefix="$">
-        </mat-form-field>
+            <mat-form-field appearance="outline">
+                <mat-label>Amount</mat-label>
+                <input matInput type="number" formControlName="amount" prefix="$">
+            </mat-form-field>
 
-        <mat-form-field appearance="outline">
-            <mat-label>Recurrence</mat-label>
-            <mat-select formControlName="recurrence">
-                <mat-option *ngFor="let opt of recurrenceOptions" [value]="opt">
-                    {{opt}}
-                </mat-option>
-            </mat-select>
-        </mat-form-field>
-    </div>
+            <mat-form-field appearance="outline">
+                <mat-label>Recurrence</mat-label>
+                <mat-select formControlName="recurrence">
+                    @for (opt of recurrenceOptions; track opt) {
+                        <mat-option [value]="opt">
+                            {{opt}}
+                        </mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        </div>
 
-    <div modal-actions>
-        <button mat-button type="button" mat-dialog-close>Cancel</button>
-        <button mat-raised-button color="primary" type="submit" [disabled]="budgetForm.invalid">
-            Save
-        </button>
-    </div>
-  </form>
+        <div modal-actions>
+            <button mat-button type="button" mat-dialog-close>Cancel</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="budgetForm.invalid">
+                Save
+            </button>
+        </div>
+    </form>
 </app-modal-layout>

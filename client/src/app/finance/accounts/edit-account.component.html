@@ -1,33 +1,32 @@
 <div class="summary-container details-container">
-    @if (accountData()) {
-    <div class="breadcrumb-nav">
-        <a [routerLink]="['/']" class="breadcrumb-link">Accounts</a>
-        <span class="breadcrumb-separator">/</span>
-        <a [routerLink]="['/accounts', accountData()!.id]" class="breadcrumb-link">{{ accountData()!.name }}</a>
-        <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">Edit Account</span>
-    </div>
+    @if (accountData(); as account) {
+        <div class="breadcrumb-nav">
+            <a [routerLink]="['/']" class="breadcrumb-link">Accounts</a>
+            <span class="breadcrumb-separator">/</span>
+            <a [routerLink]="['/accounts', account.id]" class="breadcrumb-link">{{ account.name }}</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">Edit Account</span>
+        </div>
 
-    <div class="header-section" style="margin-bottom: 24px;">
-        <h1 class="desktop-page-title">Edit Account</h1>
-    </div>
+        <div class="header-section">
+            <h1 class="desktop-page-title">Edit Account</h1>
+        </div>
 
-    <app-account-form mode="edit" [account]="accountData()!" (save)="onSave($event)" (cancel)="onCancel()">
-    </app-account-form>
+        <app-account-form mode="edit" [account]="account" (save)="onSave($event)" (cancelled)="onCancel()">
+        </app-account-form>
 
-    <div class="danger-zone"
-        style="background-color: var(--bg-card); border-radius: 8px; padding: 2rem; margin-top: 24px; display: flex; flex-direction: column; align-items: flex-start;">
-        <h3 style="color: var(--color-negative); margin-top: 0; display: flex; align-items: center; font-size: 16px;">
-            <mat-icon style="vertical-align: middle; margin-right: 4px;">warning</mat-icon>
-            Danger Zone
-        </h3>
-        <p style="color: var(--text-muted); margin-top: 0;">Once you delete an account, there is no going back. Please
-            be certain.</p>
-        <button mat-stroked-button color="warn" type="button" (click)="onDelete()">
-            Delete Account
-        </button>
-    </div>
-    } @else {
-    <p>Loading account details...</p>
+        <div class="danger-zone">
+            <h3>
+                <mat-icon>warning</mat-icon>
+                Danger Zone
+            </h3>
+            <p>Once you delete an account, there is no going back. Please be certain.</p>
+            <button mat-stroked-button color="warn" type="button" (click)="onDelete()">
+                Delete Account
+            </button>
+        </div>
+    }
+    @else {
+        <p>Loading account details...</p>
     }
 </div>

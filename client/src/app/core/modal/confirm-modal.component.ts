@@ -1,5 +1,4 @@
-import { Component, Inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { ModalLayoutComponent } from './modal-layout.component';
@@ -14,16 +13,14 @@ export interface ConfirmModalData {
 
 @Component({
     selector: 'app-confirm-modal',
-    standalone: true,
-    imports: [CommonModule, MatDialogModule, MatButtonModule, ModalLayoutComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [MatDialogModule, MatButtonModule, ModalLayoutComponent],
     templateUrl: './confirm-modal.component.html',
     styleUrl: './confirm-modal.component.scss'
 })
 export class ConfirmModalComponent {
-    constructor(
-        public dialogRef: MatDialogRef<ConfirmModalComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: ConfirmModalData
-    ) { }
+    private dialogRef = inject<MatDialogRef<ConfirmModalComponent>>(MatDialogRef);
+    readonly data = inject<ConfirmModalData>(MAT_DIALOG_DATA);
 
     onCancel(): void {
         this.dialogRef.close(false);

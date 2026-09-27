@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnChanges, OnDestroy, OnInit, input, viewChild } from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
 export type { ChartConfiguration } from 'chart.js';
@@ -18,25 +18,24 @@ Chart.defaults.plugins.tooltip.borderWidth = 1;
 
 @Component({
     selector: 'app-chart',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './chart.component.html',
-    styles: [`
-        :host {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-    `]
+    styleUrl: './chart.component.scss',
+    host: {
+        '[style.height]': 'height()',
+        '[style.width]': 'width()'
+    }
 })
 export class ChartComponent implements OnInit, OnChanges, OnDestroy {
-    @ViewChild('chartCanvas', { static: true }) chartCanvas!: ElementRef<HTMLCanvasElement>;
+    readonly chartCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('chartCanvas');
 
-    @Input() config!: ChartConfiguration;
-    @Input() height?: string;
-    @Input() width?: string;
+    readonly config = input.required<ChartConfiguration>();
+    readonly height = input<string>();
+    readonly width = input<string>();
 
     private chart: Chart | undefined;
     private initialized = false;
+    private destroyed = false;
 
     ngOnInit(): void {
         this.initialized = true;
@@ -50,24 +49,29 @@ export class ChartComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.destroyed = true;
         if (this.chart) {
             this.chart.destroy();
         }
     }
 
     private createChart(): void {
-        if (!this.config || !this.initialized) return;
+        if (!this.initialized) {
+            return;
+        }
 
         // Use setTimeout to ensure the DOM is fully rendered and sized before Chart.js measures it
         setTimeout(() => {
-            if (!this.chartCanvas) return; // Component might have been destroyed
-            
-            const ctx = this.chartCanvas.nativeElement.getContext('2d');
+            if (this.destroyed) {
+                return;
+            }
+
+            const ctx = this.chartCanvas().nativeElement.getContext('2d');
             if (ctx) {
                 if (this.chart) {
                     this.chart.destroy();
                 }
-                this.chart = new Chart(ctx, this.config);
+                this.chart = new Chart(ctx, this.config());
             }
         });
     }

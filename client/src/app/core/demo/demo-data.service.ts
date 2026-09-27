@@ -9,7 +9,7 @@ export class DemoDataService {
     private dateProvider = inject(DateProviderService);
 
     private readonly STORAGE_KEY = 'moped_finance_demo_data';
-    private data: any;
+    private data: { isLoggedIn: boolean } = { isLoggedIn: false };
 
     constructor() {
         this.loadData();
@@ -20,10 +20,12 @@ export class DemoDataService {
         if (stored) {
             try {
                 this.data = JSON.parse(stored);
-            } catch {
+            }
+            catch {
                 this.initData();
             }
-        } else {
+        }
+        else {
             this.initData();
         }
     }

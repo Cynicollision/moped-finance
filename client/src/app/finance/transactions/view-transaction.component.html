@@ -1,29 +1,30 @@
-<div class="container" *ngIf="transaction()">
-    <div class="page-header">
-        <div class="breadcrumb-nav">
-            <a [routerLink]="['/transactions']" class="breadcrumb-link">Transactions</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-current">Transaction Details</span>
-        </div>
-        <div class="top-actions">
-            <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
-                <mat-icon>more_vert</mat-icon>
-            </button>
-            <mat-menu #menu="matMenu">
-                <button mat-menu-item (click)="onEdit()">
-                    <mat-icon>edit</mat-icon>
-                    <span>Edit</span>
+@if (transaction(); as transaction) {
+    <div class="container">
+        <div class="page-header">
+            <div class="breadcrumb-nav">
+                <a [routerLink]="['/transactions']" class="breadcrumb-link">Transactions</a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-current">Transaction Details</span>
+            </div>
+            <div class="top-actions">
+                <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
+                    <mat-icon>more_vert</mat-icon>
                 </button>
-                <button mat-menu-item (click)="deleteTransaction()">
-                    <mat-icon color="warn">delete</mat-icon>
-                    <span style="color: var(--color-warn)">Delete</span>
-                </button>
-            </mat-menu>
+                <mat-menu #menu="matMenu">
+                    <button mat-menu-item (click)="onEdit()">
+                        <mat-icon>edit</mat-icon>
+                        <span>Edit</span>
+                    </button>
+                    <button mat-menu-item class="delete-item" (click)="deleteTransaction()">
+                        <mat-icon>delete</mat-icon>
+                        <span>Delete</span>
+                    </button>
+                </mat-menu>
+            </div>
         </div>
+        <app-transaction-form
+            [transaction]="transaction"
+            mode="readonly">
+        </app-transaction-form>
     </div>
-
-    <app-transaction-form 
-        [transaction]="transaction()"
-        mode="readonly">
-    </app-transaction-form>
-</div>
+}

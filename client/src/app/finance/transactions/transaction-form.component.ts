@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, Output, inject, OnInit, ChangeDetectorRef, SimpleChanges, OnChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, SimpleChanges, OnChanges, input, output, signal } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,9 +19,10 @@ export type TransactionFormMode = 'create' | 'edit' | 'readonly';
 
 @Component({
     selector: 'app-transaction-form',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CommonModule,
+        CurrencyPipe,
+        DatePipe,
         ReactiveFormsModule,
         MatButtonModule,
         MatIconModule,
@@ -38,19 +39,18 @@ export type TransactionFormMode = 'create' | 'edit' | 'readonly';
     styleUrl: './transaction-form.component.scss'
 })
 export class TransactionFormComponent implements OnInit, OnChanges {
-    @Input() transaction: Transaction | null = null;
-    @Input() mode: TransactionFormMode = 'readonly';
-    @Input() defaultAccountId?: string;
-    @Output() save = new EventEmitter<Partial<Transaction>>();
-    @Output() cancel = new EventEmitter<void>();
+    readonly transaction = input<Transaction | null>(null);
+    readonly mode = input<TransactionFormMode>('readonly');
+    readonly defaultAccountId = input<string>();
+    readonly save = output<Partial<Transaction>>();
+    readonly cancelled = output<void>();
 
     private financeService = inject(FinanceService);
     private dateProvider = inject(DateProviderService);
-    private cdr = inject(ChangeDetectorRef);
 
-    protected readonly Math = Math;
+    readonly Math = Math;
 
-    transactionForm = new FormGroup({
+    readonly transactionForm = new FormGroup({
         accountId: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
         amount: new FormControl<number>(0, { nonNullable: true, validators: [Validators.required] }),
         merchant: new FormControl<string>('', { nonNullable: true }),
@@ -61,9 +61,9 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         isHidden: new FormControl<boolean>(false, { nonNullable: true })
     });
 
-    categories: Category[] = [];
-    accounts: Account[] = [];
-    categoryMap = new Map<string, Category>();
+    readonly categories = signal<Category[]>([]);
+    readonly accounts = signal<Account[]>([]);
+    private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
 
     async ngOnInit() {
         const [categories, accounts] = await Promise.all([
@@ -71,17 +71,10 @@ export class TransactionFormComponent implements OnInit, OnChanges {
             this.financeService.fetchAllAccounts()
         ]);
 
-        if (categories) {
-            this.categories = categories;
-            categories.forEach(c => this.categoryMap.set(c.id, c));
-        }
-
-        if (accounts) {
-            this.accounts = accounts;
-        }
+        this.categories.set(categories || []);
+        this.accounts.set(accounts || []);
 
         this.updateFormState();
-        this.cdr.detectChanges();
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -91,43 +84,51 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     }
 
     private updateFormState() {
-        if (this.transaction) {
+        const transaction = this.transaction();
+        const mode = this.mode();
+        if (transaction) {
             this.transactionForm.patchValue({
-                accountId: this.transaction.accountId,
-                amount: this.transaction.amount,
-                merchant: this.transaction.merchant || '',
-                originalStatement: this.transaction.originalStatement || '',
-                category: this.transaction.categoryId || '',
-                date: new Date(this.transaction.date),
-                notes: this.transaction.notes || '',
-                isHidden: this.transaction.isHidden || false
+                accountId: transaction.accountId,
+                amount: transaction.amount,
+                merchant: transaction.merchant || '',
+                originalStatement: transaction.originalStatement || '',
+                category: transaction.categoryId || '',
+                date: new Date(transaction.date),
+                notes: transaction.notes || '',
+                isHidden: transaction.isHidden || false
             });
-        } else if (this.mode === 'create') {
+        }
+        else if (mode === 'create') {
             this.transactionForm.reset({
-                accountId: this.defaultAccountId || '',
+                accountId: this.defaultAccountId() || '',
                 date: this.dateProvider.now(),
                 amount: 0,
                 isHidden: false
             });
         }
 
-        if (this.mode === 'readonly') {
+        if (mode === 'readonly') {
             this.transactionForm.disable();
-        } else {
+        }
+        else {
             // All fields stay editable in edit mode, including bank-provided ones (amount, merchant, account).
             this.transactionForm.enable();
         }
     }
 
     getCategoryName(id: string | null | undefined): string {
-        if (!id) return '';
-        const category = this.categoryMap.get(id);
+        if (!id) {
+            return '';
+        }
+        const category = this.categoryMap().get(id);
         return category ? `${category.icon} ${category.name}` : id;
     }
 
     getAccountName(id: string | null | undefined): string {
-        if (!id) return '';
-        const account = this.accounts.find(a => a.id === id);
+        if (!id) {
+            return '';
+        }
+        const account = this.accounts().find(a => a.id === id);
         return account ? account.name : id;
     }
 
@@ -141,7 +142,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         const formValue = this.transactionForm.getRawValue();
 
         const updatedTransaction: Partial<Transaction> = {
-            ...this.transaction,
+            ...this.transaction(),
             accountId: formValue.accountId,
             amount: formValue.amount,
             merchant: formValue.merchant,
@@ -156,6 +157,6 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     }
 
     onCancel() {
-        this.cancel.emit();
+        this.cancelled.emit();
     }
 }

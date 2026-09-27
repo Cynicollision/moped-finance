@@ -30,6 +30,8 @@ html {
     --color-positive: #81c784; // Material 3 has no "success" role.
     --color-negative: var(--mat-sys-error);
     --color-link: var(--mat-sys-primary);
+    --color-demo: #9c27b0; // the Demo Mode and Debug Mode badges
+    --color-debug: #ff9800;
 }
 
 body {
@@ -49,8 +51,8 @@ body {
 
 /* You can add global styles to this file, and also import other style files */
 
-mat-card, 
-mat-card.mat-mdc-card, 
+mat-card,
+mat-card.mat-mdc-card,
 mat-card.mat-mdc-card-outlined {
     background-color: var(--bg-card) !important;
     border-color: var(--border-color) !important;
@@ -66,6 +68,11 @@ table.mat-mdc-table {
 mat-card table.mat-mdc-table,
 mat-card.mat-mdc-card table.mat-mdc-table {
     border: none;
+}
+
+// A screen's title row. The page header component in the App shell PR replaces these (TODO.md).
+.header-section {
+    margin-bottom: 24px;
 }
 
 .desktop-page-title {
@@ -98,6 +105,40 @@ mat-card.mat-mdc-card table.mat-mdc-table {
     ));
 }
 
+// The "Danger Zone" block at the bottom of an edit screen, holding its Delete button.
+.danger-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 24px;
+    padding: 2rem;
+    border-radius: 8px;
+    background-color: var(--bg-card);
+
+    h3 {
+        display: flex;
+        align-items: center;
+        margin-top: 0;
+        font-size: 16px;
+        color: var(--color-negative);
+
+        mat-icon {
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+    }
+
+    p {
+        margin-top: 0;
+        color: var(--text-muted);
+    }
+
+    .danger-note {
+        margin-bottom: 16px;
+        color: var(--color-negative);
+    }
+}
+
 .amount-positive {
     color: var(--color-positive) !important;
 }
@@ -117,33 +158,5 @@ mat-card.mat-mdc-card table.mat-mdc-table {
 
     &:hover {
         background-color: var(--bg-hover) !important;
-    }
-}
-
-.change-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-weight: 500;
-
-    mat-icon {
-        font-size: 20px;
-        height: 20px;
-        width: 20px;
-    }
-
-    &.good {
-        color: var(--color-positive);
-    }
-
-    &.bad {
-        color: var(--color-negative);
-    }
-
-    .change-label {
-        color: var(--text-muted);
-        font-weight: normal;
-        font-size: 0.9em;
-        margin-left: 0.25rem;
     }
 }

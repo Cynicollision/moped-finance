@@ -1,7 +1,7 @@
 <div class="container">
-    <div class="header-section hide-on-mobile" style="margin-bottom: 24px; display: flex; align-items: center;">
-        <h1 class="desktop-page-title" style="margin: 0;">Transactions</h1>
-        <span class="spacer" style="flex: 1 1 auto;"></span>
+    <div class="header-section hide-on-mobile">
+        <h1 class="desktop-page-title">Transactions</h1>
+        <span class="spacer"></span>
         <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
             <mat-icon>more_vert</mat-icon>
         </button>
@@ -56,16 +56,20 @@
                         <mat-label>Group</mat-label>
                         <input type="text" matInput formControlName="group" [matAutocomplete]="autoGroup">
                         <mat-autocomplete #autoGroup="matAutocomplete" [displayWith]="displayGroup">
-                            <mat-option *ngFor="let g of filteredGroups()" [value]="g.id">{{g.name}}</mat-option>
+                            @for (g of filteredGroups(); track g.id) {
+                                <mat-option [value]="g.id">{{g.name}}</mat-option>
+                            }
                         </mat-autocomplete>
                     </mat-form-field>
                     <mat-form-field appearance="outline">
                         <mat-label>Category</mat-label>
                         <input type="text" matInput formControlName="category" [matAutocomplete]="autoCategory">
                         <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
-                            <mat-option *ngFor="let c of filteredCategories()" [value]="c.id">
-                                {{c.icon}} {{c.name}}
-                            </mat-option>
+                            @for (c of filteredCategories(); track c.id) {
+                                <mat-option [value]="c.id">
+                                    {{c.icon}} {{c.name}}
+                                </mat-option>
+                            }
                         </mat-autocomplete>
                     </mat-form-field>
                 </div>
@@ -74,16 +78,20 @@
                         <mat-label>Account</mat-label>
                         <mat-select formControlName="account">
                             <mat-option>-- None --</mat-option>
-                            <mat-option *ngFor="let account of accounts()" [value]="account.id">
-                                {{account.name}}
-                            </mat-option>
+                            @for (account of accounts(); track account.id) {
+                                <mat-option [value]="account.id">
+                                    {{account.name}}
+                                </mat-option>
+                            }
                         </mat-select>
                     </mat-form-field>
                     <mat-form-field appearance="outline">
                         <mat-label>Merchant</mat-label>
                         <input type="text" matInput formControlName="merchant" [matAutocomplete]="autoMerchant">
                         <mat-autocomplete #autoMerchant="matAutocomplete">
-                            <mat-option *ngFor="let m of filteredMerchants()" [value]="m">{{m}}</mat-option>
+                            @for (m of filteredMerchants(); track m) {
+                                <mat-option [value]="m">{{m}}</mat-option>
+                            }
                         </mat-autocomplete>
                     </mat-form-field>
                 </div>
@@ -95,7 +103,7 @@
         </mat-expansion-panel>
     </mat-accordion>
 
-    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8 transactions-table">
+    <table mat-table [dataSource]="transactions()" matSort class="mat-elevation-z8 transactions-table">
 
         <!-- Date Column -->
         <ng-container matColumnDef="date">
@@ -130,7 +138,7 @@
         <ng-container matColumnDef="amount">
             <th mat-header-cell *matHeaderCellDef mat-sort-header> Amount </th>
             <td mat-cell *matCellDef="let row">
-                <span [ngClass]="{'amount-positive': row.amount > 0, 'amount-negative': row.amount < 0}">
+                <span [class.amount-positive]="row.amount > 0" [class.amount-negative]="row.amount < 0">
                     {{Math.abs(row.amount) | currency}}
                 </span>
             </td>
@@ -141,11 +149,15 @@
         </tr>
     </table>
 
-    <div *ngIf="loaded && dataSource.data.length === 0" class="no-transactions-message">
-        No transactions found
-    </div>
+    @if (loaded() && transactions().length === 0) {
+        <div class="no-transactions-message">
+            No transactions found
+        </div>
+    }
 
-    <div class="footer" *ngIf="hasMoreData">
-        <button mat-raised-button color="primary" (click)="loadMore()">Load More</button>
-    </div>
+    @if (hasMoreData()) {
+        <div class="footer">
+            <button mat-raised-button color="primary" (click)="loadMore()">Load More</button>
+        </div>
+    }
 </div>

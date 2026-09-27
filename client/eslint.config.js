@@ -3,10 +3,7 @@ const eslint = require('@eslint/js');
 const { defineConfig } = require('eslint/config');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
-
-// Rules the existing code doesn't meet yet. They warn until the modernisation PR migrates the code
-// (see TODO.md), which then makes them errors.
-const notYetMet = 'warn';
+const stylistic = require('@stylistic/eslint-plugin');
 
 module.exports = defineConfig([
     {
@@ -18,17 +15,22 @@ module.exports = defineConfig([
             angular.configs.tsRecommended
         ],
         processor: angular.processInlineTemplates,
+        plugins: { '@stylistic': stylistic },
         rules: {
+            // docs/conventions.md: 4-space indentation, and else/catch on a new line.
+            '@stylistic/indent': ['error', 4],
+            '@stylistic/brace-style': ['error', 'stroustrup', { allowSingleLine: true }],
+
             '@angular-eslint/directive-selector': ['error', { type: 'attribute', prefix: 'app', style: 'camelCase' }],
             '@angular-eslint/component-selector': ['error', { type: 'element', prefix: 'app', style: 'kebab-case' }],
 
             // docs/conventions.md: separate .html and .scss files, OnPush with signals.
-            '@angular-eslint/component-max-inline-declarations': [notYetMet, { template: 0, styles: 0, animations: 0 }],
-            '@angular-eslint/prefer-on-push-component-change-detection': notYetMet,
-            '@angular-eslint/prefer-signals': notYetMet,
-            '@angular-eslint/prefer-inject': notYetMet,
-            '@angular-eslint/no-output-native': notYetMet,
-            '@typescript-eslint/no-explicit-any': notYetMet,
+            '@angular-eslint/component-max-inline-declarations': ['error', { template: 0, styles: 0, animations: 0 }],
+            '@angular-eslint/prefer-on-push-component-change-detection': 'error',
+            '@angular-eslint/prefer-signals': 'error',
+            '@angular-eslint/prefer-inject': 'error',
+            '@angular-eslint/no-output-native': 'error',
+            '@typescript-eslint/no-explicit-any': 'error',
 
             // docs/conventions.md: "today" comes from DateProviderService.
             'no-restricted-syntax': ['error', {
@@ -50,8 +52,8 @@ module.exports = defineConfig([
             angular.configs.templateAccessibility
         ],
         rules: {
-            '@angular-eslint/template/prefer-control-flow': notYetMet,
-            '@angular-eslint/template/no-inline-styles': notYetMet
+            '@angular-eslint/template/prefer-control-flow': 'error',
+            '@angular-eslint/template/no-inline-styles': 'error'
         }
     }
 ]);

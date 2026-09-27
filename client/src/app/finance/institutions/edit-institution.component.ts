@@ -1,5 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,8 +9,8 @@ import { ModalService } from './../../core/modal/modal.service';
 
 @Component({
     selector: 'app-finance-edit-institution',
-    standalone: true,
-    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, InstitutionFormComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [RouterLink, MatButtonModule, MatIconModule, InstitutionFormComponent],
     templateUrl: './edit-institution.component.html',
     styleUrl: './edit-institution.component.scss'
 })
@@ -21,7 +20,7 @@ export class EditInstitutionComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private modalService = inject(ModalService);
 
-    institutionId: string | null = null;
+    private institutionId: string | null = null;
     readonly institution = signal<Institution | null>(null);
     readonly associatedAccountsCount = signal<number | null>(null);
 
@@ -42,7 +41,9 @@ export class EditInstitutionComponent implements OnInit {
     }
 
     async onSave(updatedInstitution: Partial<Institution>) {
-        if (!this.institutionId) return;
+        if (!this.institutionId) {
+            return;
+        }
 
         const success = await this.financeService.saveInstitution(updatedInstitution as Institution);
         if (success) {
@@ -53,13 +54,16 @@ export class EditInstitutionComponent implements OnInit {
     onCancel() {
         if (this.institutionId) {
             this.router.navigate(['/institutions', this.institutionId]);
-        } else {
+        }
+        else {
             this.router.navigate(['/institutions']);
         }
     }
 
     async onDelete() {
-        if (!this.institutionId || this.associatedAccountsCount() !== 0) return;
+        if (!this.institutionId || this.associatedAccountsCount() !== 0) {
+            return;
+        }
 
         const confirmDelete = await this.modalService.confirm({
             title: 'Delete Institution',

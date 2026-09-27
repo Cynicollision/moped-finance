@@ -41,8 +41,8 @@ describe('LoginComponent', () => {
     });
 
     it('should call AuthService.login with credentials and returnUrl on submit', async () => {
-        component.username = 'stn';
-        component.password = 'password';
+        component.username.set('stn');
+        component.password.set('password');
 
         await component.onLogin();
 
@@ -50,8 +50,8 @@ describe('LoginComponent', () => {
     });
 
     it('should not call AuthService.login if username is empty', async () => {
-        component.username = '';
-        component.password = 'password';
+        component.username.set('');
+        component.password.set('password');
 
         await component.onLogin();
 

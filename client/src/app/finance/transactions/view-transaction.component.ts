@@ -1,5 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,9 +10,8 @@ import { ModalService } from './../../core/modal/modal.service';
 
 @Component({
     selector: 'app-finance-view-transaction',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CommonModule,
         RouterLink,
         MatButtonModule,
         MatIconModule,
@@ -29,7 +27,7 @@ export class ViewTransactionComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private modalService = inject(ModalService);
 
-    transactionId: string | null = null;
+    private transactionId: string | null = null;
     readonly transaction = signal<Transaction | null>(null);
 
     async ngOnInit() {
@@ -50,7 +48,9 @@ export class ViewTransactionComponent implements OnInit {
     }
 
     async deleteTransaction() {
-        if (!this.transactionId) return;
+        if (!this.transactionId) {
+            return;
+        }
 
         const confirmDelete = await this.modalService.confirm({
             title: 'Delete Transaction',

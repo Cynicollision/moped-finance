@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, computed, signal, OnInit } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { DateProviderService } from './../../core/date-provider.service';
 import { MatCardModule } from '@angular/material/card';
@@ -9,12 +9,29 @@ import { TotalValueHistory } from '@shared/finance/contracts';
 import { AccountGroup, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { FinanceValueHistoryComponent } from './../common/value-history.component';
-import { FinanceValuePeriodChangeComponent } from './../common/value-period-change.component';
+import { FinanceValuePeriodChangeComponent, ValuePeriodChange } from './../common/value-period-change.component';
 import { FinanceService } from './../finance.service';
+
+/** One account group in the list, in display order. Liability groups show magnitudes, without the minus sign. */
+interface AccountGroupSummary {
+    group: AccountGroup;
+    label: string;
+    total: number;
+    accounts: Account[];
+    isLiability: boolean;
+}
+
+const groupOrder: { group: AccountGroup; label: string; isLiability: boolean }[] = [
+    { group: AccountGroup.Cash, label: 'Cash', isLiability: false },
+    { group: AccountGroup.Investment, label: 'Investments', isLiability: false },
+    { group: AccountGroup.CreditCard, label: 'Credit Cards', isLiability: true },
+    { group: AccountGroup.Loan, label: 'Loans', isLiability: true },
+    { group: AccountGroup.RealEstate, label: 'Real Estate', isLiability: false }
+];
 
 @Component({
     selector: 'app-finance-summary',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CurrencyPipe,
         MatCardModule,
@@ -27,13 +44,12 @@ import { FinanceService } from './../finance.service';
     styleUrl: './summary.component.scss'
 })
 export class FinanceSummaryComponent implements OnInit {
-    financeService = inject(FinanceService);
-    dateProvider = inject(DateProviderService);
-    protected readonly Math = Math;
-    protected readonly AccountGroup = AccountGroup;
+    private financeService = inject(FinanceService);
+    private dateProvider = inject(DateProviderService);
+    readonly Math = Math;
 
     readonly accounts = signal<Account[]>([]);
-    readonly groupPeriodChanges = signal<Map<string, any>>(new Map());
+    readonly groupPeriodChanges = signal<Map<AccountGroup, ValuePeriodChange>>(new Map());
 
     // Chart Data payload provided to the child `<app-value-history>` component
     readonly historyData = signal<TotalValueHistory[]>([]);
@@ -42,13 +58,13 @@ export class FinanceSummaryComponent implements OnInit {
     readonly selectedChartType = signal<ValueHistoryType>(ValueHistoryType.NetWorth);
     readonly selectedTimeframe = signal<HistoryTimeframe>(HistoryTimeframe.PastThirtyDays);
 
-    chartTypeOptions = [
+    readonly chartTypeOptions = [
         { value: ValueHistoryType.NetWorth, label: 'Net Worth' },
         { value: ValueHistoryType.Assets, label: 'Total Assets' },
         { value: ValueHistoryType.Liabilities, label: 'Total Liabilities' }
     ];
 
-    timeframeOptions = [
+    readonly timeframeOptions = [
         { value: HistoryTimeframe.PastThirtyDays, label: 'Past 30 Days' },
         { value: HistoryTimeframe.PastSixtyDays, label: 'Past 60 Days' },
         { value: HistoryTimeframe.PastNinetyDays, label: 'Past 90 Days' },
@@ -73,10 +89,12 @@ export class FinanceSummaryComponent implements OnInit {
         const asOfDate = this.dateProvider.now();
 
         const accounts = this.accounts();
-        if (accounts.length === 0) return;
+        if (accounts.length === 0) {
+            return;
+        }
 
-        const changes = new Map<string, any>();
-        const groupedAccounts = new Map<string, Account[]>();
+        const changes = new Map<AccountGroup, ValuePeriodChange>();
+        const groupedAccounts = new Map<AccountGroup, Account[]>();
 
         for (const account of accounts) {
             const group = account.group;
@@ -149,68 +167,44 @@ export class FinanceSummaryComponent implements OnInit {
 
     // Dynamic Summary value to hand down dependent on chart viewing mode
     readonly currentChartValue = computed(() => {
-        if (this.selectedChartType() === ValueHistoryType.NetWorth) return this.summary().netWorth;
-        if (this.selectedChartType() === ValueHistoryType.Assets) return this.summary().totalAssets;
-        if (this.selectedChartType() === ValueHistoryType.Liabilities) return this.summary().totalLiabilities;
-        return 0;
+        switch (this.selectedChartType()) {
+            case ValueHistoryType.NetWorth:
+                return this.summary().netWorth;
+            case ValueHistoryType.Assets:
+                return this.summary().totalAssets;
+            case ValueHistoryType.Liabilities:
+                return this.summary().totalLiabilities;
+            default:
+                return 0;
+        }
     });
 
     readonly summary = computed(() => {
-        const cashAccounts: any[] = [];
-        const investmentAccounts: any[] = [];
-        const realEstateAccounts: any[] = [];
-        const creditCardAccounts: any[] = [];
-        const loanAccounts: any[] = [];
-
-        let cashTotal = 0;
-        let investmentsTotal = 0;
-        let realEstateTotal = 0;
-        let creditCardsTotal = 0;
-        let loansTotal = 0;
+        const groups: AccountGroupSummary[] = groupOrder.map(g => ({ ...g, total: 0, accounts: [] }));
+        const byGroup = new Map(groups.map(g => [g.group, g]));
 
         for (const account of this.accounts()) {
-            const balance = Number(account.balance) || 0;
-            const group = (account.group || '');
-
-            if (group === AccountGroup.Cash) {
-                cashTotal += balance;
-                cashAccounts.push(account);
-            }
-            else if (group === AccountGroup.Investment) {
-                investmentsTotal += balance;
-                investmentAccounts.push(account);
-            }
-            else if (group === AccountGroup.RealEstate) {
-                realEstateTotal += balance;
-                realEstateAccounts.push(account);
-            }
-            else if (group === AccountGroup.CreditCard) {
-                creditCardsTotal += balance;
-                creditCardAccounts.push(account);
-            }
-            else if (group === AccountGroup.Loan) {
-                loansTotal += balance;
-                loanAccounts.push(account);
+            const group = byGroup.get(account.group);
+            if (group) {
+                group.total += Number(account.balance) || 0;
+                group.accounts.push(account);
             }
         }
 
-        const totalAssets = cashTotal + investmentsTotal + realEstateTotal;
-        const totalLiabilities = creditCardsTotal + loansTotal;
+        const total = (group: AccountGroup) => byGroup.get(group)!.total;
+        const totalAssets = total(AccountGroup.Cash) + total(AccountGroup.Investment) + total(AccountGroup.RealEstate);
+        const totalLiabilities = total(AccountGroup.CreditCard) + total(AccountGroup.Loan);
 
         return {
             netWorth: totalAssets - Math.abs(totalLiabilities),
             totalAssets,
             totalLiabilities,
-            cash: cashTotal,
-            investments: investmentsTotal,
-            realEstate: realEstateTotal,
-            creditCards: creditCardsTotal,
-            loans: loansTotal,
-            cashAccounts,
-            investmentAccounts,
-            realEstateAccounts,
-            creditCardAccounts,
-            loanAccounts
+            cash: total(AccountGroup.Cash),
+            investments: total(AccountGroup.Investment),
+            realEstate: total(AccountGroup.RealEstate),
+            creditCards: total(AccountGroup.CreditCard),
+            loans: total(AccountGroup.Loan),
+            groups: groups.filter(g => g.accounts.length > 0)
         };
     });
 }

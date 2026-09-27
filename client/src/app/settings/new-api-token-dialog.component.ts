@@ -17,7 +17,6 @@ import { ApiTokenService } from './api-token.service';
  */
 @Component({
     selector: 'app-new-api-token-dialog',
-    standalone: true,
     imports: [
         ReactiveFormsModule,
         MatButtonModule,

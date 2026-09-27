@@ -8,11 +8,11 @@
     display: flex;
     align-items: center;
     margin-bottom: 24px;
-    color: var(--text-secondary);
+    color: var(--text-muted);
 }
 
 .breadcrumb-link {
-    color: var(--primary-color);
+    color: var(--color-link);
     text-decoration: none;
     cursor: pointer;
 
@@ -27,7 +27,7 @@
 
 .breadcrumb-current {
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--text-main);
 }
 
 .import-card {
@@ -46,14 +46,14 @@
 }
 
 .file-name {
-    color: var(--text-secondary);
+    color: var(--text-muted);
     font-family: monospace;
 }
 
 .dry-run-results {
     margin-top: 24px;
     padding: 16px;
-    background-color: var(--surface-hover);
+    background-color: var(--bg-highlight);
     border-radius: 8px;
 }
 
@@ -64,16 +64,12 @@
 }
 
 .error-item {
-    color: var(--error-color);
+    color: var(--color-negative);
 }
 
 .actions {
     display: flex;
     gap: 16px;
-}
-
-.mt-0 {
-    margin-top: 0;
 }
 
 .mt-16 {
@@ -82,4 +78,25 @@
 
 .mt-24 {
     margin-top: 24px;
+}
+
+.validation-error {
+    margin: 16px 0 24px;
+
+    p {
+        margin-top: 8px;
+    }
+}
+
+.icon-heading {
+    display: flex;
+    align-items: center;
+
+    mat-icon {
+        margin-right: 8px;
+    }
+}
+
+.dry-run-results h3 {
+    margin-top: 0;
 }

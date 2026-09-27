@@ -1,6 +1,5 @@
-import { Component, Inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, OnInit, signal, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -22,9 +21,8 @@ export interface BudgetFormModalData {
 
 @Component({
     selector: 'app-budget-form-modal',
-    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CommonModule,
         ReactiveFormsModule,
         MatDialogModule,
         MatButtonModule,
@@ -38,29 +36,25 @@ export interface BudgetFormModalData {
     styleUrl: './budget-form-modal.component.scss'
 })
 export class FinanceBudgetFormModalComponent implements OnInit {
-    budgetForm: FormGroup;
-    isEditing = false;
-    recurrenceOptions = Object.values(CalendarPeriod);
+    private fb = inject(FormBuilder);
+    private dialogRef = inject<MatDialogRef<FinanceBudgetFormModalComponent>>(MatDialogRef);
+    readonly data = inject<BudgetFormModalData>(MAT_DIALOG_DATA);
+
+    readonly budgetForm = this.fb.group({
+        id: [null as string | null],
+        type: [this.data.type, Validators.required],
+        name: ['', Validators.required],
+        categoryId: ['', Validators.required],
+        amount: [0, [Validators.required, Validators.min(0)]],
+        recurrence: [CalendarPeriod.Monthly, Validators.required]
+    });
+    readonly isEditing = !!this.data.stream;
+    readonly recurrenceOptions = Object.values(CalendarPeriod);
     readonly categories = signal<Category[]>([]);
     readonly filteredCategories = signal<Category[]>([]);
 
     get typeString(): string {
         return this.data.type === BudgetStreamType.Income ? 'Income' : 'Expense';
-    }
-
-    constructor(
-        private fb: FormBuilder,
-        public dialogRef: MatDialogRef<FinanceBudgetFormModalComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: BudgetFormModalData
-    ) {
-        this.budgetForm = this.fb.group({
-            id: [null],
-            type: [data.type, Validators.required],
-            name: ['', Validators.required],
-            categoryId: ['', Validators.required],
-            amount: [0, [Validators.required, Validators.min(0)]],
-            recurrence: [CalendarPeriod.Monthly, Validators.required]
-        });
     }
 
     ngOnInit() {
@@ -75,7 +69,6 @@ export class FinanceBudgetFormModalComponent implements OnInit {
         this.setupTypeaheadFilters();
 
         if (this.data.stream) {
-            this.isEditing = true;
             this.budgetForm.patchValue(this.data.stream);
         }
     }
@@ -86,11 +79,13 @@ export class FinanceBudgetFormModalComponent implements OnInit {
             return this.categories().filter(c => c.name.toLowerCase().includes(filterValue));
         };
 
-        this.budgetForm.controls['categoryId'].valueChanges.pipe(
+        this.budgetForm.controls.categoryId.valueChanges.pipe(
             startWith(''),
             map(value => {
-                if (typeof value === 'string') return value;
-                // If it's an ID (from patchValue), we need to find the name if we want to filter, 
+                if (typeof value === 'string') {
+                    return value;
+                }
+                // If it's an ID (from patchValue), we need to find the name if we want to filter,
                 // but since we display name in the input, usually value is the name or empty.
                 const cat = this.categories().find(c => c.id === value);
                 return cat ? cat.name : '';
