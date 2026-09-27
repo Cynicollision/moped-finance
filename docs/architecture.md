@@ -73,13 +73,13 @@ Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates wit
 
 ```
 client/src/app/
-  core/       API/auth services, auth guard, DateProviderService, modal, loading, demo mode
+  core/       API/auth services, auth guard, DateProviderService, LayoutService, modal, loading, demo mode
   finance/    one folder per screen area: accounts, budget, cashflow, categories,
               institutions, summary, transactions, common
   login/, register/
 ```
 
-- Standalone components, routes in `app.routes.ts`.
+- Standalone components, routes in `app.routes.ts`. Global styles and colour tokens are in `src/styles.scss`, shared SCSS partials (breakpoints) in `src/styles/`. Fonts (Roboto, Material Icons) are npm packages bundled into the build, so the app makes no third-party requests.
 - All HTTP goes through `core/api.service.ts`, which prefixes `Environment.apiUrl`. It's empty, so requests go to the origin that served the app: Express in production, and the dev server in development, which forwards `/api`, `/auth` and `/health` to the API on :3000 (`client/proxy.conf.json`). No CORS is needed.
 - Build configurations (`client/angular.json`, `client/src/environments/`):
   - `development`: debug mode (fixed "today" of 2026-05-17 plus a badge), dev login prefilled.

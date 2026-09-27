@@ -11,42 +11,45 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Now
 
-Nothing right now.
+### Client baseline
+A series of PRs, in this order, that gives the client consistent, tested patterns to build features on (decided 2026-09-27). The target shape:
+- Navigation: **Dashboard** (renamed from Summary, at `/dashboard`, matching `DASH` and `dashboard.md`), **Transactions**, **Cashflow**, **Budget**. Phones get a bottom navigation bar with those four; Settings and Sign out stay in the profile menu, opened from an avatar button in the page header, not a tab, so they're harder to reach by accident. Tablets get a navigation rail and desktops the side navigation.
+- Settings becomes a hub with sub-pages: Institutions (today's Institutions screen, listing every account including hidden and closed ones), Categories, API Tokens, and later Rules, Profile and Appearance.
+- The Dashboard keeps grouping accounts by type (DASH-2) and gets an **Add account** action; the account form gains an Institution select.
+- Bank-connection UI is removed until INST-2 is redesigned. No disabled "coming soon" controls.
+- Each PR adds specs for what it touches (see Testing).
+
+1. [ ] **Modernise components** (mechanical, no visual change). Run Angular's migrations (built-in control flow, signal inputs, outputs and queries, `inject()`), make every component `OnPush` with signal state, and delete the manual `cdr.detectChanges()` calls in budget, cashflow, categories and transaction-form. Move the ~80 inline `style="..."` attributes (e.g. `app.html`) into component SCSS, and the inline templates and styles of the two category dialogs, `chart.component.ts` and `value-period-change.component.ts` into their own files. Then make the `notYetMet` rules in `client/eslint.config.js` errors.
+2. [ ] **Calendar dates as strings.**
+   - Dates are off by a day outside UTC. The API returns `date` columns as UTC-midnight timestamps (`mapRowToTransaction` in `transaction-data.ts` uses `DateTimeUtil.toISOString`; `BalanceHistory.date` and `TotalValueHistory.date` are `Date`s), so the client's date pipe and `new Date(...)` in `transaction-form.component.ts` show the previous day in US time zones. The client also sends dates with `toISOString()` (`transactions.component.ts` filters, `finance.service.ts` `fetchTotalValueHistory`, `cashflow.component.ts`), which gives the previous day east of UTC, and `fetchAccountBalanceHistory` sends `Date.toString()`. Make calendar dates plain `YYYY-MM-DD` strings in `shared/` types and both directions, and format them in the client without converting through UTC.
+   - Cashflow periods include the next period's first day west of UTC (APP-5.6). `DateTimeUtil.getDatesForPeriod` sets the boundaries with local-time setters (`setDate`, `setHours(23, 59, ...)`), then `retrieveCashflowByCategory` formats them with `DateTimeUtil.toDateString`, which uses UTC. With `TZ=America/New_York`, April is `2026-04-01`..`2026-05-01`, so a May 1 mortgage payment counts in April too (seen with the seed data). Build the period as calendar date strings, and add a spec that runs under a non-UTC `TZ`.
+3. [ ] **App shell and navigation.**
+   - The navigation above, with routes renamed and redirects from the old ones (`/summary`, `/institutions/...`, `/categories`).
+   - One page header component on every screen: title, breadcrumbs (a back arrow on phones), and a slot for a primary action and an overflow menu. It replaces each screen's own `desktop-page-title` and `hide-on-mobile` markup and the shell's handset title, so the title stops moving around (APP-1.3, APP-1.8).
+   - Tab titles as "Dashboard · Moped Finance" through a `TitleStrategy`, fixing "Dashboard" on the summary and the flash of the bare product name (APP-1.9).
+   - Remove Add Account's mode picker (its only other option is a disabled "Connect via ... (Coming Soon)"), and the **Manual Account** checkbox and Balance field, which the server discards (ACCT known gaps).
+   - The product name on Login and Register, and on Register the explanation that this creates the instance's only account, which owns all its data, and that Register won't be available again afterwards (AUTH-2.8), above the form in `register.component.html`.
+   - Update APP-1, DASH, INST, SET-1.1, ACCT-1.3 and the CAT screen paths.
+4. [ ] **Feedback and dialogs.**
+   - Replace the global loading overlay on every request (APP-2.1) with loading states or skeletons per view, so screens don't flash empty or $0.00 values that look real. Use Angular's `resource()` (or a small wrapper with the same shape) over `FinanceService`, and take loading out of `ApiService`.
+   - Consistent success feedback (a snackbar) for create, save and delete (APP known gaps).
+   - One pattern for create and edit: full pages for records with many fields or their own URL (account, transaction, imports), dialogs for small forms (institution, category, group, budget stream), full-screen on phones. `ModalService` (fixed 500px, `disableClose: true`) should let Esc and backdrop clicks close unless the form has unsaved changes, and then ask before discarding them. Add, view and edit institution become one dialog.
+   - The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8), and import breadcrumbs don't follow where the screen was opened from (APP known gaps).
+5. [ ] **Lists and phones.**
+   - A shared responsive list to replace `mat-table` in Transactions, Budget, Cashflow and Account Details: columns when the page area is wide; name and amount with a second line for date and category when it's narrow, instead of a table that scrolls sideways. Sortable headers when wide, a sort menu when narrow.
+   - A shared money display that applies APP-6.1 and APP-6.2 ("+" and green for money in, no red for expected negatives).
+   - On phones, collapse the Transactions filters into a bottom sheet.
+   - The Cashflow year list is a fixed four-year window; derive it from the data (CASH known gaps), for example from the earliest transaction.
+6. [ ] **Budget redesign**, with BUD-1.2 and BUD-1.10: a side panel (desktop) or full-screen dialog (phone) for adding and editing streams, an empty state (BUD known gaps), the Left over figure, and a layout that works on phones. Leave room for the 12-month averages (BUD-1.8, BUD-1.9), which need a server endpoint.
+7. [ ] **Charts.** Rewrite `ChartComponent` on Chart.js: update the chart in place instead of recreating it in a `setTimeout`, resize with its container, take colours from the theme tokens instead of hard-coded dark defaults (`Chart.defaults`), and make y-axis ticks distinct (ACCT-2.12). Offer the 5- and 10-year timeframes (DASH-1.2, ACCT-2.4).
 
 ---
 
 ## Next
 
-### Client: mobile and dialogs
-- [ ] Define shared breakpoints: one SCSS partial or mixin plus `BreakpointObserver` in TypeScript. Components currently use ad hoc 599/600/768px media queries, and a ~800 px window with the side nav open overflows (APP known gaps).
-- [ ] Tables on phones: Transactions, Budget, Cashflow and Account Details use `mat-table`. At handset width, switch to a list or card layout (name and amount, with a second line for date and category) instead of a table that scrolls sideways.
-- [ ] Pick one pattern for create and edit. Today accounts, institutions and transactions use full pages, while budget streams, categories and groups use dialogs (`ModalService`: fixed 500px, `disableClose: true`). Suggested rule: full pages for records with many fields or that need their own URL; dialogs for small forms, full-screen on phones. Allow Esc and backdrop clicks to close unless the form has unsaved changes.
-- [ ] Budget screen redesign, together with BUD-1.2 and BUD-1.8 to BUD-1.10: consider inline add/edit rows or a side panel instead of a dialog per stream, an empty state (BUD known gaps), and a layout that works on phones.
-- [ ] On phones, collapse the Transactions filters into a panel or bottom sheet.
-
-### Client refactors
-- [ ] The app runs without zone.js, but component state is a mix of signals and plain fields, with manual `cdr.detectChanges()` calls in budget, cashflow, categories and transaction-form. Standardize on signals (with `OnPush`) so updates render without manual change detection.
-- [ ] Replace the global loading overlay on every request (APP-2.1) with loading states or skeletons per view, so screens don't flash empty or $0.00 values that look real.
-- [ ] Consistent success feedback (a snackbar) for create, save and delete (APP known gaps).
-- [ ] Confirmation dialogs don't show destructive actions in red (APP-2.4): `ConfirmModalComponent` sets `color="warn"` on its confirm button when `isWarn` is true, which does nothing under Material 3, so **Delete** and **Revoke** look like any other button. Style it with the error color (e.g. `--mat-sys-error`).
-- [ ] Move the ~80 inline `style="..."` attributes in templates (e.g. `app.html`) into component SCSS. The two category dialog components, `chart.component.ts` and `value-period-change.component.ts` also use inline templates or styles, against `docs/conventions.md`.
-- [ ] The `@client/*` path alias in `client/tsconfig.json` is unused; use it or remove it.
-- [ ] `api.service.ts` passes `withCredentials: true` on every request; it's unneeded now that requests are same-origin (relative `apiUrl` plus the dev-server proxy).
-- [ ] Serve the Roboto and Material Icons fonts from the app instead of Google Fonts (`client/src/index.html`), so it looks right on a LAN without internet access and doesn't call a third party on every load. Then drop the Google hosts from the Content-Security-Policy in `security-headers.ts` (`buildSecurityHeaders`).
-
-### UX fixes from the requirements review
-- [ ] The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8).
-- [ ] The Cashflow year list is a fixed four-year window; derive it from the data (CASH known gaps).
-- [ ] Import breadcrumbs and the product name on Login/Register (APP known gaps).
-- [ ] Register screen: explain that this creates the instance's only account, which owns all its data, and that Register won't be available again afterwards (AUTH-2.8). Add it to `register.component.html` above the form.
-
 ### Data & deployment
 - [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
-
-### Correctness
-- [ ] Cashflow periods include the next period's first day west of UTC (APP-5.6). `DateTimeUtil.getDatesForPeriod` sets the boundaries with local-time setters (`setDate`, `setHours(23, 59, …)`), then `retrieveCashflowByCategory` formats them with `DateTimeUtil.toDateString`, which uses UTC. With `TZ=America/New_York`, April is `2026-04-01`..`2026-05-01`, so a May 1 mortgage payment counts in April too (seen with the seed data). Build the period as calendar date strings, and add a spec that runs under a non-UTC `TZ`.
-- [ ] Calendar dates are off by a day outside UTC. The API returns `date` columns as UTC-midnight timestamps (`mapRowToTransaction` in `transaction-data.ts` uses `DateTimeUtil.toISOString`; `BalanceHistory.date` and `TotalValueHistory.date` are `Date`s), so the client's date pipe and `new Date(...)` in `transaction-form.component.ts` show the previous day in US time zones. The client also sends dates with `toISOString()` (`transactions.component.ts` filters, `finance.service.ts` `fetchTotalValueHistory`, `cashflow.component.ts`), which gives the previous day east of UTC, and `fetchAccountBalanceHistory` sends `Date.toString()`. Make calendar dates plain `YYYY-MM-DD` strings in `shared/` types and both directions, and format them in the client without converting through UTC.
 
 ### Testing
 - [ ] Frontend coverage: services (`api`, `finance`, `auth`, `modal`, `notification`), `auth.guard`, the demo interceptor, and key components (summary, transactions, imports).
@@ -55,7 +58,7 @@ Nothing right now.
 
 ### Tooling
 - [ ] Install Prettier (already configured in `client/package.json` but not a dependency) and apply it to both packages. Its config doesn't set `tabWidth`, so it would default to 2 spaces; set 4 to match `docs/conventions.md` and `.editorconfig`, and move the config to a root `.prettierrc` so it covers the server too.
-- [ ] Add ESLint (angular-eslint on the client, typescript-eslint on the server) and run it in CI.
+- [ ] Add ESLint to the server (typescript-eslint, matching `client/eslint.config.js`) and run it in CI.
 
 ---
 
@@ -67,6 +70,9 @@ Manual entry and import/export come first. Constraints for when this gets picked
 - **Polling only.** The host isn't reachable from the internet, so no webhooks. Sync on a schedule and/or on demand. Scheduling: a built-in timer (no setup for self-hosters) as the main schedule, with the sync endpoints also callable by an external scheduler using a Read & write API token (AUTH-11).
 - [ ] Write `docs/integrations/bank-sync.md` before coding: provider choice and cost, link flow, encrypted storage of access tokens, cursor-based incremental sync, mapping provider items/accounts to institutions/accounts, de-duplicating against CSV imports, and sandbox → production.
 - [ ] Implement behind the existing sync endpoints.
+
+### Chart library
+- [ ] Re-evaluate Chart.js when Cashflow gets more report and chart types (trends over months, category breakdowns). Compare it with alternatives such as ECharts on the chart types needed, touch interaction and bundle size. Chart.js stays until then (decided 2026-09-27).
 
 ### Demo mode
 - [ ] Populate demo mode from `server/seed-data/` (APP-4.3): `demo.interceptor.ts` answers everything but auth with an empty list. Needs the CSVs turned into client-side data (a build step or JSON) and in-browser create/edit/delete.

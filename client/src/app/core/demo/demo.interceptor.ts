@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { of, delay, throwError } from 'rxjs';
 import { DemoDataService } from './demo-data.service';
 
-export const demoInterceptor: HttpInterceptorFn = (req, next) => {
+export const demoInterceptor: HttpInterceptorFn = (req) => {
     const demoData = inject(DemoDataService);
     
     // Simulate network delay

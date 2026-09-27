@@ -1,8 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { of } from 'rxjs';
 import { App } from './app';
 import { AuthService } from './core/auth.service';
 import { DateProviderService } from './core/date-provider.service';
@@ -12,7 +10,6 @@ describe('App', () => {
     let mockAuthService: any;
     let mockDateProvider: any;
     let mockLoadingService: any;
-    let mockBreakpointObserver: any;
 
     beforeEach(async () => {
         mockAuthService = {
@@ -28,18 +25,13 @@ describe('App', () => {
             isLoading: signal(false)
         };
 
-        mockBreakpointObserver = {
-            observe: vi.fn().mockReturnValue(of({ matches: false }))
-        };
-
         await TestBed.configureTestingModule({
             imports: [App],
             providers: [
                 { provide: AuthService, useValue: mockAuthService },
                 { provide: DateProviderService, useValue: mockDateProvider },
                 { provide: LoadingService, useValue: mockLoadingService },
-                provideRouter([]),
-                { provide: BreakpointObserver, useValue: mockBreakpointObserver }
+                provideRouter([])
             ]
         }).compileComponents();
     });

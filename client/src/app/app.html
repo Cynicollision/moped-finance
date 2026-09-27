@@ -1,7 +1,7 @@
 <mat-sidenav-container class="sidenav-container">
     <!-- Sidenav: Permanent on Desktop, Modal on Mobile -->
-    <mat-sidenav #drawer class="sidenav" fixedInViewport [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
-        [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false">
+    <mat-sidenav #drawer class="sidenav" fixedInViewport [attr.role]="isHandset() ? 'dialog' : 'navigation'"
+        [mode]="isHandset() ? 'over' : 'side'" [opened]="!isHandset()">
 
         <div style="display: flex; flex-direction: column; height: 100%;">
             <div *ngIf="authService.currentUser()"
@@ -74,7 +74,7 @@
     <!-- Main Content Area -->
     <mat-sidenav-content>
         <div class="content-container">
-            <div *ngIf="isHandset$ | async" style="display: flex; align-items: center; margin-bottom: 16px;">
+            <div *ngIf="isHandset()" style="display: flex; align-items: center; margin-bottom: 16px;">
                 <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()">
                     <mat-icon>menu</mat-icon>
                 </button>

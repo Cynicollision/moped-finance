@@ -11,7 +11,7 @@ export class AuthService {
     private api = inject(ApiService);
     private router = inject(Router);
 
-    currentUser = signal<User | null>(null);
+    readonly currentUser = signal<User | null>(null);
 
     async checkSession(): Promise<void> {
         const response = await this.api.get<User>('auth/me');

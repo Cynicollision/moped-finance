@@ -5,9 +5,6 @@
     "compilerOptions": {
         "baseUrl": "./",
         "paths": {
-            "@client/*": [
-                "./src/app/*"
-            ],
             "@shared/*": [
                 "../shared/*"
             ]

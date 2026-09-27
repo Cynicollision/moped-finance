@@ -1,4 +1,4 @@
-import { Component, ViewChild, AfterViewInit, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
@@ -71,20 +71,17 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         group: new FormControl<string>('')
     });
 
-    merchants = signal<string[]>([]);
-    categories = signal<Category[]>([]);
-    groups = signal<CategoryGroup[]>([]);
+    readonly merchants = signal<string[]>([]);
+    readonly categories = signal<Category[]>([]);
+    readonly groups = signal<CategoryGroup[]>([]);
     categoryMap = new Map<string, Category>();
     groupMap = new Map<string, CategoryGroup>();
-    accounts = signal<Account[]>([]);
+    readonly accounts = signal<Account[]>([]);
     accountMap = new Map<string, Account>();
 
-    filteredMerchants = signal<string[]>([]);
-    filteredCategories = signal<Category[]>([]);
-    filteredGroups = signal<CategoryGroup[]>([]);
-
-    constructor() {
-    }
+    readonly filteredMerchants = signal<string[]>([]);
+    readonly filteredCategories = signal<Category[]>([]);
+    readonly filteredGroups = signal<CategoryGroup[]>([]);
 
     async ngOnInit() {
         const [merchants, categories, accounts, groups] = await Promise.all([
@@ -185,7 +182,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         });
     }
 
-    async loadData(reset: boolean = false) {
+    async loadData(reset = false) {
         if (reset) {
             this.dataSource.data = [];
             this.hasMoreData = true;

@@ -17,9 +17,9 @@ export function buildSecurityHeaders(useHttps: boolean): RequestHandler {
     return helmet({
         contentSecurityPolicy: {
             directives: {
-                // Angular adds component styles as inline <style> elements. Fonts come from Google Fonts.
-                styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-                fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+                // Angular adds component styles as inline <style> elements. Fonts are bundled with the client.
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                fontSrc: ["'self'", 'data:'],
                 upgradeInsecureRequests: useHttps ? [] : null
             }
         },

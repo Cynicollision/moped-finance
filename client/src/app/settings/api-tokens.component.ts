@@ -24,8 +24,8 @@ export class ApiTokensComponent implements OnInit {
     private modalService = inject(ModalService);
     private dateProvider = inject(DateProviderService);
 
-    tokens = signal<ApiToken[]>([]);
-    isLoaded = signal(false);
+    readonly tokens = signal<ApiToken[]>([]);
+    readonly isLoaded = signal(false);
 
     async ngOnInit(): Promise<void> {
         await this.load();

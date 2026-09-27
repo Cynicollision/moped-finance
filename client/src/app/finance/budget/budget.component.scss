@@ -1,8 +1,10 @@
+@use 'breakpoints' as bp;
+
 :host {
     display: block;
     padding: 20px;
 
-    @media (max-width: 600px) {
+    @include bp.content-below(bp.$medium) {
         padding: 16px 8px;
     }
 }
@@ -12,7 +14,7 @@
     flex-direction: column;
     gap: 32px;
 
-    @media (max-width: 600px) {
+    @include bp.content-below(bp.$medium) {
         gap: 16px;
     }
 }
@@ -59,7 +61,7 @@
         display: none;
     }
 
-    @media (max-width: 768px) {
+    @include bp.content-below(bp.$expanded) {
         .mat-column-group,
         .mat-column-category,
         .mat-column-amount,
@@ -185,7 +187,7 @@
         }
     }
 
-    @media (max-width: 600px) {
+    @include bp.content-below(bp.$medium) {
         justify-content: space-between;
         padding: 16px;
         gap: 16px;

@@ -48,13 +48,12 @@
     }
 
     .group-card {
-        background-color: var(--mat-card-background-color, #1e1e1e);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
 
         .group-header {
             display: flex;
             align-items: center;
-            width: 100%;
             padding: 16px 24px 8px;
 
             h3 {
@@ -92,13 +91,13 @@
             display: flex;
             align-items: center;
             padding: 8px 16px;
-            background-color: rgba(255, 255, 255, 0.03);
+            background-color: var(--bg-highlight);
             border-radius: 8px;
             transition: background-color 0.2s;
             min-height: 48px;
 
             &:hover {
-                background-color: rgba(255, 255, 255, 0.08);
+                background-color: var(--bg-hover);
             }
 
             &.inactive {
@@ -160,7 +159,7 @@
         padding: 32px;
         text-align: center;
         opacity: 0.6;
-        background-color: rgba(255, 255, 255, 0.02);
+        background-color: var(--bg-highlight);
         border-radius: 8px;
     }
 }

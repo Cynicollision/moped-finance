@@ -16,7 +16,7 @@
             <input matInput formControlName="name" maxlength="100" placeholder="e.g. Nightly bank sync">
         </mat-form-field>
 
-        <label class="field-label" id="access-label">Access</label>
+        <span class="field-label" id="access-label">Access</span>
         <mat-radio-group formControlName="access" aria-labelledby="access-label" class="access-options">
             @for (option of accessOptions; track option.value) {
             <mat-radio-button [value]="option.value">{{ option.label }}</mat-radio-button>

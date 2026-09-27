@@ -32,15 +32,15 @@ export class FinanceSummaryComponent implements OnInit {
     protected readonly Math = Math;
     protected readonly AccountGroup = AccountGroup;
 
-    accounts = signal<Account[]>([]);
-    groupPeriodChanges = signal<Map<string, any>>(new Map());
+    readonly accounts = signal<Account[]>([]);
+    readonly groupPeriodChanges = signal<Map<string, any>>(new Map());
 
     // Chart Data payload provided to the child `<app-value-history>` component
-    historyData = signal<TotalValueHistory[]>([]);
+    readonly historyData = signal<TotalValueHistory[]>([]);
 
     // View State for Chart Options
-    selectedChartType = signal<ValueHistoryType>(ValueHistoryType.NetWorth);
-    selectedTimeframe = signal<HistoryTimeframe>(HistoryTimeframe.PastThirtyDays);
+    readonly selectedChartType = signal<ValueHistoryType>(ValueHistoryType.NetWorth);
+    readonly selectedTimeframe = signal<HistoryTimeframe>(HistoryTimeframe.PastThirtyDays);
 
     chartTypeOptions = [
         { value: ValueHistoryType.NetWorth, label: 'Net Worth' },
@@ -58,7 +58,7 @@ export class FinanceSummaryComponent implements OnInit {
         { value: HistoryTimeframe.All, label: 'All Time' }
     ];
 
-    selectedTimeframeLabel = computed(() => {
+    readonly selectedTimeframeLabel = computed(() => {
         return this.timeframeOptions.find(t => t.value === this.selectedTimeframe())?.label || 'Period';
     });
 
@@ -148,14 +148,14 @@ export class FinanceSummaryComponent implements OnInit {
     }
 
     // Dynamic Summary value to hand down dependent on chart viewing mode
-    currentChartValue = computed(() => {
+    readonly currentChartValue = computed(() => {
         if (this.selectedChartType() === ValueHistoryType.NetWorth) return this.summary().netWorth;
         if (this.selectedChartType() === ValueHistoryType.Assets) return this.summary().totalAssets;
         if (this.selectedChartType() === ValueHistoryType.Liabilities) return this.summary().totalLiabilities;
         return 0;
     });
 
-    summary = computed(() => {
+    readonly summary = computed(() => {
         const cashAccounts: any[] = [];
         const investmentAccounts: any[] = [];
         const realEstateAccounts: any[] = [];

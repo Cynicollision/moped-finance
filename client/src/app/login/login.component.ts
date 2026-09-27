@@ -27,7 +27,7 @@ export class LoginComponent implements OnInit {
     password = Environment.devPassword;
     private authService = inject(AuthService);
     private route = inject(ActivatedRoute);
-    registrationOpen = signal(false);
+    readonly registrationOpen = signal(false);
 
     async ngOnInit() {
         this.registrationOpen.set(await this.authService.isRegistrationOpen());

@@ -23,10 +23,10 @@ interface InstitutionGroup {
 export class FinanceInstitutionsComponent implements OnInit {
     private financeService = inject(FinanceService);
 
-    institutions = signal<Institution[]>([]);
-    accounts = signal<Account[]>([]);
+    readonly institutions = signal<Institution[]>([]);
+    readonly accounts = signal<Account[]>([]);
 
-    institutionGroups = computed<InstitutionGroup[]>(() => {
+    readonly institutionGroups = computed<InstitutionGroup[]>(() => {
         const insts = this.institutions();
         const accs = this.accounts();
 

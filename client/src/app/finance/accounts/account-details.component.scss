@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 .details-container {
     padding: 1rem;
 }
@@ -43,7 +45,7 @@
         padding: 1.5rem 1rem;
         gap: 1rem;
 
-        @media (max-width: 600px) {
+        @include bp.content-below(bp.$medium) {
             flex-direction: column;
             align-items: flex-start;
             gap: 1.5rem;
@@ -90,7 +92,7 @@
             display: none;
         }
 
-        @media (max-width: 768px) {
+        @include bp.content-below(bp.$expanded) {
             .mat-column-category {
                 display: none !important;
             }

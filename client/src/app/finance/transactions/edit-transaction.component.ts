@@ -18,7 +18,7 @@ export class EditTransactionComponent implements OnInit {
     private route = inject(ActivatedRoute);
 
     transactionId: string | null = null;
-    transaction = signal<Transaction | null>(null);
+    readonly transaction = signal<Transaction | null>(null);
 
     async ngOnInit() {
         this.transactionId = this.route.snapshot.paramMap.get('transactionId');

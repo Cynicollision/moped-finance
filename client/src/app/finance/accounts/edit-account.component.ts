@@ -28,7 +28,7 @@ export class FinanceEditAccountComponent implements OnInit {
     private financeService = inject(FinanceService);
 
     accountId?: string;
-    accountData = signal<Account | undefined>(undefined);
+    readonly accountData = signal<Account | undefined>(undefined);
 
     async ngOnInit() {
         this.accountId = this.route.snapshot.paramMap.get('accountId') || undefined;

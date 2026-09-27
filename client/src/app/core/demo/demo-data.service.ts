@@ -1,11 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { User } from '@shared/core/types/user';
+import { DateProviderService } from './../date-provider.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class DemoDataService {
-    
+    private dateProvider = inject(DateProviderService);
+
     private readonly STORAGE_KEY = 'moped_finance_demo_data';
     private data: any;
 
@@ -43,8 +45,8 @@ export class DemoDataService {
             id: 'demo-user-id',
             username: 'demo',
             displayName: 'Demo User',
-            createdAt: new Date(),
-            updatedAt: new Date()
+            createdAt: this.dateProvider.now(),
+            updatedAt: this.dateProvider.now()
         };
     }
 

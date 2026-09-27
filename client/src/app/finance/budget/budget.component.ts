@@ -53,8 +53,6 @@ export class FinanceBudgetComponent implements OnInit {
     incomeTotals: BudgetTotals = { monthly: 0, quarterly: 0, yearly: 0 };
     expenseTotals: BudgetTotals = { monthly: 0, quarterly: 0, yearly: 0 };
 
-    constructor() { }
-
     async ngOnInit() {
         await this.loadData();
     }

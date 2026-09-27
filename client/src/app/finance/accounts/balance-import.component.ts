@@ -22,12 +22,12 @@ export class BalanceImportComponent implements OnInit {
     private router = inject(Router);
     private notificationService = inject(NotificationService);
 
-    accountId = signal<string | null>(null);
-    account = signal<Account | null>(null);
-    selectedFile = signal<File | null>(null);
-    isProcessing = signal<boolean>(false);
-    dryRunResults = signal<any>(null);
-    validationError = signal<string | null>(null);
+    readonly accountId = signal<string | null>(null);
+    readonly account = signal<Account | null>(null);
+    readonly selectedFile = signal<File | null>(null);
+    readonly isProcessing = signal<boolean>(false);
+    readonly dryRunResults = signal<any>(null);
+    readonly validationError = signal<string | null>(null);
 
     ngOnInit() {
         const id = this.route.snapshot.paramMap.get('accountId');

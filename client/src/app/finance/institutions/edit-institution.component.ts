@@ -22,8 +22,8 @@ export class EditInstitutionComponent implements OnInit {
     private modalService = inject(ModalService);
 
     institutionId: string | null = null;
-    institution = signal<Institution | null>(null);
-    associatedAccountsCount = signal<number | null>(null);
+    readonly institution = signal<Institution | null>(null);
+    readonly associatedAccountsCount = signal<number | null>(null);
 
     async ngOnInit() {
         this.institutionId = this.route.snapshot.paramMap.get('id');

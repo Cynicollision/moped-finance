@@ -34,7 +34,7 @@ export class FinanceValueHistoryComponent implements OnChanges {
     // Inputs
     @Input({ required: true }) historyData: TotalValueHistory[] = [];
     @Input() title: string | undefined;
-    @Input() currentValue: number = 0;
+    @Input() currentValue = 0;
 
     // Configurable Options
     @Input({ required: true }) chartTypeOptions: ChartTypeOption[] = [];
@@ -57,10 +57,10 @@ export class FinanceValueHistoryComponent implements OnChanges {
     @Output() timeframeChange = new EventEmitter<HistoryTimeframe>();
 
     // Internal Signals mapped from Inputs
-    historyDataSignal = signal<TotalValueHistory[]>([]);
-    chartTypeOptionsSignal = signal<ChartTypeOption[]>([]);
-    selectedChartTypeSignal = signal<ValueHistoryType | undefined>(undefined);
-    selectedTimeframeSignal = signal<HistoryTimeframe | undefined>(undefined);
+    readonly historyDataSignal = signal<TotalValueHistory[]>([]);
+    readonly chartTypeOptionsSignal = signal<ChartTypeOption[]>([]);
+    readonly selectedChartTypeSignal = signal<ValueHistoryType | undefined>(undefined);
+    readonly selectedTimeframeSignal = signal<HistoryTimeframe | undefined>(undefined);
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes['historyData']) {
@@ -87,12 +87,12 @@ export class FinanceValueHistoryComponent implements OnChanges {
     }
 
     // Computed Properties
-    selectedChartLabel = computed(() => {
+    readonly selectedChartLabel = computed(() => {
         if (this.title) return this.title;
         return this.chartTypeOptionsSignal().find(o => o.value === this.selectedChartTypeSignal())?.label || 'History';
     });
 
-    chartConfig = computed<ChartConfiguration | undefined>(() => {
+    readonly chartConfig = computed<ChartConfiguration | undefined>(() => {
         const data = this.historyDataSignal();
         if (!data || data.length === 0) return undefined;
 
@@ -190,7 +190,7 @@ export class FinanceValueHistoryComponent implements OnChanges {
         };
     });
 
-    periodChange = computed(() => {
+    readonly periodChange = computed(() => {
         const data = this.historyDataSignal();
         if (!data || data.length < 2) return undefined;
 

@@ -16,7 +16,7 @@ export class ModalLayoutComponent {
     @Input() title?: string;
 
     /** Whether to show the standard X close button. Default: true */
-    @Input() showClose: boolean = true;
+    @Input() showClose = true;
 
     /** Alignment of actions in the bottom bar. Default: 'end' */
     @Input() alignActions: 'start' | 'center' | 'end' = 'end';

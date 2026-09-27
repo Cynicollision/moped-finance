@@ -3,7 +3,7 @@
 
     <div modal-actions>
         <button mat-button (click)="onCancel()">{{ data.cancelLabel || 'Cancel' }}</button>
-        <button mat-raised-button [color]="data.isWarn ? 'warn' : 'primary'" (click)="onConfirm()">
+        <button mat-flat-button [class.danger-button]="data.isWarn" (click)="onConfirm()">
             {{ data.confirmLabel || 'Confirm' }}
         </button>
     </div>

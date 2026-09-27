@@ -26,7 +26,6 @@ Screen: **Budget** (`/budget`). Adding and editing happen in a dialog.
 - **Transfer categories can't have streams (BUD-1.1, BUD-1.2, BUD-1.3),** so there's no Savings card, and nothing shows actual spending (BUD-1.8, BUD-1.9) or what's left over (BUD-1.10).
 - **A stream's type is stored separately from its category (BUD-1.1).** The two can disagree: moving a category to a group of another type leaves its streams under the old type.
 - **An empty card shows only its header row.** With no expense streams the Expenses card shows Name/Group/Category/Amount/Recurrence headings over nothing, and $0.00 totals, with no "no streams yet" message (compare CAT-1.5 and INST-1.3).
-- **The table is wider than the card.** At about 800 px with the side navigation open, the table runs past the card and the row menu (Edit/Delete) is only reachable by scrolling the page sideways (APP known gaps).
 - **Category deleted, stream kept.** Deleting a category through the API leaves the stream with no category, and the table shows a blank group and category for it. CAT-4.5 will block that delete instead.
 - **Category ID isn't validated.** Saving a stream with a category ID that doesn't exist fails with a generic database error rather than a clear message.
 

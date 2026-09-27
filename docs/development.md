@@ -58,7 +58,7 @@ Don't edit a migration once it's merged: databases that already ran it won't run
 ## Before opening a PR
 
 - `npm test` in `server/`, and `npx tsc --noEmit` in `server/`
-- `npx ng test --watch=false` and `npx ng build` in `client/`
+- `npx ng test --watch=false`, `npx ng lint` and `npx ng build` in `client/`
 
 See [testing.md](testing.md) for how the tests are set up.
 
