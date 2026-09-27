@@ -1,53 +1,50 @@
 <div class="spending-container">
 
-    <div class="header-section">
-        <div class="title-container hide-on-mobile">
-            <h1 class="desktop-page-title">Cashflow</h1>
+    <app-page-header title="Cashflow"></app-page-header>
+
+    <!-- Controls -->
+    <div class="controls-container">
+        <div class="primary-controls">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Year</mat-label>
+                <mat-select [(ngModel)]="selectedYear" (selectionChange)="loadData()">
+                    @for (y of years; track y) {
+                        <mat-option [value]="y">{{y}}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Period</mat-label>
+                <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="loadData()">
+                    @for (p of periods; track p) {
+                        <mat-option [value]="p">{{p}}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
         </div>
-        <!-- Controls -->
-        <div class="controls-container">
-            <div class="primary-controls">
-                <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>Year</mat-label>
-                    <mat-select [(ngModel)]="selectedYear" (selectionChange)="loadData()">
-                        @for (y of years; track y) {
-                            <mat-option [value]="y">{{y}}</mat-option>
-                        }
-                    </mat-select>
-                </mat-form-field>
 
-                <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>Period</mat-label>
-                    <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="loadData()">
-                        @for (p of periods; track p) {
-                            <mat-option [value]="p">{{p}}</mat-option>
-                        }
-                    </mat-select>
-                </mat-form-field>
-            </div>
+        @if (selectedPeriod() === CalendarPeriod.Monthly) {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Month</mat-label>
+                <mat-select [(ngModel)]="selectedMonth" (selectionChange)="loadData()">
+                    @for (m of months; track m.value) {
+                        <mat-option [value]="m.value">{{m.label}}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        }
 
-            @if (selectedPeriod() === CalendarPeriod.Monthly) {
-                <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>Month</mat-label>
-                    <mat-select [(ngModel)]="selectedMonth" (selectionChange)="loadData()">
-                        @for (m of months; track m.value) {
-                            <mat-option [value]="m.value">{{m.label}}</mat-option>
-                        }
-                    </mat-select>
-                </mat-form-field>
-            }
-
-            @if (selectedPeriod() === CalendarPeriod.Quarterly) {
-                <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>Quarter</mat-label>
-                    <mat-select [(ngModel)]="selectedQuarter" (selectionChange)="loadData()">
-                        @for (q of quarters; track q.value) {
-                            <mat-option [value]="q.value">{{q.label}}</mat-option>
-                        }
-                    </mat-select>
-                </mat-form-field>
-            }
-        </div>
+        @if (selectedPeriod() === CalendarPeriod.Quarterly) {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Quarter</mat-label>
+                <mat-select [(ngModel)]="selectedQuarter" (selectionChange)="loadData()">
+                    @for (q of quarters; track q.value) {
+                        <mat-option [value]="q.value">{{q.label}}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        }
     </div>
 
     <!-- Summary Section -->

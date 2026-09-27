@@ -1,26 +1,19 @@
-@if (institution(); as institution) {
-    <div class="container">
-        <div class="page-header">
-            <div class="breadcrumb-nav">
-                <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
-                <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-current">{{institution.name}}</span>
-            </div>
-            <div class="top-actions">
-                <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
-                    <mat-icon>more_vert</mat-icon>
-                </button>
-                <mat-menu #menu="matMenu">
-                    <button mat-menu-item (click)="onEdit()">
-                        <mat-icon>edit</mat-icon>
-                        <span>Edit</span>
-                    </button>
-                </mat-menu>
-            </div>
-        </div>
+<div class="container">
+    <app-page-header [title]="institution()?.name ?? ''" [crumbs]="[{ label: 'Settings', link: '/settings' }, { label: 'Institutions', link: '/settings/institutions' }]">
+        <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
+            <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+            <button mat-menu-item (click)="onEdit()">
+                <mat-icon>edit</mat-icon>
+                <span>Edit</span>
+            </button>
+        </mat-menu>
+    </app-page-header>
+    @if (institution(); as institution) {
         <app-institution-form
             [institution]="institution"
             mode="readonly">
         </app-institution-form>
-    </div>
-}
+    }
+</div>

@@ -1,71 +1,14 @@
 .add-container {
-    padding: 1.5rem;
     max-width: 800px;
-    margin: 0 auto;
 }
 
-.breadcrumb-nav {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    color: var(--text-muted);
-}
-
-.breadcrumb-link {
-    text-decoration: none;
-    color: var(--color-link);
-    font-weight: 500;
-
-    &:hover {
-        text-decoration: underline;
-    }
-}
-
-.breadcrumb-separator {
-    font-size: 0.9em;
-}
-
-.breadcrumb-current {
-    font-weight: 500;
-}
-
-.selection-mode {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+.no-institutions {
     padding: 2rem;
     border-radius: 8px;
     background-color: var(--bg-card);
-    text-align: center;
 
-    .description {
-        font-size: 1.1rem;
-        color: var(--text-main);
-        margin: 0;
-    }
-
-    .options-container {
-        display: flex;
-        flex-direction: column;
-        flex-wrap: wrap;
-        gap: 16px;
-        max-width: 400px;
-        margin: 0 auto;
-
-        .option-btn {
-            padding: 1rem;
-            height: auto;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 1rem;
-            font-size: 1.1rem;
-
-            mat-icon {
-                margin-right: 8px;
-            }
-        }
+    p {
+        margin-top: 0;
+        color: var(--text-muted);
     }
 }

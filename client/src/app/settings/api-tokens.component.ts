@@ -5,15 +5,16 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiTokenAccess } from '@shared/core/enum';
 import { ApiToken } from '@shared/core/types';
+import { PageHeaderComponent } from './../core/layout/page-header.component';
 import { DateProviderService } from './../core/date-provider.service';
 import { ModalService } from './../core/modal/modal.service';
 import { ApiTokenService } from './api-token.service';
 import { NewApiTokenDialogComponent } from './new-api-token-dialog.component';
 
-// The API Tokens section of Settings (AUTH-11.1, AUTH-11.5)
+// The API Tokens page of Settings (AUTH-11.1, AUTH-11.5)
 @Component({
     selector: 'app-api-tokens',
-    imports: [DatePipe, MatButtonModule, MatCardModule, MatIconModule],
+    imports: [DatePipe, MatButtonModule, MatCardModule, MatIconModule, PageHeaderComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './api-tokens.component.html',
     styleUrl: './api-tokens.component.scss'

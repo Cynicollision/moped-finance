@@ -70,31 +70,30 @@ mat-card.mat-mdc-card table.mat-mdc-table {
     border: none;
 }
 
-// A screen's title row. The page header component in the App shell PR replaces these (TODO.md).
-.header-section {
-    margin-bottom: 24px;
-}
+// A screen's primary action in its page header (app-page-header): a filled button with an icon and a label.
+// On phones only the icon shows, so give the button an aria-label with the same text.
+.page-action {
+    @include bp.content-below(bp.$medium) {
+        @include mat.button-overrides((
+            filled-horizontal-padding: 8px,
+            filled-icon-offset: 0,
+            filled-icon-spacing: 0
+        ));
 
-.desktop-page-title {
-    margin: 0;
-    font-size: 2rem;
-    font-weight: 500;
-}
+        &.mat-mdc-button-base {
+            min-width: 40px;
+        }
 
-// Below the expanded size class the app shell shows the screen's name beside the menu button, so screens
-// hide their own title (APP-1.3).
-.hide-on-mobile {
-    @include bp.viewport-below(bp.$expanded) {
-        display: none !important;
+        .page-action-label {
+            display: none;
+        }
     }
 }
 
-.show-on-mobile {
-    display: none !important;
-
-    @include bp.viewport-below(bp.$expanded) {
-        display: inline-flex !important;
-    }
+// The profile menu's Sign out entry (APP-1.10). Menus render in an overlay, outside any component's styles.
+.sign-out,
+.sign-out mat-icon {
+    color: var(--color-negative);
 }
 
 // A filled button for a destructive action, such as Delete or Revoke in a confirmation (APP-2.4).

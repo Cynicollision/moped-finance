@@ -1,22 +1,21 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
 import { NewEntity } from '@shared/core/types';
 import { Account, Institution } from '@shared/finance/types';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { FinanceService } from './../finance.service';
 import { AccountFormComponent } from './account-form.component';
 
+// Add Account (ACCT-1.3), from the Institutions screen or, with ?institutionId=, from an institution's menu.
 @Component({
     selector: 'app-finance-add-account',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         RouterLink,
         MatButtonModule,
-        MatCardModule,
-        MatIconModule,
-        AccountFormComponent
+        AccountFormComponent,
+        PageHeaderComponent
     ],
     templateUrl: './add-account.component.html',
     styleUrl: './add-account.component.scss'
@@ -26,45 +25,34 @@ export class FinanceAddAccountComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
-    readonly mode = signal<'selection' | 'manual'>('selection');
-    readonly institution = signal<Institution | undefined>(undefined);
-
-    private institutionId?: string;
+    readonly institutions = signal<Institution[] | null>(null);
+    readonly institutionId = this.route.snapshot.queryParamMap.get('institutionId');
 
     async ngOnInit() {
-        this.institutionId = this.route.snapshot.paramMap.get('id') || undefined;
-        if (this.institutionId) {
-            const institution = await this.financeService.fetchInstitution(this.institutionId);
-            this.institution.set(institution);
-            if (!institution) {
-                this.router.navigate(['/institutions']);
-                return;
-            }
-        }
-        else {
-            this.router.navigate(['/institutions']);
-        }
+        const institutions = await this.financeService.fetchInstitutions() ?? [];
+        this.institutions.set(institutions.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })));
     }
 
     async onSave(accountData: Partial<Account>) {
-        if (this.institutionId) {
-            const newAccount: NewEntity<Account> = {
-                institutionId: this.institutionId,
-                name: accountData.name!,
-                category: accountData.category!,
-                group: accountData.group!,
-                type: accountData.type!,
-                balance: accountData.balance || 0,
-                isHidden: accountData.isHidden || false,
-                isManual: accountData.isManual !== undefined ? accountData.isManual : true,
-                isRetirement: accountData.isRetirement || false,
-                hideFromCashflow: accountData.hideFromCashflow || false
-            };
+        const newAccount: NewEntity<Account> = {
+            institutionId: accountData.institutionId!,
+            name: accountData.name!,
+            category: accountData.category!,
+            group: accountData.group!,
+            type: accountData.type!,
+            isHidden: accountData.isHidden ?? false,
+            isManual: true,
+            isRetirement: accountData.isRetirement ?? false,
+            hideFromCashflow: accountData.hideFromCashflow ?? false
+        };
 
-            const created = await this.financeService.createAccount(newAccount);
-            if (created) {
-                this.router.navigate(['/institutions']);
-            }
+        const created = await this.financeService.createAccount(newAccount);
+        if (created) {
+            this.router.navigate(['/accounts', created.id]);
         }
+    }
+
+    onCancel() {
+        this.router.navigate(['/settings/institutions']);
     }
 }

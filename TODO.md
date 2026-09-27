@@ -13,34 +13,26 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ### Client baseline
 A series of PRs, in this order, that gives the client consistent, tested patterns to build features on (decided 2026-09-27). The target shape:
-- Navigation: **Dashboard** (renamed from Summary, at `/dashboard`, matching `DASH` and `dashboard.md`), **Transactions**, **Cashflow**, **Budget**. Phones get a bottom navigation bar with those four; Settings and Sign out stay in the profile menu, opened from an avatar button in the page header, not a tab, so they're harder to reach by accident. Tablets get a navigation rail and desktops the side navigation.
-- Settings becomes a hub with sub-pages: Institutions (today's Institutions screen, listing every account including hidden and closed ones), Categories, API Tokens, and later Rules, Profile and Appearance.
-- The Dashboard keeps grouping accounts by type (DASH-2) and gets an **Add account** action; the account form gains an Institution select.
+- Navigation (done): **Dashboard**, **Transactions**, **Cashflow**, **Budget** as a bottom bar on phones, a rail on tablets and a side navigation on desktops, with Settings and Sign out in the profile menu. Screens use `<app-page-header>`, with occasional actions (add, import, download) in its overflow menu rather than as buttons (decided 2026-09-27).
+- Settings is a list of pages: Institutions (listing every account including hidden and closed ones), Categories and API Tokens so far; the profile menu also links Institutions and Categories directly (APP-1.5). **Rules** (CAT-8, `/settings/rules`, also linked from the Categories menu) and **Bank Sync** (SET-4) join it when they're built, then Profile and Appearance (SET-1.1).
+- The Dashboard keeps grouping accounts by type (DASH-2). Accounts are added from Settings > Institutions (ACCT-1.3).
 - Bank-connection UI is removed until INST-2 is redesigned. No disabled "coming soon" controls.
 - Each PR adds specs for what it touches (see Testing).
 
-1. [ ] **App shell and navigation.**
-   - The navigation above, with routes renamed and redirects from the old ones (`/summary`, `/institutions/...`, `/categories`).
-   - One page header component on every screen: title, breadcrumbs (a back arrow on phones), and a slot for a primary action and an overflow menu. It replaces each screen's own `desktop-page-title` and `hide-on-mobile` markup and the shell's handset title, so the title stops moving around (APP-1.3, APP-1.8).
-   - Tab titles as "Dashboard · Moped Finance" through a `TitleStrategy`, fixing "Dashboard" on the summary and the flash of the bare product name (APP-1.9).
-   - Remove Add Account's mode picker (its only other option is a disabled "Connect via ... (Coming Soon)"), and the **Manual Account** checkbox and Balance field, which the server discards (ACCT known gaps).
-   - The product name on Login and Register, and on Register the explanation that this creates the instance's only account, which owns all its data, and that Register won't be available again afterwards (AUTH-2.8), above the form in `register.component.html`.
-   - The page header also replaces the stopgap title styles: `.header-section` and `.desktop-page-title` in `styles.scss`, and the breadcrumb rules copied into each screen's SCSS (`account-details`, `add-account`, `edit-account`, `balance-import`, `import-transactions`, and the institution and transaction pages). A long `desktop-page-title` overlaps itself when it wraps (Add Account at phone width).
-   - Update APP-1, DASH, INST, SET-1.1, ACCT-1.3 and the CAT screen paths.
-2. [ ] **Feedback and dialogs.**
+1. [ ] **Feedback and dialogs.**
    - Replace the global loading overlay on every request (APP-2.1) with loading states or skeletons per view, so screens don't flash empty or $0.00 values that look real. Use Angular's `resource()` (or a small wrapper with the same shape) over `FinanceService`, and take loading out of `ApiService`.
    - Consistent success feedback (a snackbar) for create, save and delete (APP known gaps).
    - One pattern for create and edit: full pages for records with many fields or their own URL (account, transaction, imports), dialogs for small forms (institution, category, group, budget stream), full-screen on phones. `ModalService` (fixed 500px, `disableClose: true`) should let Esc and backdrop clicks close unless the form has unsaved changes, and then ask before discarding them. Add, view and edit institution become one dialog.
    - The category, category group and budget stream dialogs put their `modal-actions` buttons inside `<form>`, so `ModalLayoutComponent` doesn't project them into its action bar and they sit in the dialog content (`category-form-modal.component.html`, `category-group-form-modal.component.html`, `budget-form-modal.component.html`).
    - `color="warn"` does nothing under Material 3 but is still used: the Danger Zone Delete buttons (`edit-account`, `edit-institution`), Budget's Add Expense button and Delete menu item, and the import screens' warning icons. Use `danger-button` or `--color-negative`.
-   - The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8), and import breadcrumbs don't follow where the screen was opened from (APP known gaps).
-3. [ ] **Lists and phones.**
+   - The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8).
+2. [ ] **Lists and phones.**
    - A shared responsive list to replace `mat-table` in Transactions, Budget, Cashflow and Account Details: columns when the page area is wide; name and amount with a second line for date and category when it's narrow, instead of a table that scrolls sideways. Sortable headers when wide, a sort menu when narrow.
    - A shared money display that applies APP-6.1 and APP-6.2 ("+" and green for money in, no red for expected negatives).
    - On phones, collapse the Transactions filters into a bottom sheet.
    - The Cashflow year list is a fixed four-year window; derive it from the data (CASH known gaps), for example from the earliest transaction.
-4. [ ] **Budget redesign**, with BUD-1.2 and BUD-1.10: a side panel (desktop) or full-screen dialog (phone) for adding and editing streams, an empty state (BUD known gaps), the Left over figure, and a layout that works on phones. Leave room for the 12-month averages (BUD-1.8, BUD-1.9), which need a server endpoint.
-5. [ ] **Charts.** Rewrite `ChartComponent` on Chart.js: update the chart in place instead of recreating it in a `setTimeout`, resize with its container, take colours from the theme tokens instead of hard-coded dark defaults (`Chart.defaults`), and make y-axis ticks distinct (ACCT-2.12). Offer the 5- and 10-year timeframes (DASH-1.2, ACCT-2.4).
+3. [ ] **Budget redesign**, with BUD-1.2 and BUD-1.10: a side panel (desktop) or full-screen dialog (phone) for adding and editing streams, an empty state (BUD known gaps), the Left over figure, and a layout that works on phones. Leave room for the 12-month averages (BUD-1.8, BUD-1.9), which need a server endpoint.
+4. [ ] **Charts.** Rewrite `ChartComponent` on Chart.js: update the chart in place instead of recreating it in a `setTimeout`, resize with its container, take colours from the theme tokens instead of hard-coded dark defaults (`Chart.defaults`), and make y-axis ticks distinct (ACCT-2.12). Offer the 5- and 10-year timeframes (DASH-1.2, ACCT-2.4).
 
 ---
 

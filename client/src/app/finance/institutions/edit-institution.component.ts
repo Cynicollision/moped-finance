@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Institution } from '@shared/finance/types';
+import { Crumb, PageHeaderComponent } from './../../core/layout/page-header.component';
 import { InstitutionFormComponent } from './institution-form.component';
 import { FinanceService } from './../finance.service';
 import { ModalService } from './../../core/modal/modal.service';
@@ -10,7 +11,7 @@ import { ModalService } from './../../core/modal/modal.service';
 @Component({
     selector: 'app-finance-edit-institution',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, MatButtonModule, MatIconModule, InstitutionFormComponent],
+    imports: [MatButtonModule, MatIconModule, InstitutionFormComponent, PageHeaderComponent],
     templateUrl: './edit-institution.component.html',
     styleUrl: './edit-institution.component.scss'
 })
@@ -23,6 +24,18 @@ export class EditInstitutionComponent implements OnInit {
     private institutionId: string | null = null;
     readonly institution = signal<Institution | null>(null);
     readonly associatedAccountsCount = signal<number | null>(null);
+
+    readonly crumbs = computed<Crumb[]>(() => {
+        const crumbs: Crumb[] = [
+            { label: 'Settings', link: '/settings' },
+            { label: 'Institutions', link: '/settings/institutions' }
+        ];
+        const institution = this.institution();
+        if (institution) {
+            crumbs.push({ label: institution.name, link: ['/settings/institutions', institution.id] });
+        }
+        return crumbs;
+    });
 
     async ngOnInit() {
         this.institutionId = this.route.snapshot.paramMap.get('id');
@@ -47,16 +60,16 @@ export class EditInstitutionComponent implements OnInit {
 
         const success = await this.financeService.saveInstitution(updatedInstitution as Institution);
         if (success) {
-            this.router.navigate(['/institutions', this.institutionId]);
+            this.router.navigate(['/settings/institutions', this.institutionId]);
         }
     }
 
     onCancel() {
         if (this.institutionId) {
-            this.router.navigate(['/institutions', this.institutionId]);
+            this.router.navigate(['/settings/institutions', this.institutionId]);
         }
         else {
-            this.router.navigate(['/institutions']);
+            this.router.navigate(['/settings/institutions']);
         }
     }
 
@@ -75,7 +88,7 @@ export class EditInstitutionComponent implements OnInit {
         if (confirmDelete) {
             const success = await this.financeService.deleteInstitution(this.institutionId);
             if (success) {
-                this.router.navigate(['/institutions']);
+                this.router.navigate(['/settings/institutions']);
             }
         }
     }

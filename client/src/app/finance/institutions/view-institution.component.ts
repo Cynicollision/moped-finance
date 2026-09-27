@@ -1,16 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Institution } from '@shared/finance/types';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { InstitutionFormComponent } from './institution-form.component';
 import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-view-institution',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, InstitutionFormComponent],
+    imports: [MatButtonModule, MatIconModule, MatMenuModule, InstitutionFormComponent, PageHeaderComponent],
     templateUrl: './view-institution.component.html',
     styleUrl: './view-institution.component.scss'
 })
@@ -35,7 +36,7 @@ export class ViewInstitutionComponent implements OnInit {
 
     onEdit() {
         if (this.institutionId) {
-            this.router.navigate(['/institutions', this.institutionId, 'edit']);
+            this.router.navigate(['/settings/institutions', this.institutionId, 'edit']);
         }
     }
 }

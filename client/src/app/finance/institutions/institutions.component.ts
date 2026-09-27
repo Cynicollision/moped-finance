@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Account, Institution } from '@shared/finance/types';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { FinanceService } from './../finance.service';
 
 interface InstitutionGroup {
@@ -15,7 +16,7 @@ interface InstitutionGroup {
 @Component({
     selector: 'app-finance-institutions',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule],
+    imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, PageHeaderComponent],
     templateUrl: './institutions.component.html',
     styleUrl: './institutions.component.scss'
 })

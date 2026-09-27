@@ -11,6 +11,7 @@ import { HistoryTimeframe } from '@shared/core/enum';
 import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceValueHistoryComponent } from './../common/value-history.component';
 import { FinanceService } from './../finance.service';
@@ -18,7 +19,7 @@ import { FinanceService } from './../finance.service';
 @Component({
     selector: 'app-finance-accounts',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CurrencyPipe, DatePipe, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, MatDividerModule],
+    imports: [CurrencyPipe, DatePipe, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, MatDividerModule, PageHeaderComponent],
     templateUrl: './account-details.component.html',
     styleUrl: './account-details.component.scss'
 })

@@ -1,12 +1,6 @@
-@if (institution(); as institution) {
-    <div class="container">
-        <div class="breadcrumb-nav">
-            <a [routerLink]="['/institutions']" class="breadcrumb-link">Institutions</a>
-            <span class="breadcrumb-separator">/</span>
-            <a [routerLink]="['/institutions', institution.id]" class="breadcrumb-link">{{institution.name}}</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-current">Edit Institution</span>
-        </div>
+<div class="container">
+    <app-page-header title="Edit Institution" [crumbs]="crumbs()"></app-page-header>
+    @if (institution(); as institution) {
         <app-institution-form [institution]="institution" mode="edit" (save)="onSave($event)" (cancelled)="onCancel()">
         </app-institution-form>
         <div class="danger-zone">
@@ -24,5 +18,5 @@
                 Delete Institution
             </button>
         </div>
-    </div>
-}
+    }
+</div>

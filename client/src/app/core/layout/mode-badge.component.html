@@ -1,0 +1,16 @@
+@if (isDemoMode) {
+    <div class="mode-badge demo" title="Demo Mode">
+        <mat-icon>science</mat-icon>
+        @if (!iconOnly()) {
+            <span>Demo Mode</span>
+        }
+    </div>
+}
+@else if (isDebugMode) {
+    <div class="mode-badge debug" title="Debug Mode: {{ debugDateLabel() }}">
+        <mat-icon>bug_report</mat-icon>
+        @if (!iconOnly()) {
+            <span>{{ debugDateLabel() }}</span>
+        }
+    </div>
+}

@@ -1,9 +1,12 @@
 .register-container {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100%;
-    padding: 2rem;
+    gap: 1.5rem;
+    min-height: 100%;
+    box-sizing: border-box;
+    padding: 2rem 1rem;
 }
 
 mat-card-header {
@@ -33,6 +36,12 @@ mat-card-header {
 
 mat-card {
     min-width: 300px;
+    max-width: 440px;
+}
+
+.one-account {
+    margin: 0 0 1.5rem;
+    color: var(--text-muted);
 }
 
 .login-prompt {
@@ -49,5 +58,18 @@ mat-card {
         &:hover {
             text-decoration: underline;
         }
+    }
+}
+
+// The product name above the form (APP-3.1).
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--mat-sys-primary);
+
+    .brand-title {
+        font: var(--mat-sys-headline-small);
+        color: var(--text-main);
     }
 }

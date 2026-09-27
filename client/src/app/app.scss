@@ -1,11 +1,17 @@
 @use 'breakpoints' as bp;
 
-.sidenav-container {
+$bottom-nav-height: 80px;
+
+.shell {
     height: 100%;
 }
 
 .sidenav {
     width: 250px;
+
+    &.rail {
+        width: 80px;
+    }
 }
 
 .sidenav-body {
@@ -17,6 +23,7 @@
 .brand {
     padding: 16px 24px;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
@@ -26,134 +33,138 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    color: var(--mat-sys-primary);
 }
 
 .brand-title {
     font-size: 18px;
     font-weight: 500;
     letter-spacing: 0.5px;
+    white-space: nowrap;
     color: var(--text-main);
 }
 
-.mode-badge {
-    --badge-color: var(--color-debug);
+.rail-top {
     display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    background: color-mix(in srgb, var(--badge-color) 10%, transparent);
-    border: 1px solid color-mix(in srgb, var(--badge-color) 20%, transparent);
-    color: var(--badge-color);
-
-    &.demo {
-        --badge-color: var(--color-demo);
-    }
-
-    mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-        margin: 0;
-    }
-
-    span {
-        font-size: 11px;
-        font-weight: bold;
-        line-height: 1;
-    }
-}
-
-.sidenav mat-nav-list {
-    padding-left: 12px;
-    padding-right: 12px;
-}
-
-.sidenav mat-nav-list a[mat-list-item] {
-    margin-bottom: 8px;
-    border-radius: 4px !important;
-}
-
-/* Highlight active link */
-.active-link {
-    background-color: var(--bg-hover);
-    font-weight: 500;
+    justify-content: center;
+    min-height: 32px;
+    padding: 16px 0 8px;
 }
 
 .spacer {
     flex: 1 1 auto;
 }
 
-.profile-trigger {
+.profile {
+    display: flex;
+    flex-direction: column;
+}
+
+.rail .profile {
+    align-items: center;
+    padding-bottom: 16px;
+}
+
+// Navigation entries. The side navigation lays each one out as a row; the rail and the bottom bar stack the
+// label under the icon and mark the current section with a pill behind the icon, as Material 3 does.
+.nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin: 12px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-card);
-    color: var(--text-main);
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    color: var(--text-muted);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+
+    &.active {
+        color: var(--text-main);
+    }
+}
+
+.nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 12px;
+}
+
+.sidenav:not(.rail) .nav-item {
+    gap: 16px;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 24px;
+    font: var(--mat-sys-label-large);
 
     &:hover {
         background-color: var(--bg-hover);
     }
+
+    &.active {
+        background-color: var(--mat-sys-secondary-container);
+        color: var(--mat-sys-on-secondary-container);
+    }
 }
 
-.avatar {
-    width: 32px;
-    height: 32px;
-    flex: none;
-    border-radius: 50%;
-    background-color: var(--mat-sys-primary);
-    color: var(--mat-sys-on-primary);
-    display: flex;
-    align-items: center;
+.rail .nav-list {
+    gap: 12px;
+    padding: 0;
+}
+
+.rail .nav-item,
+.bottom-nav .nav-item {
+    flex-direction: column;
     justify-content: center;
-    font-weight: bold;
-    font-size: 14px;
+    gap: 4px;
+    font: var(--mat-sys-label-medium);
+
+    .nav-icon {
+        width: 56px;
+        height: 32px;
+        line-height: 32px;
+        text-align: center;
+        border-radius: 16px;
+    }
+
+    &:hover .nav-icon {
+        background-color: var(--bg-hover);
+    }
+
+    &.active .nav-icon {
+        background-color: var(--mat-sys-secondary-container);
+        color: var(--mat-sys-on-secondary-container);
+    }
 }
 
-.profile-name {
-    flex: 1;
-    font-weight: 500;
-    font-size: 14px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+.bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    height: $bottom-nav-height;
+    padding-bottom: env(safe-area-inset-bottom);
+    background-color: var(--mat-sys-surface-container);
 
-.profile-arrow {
-    color: var(--text-muted);
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-    margin: 0;
-}
-
-.sign-out,
-.sign-out mat-icon {
-    color: var(--color-negative);
+    .nav-item {
+        flex: 1;
+        min-width: 0;
+    }
 }
 
 .content-container {
     // Screens lay out their content by this container's width (the `content-*` mixins in _breakpoints.scss).
     container: #{bp.$page-container} / inline-size;
-    padding: 20px;
+    display: block;
+    padding: 24px;
+
+    @include bp.viewport-below(bp.$medium) {
+        padding: 16px;
+    }
 }
 
-.handset-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 16px;
+.has-bottom-nav .content-container {
+    padding-bottom: calc(#{$bottom-nav-height} + 16px + env(safe-area-inset-bottom));
 }
 
-.handset-title {
-    font-size: 20px;
-    font-weight: 500;
-    margin-left: 8px;
+.signed-out {
+    height: 100%;
 }

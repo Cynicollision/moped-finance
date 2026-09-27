@@ -1,52 +1,5 @@
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.top-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.breadcrumb-nav {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-muted, gray);
-}
-
-.breadcrumb-link {
-    text-decoration: none;
-    color: var(--color-link);
-    font-weight: 500;
-
-    &:hover {
-        text-decoration: underline;
-    }
-}
-
-.breadcrumb-separator {
-    font-size: 0.9em;
-    color: var(--text-muted, gray);
-}
-
-.breadcrumb-current {
-    font-weight: 500;
-    color: var(--text-main);
-}
-
 .container {
-    padding: 24px;
     max-width: 600px;
-    margin: 0 auto;
-
-    h1 {
-        margin-bottom: 24px;
-        color: var(--text-main);
-    }
 }
 
 .actions {

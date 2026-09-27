@@ -1,12 +1,42 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ApiTokensComponent } from './api-tokens.component';
+import { RouterLink } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { PageHeaderComponent } from './../core/layout/page-header.component';
 
-// The Settings screen (SET-1.1). Sections not built yet are left out.
+interface SettingsSection {
+    label: string;
+    description: string;
+    route: string;
+    icon: string;
+}
+
+// The Settings screen (SET-1.1): a list of sections, each its own page. Sections not built yet are left out.
 @Component({
     selector: 'app-settings',
-    imports: [ApiTokensComponent],
+    imports: [RouterLink, MatIconModule, PageHeaderComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './settings.component.html',
     styleUrl: './settings.component.scss'
 })
-export class SettingsComponent { }
+export class SettingsComponent {
+    readonly sections: SettingsSection[] = [
+        {
+            label: 'Institutions',
+            description: 'Banks, brokerages and lenders, and every account at each, including hidden ones',
+            route: '/settings/institutions',
+            icon: 'account_balance'
+        },
+        {
+            label: 'Categories',
+            description: 'Income, expense and transfer categories, and their groups',
+            route: '/settings/categories',
+            icon: 'category'
+        },
+        {
+            label: 'API Tokens',
+            description: 'Let scripts and tools call the API without signing in',
+            route: '/settings/api-tokens',
+            icon: 'key'
+        }
+    ];
+}

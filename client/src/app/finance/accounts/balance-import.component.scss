@@ -1,37 +1,5 @@
 .import-container {
-    padding: 24px;
     max-width: 800px;
-    margin: 0 auto;
-}
-
-.breadcrumb-nav {
-    display: flex;
-    align-items: center;
-    margin-bottom: 24px;
-    color: var(--text-muted);
-}
-
-.breadcrumb-link {
-    color: var(--color-link);
-    text-decoration: none;
-    cursor: pointer;
-
-    &:hover {
-        text-decoration: underline;
-    }
-}
-
-.breadcrumb-separator {
-    margin: 0 8px;
-}
-
-.breadcrumb-current {
-    font-weight: 500;
-    color: var(--text-main);
-}
-
-.import-card {
-    margin-top: 16px;
 }
 
 .file-upload-section {
@@ -60,10 +28,6 @@
 .actions {
     display: flex;
     gap: 16px;
-}
-
-.mt-16 {
-    margin-top: 16px;
 }
 
 .mt-24 {

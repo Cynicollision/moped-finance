@@ -8,6 +8,19 @@
             </mat-error>
         }
     </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Institution</mat-label>
+        <mat-select formControlName="institutionId">
+            @for (institution of institutions(); track institution.id) {
+                <mat-option [value]="institution.id">{{ institution.name }}</mat-option>
+            }
+        </mat-select>
+        @if (accountForm.controls.institutionId.hasError('required')) {
+            <mat-error>
+                Institution is required
+            </mat-error>
+        }
+    </mat-form-field>
     <div class="row">
         <mat-form-field appearance="outline">
             <mat-label>Category</mat-label>
@@ -36,21 +49,9 @@
     </div>
     <div class="toggles-grid">
         <mat-checkbox formControlName="isHidden">Hide Account</mat-checkbox>
-        <mat-checkbox formControlName="isManual">Manual Account</mat-checkbox>
         <mat-checkbox formControlName="isRetirement">Retirement Account</mat-checkbox>
         <mat-checkbox formControlName="hideFromCashflow">Hide from Cashflow</mat-checkbox>
     </div>
-    @if (accountForm.controls.isManual.value) {
-        <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Balance</mat-label>
-            <input matInput formControlName="balance" type="number" step="0.01">
-            @if (accountForm.controls.balance.hasError('pattern')) {
-                <mat-error>
-                    Invalid decimal format
-                </mat-error>
-            }
-        </mat-form-field>
-    }
     <div class="actions-row">
         <button mat-button type="button" (click)="onCancelClick()">Cancel</button>
         <span class="spacer"></span>

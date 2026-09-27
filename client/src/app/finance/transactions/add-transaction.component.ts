@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { NewEntity } from '@shared/core/types';
 import { Transaction } from '@shared/finance/types';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { TransactionFormComponent } from './transaction-form.component';
 import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-add-transaction',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, TransactionFormComponent],
+    imports: [TransactionFormComponent, PageHeaderComponent],
     templateUrl: './add-transaction.component.html',
     styleUrl: './add-transaction.component.scss'
 })

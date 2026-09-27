@@ -5,7 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { Account } from '@shared/finance/types';
+import { Account, Institution } from '@shared/finance/types';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
 
 @Component({
@@ -25,6 +25,10 @@ import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum
 export class AccountFormComponent implements OnInit, OnChanges {
     readonly account = input<Account | null>(null);
     readonly mode = input<'create' | 'edit'>('create');
+    /** The institutions to choose from, sorted by name. */
+    readonly institutions = input<Institution[]>([]);
+    /** The institution a new account starts at, when it's added from that institution. */
+    readonly defaultInstitutionId = input<string | null>(null);
     readonly save = output<Partial<Account>>();
     readonly cancelled = output<void>();
 
@@ -34,15 +38,14 @@ export class AccountFormComponent implements OnInit, OnChanges {
 
     readonly accountForm = new FormGroup({
         name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+        institutionId: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
         category: new FormControl<AccountCategory>(AccountCategory.Asset, { nonNullable: true, validators: [Validators.required] }),
         group: new FormControl<AccountGroup | null>(AccountGroup.Cash, { validators: [Validators.required] }),
         // Null for groups that have no account types (credit cards).
         type: new FormControl<AccountType | null>(AccountType.Checking),
         isHidden: new FormControl<boolean>(false, { nonNullable: true }),
-        isManual: new FormControl<boolean>(true, { nonNullable: true }),
         isRetirement: new FormControl<boolean>(false, { nonNullable: true }),
-        hideFromCashflow: new FormControl<boolean>(false, { nonNullable: true }),
-        balance: new FormControl<number>(0, { nonNullable: true, validators: [Validators.required, Validators.pattern(/^-?\d+(\.\d{1,2})?$/)] })
+        hideFromCashflow: new FormControl<boolean>(false, { nonNullable: true })
     });
 
     constructor() {
@@ -54,7 +57,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes['account']) {
+        if (changes['account'] || changes['defaultInstitutionId']) {
             this.updateFormState();
         }
     }
@@ -67,47 +70,23 @@ export class AccountFormComponent implements OnInit, OnChanges {
 
             this.accountForm.patchValue({
                 name: account.name,
+                institutionId: account.institutionId,
                 category: account.category,
                 group: account.group,
                 type: account.type,
                 isHidden: account.isHidden,
-                isManual: account.isManual,
                 isRetirement: account.isRetirement,
-                hideFromCashflow: account.hideFromCashflow,
-                balance: account.balance
+                hideFromCashflow: account.hideFromCashflow
             }, { emitEvent: false });
-
-            if (account.isManual) {
-                this.accountForm.controls.balance.enable({ emitEvent: false });
-            }
-            else {
-                this.accountForm.controls.balance.disable({ emitEvent: false });
-            }
         }
         else {
             this.updateAvailableGroups(AccountCategory.Asset);
             this.updateAvailableTypes(AccountGroup.Cash);
+            this.accountForm.controls.institutionId.setValue(this.defaultInstitutionId() ?? '', { emitEvent: false });
         }
     }
 
     private setupSubscriptions() {
-        this.accountForm.controls.isManual.valueChanges.subscribe(isManual => {
-            const balanceControl = this.accountForm.controls.balance;
-            if (isManual) {
-                balanceControl.enable();
-            }
-            else {
-                balanceControl.disable();
-                const account = this.account();
-                if (account) {
-                    balanceControl.setValue(account.balance || 0);
-                }
-                else {
-                    balanceControl.setValue(0);
-                }
-            }
-        });
-
         this.accountForm.controls.category.valueChanges.subscribe(category => {
             this.updateAvailableGroups(category);
             const groups = this.groups();
@@ -170,11 +149,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
         const rawValue = this.accountForm.getRawValue();
         // The group's required validator means it's set whenever the form is valid.
         if (this.accountForm.valid && rawValue.group) {
-            this.save.emit({
-                ...rawValue,
-                group: rawValue.group,
-                balance: typeof rawValue.balance === 'string' ? parseFloat(rawValue.balance) : rawValue.balance
-            });
+            this.save.emit({ ...rawValue, group: rawValue.group });
         }
     }
 

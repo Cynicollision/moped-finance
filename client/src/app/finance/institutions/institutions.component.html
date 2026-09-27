@@ -1,20 +1,19 @@
 <div class="institutions-container">
-    <div class="header-section">
-        <div class="title-container hide-on-mobile">
-            <h1 class="desktop-page-title">Institutions</h1>
-        </div>
-        <div class="actions-container">
-            <button mat-flat-button color="primary" class="add-institution-btn hide-on-mobile"
-                [routerLink]="['/institutions/new']">
-                <mat-icon>add</mat-icon>
-                Add institution
-            </button>
-            <a class="show-on-mobile add-institution-link" [routerLink]="['/institutions/new']">
-                <mat-icon>add</mat-icon>
-                Add institution
+    <app-page-header title="Institutions" [crumbs]="[{ label: 'Settings', link: '/settings' }]">
+        <a mat-flat-button class="page-action" routerLink="/accounts/new" aria-label="Add account">
+            <mat-icon>add</mat-icon>
+            <span class="page-action-label">Add account</span>
+        </a>
+        <button mat-icon-button [matMenuTriggerFor]="pageMenu" aria-label="More options">
+            <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #pageMenu="matMenu">
+            <a mat-menu-item routerLink="/settings/institutions/new">
+                <mat-icon>account_balance</mat-icon>
+                <span>Add Institution</span>
             </a>
-        </div>
-    </div>
+        </mat-menu>
+    </app-page-header>
 
     <div class="institution-list">
         @for (group of institutionGroups(); track group.institution.id) {
@@ -24,7 +23,7 @@
                     <mat-icon>account_balance</mat-icon>
                 </div>
                 <mat-card-title>
-                    <a [routerLink]="['/institutions', group.institution.id]" class="title-link">
+                    <a [routerLink]="['/settings/institutions', group.institution.id]" class="title-link">
                         {{ group.institution.name }}
                     </a>
                 </mat-card-title>
@@ -34,11 +33,11 @@
                     <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #menu="matMenu">
-                    <a mat-menu-item [routerLink]="['/institutions', group.institution.id, 'edit']">
+                    <a mat-menu-item [routerLink]="['/settings/institutions', group.institution.id, 'edit']">
                         <mat-icon>edit</mat-icon>
                         <span>Edit</span>
                     </a>
-                    <a mat-menu-item [routerLink]="['/institutions', group.institution.id, 'add-account']">
+                    <a mat-menu-item routerLink="/accounts/new" [queryParams]="{ institutionId: group.institution.id }">
                         <mat-icon>add</mat-icon>
                         <span>Add account</span>
                     </a>
@@ -72,7 +71,7 @@
         @if (institutionGroups().length === 0) {
         <div class="empty-state">
             <p>You haven't added any institutions yet.</p>
-            <button mat-raised-button color="primary" [routerLink]="['/institutions/new']">Add your first institution</button>
+            <button mat-raised-button color="primary" routerLink="/settings/institutions/new">Add your first institution</button>
         </div>
         }
     </div>

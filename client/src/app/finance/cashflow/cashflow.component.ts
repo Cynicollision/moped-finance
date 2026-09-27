@@ -15,6 +15,7 @@ import { CalendarDateUtil } from '@shared/core/util';
 import { CashflowStream } from '@shared/finance/contracts';
 import { CategoryClass } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 
@@ -39,7 +40,8 @@ interface CashflowRow {
         MatButtonModule,
         MatButtonToggleModule,
         MatTableModule,
-        MatIconModule
+        MatIconModule,
+        PageHeaderComponent
     ],
     templateUrl: './cashflow.component.html',
     styleUrl: './cashflow.component.scss'

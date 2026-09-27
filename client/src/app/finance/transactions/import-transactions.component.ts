@@ -1,5 +1,5 @@
 
-import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,13 +7,14 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TransactionImportResult } from '@shared/finance/contracts';
 import { Account } from '@shared/finance/types';
+import { Crumb, PageHeaderComponent } from './../../core/layout/page-header.component';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-import-transactions',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule, RouterModule],
+    imports: [MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule, RouterModule, PageHeaderComponent],
     templateUrl: './import-transactions.component.html',
     styleUrl: './import-transactions.component.scss'
 })
@@ -29,6 +30,18 @@ export class ImportTransactionsComponent implements OnInit {
     readonly isProcessing = signal<boolean>(false);
     readonly dryRunResults = signal<TransactionImportResult | null>(null);
     readonly validationError = signal<string | null>(null);
+
+    // Opened from an account's menu, the screen sits below that account; otherwise below Transactions.
+    readonly crumbs = computed<Crumb[]>(() => {
+        const accountId = this.accountId();
+        if (!accountId) {
+            return [{ label: 'Transactions', link: '/transactions' }];
+        }
+        return [
+            { label: 'Dashboard', link: '/dashboard' },
+            { label: this.account()?.name ?? 'Account', link: ['/accounts', accountId] }
+        ];
+    });
 
     ngOnInit() {
         const id = this.route.snapshot.queryParamMap.get('accountId');

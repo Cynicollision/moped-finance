@@ -19,7 +19,7 @@ describe('LoginComponent', () => {
 
         mockActivatedRoute = {
             snapshot: {
-                queryParams: { returnUrl: '/summary' }
+                queryParams: { returnUrl: '/dashboard' }
             }
         };
 
@@ -46,7 +46,7 @@ describe('LoginComponent', () => {
 
         await component.onLogin();
 
-        expect(mockAuthService.login).toHaveBeenCalledWith('stn', 'password', '/summary');
+        expect(mockAuthService.login).toHaveBeenCalledWith('stn', 'password', '/dashboard');
     });
 
     it('should not call AuthService.login if username is empty', async () => {
@@ -71,5 +71,9 @@ describe('LoginComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('.register-prompt')).not.toBeNull();
+    });
+
+    it('APP-3.1 should show the product name', () => {
+        expect(fixture.nativeElement.querySelector('.brand-title').textContent).toBe('Moped Finance');
     });
 });

@@ -2,7 +2,7 @@
 
 Transactions and budget streams are classified with **categories**. Categories are organized into **category groups**, and each group has a **type** (Income, Expense or Transfer) that decides how its categories count in Budget and Cashflow. Expense categories also have a **necessity**, Essential or Discretionary, so the user can see how much of their spending they could cut. One built-in category, **Uncategorized**, holds transactions that haven't been given a category yet.
 
-Screens: **Categories** (`/categories`), where creating and editing happen in dialogs, and **Rules** (`/categories/rules`, from the Categories menu).
+Screens, both pages of Settings: **Categories** (`/settings/categories`, also in the profile menu, APP-1.5), where creating and editing happen in dialogs, and **Rules** (`/settings/rules`, CAT-8, listed in Settings and linked from the Categories menu).
 
 ## CAT-1 The user can organize categories into groups
 
