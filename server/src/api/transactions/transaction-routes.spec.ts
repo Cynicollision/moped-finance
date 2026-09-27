@@ -191,6 +191,25 @@ describe('Transaction Routes', () => {
             expect(response.body[0].categoryId).toBe(testCategoryId);
             expect(response.body[0].amount).toBe(500);
         });
+
+        it('APP-5.6 CASH-1.2 should count the first and last days of the month and nothing from the next, west of UTC', async () => {
+            // Tests run with TZ=America/New_York (jest.config.js).
+            await insertTransaction({ date: '2026-03-31', amount: -1 });
+            await insertTransaction({ date: '2026-04-01', amount: -10 });
+            await insertTransaction({ date: '2026-04-30', amount: -100 });
+            await insertTransaction({ date: '2026-05-01', amount: -1000 });
+
+            const response = await request(app).get('/transactions/cashflow?period=Monthly&asOfDate=2026-04-15');
+
+            expect(response.body).toEqual([{ categoryId: testCategoryId, amount: -110 }]);
+        });
+
+        it('APP-5.7 should reject an asOfDate that is a timestamp rather than a date', async () => {
+            const response = await request(app).get('/transactions/cashflow?period=Monthly&asOfDate=2026-04-15T00:00:00.000Z');
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('asOfDate: Expected a date as YYYY-MM-DD');
+        });
     });
 
     describe('GET /:id', () => {
@@ -463,7 +482,7 @@ describe('Transaction Routes', () => {
 
             expect(response.status).toBe(201);
             const saved = await transactionsData.search({ includeHidden: true });
-            expect(saved).toEqual([expect.objectContaining({ date: '2026-06-06T00:00:00.000Z', amount: -12.5, merchant: 'Café, "Quoted"', notes: 'Line one', isHidden: true })]);
+            expect(saved).toEqual([expect.objectContaining({ date: '2026-06-06', amount: -12.5, merchant: 'Café, "Quoted"', notes: 'Line one', isHidden: true })]);
         });
 
         it('APP-5.4 should reject a file larger than 5 MB', async () => {
@@ -541,6 +560,16 @@ describe('Transaction Routes', () => {
             expect(byCategory.body.map((t: Transaction) => t.id)).toEqual([checkingGroceries.id, savingsRent.id]);
         });
 
+        it('TXN-1.5 should include transactions on both the start and end dates, returned as YYYY-MM-DD', async () => {
+            for (const date of ['2026-06-05', '2026-06-06', '2026-06-07', '2026-06-08']) {
+                await insertTransaction({ date });
+            }
+
+            const response = await request(app).get('/transactions').query({ startDate: '2026-06-06', endDate: '2026-06-07' });
+
+            expect(response.body.map((t: Transaction) => t.date)).toEqual(['2026-06-07', '2026-06-06']);
+        });
+
         it('TXN-1.6 should match merchant text literally, not as a LIKE pattern', async () => {
             await insertTransaction({ merchant: '100% Juice' });
             await insertTransaction({ merchant: '1000 Things' });
@@ -553,7 +582,8 @@ describe('Transaction Routes', () => {
         it.each([
             [{ filters: 'not json' }, 'filters: Invalid JSON'],
             [{ filters: JSON.stringify([{ key: 'nope', value: 'x' }]) }, 'filters: Expected an array of { key, value } filters'],
-            [{ startDate: 'not a date' }, 'startDate: Invalid date'],
+            [{ startDate: 'not a date' }, 'startDate: Expected a date as YYYY-MM-DD'],
+            [{ endDate: '2026-06-06T00:00:00.000Z' }, 'endDate: Expected a date as YYYY-MM-DD'],
             [{ sortKey: 'account_id' }, 'sortKey:'],
         ])('APP-5.7 should reject invalid search options %p', async (query, message) => {
             const response = await request(app).get('/transactions').query(query);
@@ -588,7 +618,7 @@ describe('Transaction Routes', () => {
             const response = await request(app).post('/transactions').send(payload);
 
             expect(response.status).toBe(400);
-            expect(response.body.message).toContain('date: Invalid date');
+            expect(response.body.message).toContain('date: Expected a date as YYYY-MM-DD');
         });
 
         it('TXN-2.3 should change only the fields sent', async () => {

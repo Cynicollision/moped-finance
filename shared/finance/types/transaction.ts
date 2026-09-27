@@ -1,9 +1,9 @@
-import { Entity } from './../../core/types';
+import { CalendarDate, Entity } from './../../core/types';
 
 export type Transaction = Entity & {
     accountId: string;
     categoryId: string;
-    date: string;
+    date: CalendarDate;
     amount: number;
     merchant: string;
     originalStatement: string;

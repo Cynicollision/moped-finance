@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SchemaUtil } from '@server/data';
 
 /** Route params for `/:id` routes. */
 export const idParamsSchema = z.object({
@@ -12,8 +13,8 @@ export class QueryField {
         return z.enum(['true', 'false']).transform(v => v === 'true');
     }
 
-    /** Any date string `Date` can parse, parsed to a `Date`; anything else is a 400 rather than an Invalid Date. */
+    /** A calendar date written YYYY-MM-DD, as `SchemaUtil.date()`; anything else is a 400. */
     public static date() {
-        return z.coerce.date();
+        return SchemaUtil.date();
     }
 }

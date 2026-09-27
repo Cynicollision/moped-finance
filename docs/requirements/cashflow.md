@@ -28,7 +28,6 @@ Screen: **Cashflow** (`/cashflow`).
 - **Uncategorized counts as expense regardless of sign (CASH-1.3).** Transactions with no category are all treated as expenses today.
 - **Hidden accounts are counted (CASH-1.2).** Only **Hide from Cashflow** is checked today.
 - **Hidden transactions are counted (CASH-1.2).** They're excluded from the Transactions list (TXN-1.8) but included in Cashflow.
-- **Period boundaries and time zones.** Periods include the next period's first day west of UTC, and the browser and server can disagree about the as-of date east of UTC. `TODO.md` has the fix.
 - **Year list is fixed** to a window of four years around the current one, so older data can't be viewed here (it can via the Transactions filters). The seed data starts in February 2024, so 2027 is offered and empty.
 - **The Category/Group toggle is shared** by the Income and Expenses cards (CASH-1.5); switching it on one card changes the other, which isn't obvious from two separately labelled toggles.
 - **Savings Rate isn't colored** although Total Savings is (CASH-1.4).

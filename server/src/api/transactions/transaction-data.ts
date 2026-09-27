@@ -1,6 +1,7 @@
 import { AnyColumn, eq, and, desc, asc, ilike, sum, gte, lte, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
+import { CalendarDate } from '@shared/core/types';
 import { Transaction } from '@shared/finance/types';
 import { CashflowStream, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
@@ -26,7 +27,7 @@ export interface IFinanceTransactionData {
     search(options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
     retrieveForExport(accountId?: string): Promise<TransactionExport[]>;
     retrieveMerchants(): Promise<string[]>;
-    retrieveCashflowByCategory(startDate: Date, endDate: Date): Promise<CashflowStream[]>;
+    retrieveCashflowByCategory(startDate: CalendarDate, endDate: CalendarDate): Promise<CashflowStream[]>;
     retrieveSingle(id: string): Promise<Transaction | null>;
     insert(transaction: Transaction): Promise<Transaction>;
     /** Inserts all of the transactions or, if any insert fails, none of them. */
@@ -42,7 +43,7 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
         updatedAt: row.updatedAt,
         accountId: row.accountId,
         categoryId: row.categoryId ?? '',
-        date: DateTimeUtil.toISOString(row.date),
+        date: row.date,
         amount: Number(row.amount),
         merchant: row.merchant,
         originalStatement: row.originalStatement ?? '',
@@ -80,7 +81,7 @@ function mapTransactionToRow(transaction: Transaction): typeof transactionSchema
         id: transaction.id,
         accountId: transaction.accountId,
         categoryId: transaction.categoryId || null,
-        date: DateTimeUtil.toDateString(transaction.date),
+        date: transaction.date,
         amount: transaction.amount.toString(),
         merchant: transaction.merchant,
         originalStatement: transaction.originalStatement || null,
@@ -150,11 +151,11 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         }
 
         if (options.startDate) {
-            conditions.push(gte(transactionSchema.date, DateTimeUtil.toDateString(options.startDate)));
+            conditions.push(gte(transactionSchema.date, options.startDate));
         }
 
         if (options.endDate) {
-            conditions.push(lte(transactionSchema.date, DateTimeUtil.toDateString(options.endDate)));
+            conditions.push(lte(transactionSchema.date, options.endDate));
         }
 
         if (!options.includeHidden) {
@@ -223,7 +224,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         return mapRowToTransaction(rows[0]);
     }
 
-    public async retrieveCashflowByCategory(startDate: Date, endDate: Date): Promise<CashflowStream[]> {
+    public async retrieveCashflowByCategory(startDate: CalendarDate, endDate: CalendarDate): Promise<CashflowStream[]> {
         const rows = await this.db
             .select({
                 categoryId: transactionSchema.categoryId,
@@ -232,8 +233,8 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
             .where(and(
-                gte(transactionSchema.date, DateTimeUtil.toDateString(startDate)),
-                lte(transactionSchema.date, DateTimeUtil.toDateString(endDate)),
+                gte(transactionSchema.date, startDate),
+                lte(transactionSchema.date, endDate),
                 eq(accountSchema.hideFromCashflow, false)
             ))
             .groupBy(transactionSchema.categoryId);
@@ -270,7 +271,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
                 merchant: transaction.merchant,
                 categoryId: transaction.categoryId || null,
                 amount: transaction.amount.toString(),
-                date: DateTimeUtil.toDateString(transaction.date),
+                date: transaction.date,
                 originalStatement: transaction.originalStatement || null,
                 notes: transaction.notes || null,
                 isHidden: transaction.isHidden,

@@ -1,4 +1,6 @@
 import { CalendarPeriod } from '@shared/core/enum';
+import { CalendarDate } from '@shared/core/types';
+import { CalendarDateUtil } from '@shared/core/util';
 import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
@@ -73,8 +75,8 @@ export class TransactionController {
         return Result.successDeleted();
     }
 
-    public async getTransactionCashflowByCategory(context: OperationContext, period: CalendarPeriod, asOfDate?: Date): Promise<OperationResult<CashflowStream[]>> {
-        const { startDate, endDate } = DateTimeUtil.getDatesForPeriod(period, asOfDate ?? DateTimeUtil.now());
+    public async getTransactionCashflowByCategory(context: OperationContext, period: CalendarPeriod, asOfDate?: CalendarDate): Promise<OperationResult<CashflowStream[]>> {
+        const { startDate, endDate } = CalendarDateUtil.getPeriod(period, asOfDate ?? DateTimeUtil.today());
         const cashflow = await this.transactionData.retrieveCashflowByCategory(startDate, endDate);
         return Result.success(cashflow);
     }

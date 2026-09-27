@@ -19,10 +19,7 @@ A series of PRs, in this order, that gives the client consistent, tested pattern
 - Bank-connection UI is removed until INST-2 is redesigned. No disabled "coming soon" controls.
 - Each PR adds specs for what it touches (see Testing).
 
-1. [ ] **Calendar dates as strings.**
-   - Dates are off by a day outside UTC. The API returns `date` columns as UTC-midnight timestamps (`mapRowToTransaction` in `transaction-data.ts` uses `DateTimeUtil.toISOString`; `BalanceHistory.date` and `TotalValueHistory.date` are `Date`s), so the client's date pipe and `new Date(...)` in `transaction-form.component.ts` show the previous day in US time zones. The client also sends dates with `toISOString()` (`transactions.component.ts` filters, `finance.service.ts` `fetchTotalValueHistory`, `cashflow.component.ts`), which gives the previous day east of UTC, and `fetchAccountBalanceHistory` sends `Date.toString()`. Make calendar dates plain `YYYY-MM-DD` strings in `shared/` types and both directions, and format them in the client without converting through UTC.
-   - Cashflow periods include the next period's first day west of UTC (APP-5.6). `DateTimeUtil.getDatesForPeriod` sets the boundaries with local-time setters (`setDate`, `setHours(23, 59, ...)`), then `retrieveCashflowByCategory` formats them with `DateTimeUtil.toDateString`, which uses UTC. With `TZ=America/New_York`, April is `2026-04-01`..`2026-05-01`, so a May 1 mortgage payment counts in April too (seen with the seed data). Build the period as calendar date strings, and add a spec that runs under a non-UTC `TZ`.
-2. [ ] **App shell and navigation.**
+1. [ ] **App shell and navigation.**
    - The navigation above, with routes renamed and redirects from the old ones (`/summary`, `/institutions/...`, `/categories`).
    - One page header component on every screen: title, breadcrumbs (a back arrow on phones), and a slot for a primary action and an overflow menu. It replaces each screen's own `desktop-page-title` and `hide-on-mobile` markup and the shell's handset title, so the title stops moving around (APP-1.3, APP-1.8).
    - Tab titles as "Dashboard · Moped Finance" through a `TitleStrategy`, fixing "Dashboard" on the summary and the flash of the bare product name (APP-1.9).
@@ -30,20 +27,20 @@ A series of PRs, in this order, that gives the client consistent, tested pattern
    - The product name on Login and Register, and on Register the explanation that this creates the instance's only account, which owns all its data, and that Register won't be available again afterwards (AUTH-2.8), above the form in `register.component.html`.
    - The page header also replaces the stopgap title styles: `.header-section` and `.desktop-page-title` in `styles.scss`, and the breadcrumb rules copied into each screen's SCSS (`account-details`, `add-account`, `edit-account`, `balance-import`, `import-transactions`, and the institution and transaction pages). A long `desktop-page-title` overlaps itself when it wraps (Add Account at phone width).
    - Update APP-1, DASH, INST, SET-1.1, ACCT-1.3 and the CAT screen paths.
-3. [ ] **Feedback and dialogs.**
+2. [ ] **Feedback and dialogs.**
    - Replace the global loading overlay on every request (APP-2.1) with loading states or skeletons per view, so screens don't flash empty or $0.00 values that look real. Use Angular's `resource()` (or a small wrapper with the same shape) over `FinanceService`, and take loading out of `ApiService`.
    - Consistent success feedback (a snackbar) for create, save and delete (APP known gaps).
    - One pattern for create and edit: full pages for records with many fields or their own URL (account, transaction, imports), dialogs for small forms (institution, category, group, budget stream), full-screen on phones. `ModalService` (fixed 500px, `disableClose: true`) should let Esc and backdrop clicks close unless the form has unsaved changes, and then ask before discarding them. Add, view and edit institution become one dialog.
    - The category, category group and budget stream dialogs put their `modal-actions` buttons inside `<form>`, so `ModalLayoutComponent` doesn't project them into its action bar and they sit in the dialog content (`category-form-modal.component.html`, `category-group-form-modal.component.html`, `budget-form-modal.component.html`).
    - `color="warn"` does nothing under Material 3 but is still used: the Danger Zone Delete buttons (`edit-account`, `edit-institution`), Budget's Add Expense button and Delete menu item, and the import screens' warning icons. Use `danger-button` or `--color-negative`.
    - The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8), and import breadcrumbs don't follow where the screen was opened from (APP known gaps).
-4. [ ] **Lists and phones.**
+3. [ ] **Lists and phones.**
    - A shared responsive list to replace `mat-table` in Transactions, Budget, Cashflow and Account Details: columns when the page area is wide; name and amount with a second line for date and category when it's narrow, instead of a table that scrolls sideways. Sortable headers when wide, a sort menu when narrow.
    - A shared money display that applies APP-6.1 and APP-6.2 ("+" and green for money in, no red for expected negatives).
    - On phones, collapse the Transactions filters into a bottom sheet.
    - The Cashflow year list is a fixed four-year window; derive it from the data (CASH known gaps), for example from the earliest transaction.
-5. [ ] **Budget redesign**, with BUD-1.2 and BUD-1.10: a side panel (desktop) or full-screen dialog (phone) for adding and editing streams, an empty state (BUD known gaps), the Left over figure, and a layout that works on phones. Leave room for the 12-month averages (BUD-1.8, BUD-1.9), which need a server endpoint.
-6. [ ] **Charts.** Rewrite `ChartComponent` on Chart.js: update the chart in place instead of recreating it in a `setTimeout`, resize with its container, take colours from the theme tokens instead of hard-coded dark defaults (`Chart.defaults`), and make y-axis ticks distinct (ACCT-2.12). Offer the 5- and 10-year timeframes (DASH-1.2, ACCT-2.4).
+4. [ ] **Budget redesign**, with BUD-1.2 and BUD-1.10: a side panel (desktop) or full-screen dialog (phone) for adding and editing streams, an empty state (BUD known gaps), the Left over figure, and a layout that works on phones. Leave room for the 12-month averages (BUD-1.8, BUD-1.9), which need a server endpoint.
+5. [ ] **Charts.** Rewrite `ChartComponent` on Chart.js: update the chart in place instead of recreating it in a `setTimeout`, resize with its container, take colours from the theme tokens instead of hard-coded dark defaults (`Chart.defaults`), and make y-axis ticks distinct (ACCT-2.12). Offer the 5- and 10-year timeframes (DASH-1.2, ACCT-2.4).
 
 ---
 

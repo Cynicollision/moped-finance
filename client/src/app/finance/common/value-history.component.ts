@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { HistoryTimeframe } from '@shared/core/enum';
+import { CalendarDateUtil } from '@shared/core/util';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ChartComponent, ChartConfiguration } from './../../core/chart.component';
@@ -70,18 +71,15 @@ export class FinanceValueHistoryComponent {
         }
 
         // Sort ascending by date for the chart (left to right)
-        const ascendingData = [...data].sort((a, b) =>
-            new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
+        const ascendingData = [...data].sort((a, b) => a.date.localeCompare(b.date));
 
         const type = this.selectedChartType();
         const label = this.selectedChartLabel();
 
         // Determine label format based on timeframe duration
-        const firstDate = new Date(ascendingData[0].date);
-        const lastDate = new Date(ascendingData[ascendingData.length - 1].date);
-        const diffDays = (lastDate.getTime() - firstDate.getTime()) / (1000 * 3600 * 24);
-        const isLongTimeframe = diffDays > 180; // More than 6 months
+        const firstDate = ascendingData[0].date;
+        const lastDate = ascendingData[ascendingData.length - 1].date;
+        const isLongTimeframe = CalendarDateUtil.addMonths(firstDate, 6) < lastDate;
 
         // Use Intl.DateTimeFormat for clean "Jun 12" displays
         const shortFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
@@ -91,7 +89,7 @@ export class FinanceValueHistoryComponent {
             type: 'line',
             data: {
                 labels: ascendingData.map(d => {
-                    const date = new Date(d.date);
+                    const date = CalendarDateUtil.toDate(d.date);
                     if (isLongTimeframe) {
                         return `${shortMonthFormat.format(date)} '${date.getFullYear().toString().slice(-2)}`;
                     }
@@ -175,7 +173,7 @@ export class FinanceValueHistoryComponent {
         }
 
         // historyData comes sorted from the API by default, but double check first/last
-        const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const sortedData = [...data].sort((a, b) => a.date.localeCompare(b.date));
         const startValue = sortedData[0].amount;
         const endValue = sortedData[sortedData.length - 1].amount;
 

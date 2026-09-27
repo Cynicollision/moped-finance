@@ -12,7 +12,6 @@ import { TransactionCsv } from '@server/api/transactions/transaction-csv';
 import { FinanceTransactionData } from '@server/api/transactions/transaction-data';
 import { CsvFile, CsvRow, CsvValue, CsvValueResult } from '@server/csv';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
-import { DateTimeUtil } from '@server/utility';
 
 // Imports come from the data files rather than the domain barrels, which load the routes and auth middleware.
 // Seeds the synthetic sample data in server/seed-data/ (see its README). Records are linked by name, and
@@ -142,7 +141,7 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         const balancesFile = 'balance-history.csv';
         const balances = readRows(balancesFile, ['Date', 'AccountName', 'Balance']).map(row => FinanceEntityFactory.createBalanceHistory({
             accountId: idOf(accountIds, row.values['AccountName'], balancesFile, row),
-            date: DateTimeUtil.parse(valueOf(balancesFile, row, CsvValue.date('Date', row.values['Date']))),
+            date: valueOf(balancesFile, row, CsvValue.date('Date', row.values['Date'])),
             balance: valueOf(balancesFile, row, CsvValue.amount('Balance', row.values['Balance'])),
         }));
         await new FinanceBalanceHistoryData(dbClient).insertBulk(balances);

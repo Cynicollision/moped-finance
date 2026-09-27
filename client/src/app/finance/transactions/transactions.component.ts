@@ -16,6 +16,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { startWith, map } from 'rxjs';
 import { SortDirection } from '@shared/core/enum';
+import { CalendarDateUtil } from '@shared/core/util';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction, Category, Account, CategoryGroup } from '@shared/finance/types';
@@ -156,17 +157,11 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         if (group) {
             patch.group = group;
         }
-        if (startDateStr) {
-            const date = new Date(startDateStr);
-            if (!isNaN(date.getTime())) {
-                patch.startDate = date;
-            }
+        if (startDateStr && CalendarDateUtil.isValid(startDateStr)) {
+            patch.startDate = CalendarDateUtil.toDate(startDateStr);
         }
-        if (endDateStr) {
-            const date = new Date(endDateStr);
-            if (!isNaN(date.getTime())) {
-                patch.endDate = date;
-            }
+        if (endDateStr && CalendarDateUtil.isValid(endDateStr)) {
+            patch.endDate = CalendarDateUtil.toDate(endDateStr);
         }
 
         if (Object.keys(patch).length > 0) {
@@ -236,8 +231,8 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             offset: this.transactions().length,
             minAmount: formValues.minAmount ?? undefined,
             maxAmount: formValues.maxAmount ?? undefined,
-            startDate: formValues.startDate?.toISOString(),
-            endDate: formValues.endDate?.toISOString(),
+            startDate: formValues.startDate ? CalendarDateUtil.fromDate(formValues.startDate) : undefined,
+            endDate: formValues.endDate ? CalendarDateUtil.fromDate(formValues.endDate) : undefined,
             filters: filters.length > 0 ? filters : undefined,
             sortKey,
             sortDirection

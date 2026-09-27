@@ -32,10 +32,13 @@ module.exports = defineConfig([
             '@angular-eslint/no-output-native': 'error',
             '@typescript-eslint/no-explicit-any': 'error',
 
-            // docs/conventions.md: "today" comes from DateProviderService.
+            // docs/conventions.md: "today" comes from DateProviderService, and calendar dates are YYYY-MM-DD strings.
             'no-restricted-syntax': ['error', {
                 selector: "NewExpression[callee.name='Date'][arguments.length=0]",
                 message: 'Get "today" from DateProviderService, not new Date().'
+            }, {
+                selector: "CallExpression[callee.property.name='toISOString']",
+                message: 'toISOString() gives the UTC day, which is the previous day east of UTC. Use CalendarDateUtil.fromDate for a calendar date; timestamps go through JSON as they are.'
             }]
         }
     },

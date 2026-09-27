@@ -1,5 +1,6 @@
 import { AnyColumn, SQL, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { CalendarDateUtil } from '@shared/core/util';
 
 export class SchemaUtil {
 
@@ -28,8 +29,11 @@ export class SchemaUtil {
         return text.nullish().transform(v => v ?? '');
     }
 
-    /** Request schema for a `date` column: any string `Date` can parse, such as YYYY-MM-DD or an ISO timestamp. */
+    /**
+     * Request schema for a calendar date (a `date` column, or a date in a query string): a real date written YYYY-MM-DD.
+     * Timestamps are refused, because which day a timestamp falls on depends on the time zone.
+     */
     public static date() {
-        return z.string().refine(v => !Number.isNaN(Date.parse(v)), 'Invalid date');
+        return z.string().refine(v => CalendarDateUtil.isValid(v), 'Expected a date as YYYY-MM-DD');
     }
 }

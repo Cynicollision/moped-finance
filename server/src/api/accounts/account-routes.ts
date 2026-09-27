@@ -39,7 +39,7 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
             return controller.getTotalValueHistory(context, {
                 type: query.type,
                 timeframe: query.timeframe,
-                asOfDate: query.asOfDate ?? DateTimeUtil.now()
+                asOfDate: query.asOfDate ?? DateTimeUtil.today()
             });
         });
     });
@@ -87,7 +87,7 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
         handler.execute(req, res, op, { params: idParamsSchema, query: balanceHistoryQuerySchema }, (context, { params, query }) => {
             return controller.getAccountBalanceHistory(context, params.id, {
                 timeframe: query.timeframe,
-                asOfDate: query.asOfDate ?? DateTimeUtil.now()
+                asOfDate: query.asOfDate ?? DateTimeUtil.today()
             });
         });
     });

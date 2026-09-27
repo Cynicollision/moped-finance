@@ -60,7 +60,7 @@ export class FinanceAccountDetailsComponent implements OnInit {
 
     async updateChartData(accountId: string) {
         const timeframe = this.selectedTimeframe();
-        const asOfDate = this.dateProvider.now();
+        const asOfDate = this.dateProvider.today();
 
         const options: GetAccountBalanceHistoryOptions = {
             asOfDate,

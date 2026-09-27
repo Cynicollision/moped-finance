@@ -1,7 +1,9 @@
+import { CalendarDate } from './../../core/types';
+
 export type BalanceImportResult = {
-    /** Earliest and latest dates in the file (YYYY-MM-DD); the import replaces existing balances in this range. */
-    startDate: string;
-    endDate: string;
+    /** Earliest and latest dates in the file; the import replaces existing balances in this range. */
+    startDate: CalendarDate;
+    endDate: CalendarDate;
     /** Rows created, or that would be created on a dry run. */
     createdCount: number;
     /** One message per invalid row, such as "Row 3: Duplicate date 2026-06-06". */
