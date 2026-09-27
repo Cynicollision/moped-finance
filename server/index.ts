@@ -1,29 +1,15 @@
 import express, { Request, Response } from 'express';
-import session from 'express-session';
 import { Server } from 'http';
 import path from 'path';
 import { buildFinanceRouter } from '@server/api';
-import { buildAuthRouter, buildAuthMiddleware, AuthController, UserData } from '@server/auth';
+import { buildAuthRouter, buildAuthMiddleware, AuthController, SecretData, SessionUtil, UserData } from '@server/auth';
 import { DatabaseClient, DatabaseClientConfig } from '@server/data';
 import { buildHealthRouter } from '@server/health';
 import { AppLogger } from '@server/logging';
-import { buildErrorHandler } from '@server/routing';
+import { buildErrorHandler, buildSecurityHeaders } from '@server/routing';
 
-const app = express();
-app.use(express.json());
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'dev-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: process.env.COOKIE_SECURE === 'true',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-}));
-
-if (process.env.TRUST_FIRST_PROXY === 'true') {
-    app.set('trust proxy', 1);
-}
+// True when users reach the app over HTTPS, through a reverse proxy. Off by default: plain HTTP on the LAN.
+const useHttps = process.env.USE_HTTPS === 'true';
 
 // Core services
 const dbConfig: DatabaseClientConfig = {
@@ -37,35 +23,55 @@ const dbConfig: DatabaseClientConfig = {
 const dbClient = DatabaseClient.fromConfig(dbConfig);
 const logger = AppLogger.fromEnvironment(dbClient);
 
-// Health check (unauthenticated; used by Docker)
 let isShuttingDown = false;
-app.use('/health', buildHealthRouter({
-    pingDatabase: () => dbClient.ping(),
-    isShuttingDown: () => isShuttingDown
-}));
 
-// Auth module
-const userData = new UserData(dbClient);
-const authController = new AuthController(userData);
-const authMiddleware = buildAuthMiddleware(authController);
-const authRoutes = buildAuthRouter(logger, authController, authMiddleware);
-app.use('/auth', authRoutes);
+function buildApp(sessionSecret: string): express.Express {
+    const app = express();
 
-// API module
-const apiRouter = buildFinanceRouter(logger, dbClient, authMiddleware);
-app.use('/api', apiRouter);
-app.all('/api/*', (req: Request, res: Response) => {
-    res.status(404).send(`${req.originalUrl} not found.`);
-});
+    if (process.env.TRUST_FIRST_PROXY === 'true') {
+        app.set('trust proxy', 1);
+    }
 
-// Frontend
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('*', (_req: Request, res: Response) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+    app.use(buildSecurityHeaders(useHttps));
 
-// Errors passed to next(): body parsing, uploads. Must be registered last.
-app.use(buildErrorHandler(logger));
+    // Health check (unauthenticated; used by Docker)
+    app.use('/health', buildHealthRouter({
+        pingDatabase: () => dbClient.ping(),
+        isShuttingDown: () => isShuttingDown
+    }));
+
+    app.use(express.json());
+    app.use(SessionUtil.buildMiddleware({
+        secret: sessionSecret,
+        secureCookie: useHttps,
+        store: SessionUtil.createStore(dbClient)
+    }));
+
+    // Auth module
+    const userData = new UserData(dbClient);
+    const authController = new AuthController(userData);
+    const authMiddleware = buildAuthMiddleware(authController);
+    const authRoutes = buildAuthRouter(logger, authController, authMiddleware, SessionUtil.cookieOptions(useHttps));
+    app.use('/auth', authRoutes);
+
+    // API module
+    const apiRouter = buildFinanceRouter(logger, dbClient, authMiddleware);
+    app.use('/api', apiRouter);
+    app.all('/api/*', (req: Request, res: Response) => {
+        res.status(404).send(`${req.originalUrl} not found.`);
+    });
+
+    // Frontend
+    app.use(express.static(path.join(__dirname, 'public')));
+    app.get('*', (_req: Request, res: Response) => {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
+
+    // Errors passed to next(): body parsing, uploads. Must be registered last.
+    app.use(buildErrorHandler(logger));
+
+    return app;
+}
 
 const PORT = process.env.PORT || 3000;
 let server: Server | undefined;
@@ -88,9 +94,25 @@ async function start(): Promise<void> {
         process.exit(1);
     }
 
-    if (!isShuttingDown) {
-        server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    if (isShuttingDown) {
+        return;
     }
+
+    // SESSION_SECRET if set, otherwise one generated on first start and kept in the database, so sessions
+    // survive restarts without any configuration (AUTH-3.7).
+    let sessionSecret = process.env.SESSION_SECRET;
+    if (!sessionSecret) {
+        try {
+            sessionSecret = await new SecretData(dbClient).retrieveOrCreate('session');
+        }
+        catch (error: any) {
+            console.error(`Could not read or create the session secret: ${error?.message ?? error}`);
+            await dbClient.close().catch(() => undefined);
+            process.exit(1);
+        }
+    }
+
+    server = buildApp(sessionSecret).listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
 // Graceful shutdown: on SIGTERM (docker stop) or SIGINT (Ctrl+C), stop accepting connections,

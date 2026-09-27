@@ -92,7 +92,6 @@ jobs:
         run: >-
           docker run -d --name app --network host
           -e PGHOST=127.0.0.1 -e PGUSER=moped -e PGPASSWORD=moped -e PGDATABASE=moped
-          -e SESSION_SECRET=ci-smoke-test
           moped-finance:ci
 
       - name: Wait for /health
@@ -109,6 +108,9 @@ jobs:
 
       - name: Check / serves index.html
         run: curl -fsS http://127.0.0.1:3000/ | grep -q '<app-root'
+
+      - name: Check security headers are sent
+        run: curl -fsSI http://127.0.0.1:3000/ | grep -qi '^content-security-policy:'
 
       - name: Container logs
         if: always()

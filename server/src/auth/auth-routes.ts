@@ -1,11 +1,13 @@
-import { Router } from 'express';
+import { CookieOptions, Router } from 'express';
 import { z } from 'zod';
 import { IAppLogger } from '@server/logging';
 import { OperationDefinition, OperationHandler, OperationResult, Result } from '@server/routing';
 import { AuthController } from './auth-controller';
 import { AuthMiddleware } from './auth-middleware';
+import { SESSION_COOKIE_NAME } from './session';
 
-export function buildAuthRouter(logger: IAppLogger, controller: AuthController, middleware: AuthMiddleware) {
+/** `sessionCookie` is the session cookie's options (`SessionUtil.cookieOptions`), which logout clears it with. */
+export function buildAuthRouter(logger: IAppLogger, controller: AuthController, middleware: AuthMiddleware, sessionCookie: CookieOptions) {
     const domain = 'Auth';
     const handler = new OperationHandler(logger);
     const router = Router();
@@ -93,12 +95,8 @@ export function buildAuthRouter(logger: IAppLogger, controller: AuthController, 
                         return resolve(Result.internalError('Could not log out.'));
                     }
 
-                    // Explicitly clear the cookie with matching options
-                    res.clearCookie('connect.sid', {
-                        path: '/',
-                        secure: process.env.NODE_ENV === 'production',
-                        httpOnly: true
-                    });
+                    // The browser only drops the cookie if these match the ones it was set with
+                    res.clearCookie(SESSION_COOKIE_NAME, sessionCookie);
 
                     resolve(Result.success());
                 });

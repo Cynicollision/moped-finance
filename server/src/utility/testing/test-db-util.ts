@@ -55,6 +55,6 @@ export class TestDatabaseUtil {
     }
 
     public static async clearCoreData(pglite: PGlite): Promise<void> {
-        await pglite.exec('DELETE FROM core.users;');
+        await pglite.exec('DELETE FROM core.users; DELETE FROM core.sessions; DELETE FROM core.secrets;');
     }
 }

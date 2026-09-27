@@ -46,13 +46,13 @@ Each finance domain (`accounts`, `budget`, `categories`, `institutions`, `transa
 
 `OperationHandler` logs the operation, maps the result's `OperationStatus` to an HTTP status code, sends `data` or `{ code, message, details? }`, and turns thrown errors into a 400 (constraint violations, via `DatabaseErrorUtil`) or a generic 500. Errors raised before an operation runs (malformed JSON, rejected uploads) reach `buildErrorHandler` (`src/routing/error-handler.ts`), registered last in `index.ts`, which answers in the same `{ code, message }` shape. Uploads go through `singleFileUpload` (`src/routing/upload.ts`): one file, at most 5 MB, held in memory.
 
-Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>`, behind `resolveUser` + `requireAuth`. Auth is mounted separately at `/auth` (`login`, `register`, `registration`, `logout`, `me`, `password`) and uses a cookie session (`express-session`, in-memory store for now).
+Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>`, behind `resolveUser` + `requireAuth`. Auth is mounted separately at `/auth` (`login`, `register`, `registration`, `logout`, `me`, `password`) and uses a cookie session (`express-session`, stored in `core.sessions` by `connect-pg-simple`; see `src/auth/session.ts`). `helmet` sets security headers on every response (`src/routing/security-headers.ts`).
 
 ## Database
 
 One Postgres 16 database with two schemas:
 
-- `core`: `users`, `logs`
+- `core`: `users`, `logs`, `sessions`, `secrets` (the generated session secret)
 - `finance`: `institutions`, `accounts`, `balance_history`, `category_groups`, `categories`, `transactions`, `budget_streams`
 
 Each instance has one owner (AUTH-7). `core.users` exists for login, and registration closes after the first user. Finance tables have no `user_id`: every signed-in request sees all finance data. `core.logs.user_id` records who performed an operation.
