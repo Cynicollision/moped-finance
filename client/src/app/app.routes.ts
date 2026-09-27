@@ -20,6 +20,7 @@ import { EditTransactionComponent } from './finance/transactions/edit-transactio
 import { FinanceTransactionsComponent } from './finance/transactions/transactions.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
+import { SettingsComponent } from './settings/settings.component';
 
 export const routes: Routes = [
     {
@@ -52,7 +53,8 @@ export const routes: Routes = [
             { path: 'categories', component: FinanceCategoriesComponent, title: 'Categories' },
             { path: 'institutions/:id/add-account', component: FinanceAddAccountComponent, title: 'Add Account' },
             { path: 'accounts/:accountId/edit', component: FinanceEditAccountComponent, title: 'Edit Account' },
-            { path: 'accounts/:accountId/import-balances', component: BalanceImportComponent, title: 'Import Balance History' }
+            { path: 'accounts/:accountId/import-balances', component: BalanceImportComponent, title: 'Import Balance History' },
+            { path: 'settings', component: SettingsComponent, title: 'Settings' }
         ]
     },
     {

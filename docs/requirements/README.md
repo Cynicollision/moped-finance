@@ -9,7 +9,8 @@ The first set was written by reading the running app and its code, so domains no
 | Prefix | Domain | File |
 |---|---|---|
 | `APP` | Application shell, navigation, feedback, demo mode | [app.md](app.md) |
-| `AUTH` | Registration, login, sessions, single owner | [auth.md](auth.md) |
+| `AUTH` | Registration, login, sessions, single owner, API tokens | [auth.md](auth.md) |
+| `SET` | The Settings screen, profile, appearance | [settings.md](settings.md) |
 | `INST` | Institutions, manual and connected, and the Accounts screen that lists them | [institutions.md](institutions.md) |
 | `ACCT` | Accounts, balances, balance-history import/export | [accounts.md](accounts.md) |
 | `DASH` | Summary, net worth and value-history chart | [dashboard.md](dashboard.md) |

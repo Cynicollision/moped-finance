@@ -28,6 +28,7 @@ Nothing right now.
 - [ ] The app runs without zone.js, but component state is a mix of signals and plain fields, with manual `cdr.detectChanges()` calls in budget, cashflow, categories and transaction-form. Standardize on signals (with `OnPush`) so updates render without manual change detection.
 - [ ] Replace the global loading overlay on every request (APP-2.1) with loading states or skeletons per view, so screens don't flash empty or $0.00 values that look real.
 - [ ] Consistent success feedback (a snackbar) for create, save and delete (APP known gaps).
+- [ ] Confirmation dialogs don't show destructive actions in red (APP-2.4): `ConfirmModalComponent` sets `color="warn"` on its confirm button when `isWarn` is true, which does nothing under Material 3, so **Delete** and **Revoke** look like any other button. Style it with the error color (e.g. `--mat-sys-error`).
 - [ ] Move the ~80 inline `style="..."` attributes in templates (e.g. `app.html`) into component SCSS. The two category dialog components, `chart.component.ts` and `value-period-change.component.ts` also use inline templates or styles, against `docs/conventions.md`.
 - [ ] The `@client/*` path alias in `client/tsconfig.json` is unused; use it or remove it.
 - [ ] `api.service.ts` passes `withCredentials: true` on every request; it's unneeded now that requests are same-origin (relative `apiUrl` plus the dev-server proxy).
@@ -42,9 +43,6 @@ Nothing right now.
 ### Data & deployment
 - [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
-
-### Security & auth
-- [ ] Replace HTTP Basic auth (AUTH-3.5) with personal API tokens, for scripts, manual testing and scheduled bank sync. Decided 2026-09-27. Basic sends the password itself on every request (irrevocable, reusable elsewhere, a bcrypt compare per call), and `resolveUser` in `auth-middleware.ts` splits the credentials on every `:`, so a password containing one fails. Plan: Settings gets an **API Tokens** section (name, optional expiry, Read-only or Read & write; the token is shown once, stored as a SHA-256 hash, and can be revoked; list shows last used). Requests send `Authorization: Bearer mf_…` to the existing `/api` routes; tokens can't use `/auth` (password, tokens, sign-in). Write the requirements as AUTH-11, retire AUTH-3.5, and reword AUTH-10.2 for tokens.
 
 ### Correctness
 - [ ] Cashflow periods include the next period's first day west of UTC (APP-5.6). `DateTimeUtil.getDatesForPeriod` sets the boundaries with local-time setters (`setDate`, `setHours(23, 59, …)`), then `retrieveCashflowByCategory` formats them with `DateTimeUtil.toDateString`, which uses UTC. With `TZ=America/New_York`, April is `2026-04-01`..`2026-05-01`, so a May 1 mortgage payment counts in April too (seen with the seed data). Build the period as calendar date strings, and add a spec that runs under a non-UTC `TZ`.
@@ -66,7 +64,7 @@ Nothing right now.
 ### Automated bank sync
 Manual entry and import/export come first. Constraints for when this gets picked up:
 - **No paid subscription.** It must fit a single user on a free tier (or use a free alternative). Check the current terms before building anything.
-- **Polling only.** The host isn't reachable from the internet, so no webhooks. Sync on a schedule and/or on demand.
+- **Polling only.** The host isn't reachable from the internet, so no webhooks. Sync on a schedule and/or on demand. Scheduling: a built-in timer (no setup for self-hosters) as the main schedule, with the sync endpoints also callable by an external scheduler using a Read & write API token (AUTH-11).
 - [ ] Write `docs/integrations/bank-sync.md` before coding: provider choice and cost, link flow, encrypted storage of access tokens, cursor-based incremental sync, mapping provider items/accounts to institutions/accounts, de-duplicating against CSV imports, and sandbox → production.
 - [ ] Implement behind the existing sync endpoints.
 

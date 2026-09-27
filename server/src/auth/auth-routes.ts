@@ -70,7 +70,7 @@ export function buildAuthRouter(logger: IAppLogger, controller: AuthController, 
         newPassword: z.string().min(1)
     });
 
-    router.put('/password', middleware.requireAuth, (req, res) => {
+    router.put('/password', middleware.requireSession, (req, res) => {
         const op: OperationDefinition = { domain, operation: 'changePassword' };
         handler.execute(req, res, op, { body: changePasswordSchema }, async (context, { body }) => {
             const { oldPassword, newPassword } = body;
@@ -105,7 +105,7 @@ export function buildAuthRouter(logger: IAppLogger, controller: AuthController, 
     });
 
     // GET /me - Get Current User
-    router.get('/me', middleware.resolveUser, (req, res) => {
+    router.get('/me', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'me' };
         handler.execute(req, res, op, async (context) => {
             return Result.success(context.req.session.user);

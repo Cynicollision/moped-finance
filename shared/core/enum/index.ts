@@ -1,3 +1,4 @@
+export { ApiTokenAccess } from './api-token-access';
 export { CalendarPeriod } from './calendar-period';
 export { HistoryTimeframe } from './history-timeframe';
 export { LogLevel } from './log-level';

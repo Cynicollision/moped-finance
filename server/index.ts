@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { Server } from 'http';
 import path from 'path';
 import { buildFinanceRouter } from '@server/api';
-import { buildAuthRouter, buildAuthMiddleware, AuthController, SecretData, SessionUtil, UserData } from '@server/auth';
+import { ApiTokenController, ApiTokenData, buildApiTokenRouter, buildAuthRouter, buildAuthMiddleware, AuthController, SecretData, SessionUtil, UserData } from '@server/auth';
 import { DatabaseClient, DatabaseClientConfig } from '@server/data';
 import { buildHealthRouter } from '@server/health';
 import { AppLogger } from '@server/logging';
@@ -50,9 +50,10 @@ function buildApp(sessionSecret: string): express.Express {
     // Auth module
     const userData = new UserData(dbClient);
     const authController = new AuthController(userData);
-    const authMiddleware = buildAuthMiddleware(authController);
-    const authRoutes = buildAuthRouter(logger, authController, authMiddleware, SessionUtil.cookieOptions(useHttps));
-    app.use('/auth', authRoutes);
+    const apiTokenController = new ApiTokenController(new ApiTokenData(dbClient));
+    const authMiddleware = buildAuthMiddleware(apiTokenController);
+    app.use('/auth/tokens', buildApiTokenRouter(logger, apiTokenController, authMiddleware));
+    app.use('/auth', buildAuthRouter(logger, authController, authMiddleware, SessionUtil.cookieOptions(useHttps)));
 
     // API module
     const apiRouter = buildFinanceRouter(logger, dbClient, authMiddleware);

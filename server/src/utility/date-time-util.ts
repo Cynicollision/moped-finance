@@ -14,6 +14,11 @@ export class DateTimeUtil {
         return new Date(dateInput);
     }
 
+    /** The instant `milliseconds` after `date` (before it, if negative). For durations, not calendar days. */
+    public static addMilliseconds(date: Date, milliseconds: number): Date {
+        return new Date(date.getTime() + milliseconds);
+    }
+
     public static toDateString(dateInput: Date | string): string {
         return this.parse(dateInput).toISOString().split('T')[0];
     }

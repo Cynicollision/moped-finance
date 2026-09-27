@@ -1,0 +1,53 @@
+<app-modal-layout title="New API Token" [showClose]="false">
+    @if (createdToken(); as token) {
+    <p class="warning">
+        <mat-icon>warning</mat-icon>
+        Copy this token now. You won't be able to see it again.
+    </p>
+    <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Token</mat-label>
+        <input matInput #tokenInput readonly [value]="token" (focus)="tokenInput.select()">
+    </mat-form-field>
+    }
+    @else {
+    <form [formGroup]="form" (ngSubmit)="create()" id="new-token-form" class="token-form">
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" maxlength="100" placeholder="e.g. Nightly bank sync">
+        </mat-form-field>
+
+        <label class="field-label" id="access-label">Access</label>
+        <mat-radio-group formControlName="access" aria-labelledby="access-label" class="access-options">
+            @for (option of accessOptions; track option.value) {
+            <mat-radio-button [value]="option.value">{{ option.label }}</mat-radio-button>
+            }
+        </mat-radio-group>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Expiration</mat-label>
+            <mat-select formControlName="expiresInDays">
+                @for (option of expirationOptions; track option.label) {
+                <mat-option [value]="option.days">{{ option.label }}</mat-option>
+                }
+            </mat-select>
+        </mat-form-field>
+    </form>
+    }
+
+    <div modal-actions>
+        @if (createdToken()) {
+        <button mat-stroked-button type="button" (click)="copy()">
+            <mat-icon>content_copy</mat-icon>
+            Copy
+        </button>
+        <button mat-flat-button color="primary" type="button" (click)="close()">Done</button>
+        }
+        @else {
+        <button mat-button type="button" (click)="close()">Cancel</button>
+        <button mat-flat-button color="primary" type="submit" form="new-token-form"
+            [disabled]="!form.controls.name.value.trim() || isSaving()">
+            Create
+        </button>
+        }
+    </div>
+</app-modal-layout>
