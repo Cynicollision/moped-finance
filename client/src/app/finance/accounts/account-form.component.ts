@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, input, output } from '@angular/core';
 import { FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,10 +23,10 @@ import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum
     styleUrl: './account-form.component.scss'
 })
 export class AccountFormComponent implements OnInit, OnChanges {
-    @Input() account: Account | null = null;
-    @Input() mode: 'create' | 'edit' = 'create';
-    @Output() save = new EventEmitter<Partial<Account>>();
-    @Output() cancel = new EventEmitter<void>();
+    readonly account = input<Account | null>(null);
+    readonly mode = input<'create' | 'edit'>('create');
+    readonly save = output<Partial<Account>>();
+    readonly cancel = output<void>();
 
     categories = Object.values(AccountCategory);
     groups: AccountGroup[] = [];
@@ -59,23 +59,24 @@ export class AccountFormComponent implements OnInit, OnChanges {
     }
 
     private updateFormState() {
-        if (this.account) {
-            this.updateAvailableGroups(this.account.category);
-            this.updateAvailableTypes(this.account.group);
+        const account = this.account();
+        if (account) {
+            this.updateAvailableGroups(account.category);
+            this.updateAvailableTypes(account.group);
 
             this.accountForm.patchValue({
-                name: this.account.name,
-                category: this.account.category,
-                group: this.account.group,
-                type: this.account.type ?? undefined,
-                isHidden: this.account.isHidden,
-                isManual: this.account.isManual,
-                isRetirement: this.account.isRetirement,
-                hideFromCashflow: this.account.hideFromCashflow,
-                balance: this.account.balance
+                name: account.name,
+                category: account.category,
+                group: account.group,
+                type: account.type ?? undefined,
+                isHidden: account.isHidden,
+                isManual: account.isManual,
+                isRetirement: account.isRetirement,
+                hideFromCashflow: account.hideFromCashflow,
+                balance: account.balance
             }, { emitEvent: false });
 
-            if (this.account.isManual) {
+            if (account.isManual) {
                 this.accountForm.controls.balance.enable({ emitEvent: false });
             } else {
                 this.accountForm.controls.balance.disable({ emitEvent: false });
@@ -93,8 +94,9 @@ export class AccountFormComponent implements OnInit, OnChanges {
                 balanceControl.enable();
             } else {
                 balanceControl.disable();
-                if (this.account) {
-                    balanceControl.setValue(this.account.balance || 0);
+                const account = this.account();
+                if (account) {
+                    balanceControl.setValue(account.balance || 0);
                 } else {
                     balanceControl.setValue(0);
                 }

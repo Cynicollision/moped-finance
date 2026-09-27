@@ -7,7 +7,7 @@
             @if (chartTypeOptions.length > 1) {
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>View Type</mat-label>
-                <mat-select [value]="selectedChartType" (selectionChange)="onChartTypeChange($event.value)">
+                <mat-select [value]="selectedChartType()" (selectionChange)="onChartTypeChange($event.value)">
                     @for (option of chartTypeOptions; track option.value) {
                     <mat-option [value]="option.value">{{ option.label }}</mat-option>
                     }
@@ -18,8 +18,8 @@
             <!-- Timeframe Selector -->
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>Timeframe</mat-label>
-                <mat-select [value]="selectedTimeframe" (selectionChange)="onTimeframeChange($event.value)">
-                    @for (option of timeframeOptions; track option.value) {
+                <mat-select [value]="selectedTimeframe()" (selectionChange)="onTimeframeChange($event.value)">
+                    @for (option of timeframeOptions(); track option.value) {
                     <mat-option [value]="option.value">{{ option.label }}</mat-option>
                     }
                 </mat-select>
@@ -29,7 +29,7 @@
 
     <mat-card-content>
         <div class="large-value">
-            {{ currentValue | currency }}
+            {{ currentValue() | currency }}
         </div>
 
         @if (periodChange(); as change) {

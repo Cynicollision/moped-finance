@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, OnInit, ChangeDetectorRef, SimpleChanges, OnChanges } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef, SimpleChanges, OnChanges, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
@@ -38,11 +38,11 @@ export type TransactionFormMode = 'create' | 'edit' | 'readonly';
     styleUrl: './transaction-form.component.scss'
 })
 export class TransactionFormComponent implements OnInit, OnChanges {
-    @Input() transaction: Transaction | null = null;
-    @Input() mode: TransactionFormMode = 'readonly';
-    @Input() defaultAccountId?: string;
-    @Output() save = new EventEmitter<Partial<Transaction>>();
-    @Output() cancel = new EventEmitter<void>();
+    readonly transaction = input<Transaction | null>(null);
+    readonly mode = input<TransactionFormMode>('readonly');
+    readonly defaultAccountId = input<string>();
+    readonly save = output<Partial<Transaction>>();
+    readonly cancel = output<void>();
 
     private financeService = inject(FinanceService);
     private dateProvider = inject(DateProviderService);
@@ -91,27 +91,29 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     }
 
     private updateFormState() {
-        if (this.transaction) {
+        const transaction = this.transaction();
+        const mode = this.mode();
+        if (transaction) {
             this.transactionForm.patchValue({
-                accountId: this.transaction.accountId,
-                amount: this.transaction.amount,
-                merchant: this.transaction.merchant || '',
-                originalStatement: this.transaction.originalStatement || '',
-                category: this.transaction.categoryId || '',
-                date: new Date(this.transaction.date),
-                notes: this.transaction.notes || '',
-                isHidden: this.transaction.isHidden || false
+                accountId: transaction.accountId,
+                amount: transaction.amount,
+                merchant: transaction.merchant || '',
+                originalStatement: transaction.originalStatement || '',
+                category: transaction.categoryId || '',
+                date: new Date(transaction.date),
+                notes: transaction.notes || '',
+                isHidden: transaction.isHidden || false
             });
-        } else if (this.mode === 'create') {
+        } else if (mode === 'create') {
             this.transactionForm.reset({
-                accountId: this.defaultAccountId || '',
+                accountId: this.defaultAccountId() || '',
                 date: this.dateProvider.now(),
                 amount: 0,
                 isHidden: false
             });
         }
 
-        if (this.mode === 'readonly') {
+        if (mode === 'readonly') {
             this.transactionForm.disable();
         } else {
             // All fields stay editable in edit mode, including bank-provided ones (amount, merchant, account).
@@ -141,7 +143,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         const formValue = this.transactionForm.getRawValue();
 
         const updatedTransaction: Partial<Transaction> = {
-            ...this.transaction,
+            ...this.transaction(),
             accountId: formValue.accountId,
             amount: formValue.amount,
             merchant: formValue.merchant,

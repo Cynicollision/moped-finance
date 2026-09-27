@@ -1,4 +1,4 @@
-import { Injectable, Type } from '@angular/core';
+import { Injectable, Type, inject } from '@angular/core';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmModalComponent, ConfirmModalData } from './confirm-modal.component';
@@ -7,7 +7,7 @@ import { ConfirmModalComponent, ConfirmModalData } from './confirm-modal.compone
     providedIn: 'root'
 })
 export class ModalService {
-    constructor(private dialog: MatDialog) { }
+    private dialog = inject(MatDialog);
 
     /**
      * Opens a standard modal with the specified component.

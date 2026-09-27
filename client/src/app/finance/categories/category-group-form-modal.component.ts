@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -67,15 +67,15 @@ export interface CategoryGroupFormModalData {
     `]
 })
 export class CategoryGroupFormModalComponent {
+    private fb = inject(FormBuilder);
+    dialogRef = inject<MatDialogRef<CategoryGroupFormModalComponent>>(MatDialogRef);
+    data = inject<CategoryGroupFormModalData>(MAT_DIALOG_DATA);
+
     form: FormGroup;
     isEditing = false;
     classOptions = Object.values(CategoryClass);
 
-    constructor(
-        private fb: FormBuilder,
-        public dialogRef: MatDialogRef<CategoryGroupFormModalComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: CategoryGroupFormModalData
-    ) {
+    constructor() {
         this.form = this.fb.group({
             id: [null],
             name: ['', Validators.required],

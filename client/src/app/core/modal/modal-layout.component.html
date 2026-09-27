@@ -5,7 +5,7 @@
         }
         <ng-content select="[modal-title]"></ng-content>
     </div>
-    @if (showClose) {
+    @if (showClose()) {
         <button mat-icon-button mat-dialog-close class="close-button" aria-label="Close dialog">
             <mat-icon>close</mat-icon>
         </button>
@@ -16,6 +16,6 @@
     <ng-content></ng-content>
 </mat-dialog-content>
 
-<mat-dialog-actions class="modal-actions" [align]="alignActions">
+<mat-dialog-actions class="modal-actions" [align]="alignActions()">
     <ng-content select="[modal-actions]"></ng-content>
 </mat-dialog-actions>

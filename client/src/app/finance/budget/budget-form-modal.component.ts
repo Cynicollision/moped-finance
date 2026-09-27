@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -36,6 +36,10 @@ export interface BudgetFormModalData {
     styleUrl: './budget-form-modal.component.scss'
 })
 export class FinanceBudgetFormModalComponent implements OnInit {
+    private fb = inject(FormBuilder);
+    dialogRef = inject<MatDialogRef<FinanceBudgetFormModalComponent>>(MatDialogRef);
+    data = inject<BudgetFormModalData>(MAT_DIALOG_DATA);
+
     budgetForm: FormGroup;
     isEditing = false;
     recurrenceOptions = Object.values(CalendarPeriod);
@@ -46,11 +50,9 @@ export class FinanceBudgetFormModalComponent implements OnInit {
         return this.data.type === BudgetStreamType.Income ? 'Income' : 'Expense';
     }
 
-    constructor(
-        private fb: FormBuilder,
-        public dialogRef: MatDialogRef<FinanceBudgetFormModalComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: BudgetFormModalData
-    ) {
+    constructor() {
+        const data = this.data;
+
         this.budgetForm = this.fb.group({
             id: [null],
             type: [data.type, Validators.required],

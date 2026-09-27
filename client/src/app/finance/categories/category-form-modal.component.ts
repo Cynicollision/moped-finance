@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -75,15 +75,15 @@ export interface CategoryFormModalData {
     `]
 })
 export class CategoryFormModalComponent implements OnInit {
+    private fb = inject(FormBuilder);
+    dialogRef = inject<MatDialogRef<CategoryFormModalComponent>>(MatDialogRef);
+    data = inject<CategoryFormModalData>(MAT_DIALOG_DATA);
+
     form: FormGroup;
     isEditing = false;
     groups: CategoryGroup[] = [];
 
-    constructor(
-        private fb: FormBuilder,
-        public dialogRef: MatDialogRef<CategoryFormModalComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: CategoryFormModalData
-    ) {
+    constructor() {
         this.form = this.fb.group({
             id: [null],
             name: ['', Validators.required],

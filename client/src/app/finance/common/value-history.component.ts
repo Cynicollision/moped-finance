@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, computed, signal, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, computed, signal, OnChanges, SimpleChanges, input, output } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -32,29 +32,29 @@ export interface ChartTypeOption {
 })
 export class FinanceValueHistoryComponent implements OnChanges {
     // Inputs
-    @Input({ required: true }) historyData: TotalValueHistory[] = [];
-    @Input() title: string | undefined;
-    @Input() currentValue = 0;
+    readonly historyData = input.required<TotalValueHistory[]>();
+    readonly title = input<string>();
+    readonly currentValue = input(0);
 
     // Configurable Options
     @Input({ required: true }) chartTypeOptions: ChartTypeOption[] = [];
-    @Input() timeframeOptions = [
-        { value: HistoryTimeframe.PastThirtyDays, label: 'Past 30 Days' },
-        { value: HistoryTimeframe.PastSixtyDays, label: 'Past 60 Days' },
-        { value: HistoryTimeframe.PastNinetyDays, label: 'Past 90 Days' },
-        { value: HistoryTimeframe.PastOneYear, label: 'Past Year' },
-        { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years' },
-        { value: HistoryTimeframe.YearToDate, label: 'Year To Date' },
-        { value: HistoryTimeframe.All, label: 'All Time' }
-    ];
+    readonly timeframeOptions = input([
+    { value: HistoryTimeframe.PastThirtyDays, label: 'Past 30 Days' },
+    { value: HistoryTimeframe.PastSixtyDays, label: 'Past 60 Days' },
+    { value: HistoryTimeframe.PastNinetyDays, label: 'Past 90 Days' },
+    { value: HistoryTimeframe.PastOneYear, label: 'Past Year' },
+    { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years' },
+    { value: HistoryTimeframe.YearToDate, label: 'Year To Date' },
+    { value: HistoryTimeframe.All, label: 'All Time' }
+]);
 
     // Current Selections
-    @Input({ required: true }) selectedChartType!: ValueHistoryType;
-    @Input({ required: true }) selectedTimeframe!: HistoryTimeframe;
+    readonly selectedChartType = input.required<ValueHistoryType>();
+    readonly selectedTimeframe = input.required<HistoryTimeframe>();
 
     // Outputs
-    @Output() chartTypeChange = new EventEmitter<ValueHistoryType>();
-    @Output() timeframeChange = new EventEmitter<HistoryTimeframe>();
+    readonly chartTypeChange = output<ValueHistoryType>();
+    readonly timeframeChange = output<HistoryTimeframe>();
 
     // Internal Signals mapped from Inputs
     readonly historyDataSignal = signal<TotalValueHistory[]>([]);
@@ -64,16 +64,16 @@ export class FinanceValueHistoryComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes['historyData']) {
-            this.historyDataSignal.set(this.historyData || []);
+            this.historyDataSignal.set(this.historyData() || []);
         }
         if (changes['chartTypeOptions']) {
             this.chartTypeOptionsSignal.set(this.chartTypeOptions || []);
         }
         if (changes['selectedChartType']) {
-            this.selectedChartTypeSignal.set(this.selectedChartType);
+            this.selectedChartTypeSignal.set(this.selectedChartType());
         }
         if (changes['selectedTimeframe']) {
-            this.selectedTimeframeSignal.set(this.selectedTimeframe);
+            this.selectedTimeframeSignal.set(this.selectedTimeframe());
         }
     }
 
@@ -88,7 +88,8 @@ export class FinanceValueHistoryComponent implements OnChanges {
 
     // Computed Properties
     readonly selectedChartLabel = computed(() => {
-        if (this.title) return this.title;
+        const title = this.title();
+        if (title) return title;
         return this.chartTypeOptionsSignal().find(o => o.value === this.selectedChartTypeSignal())?.label || 'History';
     });
 
@@ -218,7 +219,7 @@ export class FinanceValueHistoryComponent implements OnChanges {
             isGood = !isPositive;
         }
 
-        const timeframeLabel = this.timeframeOptions.find(t => t.value === this.selectedTimeframeSignal())?.label || 'Period';
+        const timeframeLabel = this.timeframeOptions().find(t => t.value === this.selectedTimeframeSignal())?.label || 'Period';
 
         return {
             amount: Math.abs(changeAmount), // Absolute value for display (- is handled by arrow/positivity)

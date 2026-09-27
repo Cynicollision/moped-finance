@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { ModalLayoutComponent } from './modal-layout.component';
@@ -19,10 +19,8 @@ export interface ConfirmModalData {
     styleUrl: './confirm-modal.component.scss'
 })
 export class ConfirmModalComponent {
-    constructor(
-        public dialogRef: MatDialogRef<ConfirmModalComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: ConfirmModalData
-    ) { }
+    dialogRef = inject<MatDialogRef<ConfirmModalComponent>>(MatDialogRef);
+    data = inject<ConfirmModalData>(MAT_DIALOG_DATA);
 
     onCancel(): void {
         this.dialogRef.close(false);

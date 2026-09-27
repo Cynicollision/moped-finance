@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, input } from '@angular/core';
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -10,9 +10,9 @@ import { MatIconModule } from '@angular/material/icon';
     styles: []
 })
 export class FinanceValuePeriodChangeComponent {
-    @Input({ required: true }) amount!: number;
-    @Input({ required: true }) percentage!: number;
-    @Input({ required: true }) isPositive!: boolean;
-    @Input({ required: true }) isGood!: boolean;
+    readonly amount = input.required<number>();
+    readonly percentage = input.required<number>();
+    readonly isPositive = input.required<boolean>();
+    readonly isGood = input.required<boolean>();
     @Input() label: string | undefined;
 }

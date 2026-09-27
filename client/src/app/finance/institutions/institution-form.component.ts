@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, input, output } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -20,10 +20,10 @@ export type InstitutionFormMode = 'create' | 'edit' | 'readonly';
     styleUrl: './institution-form.component.scss'
 })
 export class InstitutionFormComponent implements OnInit, OnChanges {
-    @Input() institution: Institution | null = null;
-    @Input() mode: InstitutionFormMode = 'readonly';
-    @Output() save = new EventEmitter<Partial<Institution>>();
-    @Output() cancel = new EventEmitter<void>();
+    readonly institution = input<Institution | null>(null);
+    readonly mode = input<InstitutionFormMode>('readonly');
+    readonly save = output<Partial<Institution>>();
+    readonly cancel = output<void>();
 
     institutionForm = new FormGroup({
         name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] })
@@ -40,17 +40,19 @@ export class InstitutionFormComponent implements OnInit, OnChanges {
     }
 
     private updateFormState() {
-        if (this.institution) {
+        const institution = this.institution();
+        const mode = this.mode();
+        if (institution) {
             this.institutionForm.patchValue({
-                name: this.institution.name
+                name: institution.name
             });
-        } else if (this.mode === 'create') {
+        } else if (mode === 'create') {
             this.institutionForm.reset({
                 name: ''
             });
         }
 
-        if (this.mode === 'readonly') {
+        if (mode === 'readonly') {
             this.institutionForm.disable();
         } else {
             this.institutionForm.enable();
@@ -65,7 +67,7 @@ export class InstitutionFormComponent implements OnInit, OnChanges {
         const formValue = this.institutionForm.getRawValue();
 
         const updatedInstitution: Partial<Institution> = {
-            ...this.institution,
+            ...this.institution(),
             name: formValue.name
         };
 

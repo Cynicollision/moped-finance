@@ -1,4 +1,4 @@
-import { Component, ViewChild, AfterViewInit, inject, OnInit, signal } from '@angular/core';
+import { Component, AfterViewInit, inject, OnInit, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
@@ -58,7 +58,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
     hasMoreData = true;
     loaded = false;
 
-    @ViewChild(MatSort) sort!: MatSort;
+    readonly sort = viewChild.required(MatSort);
 
     filterForm = new FormGroup({
         minAmount: new FormControl<number | null>(null),
@@ -175,10 +175,10 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             this.filterForm.patchValue(patch);
         }
 
-        this.sort.sortChange.subscribe(() => this.loadData(true));
+        this.sort().sortChange.subscribe(() => this.loadData(true));
         
         Promise.resolve().then(() => {
-            this.sort.sort({ id: 'date', start: 'desc', disableClear: false });
+            this.sort().sort({ id: 'date', start: 'desc', disableClear: false });
         });
     }
 
@@ -207,14 +207,15 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         let sortKey: TransactionsSortKey | undefined;
         let sortDirection: SortDirection | undefined;
 
-        if (this.sort) {
-            if (this.sort.direction === 'asc') {
+        const sort = this.sort();
+        if (sort) {
+            if (sort.direction === 'asc') {
                 sortDirection = SortDirection.Asc;
-            } else if (this.sort.direction === 'desc') {
+            } else if (sort.direction === 'desc') {
                 sortDirection = SortDirection.Desc;
             }
 
-            switch (this.sort.active) {
+            switch (sort.active) {
                 case 'date':
                     sortKey = TransactionsSortKey.Date;
                     break;

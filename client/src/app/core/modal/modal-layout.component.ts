@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, input } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,8 +15,8 @@ export class ModalLayoutComponent {
     @Input() title?: string;
 
     /** Whether to show the standard X close button. Default: true */
-    @Input() showClose = true;
+    readonly showClose = input(true);
 
     /** Alignment of actions in the bottom bar. Default: 'end' */
-    @Input() alignActions: 'start' | 'center' | 'end' = 'end';
+    readonly alignActions = input<'start' | 'center' | 'end'>('end');
 }

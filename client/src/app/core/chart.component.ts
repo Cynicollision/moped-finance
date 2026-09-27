@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnChanges, OnDestroy, OnInit, input, viewChild } from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
 export type { ChartConfiguration } from 'chart.js';
@@ -29,11 +29,11 @@ Chart.defaults.plugins.tooltip.borderWidth = 1;
     `]
 })
 export class ChartComponent implements OnInit, OnChanges, OnDestroy {
-    @ViewChild('chartCanvas', { static: true }) chartCanvas!: ElementRef<HTMLCanvasElement>;
+    readonly chartCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('chartCanvas');
 
-    @Input() config!: ChartConfiguration;
-    @Input() height?: string;
-    @Input() width?: string;
+    readonly config = input.required<ChartConfiguration>();
+    readonly height = input<string>();
+    readonly width = input<string>();
 
     private chart: Chart | undefined;
     private initialized = false;
@@ -56,18 +56,19 @@ export class ChartComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private createChart(): void {
-        if (!this.config || !this.initialized) return;
+        if (!this.config() || !this.initialized) return;
 
         // Use setTimeout to ensure the DOM is fully rendered and sized before Chart.js measures it
         setTimeout(() => {
-            if (!this.chartCanvas) return; // Component might have been destroyed
+            const chartCanvas = this.chartCanvas();
+            if (!chartCanvas) return; // Component might have been destroyed
             
-            const ctx = this.chartCanvas.nativeElement.getContext('2d');
+            const ctx = chartCanvas.nativeElement.getContext('2d');
             if (ctx) {
                 if (this.chart) {
                     this.chart.destroy();
                 }
-                this.chart = new Chart(ctx, this.config);
+                this.chart = new Chart(ctx, this.config());
             }
         });
     }
