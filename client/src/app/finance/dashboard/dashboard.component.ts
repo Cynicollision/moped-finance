@@ -9,7 +9,7 @@ import { TotalValueHistory } from '@shared/finance/contracts';
 import { AccountGroup, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
-import { FinanceValueHistoryComponent } from './../common/value-history.component';
+import { FinanceValueHistoryComponent, TimeframeOptions } from './../common/value-history.component';
 import { FinanceValuePeriodChangeComponent, ValuePeriodChange } from './../common/value-period-change.component';
 import { FinanceService } from './../finance.service';
 
@@ -66,18 +66,8 @@ export class DashboardComponent implements OnInit {
         { value: ValueHistoryType.Liabilities, label: 'Total Liabilities' }
     ];
 
-    readonly timeframeOptions = [
-        { value: HistoryTimeframe.PastThirtyDays, label: 'Past 30 Days' },
-        { value: HistoryTimeframe.PastSixtyDays, label: 'Past 60 Days' },
-        { value: HistoryTimeframe.PastNinetyDays, label: 'Past 90 Days' },
-        { value: HistoryTimeframe.PastOneYear, label: 'Past Year' },
-        { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years' },
-        { value: HistoryTimeframe.YearToDate, label: 'Year To Date' },
-        { value: HistoryTimeframe.All, label: 'All Time' }
-    ];
-
     readonly selectedTimeframeLabel = computed(() => {
-        return this.timeframeOptions.find(t => t.value === this.selectedTimeframe())?.label || 'Period';
+        return TimeframeOptions.find(t => t.value === this.selectedTimeframe())?.label || 'Period';
     });
 
     async ngOnInit() {

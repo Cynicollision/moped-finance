@@ -8,8 +8,8 @@ The same value-history chart component is reused on Account Details (see ACCT-2.
 
 | ID | Requirement | Status |
 |---|---|---|
-| DASH-1.1 | The Dashboard shall show a large current value with a chart of that value over time. The user can choose the **View Type**: *Net Worth* (default), *Total Assets* or *Total Liabilities*. | Implemented |
-| DASH-1.2 | The user can choose the **Timeframe**: Past 30 Days (default), Past 60 Days, Past 90 Days, Past Year, Past 2 Years, Past 5 Years, Past 10 Years, Year To Date, All Time. Changing either choice shall refresh the chart. | Partial |
+| DASH-1.1 | The Dashboard shall show a large current value with a chart of that value over time. The chart's title is the **View Type** and opens a menu to change it: *Net Worth* (default), *Total Assets* or *Total Liabilities*. | Implemented |
+| DASH-1.2 | The user can choose the **Timeframe** from a row of buttons under the chart, shortest first: **30D** (Past 30 Days, the default), **60D**, **90D**, **YTD** (Year To Date), **1Y**, **2Y**, **5Y**, **10Y** and **All** (All Time). Each button's accessible name is the full name. On phones the row spans the card. Changing the View Type or Timeframe shall refresh the chart. | Partial |
 | DASH-1.3 | Beneath the value, the Dashboard shall show the change over the timeframe as an amount and a percentage of the starting value, followed by the timeframe's name ("- Past 30 Days", "- All Time"), with direction and favourable/unfavourable coloring (for liabilities, shrinking debt is favourable). | Implemented |
 | DASH-1.4 | The chart shall have a point for every day in the timeframe: the sum, over the accounts included (assets only, liabilities only, or all for net worth), of each account's latest balance entry on or before that day. Accounts with no entry yet on a day add nothing. Hidden accounts are left out on every day (ACCT-1.9); closed accounts are included (ACCT-6.2). | Partial |
 | DASH-1.5 | When there is no data for the selection the chart area shall say "No data available for the selected timeframe." with the hint "Try adjusting the timeframe or historical view type." | Implemented |
@@ -40,7 +40,7 @@ The same value-history chart component is reused on Account Details (see ACCT-2.
 - **Hidden accounts** are included everywhere (DASH-2.9).
 - **Groups are the old five (DASH-2.1, DASH-2.5).** Other Assets doesn't exist yet, Real Estate is listed after Loans, and accounts within a group appear in creation order.
 - **Empty state (DASH-1.8).** A new user with no accounts sees an empty chart and no groups.
-- **No 5- or 10-year timeframes (DASH-1.2, ACCT-2.4).** The API supports them; the selects don't offer them.
+- **No 5- or 10-year timeframes (DASH-1.2, ACCT-2.4).** The API supports them; the buttons under the chart (`TimeframeOptions` in `value-history.component.ts`) don't offer them yet.
 
 ## Notes
 

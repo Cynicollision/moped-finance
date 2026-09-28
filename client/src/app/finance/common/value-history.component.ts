@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
+import { MatMenuModule } from '@angular/material/menu';
 import { HistoryTimeframe } from '@shared/core/enum';
 import { CalendarDateUtil } from '@shared/core/util';
 import { ValueHistoryType } from '@shared/finance/enum';
@@ -16,15 +16,34 @@ export interface ChartTypeOption {
     label: string;
 }
 
+export interface TimeframeOption {
+    value: HistoryTimeframe;
+    /** The name, as shown after the period change ("Past 30 Days"). */
+    label: string;
+    /** The button text under the chart ("30D"). */
+    shortLabel: string;
+}
+
+/** The timeframes offered under the chart (DASH-1.2, ACCT-2.4), shortest first. */
+export const TimeframeOptions: TimeframeOption[] = [
+    { value: HistoryTimeframe.PastThirtyDays, label: 'Past 30 Days', shortLabel: '30D' },
+    { value: HistoryTimeframe.PastSixtyDays, label: 'Past 60 Days', shortLabel: '60D' },
+    { value: HistoryTimeframe.PastNinetyDays, label: 'Past 90 Days', shortLabel: '90D' },
+    { value: HistoryTimeframe.YearToDate, label: 'Year To Date', shortLabel: 'YTD' },
+    { value: HistoryTimeframe.PastOneYear, label: 'Past Year', shortLabel: '1Y' },
+    { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years', shortLabel: '2Y' },
+    { value: HistoryTimeframe.All, label: 'All Time', shortLabel: 'All' }
+];
+
 @Component({
     selector: 'app-value-history',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CurrencyPipe,
+        MatButtonToggleModule,
         MatCardModule,
-        MatFormFieldModule,
-        MatSelectModule,
         MatIconModule,
+        MatMenuModule,
         ChartComponent,
         FinanceValuePeriodChangeComponent
     ],
@@ -38,15 +57,7 @@ export class FinanceValueHistoryComponent {
 
     // Configurable Options
     readonly chartTypeOptions = input.required<ChartTypeOption[]>();
-    readonly timeframeOptions = input([
-        { value: HistoryTimeframe.PastThirtyDays, label: 'Past 30 Days' },
-        { value: HistoryTimeframe.PastSixtyDays, label: 'Past 60 Days' },
-        { value: HistoryTimeframe.PastNinetyDays, label: 'Past 90 Days' },
-        { value: HistoryTimeframe.PastOneYear, label: 'Past Year' },
-        { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years' },
-        { value: HistoryTimeframe.YearToDate, label: 'Year To Date' },
-        { value: HistoryTimeframe.All, label: 'All Time' }
-    ]);
+    readonly timeframeOptions = input<TimeframeOption[]>(TimeframeOptions);
 
     // Current Selections
     readonly selectedChartType = input.required<ValueHistoryType>();
