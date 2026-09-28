@@ -1,95 +1,60 @@
 <div class="spending-container">
-
     <app-page-header title="Spending" [refreshing]="totals.isRefreshing()"></app-page-header>
 
-    <!-- Controls -->
-    <div class="controls-container">
-        <div class="primary-controls">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>Year</mat-label>
-                <mat-select [(ngModel)]="selectedYear">
-                    @for (y of years(); track y) {
-                        <mat-option [value]="y">{{y}}</mat-option>
-                    }
-                </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>Period</mat-label>
-                <mat-select [(ngModel)]="selectedPeriod">
-                    @for (p of periods; track p) {
-                        <mat-option [value]="p">{{p}}</mat-option>
-                    }
-                </mat-select>
-            </mat-form-field>
+    <!-- The period stepper and the view switch share one row (CASH-1.1, CASH-1.5). -->
+    <div class="controls">
+        <div class="stepper">
+            <button mat-icon-button (click)="step(-1)" [disabled]="!canStepBack()" [attr.aria-label]="'Previous ' + periodNoun()">
+                <mat-icon>chevron_left</mat-icon>
+            </button>
+            <button mat-button #pickerTrigger class="period-button" cdkOverlayOrigin #pickerOrigin="cdkOverlayOrigin"
+                (click)="openPicker()" aria-haspopup="dialog" [attr.aria-expanded]="isPopoverOpen()"
+                [attr.aria-label]="periodLabel() + ', choose a period'">
+                {{ periodText() }}
+                <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+            </button>
+            <button mat-icon-button (click)="step(1)" [disabled]="!canStepForward()" [attr.aria-label]="'Next ' + periodNoun()">
+                <mat-icon>chevron_right</mat-icon>
+            </button>
         </div>
 
-        @if (selectedPeriod() === CalendarPeriod.Monthly) {
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>Month</mat-label>
-                <mat-select [(ngModel)]="selectedMonth">
-                    @for (m of months; track m.value) {
-                        <mat-option [value]="m.value">{{m.label}}</mat-option>
-                    }
-                </mat-select>
-            </mat-form-field>
-        }
-
-        @if (selectedPeriod() === CalendarPeriod.Quarterly) {
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>Quarter</mat-label>
-                <mat-select [(ngModel)]="selectedQuarter">
-                    @for (q of quarters; track q.value) {
-                        <mat-option [value]="q.value">{{q.label}}</mat-option>
-                    }
-                </mat-select>
-            </mat-form-field>
-        }
+        <mat-button-toggle-group class="view-toggle" [value]="viewMode()" (change)="viewMode.set($event.value)"
+            hideSingleSelectionIndicator aria-label="Show by">
+            <mat-button-toggle value="category">Category</mat-button-toggle>
+            <mat-button-toggle value="group">Group</mat-button-toggle>
+        </mat-button-toggle-group>
     </div>
 
     @if (error(); as error) {
         <app-load-error [message]="error" (retry)="retry()"></app-load-error>
     }
     @else if (isLoaded()) {
-        <!-- Summary Section -->
-        <div class="summary-cards">
-            <mat-card class="summary-card">
-                <mat-card-content>
-                    <app-money class="value" [amount]="totalIncome()" tone="favourable" digits="1.0-0"></app-money>
-                    <div class="label">INCOME</div>
-                </mat-card-content>
-            </mat-card>
-            <mat-card class="summary-card">
-                <mat-card-content>
-                    <app-money class="value" [amount]="totalExpenses()" digits="1.0-0"></app-money>
-                    <div class="label">EXPENSES</div>
-                </mat-card-content>
-            </mat-card>
-            <mat-card class="summary-card">
-                <mat-card-content>
-                    <app-money class="value" [amount]="totalSavings()" tone="favourable" digits="1.0-0"></app-money>
-                    <div class="label">TOTAL SAVINGS</div>
-                </mat-card-content>
-            </mat-card>
-            <mat-card class="summary-card">
-                <mat-card-content>
-                    <div class="value">{{ savingsRate() | percent:'1.0-0' }}</div>
-                    <div class="label">SAVINGS RATE</div>
-                </mat-card-content>
-            </mat-card>
-        </div>
+        <mat-card class="summary-card" appearance="outlined">
+            <div class="saved">
+                <span class="label">Saved</span>
+                <div class="saved-figures">
+                    <app-money class="headline" [amount]="totalSavings()" tone="favourable" digits="1.0-0"></app-money>
+                    <span class="rate">{{ savingsRate() | percent:'1.0-0' }} of income</span>
+                </div>
+            </div>
+            <div class="summary-figures">
+                @for (section of sections(); track section.title) {
+                    <div class="figure">
+                        <span class="label">{{ section.title }}</span>
+                        <app-money class="value" [amount]="section.total" [tone]="section.tone" digits="1.0-0"></app-money>
+                    </div>
+                }
+            </div>
+        </mat-card>
 
         @for (section of sections(); track section.title) {
-            <mat-card class="section-card">
-                <div class="card-header">
-                    <h2 class="card-title">{{ section.title }}</h2>
-                    <mat-button-toggle-group [(ngModel)]="viewMode" aria-label="View Mode" class="compact-toggle">
-                        <mat-button-toggle value="category">Category</mat-button-toggle>
-                        <mat-button-toggle value="group">Group</mat-button-toggle>
-                    </mat-button-toggle-group>
+            <mat-card class="section-card" appearance="outlined">
+                <div class="section-header">
+                    <h2>{{ section.title }}</h2>
+                    <app-money class="section-total" [amount]="section.total" [tone]="section.tone" digits="1.0-0"></app-money>
                 </div>
 
-                <mat-card-content>
+                @if (section.rows.length) {
                     <app-list [columns]="columns" [showHeader]="false">
                         @for (row of section.rows; track row.id) {
                             <a appListRow routerLink="/transactions" [queryParams]="rowQueryParams(row)">
@@ -98,20 +63,65 @@
                             </a>
                         }
                     </app-list>
-
-                    @if (section.rows.length === 0) {
-                        <div class="no-data">
-                            No {{ section.title | lowercase }} data for the selected period.
-                        </div>
-                    }
-                </mat-card-content>
+                }
+                @else {
+                    <p class="empty">{{ section.empty }}</p>
+                }
             </mat-card>
         }
     }
     @else {
-        <div class="loading-cards">
-            <app-card-skeleton [rows]="4"></app-card-skeleton>
-            <app-card-skeleton [rows]="4"></app-card-skeleton>
-        </div>
+        <app-card-skeleton [rows]="2"></app-card-skeleton>
+        <app-card-skeleton [rows]="4"></app-card-skeleton>
+        <app-card-skeleton [rows]="4"></app-card-skeleton>
     }
 </div>
+
+<!-- The picker opens below the period on wider screens... -->
+<ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="pickerOrigin" [cdkConnectedOverlayOpen]="isPopoverOpen()"
+    cdkConnectedOverlayHasBackdrop cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+    (backdropClick)="closePicker()" (overlayKeydown)="$event.key === 'Escape' && closePicker()" (detach)="closePicker()">
+    <div class="period-popover" role="dialog" aria-label="Choose a period" cdkTrapFocus cdkTrapFocusAutoCapture>
+        <ng-container [ngTemplateOutlet]="pickerContent"></ng-container>
+    </div>
+</ng-template>
+
+<!-- ...and in a bottom sheet on phones. -->
+<ng-template #pickerSheet>
+    <div class="period-sheet">
+        <h2 class="period-sheet-title">Period</h2>
+        <ng-container [ngTemplateOutlet]="pickerContent"></ng-container>
+    </div>
+</ng-template>
+
+<ng-template #pickerContent>
+    <div class="period-picker">
+        <mat-button-toggle-group class="picker-type" [value]="pickerPeriod()" (change)="pickerPeriod.set($event.value)"
+            hideSingleSelectionIndicator aria-label="Period type">
+            @for (type of periodTypes; track type.value) {
+                <mat-button-toggle [value]="type.value">{{ type.label }}</mat-button-toggle>
+            }
+        </mat-button-toggle-group>
+
+        @if (pickerPeriod() !== CalendarPeriod.Yearly) {
+            <div class="picker-year">
+                <button mat-icon-button (click)="stepPickerYear(-1)" [disabled]="!canPickPreviousYear()" aria-label="Previous year">
+                    <mat-icon>chevron_left</mat-icon>
+                </button>
+                <span class="picker-year-label">{{ pickerYear() }}</span>
+                <button mat-icon-button (click)="stepPickerYear(1)" [disabled]="!canPickNextYear()" aria-label="Next year">
+                    <mat-icon>chevron_right</mat-icon>
+                </button>
+            </div>
+        }
+
+        <div class="picker-grid" [class.quarters]="pickerPeriod() === CalendarPeriod.Quarterly">
+            @for (option of pickerOptions(); track option.start) {
+                <button mat-button class="picker-option" [class.selected]="isSelected(option)"
+                    [attr.aria-pressed]="isSelected(option)" [attr.aria-label]="option.ariaLabel" (click)="pick(option)">
+                    {{ option.label }}
+                </button>
+            }
+        </div>
+    </div>
+</ng-template>
