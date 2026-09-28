@@ -1,3 +1,4 @@
+@use '@angular/material' as mat;
 @use 'breakpoints' as bp;
 
 .full-width-card {
@@ -15,40 +16,54 @@
 .chart-header {
     padding: 16px 16px 0 16px !important;
     box-sizing: border-box;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
     width: 100%;
-    gap: 1rem;
 }
 
 .chart-title {
     margin: 0;
 }
 
-.chart-controls {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    flex: 1 1 auto;
+// The title doubles as the View Type menu: title text with a drop-down arrow, no button chrome.
+.chart-type-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 4px 4px 8px;
+    margin-left: -8px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: inherit;
+    font: var(--mat-sys-title-large);
+    cursor: pointer;
 
-    mat-form-field {
-        width: 160px;
+    &:hover,
+    &:focus-visible {
+        background-color: var(--bg-hover);
     }
 }
 
-@include bp.content-below(bp.$medium) {
-    .chart-header {
-        flex-direction: column;
-        align-items: flex-start;
+// One row of short labels under the chart; on phones it spans the card, sharing the width equally.
+.timeframes {
+    display: flex;
+    width: fit-content;
+    margin-top: 16px;
+
+    @include mat.button-toggle-overrides((
+        height: 36px
+    ));
+
+    mat-button-toggle {
+        min-width: 56px;
     }
 
-    .chart-controls {
-        justify-content: flex-start;
+    @include bp.content-below(bp.$medium) {
         width: 100%;
-        margin-bottom: 0.5rem;
+
+        mat-button-toggle {
+            flex: 1 1 0;
+            min-width: 0;
+        }
     }
 }
 

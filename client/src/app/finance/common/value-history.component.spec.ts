@@ -25,4 +25,65 @@ describe('FinanceValueHistoryComponent', () => {
 
         expect(history.chartConfig()!.data.labels).toEqual(['Jun \'25', 'May \'26']);
     });
+
+    async function render(chartTypeOptions: { value: ValueHistoryType, label: string }[]) {
+        const fixture = TestBed.createComponent(FinanceValueHistoryComponent);
+        fixture.componentRef.setInput('historyData', [
+            { date: '2026-05-01', amount: 1, type: ValueHistoryType.NetWorth },
+            { date: '2026-05-02', amount: 2, type: ValueHistoryType.NetWorth }
+        ]);
+        fixture.componentRef.setInput('chartTypeOptions', chartTypeOptions);
+        fixture.componentRef.setInput('selectedChartType', chartTypeOptions[0].value);
+        fixture.componentRef.setInput('selectedTimeframe', HistoryTimeframe.PastThirtyDays);
+        await fixture.whenStable();
+        return { fixture, element: fixture.nativeElement as HTMLElement };
+    }
+
+    const viewTypes = [
+        { value: ValueHistoryType.NetWorth, label: 'Net Worth' },
+        { value: ValueHistoryType.Assets, label: 'Total Assets' },
+        { value: ValueHistoryType.Liabilities, label: 'Total Liabilities' }
+    ];
+
+    it('DASH-1.1 should choose the View Type from the title', async () => {
+        const { fixture, element } = await render(viewTypes);
+        const chosen: ValueHistoryType[] = [];
+        fixture.componentInstance.chartTypeChange.subscribe(type => chosen.push(type));
+
+        const title = element.querySelector<HTMLButtonElement>('.chart-type-trigger')!;
+        expect(title.textContent).toContain('Net Worth');
+        expect(element.querySelector('mat-select')).toBeNull();
+
+        title.click();
+        await fixture.whenStable();
+        const items = Array.from(document.querySelectorAll<HTMLElement>('.mat-mdc-menu-item'));
+        expect(items.map(item => item.querySelector('span')!.textContent)).toEqual(['Net Worth', 'Total Assets', 'Total Liabilities']);
+        items[1].click();
+
+        expect(chosen).toEqual([ValueHistoryType.Assets]);
+        document.querySelectorAll('.cdk-overlay-container').forEach(container => container.remove());
+    });
+
+    it('ACCT-2.3 should show a plain title when there is only one view type', async () => {
+        const { element } = await render([viewTypes[1]]);
+
+        expect(element.querySelector('.chart-type-trigger')).toBeNull();
+        expect(element.querySelector('.chart-title')!.textContent).toContain('Total Assets');
+    });
+
+    it('DASH-1.2 should offer the timeframes as short buttons below the chart', async () => {
+        const { fixture, element } = await render(viewTypes);
+        const chosen: HistoryTimeframe[] = [];
+        fixture.componentInstance.timeframeChange.subscribe(timeframe => chosen.push(timeframe));
+
+        const toggles = Array.from(element.querySelectorAll<HTMLButtonElement>('.timeframes button'));
+        expect(toggles.map(toggle => toggle.textContent!.trim())).toEqual(['30D', '60D', '90D', 'YTD', '1Y', '2Y', 'All']);
+        expect(toggles[4].getAttribute('aria-label')).toBe('Past Year');
+        expect(element.querySelector('.chart-wrapper')!.compareDocumentPosition(element.querySelector('.timeframes')!))
+            .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+
+        toggles[4].click();
+
+        expect(chosen).toEqual([HistoryTimeframe.PastOneYear]);
+    });
 });
