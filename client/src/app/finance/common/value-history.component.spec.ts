@@ -71,13 +71,13 @@ describe('FinanceValueHistoryComponent', () => {
         expect(element.querySelector('.chart-title')!.textContent).toContain('Total Assets');
     });
 
-    it('DASH-1.2 should offer the timeframes as short buttons below the chart', async () => {
+    it('DASH-1.2 ACCT-2.4 should offer the timeframes, up to 10 years, as short buttons below the chart', async () => {
         const { fixture, element } = await render(viewTypes);
         const chosen: HistoryTimeframe[] = [];
         fixture.componentInstance.timeframeChange.subscribe(timeframe => chosen.push(timeframe));
 
         const toggles = Array.from(element.querySelectorAll<HTMLButtonElement>('.timeframes button'));
-        expect(toggles.map(toggle => toggle.textContent!.trim())).toEqual(['30D', '60D', '90D', 'YTD', '1Y', '2Y', 'All']);
+        expect(toggles.map(toggle => toggle.textContent!.trim())).toEqual(['30D', '60D', '90D', 'YTD', '1Y', '2Y', '5Y', '10Y', 'All']);
         expect(toggles[4].getAttribute('aria-label')).toBe('Past Year');
         expect(element.querySelector('.chart-wrapper')!.compareDocumentPosition(element.querySelector('.timeframes')!))
             .toBe(Node.DOCUMENT_POSITION_FOLLOWING);

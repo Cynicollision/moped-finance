@@ -43,7 +43,7 @@
     }
 }
 
-// One row of short labels under the chart; on phones it spans the card, sharing the width equally.
+// One row of short labels under the chart (DASH-1.2); on phones it spans the card, sharing the width equally.
 .timeframes {
     display: flex;
     width: fit-content;
@@ -63,6 +63,12 @@
         mat-button-toggle {
             flex: 1 1 0;
             min-width: 0;
+        }
+
+        // Nine buttons share about 310px on a phone: drop Material's 12px label padding (it has no token)
+        // so "YTD" and "10Y" clear the dividers.
+        ::ng-deep .mat-button-toggle-label-content {
+            padding: 0 2px;
         }
     }
 }

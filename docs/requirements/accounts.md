@@ -41,7 +41,7 @@ Account types for ACCT-1.2:
 | ACCT-2.1 | An account's current balance shall be its latest balance entry dated on or before today, or 0 if it has none. | Partial |
 | ACCT-2.2 | The user can set a manual account's balance: a **Starting Balance** and **As of** date when adding it (ACCT-1.4), and **Update Balance** on Account Details' actions menu afterwards, which asks for a **Balance** and a **Date** (default today, not after today). Either one creates the entry for that date, or replaces the entry already there, as a *set* entry (ACCT-5.1). Entries on other dates don't change. | Partial |
 | ACCT-2.3 | Account Details shall show the current balance, a chart of the balance over the selected timeframe, and the change over that timeframe as an amount and a percentage. For a liability, debt shrinking toward zero shall be shown as favourable (green, down arrow) and debt growing as unfavourable (red, up arrow). | Implemented |
-| ACCT-2.4 | The timeframe shall be chosen as on the Dashboard (DASH-1.2), from the same row of buttons under the chart, counted back from today. The chart's title is "Current Balance" with no View Type menu. | Partial |
+| ACCT-2.4 | The timeframe shall be chosen as on the Dashboard (DASH-1.2), from the same row of buttons under the chart, counted back from today. The chart's title is "Current Balance" with no View Type menu. | Implemented |
 | ACCT-2.5 | When there is no data for the timeframe the chart area shall say "No data available for the selected timeframe." | Implemented |
 | ACCT-2.6 | Account Details shall show the institution's name, the account's type, whether it's **Manual** or **Connected** (ACCT-4.3), and "Balance as of *date*", the date of the current balance's entry. | Partial |
 | ACCT-2.7 | Account Details shall list the account's 10 most recent transactions (date, merchant, category, amount, as in TXN-1.1 and TXN-1.9), newest first, or say "No transactions yet.". Selecting one opens it (TXN-2.2). A **Go To Transactions** button shall open the Transactions screen filtered to this account. | Implemented |
@@ -49,7 +49,7 @@ Account types for ACCT-1.2:
 | ACCT-2.9 | Account Details shall show a liability's balance as a negative amount (for example "-$132,516.44" for the mortgage) and its change with the same favourable/unfavourable coloring as ACCT-2.3. The Dashboard shows the same balance unsigned (DASH-2.4). | Implemented |
 | ACCT-2.10 | Account Details shall be titled with the account's name, below the Dashboard (APP-1.8), and, for an account with no transactions, an empty Recent Transactions table (header only) with the **Go To Transactions** button still shown. | Partial |
 | ACCT-2.11 | The balance chart shall show a value for every day in the timeframe, carrying each entry forward until the next one, so an account updated now and then draws the same kind of line as one synced daily. Days before the account's first entry have no value. | Planned |
-| ACCT-2.12 | The chart's axis labels shall be distinct: the y-axis shall use enough precision that neighbouring ticks never read the same (not "$34.3K, $34.3K, $34.2K"). | Partial |
+| ACCT-2.12 | The chart's axis labels shall be distinct: the y-axis shall use enough precision that neighbouring ticks never read the same (not "$34.3K, $34.3K, $34.2K"). | Implemented |
 | ACCT-2.13 | Account Details shall have a **Balance History** section listing the account's entries, newest first, with date, balance, and whether each was set or adjusted (ACCT-5.1). For a manual account the user can edit an entry's balance or delete an entry, after confirming. An edited entry becomes a set entry. | Planned |
 
 ## ACCT-3 The user can move balance history in and out as CSV
@@ -108,7 +108,6 @@ A closed account is one the user no longer has, such as a savings account they e
 - **Hide Account has no effect (ACCT-1.9).** The flag is saved and editable, but no screen or total filters hidden accounts out, and the Institutions screen doesn't mark them.
 - **Manual vs. connected is a stored flag (ACCT-4.3).** The form no longer shows it and new accounts are saved manual, but it's still the `is_manual` column. Once connections exist, derive it from the link.
 - **"Last updated" is the record's edit date (ACCT-2.6),** not the date of the latest balance, so it can be later than the newest balance.
-- **Chart axis labels lose precision (ACCT-2.12).** The y-axis rounds to thousands or millions, so neighbouring ticks repeat.
 - **Dry-run date range (ACCT-3.3).** A dry run with bad rows reports the date range of the valid rows only.
 
 ## Housekeeping

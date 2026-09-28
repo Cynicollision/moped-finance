@@ -11,15 +11,7 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Now
 
-### Client baseline
-A series of PRs, in this order, that gives the client consistent, tested patterns to build features on (decided 2026-09-27). The target shape:
-- Navigation (done): **Dashboard**, **Transactions**, **Cashflow**, **Budget** as a bottom bar on phones, a rail on tablets and a side navigation on desktops, with Settings and Sign out in the profile menu. Screens use `<app-page-header>`, with occasional actions (add, import, download) in its overflow menu rather than as buttons (decided 2026-09-27).
-- Settings is a list of pages: Institutions (listing every account including hidden and closed ones), Categories and API Tokens so far; the profile menu also links Institutions and Categories directly (APP-1.5). **Rules** (CAT-8, `/settings/rules`, also linked from the Categories menu) and **Bank Sync** (SET-4) join it when they're built, then Profile and Appearance (SET-1.1).
-- The Dashboard keeps grouping accounts by type (DASH-2). Accounts are added from Settings > Institutions (ACCT-1.3).
-- Bank-connection UI is removed until INST-2 is redesigned. No disabled "coming soon" controls.
-- Each PR adds specs for what it touches (see Testing).
-
-1. [ ] **Charts.** Rewrite `ChartComponent` on Chart.js: update the chart in place instead of recreating it in a `setTimeout`, resize with its container, take colours from the theme tokens instead of hard-coded dark defaults (`Chart.defaults`), and make y-axis ticks distinct (ACCT-2.12). Offer the 5- and 10-year timeframes (DASH-1.2, ACCT-2.4) by adding 5Y and 10Y to `TimeframeOptions` (`value-history.component.ts`); check the row still fits a phone.
+Nothing right now: the client baseline is done. Pull the next item up from Next.
 
 ---
 

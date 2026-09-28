@@ -78,8 +78,9 @@ client/src/app/
   core/loading/  viewResource, placeholders (skeletons) and the in-place load error
   core/layout/  LayoutService, the page header, profile menu and tab-title strategy
   core/list/    the responsive list (columns when wide, two-line rows when narrow)
+  core/chart/   the Chart.js wrapper, its theme colours and axis labels
   finance/    one folder per screen area: accounts, budget, cashflow, categories,
-              dashboard, institutions, transactions, common (charts, the money display)
+              dashboard, institutions, transactions, common (the value-history chart, the money display)
   settings/   the Settings list and API Tokens (Institutions and Categories live in finance/)
   login/, register/
 ```
