@@ -1,18 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { LowerCasePipe, PercentPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, ElementRef, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet, PercentPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { A11yModule } from '@angular/cdk/a11y';
+import { OverlayModule } from '@angular/cdk/overlay';
+import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
 import { CategoryClass, TransactionsSortKey } from '@shared/finance/enum';
+import { BudgetStreamUtil } from '@shared/finance/util';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { LayoutService } from './../../core/layout/layout.service';
 import { ListColumn, ListModule } from './../../core/list/list.component';
 import { DateProviderService } from './../../core/date-provider.service';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
@@ -25,23 +27,44 @@ interface SpendingRow {
     /** The category or group ID, depending on the view mode; undefined for uncategorized transactions. */
     id?: string;
     name: string;
-    /** As the card shows it: income, or spending as a positive number; negative when the net runs the other way (CASH-1.9). */
+    /** As the section shows it: income, or spending as a positive number; negative when the net runs the other way (CASH-1.9). */
     amount: number;
 }
+
+/** The period on screen: a month, quarter or year, by its first day (CASH-1.1). */
+export interface SpendingPeriod {
+    period: CalendarPeriod;
+    start: CalendarDate;
+}
+
+/** One choice in the period picker's grid: a month, a quarter or a year. */
+interface PeriodOption {
+    label: string;
+    ariaLabel: string;
+    start: CalendarDate;
+}
+
+const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// What the stepper's buttons and the picker call each period type.
+const periodNouns: Record<CalendarPeriod, string> = {
+    [CalendarPeriod.Monthly]: 'month',
+    [CalendarPeriod.Quarterly]: 'quarter',
+    [CalendarPeriod.Yearly]: 'year'
+};
 
 @Component({
     selector: 'app-finance-spending',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         PercentPipe,
-        LowerCasePipe,
-        FormsModule,
+        NgTemplateOutlet,
         RouterLink,
-        MatCardModule,
-        MatFormFieldModule,
-        MatSelectModule,
+        A11yModule,
+        OverlayModule,
         MatButtonModule,
         MatButtonToggleModule,
+        MatCardModule,
         MatIconModule,
         PageHeaderComponent,
         CardSkeletonComponent,
@@ -54,34 +77,27 @@ interface SpendingRow {
 })
 export class FinanceSpendingComponent {
     private financeService = inject(FinanceService);
-    private dateProvider = inject(DateProviderService);
+    private bottomSheet = inject(MatBottomSheet);
+    readonly isCompact = inject(LayoutService).isCompact;
 
     readonly CalendarPeriod = CalendarPeriod;
-    readonly periods = [CalendarPeriod.Monthly, CalendarPeriod.Quarterly, CalendarPeriod.Yearly];
+    readonly periodTypes = [
+        { value: CalendarPeriod.Monthly, label: 'Month' },
+        { value: CalendarPeriod.Quarterly, label: 'Quarter' },
+        { value: CalendarPeriod.Yearly, label: 'Year' }
+    ];
     readonly columns: ListColumn[] = [
         { key: 'name', label: 'Name', compact: 'primary' },
         { key: 'amount', label: 'Amount', width: '9rem', align: 'end', compact: 'trailing' }
     ];
 
-    readonly months = [
-        { value: 0, label: 'January' }, { value: 1, label: 'February' },
-        { value: 2, label: 'March' }, { value: 3, label: 'April' },
-        { value: 4, label: 'May' }, { value: 5, label: 'June' },
-        { value: 6, label: 'July' }, { value: 7, label: 'August' },
-        { value: 8, label: 'September' }, { value: 9, label: 'October' },
-        { value: 10, label: 'November' }, { value: 11, label: 'December' }
-    ];
-    readonly quarters = [
-        { value: 1, label: 'Q1' }, { value: 2, label: 'Q2' },
-        { value: 3, label: 'Q3' }, { value: 4, label: 'Q4' }
-    ];
+    private readonly today = inject(DateProviderService).today();
 
-    private readonly today = this.dateProvider.now();
-
-    readonly selectedPeriod = signal(CalendarPeriod.Monthly);
-    readonly selectedYear = signal(this.today.getFullYear());
-    readonly selectedMonth = signal(this.today.getMonth());
-    readonly selectedQuarter = signal(Math.floor(this.today.getMonth() / 3) + 1);
+    /** Opens on the current month (CASH-1.1). */
+    readonly selection = signal<SpendingPeriod>({
+        period: CalendarPeriod.Monthly,
+        start: CalendarDateUtil.getPeriod(CalendarPeriod.Monthly, this.today).startDate
+    });
     readonly viewMode = signal<'category' | 'group'>('category');
 
     readonly lookups = viewResource({
@@ -102,18 +118,17 @@ export class FinanceSpendingComponent {
 
     /** Every year from the oldest transaction to the newest, and always the current one (CASH-1.1). */
     readonly years = computed(() => {
-        const current = this.today.getFullYear();
-        const yearOf = (date: CalendarDate | undefined) => date ? CalendarDateUtil.toDate(date).getFullYear() : current;
+        const current = yearOf(this.today);
         const lookups = this.lookups.value();
-        const from = Math.min(yearOf(lookups?.firstDate), current);
-        const to = Math.max(yearOf(lookups?.lastDate), current);
+        const from = Math.min(lookups?.firstDate ? yearOf(lookups.firstDate) : current, current);
+        const to = Math.max(lookups?.lastDate ? yearOf(lookups.lastDate) : current, current);
         return Array.from({ length: to - from + 1 }, (_, i) => from + i);
     });
 
     // The period's totals: reloads when the period changes, keeping the old ones on screen meanwhile.
     readonly totals = viewResource({
-        params: () => ({ period: this.selectedPeriod(), asOfDate: this.getAsOfDate() }),
-        loader: ({ period, asOfDate }) => this.financeService.fetchSpendingTotals(period, asOfDate)
+        params: () => this.selection(),
+        loader: ({ period, start }) => this.financeService.fetchSpendingTotals(period, start)
     });
 
     private readonly categoryMap = computed(() => new Map((this.lookups.value()?.categories ?? []).map(c => [c.id, c])));
@@ -127,6 +142,98 @@ export class FinanceSpendingComponent {
         this.lookups.reload();
         this.totals.reload();
     }
+
+    // The stepper (CASH-1.1)
+
+    /** The period in full: "May 2026", "Q2 2026" or "2026". */
+    readonly periodLabel = computed(() => labelFor(this.selection(), false));
+    /** As the stepper shows it, with a short month on phones ("Sep 2026") so the controls fit one row. */
+    readonly periodText = computed(() => labelFor(this.selection(), this.isCompact()));
+    readonly periodNoun = computed(() => periodNouns[this.selection().period]);
+    readonly canStepBack = computed(() => this.canStep(-1));
+    readonly canStepForward = computed(() => this.canStep(1));
+
+    /** Moves to the previous or next month, quarter or year, within the years on offer. */
+    step(direction: -1 | 1) {
+        if (this.canStep(direction)) {
+            this.selection.update(({ period, start }) => ({ period, start: this.stepped(period, start, direction) }));
+        }
+    }
+
+    private canStep(direction: -1 | 1): boolean {
+        const { period, start } = this.selection();
+        return this.years().includes(yearOf(this.stepped(period, start, direction)));
+    }
+
+    private stepped(period: CalendarPeriod, start: CalendarDate, direction: -1 | 1): CalendarDate {
+        return CalendarDateUtil.addMonths(start, direction * BudgetStreamUtil.monthsIn(period));
+    }
+
+    // The period picker: a popover on wider screens, a bottom sheet on phones (CASH-1.1)
+
+    private readonly pickerSheet = viewChild.required<TemplateRef<unknown>>('pickerSheet');
+    private readonly pickerTrigger = viewChild('pickerTrigger', { read: ElementRef });
+    private pickerSheetRef?: MatBottomSheetRef;
+    readonly isPopoverOpen = signal(false);
+
+    /** The period type and year the picker is showing, before a choice is made. */
+    readonly pickerPeriod = signal(CalendarPeriod.Monthly);
+    readonly pickerYear = signal(yearOf(this.today));
+
+    readonly pickerOptions = computed<PeriodOption[]>(() => {
+        const year = this.pickerYear();
+        switch (this.pickerPeriod()) {
+            case CalendarPeriod.Monthly:
+                return monthNames.map((name, i) => ({
+                    label: name.slice(0, 3), ariaLabel: `${name} ${year}`, start: firstDay(year, i)
+                }));
+            case CalendarPeriod.Quarterly:
+                return [1, 2, 3, 4].map(q => ({ label: `Q${q}`, ariaLabel: `Q${q} ${year}`, start: firstDay(year, (q - 1) * 3) }));
+            default:
+                return this.years().map(y => ({ label: `${y}`, ariaLabel: `${y}`, start: firstDay(y, 0) }));
+        }
+    });
+
+    readonly canPickPreviousYear = computed(() => this.years().includes(this.pickerYear() - 1));
+    readonly canPickNextYear = computed(() => this.years().includes(this.pickerYear() + 1));
+
+    openPicker() {
+        const { period, start } = this.selection();
+        this.pickerPeriod.set(period);
+        this.pickerYear.set(yearOf(start));
+
+        if (this.isCompact()) {
+            this.pickerSheetRef = this.bottomSheet.open(this.pickerSheet(), { ariaLabel: 'Choose a period', autoFocus: 'dialog' });
+        }
+        else {
+            this.isPopoverOpen.set(true);
+        }
+    }
+
+    closePicker() {
+        this.pickerSheetRef?.dismiss();
+        this.pickerSheetRef = undefined;
+        if (this.isPopoverOpen()) {
+            this.isPopoverOpen.set(false);
+            this.pickerTrigger()?.nativeElement.focus();
+        }
+    }
+
+    stepPickerYear(direction: -1 | 1) {
+        this.pickerYear.update(year => year + direction);
+    }
+
+    isSelected(option: PeriodOption): boolean {
+        const { period, start } = this.selection();
+        return period === this.pickerPeriod() && start === option.start;
+    }
+
+    pick(option: PeriodOption) {
+        this.selection.set({ period: this.pickerPeriod(), start: option.start });
+        this.closePicker();
+    }
+
+    // The figures
 
     private readonly rows = computed(() => {
         const viewMode = this.viewMode();
@@ -162,31 +269,16 @@ export class FinanceSpendingComponent {
         };
     });
 
-    private readonly incomeRows = computed(() => this.rows().income);
-    private readonly expenseRows = computed(() => this.rows().expense);
-
-    // Income is green and expenses the ordinary colour (APP-6.1).
-    readonly sections = computed<{ title: string, rows: SpendingRow[], tone: MoneyTone }[]>(() => [
-        { title: 'Income', rows: this.incomeRows(), tone: 'favourable' },
-        { title: 'Expenses', rows: this.expenseRows(), tone: 'plain' }
-    ]);
-
-    readonly totalIncome = computed(() => this.incomeRows().reduce((sum, row) => sum + row.amount, 0));
-    readonly totalExpenses = computed(() => this.expenseRows().reduce((sum, row) => sum + row.amount, 0));
+    readonly totalIncome = computed(() => this.rows().income.reduce((sum, row) => sum + row.amount, 0));
+    readonly totalExpenses = computed(() => this.rows().expense.reduce((sum, row) => sum + row.amount, 0));
     readonly totalSavings = computed(() => this.totalIncome() - this.totalExpenses());
     readonly savingsRate = computed(() => this.totalIncome() > 0 ? this.totalSavings() / this.totalIncome() : 0);
 
-    /** The first day of the selected period. */
-    private getAsOfDate(): CalendarDate {
-        switch (this.selectedPeriod()) {
-            case CalendarPeriod.Monthly:
-                return CalendarDateUtil.fromDate(new Date(this.selectedYear(), this.selectedMonth(), 1));
-            case CalendarPeriod.Quarterly:
-                return CalendarDateUtil.fromDate(new Date(this.selectedYear(), (this.selectedQuarter() - 1) * 3, 1));
-            default:
-                return CalendarDateUtil.fromDate(new Date(this.selectedYear(), 0, 1));
-        }
-    }
+    // Income is green and expenses the ordinary colour (APP-6.1).
+    readonly sections = computed<{ title: string, rows: SpendingRow[], total: number, tone: MoneyTone, empty: string }[]>(() => [
+        { title: 'Income', rows: this.rows().income, total: this.totalIncome(), tone: 'favourable', empty: 'No income in this period.' },
+        { title: 'Expenses', rows: this.rows().expense, total: this.totalExpenses(), tone: 'plain', empty: 'No expenses in this period.' }
+    ]);
 
     /** The Transactions filters for a row: its category or group, and the period (CASH-1.6). */
     rowQueryParams(row: SpendingRow): Record<string, string> {
@@ -200,9 +292,32 @@ export class FinanceSpendingComponent {
         }
 
         // The same period the server totalled (CASH-1.6).
-        const { startDate, endDate } = CalendarDateUtil.getPeriod(this.selectedPeriod(), this.getAsOfDate());
+        const { period, start } = this.selection();
+        const { startDate, endDate } = CalendarDateUtil.getPeriod(period, start);
         queryParams['startDate'] = startDate;
         queryParams['endDate'] = endDate;
         return queryParams;
+    }
+}
+
+function yearOf(date: CalendarDate): number {
+    return Number(date.slice(0, 4));
+}
+
+/** The first day of a month, by its zero-based index. */
+function firstDay(year: number, monthIndex: number): CalendarDate {
+    return `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
+}
+
+function labelFor({ period, start }: SpendingPeriod, shortMonth: boolean): string {
+    const year = yearOf(start);
+    const monthIndex = Number(start.slice(5, 7)) - 1;
+    switch (period) {
+        case CalendarPeriod.Monthly:
+            return `${shortMonth ? monthNames[monthIndex].slice(0, 3) : monthNames[monthIndex]} ${year}`;
+        case CalendarPeriod.Quarterly:
+            return `Q${Math.floor(monthIndex / 3) + 1} ${year}`;
+        default:
+            return `${year}`;
     }
 }

@@ -1,118 +1,206 @@
+@use '@angular/material' as mat;
 @use 'breakpoints' as bp;
 
-.section-card {
-    margin-bottom: 24px;
+.spending-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    @include bp.content-below(bp.$medium) {
+        gap: 16px;
+    }
 }
 
-.card-header {
+// The container's gap already spaces the header.
+app-page-header {
+    margin-bottom: 0;
+}
+
+.label {
+    font: var(--mat-sys-label-medium);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+// The period stepper, then the Category / Group switch (CASH-1.1, CASH-1.5).
+.controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 16px;
-    padding: 16px;
-    border-bottom: 1px solid var(--border-color);
+    gap: 8px;
 }
 
-.card-title {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 500;
-}
-
-.controls-container {
+.stepper {
     display: flex;
-    gap: 16px;
     align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
+    margin-left: -8px;
 }
 
-.primary-controls {
+// Wide enough for "September 2026", so the arrows stay put as the period changes.
+.period-button {
+    min-width: 10.5rem;
+    font: var(--mat-sys-title-medium);
+}
+
+.view-toggle {
+    @include mat.button-toggle-overrides((
+        height: 36px
+    ));
+}
+
+// Phones show "Sep 2026" and smaller arrows, so both controls fit one row at 360px.
+@include bp.content-below(bp.$medium) {
+    .stepper {
+        margin-left: -6px;
+
+        @include mat.icon-button-density(-3);
+    }
+
+    .period-button {
+        min-width: 6.5rem;
+
+        @include mat.button-overrides((
+            text-horizontal-padding: 6px,
+            text-with-icon-horizontal-padding: 6px
+        ));
+    }
+}
+
+// Saved and the rate, then each section's total (CASH-1.4).
+.summary-card {
+    padding: 20px;
+    gap: 20px;
+}
+
+.saved {
     display: flex;
-    gap: 16px;
+    flex-direction: column;
+    gap: 4px;
 }
 
-mat-form-field {
-    width: 200px;
-    max-width: 100%;
+.saved-figures {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+
+    .headline {
+        font: var(--mat-sys-headline-medium);
+    }
+
+    .rate {
+        font: var(--mat-sys-body-large);
+        color: var(--text-muted);
+    }
+}
+
+.summary-figures {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+
+    .figure {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .value {
+        font: var(--mat-sys-title-large);
+    }
 }
 
 @include bp.content-below(bp.$medium) {
-    .controls-container {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 16px;
-    }
-
-    // Material fixes a form field's inner width at 180px, so two side by side don't fit a phone.
-    .primary-controls {
-        flex-direction: column;
-        width: 100%;
-
-        mat-form-field {
-            flex: 1;
-            width: auto;
-        }
-    }
-
-    .controls-container>mat-form-field {
-        width: 100%;
-    }
-
-    mat-button-toggle-group {
-        width: 100%;
-
-        mat-button-toggle {
-            flex: 1;
-        }
+    .summary-figures .value {
+        font: var(--mat-sys-title-medium);
     }
 }
 
-.no-data {
-    padding: 24px;
-    text-align: center;
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 48px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-color);
+
+    h2 {
+        flex: 1;
+        margin: 0;
+        font: var(--mat-sys-title-large);
+    }
+
+    .section-total {
+        font: var(--mat-sys-title-medium);
+    }
+}
+
+.empty {
+    margin: 0;
+    padding: 24px 16px;
     color: var(--text-muted);
 }
 
-.summary-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+// The period picker, in a popover or a bottom sheet (CASH-1.1).
+.period-popover {
+    width: 296px;
+    padding: 16px;
+    border-radius: var(--mat-sys-corner-large);
+    background-color: var(--mat-sys-surface-container);
+    box-shadow: var(--mat-sys-level2);
+}
 
-    .summary-card {
-        text-align: center;
-        padding: 24px 0;
+.period-sheet {
+    padding: 8px 0 16px;
 
-        .value {
-            display: block;
-            font-size: 1.75rem;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-
-        .label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+    .period-sheet-title {
+        margin: 0 0 16px;
+        font: var(--mat-sys-title-large);
     }
 }
 
-.compact-toggle {
-    height: 36px;
-
-    mat-button-toggle {
-        padding: 0 12px;
-        font-size: 0.85rem;
-    }
-}
-
-.loading-cards {
+.period-picker {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
+}
+
+.picker-type {
+    width: 100%;
+
+    mat-button-toggle {
+        flex: 1;
+    }
+}
+
+.picker-year {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .picker-year-label {
+        font: var(--mat-sys-title-medium);
+    }
+}
+
+.picker-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+
+    &.quarters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .picker-option {
+        min-width: 0;
+    }
+
+    .picker-option.selected {
+        background-color: var(--mat-sys-secondary-container);
+        color: var(--mat-sys-on-secondary-container);
+    }
 }
