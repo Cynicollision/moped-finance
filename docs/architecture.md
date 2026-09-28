@@ -77,8 +77,9 @@ client/src/app/
               unsaved-changes guard, demo mode
   core/loading/  viewResource, placeholders (skeletons) and the in-place load error
   core/layout/  LayoutService, the page header, profile menu and tab-title strategy
+  core/list/    the responsive list (columns when wide, two-line rows when narrow)
   finance/    one folder per screen area: accounts, budget, cashflow, categories,
-              dashboard, institutions, transactions, common
+              dashboard, institutions, transactions, common (charts, the money display)
   settings/   the Settings list and API Tokens (Institutions and Categories live in finance/)
   login/, register/
 ```

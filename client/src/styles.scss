@@ -58,18 +58,6 @@ mat-card.mat-mdc-card-outlined {
     border-color: var(--border-color) !important;
 }
 
-table.mat-mdc-table {
-    background-color: var(--bg-card) !important;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-}
-
-mat-card table.mat-mdc-table,
-mat-card.mat-mdc-card table.mat-mdc-table {
-    border: none;
-}
-
 // A screen's primary action in its page header (app-page-header): a filled button with an icon and a label.
 // On phones only the icon shows, so give the button an aria-label with the same text.
 .page-action {
@@ -126,26 +114,4 @@ mat-card.mat-mdc-card table.mat-mdc-table {
 // Snackbars clear the bottom navigation bar on phones (APP-2.8).
 .mat-mdc-snack-bar-container.snackbar-above-bottom-nav {
     margin-bottom: calc(88px + env(safe-area-inset-bottom));
-}
-
-.amount-positive {
-    color: var(--color-positive) !important;
-}
-
-.amount-negative {
-    color: var(--color-negative) !important;
-}
-
-.transactions-table {
-    .amount-negative {
-        color: var(--text-main) !important;
-    }
-}
-
-.clickable-row {
-    cursor: pointer;
-
-    &:hover {
-        background-color: var(--bg-hover) !important;
-    }
 }

@@ -65,13 +65,20 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 
 | ID | Requirement | Status |
 |---|---|---|
-| APP-6.1 | Red shall mean unfavourable: a value that's bad for the user, such as debt growing (DASH-1.3), negative savings (CASH-1.4) or spending over budget (CASH-1.10). A negative amount that's expected, such as a purchase, shall not be red. | Partial |
-| APP-6.2 | Transaction amounts (the Transactions list, View Transaction, Account Details' recent transactions) shall show money in with a "+" before the "$", in green, and money out with no sign, in the ordinary text color. | Partial |
+| APP-6.1 | Red shall mean unfavourable: a value that's bad for the user, such as debt growing (DASH-1.3), negative savings (CASH-1.4) or spending over budget (CASH-1.10). A negative amount that's expected, such as a purchase, shall not be red. | Implemented |
+| APP-6.2 | Transaction amounts (the Transactions list, View Transaction, Account Details' recent transactions) shall show money in with a "+" before the "$", in green, and money out with no sign, in the ordinary text color. | Implemented |
 | APP-6.3 | Amounts shall be stored signed: money out and liability balances are negative. Forms shall not ask the user for a sign: transaction amounts use a Money out / Money in switch (TXN-2.13), and a liability's balance fields (starting balance, Update Balance, ACCT-2.2) ask for **Amount owed** as a positive number and store it negative. Budget amounts are positive, with direction from the category (BUD notes). CSV files keep signed amounts (TXN-3.10, ACCT-3.10). | Planned |
+
+## APP-7 Lists work at any width
+
+| ID | Requirement | Status |
+|---|---|---|
+| APP-7.1 | Lists of records (Transactions, Account Details' recent transactions, Budget, Cashflow) shall show columns under headings when the page area is at least 840px wide. Narrower, each row shall show its main text and its amount on the first line, with details in smaller text on a second line, and leave out the rest. A list shall never scroll sideways. | Implemented |
+| APP-7.2 | A sortable list shall sort by its column headings when wide, with an arrow on the current one, and by a sort menu above the list when narrow. Choosing a new column sorts it in its natural direction; choosing the current one reverses it. | Implemented |
 
 ## Known gaps
 
-- **Red and signs aren't consistent yet (APP-6).** Cashflow shows expenses in red, transaction amounts have no "+", and forms take signed amounts (liabilities must be entered negative).
+- **Forms take signed amounts (APP-6.3).** Money out and liability balances must be typed as negative numbers.
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.
 
 ## Notes

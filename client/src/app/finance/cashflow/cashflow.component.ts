@@ -1,29 +1,31 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { CurrencyPipe, LowerCasePipe, PercentPipe } from '@angular/common';
+import { LowerCasePipe, PercentPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
-import { CalendarPeriod } from '@shared/core/enum';
+import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
-import { CategoryClass } from '@shared/finance/enum';
+import { CategoryClass, TransactionsSortKey } from '@shared/finance/enum';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { ListColumn, ListModule } from './../../core/list/list.component';
 import { DateProviderService } from './../../core/date-provider.service';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
+import { MoneyComponent, MoneyTone } from './../common/money.component';
 import { FinanceService } from './../finance.service';
 
 interface CashflowRow {
     /** The category or group ID, depending on the view mode; undefined for uncategorized transactions. */
     id?: string;
     name: string;
+    /** As the card shows it: income, or spending as a positive number; negative when the net runs the other way (CASH-1.9). */
     amount: number;
 }
 
@@ -31,33 +33,35 @@ interface CashflowRow {
     selector: 'app-finance-cashflow',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CurrencyPipe,
         PercentPipe,
         LowerCasePipe,
         FormsModule,
+        RouterLink,
         MatCardModule,
         MatFormFieldModule,
         MatSelectModule,
         MatButtonModule,
         MatButtonToggleModule,
-        MatTableModule,
         MatIconModule,
         PageHeaderComponent,
         CardSkeletonComponent,
-        LoadErrorComponent
+        LoadErrorComponent,
+        ListModule,
+        MoneyComponent
     ],
     templateUrl: './cashflow.component.html',
     styleUrl: './cashflow.component.scss'
 })
 export class FinanceCashflowComponent {
     private financeService = inject(FinanceService);
-    private router = inject(Router);
     private dateProvider = inject(DateProviderService);
 
     readonly CalendarPeriod = CalendarPeriod;
-    readonly Math = Math;
     readonly periods = [CalendarPeriod.Monthly, CalendarPeriod.Quarterly, CalendarPeriod.Yearly];
-    readonly displayedColumns: string[] = ['name', 'amount'];
+    readonly columns: ListColumn[] = [
+        { key: 'name', label: 'Name', compact: 'primary' },
+        { key: 'amount', label: 'Amount', width: '9rem', align: 'end', compact: 'trailing' }
+    ];
 
     readonly months = [
         { value: 0, label: 'January' }, { value: 1, label: 'February' },
@@ -73,7 +77,6 @@ export class FinanceCashflowComponent {
     ];
 
     private readonly today = this.dateProvider.now();
-    readonly years = [this.today.getFullYear() - 2, this.today.getFullYear() - 1, this.today.getFullYear(), this.today.getFullYear() + 1];
 
     readonly selectedPeriod = signal(CalendarPeriod.Monthly);
     readonly selectedYear = signal(this.today.getFullYear());
@@ -83,12 +86,28 @@ export class FinanceCashflowComponent {
 
     readonly lookups = viewResource({
         loader: async () => {
-            const [categories, groups] = await Promise.all([
+            // The oldest and newest transactions bound the years to choose from (CASH-1.1).
+            const edgeTransaction = (sortDirection: SortDirection) => this.financeService.fetchTransactions({
+                sortKey: TransactionsSortKey.Date, sortDirection, limit: 1, offset: 0
+            });
+            const [categories, groups, [first], [last]] = await Promise.all([
                 this.financeService.fetchCategories(false),
-                this.financeService.fetchCategoryGroups()
+                this.financeService.fetchCategoryGroups(),
+                edgeTransaction(SortDirection.Asc),
+                edgeTransaction(SortDirection.Desc)
             ]);
-            return { categories, groups };
+            return { categories, groups, firstDate: first?.date, lastDate: last?.date };
         }
+    });
+
+    /** Every year from the oldest transaction to the newest, and always the current one (CASH-1.1). */
+    readonly years = computed(() => {
+        const current = this.today.getFullYear();
+        const yearOf = (date: CalendarDate | undefined) => date ? CalendarDateUtil.toDate(date).getFullYear() : current;
+        const lookups = this.lookups.value();
+        const from = Math.min(yearOf(lookups?.firstDate), current);
+        const to = Math.max(yearOf(lookups?.lastDate), current);
+        return Array.from({ length: to - from + 1 }, (_, i) => from + i);
     });
 
     // The period's totals: reloads when the period changes, keeping the old ones on screen meanwhile.
@@ -127,29 +146,32 @@ export class FinanceCashflowComponent {
                 ? (cat ? `${cat.icon} ${cat.name}` : 'Uncategorized')
                 : (group?.name || 'Uncategorized');
 
-            const rows = group?.class === CategoryClass.Income ? income : expense;
+            // Spending is money out, so an expense row counts amounts the other way round.
+            const isIncome = group?.class === CategoryClass.Income;
+            const rows = isIncome ? income : expense;
             const row = rows.get(id ?? '') ?? { id, name, amount: 0 };
-            row.amount += stream.amount;
+            row.amount += isIncome ? stream.amount : -stream.amount;
             rows.set(id ?? '', row);
         }
 
-        const sortByAmountDesc = (a: CashflowRow, b: CashflowRow) => Math.abs(b.amount) - Math.abs(a.amount);
+        const largestFirst = (a: CashflowRow, b: CashflowRow) => b.amount - a.amount;
         return {
-            income: [...income.values()].sort(sortByAmountDesc),
-            expense: [...expense.values()].sort(sortByAmountDesc)
+            income: [...income.values()].sort(largestFirst),
+            expense: [...expense.values()].sort(largestFirst)
         };
     });
 
     private readonly incomeStreams = computed(() => this.rows().income);
     private readonly expenseStreams = computed(() => this.rows().expense);
 
-    readonly sections = computed(() => [
-        { title: 'Income', rows: this.incomeStreams() },
-        { title: 'Expenses', rows: this.expenseStreams() }
+    // Income is green and expenses the ordinary colour (APP-6.1).
+    readonly sections = computed<{ title: string, rows: CashflowRow[], tone: MoneyTone }[]>(() => [
+        { title: 'Income', rows: this.incomeStreams(), tone: 'favourable' },
+        { title: 'Expenses', rows: this.expenseStreams(), tone: 'plain' }
     ]);
 
     readonly totalIncome = computed(() => this.incomeStreams().reduce((sum, row) => sum + row.amount, 0));
-    readonly totalExpenses = computed(() => this.expenseStreams().reduce((sum, row) => sum + Math.abs(row.amount), 0));
+    readonly totalExpenses = computed(() => this.expenseStreams().reduce((sum, row) => sum + row.amount, 0));
     readonly totalSavings = computed(() => this.totalIncome() - this.totalExpenses());
     readonly savingsRate = computed(() => this.totalIncome() > 0 ? this.totalSavings() / this.totalIncome() : 0);
 
@@ -165,7 +187,8 @@ export class FinanceCashflowComponent {
         }
     }
 
-    onRowClick(row: CashflowRow) {
+    /** The Transactions filters for a row: its category or group, and the period (CASH-1.6). */
+    rowQueryParams(row: CashflowRow): Record<string, string> {
         const queryParams: Record<string, string> = {};
 
         if (this.viewMode() === 'category' && row.id) {
@@ -179,7 +202,6 @@ export class FinanceCashflowComponent {
         const { startDate, endDate } = CalendarDateUtil.getPeriod(this.selectedPeriod(), this.getAsOfDate());
         queryParams['startDate'] = startDate;
         queryParams['endDate'] = endDate;
-
-        this.router.navigate(['/transactions'], { queryParams });
+        return queryParams;
     }
 }

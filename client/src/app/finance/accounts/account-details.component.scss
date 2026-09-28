@@ -47,49 +47,8 @@
         color: var(--text-main);
     }
 
-    table {
-        width: 100%;
-        background: var(--bg-card);
-        border-radius: 8px;
-        overflow: hidden;
-
-        .mobile-details {
-            display: none;
-        }
-
-        @include bp.content-below(bp.$expanded) {
-            .mat-column-category {
-                display: none !important;
-            }
-
-            .mat-column-merchant {
-                width: auto !important;
-                flex: 1 !important;
-                padding-right: 16px;
-            }
-
-            .mobile-details {
-                display: flex;
-                flex-direction: column;
-                margin-top: 6px;
-                font-size: 0.85rem;
-                line-height: 1.4;
-                color: var(--text-muted);
-
-                .mobile-category {
-                    font-weight: 510;
-                    color: var(--text-main);
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                }
-            }
-
-            .mat-cell {
-                padding-top: 12px !important;
-                padding-bottom: 12px !important;
-            }
-        }
+    .no-transactions {
+        color: var(--text-muted);
     }
 }
 

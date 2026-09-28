@@ -19,13 +19,8 @@ A series of PRs, in this order, that gives the client consistent, tested pattern
 - Bank-connection UI is removed until INST-2 is redesigned. No disabled "coming soon" controls.
 - Each PR adds specs for what it touches (see Testing).
 
-1. [ ] **Lists and phones.**
-   - A shared responsive list to replace `mat-table` in Transactions, Budget, Cashflow and Account Details: columns when the page area is wide; name and amount with a second line for date and category when it's narrow, instead of a table that scrolls sideways. Sortable headers when wide, a sort menu when narrow.
-   - A shared money display that applies APP-6.1 and APP-6.2 ("+" and green for money in, no red for expected negatives).
-   - On phones, collapse the Transactions filters into a bottom sheet.
-   - The Cashflow year list is a fixed four-year window; derive it from the data (CASH known gaps), for example from the earliest transaction.
-2. [ ] **Budget redesign**, with BUD-1.2 and BUD-1.10: a side panel (desktop) or full-screen dialog (phone) for adding and editing streams, an empty state (BUD known gaps), the Left over figure, and a layout that works on phones. Leave room for the 12-month averages (BUD-1.8, BUD-1.9), which need a server endpoint.
-3. [ ] **Charts.** Rewrite `ChartComponent` on Chart.js: update the chart in place instead of recreating it in a `setTimeout`, resize with its container, take colours from the theme tokens instead of hard-coded dark defaults (`Chart.defaults`), and make y-axis ticks distinct (ACCT-2.12). Offer the 5- and 10-year timeframes (DASH-1.2, ACCT-2.4) by adding 5Y and 10Y to `TimeframeOptions` (`value-history.component.ts`); check the row still fits a phone.
+1. [ ] **Budget redesign**, with BUD-1.2 and BUD-1.10: a side panel (desktop) or full-screen dialog (phone) for adding and editing streams, an empty state (BUD known gaps), the Left over figure, and a layout that works on phones. Leave room for the 12-month averages (BUD-1.8, BUD-1.9), which need a server endpoint.
+2. [ ] **Charts.** Rewrite `ChartComponent` on Chart.js: update the chart in place instead of recreating it in a `setTimeout`, resize with its container, take colours from the theme tokens instead of hard-coded dark defaults (`Chart.defaults`), and make y-axis ticks distinct (ACCT-2.12). Offer the 5- and 10-year timeframes (DASH-1.2, ACCT-2.4) by adding 5Y and 10Y to `TimeframeOptions` (`value-history.component.ts`); check the row still fits a phone.
 
 ---
 

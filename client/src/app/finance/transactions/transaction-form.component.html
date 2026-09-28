@@ -6,9 +6,7 @@
         @if (mode() === 'readonly') {
             <div class="readonly-field amount">
                 <div class="label">Amount</div>
-                <div class="value" [class.amount-positive]="transactionForm.value.amount! > 0" [class.amount-negative]="transactionForm.value.amount! < 0">
-                    {{Math.abs(transactionForm.value.amount!) | currency}}
-                </div>
+                <app-money class="value" [amount]="transactionForm.value.amount ?? 0" tone="transaction"></app-money>
             </div>
 
             <div class="readonly-field">

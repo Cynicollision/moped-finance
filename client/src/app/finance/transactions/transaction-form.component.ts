@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, SimpleChanges, OnChanges, input, output } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,6 +18,7 @@ import { DateProviderService } from './../../core/date-provider.service';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
+import { MoneyComponent } from './../common/money.component';
 import { FinanceService } from './../finance.service';
 
 export type TransactionFormMode = 'create' | 'edit' | 'readonly';
@@ -26,7 +27,6 @@ export type TransactionFormMode = 'create' | 'edit' | 'readonly';
     selector: 'app-transaction-form',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CurrencyPipe,
         DatePipe,
         ReactiveFormsModule,
         MatButtonModule,
@@ -41,7 +41,8 @@ export type TransactionFormMode = 'create' | 'edit' | 'readonly';
         MatSelectModule,
         RouterLink,
         CardSkeletonComponent,
-        LoadErrorComponent
+        LoadErrorComponent,
+        MoneyComponent
     ],
     templateUrl: './transaction-form.component.html',
     styleUrl: './transaction-form.component.scss'
@@ -58,7 +59,6 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     private financeService = inject(FinanceService);
     private dateProvider = inject(DateProviderService);
 
-    readonly Math = Math;
 
     readonly transactionForm = new FormGroup({
         accountId: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),

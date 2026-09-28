@@ -33,16 +33,9 @@
             margin-bottom: 32px;
 
             .value {
+                display: block;
                 font-size: 2rem;
                 font-weight: 700;
-                color: var(--text-main);
-
-                &.amount-positive {
-                    color: var(--color-positive);
-                }
-                &.amount-negative {
-                    color: var(--text-main);
-                }
             }
         }
     }

@@ -16,51 +16,6 @@ app-page-header {
     padding: 16px;
 }
 
-table {
-    width: 100%;
-
-    .mobile-details {
-        display: none;
-    }
-
-    @include bp.content-below(bp.$expanded) {
-        .mat-column-account,
-        .mat-column-category {
-            display: none !important;
-        }
-
-        .mat-column-merchant {
-            width: auto !important;
-            flex: 1 !important;
-            padding-right: 16px;
-        }
-
-        .mobile-details {
-            display: flex;
-            flex-direction: column;
-            margin-top: 6px;
-            font-size: 0.85rem;
-            line-height: 1.4;
-            color: var(--text-muted);
-
-            .mobile-category {
-                font-weight: 510;
-                color: var(--text-main);
-                display: flex;
-                align-items: center;
-                gap: 4px;
-            }
-        }
-
-        .mat-cell {
-            padding-top: 12px !important;
-            padding-bottom: 12px !important;
-        }
-    }
-}
-
-
-
 .filter-form {
     display: flex;
     flex-direction: column;
@@ -113,6 +68,34 @@ mat-expansion-panel {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
+}
+
+// The filters in a bottom sheet on phones (TXN-1.5).
+// Two fields to a row, with the buttons kept in view at the bottom.
+.filters-sheet {
+    padding-top: 8px;
+
+    .filters-sheet-title {
+        margin: 0 0 16px;
+        font: var(--mat-sys-title-large);
+    }
+
+    .filter-form {
+        gap: 0;
+    }
+
+    .filter-row mat-form-field {
+        flex: 1 1 calc(50% - 6px);
+        min-width: 0;
+    }
+
+    .filter-actions {
+        position: sticky;
+        bottom: 0;
+        gap: 8px;
+        padding: 12px 0 16px;
+        background-color: var(--mat-sys-surface-container-low);
+    }
 }
 
 .loading-rows {
