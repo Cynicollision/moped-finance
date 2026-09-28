@@ -145,6 +145,10 @@ export class AccountFormComponent implements OnInit, OnChanges {
         }
     }
 
+    hasUnsavedChanges(): boolean {
+        return this.accountForm.dirty;
+    }
+
     onSubmit() {
         const rawValue = this.accountForm.getRawValue();
         // The group's required validator means it's set whenever the form is valid.

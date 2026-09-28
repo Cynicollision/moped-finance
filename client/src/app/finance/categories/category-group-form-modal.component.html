@@ -1,5 +1,5 @@
 <app-modal-layout [title]="isEditing ? 'Edit Group' : 'Create Group'">
-    <form [formGroup]="form" (ngSubmit)="save()">
+    <form id="category-group-form" [formGroup]="form" (ngSubmit)="save()">
         <div class="form-row">
             <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
@@ -17,12 +17,22 @@
                 </mat-select>
             </mat-form-field>
         </div>
+    </form>
+    @if (isEditing && categoryCount > 0) {
+        <p class="delete-note">
+            To delete this group, first move or delete its {{ categoryCount }} {{ categoryCount === 1 ? 'category' : 'categories' }}.
+        </p>
+    }
 
-        <div modal-actions>
-            <button mat-button type="button" mat-dialog-close>Cancel</button>
-            <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
-                Save
+    @if (isEditing) {
+        <div modal-actions-start>
+            <button mat-button class="danger-button" type="button" (click)="delete()" [disabled]="categoryCount > 0">
+                Delete
             </button>
         </div>
-    </form>
+    }
+    <div modal-actions>
+        <button mat-button type="button" appModalCancel>Cancel</button>
+        <button mat-flat-button type="submit" form="category-group-form" [disabled]="form.invalid || isSaving()">Save</button>
+    </div>
 </app-modal-layout>

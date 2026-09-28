@@ -8,6 +8,7 @@ import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { TransactionFormComponent } from './transaction-form.component';
 import { FinanceService } from './../finance.service';
 import { ModalService } from './../../core/modal/modal.service';
+import { NotificationService } from './../../core/notification.service';
 
 @Component({
     selector: 'app-finance-view-transaction',
@@ -27,6 +28,7 @@ export class ViewTransactionComponent implements OnInit {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private modalService = inject(ModalService);
+    private notificationService = inject(NotificationService);
 
     private transactionId: string | null = null;
     readonly transaction = signal<Transaction | null>(null);
@@ -55,7 +57,7 @@ export class ViewTransactionComponent implements OnInit {
 
         const confirmDelete = await this.modalService.confirm({
             title: 'Delete Transaction',
-            message: 'Are you sure you want to delete this transaction?',
+            message: "Delete this transaction? This can't be undone.",
             confirmLabel: 'Delete',
             isWarn: true
         });
@@ -63,6 +65,7 @@ export class ViewTransactionComponent implements OnInit {
         if (confirmDelete) {
             const success = await this.financeService.deleteTransaction(this.transactionId);
             if (success) {
+                this.notificationService.success('Transaction deleted');
                 this.router.navigate(['/transactions']);
             }
         }

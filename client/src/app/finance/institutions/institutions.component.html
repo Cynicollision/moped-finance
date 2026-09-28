@@ -8,10 +8,10 @@
             <mat-icon>more_vert</mat-icon>
         </button>
         <mat-menu #pageMenu="matMenu">
-            <a mat-menu-item routerLink="/settings/institutions/new">
+            <button mat-menu-item (click)="openInstitution()">
                 <mat-icon>account_balance</mat-icon>
                 <span>Add Institution</span>
-            </a>
+            </button>
         </mat-menu>
     </app-page-header>
 
@@ -23,9 +23,9 @@
                     <mat-icon>account_balance</mat-icon>
                 </div>
                 <mat-card-title>
-                    <a [routerLink]="['/settings/institutions', group.institution.id]" class="title-link">
+                    <button type="button" class="title-link" (click)="openInstitution(group)">
                         {{ group.institution.name }}
-                    </a>
+                    </button>
                 </mat-card-title>
                 <mat-card-subtitle>{{ group.accounts.length }} account{{ group.accounts.length === 1 ? '' : 's' }}</mat-card-subtitle>
                 <span class="spacer"></span>
@@ -33,10 +33,10 @@
                     <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #menu="matMenu">
-                    <a mat-menu-item [routerLink]="['/settings/institutions', group.institution.id, 'edit']">
+                    <button mat-menu-item (click)="openInstitution(group)">
                         <mat-icon>edit</mat-icon>
                         <span>Edit</span>
-                    </a>
+                    </button>
                     <a mat-menu-item routerLink="/accounts/new" [queryParams]="{ institutionId: group.institution.id }">
                         <mat-icon>add</mat-icon>
                         <span>Add account</span>
@@ -71,7 +71,7 @@
         @if (institutionGroups().length === 0) {
         <div class="empty-state">
             <p>You haven't added any institutions yet.</p>
-            <button mat-raised-button color="primary" routerLink="/settings/institutions/new">Add your first institution</button>
+            <button mat-flat-button (click)="openInstitution()">Add your first institution</button>
         </div>
         }
     </div>

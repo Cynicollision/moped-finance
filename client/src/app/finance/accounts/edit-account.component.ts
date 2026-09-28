@@ -1,10 +1,9 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { Account, Institution } from '@shared/finance/types';
 import { Crumb, PageHeaderComponent } from './../../core/layout/page-header.component';
-import { ModalService } from './../../core/modal/modal.service';
+import { NotificationService } from './../../core/notification.service';
+import { HasUnsavedChanges } from './../../core/unsaved-changes';
 import { FinanceService } from './../finance.service';
 import { AccountFormComponent } from './account-form.component';
 
@@ -12,19 +11,20 @@ import { AccountFormComponent } from './account-form.component';
     selector: 'app-edit-account',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        MatButtonModule,
-        MatIconModule,
         AccountFormComponent,
         PageHeaderComponent
     ],
     templateUrl: './edit-account.component.html',
     styleUrl: './edit-account.component.scss'
 })
-export class FinanceEditAccountComponent implements OnInit {
+export class FinanceEditAccountComponent implements OnInit, HasUnsavedChanges {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private modalService = inject(ModalService);
+    private notificationService = inject(NotificationService);
     private financeService = inject(FinanceService);
+
+    private readonly form = viewChild(AccountFormComponent);
+    private saved = false;
 
     private accountId?: string;
     readonly accountData = signal<Account | undefined>(undefined);
@@ -56,34 +56,19 @@ export class FinanceEditAccountComponent implements OnInit {
         }
     }
 
+    hasUnsavedChanges(): boolean {
+        return !this.saved && (this.form()?.hasUnsavedChanges() ?? false);
+    }
+
     async onSave(updatedData: Partial<Account>) {
         const currentData = this.accountData();
         if (currentData) {
             const updatedAccount: Account = { ...currentData, ...updatedData };
             const result = await this.financeService.saveAccount(updatedAccount);
             if (result) {
+                this.saved = true;
+                this.notificationService.success('Account saved');
                 this.router.navigate(['/accounts', currentData.id]);
-            }
-        }
-    }
-
-    async onDelete() {
-        const currentData = this.accountData();
-        if (!currentData) {
-            return;
-        }
-
-        const confirmed = await this.modalService.confirm({
-            title: 'Delete Account',
-            message: 'Are you sure you want to delete this account? This action cannot be undone.',
-            confirmLabel: 'Delete',
-            isWarn: true
-        });
-
-        if (confirmed) {
-            const success = await this.financeService.deleteAccount(currentData.id);
-            if (success) {
-                this.router.navigate(['/dashboard']);
             }
         }
     }

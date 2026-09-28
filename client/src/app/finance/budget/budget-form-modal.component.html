@@ -1,5 +1,5 @@
 <app-modal-layout [title]="isEditing ? 'Edit ' + typeString : 'Add ' + typeString">
-    <form [formGroup]="budgetForm" (ngSubmit)="save()" class="budget-form">
+    <form id="budget-form" [formGroup]="budgetForm" (ngSubmit)="save()" class="budget-form">
         <div class="form-row">
             <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
@@ -34,12 +34,15 @@
                 </mat-select>
             </mat-form-field>
         </div>
-
-        <div modal-actions>
-            <button mat-button type="button" mat-dialog-close>Cancel</button>
-            <button mat-raised-button color="primary" type="submit" [disabled]="budgetForm.invalid">
-                Save
-            </button>
-        </div>
     </form>
+
+    @if (isEditing) {
+        <div modal-actions-start>
+            <button mat-button class="danger-button" type="button" (click)="delete()">Delete</button>
+        </div>
+    }
+    <div modal-actions>
+        <button mat-button type="button" appModalCancel>Cancel</button>
+        <button mat-flat-button type="submit" form="budget-form" [disabled]="budgetForm.invalid || isSaving()">Save</button>
+    </div>
 </app-modal-layout>

@@ -5,16 +5,5 @@
         <app-account-form mode="edit" [account]="account" [institutions]="institutions()" (save)="onSave($event)"
             (cancelled)="onCancel()">
         </app-account-form>
-
-        <div class="danger-zone">
-            <h3>
-                <mat-icon>warning</mat-icon>
-                Danger Zone
-            </h3>
-            <p>Once you delete an account, there is no going back. Please be certain.</p>
-            <button mat-stroked-button color="warn" type="button" (click)="onDelete()">
-                Delete Account
-            </button>
-        </div>
     }
 </div>

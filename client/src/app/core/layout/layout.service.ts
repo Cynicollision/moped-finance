@@ -1,5 +1,5 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Injectable, computed, inject } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
@@ -49,6 +49,9 @@ export class LayoutService {
     });
 
     readonly isCompact = computed(() => this.sizeClass() === 'compact');
+
+    /** Whether the shell is showing the bottom navigation bar, set by the shell. Snackbars sit above it. */
+    readonly hasBottomNav = signal(false);
 
     /** Whether the viewport is `size` or wider. Reads the signal, so it's reactive in templates and computeds. */
     atLeast(size: SizeClass): boolean {

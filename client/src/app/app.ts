@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
@@ -72,4 +72,8 @@ export class App {
                 return 'side';
         }
     });
+
+    constructor() {
+        effect(() => this.layout.hasBottomNav.set(this.navMode() === 'bottom' && this.authService.currentUser() !== null));
+    }
 }

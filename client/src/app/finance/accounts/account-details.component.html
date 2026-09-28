@@ -31,6 +31,11 @@
                     <mat-icon>download</mat-icon>
                     <span>Download Balance History</span>
                 </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item class="danger-item" (click)="deleteAccount()">
+                    <mat-icon>delete</mat-icon>
+                    <span>Delete Account</span>
+                </button>
             </mat-menu>
         }
     </app-page-header>
@@ -101,7 +106,7 @@
             </table>
 
             <div class="footer-actions">
-                <a mat-raised-button color="primary" [routerLink]="['/transactions']"
+                <a mat-stroked-button [routerLink]="['/transactions']"
                     [queryParams]="{ accountId: account.id }">
                     Go To Transactions
                 </a>

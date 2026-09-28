@@ -1,0 +1,28 @@
+<app-modal-layout [title]="institution ? 'Edit Institution' : 'Add Institution'">
+    <form id="institution-form" [formGroup]="form" (ngSubmit)="save()">
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" maxlength="100">
+            @if (form.controls.name.hasError('required')) {
+                <mat-error>Name is required</mat-error>
+            }
+        </mat-form-field>
+    </form>
+    @if (institution && accountCount > 0) {
+        <p class="delete-note">
+            To delete this institution, first delete its {{ accountCount }} account{{ accountCount === 1 ? '' : 's' }}.
+        </p>
+    }
+
+    @if (institution) {
+        <div modal-actions-start>
+            <button mat-button class="danger-button" type="button" (click)="delete()" [disabled]="accountCount > 0">
+                Delete
+            </button>
+        </div>
+    }
+    <div modal-actions>
+        <button mat-button type="button" appModalCancel>Cancel</button>
+        <button mat-flat-button type="submit" form="institution-form" [disabled]="form.invalid || isSaving()">Save</button>
+    </div>
+</app-modal-layout>

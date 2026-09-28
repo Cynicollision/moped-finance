@@ -1,9 +1,0 @@
-<div class="container">
-    <app-page-header title="Add Institution" [crumbs]="[{ label: 'Settings', link: '/settings' }, { label: 'Institutions', link: '/settings/institutions' }]"></app-page-header>
-
-    <app-institution-form
-        mode="create"
-        (save)="onSave($event)"
-        (cancelled)="onCancel()">
-    </app-institution-form>
-</div>

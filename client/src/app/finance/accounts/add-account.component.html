@@ -10,7 +10,7 @@
         @else {
             <div class="no-institutions">
                 <p>Accounts belong to an institution, such as a bank or lender. Add one first.</p>
-                <a mat-flat-button routerLink="/settings/institutions/new">Add institution</a>
+                <button mat-flat-button type="button" (click)="addInstitution()">Add institution</button>
             </div>
         }
     }

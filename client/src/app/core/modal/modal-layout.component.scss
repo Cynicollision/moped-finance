@@ -1,10 +1,15 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 .modal-header {
     display: flex !important;
     justify-content: space-between;
     align-items: center;
     margin: 0;
-    // Increase overall padding from the edges (Material default is 24px)
-    padding: 32px 32px 16px 32px !important;
+    padding: 24px 24px 8px 24px !important;
 
     .header-content {
         flex: 1;
@@ -17,22 +22,38 @@
     .close-button {
         flex-shrink: 0;
         margin-left: 16px;
-        // Tweak margins so it perfectly rests near the top-right corner padding
-        margin-top: -8px;
-        margin-right: -16px;
+        margin-right: -12px;
     }
 }
 
 .modal-content {
-    // Use visible to allow floating labels (Name, Category, etc.) to bleed out above the container
-    overflow: visible !important;
-    padding: 16px 32px 8px 32px !important;
+    padding: 16px 24px 8px 24px !important;
     box-sizing: border-box;
 }
 
 .modal-actions {
-    // Increase bottom padding to prevent the elevated button shadows from being clipped
-    // Increase side paddings to match the rest of the modal
-    padding: 16px 32px 32px 32px !important;
+    gap: 8px;
+    padding: 16px 24px 24px 24px !important;
     margin-bottom: 0;
+
+    .spacer {
+        flex: 1;
+    }
+}
+
+// Full-screen on phones (APP-2.6): the content scrolls between a fixed header and action bar.
+:host-context(.full-screen-dialog) {
+    .modal-header {
+        padding: 16px 16px 8px 16px !important;
+    }
+
+    .modal-content {
+        flex: 1;
+        max-height: none;
+        padding: 8px 16px !important;
+    }
+
+    .modal-actions {
+        padding: 12px 16px calc(16px + env(safe-area-inset-bottom)) 16px !important;
+    }
 }

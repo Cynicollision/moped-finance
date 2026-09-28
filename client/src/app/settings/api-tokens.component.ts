@@ -8,6 +8,7 @@ import { ApiToken } from '@shared/core/types';
 import { PageHeaderComponent } from './../core/layout/page-header.component';
 import { DateProviderService } from './../core/date-provider.service';
 import { ModalService } from './../core/modal/modal.service';
+import { NotificationService } from './../core/notification.service';
 import { ApiTokenService } from './api-token.service';
 import { NewApiTokenDialogComponent } from './new-api-token-dialog.component';
 
@@ -22,6 +23,7 @@ import { NewApiTokenDialogComponent } from './new-api-token-dialog.component';
 export class ApiTokensComponent implements OnInit {
     private apiTokenService = inject(ApiTokenService);
     private modalService = inject(ModalService);
+    private notificationService = inject(NotificationService);
     private dateProvider = inject(DateProviderService);
 
     readonly tokens = signal<ApiToken[]>([]);
@@ -40,10 +42,9 @@ export class ApiTokensComponent implements OnInit {
     }
 
     async newToken(): Promise<void> {
-        const created = await this.modalService.open<NewApiTokenDialogComponent, void, boolean>(NewApiTokenDialogComponent);
-        if (created) {
-            await this.load();
-        }
+        // However the dialog closes, a token may have been created.
+        await this.modalService.open(NewApiTokenDialogComponent);
+        await this.load();
     }
 
     async revoke(token: ApiToken): Promise<void> {
@@ -54,6 +55,7 @@ export class ApiTokensComponent implements OnInit {
             isWarn: true
         });
         if (confirmed && await this.apiTokenService.revoke(token.id)) {
+            this.notificationService.success('Token revoked');
             await this.load();
         }
     }

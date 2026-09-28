@@ -74,7 +74,7 @@
             </table>
 
             <div class="actions-section">
-                <button mat-flat-button color="primary" (click)="startAdd(BudgetStreamType.Income)">
+                <button mat-flat-button (click)="startAdd(BudgetStreamType.Income)">
                     <mat-icon>add</mat-icon> Add Income
                 </button>
             </div>
@@ -155,7 +155,7 @@
             </table>
 
             <div class="actions-section">
-                <button mat-flat-button color="warn" (click)="startAdd(BudgetStreamType.Expense)">
+                <button mat-flat-button (click)="startAdd(BudgetStreamType.Expense)">
                     <mat-icon>add</mat-icon> Add Expense
                 </button>
             </div>
@@ -171,8 +171,8 @@
             <mat-icon>edit</mat-icon>
             <span>Edit</span>
         </button>
-        <button mat-menu-item (click)="delete(s.id)">
-            <mat-icon color="warn">delete</mat-icon>
+        <button mat-menu-item class="danger-item" (click)="delete(s)">
+            <mat-icon>delete</mat-icon>
             <span>Delete</span>
         </button>
     </ng-template>

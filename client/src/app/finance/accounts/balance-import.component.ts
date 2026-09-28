@@ -11,6 +11,11 @@ import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
 
+interface ImportErrors {
+    message: string;
+    rows: string[];
+}
+
 @Component({
     selector: 'app-balance-import',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,7 +34,8 @@ export class BalanceImportComponent implements OnInit {
     readonly selectedFile = signal<File | null>(null);
     readonly isProcessing = signal<boolean>(false);
     readonly dryRunResults = signal<BalanceImportResult | null>(null);
-    readonly validationError = signal<string | null>(null);
+    /** The dry run's summary and each failed row's message (TXN-3.7, ACCT-3.7). */
+    readonly validationError = signal<ImportErrors | null>(null);
 
     ngOnInit() {
         const id = this.route.snapshot.paramMap.get('accountId');
@@ -73,7 +79,10 @@ export class BalanceImportComponent implements OnInit {
                 this.dryRunResults.set(response);
             }
             else {
-                this.validationError.set(response.resultMessage || 'An unknown validation error occurred.');
+                this.validationError.set({
+                    message: response.resultMessage || 'An unknown validation error occurred.',
+                    rows: response.failedRowMessages
+                });
             }
         }
 
@@ -99,7 +108,10 @@ export class BalanceImportComponent implements OnInit {
                 this.router.navigate(['/accounts', id]);
             }
             else {
-                this.validationError.set(response.resultMessage || 'An unknown error occurred during import.');
+                this.validationError.set({
+                    message: response.resultMessage || 'An unknown error occurred during import.',
+                    rows: response.failedRowMessages
+                });
             }
         }
 

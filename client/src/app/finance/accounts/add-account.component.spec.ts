@@ -6,6 +6,9 @@ import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum
 import { Institution } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { AuthService } from './../../core/auth.service';
+import { ModalService } from './../../core/modal/modal.service';
+import { NotificationService } from './../../core/notification.service';
+import { InstitutionDialogComponent } from './../institutions/institution-dialog.component';
 import { FinanceService } from './../finance.service';
 import { AccountFormComponent } from './account-form.component';
 import { FinanceAddAccountComponent } from './add-account.component';
@@ -20,12 +23,16 @@ describe('FinanceAddAccountComponent', () => {
             fetchInstitutions: vi.fn().mockResolvedValue(institutions),
             createAccount: vi.fn().mockResolvedValue({ id: 'new-account' })
         };
+        const modalService = { open: vi.fn().mockResolvedValue(true) };
+        const notificationService = { success: vi.fn() };
         TestBed.configureTestingModule({
             imports: [FinanceAddAccountComponent],
             providers: [
                 provideRouter([]),
                 { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(institutionId ? { institutionId } : {}) } } },
                 { provide: FinanceService, useValue: financeService },
+                { provide: ModalService, useValue: modalService },
+                { provide: NotificationService, useValue: notificationService },
                 { provide: AuthService, useValue: { currentUser: signal(null) } },
                 { provide: DateProviderService, useValue: { today: () => '2026-05-17' } }
             ]
@@ -33,7 +40,7 @@ describe('FinanceAddAccountComponent', () => {
 
         const fixture = TestBed.createComponent(FinanceAddAccountComponent);
         await fixture.whenStable();
-        return { fixture, element: fixture.nativeElement as HTMLElement, financeService };
+        return { fixture, element: fixture.nativeElement as HTMLElement, financeService, modalService, notificationService };
     }
 
     function labels(element: HTMLElement): string[] {
@@ -59,8 +66,8 @@ describe('FinanceAddAccountComponent', () => {
         expect(form.accountForm.controls.institutionId.value).toBe('inst-2');
     });
 
-    it('ACCT-1.3 should save a manual account and open its details', async () => {
-        const { fixture, element, financeService } = await render([institution('inst-1', 'First Bank')], 'inst-1');
+    it('ACCT-1.3 should save a manual account, say so, and open its details', async () => {
+        const { fixture, element, financeService, notificationService } = await render([institution('inst-1', 'First Bank')], 'inst-1');
         const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
         const form = fixture.debugElement.query(By.directive(AccountFormComponent)).componentInstance as AccountFormComponent;
@@ -80,13 +87,31 @@ describe('FinanceAddAccountComponent', () => {
             isRetirement: false,
             hideFromCashflow: false
         });
+        expect(notificationService.success).toHaveBeenCalledWith('Account added');
         expect(navigate).toHaveBeenCalledWith(['/accounts', 'new-account']);
+        expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
     });
 
-    it('ACCT-1.3 should ask for an institution first when there are none', async () => {
-        const { element } = await render([]);
+    it('APP-2.7 should have unsaved changes once the form is edited', async () => {
+        const { fixture } = await render([institution('inst-1', 'First Bank')]);
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent)).componentInstance as AccountFormComponent;
+
+        expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
+        form.accountForm.controls.name.setValue('Joint Checking');
+        form.accountForm.markAsDirty();
+        expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('ACCT-1.3 should ask for an institution first when there are none, then show the form', async () => {
+        const { fixture, element, financeService, modalService } = await render([]);
 
         expect(element.querySelector('app-account-form')).toBeNull();
-        expect(element.querySelector('.no-institutions a')!.getAttribute('href')).toBe('/settings/institutions/new');
+
+        financeService.fetchInstitutions.mockResolvedValue([institution('inst-1', 'First Bank')]);
+        element.querySelector<HTMLButtonElement>('.no-institutions button')!.click();
+        await fixture.whenStable();
+
+        expect(modalService.open).toHaveBeenCalledWith(InstitutionDialogComponent, {});
+        expect(element.querySelector('app-account-form')).not.toBeNull();
     });
 });
