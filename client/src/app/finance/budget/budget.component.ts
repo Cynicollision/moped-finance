@@ -10,8 +10,9 @@ import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { ModalService } from './../../core/modal/modal.service';
+import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
-import { FinanceBudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';
+import { FinanceBudgetFormModalComponent, BudgetFormModalData, confirmDeleteStream } from './budget-form-modal.component';
 
 export interface BudgetTotals {
     monthly: number;
@@ -37,6 +38,7 @@ export interface BudgetTotals {
 export class FinanceBudgetComponent implements OnInit {
     private financeService = inject(FinanceService);
     private modalService = inject(ModalService);
+    private notificationService = inject(NotificationService);
 
     readonly BudgetStreamType = BudgetStreamType;
     readonly displayedColumns: string[] = ['name', 'group', 'category', 'amount', 'recurrence', 'actions'];
@@ -150,52 +152,26 @@ export class FinanceBudgetComponent implements OnInit {
     }
 
     async startAdd(type: BudgetStreamType) {
-        const result = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, BudgetStream>(FinanceBudgetFormModalComponent, {
-            type,
-            categories: this.categories(),
-            groups: this.groups()
-        });
-
-        if (result) {
-            await this.save(result);
-        }
+        await this.openStream({ type, categories: this.categories(), groups: this.groups() });
     }
 
     async startEdit(stream: BudgetStream) {
-        const result = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, BudgetStream>(FinanceBudgetFormModalComponent, {
-            stream,
-            type: stream.type,
-            categories: this.categories(),
-            groups: this.groups()
-        });
-
-        if (result) {
-            await this.save(result);
-        }
+        await this.openStream({ stream, type: stream.type, categories: this.categories(), groups: this.groups() });
     }
 
-    async save(stream: BudgetStream) {
-        const result = stream.id
-            ? await this.financeService.saveBudgetStream(stream)
-            : await this.financeService.createBudgetStream(stream);
-        if (result) {
+    private async openStream(data: BudgetFormModalData) {
+        const changed = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, boolean>(
+            FinanceBudgetFormModalComponent, data
+        );
+        if (changed) {
             await this.loadData();
         }
     }
 
-    async delete(id: string) {
-        const confirmed = await this.modalService.confirm({
-            title: 'Delete Budget Stream',
-            message: 'Are you sure you want to delete this budget stream? This action cannot be undone.',
-            confirmLabel: 'Delete',
-            isWarn: true
-        });
-
-        if (confirmed) {
-            const success = await this.financeService.deleteBudgetStream(id);
-            if (success) {
-                await this.loadData();
-            }
+    async delete(stream: BudgetStream) {
+        if (await confirmDeleteStream(this.modalService, stream) && await this.financeService.deleteBudgetStream(stream.id)) {
+            this.notificationService.success(`${stream.type === BudgetStreamType.Income ? 'Income' : 'Expense'} deleted`);
+            await this.loadData();
         }
     }
 }

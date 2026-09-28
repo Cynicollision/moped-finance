@@ -73,7 +73,8 @@ Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates wit
 
 ```
 client/src/app/
-  core/       API/auth services, auth guard, DateProviderService, modal, loading, demo mode
+  core/       API/auth services, auth guard, DateProviderService, dialogs (modal/), notifications,
+              unsaved-changes guard, loading, demo mode
   core/layout/  LayoutService, the page header, profile menu and tab-title strategy
   finance/    one folder per screen area: accounts, budget, cashflow, categories,
               dashboard, institutions, transactions, common

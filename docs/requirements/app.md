@@ -13,8 +13,8 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 | APP-1.5 | The profile control shall open a menu with **Institutions** (INST-1) and **Categories** (CAT-1), shortcuts to those Settings pages, then **Settings** (SET-1.1), then, after a divider, **Sign out** (AUTH-4.1). | Implemented |
 | APP-1.6 | The landing page after sign-in, and the target of any unknown URL, shall be the Dashboard (DASH). | Implemented |
 | APP-1.7 | Signed-out visitors shall see no navigation or profile control, only the Login or Register screen. | Implemented |
-| APP-1.8 | A screen below another (Account Details, Edit Account, Add Account, the import screens, View/Add/Edit Transaction, Settings' pages) shall show, above its title, a trail of links to the screens it sits below, for example "Settings / Institutions / *name*" on Edit Institution. Where the page area is narrower than 600px, the trail is replaced by a back arrow to the last of them. Import Transactions sits below the account it was opened from, or below Transactions when opened from there. Top-level screens have no trail. | Implemented |
-| APP-1.9 | The browser tab title shall be the current screen's name, then the product name: "Dashboard · Moped Finance", "Edit Institution · Moped Finance". Until the first screen loads it is "Moped Finance". | Implemented |
+| APP-1.8 | A screen below another (Account Details, Edit Account, Add Account, the import screens, View/Add/Edit Transaction, Settings' pages) shall show, above its title, a trail of links to the screens it sits below, for example "Dashboard / *account name*" on Edit Account. Where the page area is narrower than 600px, the trail is replaced by a back arrow to the last of them. Import Transactions sits below the account it was opened from, or below Transactions when opened from there. Top-level screens have no trail. | Implemented |
+| APP-1.9 | The browser tab title shall be the current screen's name, then the product name: "Dashboard · Moped Finance", "Edit Account · Moped Finance". Until the first screen loads it is "Moped Finance". | Implemented |
 | APP-1.10 | The profile menu's **Sign out** entry shall be shown in a warning (red) color. | Implemented |
 
 ## APP-2 The user gets feedback on what the app is doing
@@ -22,10 +22,13 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 | ID | Requirement | Status |
 |---|---|---|
 | APP-2.1 | While any request to the server is in flight, the app shall show a loading overlay. | Implemented |
-| APP-2.2 | When a request fails, the app shall show an error message in a dismissible notification for 5 seconds. For client errors it shall use the server's message; if the server can't be reached it shall say "Network or server error encountered." | Implemented |
+| APP-2.2 | When a request fails, the app shall show an error message for 5 seconds, placed as in APP-2.8, with a **Close** button. For client errors it shall use the server's message; if the server can't be reached it shall say "Network or server error encountered." | Implemented |
 | APP-2.3 | After a successful bulk import (balances or transactions) the app shall show a success notification with the number of records created. | Implemented |
-| APP-2.4 | Deleting an account, institution, transaction or budget stream shall first ask for confirmation in a dialog that names the action and can be cancelled. The confirm button of a destructive action (Delete, Revoke) shall be shown in the error (red) color. | Implemented |
+| APP-2.4 | A record is deleted from the ⋮ menu of the screen showing it (**Delete Account** on Account Details, **Delete** on Transaction Details and a budget stream's row), or with a **Delete** button at the bottom left of its dialog (institution, category group, budget stream), shown in the error (red) color. Deleting shall first ask for confirmation in a dialog that names the action and can be cancelled, whose confirm button (Delete, Revoke) is also red. There are no separate "Danger Zone" sections. | Implemented |
 | APP-2.5 | Screens shall adapt to the width available to them, for example by hiding secondary table columns and showing that detail under the primary column, and shall not scroll sideways at any window width. | Implemented |
+| APP-2.6 | Records with few fields (institution, category, category group, budget stream) are added and edited in a dialog; records with many fields or their own address (account, transaction) and the imports are full pages. A form dialog shall fill the screen on phones, with its buttons in a bar at the bottom, and be up to 560px wide on larger screens. Its **Cancel** and main action (**Save**) sit at the bottom right, and **Delete**, when offered, at the bottom left. Esc, a click outside the dialog and its close button close it like **Cancel**. Confirmations stay small on every screen. | Implemented |
+| APP-2.7 | Leaving a form with unsaved changes shall first ask "Discard changes?" ("Your changes haven't been saved.", **Keep editing** / **Discard**): closing a dialog in any way but saving, and leaving a full-page form (Add or Edit Account, Add or Edit Transaction) by **Cancel**, a link or the navigation. A form with no changes, or one just saved, closes or leaves without asking. | Implemented |
+| APP-2.8 | Creating, saving or deleting a record shall be confirmed with a short message naming it, such as "Account added", "Transaction saved", "Group deleted" or "Token revoked", shown for 4 seconds at the bottom of the screen: centred on phones, above the bottom navigation, and at the bottom right on larger screens. Messages have no Undo. | Implemented |
 
 ## APP-3 The app is identifiable as Moped Finance
 
@@ -69,7 +72,6 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 
 - **Red and signs aren't consistent yet (APP-6).** Cashflow shows expenses in red, transaction amounts have no "+", and forms take signed amounts (liabilities must be entered negative).
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.
-- **Success feedback is sparse.** Only imports announce success. Creating, saving and deleting records just navigate or refresh.
 - **The loading overlay shows fake zeros (APP-2.1).** Every navigation and every timeframe or filter change dims the screen behind a spinner, and the blurred backdrop briefly shows an empty or zero state (an empty Budget, a $0.00 net worth) that looks like real data.
 
 ## Notes

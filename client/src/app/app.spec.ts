@@ -20,7 +20,7 @@ describe('App', () => {
                 { provide: AuthService, useValue: { currentUser: signal(currentUser), logout: vi.fn() } },
                 { provide: DateProviderService, useValue: { now: () => new Date(2026, 0, 1), today: () => '2026-01-01' } },
                 { provide: LoadingService, useValue: { isLoading: signal(false) } },
-                { provide: LayoutService, useValue: { sizeClass: size, isCompact: computed(() => size() === 'compact') } }
+                { provide: LayoutService, useValue: { sizeClass: size, isCompact: computed(() => size() === 'compact'), hasBottomNav: signal(false) } }
             ]
         });
 

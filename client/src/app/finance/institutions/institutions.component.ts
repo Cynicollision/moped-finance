@@ -6,7 +6,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Account, Institution } from '@shared/finance/types';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { ModalService } from './../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
+import { InstitutionDialogComponent, InstitutionDialogData } from './institution-dialog.component';
 
 interface InstitutionGroup {
     institution: Institution;
@@ -22,6 +24,7 @@ interface InstitutionGroup {
 })
 export class FinanceInstitutionsComponent implements OnInit {
     private financeService = inject(FinanceService);
+    private modalService = inject(ModalService);
 
     readonly institutions = signal<Institution[]>([]);
     readonly accounts = signal<Account[]>([]);
@@ -37,6 +40,21 @@ export class FinanceInstitutionsComponent implements OnInit {
     });
 
     async ngOnInit() {
+        await this.load();
+    }
+
+    /** Add Institution, or edit an institution when given one (INST-1.4, INST-1.6). */
+    async openInstitution(group?: InstitutionGroup) {
+        const changed = await this.modalService.open<InstitutionDialogComponent, InstitutionDialogData, boolean>(
+            InstitutionDialogComponent,
+            { institution: group?.institution, accountCount: group?.accounts.length }
+        );
+        if (changed) {
+            await this.load();
+        }
+    }
+
+    private async load() {
         const [institutions, accounts] = await Promise.all([
             this.financeService.fetchInstitutions(),
             this.financeService.fetchAllAccounts()

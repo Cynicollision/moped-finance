@@ -13,6 +13,8 @@ import { Account, BalanceHistory, Transaction, Category, Institution } from '@sh
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { DateProviderService } from './../../core/date-provider.service';
+import { ModalService } from './../../core/modal/modal.service';
+import { NotificationService } from './../../core/notification.service';
 import { FinanceValueHistoryComponent } from './../common/value-history.component';
 import { FinanceService } from './../finance.service';
 
@@ -28,6 +30,8 @@ export class FinanceAccountDetailsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private dateProvider = inject(DateProviderService);
+    private modalService = inject(ModalService);
+    private notificationService = inject(NotificationService);
     readonly Math = Math;
 
     readonly account = signal<Account | undefined>(undefined);
@@ -150,6 +154,24 @@ export class FinanceAccountDetailsComponent implements OnInit {
         if (accountId) {
             const url = this.financeService.getExportBalanceHistoryUrl(accountId);
             window.open(url, '_blank');
+        }
+    }
+
+    async deleteAccount() {
+        const account = this.account();
+        if (!account) {
+            return;
+        }
+
+        const confirmed = await this.modalService.confirm({
+            title: 'Delete Account',
+            message: `Delete ${account.name}, with its balance history and transactions? This can't be undone.`,
+            confirmLabel: 'Delete',
+            isWarn: true
+        });
+        if (confirmed && await this.financeService.deleteAccount(account.id)) {
+            this.notificationService.success('Account deleted');
+            this.router.navigate(['/dashboard']);
         }
     }
 }

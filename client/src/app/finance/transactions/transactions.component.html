@@ -96,7 +96,7 @@
                 </div>
                 <div class="filter-actions">
                     <button mat-button type="button" (click)="clearFilters()">Clear Filters</button>
-                    <button mat-raised-button color="primary" type="submit">Apply Filters</button>
+                    <button mat-flat-button type="submit">Apply Filters</button>
                 </div>
             </form>
         </mat-expansion-panel>
@@ -156,7 +156,7 @@
 
     @if (hasMoreData()) {
         <div class="footer">
-            <button mat-raised-button color="primary" (click)="loadMore()">Load More</button>
+            <button mat-stroked-button (click)="loadMore()">Load More</button>
         </div>
     }
 </div>

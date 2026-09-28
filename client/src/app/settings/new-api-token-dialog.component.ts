@@ -8,12 +8,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { ApiTokenAccess } from '@shared/core/enum';
+import { ModalCancelDirective } from './../core/modal/modal-cancel.directive';
 import { ModalLayoutComponent } from './../core/modal/modal-layout.component';
 import { NotificationService } from './../core/notification.service';
+import { HasUnsavedChanges } from './../core/unsaved-changes';
 import { ApiTokenService } from './api-token.service';
 
 /**
- * Creates an API token (AUTH-11.2), then shows it once (AUTH-11.3). Closes with true if a token was created.
+ * Creates an API token (AUTH-11.2), then shows it once (AUTH-11.3).
  */
 @Component({
     selector: 'app-new-api-token-dialog',
@@ -26,16 +28,17 @@ import { ApiTokenService } from './api-token.service';
         MatInputModule,
         MatRadioModule,
         MatSelectModule,
+        ModalCancelDirective,
         ModalLayoutComponent
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './new-api-token-dialog.component.html',
     styleUrl: './new-api-token-dialog.component.scss'
 })
-export class NewApiTokenDialogComponent {
+export class NewApiTokenDialogComponent implements HasUnsavedChanges {
     private apiTokenService = inject(ApiTokenService);
     private notificationService = inject(NotificationService);
-    private dialogRef = inject(MatDialogRef<NewApiTokenDialogComponent, boolean>);
+    private dialogRef = inject(MatDialogRef<NewApiTokenDialogComponent>);
 
     readonly accessOptions = [
         { value: ApiTokenAccess.ReadOnly, label: 'Read-only' },
@@ -58,6 +61,10 @@ export class NewApiTokenDialogComponent {
     readonly createdToken = signal<string | null>(null);
 
     private readonly tokenInput = viewChild<ElementRef<HTMLInputElement>>('tokenInput');
+
+    hasUnsavedChanges(): boolean {
+        return this.createdToken() === null && this.form.dirty;
+    }
 
     async create(): Promise<void> {
         const name = this.form.controls.name.value.trim();
@@ -89,10 +96,10 @@ export class NewApiTokenDialogComponent {
             this.tokenInput()?.nativeElement.select();
             document.execCommand('copy');
         }
-        this.notificationService.success('Token copied.');
+        this.notificationService.success('Token copied');
     }
 
     close(): void {
-        this.dialogRef.close(this.createdToken() !== null);
+        this.dialogRef.close();
     }
 }

@@ -40,11 +40,11 @@
             <mat-icon>content_copy</mat-icon>
             Copy
         </button>
-        <button mat-flat-button color="primary" type="button" (click)="close()">Done</button>
+        <button mat-flat-button type="button" (click)="close()">Done</button>
         }
         @else {
-        <button mat-button type="button" (click)="close()">Cancel</button>
-        <button mat-flat-button color="primary" type="submit" form="new-token-form"
+        <button mat-button type="button" appModalCancel>Cancel</button>
+        <button mat-flat-button type="submit" form="new-token-form"
             [disabled]="!form.controls.name.value.trim() || isSaving()">
             Create
         </button>

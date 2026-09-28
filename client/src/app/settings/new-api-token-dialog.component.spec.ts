@@ -59,13 +59,14 @@ describe('NewApiTokenDialogComponent', () => {
         expect(fixture.nativeElement.textContent).toContain("Copy this token now. You won't be able to see it again.");
     });
 
-    it('should close with true once a token was created, and false if cancelled', async () => {
-        component.close();
-        expect(mockDialogRef.close).toHaveBeenLastCalledWith(false);
+    it('APP-2.7 should have unsaved changes once edited, until the token is created', async () => {
+        expect(component.hasUnsavedChanges()).toBe(false);
 
         component.form.controls.name.setValue('Sync job');
+        component.form.markAsDirty();
+        expect(component.hasUnsavedChanges()).toBe(true);
+
         await component.create();
-        component.close();
-        expect(mockDialogRef.close).toHaveBeenLastCalledWith(true);
+        expect(component.hasUnsavedChanges()).toBe(false);
     });
 });

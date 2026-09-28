@@ -11,6 +11,11 @@ import { Crumb, PageHeaderComponent } from './../../core/layout/page-header.comp
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
 
+interface ImportErrors {
+    message: string;
+    rows: string[];
+}
+
 @Component({
     selector: 'app-import-transactions',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,7 +34,8 @@ export class ImportTransactionsComponent implements OnInit {
     readonly selectedFile = signal<File | null>(null);
     readonly isProcessing = signal<boolean>(false);
     readonly dryRunResults = signal<TransactionImportResult | null>(null);
-    readonly validationError = signal<string | null>(null);
+    /** The dry run's summary and each failed row's message (TXN-3.7, ACCT-3.7). */
+    readonly validationError = signal<ImportErrors | null>(null);
 
     // Opened from an account's menu, the screen sits below that account; otherwise below Transactions.
     readonly crumbs = computed<Crumb[]>(() => {
@@ -84,7 +90,10 @@ export class ImportTransactionsComponent implements OnInit {
                 this.dryRunResults.set(response);
             }
             else {
-                this.validationError.set(response.resultMessage || 'An unknown validation error occurred.');
+                this.validationError.set({
+                    message: response.resultMessage || 'An unknown validation error occurred.',
+                    rows: response.failedRowMessages
+                });
             }
         }
 
@@ -115,7 +124,10 @@ export class ImportTransactionsComponent implements OnInit {
                 }
             }
             else {
-                this.validationError.set(response.resultMessage || 'An unknown error occurred during import.');
+                this.validationError.set({
+                    message: response.resultMessage || 'An unknown error occurred during import.',
+                    rows: response.failedRowMessages
+                });
             }
         }
 

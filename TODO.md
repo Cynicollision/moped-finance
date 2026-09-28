@@ -19,13 +19,11 @@ A series of PRs, in this order, that gives the client consistent, tested pattern
 - Bank-connection UI is removed until INST-2 is redesigned. No disabled "coming soon" controls.
 - Each PR adds specs for what it touches (see Testing).
 
-1. [ ] **Feedback and dialogs.**
-   - Replace the global loading overlay on every request (APP-2.1) with loading states or skeletons per view, so screens don't flash empty or $0.00 values that look real. Use Angular's `resource()` (or a small wrapper with the same shape) over `FinanceService`, and take loading out of `ApiService`.
-   - Consistent success feedback (a snackbar) for create, save and delete (APP known gaps).
-   - One pattern for create and edit: full pages for records with many fields or their own URL (account, transaction, imports), dialogs for small forms (institution, category, group, budget stream), full-screen on phones. `ModalService` (fixed 500px, `disableClose: true`) should let Esc and backdrop clicks close unless the form has unsaved changes, and then ask before discarding them. Add, view and edit institution become one dialog.
-   - The category, category group and budget stream dialogs put their `modal-actions` buttons inside `<form>`, so `ModalLayoutComponent` doesn't project them into its action bar and they sit in the dialog content (`category-form-modal.component.html`, `category-group-form-modal.component.html`, `budget-form-modal.component.html`).
-   - `color="warn"` does nothing under Material 3 but is still used: the Danger Zone Delete buttons (`edit-account`, `edit-institution`), Budget's Add Expense button and Delete menu item, and the import screens' warning icons. Use `danger-button` or `--color-negative`.
-   - The import screens don't show which rows failed (TXN-3.7, ACCT-3.7): `import-transactions.component.ts` and `balance-import.component.ts` show only the dry run's `resultMessage` when `isValidToImport` is false; list `failedRowMessages` there too. The transaction import screen also lists the wrong CSV columns (TXN-3.8).
+1. [ ] **Per-view loading.** Replace the global loading overlay on every request (APP-2.1) with loading states per view, so screens don't flash empty or $0.00 values that look real. Use Angular's `resource()` (or a small wrapper with the same shape) over `FinanceService`, and take loading out of `ApiService`. Agreed 2026-09-28:
+   - First load: placeholder shapes where the content goes, never a zero until real data arrives.
+   - Refresh (timeframe, filter or month changes): keep the current data on screen with a thin progress bar under the page header.
+   - Saving: disable the Save button and show a small spinner in it (dialogs already disable Save while saving; add the spinner).
+   - A screen that fails to load shows the error in place with **Retry**; failed actions (save, delete) keep the error snackbar (APP-2.2).
 2. [ ] **Lists and phones.**
    - A shared responsive list to replace `mat-table` in Transactions, Budget, Cashflow and Account Details: columns when the page area is wide; name and amount with a second line for date and category when it's narrow, instead of a table that scrolls sideways. Sortable headers when wide, a sort menu when narrow.
    - A shared money display that applies APP-6.1 and APP-6.2 ("+" and green for money in, no red for expected negatives).
@@ -43,7 +41,7 @@ A series of PRs, in this order, that gives the client consistent, tested pattern
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
 ### Testing
-- [ ] Frontend coverage: services (`api`, `finance`, `auth`, `modal`, `notification`), `auth.guard`, the demo interceptor, and key components (transactions, imports).
+- [ ] Frontend coverage: services (`api`, `finance`, `auth`), `auth.guard`, the demo interceptor, and key components (transactions, imports).
 - [ ] Make server "now" injectable (via `DateTimeUtil`) so date-based logic is deterministic in tests.
 - [ ] `TestExpressUtil.createMockLogger` should mock `IAppLogger`, not `AppLogger` (`server/src/utility/testing/express-util.ts`).
 
@@ -74,3 +72,4 @@ Manual entry and import/export come first. Constraints for when this gets picked
 
 - Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Cashflow does, and round at the edges. Revisit integer cents only if totals ever drift.
 - Project Claude Code skills (e.g. `new-finance-resource`, `verify`, `schema-change` once migrations exist). Skipped for now; revisit if the same multi-step instructions keep getting repeated.
+- Warn before reloading or closing the tab with unsaved changes (`beforeunload`). APP-2.7 covers only leaving within the app.

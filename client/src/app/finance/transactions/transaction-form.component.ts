@@ -157,6 +157,10 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         this.save.emit(updatedTransaction);
     }
 
+    hasUnsavedChanges(): boolean {
+        return this.transactionForm.dirty;
+    }
+
     onCancel() {
         this.cancelled.emit();
     }

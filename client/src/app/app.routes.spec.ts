@@ -54,7 +54,7 @@ describe('app routes', () => {
         await harness.navigateByUrl('/dashboard');
         expect(title.getTitle()).toBe('Dashboard · Moped Finance');
 
-        await harness.navigateByUrl('/settings/institutions/inst-1/edit');
-        expect(title.getTitle()).toBe('Edit Institution · Moped Finance');
+        await harness.navigateByUrl('/accounts/acc-1/edit');
+        expect(title.getTitle()).toBe('Edit Account · Moped Finance');
     });
 });

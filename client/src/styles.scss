@@ -90,52 +90,31 @@ mat-card.mat-mdc-card table.mat-mdc-table {
     }
 }
 
-// The profile menu's Sign out entry (APP-1.10). Menus render in an overlay, outside any component's styles.
-.sign-out,
-.sign-out mat-icon {
+// A destructive menu entry: the profile menu's Sign out (APP-1.10) and a record's Delete (APP-2.4).
+// Menus render in an overlay, outside any component's styles.
+.danger-item,
+.danger-item mat-icon {
     color: var(--color-negative);
 }
 
-// A filled button for a destructive action, such as Delete or Revoke in a confirmation (APP-2.4).
+// A button for a destructive action (APP-2.4): as a text button, Delete in a dialog; as a filled button, the
+// confirm button of a destructive confirmation.
 .danger-button {
     @include mat.button-overrides((
         filled-container-color: var(--mat-sys-error),
-        filled-label-text-color: var(--mat-sys-on-error)
+        filled-label-text-color: var(--mat-sys-on-error),
+        text-label-text-color: var(--mat-sys-error)
     ));
 }
 
-// The "Danger Zone" block at the bottom of an edit screen, holding its Delete button.
-.danger-zone {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-top: 24px;
-    padding: 2rem;
-    border-radius: 8px;
-    background-color: var(--bg-card);
+// Dialogs on phones fill the screen (APP-2.6).
+.full-screen-dialog .mat-mdc-dialog-surface {
+    border-radius: 0;
+}
 
-    h3 {
-        display: flex;
-        align-items: center;
-        margin-top: 0;
-        font-size: 16px;
-        color: var(--color-negative);
-
-        mat-icon {
-            vertical-align: middle;
-            margin-right: 4px;
-        }
-    }
-
-    p {
-        margin-top: 0;
-        color: var(--text-muted);
-    }
-
-    .danger-note {
-        margin-bottom: 16px;
-        color: var(--color-negative);
-    }
+// Snackbars clear the bottom navigation bar on phones (APP-2.8).
+.mat-mdc-snack-bar-container.snackbar-above-bottom-nav {
+    margin-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 
 .amount-positive {

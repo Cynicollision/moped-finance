@@ -10,7 +10,23 @@ import { startWith, map } from 'rxjs';
 import { CalendarPeriod } from '@shared/core/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
+import { ModalCancelDirective } from './../../core/modal/modal-cancel.directive';
 import { ModalLayoutComponent } from './../../core/modal/modal-layout.component';
+import { ModalService } from './../../core/modal/modal.service';
+import { NotificationService } from './../../core/notification.service';
+import { HasUnsavedChanges } from './../../core/unsaved-changes';
+import { FinanceService } from './../finance.service';
+
+/** Asks before deleting a budget stream (APP-2.4), from its dialog or its row menu. */
+export async function confirmDeleteStream(modalService: ModalService, stream: BudgetStream): Promise<boolean> {
+    const confirmed = await modalService.confirm({
+        title: 'Delete Budget Stream',
+        message: `Delete ${stream.name}?`,
+        confirmLabel: 'Delete',
+        isWarn: true
+    });
+    return confirmed === true;
+}
 
 export interface BudgetFormModalData {
     stream?: BudgetStream;
@@ -19,6 +35,10 @@ export interface BudgetFormModalData {
     groups: CategoryGroup[];
 }
 
+/**
+ * Adds, edits or deletes a budget stream (BUD-1.3, BUD-1.4). Saves and deletes itself and closes with true once
+ * something changed.
+ */
 @Component({
     selector: 'app-budget-form-modal',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,14 +50,18 @@ export interface BudgetFormModalData {
         MatInputModule,
         MatSelectModule,
         MatAutocompleteModule,
+        ModalCancelDirective,
         ModalLayoutComponent
     ],
     templateUrl: './budget-form-modal.component.html',
     styleUrl: './budget-form-modal.component.scss'
 })
-export class FinanceBudgetFormModalComponent implements OnInit {
+export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChanges {
     private fb = inject(FormBuilder);
-    private dialogRef = inject<MatDialogRef<FinanceBudgetFormModalComponent>>(MatDialogRef);
+    private financeService = inject(FinanceService);
+    private modalService = inject(ModalService);
+    private notificationService = inject(NotificationService);
+    private dialogRef = inject<MatDialogRef<FinanceBudgetFormModalComponent, boolean>>(MatDialogRef);
     readonly data = inject<BudgetFormModalData>(MAT_DIALOG_DATA);
 
     readonly budgetForm = this.fb.group({
@@ -49,6 +73,7 @@ export class FinanceBudgetFormModalComponent implements OnInit {
         recurrence: [CalendarPeriod.Monthly, Validators.required]
     });
     readonly isEditing = !!this.data.stream;
+    readonly isSaving = signal(false);
     readonly recurrenceOptions = Object.values(CalendarPeriod);
     readonly categories = signal<Category[]>([]);
     readonly filteredCategories = signal<Category[]>([]);
@@ -99,9 +124,39 @@ export class FinanceBudgetFormModalComponent implements OnInit {
         return category ? `${category.icon} ${category.name}` : id;
     };
 
-    save() {
-        if (this.budgetForm.valid) {
-            this.dialogRef.close(this.budgetForm.value);
+    hasUnsavedChanges(): boolean {
+        return this.budgetForm.dirty;
+    }
+
+    async save() {
+        if (this.budgetForm.invalid || this.isSaving()) {
+            return;
+        }
+
+        this.isSaving.set(true);
+        const { type, name, categoryId, amount, recurrence } = this.budgetForm.getRawValue();
+        const values = { type: type!, name: name!, categoryId: categoryId!, amount: amount!, recurrence: recurrence! };
+        const saved = this.data.stream
+            ? await this.financeService.saveBudgetStream({ ...this.data.stream, ...values })
+            : await this.financeService.createBudgetStream(values);
+        this.isSaving.set(false);
+
+        if (saved) {
+            this.notificationService.success(`${this.typeString} ${this.isEditing ? 'saved' : 'added'}`);
+            this.dialogRef.close(true);
+        }
+    }
+
+    async delete() {
+        const stream = this.data.stream;
+        if (!stream) {
+            return;
+        }
+
+        if (await confirmDeleteStream(this.modalService, stream)
+            && await this.financeService.deleteBudgetStream(stream.id)) {
+            this.notificationService.success(`${this.typeString} deleted`);
+            this.dialogRef.close(true);
         }
     }
 }

@@ -79,21 +79,19 @@ export class FinanceCategoriesComponent implements OnInit {
     }
 
     async startAddGroup() {
-        const result = await this.modalService.open<CategoryGroupFormModalComponent, CategoryGroupFormModalData, CategoryGroup>(
-            CategoryGroupFormModalComponent, {}
-        );
-        if (result) {
-            await this.financeService.createCategoryGroup(result);
-            await this.loadData();
-        }
+        await this.openGroup({});
     }
 
     async editGroup(group: CategoryGroup) {
-        const result = await this.modalService.open<CategoryGroupFormModalComponent, CategoryGroupFormModalData, CategoryGroup>(
-            CategoryGroupFormModalComponent, { group }
+        const categoryCount = this.categories().filter(c => c.groupId === group.id).length;
+        await this.openGroup({ group, categoryCount });
+    }
+
+    private async openGroup(data: CategoryGroupFormModalData) {
+        const changed = await this.modalService.open<CategoryGroupFormModalComponent, CategoryGroupFormModalData, boolean>(
+            CategoryGroupFormModalComponent, data
         );
-        if (result) {
-            await this.financeService.saveCategoryGroup(result);
+        if (changed) {
             await this.loadData();
         }
     }
@@ -104,21 +102,18 @@ export class FinanceCategoriesComponent implements OnInit {
             return;
         }
 
-        const result = await this.modalService.open<CategoryFormModalComponent, CategoryFormModalData, Category>(
-            CategoryFormModalComponent, { groups: this.groups(), initialGroupId: groupId }
-        );
-        if (result) {
-            await this.financeService.createCategory(result);
-            await this.loadData();
-        }
+        await this.openCategory({ groups: this.groups(), initialGroupId: groupId });
     }
 
     async editCategory(category: Category) {
-        const result = await this.modalService.open<CategoryFormModalComponent, CategoryFormModalData, Category>(
-            CategoryFormModalComponent, { category, groups: this.groups() }
+        await this.openCategory({ category, groups: this.groups() });
+    }
+
+    private async openCategory(data: CategoryFormModalData) {
+        const changed = await this.modalService.open<CategoryFormModalComponent, CategoryFormModalData, boolean>(
+            CategoryFormModalComponent, data
         );
-        if (result) {
-            await this.financeService.saveCategory(result);
+        if (changed) {
             await this.loadData();
         }
     }
