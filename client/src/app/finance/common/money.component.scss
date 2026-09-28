@@ -1,0 +1,13 @@
+// The colour is on the inner span, so it wins over whatever colour the screen gives the host.
+:host {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.money-positive {
+    color: var(--color-positive);
+}
+
+.money-negative {
+    color: var(--color-negative);
+}

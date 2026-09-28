@@ -1,0 +1,156 @@
+@use 'breakpoints' as bp;
+
+// Not encapsulated (the rows are projected), so every selector starts with .app-list. The grid tracks and areas
+// come from the component, as custom properties on the host.
+
+.app-list {
+    display: block;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+// Inside a card the card is the frame.
+mat-card .app-list {
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+}
+
+.app-list .app-list-row {
+    display: grid;
+    grid-template-columns: var(--list-columns);
+    grid-template-areas: var(--list-areas);
+    column-gap: 16px;
+    align-items: center;
+    min-height: 52px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    color: var(--text-main);
+    font: var(--mat-sys-body-medium);
+    text-decoration: none;
+}
+
+.app-list .app-list-row + .app-list-row {
+    border-top: 1px solid var(--border-color);
+}
+
+.app-list a.app-list-row {
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--bg-hover);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--mat-sys-primary);
+        outline-offset: -2px;
+    }
+}
+
+.app-list .app-list-cell {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &.app-list-end {
+        justify-self: end;
+        text-align: end;
+    }
+}
+
+.app-list .app-list-header {
+    min-height: 56px;
+    font: var(--mat-sys-title-small);
+    color: var(--text-muted);
+}
+
+// A sortable heading: its arrow shows when it's the sort, and on hover or focus otherwise.
+.app-list .app-list-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+
+    mat-icon {
+        width: 18px;
+        height: 18px;
+        font-size: 18px;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    &.app-list-sorted {
+        color: var(--text-main);
+    }
+
+    &.app-list-sorted mat-icon,
+    &:hover mat-icon,
+    &:focus-visible mat-icon {
+        opacity: 1;
+    }
+}
+
+.app-list-end .app-list-sort {
+    flex-direction: row-reverse;
+}
+
+.app-list .app-list-sort-bar {
+    display: none;
+    justify-content: flex-end;
+    padding: 4px 8px;
+}
+
+// Narrow: two lines per row, no headings, a sort menu instead (APP-7.1, APP-7.2).
+@include bp.content-below(bp.$expanded) {
+    .app-list .app-list-row {
+        grid-template-columns: var(--list-compact-columns);
+        grid-template-areas: var(--list-compact-areas);
+        column-gap: 0;
+        row-gap: 2px;
+        min-height: 56px;
+        padding: 10px 16px;
+    }
+
+    .app-list .app-list-header {
+        display: none;
+
+        + .app-list-row {
+            border-top: none;
+        }
+    }
+
+    .app-list .app-list-sort-bar {
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .app-list .app-list-cell {
+        &[data-compact='hidden'] {
+            display: none;
+        }
+
+        &[data-compact='secondary'] {
+            font: var(--mat-sys-body-small);
+            color: var(--text-muted);
+        }
+
+        &[data-compact='secondary'] ~ [data-compact='secondary']::before {
+            content: '·';
+            margin: 0 6px;
+        }
+
+        &[data-compact='trailing'] {
+            justify-self: end;
+            padding-left: 16px;
+        }
+    }
+}

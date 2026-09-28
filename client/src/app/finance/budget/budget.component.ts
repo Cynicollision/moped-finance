@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -9,11 +7,13 @@ import { BudgetStreamType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { ListColumn, ListModule } from './../../core/list/list.component';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
+import { MoneyComponent } from './../common/money.component';
 import { FinanceService } from './../finance.service';
 import { FinanceBudgetFormModalComponent, BudgetFormModalData, confirmDeleteStream } from './budget-form-modal.component';
 
@@ -27,15 +27,15 @@ export interface BudgetTotals {
     selector: 'app-finance-budget',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CurrencyPipe,
         MatCardModule,
-        MatTableModule,
         MatButtonModule,
         MatIconModule,
         MatMenuModule,
         PageHeaderComponent,
         CardSkeletonComponent,
-        LoadErrorComponent
+        LoadErrorComponent,
+        ListModule,
+        MoneyComponent
     ],
     templateUrl: './budget.component.html',
     styleUrl: './budget.component.scss'
@@ -46,7 +46,15 @@ export class FinanceBudgetComponent {
     private notificationService = inject(NotificationService);
 
     readonly BudgetStreamType = BudgetStreamType;
-    readonly displayedColumns: string[] = ['name', 'group', 'category', 'amount', 'recurrence', 'actions'];
+    // Narrow: the name and amount, with the category and recurrence under the name (BUD-1.2).
+    readonly columns: ListColumn[] = [
+        { key: 'name', label: 'Name', width: 'minmax(0, 1.25fr)', compact: 'primary' },
+        { key: 'group', label: 'Group' },
+        { key: 'category', label: 'Category', compact: 'secondary' },
+        { key: 'amount', label: 'Amount', width: '8rem', align: 'end', compact: 'trailing' },
+        { key: 'recurrence', label: 'Recurrence', width: '7rem', compact: 'secondary' },
+        { key: 'actions', label: '', width: '48px', align: 'end', compact: 'trailing' }
+    ];
 
     readonly data = viewResource({
         loader: async () => {

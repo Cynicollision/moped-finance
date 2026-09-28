@@ -1,0 +1,38 @@
+@if (sortableColumns().length > 0) {
+    <div class="app-list-sort-bar">
+        <button mat-button [matMenuTriggerFor]="sortMenu" [attr.aria-label]="sortColumn() ? sortLabel(sortColumn()!) : 'Sort'">
+            <mat-icon>sort</mat-icon>
+            {{ sortColumn()?.label ?? 'Sort' }}
+            @if (sortColumn(); as column) {
+                <mat-icon iconPositionEnd>{{ sortArrow(column) }}</mat-icon>
+            }
+        </button>
+        <mat-menu #sortMenu="matMenu" xPosition="before">
+            @for (column of sortableColumns(); track column.key) {
+                <button mat-menu-item (click)="sortBy(column)">
+                    <mat-icon>{{ column.key === sort()?.key ? sortArrow(column) : '' }}</mat-icon>
+                    <span>{{ column.label }}</span>
+                </button>
+            }
+        </mat-menu>
+    </div>
+}
+@if (showHeader()) {
+    <div class="app-list-row app-list-header">
+        @for (column of columns(); track column.key) {
+            <div [appListCell]="column.key">
+                @if (column.sort) {
+                    <button type="button" class="app-list-sort" [class.app-list-sorted]="column.key === sort()?.key"
+                        [attr.aria-label]="sortLabel(column)" (click)="sortBy(column)">
+                        {{ column.label }}
+                        <mat-icon>{{ sortArrow(column) }}</mat-icon>
+                    </button>
+                }
+                @else {
+                    {{ column.label }}
+                }
+            </div>
+        }
+    </div>
+}
+<ng-content></ng-content>

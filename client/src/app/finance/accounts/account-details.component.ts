@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,19 +11,21 @@ import { TotalValueHistory } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { ListColumn, ListModule } from './../../core/list/list.component';
 import { DateProviderService } from './../../core/date-provider.service';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
+import { MoneyComponent } from './../common/money.component';
 import { FinanceValueHistoryComponent } from './../common/value-history.component';
 import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-accounts',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CurrencyPipe, DatePipe, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, MatDividerModule, PageHeaderComponent, CardSkeletonComponent, LoadErrorComponent],
+    imports: [DatePipe, FinanceValueHistoryComponent, RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, MatDividerModule, PageHeaderComponent, CardSkeletonComponent, LoadErrorComponent, ListModule, MoneyComponent],
     templateUrl: './account-details.component.html',
     styleUrl: './account-details.component.scss'
 })
@@ -35,12 +36,17 @@ export class FinanceAccountDetailsComponent {
     private dateProvider = inject(DateProviderService);
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
-    readonly Math = Math;
 
     private readonly accountId = this.route.snapshot.paramMap.get('accountId') ?? undefined;
 
     readonly selectedTimeframe = signal<HistoryTimeframe>(HistoryTimeframe.PastThirtyDays);
-    readonly displayedColumns: string[] = ['date', 'merchant', 'category', 'amount'];
+    // Narrow: merchant and amount, with the date and category under the merchant.
+    readonly columns: ListColumn[] = [
+        { key: 'date', label: 'Date', width: '8rem', compact: 'secondary' },
+        { key: 'merchant', label: 'Merchant', width: 'minmax(0, 1.5fr)', compact: 'primary' },
+        { key: 'category', label: 'Category', compact: 'secondary' },
+        { key: 'amount', label: 'Amount', width: '9rem', align: 'end', compact: 'trailing' }
+    ];
 
     readonly details = viewResource({
         params: () => this.accountId,
@@ -125,10 +131,6 @@ export class FinanceAccountDetailsComponent {
 
         return this.institutionMap().get(institutionId)?.name || institutionId;
     });
-
-    onRowClick(row: Transaction) {
-        this.router.navigate(['/transactions', row.id]);
-    }
 
     downloadTransactions() {
         const accountId = this.account()?.id;

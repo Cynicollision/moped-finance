@@ -69,23 +69,10 @@ mat-form-field {
     }
 }
 
-.spending-table {
-    width: 100%;
-}
-
 .no-data {
     padding: 24px;
     text-align: center;
     color: var(--text-muted);
-}
-
-.clickable-row {
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-        background-color: var(--bg-hover) !important;
-    }
 }
 
 .summary-cards {
@@ -99,13 +86,10 @@ mat-form-field {
         padding: 24px 0;
 
         .value {
+            display: block;
             font-size: 1.75rem;
             font-weight: 500;
             margin-bottom: 8px;
-
-            &.expense-value {
-                color: var(--color-negative);
-            }
         }
 
         .label {

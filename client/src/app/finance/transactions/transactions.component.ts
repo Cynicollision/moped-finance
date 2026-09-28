@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, AfterViewInit, computed, inject, linkedSignal, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TemplateRef, computed, inject, linkedSignal, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
-import { MatTableModule } from '@angular/material/table';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -22,24 +22,26 @@ import { CalendarDateUtil } from '@shared/core/util';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
+import { LayoutService } from './../../core/layout/layout.service';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { ListColumn, ListModule, ListSort } from './../../core/list/list.component';
 import { describeRequestError } from './../../core/api.service';
 import { DateProviderService } from './../../core/date-provider.service';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { SkeletonComponent } from './../../core/loading/skeleton.component';
 import { viewResource } from './../../core/loading/view-resource';
 import { NotificationService } from './../../core/notification.service';
+import { MoneyComponent } from './../common/money.component';
 import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-finance-transactions',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        CurrencyPipe,
         DatePipe,
+        NgTemplateOutlet,
         ReactiveFormsModule,
-        MatTableModule,
-        MatSortModule,
+        MatBadgeModule,
         MatButtonModule,
         MatIconModule,
         MatExpansionModule,
@@ -55,23 +57,43 @@ import { FinanceService } from './../finance.service';
         MatDividerModule,
         PageHeaderComponent,
         LoadErrorComponent,
-        SkeletonComponent
+        SkeletonComponent,
+        ListModule,
+        MoneyComponent
     ],
     templateUrl: './transactions.component.html',
     styleUrl: './transactions.component.scss'
 })
-export class FinanceTransactionsComponent implements AfterViewInit {
+export class FinanceTransactionsComponent {
     private financeService = inject(FinanceService);
-    private router = inject(Router);
     private route = inject(ActivatedRoute);
     private dateProvider = inject(DateProviderService);
     private notificationService = inject(NotificationService);
-    readonly Math = Math;
+    private bottomSheet = inject(MatBottomSheet);
+    readonly isCompact = inject(LayoutService).isCompact;
 
-    readonly displayedColumns: string[] = ['date', 'account', 'merchant', 'category', 'amount'];
     private readonly pageSize = 25;
 
-    readonly sort = viewChild.required(MatSort);
+    // Wide: every column. Narrow: merchant and amount, with the date and category under the merchant (TXN-1.9).
+    readonly columns: ListColumn[] = [
+        { key: 'date', label: 'Date', width: '8rem', sort: 'desc', compact: 'secondary' },
+        { key: 'account', label: 'Account', sort: 'asc' },
+        { key: 'merchant', label: 'Merchant', width: 'minmax(0, 1.5fr)', sort: 'asc', compact: 'primary' },
+        { key: 'category', label: 'Category', sort: 'asc', compact: 'secondary' },
+        { key: 'amount', label: 'Amount', width: '9rem', align: 'end', sort: 'asc', compact: 'trailing' }
+    ];
+    private readonly sortKeys: Record<string, TransactionsSortKey> = {
+        date: TransactionsSortKey.Date,
+        account: TransactionsSortKey.Account,
+        merchant: TransactionsSortKey.Merchant,
+        category: TransactionsSortKey.Category,
+        amount: TransactionsSortKey.Amount
+    };
+    /** Newest first by default (TXN-1.2). */
+    readonly sort = signal<ListSort>({ key: 'date', direction: 'desc' });
+
+    private readonly filtersSheet = viewChild.required<TemplateRef<unknown>>('filtersSheet');
+    private filtersSheetRef?: MatBottomSheetRef;
 
     readonly filterForm = new FormGroup({
         minAmount: new FormControl<number | null>(null),
@@ -144,7 +166,7 @@ export class FinanceTransactionsComponent implements AfterViewInit {
     readonly isLoaded = computed(() => this.firstPage.value() !== undefined);
     readonly isRefreshing = computed(() => this.firstPage.isRefreshing() || this.lookups.isRefreshing());
 
-    ngAfterViewInit() {
+    constructor() {
         const queryParams = this.route.snapshot.queryParamMap;
         const accountId = queryParams.get('accountId');
         const categoryId = queryParams.get('categoryId');
@@ -173,11 +195,32 @@ export class FinanceTransactionsComponent implements AfterViewInit {
             this.filterForm.patchValue(patch);
         }
 
-        this.sort().sortChange.subscribe(() => this.applySearch());
+        this.applySearch();
+    }
 
-        Promise.resolve().then(() => {
-            this.sort().sort({ id: 'date', start: 'desc', disableClear: false });
-        });
+    /** How many filters the list is narrowed by, beyond the default End Date of today (TXN-1.5). */
+    readonly activeFilterCount = computed(() => {
+        const search = this.search();
+        if (!search) {
+            return 0;
+        }
+        const set = [search.minAmount, search.maxAmount, search.startDate].filter(v => v !== undefined).length;
+        const endDateChanged = search.endDate !== this.dateProvider.today() ? 1 : 0;
+        return set + endDateChanged + (search.filters?.length ?? 0);
+    });
+
+    onSortChange(sort: ListSort) {
+        this.sort.set(sort);
+        this.applySearch();
+    }
+
+    openFilters() {
+        this.filtersSheetRef = this.bottomSheet.open(this.filtersSheet(), { ariaLabel: 'Filters', autoFocus: 'dialog' });
+    }
+
+    applyFilters() {
+        this.applySearch();
+        this.filtersSheetRef?.dismiss();
     }
 
     /** Searches with the current filters and sort (TXN-1.7). */
@@ -198,43 +241,15 @@ export class FinanceTransactionsComponent implements AfterViewInit {
             filters.push({ key: TransactionsFilterKey.Group, value: formValues.group });
         }
 
-        let sortKey: TransactionsSortKey | undefined;
-        let sortDirection: SortDirection | undefined;
-
         const sort = this.sort();
-        if (sort.direction === 'asc') {
-            sortDirection = SortDirection.Asc;
-        }
-        else if (sort.direction === 'desc') {
-            sortDirection = SortDirection.Desc;
-        }
-
-        switch (sort.active) {
-            case 'date':
-                sortKey = TransactionsSortKey.Date;
-                break;
-            case 'merchant':
-                sortKey = TransactionsSortKey.Merchant;
-                break;
-            case 'amount':
-                sortKey = TransactionsSortKey.Amount;
-                break;
-            case 'account':
-                sortKey = TransactionsSortKey.Account;
-                break;
-            case 'category':
-                sortKey = TransactionsSortKey.Category;
-                break;
-        }
-
         this.search.set({
             minAmount: formValues.minAmount ?? undefined,
             maxAmount: formValues.maxAmount ?? undefined,
             startDate: formValues.startDate ? CalendarDateUtil.fromDate(formValues.startDate) : undefined,
             endDate: formValues.endDate ? CalendarDateUtil.fromDate(formValues.endDate) : undefined,
             filters: filters.length > 0 ? filters : undefined,
-            sortKey,
-            sortDirection
+            sortKey: this.sortKeys[sort.key],
+            sortDirection: sort.direction === 'asc' ? SortDirection.Asc : SortDirection.Desc
         });
     }
 
@@ -256,10 +271,6 @@ export class FinanceTransactionsComponent implements AfterViewInit {
         finally {
             this.loadingMore.set(false);
         }
-    }
-
-    onRowClick(row: Transaction) {
-        this.router.navigate([row.id], { relativeTo: this.route });
     }
 
     getCategoryName(id: string): string {
@@ -290,7 +301,7 @@ export class FinanceTransactionsComponent implements AfterViewInit {
             account: '',
             group: ''
         });
-        this.applySearch();
+        this.applyFilters();
     }
 
     downloadTransactions() {
