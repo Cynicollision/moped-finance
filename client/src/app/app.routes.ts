@@ -1,5 +1,4 @@
-import { inject } from '@angular/core';
-import { Router, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
 import { registrationGuard } from './core/registration.guard';
 import { FinanceAccountDetailsComponent } from './finance/accounts/account-details.component';
@@ -57,19 +56,7 @@ export const routes: Routes = [
             { path: 'settings/institutions/:id', component: ViewInstitutionComponent, title: 'View Institution' },
             { path: 'settings/institutions/:id/edit', component: EditInstitutionComponent, title: 'Edit Institution' },
             { path: 'settings/categories', component: FinanceCategoriesComponent, title: 'Categories' },
-            { path: 'settings/api-tokens', component: ApiTokensComponent, title: 'API Tokens' },
-
-            // Old paths, so bookmarks keep working (APP-1.11).
-            { path: 'summary', redirectTo: 'dashboard' },
-            { path: 'categories', redirectTo: 'settings/categories' },
-            { path: 'institutions', redirectTo: 'settings/institutions' },
-            { path: 'institutions/new', redirectTo: 'settings/institutions/new' },
-            { path: 'institutions/:id', redirectTo: 'settings/institutions/:id' },
-            { path: 'institutions/:id/edit', redirectTo: 'settings/institutions/:id/edit' },
-            {
-                path: 'institutions/:id/add-account',
-                redirectTo: ({ params }) => inject(Router).createUrlTree(['/accounts/new'], { queryParams: { institutionId: params['id'] } })
-            }
+            { path: 'settings/api-tokens', component: ApiTokensComponent, title: 'API Tokens' }
         ]
     },
     {

@@ -48,16 +48,6 @@ describe('app routes', () => {
         expect(await urlAfterVisiting('/no-such-screen')).toBe('/dashboard');
     });
 
-    it('APP-1.11 should send the old paths to where their screens moved', async () => {
-        expect(await urlAfterVisiting('/summary')).toBe('/dashboard');
-        expect(await urlAfterVisiting('/categories')).toBe('/settings/categories');
-        expect(await urlAfterVisiting('/institutions')).toBe('/settings/institutions');
-        expect(await urlAfterVisiting('/institutions/new')).toBe('/settings/institutions/new');
-        expect(await urlAfterVisiting('/institutions/inst-1')).toBe('/settings/institutions/inst-1');
-        expect(await urlAfterVisiting('/institutions/inst-1/edit')).toBe('/settings/institutions/inst-1/edit');
-        expect(await urlAfterVisiting('/institutions/inst-1/add-account')).toBe('/accounts/new?institutionId=inst-1');
-    });
-
     it('APP-1.9 should title the tab with the screen, then the product name', async () => {
         const title = TestBed.inject(Title);
 

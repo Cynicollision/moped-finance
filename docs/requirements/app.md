@@ -16,7 +16,6 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 | APP-1.8 | A screen below another (Account Details, Edit Account, Add Account, the import screens, View/Add/Edit Transaction, Settings' pages) shall show, above its title, a trail of links to the screens it sits below, for example "Settings / Institutions / *name*" on Edit Institution. Where the page area is narrower than 600px, the trail is replaced by a back arrow to the last of them. Import Transactions sits below the account it was opened from, or below Transactions when opened from there. Top-level screens have no trail. | Implemented |
 | APP-1.9 | The browser tab title shall be the current screen's name, then the product name: "Dashboard · Moped Finance", "Edit Institution · Moped Finance". Until the first screen loads it is "Moped Finance". | Implemented |
 | APP-1.10 | The profile menu's **Sign out** entry shall be shown in a warning (red) color. | Implemented |
-| APP-1.11 | Addresses from before the screens moved shall still work, redirecting to the screen's new address: `/summary` to the Dashboard, `/categories` and `/institutions/...` to their Settings pages, and an institution's `/institutions/:id/add-account` to Add Account with that institution selected. | Implemented |
 
 ## APP-2 The user gets feedback on what the app is doing
 
