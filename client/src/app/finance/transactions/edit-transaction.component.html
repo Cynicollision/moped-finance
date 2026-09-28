@@ -2,12 +2,19 @@
     <app-page-header title="Edit Transaction"
         [crumbs]="[{ label: 'Transactions', link: '/transactions' }, { label: 'Transaction Details', link: ['/transactions', transactionId] }]">
     </app-page-header>
-    @if (transaction(); as transaction) {
+    @if (data.error(); as error) {
+        <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
+    }
+    @else if (transaction(); as transaction) {
         <app-transaction-form
             [transaction]="transaction"
             mode="edit"
+            [saving]="saving()"
             (save)="onSave($event)"
             (cancelled)="onCancel()">
         </app-transaction-form>
+    }
+    @else {
+        <app-card-skeleton [rows]="5"></app-card-skeleton>
     }
 </div>

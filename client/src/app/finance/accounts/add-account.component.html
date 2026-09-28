@@ -1,9 +1,12 @@
 <div class="add-container">
     <app-page-header title="Add Account" [crumbs]="[{ label: 'Settings', link: '/settings' }, { label: 'Institutions', link: '/settings/institutions' }]"></app-page-header>
 
-    @if (institutions(); as institutions) {
+    @if (institutions.error(); as error) {
+        <app-load-error [message]="error" (retry)="institutions.reload()"></app-load-error>
+    }
+    @else if (institutions.value(); as institutions) {
         @if (institutions.length > 0) {
-            <app-account-form mode="create" [institutions]="institutions" [defaultInstitutionId]="institutionId"
+            <app-account-form mode="create" [institutions]="institutions" [defaultInstitutionId]="institutionId" [saving]="saving()"
                 (save)="onSave($event)" (cancelled)="onCancel()">
             </app-account-form>
         }
@@ -13,5 +16,8 @@
                 <button mat-flat-button type="button" (click)="addInstitution()">Add institution</button>
             </div>
         }
+    }
+    @else {
+        <app-card-skeleton [rows]="4"></app-card-skeleton>
     }
 </div>

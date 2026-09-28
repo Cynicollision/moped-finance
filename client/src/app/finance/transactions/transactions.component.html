@@ -1,5 +1,5 @@
 <div class="container">
-    <app-page-header title="Transactions">
+    <app-page-header title="Transactions" [refreshing]="isRefreshing()">
         <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
             <mat-icon>more_vert</mat-icon>
         </button>
@@ -25,7 +25,7 @@
                 <mat-panel-title> Filters </mat-panel-title>
             </mat-expansion-panel-header>
 
-            <form [formGroup]="filterForm" (ngSubmit)="loadData(true)" class="filter-form">
+            <form [formGroup]="filterForm" (ngSubmit)="applySearch()" class="filter-form">
                 <div class="filter-row">
                     <mat-form-field appearance="outline">
                         <mat-label>Min Amount</mat-label>
@@ -148,15 +148,30 @@
         </tr>
     </table>
 
-    @if (loaded() && transactions().length === 0) {
+    @if (firstPage.error(); as error) {
+        <app-load-error [message]="error" (retry)="firstPage.reload()"></app-load-error>
+    }
+    @else if (!isLoaded()) {
+        <div class="loading-rows" aria-busy="true" aria-label="Loading">
+            @for (row of [1, 2, 3, 4, 5, 6]; track row) {
+                <app-skeleton height="20px"></app-skeleton>
+            }
+        </div>
+    }
+    @else if (transactions().length === 0) {
         <div class="no-transactions-message">
             No transactions found
         </div>
     }
 
-    @if (hasMoreData()) {
+    @if (isLoaded() && hasMoreData()) {
         <div class="footer">
-            <button mat-stroked-button (click)="loadMore()">Load More</button>
+            <button mat-stroked-button (click)="loadMore()" [disabled]="loadingMore()">
+                @if (loadingMore()) {
+                    <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+                }
+                Load More
+            </button>
         </div>
     }
 </div>

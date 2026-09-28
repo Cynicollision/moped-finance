@@ -1,5 +1,5 @@
 <div class="institutions-container">
-    <app-page-header title="Institutions" [crumbs]="[{ label: 'Settings', link: '/settings' }]">
+    <app-page-header title="Institutions" [crumbs]="[{ label: 'Settings', link: '/settings' }]" [refreshing]="data.isRefreshing()">
         <a mat-flat-button class="page-action" routerLink="/accounts/new" aria-label="Add account">
             <mat-icon>add</mat-icon>
             <span class="page-action-label">Add account</span>
@@ -16,7 +16,11 @@
     </app-page-header>
 
     <div class="institution-list">
-        @for (group of institutionGroups(); track group.institution.id) {
+        @if (data.error(); as error) {
+        <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
+        }
+        @else if (institutionGroups(); as groups) {
+        @for (group of groups; track group.institution.id) {
         <mat-card class="institution-card">
             <mat-card-header class="institution-header">
                 <div mat-card-avatar class="institution-avatar">
@@ -68,11 +72,16 @@
         </mat-card>
         }
 
-        @if (institutionGroups().length === 0) {
+        @if (groups.length === 0) {
         <div class="empty-state">
             <p>You haven't added any institutions yet.</p>
             <button mat-flat-button (click)="openInstitution()">Add your first institution</button>
         </div>
+        }
+        }
+        @else {
+        <app-card-skeleton [rows]="2"></app-card-skeleton>
+        <app-card-skeleton [rows]="2"></app-card-skeleton>
         }
     </div>
 </div>

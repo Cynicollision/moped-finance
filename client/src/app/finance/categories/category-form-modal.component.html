@@ -28,6 +28,11 @@
 
     <div modal-actions>
         <button mat-button type="button" appModalCancel>Cancel</button>
-        <button mat-flat-button type="submit" form="category-form" [disabled]="form.invalid || isSaving()">Save</button>
+        <button mat-flat-button type="submit" form="category-form" [disabled]="form.invalid || isSaving()">
+            @if (isSaving()) {
+                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+            }
+            Save
+        </button>
     </div>
 </app-modal-layout>

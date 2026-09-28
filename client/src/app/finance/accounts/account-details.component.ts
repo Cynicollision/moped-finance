@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
@@ -8,11 +8,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { HistoryTimeframe } from '@shared/core/enum';
-import { GetAccountBalanceHistoryOptions, TotalValueHistory } from '@shared/finance/contracts';
-import { Account, BalanceHistory, Transaction, Category, Institution } from '@shared/finance/types';
+import { TotalValueHistory } from '@shared/finance/contracts';
+import { Transaction } from '@shared/finance/types';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { DateProviderService } from './../../core/date-provider.service';
+import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
+import { LoadErrorComponent } from './../../core/loading/load-error.component';
+import { viewResource } from './../../core/loading/view-resource';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceValueHistoryComponent } from './../common/value-history.component';
@@ -21,11 +24,11 @@ import { FinanceService } from './../finance.service';
 @Component({
     selector: 'app-finance-accounts',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CurrencyPipe, DatePipe, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, MatDividerModule, PageHeaderComponent],
+    imports: [CurrencyPipe, DatePipe, FinanceValueHistoryComponent, RouterLink, MatTableModule, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, MatDividerModule, PageHeaderComponent, CardSkeletonComponent, LoadErrorComponent],
     templateUrl: './account-details.component.html',
     styleUrl: './account-details.component.scss'
 })
-export class FinanceAccountDetailsComponent implements OnInit {
+export class FinanceAccountDetailsComponent {
     private financeService = inject(FinanceService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -34,59 +37,45 @@ export class FinanceAccountDetailsComponent implements OnInit {
     private notificationService = inject(NotificationService);
     readonly Math = Math;
 
-    readonly account = signal<Account | undefined>(undefined);
-    readonly balanceHistory = signal<BalanceHistory[]>([]);
-    readonly transactions = signal<Transaction[]>([]);
-    private readonly categoryMap = signal(new Map<string, Category>());
-    private readonly institutionMap = signal(new Map<string, Institution>());
+    private readonly accountId = this.route.snapshot.paramMap.get('accountId') ?? undefined;
 
     readonly selectedTimeframe = signal<HistoryTimeframe>(HistoryTimeframe.PastThirtyDays);
     readonly displayedColumns: string[] = ['date', 'merchant', 'category', 'amount'];
 
-    async ngOnInit() {
-        const accountId = this.route.snapshot.paramMap.get('accountId');
-
-        if (accountId) {
+    readonly details = viewResource({
+        params: () => this.accountId,
+        loader: async accountId => {
             const [account, categories, institutions, transactions] = await Promise.all([
                 this.financeService.fetchAccount(accountId),
                 this.financeService.fetchCategories(false),
                 this.financeService.fetchInstitutions(),
                 this.financeService.fetchAccountRecentTransactions(accountId)
             ]);
-
-            this.account.set(account);
-            this.categoryMap.set(new Map((categories || []).map(c => [c.id, c])));
-            this.institutionMap.set(new Map((institutions || []).map(i => [i.id, i])));
-            this.transactions.set(transactions || []);
-
-            await this.updateChartData(accountId);
+            return { account, categories, institutions, transactions };
         }
-    }
+    });
 
-    async updateChartData(accountId: string) {
-        const timeframe = this.selectedTimeframe();
-        const asOfDate = this.dateProvider.today();
+    // The chart reloads when the timeframe changes, keeping the old one on screen meanwhile (ACCT-2.4).
+    readonly balances = viewResource({
+        params: () => this.accountId ? { accountId: this.accountId, timeframe: this.selectedTimeframe() } : undefined,
+        loader: ({ accountId, timeframe }) =>
+            this.financeService.fetchAccountBalanceHistory(accountId, { asOfDate: this.dateProvider.today(), timeframe })
+    });
 
-        const options: GetAccountBalanceHistoryOptions = {
-            asOfDate,
-            timeframe
-        };
+    readonly account = computed(() => this.details.value()?.account);
+    readonly transactions = computed<Transaction[]>(() => this.details.value()?.transactions ?? []);
+    private readonly categoryMap = computed(() => new Map((this.details.value()?.categories ?? []).map(c => [c.id, c])));
+    private readonly institutionMap = computed(() => new Map((this.details.value()?.institutions ?? []).map(i => [i.id, i])));
 
-        const data = await this.financeService.fetchAccountBalanceHistory(accountId, options);
-        this.balanceHistory.set(data || []);
-    }
+    readonly isRefreshing = computed(() => this.details.isRefreshing() || this.balances.isRefreshing());
 
     onTimeframeChange(timeframe: HistoryTimeframe) {
         this.selectedTimeframe.set(timeframe);
-        const accountId = this.account()?.id;
-        if (accountId) {
-            this.updateChartData(accountId);
-        }
     }
 
-    // Map the raw BalanceHistory to the generic TotalValueHistory expected by ValueHistoryComponent
-    readonly historyData = computed<TotalValueHistory[]>(() => {
-        return this.balanceHistory().map(b => ({
+    // The balance history as the chart's points; undefined while it loads.
+    readonly historyData = computed<TotalValueHistory[] | undefined>(() => {
+        return this.balances.value()?.map(b => ({
             date: b.date,
             amount: b.balance,
             type: this.derivedChartType()

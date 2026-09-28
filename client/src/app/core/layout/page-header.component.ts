@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { LayoutService } from './layout.service';
 import { ModeBadgeComponent } from './mode-badge.component';
 import { ProfileMenuComponent } from './profile-menu.component';
@@ -20,7 +21,7 @@ export interface Crumb {
 @Component({
     selector: 'app-page-header',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, MatButtonModule, MatIconModule, ModeBadgeComponent, ProfileMenuComponent],
+    imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressBarModule, ModeBadgeComponent, ProfileMenuComponent],
     templateUrl: './page-header.component.html',
     styleUrl: './page-header.component.scss'
 })
@@ -29,6 +30,8 @@ export class PageHeaderComponent {
 
     readonly title = input.required<string>();
     readonly crumbs = input<Crumb[]>([]);
+    /** Show a thin progress bar under the header while the screen reloads data it's already showing (APP-2.1). */
+    readonly refreshing = input(false);
 
     readonly parent = computed(() => this.crumbs().at(-1) ?? null);
     readonly isCompact = this.layout.isCompact;

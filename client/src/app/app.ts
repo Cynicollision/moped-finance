@@ -5,7 +5,6 @@ import { filter, map } from 'rxjs/operators';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from './core/auth.service';
-import { LoadingOverlayComponent } from './core/loading/loading-overlay.component';
 import { LayoutService } from './core/layout/layout.service';
 import { ModeBadgeComponent } from './core/layout/mode-badge.component';
 import { ProfileMenuComponent } from './core/layout/profile-menu.component';
@@ -29,7 +28,6 @@ type NavMode = 'bottom' | 'rail' | 'side';
         RouterLink,
         MatSidenavModule,
         MatIconModule,
-        LoadingOverlayComponent,
         ModeBadgeComponent,
         ProfileMenuComponent
     ],

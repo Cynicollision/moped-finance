@@ -9,6 +9,7 @@ import { CalendarDateUtil } from '@shared/core/util';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ChartComponent, ChartConfiguration } from './../../core/chart.component';
+import { SkeletonComponent } from './../../core/loading/skeleton.component';
 import { FinanceValuePeriodChangeComponent, ValuePeriodChange } from './value-period-change.component';
 
 export interface ChartTypeOption {
@@ -45,15 +46,18 @@ export const TimeframeOptions: TimeframeOption[] = [
         MatIconModule,
         MatMenuModule,
         ChartComponent,
-        FinanceValuePeriodChangeComponent
+        FinanceValuePeriodChangeComponent,
+        SkeletonComponent
     ],
     templateUrl: './value-history.component.html',
     styleUrl: './value-history.component.scss'
 })
 export class FinanceValueHistoryComponent {
-    readonly historyData = input.required<TotalValueHistory[]>();
+    /** The chart's points; undefined while they load, which shows placeholders (APP-2.1). */
+    readonly historyData = input.required<TotalValueHistory[] | undefined>();
     readonly title = input<string>();
-    readonly currentValue = input(0);
+    /** The big number above the chart; undefined while it loads. */
+    readonly currentValue = input<number | undefined>(undefined);
 
     // Configurable Options
     readonly chartTypeOptions = input.required<ChartTypeOption[]>();
@@ -77,7 +81,7 @@ export class FinanceValueHistoryComponent {
 
     readonly chartConfig = computed<ChartConfiguration | undefined>(() => {
         const data = this.historyData();
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             return undefined;
         }
 
@@ -179,7 +183,7 @@ export class FinanceValueHistoryComponent {
 
     readonly periodChange = computed<(ValuePeriodChange & { timeframeLabel: string }) | undefined>(() => {
         const data = this.historyData();
-        if (data.length < 2) {
+        if (!data || data.length < 2) {
             return undefined;
         }
 

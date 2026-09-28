@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from './../core/auth.service';
@@ -17,6 +18,7 @@ import { AuthService } from './../core/auth.service';
         MatFormFieldModule,
         MatInputModule,
         MatButtonModule,
+        MatProgressSpinnerModule,
         MatIconModule,
         RouterLink
     ],
@@ -32,6 +34,7 @@ export class RegisterComponent {
     readonly password = signal('');
     readonly confirmPassword = signal('');
     readonly errorMessage = signal('');
+    readonly submitting = signal(false);
 
     async onRegister() {
         this.errorMessage.set('');
@@ -46,6 +49,7 @@ export class RegisterComponent {
             return;
         }
 
+        this.submitting.set(true);
         try {
             const returnUrl = this.route.snapshot.queryParams['returnUrl'];
             await this.authService.register(this.username(), this.displayName(), this.password(), returnUrl);
@@ -53,6 +57,9 @@ export class RegisterComponent {
         catch (error) {
             // API service handles showing notifications, but we can set local error if needed.
             this.errorMessage.set(error instanceof Error ? error.message : 'An error occurred during registration.');
+        }
+        finally {
+            this.submitting.set(false);
         }
     }
 }

@@ -99,3 +99,9 @@
     margin-top: 1.5rem;
     padding-bottom: 1rem;
 }
+
+.loading-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}

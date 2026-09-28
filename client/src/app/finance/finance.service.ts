@@ -10,6 +10,10 @@ import { DateProviderService } from './../core/date-provider.service';
 
 const API_BASE_PATH = 'api/v1';
 
+/**
+ * The finance API. `fetch*` methods load what a screen shows and throw on failure (use them through
+ * `viewResource`); the others are actions, which report their own failures and resolve to undefined.
+ */
 @Injectable({
     providedIn: 'root'
 })
@@ -18,12 +22,12 @@ export class FinanceService {
     private dateProvider = inject(DateProviderService);
 
     // Metadata (Institutions, Categories)
-    fetchInstitutions(): Promise<Institution[] | undefined> {
-        return this.api.get<Institution[]>(`${API_BASE_PATH}/institutions`);
+    fetchInstitutions(): Promise<Institution[]> {
+        return this.api.load<Institution[]>(`${API_BASE_PATH}/institutions`);
     }
 
-    fetchInstitution(id: string): Promise<Institution | undefined> {
-        return this.api.get<Institution>(`${API_BASE_PATH}/institutions/${id}`);
+    fetchInstitution(id: string): Promise<Institution> {
+        return this.api.load<Institution>(`${API_BASE_PATH}/institutions/${id}`);
     }
 
     createInstitution(institution: NewEntity<Institution>): Promise<Institution | undefined> {
@@ -38,16 +42,16 @@ export class FinanceService {
         return this.api.delete(`${API_BASE_PATH}/institutions/${id}`);
     }
 
-    fetchInstitutionAccounts(institutionId: string): Promise<Account[] | undefined> {
-        return this.api.get<Account[]>(`${API_BASE_PATH}/institutions/${institutionId}/accounts`);
+    fetchInstitutionAccounts(institutionId: string): Promise<Account[]> {
+        return this.api.load<Account[]>(`${API_BASE_PATH}/institutions/${institutionId}/accounts`);
     }
 
-    fetchCategories(activeOnly: boolean): Promise<Category[] | undefined> {
-        return this.api.get<Category[]>(`${API_BASE_PATH}/categories?activeOnly=${activeOnly}`);
+    fetchCategories(activeOnly: boolean): Promise<Category[]> {
+        return this.api.load<Category[]>(`${API_BASE_PATH}/categories?activeOnly=${activeOnly}`);
     }
 
-    fetchCategoryGroups(): Promise<CategoryGroup[] | undefined> {
-        return this.api.get<CategoryGroup[]>(`${API_BASE_PATH}/categories/groups`);
+    fetchCategoryGroups(): Promise<CategoryGroup[]> {
+        return this.api.load<CategoryGroup[]>(`${API_BASE_PATH}/categories/groups`);
     }
 
     createCategoryGroup(group: NewEntity<CategoryGroup>): Promise<CategoryGroup | undefined> {
@@ -75,12 +79,12 @@ export class FinanceService {
     }
 
     // Accounts
-    fetchAccount(accountId: string): Promise<Account | undefined> {
-        return this.api.get<Account>(`${API_BASE_PATH}/accounts/${accountId}`);
+    fetchAccount(accountId: string): Promise<Account> {
+        return this.api.load<Account>(`${API_BASE_PATH}/accounts/${accountId}`);
     }
 
-    fetchAllAccounts(): Promise<Account[] | undefined> {
-        return this.api.get<Account[]>(`${API_BASE_PATH}/accounts`);
+    fetchAllAccounts(): Promise<Account[]> {
+        return this.api.load<Account[]>(`${API_BASE_PATH}/accounts`);
     }
 
     createAccount(account: NewEntity<Account>): Promise<Account | undefined> {
@@ -95,9 +99,9 @@ export class FinanceService {
         return this.api.delete(`${API_BASE_PATH}/accounts/${id}`);
     }
 
-    fetchAccountBalanceHistory(accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[] | undefined> {
+    fetchAccountBalanceHistory(accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[]> {
         const url = `${API_BASE_PATH}/accounts/${accountId}/balance-history?asOfDate=${options.asOfDate}&timeframe=${options.timeframe}`;
-        return this.api.get<BalanceHistory[]>(url);
+        return this.api.load<BalanceHistory[]>(url);
     }
 
     importBalanceHistory(accountId: string, formData: FormData, dryRun: boolean): Promise<BalanceImportResult | undefined> {
@@ -108,33 +112,33 @@ export class FinanceService {
         return `/${API_BASE_PATH}/accounts/${accountId}/export-balances`;
     }
 
-    fetchTotalValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<TotalValueHistory[] | undefined> {
+    fetchTotalValueHistory(type: ValueHistoryType, timeframe: HistoryTimeframe): Promise<TotalValueHistory[]> {
         const asOfDate = this.dateProvider.today();
         const url = `${API_BASE_PATH}/accounts/total-value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
-        return this.api.get<TotalValueHistory[]>(url);
+        return this.api.load<TotalValueHistory[]>(url);
     }
 
     // Transactions
-    fetchTransaction(id: string): Promise<Transaction | undefined> {
-        return this.api.get<Transaction>(`${API_BASE_PATH}/transactions/${id}`);
+    fetchTransaction(id: string): Promise<Transaction> {
+        return this.api.load<Transaction>(`${API_BASE_PATH}/transactions/${id}`);
     }
 
-    fetchTransactions(options: TransactionSearchOptions): Promise<Transaction[] | undefined> {
+    fetchTransactions(options: TransactionSearchOptions): Promise<Transaction[]> {
         const params = this.getTransactionUrlParams(options);
-        return this.api.get<Transaction[]>(`${API_BASE_PATH}/transactions?${params.toString()}`);
+        return this.api.load<Transaction[]>(`${API_BASE_PATH}/transactions?${params.toString()}`);
     }
 
-    fetchAccountRecentTransactions(accountId: string): Promise<Transaction[] | undefined> {
+    fetchAccountRecentTransactions(accountId: string): Promise<Transaction[]> {
         const params = this.getTransactionUrlParams({
             sortKey: TransactionsSortKey.Date,
             sortDirection: SortDirection.Desc,
             limit: 10
         });
-        return this.api.get<Transaction[]>(`${API_BASE_PATH}/accounts/${accountId}/transactions?${params.toString()}`);
+        return this.api.load<Transaction[]>(`${API_BASE_PATH}/accounts/${accountId}/transactions?${params.toString()}`);
     }
 
-    fetchTransactionMerchants(): Promise<string[] | undefined> {
-        return this.api.get<string[]>(`${API_BASE_PATH}/transactions/merchants`);
+    fetchTransactionMerchants(): Promise<string[]> {
+        return this.api.load<string[]>(`${API_BASE_PATH}/transactions/merchants`);
     }
 
     saveTransaction(transaction: Transaction): Promise<Transaction | undefined> {
@@ -166,8 +170,8 @@ export class FinanceService {
     }
 
     // Budget
-    fetchBudgetStreams(): Promise<BudgetStream[] | undefined> {
-        return this.api.get<BudgetStream[]>(`${API_BASE_PATH}/budget-streams`);
+    fetchBudgetStreams(): Promise<BudgetStream[]> {
+        return this.api.load<BudgetStream[]>(`${API_BASE_PATH}/budget-streams`);
     }
 
     createBudgetStream(stream: NewEntity<BudgetStream>): Promise<BudgetStream | undefined> {
@@ -183,8 +187,8 @@ export class FinanceService {
     }
 
     // Cashflow
-    fetchCashflowStreams(period: CalendarPeriod, asOfDate: string): Promise<CashflowStream[] | undefined> {
-        return this.api.get<CashflowStream[]>(`${API_BASE_PATH}/transactions/cashflow?period=${period}&asOfDate=${asOfDate}`);
+    fetchCashflowStreams(period: CalendarPeriod, asOfDate: string): Promise<CashflowStream[]> {
+        return this.api.load<CashflowStream[]>(`${API_BASE_PATH}/transactions/cashflow?period=${period}&asOfDate=${asOfDate}`);
     }
 
     private getTransactionUrlParams(options: TransactionSearchOptions): URLSearchParams {

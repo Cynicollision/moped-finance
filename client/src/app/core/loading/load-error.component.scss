@@ -1,0 +1,30 @@
+:host {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.icon {
+    color: var(--color-negative);
+}
+
+.text {
+    flex: 1 1 200px;
+}
+
+p {
+    margin: 0;
+}
+
+.title {
+    font: var(--mat-sys-title-small);
+}
+
+.message {
+    color: var(--text-muted);
+}

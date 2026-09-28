@@ -84,14 +84,14 @@ describe('FinanceCashflowComponent', () => {
         expect(sectionRows(fixture.nativeElement, 'Expenses')).toEqual(['Housing $1,700.00', 'Food $300.00']);
     });
 
-    it('CASH-1.2 should ask for each period by its first day', async () => {
+    it('CASH-1.2 should ask for each period by its first day, reloading when the period changes', async () => {
         const fixture = await render();
         const { componentInstance: cashflow, financeService } = fixture;
 
         cashflow.selectedPeriod.set(CalendarPeriod.Quarterly);
-        await cashflow.loadData();
+        await fixture.whenStable();
         cashflow.selectedPeriod.set(CalendarPeriod.Yearly);
-        await cashflow.loadData();
+        await fixture.whenStable();
 
         expect(financeService.fetchCashflowStreams.mock.calls).toEqual([
             [CalendarPeriod.Monthly, '2026-05-01'],

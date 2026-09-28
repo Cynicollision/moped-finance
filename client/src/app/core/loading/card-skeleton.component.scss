@@ -1,0 +1,19 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px 16px;
+    border-radius: 12px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.heading {
+    margin-bottom: 4px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}

@@ -16,13 +16,13 @@ describe('FinanceTransactionsComponent', () => {
     }
 
     // Renders Transactions opened with the given query string, once its first page has loaded.
-    async function render(queryParams: Record<string, string> = {}, transactions: Transaction[] = []) {
+    async function render(queryParams: Record<string, string> = {}, transactions: Transaction[] = [], nextPage: Transaction[] = []) {
         const financeService = {
             fetchTransactionMerchants: vi.fn().mockResolvedValue([]),
             fetchCategories: vi.fn().mockResolvedValue([]),
             fetchAllAccounts: vi.fn().mockResolvedValue([]),
             fetchCategoryGroups: vi.fn().mockResolvedValue([]),
-            fetchTransactions: vi.fn().mockResolvedValue(transactions)
+            fetchTransactions: vi.fn().mockResolvedValueOnce(transactions).mockResolvedValue(nextPage)
         };
         TestBed.configureTestingModule({
             imports: [FinanceTransactionsComponent],
@@ -40,7 +40,7 @@ describe('FinanceTransactionsComponent', () => {
         await fixture.whenStable();
 
         const lastSearch = (): TransactionSearchOptions => financeService.fetchTransactions.mock.lastCall![0];
-        return { fixture, element: fixture.nativeElement as HTMLElement, lastSearch };
+        return { fixture, element: fixture.nativeElement as HTMLElement, lastSearch, financeService };
     }
 
     it('TXN-1.1 should show each transaction on its own date', async () => {
@@ -48,6 +48,23 @@ describe('FinanceTransactionsComponent', () => {
 
         const dates = Array.from(element.querySelectorAll('td.mat-column-date')).map(cell => cell.textContent!.trim());
         expect(dates).toEqual(['May 1, 2026', 'Apr 30, 2026']);
+    });
+
+    it('TXN-1.3 should load 25 at a time and append the next 25 with Load More', async () => {
+        const page = Array.from({ length: 25 }, (_, i) => transaction('t' + i, '2026-05-01'));
+        const { fixture, element, lastSearch } = await render({}, page, [transaction('t25', '2026-04-01')]);
+
+        expect(lastSearch()).toEqual(expect.objectContaining({ limit: 25, offset: 0 }));
+        expect(element.querySelectorAll('tr.mat-mdc-row').length).toBe(25);
+
+        const loadMore = Array.from(element.querySelectorAll<HTMLButtonElement>('.footer button')).find(b => b.textContent!.includes('Load More'))!;
+        loadMore.click();
+        await fixture.whenStable();
+
+        expect(lastSearch()).toEqual(expect.objectContaining({ limit: 25, offset: 25 }));
+        expect(element.querySelectorAll('tr.mat-mdc-row').length).toBe(26);
+        // The last page wasn't full, so there's nothing more to load.
+        expect(element.querySelector('.footer')).toBeNull();
     });
 
     it('TXN-1.10 should search up to today by default, sending it as YYYY-MM-DD', async () => {

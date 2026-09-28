@@ -107,6 +107,17 @@ mat-card.mat-mdc-card table.mat-mdc-table {
     ));
 }
 
+// A spinner inside a button while its action runs (APP-2.1): `<mat-progress-spinner class="button-spinner">`.
+.button-spinner {
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+
+    @include mat.progress-spinner-overrides((
+        active-indicator-color: currentColor
+    ));
+}
+
 // Dialogs on phones fill the screen (APP-2.6).
 .full-screen-dialog .mat-mdc-dialog-surface {
     border-radius: 0;

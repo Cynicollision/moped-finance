@@ -9,6 +9,23 @@
     }
 }
 
+.page-header {
+    position: relative;
+}
+
+// In the gap below the header, so it never moves the content.
+.progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    border-radius: 2px;
+
+    @include bp.content-below(bp.$medium) {
+        bottom: -8px;
+    }
+}
+
 .crumbs {
     ol {
         display: flex;

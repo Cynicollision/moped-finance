@@ -1,0 +1,9 @@
+<mat-icon class="icon">cloud_off</mat-icon>
+<div class="text">
+    <p class="title">Couldn't load this</p>
+    <p class="message">{{ message() }}</p>
+</div>
+<button mat-stroked-button type="button" (click)="retry.emit()">
+    <mat-icon>refresh</mat-icon>
+    Retry
+</button>

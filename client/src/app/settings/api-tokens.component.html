@@ -1,4 +1,4 @@
-<app-page-header title="API Tokens" [crumbs]="[{ label: 'Settings', link: '/settings' }]">
+<app-page-header title="API Tokens" [crumbs]="[{ label: 'Settings', link: '/settings' }]" [refreshing]="tokens.isRefreshing()">
     <button mat-flat-button class="page-action" (click)="newToken()" aria-label="New token">
         <mat-icon>add</mat-icon>
         <span class="page-action-label">New token</span>
@@ -13,13 +13,16 @@
             <code>Authorization: Bearer &lt;token&gt;</code>.
         </p>
 
-        @if (isLoaded()) {
-            @if (tokens().length === 0) {
+        @if (tokens.error(); as error) {
+            <app-load-error [message]="error" (retry)="tokens.reload()"></app-load-error>
+        }
+        @else if (tokens.value(); as tokens) {
+            @if (tokens.length === 0) {
             <p class="empty-state">No API tokens yet.</p>
             }
             @else {
             <div class="token-list">
-                @for (token of tokens(); track token.id) {
+                @for (token of tokens; track token.id) {
                 <div class="token-row">
                     <div class="token-main">
                         <span class="token-name">{{ token.name }}</span>
@@ -49,6 +52,12 @@
                 }
             </div>
             }
+        }
+        @else {
+            <div class="token-list" aria-busy="true" aria-label="Loading">
+                <app-skeleton width="40%" height="20px"></app-skeleton>
+                <app-skeleton width="70%" height="16px"></app-skeleton>
+            </div>
         }
     </mat-card-content>
 </mat-card>

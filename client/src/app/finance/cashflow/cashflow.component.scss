@@ -126,3 +126,9 @@ mat-form-field {
         font-size: 0.85rem;
     }
 }
+
+.loading-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}

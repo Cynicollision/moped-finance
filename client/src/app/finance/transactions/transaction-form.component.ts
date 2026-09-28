@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, SimpleChanges, OnChanges, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, SimpleChanges, OnChanges, input, output } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
@@ -10,10 +10,14 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { CalendarDateUtil } from '@shared/core/util';
-import { Category, Transaction, Account } from '@shared/finance/types';
+import { Transaction } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
+import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
+import { LoadErrorComponent } from './../../core/loading/load-error.component';
+import { viewResource } from './../../core/loading/view-resource';
 import { FinanceService } from './../finance.service';
 
 export type TransactionFormMode = 'create' | 'edit' | 'readonly';
@@ -33,8 +37,11 @@ export type TransactionFormMode = 'create' | 'edit' | 'readonly';
         MatNativeDateModule,
         MatAutocompleteModule,
         MatCheckboxModule,
+        MatProgressSpinnerModule,
         MatSelectModule,
-        RouterLink
+        RouterLink,
+        CardSkeletonComponent,
+        LoadErrorComponent
     ],
     templateUrl: './transaction-form.component.html',
     styleUrl: './transaction-form.component.scss'
@@ -43,6 +50,8 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     readonly transaction = input<Transaction | null>(null);
     readonly mode = input<TransactionFormMode>('readonly');
     readonly defaultAccountId = input<string>();
+    /** While the parent saves: Save is disabled and shows a spinner. */
+    readonly saving = input(false);
     readonly save = output<Partial<Transaction>>();
     readonly cancelled = output<void>();
 
@@ -62,19 +71,20 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         isHidden: new FormControl<boolean>(false, { nonNullable: true })
     });
 
-    readonly categories = signal<Category[]>([]);
-    readonly accounts = signal<Account[]>([]);
+    readonly lookups = viewResource({
+        loader: async () => {
+            const [categories, accounts] = await Promise.all([
+                this.financeService.fetchCategories(false),
+                this.financeService.fetchAllAccounts()
+            ]);
+            return { categories, accounts };
+        }
+    });
+    readonly categories = computed(() => this.lookups.value()?.categories ?? []);
+    readonly accounts = computed(() => this.lookups.value()?.accounts ?? []);
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
 
-    async ngOnInit() {
-        const [categories, accounts] = await Promise.all([
-            this.financeService.fetchCategories(false),
-            this.financeService.fetchAllAccounts()
-        ]);
-
-        this.categories.set(categories || []);
-        this.accounts.set(accounts || []);
-
+    ngOnInit() {
         this.updateFormState();
     }
 

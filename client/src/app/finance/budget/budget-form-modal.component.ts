@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, signal, inject } from '@ang
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -46,6 +47,7 @@ export interface BudgetFormModalData {
         ReactiveFormsModule,
         MatDialogModule,
         MatButtonModule,
+        MatProgressSpinnerModule,
         MatFormFieldModule,
         MatInputModule,
         MatSelectModule,

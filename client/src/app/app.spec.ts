@@ -6,7 +6,6 @@ import { App } from './app';
 import { AuthService } from './core/auth.service';
 import { DateProviderService } from './core/date-provider.service';
 import { LayoutService, SizeClass } from './core/layout/layout.service';
-import { LoadingService } from './core/loading/loading.service';
 
 describe('App', () => {
     const user = { id: '1', displayName: 'Ada Lovelace', username: 'ada' } as User;
@@ -19,7 +18,6 @@ describe('App', () => {
                 provideRouter([]),
                 { provide: AuthService, useValue: { currentUser: signal(currentUser), logout: vi.fn() } },
                 { provide: DateProviderService, useValue: { now: () => new Date(2026, 0, 1), today: () => '2026-01-01' } },
-                { provide: LoadingService, useValue: { isLoading: signal(false) } },
                 { provide: LayoutService, useValue: { sizeClass: size, isCompact: computed(() => size() === 'compact'), hasBottomNav: signal(false) } }
             ]
         });

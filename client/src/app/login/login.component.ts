@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Environment } from './../../environments/environment';
@@ -18,6 +19,7 @@ import { AuthService } from './../core/auth.service';
         MatFormFieldModule,
         MatInputModule,
         MatButtonModule,
+        MatProgressSpinnerModule,
         MatIconModule,
         RouterLink
     ],
@@ -31,15 +33,22 @@ export class LoginComponent implements OnInit {
     readonly username = signal(Environment.devUsername);
     readonly password = signal(Environment.devPassword);
     readonly registrationOpen = signal(false);
+    readonly submitting = signal(false);
 
     async ngOnInit() {
         this.registrationOpen.set(await this.authService.isRegistrationOpen());
     }
 
-    onLogin() {
-        if (this.username()) {
+    async onLogin() {
+        if (this.username() && !this.submitting()) {
             const returnUrl = this.route.snapshot.queryParams['returnUrl'];
-            this.authService.login(this.username(), this.password(), returnUrl);
+            this.submitting.set(true);
+            try {
+                await this.authService.login(this.username(), this.password(), returnUrl);
+            }
+            finally {
+                this.submitting.set(false);
+            }
         }
     }
 }

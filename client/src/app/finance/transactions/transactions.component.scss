@@ -114,3 +114,10 @@ mat-expansion-panel {
     border: 1px solid var(--border-color);
     border-radius: 8px;
 }
+
+.loading-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 20px 16px;
+}
