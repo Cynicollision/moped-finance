@@ -1,5 +1,14 @@
-<div class="settings-container">
-    <h1 class="desktop-page-title">Settings</h1>
+<app-page-header title="Settings"></app-page-header>
 
-    <app-api-tokens></app-api-tokens>
-</div>
+<nav class="section-list" aria-label="Settings">
+    @for (section of sections; track section.route) {
+        <a class="section-link" [routerLink]="section.route">
+            <mat-icon class="section-icon">{{ section.icon }}</mat-icon>
+            <span class="section-text">
+                <span class="section-label">{{ section.label }}</span>
+                <span class="section-description">{{ section.description }}</span>
+            </span>
+            <mat-icon class="chevron">chevron_right</mat-icon>
+        </a>
+    }
+</nav>

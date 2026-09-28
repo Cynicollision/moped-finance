@@ -1,19 +1,9 @@
 @use 'breakpoints' as bp;
 
 .settings-section {
+    max-width: 960px;
     background-color: var(--bg-card);
     border-radius: 8px;
-}
-
-.section-header {
-    display: flex;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-
-    .spacer {
-        flex: 1;
-    }
 }
 
 .section-content {

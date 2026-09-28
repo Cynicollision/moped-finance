@@ -1,0 +1,78 @@
+@use 'breakpoints' as bp;
+
+:host {
+    display: block;
+    margin-bottom: 24px;
+
+    @include bp.content-below(bp.$medium) {
+        margin-bottom: 16px;
+    }
+}
+
+.crumbs {
+    ol {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 0 4px;
+        padding: 0;
+        list-style: none;
+        font: var(--mat-sys-body-medium);
+        color: var(--text-muted);
+    }
+
+    li + li::before {
+        content: '/';
+        margin: 0 8px;
+    }
+
+    a {
+        color: var(--color-link);
+        font-weight: 500;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    // Phones get a back arrow instead.
+    @include bp.content-below(bp.$medium) {
+        display: none;
+    }
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    // An icon button's height, so the title sits in the same place whether or not the screen has actions.
+    min-height: 48px;
+}
+
+.back {
+    display: none;
+    margin-left: -8px;
+
+    @include bp.content-below(bp.$medium) {
+        display: inline-flex;
+    }
+}
+
+.title {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font: var(--mat-sys-headline-medium);
+    overflow-wrap: anywhere;
+
+    @include bp.content-below(bp.$medium) {
+        font: var(--mat-sys-title-large);
+    }
+}
+
+.actions,
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

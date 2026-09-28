@@ -10,7 +10,7 @@ Screens: **Login** (`/login`), **Register** (`/register`), the **Sign out** acti
 |---|---|---|
 | AUTH-1.1 | The Login screen shall show a **Username** field, a **Password** field, a **Login** button, and, while registration is open (AUTH-2.7), a link "Register here" to the Register screen. | Implemented |
 | AUTH-1.2 | The Login button shall be disabled until both Username and Password are non-empty. | Implemented |
-| AUTH-1.3 | Submitting valid credentials shall sign the user in and navigate to the page they originally requested (`returnUrl`), or to the Summary if there was none. | Implemented |
+| AUTH-1.3 | Submitting valid credentials shall sign the user in and navigate to the page they originally requested (`returnUrl`), or to the Dashboard if there was none. | Implemented |
 | AUTH-1.4 | Submitting an unknown username or a wrong password shall not sign the user in and shall show the error "Invalid username or password." The message shall be identical for both cases so it doesn't reveal which usernames exist. | Implemented |
 | AUTH-1.5 | In development builds only, the Login form shall be pre-filled with a configured developer username and password. Production and demo builds shall show empty fields. | Implemented |
 | AUTH-1.6 | Usernames shall be case-sensitive: `Stn` and `stn` are different usernames, and signing in needs the username exactly as registered. | Implemented |

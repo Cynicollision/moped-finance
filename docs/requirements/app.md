@@ -6,15 +6,15 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 
 | ID | Requirement | Status |
 |---|---|---|
-| APP-1.1 | Once signed in, the app shall show a side navigation with these entries, in this order: **Summary** (`/summary`, DASH), **Transactions**, **Cashflow**, **Budget**, **Categories**, **Accounts** (`/accounts`, the institutions and their accounts, INST-1). The current section shall be highlighted. | Partial |
-| APP-1.2 | The side navigation shall be permanently visible on screens 840px wide and wider. On narrower screens it shall be hidden behind a menu button, open over the content, and close when an entry is chosen. | Implemented |
-| APP-1.3 | While the navigation is behind the menu button (APP-1.2), the label of the current top-level section shall appear next to the menu button. | Implemented |
-| APP-1.4 | The bottom of the side navigation shall show a profile control with the user's initials and display name. Initials are the first letters of the first two words of the display name, or the first letter if there is only one word. | Implemented |
-| APP-1.5 | The profile control shall open a menu with **Settings** (SET-1.1) and **Sign out** (AUTH-4.1). | Implemented |
-| APP-1.6 | The landing page after sign-in, and the target of any unknown URL, shall be the Summary (DASH). | Implemented |
+| APP-1.1 | Once signed in, the app shall show a navigation with these entries, in this order: **Dashboard** (`/dashboard`, DASH), **Transactions**, **Cashflow** and **Budget**. The current section shall be highlighted, including on the screens below it (Account Details and its screens are below Dashboard). Settings is reached from the profile menu (APP-1.5), not the navigation. | Implemented |
+| APP-1.2 | The navigation shall follow the window width: below 600px a bar along the bottom of the screen, 600px to 839px a rail down the left side with each entry's icon above its label, and from 840px a side navigation headed by the product name. It is always visible. | Implemented |
+| APP-1.3 | Every screen shall start with a header holding its title and, at the end of the row, its actions: a primary button and/or a menu. The title shall be in the same place and style on every screen, whether or not the screen has actions. Where the page area is narrower than 600px, a primary button shows only its icon. | Implemented |
+| APP-1.4 | The profile control shall show the user's initials and, in the side navigation, their display name. Initials are the first letters of the first two words of the display name, or the first letter if there is only one word. It sits at the bottom of the side navigation or rail, and on phones at the end of every screen's header, since the bottom bar has no room for it. | Implemented |
+| APP-1.5 | The profile control shall open a menu with **Institutions** (INST-1) and **Categories** (CAT-1), shortcuts to those Settings pages, then **Settings** (SET-1.1), then, after a divider, **Sign out** (AUTH-4.1). | Implemented |
+| APP-1.6 | The landing page after sign-in, and the target of any unknown URL, shall be the Dashboard (DASH). | Implemented |
 | APP-1.7 | Signed-out visitors shall see no navigation or profile control, only the Login or Register screen. | Implemented |
-| APP-1.8 | Screens below a top-level section (Account Details, Edit Account, Add Account, Import screens, View/Edit Transaction, Add/View/Edit Institution) shall show a breadcrumb trail above the content, and every crumb except the last shall be a link back. Top-level sections have none. | Implemented |
-| APP-1.9 | The browser tab title shall name the current screen (for example "Summary", "Transactions", "Account Details", "Edit Institution"). | Partial |
+| APP-1.8 | A screen below another (Account Details, Edit Account, Add Account, the import screens, View/Add/Edit Transaction, Settings' pages) shall show, above its title, a trail of links to the screens it sits below, for example "Settings / Institutions / *name*" on Edit Institution. Where the page area is narrower than 600px, the trail is replaced by a back arrow to the last of them. Import Transactions sits below the account it was opened from, or below Transactions when opened from there. Top-level screens have no trail. | Implemented |
+| APP-1.9 | The browser tab title shall be the current screen's name, then the product name: "Dashboard · Moped Finance", "Edit Institution · Moped Finance". Until the first screen loads it is "Moped Finance". | Implemented |
 | APP-1.10 | The profile menu's **Sign out** entry shall be shown in a warning (red) color. | Implemented |
 
 ## APP-2 The user gets feedback on what the app is doing
@@ -31,14 +31,14 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 
 | ID | Requirement | Status |
 |---|---|---|
-| APP-3.1 | The product name shown to the user (side navigation header, browser tab title) shall be **Moped Finance**. | Implemented |
+| APP-3.1 | The product name shown to the user (side navigation header, browser tab title, Login and Register screens) shall be **Moped Finance**. | Implemented |
 
 ## APP-4 Developers and demo audiences can run the app in other modes
 
 | ID | Requirement | Status |
 |---|---|---|
-| APP-4.1 | **Debug mode** (development builds): the app shall treat "today" as a fixed date (2026-05-17) so date-based screens show stable data, and shall show a badge in the side navigation with that date as `YYYYMMDD`. | Implemented |
-| APP-4.2 | **Demo mode** (demo build): the app shall run entirely in the browser with no backend, shall show a "Demo Mode" badge in the side navigation, and shall let any Login or Register submission succeed as a fixed "Demo User", remembering signed-in state in browser storage across reloads. | Partial |
+| APP-4.1 | **Debug mode** (development builds): the app shall treat "today" as a fixed date (2026-05-17) so date-based screens show stable data, and shall show a badge with that date as `YYYYMMDD`: beside the product name in the side navigation, or as an icon (the date on hover) at the top of the rail or in the page header on phones. | Implemented |
+| APP-4.2 | **Demo mode** (demo build): the app shall run entirely in the browser with no backend, shall show a "Demo Mode" badge where APP-4.1 shows the debug badge, and shall let any Login or Register submission succeed as a fixed "Demo User", remembering signed-in state in browser storage across reloads. | Partial |
 | APP-4.3 | In demo mode, finance screens shall be populated with realistic sample data and support the same create/edit/delete flows as the real app. | Planned |
 
 ## APP-5 The server runs unattended and fails safely
@@ -68,13 +68,9 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 ## Known gaps
 
 - **Red and signs aren't consistent yet (APP-6).** Cashflow shows expenses in red, transaction amounts have no "+", and forms take signed amounts (liabilities must be entered negative).
-- **Old navigation names (APP-1.1, APP-1.9).** The navigation says **Accounts** for the summary and **Institutions** for the institutions list, the institutions route is `/institutions`, and the summary's tab title is "Dashboard".
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.
-- **Login and Register show no product name.** The side navigation header and browser tab say "Moped Finance" (APP-3.1), but the Login and Register screens have no product name at all.
 - **Success feedback is sparse.** Only imports announce success. Creating, saving and deleting records just navigate or refresh.
 - **The loading overlay shows fake zeros (APP-2.1).** Every navigation and every timeframe or filter change dims the screen behind a spinner, and the blurred backdrop briefly shows an empty or zero state (an empty Budget, a $0.00 net worth) that looks like real data.
-- **Breadcrumb roots aren't always right.** Import Transactions shows "Accounts / Import Transactions" even when it was opened from the Transactions menu, and its "Accounts" crumb isn't a link, unlike the other screens' trails.
-- **Tab title flashes the app name.** On a full page load the tab reads "Moped Finance" until the screen finishes loading, then switches to the screen title alone (APP-1.9).
 
 ## Notes
 

@@ -7,6 +7,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CategoryGroup, Category } from '@shared/finance/types';
 import { CategoryClass } from '@shared/finance/enum';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
@@ -27,7 +28,8 @@ interface GroupedCategories {
         MatButtonModule,
         MatIconModule,
         MatMenuModule,
-        MatTooltipModule
+        MatTooltipModule,
+        PageHeaderComponent
     ],
     templateUrl: './categories.component.html',
     styleUrl: './categories.component.scss'

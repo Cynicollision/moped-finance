@@ -86,4 +86,18 @@ describe('RegisterComponent', () => {
         expect(component.errorMessage()).toBe('');
         expect(mockAuthService.register).toHaveBeenCalledWith('testuser', 'Test User', 'password123', undefined);
     });
+
+    it('APP-3.1 should show the product name', () => {
+        expect(fixture.nativeElement.querySelector('.brand-title').textContent).toBe('Moped Finance');
+    });
+
+    it("AUTH-2.8 should explain, before the form, that this is the instance's only account and registration closes", () => {
+        const element = fixture.nativeElement as HTMLElement;
+        const explanation = element.querySelector('.one-account')!;
+
+        expect(explanation.textContent).toMatch(/only account/);
+        expect(explanation.textContent).toMatch(/own all of the instance's data/);
+        expect(explanation.textContent).toMatch(/registration closes/);
+        expect(explanation.compareDocumentPosition(element.querySelector('form')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
 });

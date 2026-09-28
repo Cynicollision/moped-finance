@@ -13,6 +13,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatSelectModule } from '@angular/material/select';
 import { startWith, map } from 'rxjs';
 import { SortDirection } from '@shared/core/enum';
@@ -20,6 +21,7 @@ import { CalendarDateUtil } from '@shared/core/util';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction, Category, Account, CategoryGroup } from '@shared/finance/types';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 
@@ -42,7 +44,9 @@ import { FinanceService } from './../finance.service';
         MatAutocompleteModule,
         MatSelectModule,
         RouterModule,
-        MatMenuModule
+        MatMenuModule,
+        MatDividerModule,
+        PageHeaderComponent
     ],
     templateUrl: './transactions.component.html',
     styleUrl: './transactions.component.scss'

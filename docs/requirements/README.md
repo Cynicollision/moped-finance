@@ -2,7 +2,7 @@
 
 This folder is Moped Finance's requirements: what it does and what it's planned to do, as numbered requirements grouped by domain. It's also the feature backlog: every `Planned` or `Partial` sub-requirement is work to do. `TODO.md` holds the rest (technical work, tooling, security hardening, and decisions not yet written up as requirements).
 
-The first set was written by reading the running app and its code, so domains not yet revisited still mostly describe current behavior. Categories (`CAT`), Institutions (`INST`), Accounts (`ACCT`) and the Summary (`DASH`) have been reworked into the intended design. Every domain's open questions were decided on 2026-09-26 and written up as requirements, so what's left in each Known gaps is work, not decisions.
+The first set was written by reading the running app and its code, so domains not yet revisited still mostly describe current behavior. Categories (`CAT`), Institutions (`INST`), Accounts (`ACCT`) and the Dashboard (`DASH`) have been reworked into the intended design. Every domain's open questions were decided on 2026-09-26 and written up as requirements, so what's left in each Known gaps is work, not decisions.
 
 ## Domains
 
@@ -10,10 +10,10 @@ The first set was written by reading the running app and its code, so domains no
 |---|---|---|
 | `APP` | Application shell, navigation, feedback, demo mode | [app.md](app.md) |
 | `AUTH` | Registration, login, sessions, single owner, API tokens | [auth.md](auth.md) |
-| `SET` | The Settings screen, profile, appearance | [settings.md](settings.md) |
-| `INST` | Institutions, manual and connected, and the Accounts screen that lists them | [institutions.md](institutions.md) |
+| `SET` | Settings, profile, appearance, bank sync | [settings.md](settings.md) |
+| `INST` | Institutions, manual and connected, and the Settings page that lists them with their accounts | [institutions.md](institutions.md) |
 | `ACCT` | Accounts, balances, balance-history import/export | [accounts.md](accounts.md) |
-| `DASH` | Summary, net worth and value-history chart | [dashboard.md](dashboard.md) |
+| `DASH` | Dashboard, net worth and value-history chart | [dashboard.md](dashboard.md) |
 | `CAT` | Categories and category groups | [categories.md](categories.md) |
 | `TXN` | Transactions, import/export | [transactions.md](transactions.md) |
 | `BUD` | Budget (recurring income and expense streams) | [budget.md](budget.md) |
@@ -80,8 +80,8 @@ Each domain file has an introduction, then one table per requirement, then up to
 | Manual / connected | A connected institution has a bank connection; a connected account is linked to an account at it and gets its balances and transactions from sync. Everything else is manual (INST-2, ACCT-4). |
 | Balance history | Dated balance entries for an account, at most one per date. An account's current balance is its latest entry on or before today. |
 | Set / adjusted entry | A set balance entry is one the user entered or imported, or sync recorded; it's a checkpoint. An adjusted entry exists only because of transactions that adjust the balance (ACCT-5.1). |
-| Hidden account | Left out of everything but the Accounts screen and its own details, past included (ACCT-1.9). |
-| Closed account | No longer held: off the Summary lists, but its past still counts (ACCT-6). |
+| Hidden account | Left out of everything but the Institutions screen and its own details, past included (ACCT-1.9). |
+| Closed account | No longer held: off the Dashboard lists, but its past still counts (ACCT-6). |
 | Category group / category | Two-level classification of transactions and budget streams. A category group has a type (`Income`, `Expense`, `Transfer`) and contains categories. |
 | Necessity | Whether an expense category is `Essential` or `Discretionary`. |
 | Uncategorized | The built-in category for transactions that haven't been given one. |

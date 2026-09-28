@@ -1,13 +1,52 @@
-.settings-container {
-    padding: 16px;
-    max-width: 960px;
+.section-list {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    max-width: 800px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    overflow: hidden;
+}
 
-    h1 {
-        margin: 0;
-        font-size: 2rem;
-        font-weight: 500;
+.section-link {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    color: var(--text-main);
+    text-decoration: none;
+
+    &:not(:last-child) {
+        border-bottom: 1px solid var(--border-color);
     }
+
+    &:hover {
+        background-color: var(--bg-hover);
+    }
+}
+
+.section-icon {
+    flex: none;
+    color: var(--mat-sys-primary);
+}
+
+.section-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+}
+
+.section-label {
+    font: var(--mat-sys-title-medium);
+}
+
+.section-description {
+    color: var(--text-muted);
+}
+
+.chevron {
+    flex: none;
+    color: var(--text-muted);
 }

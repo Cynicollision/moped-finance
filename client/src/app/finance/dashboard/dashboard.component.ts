@@ -8,6 +8,7 @@ import { HistoryTimeframe } from '@shared/core/enum';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { AccountGroup, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { FinanceValueHistoryComponent } from './../common/value-history.component';
 import { FinanceValuePeriodChangeComponent, ValuePeriodChange } from './../common/value-period-change.component';
 import { FinanceService } from './../finance.service';
@@ -30,20 +31,21 @@ const groupOrder: { group: AccountGroup; label: string; isLiability: boolean }[]
 ];
 
 @Component({
-    selector: 'app-finance-summary',
+    selector: 'app-dashboard',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CurrencyPipe,
         MatCardModule,
         MatDividerModule,
         RouterLink,
+        PageHeaderComponent,
         FinanceValueHistoryComponent,
         FinanceValuePeriodChangeComponent
     ],
-    templateUrl: './summary.component.html',
-    styleUrl: './summary.component.scss'
+    templateUrl: './dashboard.component.html',
+    styleUrl: './dashboard.component.scss'
 })
-export class FinanceSummaryComponent implements OnInit {
+export class DashboardComponent implements OnInit {
     private financeService = inject(FinanceService);
     private dateProvider = inject(DateProviderService);
     readonly Math = Math;

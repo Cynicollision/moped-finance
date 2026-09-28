@@ -1,20 +1,9 @@
 <div class="import-container details-container">
-    <div class="breadcrumb-nav">
-        <a [routerLink]="['/']" class="breadcrumb-link">Accounts</a>
-        <span class="breadcrumb-separator">/</span>
-        @if (account(); as account) {
-            <a [routerLink]="['/accounts', account.id]" class="breadcrumb-link">{{ account.name }}</a>
-            <span class="breadcrumb-separator">/</span>
-        }
-        <span class="breadcrumb-current">Import Transactions</span>
-    </div>
+    <app-page-header title="Import Transactions" [crumbs]="crumbs()"></app-page-header>
 
     <mat-card appearance="outlined" class="import-card">
-        <mat-card-header>
-            <mat-card-title>Import Transactions</mat-card-title>
-        </mat-card-header>
         <mat-card-content>
-            <p class="mt-16">Select a CSV file containing your transactions. The file must have the following columns:
+            <p>Select a CSV file containing your transactions. The file must have the following columns:
                 <strong>Id, Date, AccountName, Merchant, CategoryName, Amount, Notes</strong>.
             </p>
 

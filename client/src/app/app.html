@@ -1,77 +1,67 @@
-<mat-sidenav-container class="sidenav-container">
-    <!-- Sidenav: Permanent on Desktop, Modal on Mobile -->
-    <mat-sidenav #drawer class="sidenav" fixedInViewport [attr.role]="isHandset() ? 'dialog' : 'navigation'"
-        [mode]="isHandset() ? 'over' : 'side'" [opened]="!isHandset()">
+@if (authService.currentUser()) {
+    <mat-sidenav-container class="shell" [class.has-bottom-nav]="navMode() === 'bottom'">
+        @if (navMode() !== 'bottom') {
+            <mat-sidenav class="sidenav" [class.rail]="navMode() === 'rail'" mode="side" opened fixedInViewport>
+                <div class="sidenav-body">
+                    @if (navMode() === 'side') {
+                        <div class="brand">
+                            <div class="brand-name">
+                                <mat-icon>attach_money</mat-icon>
+                                <span class="brand-title">Moped Finance</span>
+                            </div>
+                            <app-mode-badge></app-mode-badge>
+                        </div>
+                    }
+                    @else {
+                        <div class="rail-top">
+                            <app-mode-badge [iconOnly]="true"></app-mode-badge>
+                        </div>
+                    }
 
-        <div class="sidenav-body">
-            @if (authService.currentUser()) {
-                <div class="brand">
-                    <div class="brand-name">
-                        <mat-icon color="primary">attach_money</mat-icon>
-                        <span class="brand-title">Moped Finance</span>
+                    <nav class="nav-list" aria-label="Main">
+                        @for (item of navItems; track item.route) {
+                            <a class="nav-item" [routerLink]="item.route" [class.active]="activeRoute() === item.route"
+                                [attr.aria-current]="activeRoute() === item.route ? 'page' : null">
+                                <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+                                <span class="nav-label">{{ item.label }}</span>
+                            </a>
+                        }
+                    </nav>
+
+                    <span class="spacer"></span>
+
+                    <div class="profile">
+                        <app-profile-menu [variant]="navMode() === 'side' ? 'full' : 'avatar'" [above]="true">
+                        </app-profile-menu>
                     </div>
-                    @if (isDemoMode) {
-                        <div class="mode-badge demo" title="Demo Mode">
-                            <mat-icon>science</mat-icon>
-                            <span>Demo Mode</span>
-                        </div>
-                    }
-                    @else if (isDebugMode) {
-                        <div class="mode-badge debug" title="Debug Mode: {{ debugDateLabel() }}">
-                            <mat-icon>bug_report</mat-icon>
-                            <span>{{ debugDateLabel() }}</span>
-                        </div>
-                    }
                 </div>
+            </mat-sidenav>
+        }
 
-                <mat-nav-list>
-                    @for (item of navItems; track item.route) {
-                        <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link"
-                            [routerLinkActiveOptions]="{exact: true}" (click)="drawer.mode === 'over' && drawer.close()">
-                            <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
-                            <span matListItemTitle>{{item.label}}</span>
-                        </a>
-                    }
-                </mat-nav-list>
+        <mat-sidenav-content>
+            <main class="content-container">
+                <router-outlet></router-outlet>
+            </main>
+        </mat-sidenav-content>
+    </mat-sidenav-container>
 
-                <span class="spacer"></span>
-
-                <!-- Profile Button and Dropdown Menu -->
-                <button type="button" class="profile-trigger" [matMenuTriggerFor]="profileMenu">
-                    <span class="avatar">{{ userInitials() }}</span>
-                    <span class="profile-name">{{ authService.currentUser()?.displayName }}</span>
-                    <mat-icon class="profile-arrow">keyboard_arrow_up</mat-icon>
-                </button>
-                <mat-menu #profileMenu="matMenu" xPosition="after" yPosition="above">
-                    <a mat-menu-item routerLink="/settings" (click)="drawer.mode === 'over' && drawer.close()">
-                        <mat-icon>settings</mat-icon>
-                        <span>Settings</span>
-                    </a>
-                    <button mat-menu-item class="sign-out" (click)="logout()">
-                        <mat-icon>logout</mat-icon>
-                        <span>Sign out</span>
-                    </button>
-                </mat-menu>
+    @if (navMode() === 'bottom') {
+        <nav class="bottom-nav" aria-label="Main">
+            @for (item of navItems; track item.route) {
+                <a class="nav-item" [routerLink]="item.route" [class.active]="activeRoute() === item.route"
+                    [attr.aria-current]="activeRoute() === item.route ? 'page' : null">
+                    <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+                    <span class="nav-label">{{ item.label }}</span>
+                </a>
             }
-        </div>
-    </mat-sidenav>
-
-    <!-- Main Content Area -->
-    <mat-sidenav-content>
-        <div class="content-container">
-            @if (isHandset()) {
-                <div class="handset-header">
-                    <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()">
-                        <mat-icon>menu</mat-icon>
-                    </button>
-                    @if (currentNavItem(); as item) {
-                        <span class="handset-title">{{ item.label }}</span>
-                    }
-                </div>
-            }
-            <router-outlet></router-outlet>
-        </div>
-    </mat-sidenav-content>
-</mat-sidenav-container>
+        </nav>
+    }
+}
+@else {
+    <!-- Signed out: no navigation or profile control, only Login or Register (APP-1.7). -->
+    <main class="signed-out">
+        <router-outlet></router-outlet>
+    </main>
+}
 
 <app-loading-overlay></app-loading-overlay>

@@ -1,15 +1,14 @@
 <div class="container">
-    <div class="header-section hide-on-mobile">
-        <h1 class="desktop-page-title">Transactions</h1>
-        <span class="spacer"></span>
+    <app-page-header title="Transactions">
         <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
             <mat-icon>more_vert</mat-icon>
         </button>
         <mat-menu #menu="matMenu">
-            <a mat-menu-item [routerLink]="['/transactions/new']">
+            <a mat-menu-item routerLink="/transactions/new">
                 <mat-icon>add</mat-icon>
                 <span>Add Transaction</span>
             </a>
+            <mat-divider></mat-divider>
             <a mat-menu-item [routerLink]="['/transactions/import']">
                 <mat-icon>upload_file</mat-icon>
                 <span>Import Transactions</span>
@@ -19,7 +18,7 @@
                 <span>Download Transactions</span>
             </button>
         </mat-menu>
-    </div>
+    </app-page-header>
     <mat-accordion>
         <mat-expansion-panel>
             <mat-expansion-panel-header>

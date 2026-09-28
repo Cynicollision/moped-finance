@@ -45,7 +45,9 @@ module.exports = defineConfig([
     {
         files: ['**/*.spec.ts'],
         rules: {
-            '@typescript-eslint/no-explicit-any': 'off'
+            '@typescript-eslint/no-explicit-any': 'off',
+            // Stand-in components for tests (an empty screen for a route) can have an inline template.
+            '@angular-eslint/component-max-inline-declarations': 'off'
         }
     },
     {

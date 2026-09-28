@@ -73,13 +73,15 @@ Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates wit
 
 ```
 client/src/app/
-  core/       API/auth services, auth guard, DateProviderService, LayoutService, modal, loading, demo mode
+  core/       API/auth services, auth guard, DateProviderService, modal, loading, demo mode
+  core/layout/  LayoutService, the page header, profile menu and tab-title strategy
   finance/    one folder per screen area: accounts, budget, cashflow, categories,
-              institutions, summary, transactions, common
+              dashboard, institutions, transactions, common
+  settings/   the Settings list and API Tokens (Institutions and Categories live in finance/)
   login/, register/
 ```
 
-- Standalone components, routes in `app.routes.ts`. Global styles and colour tokens are in `src/styles.scss`, shared SCSS partials (breakpoints) in `src/styles/`. Fonts (Roboto, Material Icons) are npm packages bundled into the build, so the app makes no third-party requests.
+- Standalone components, routes in `app.routes.ts`. The shell (`app.html`) shows the navigation as a bottom bar, rail or side navigation by window size (APP-1.2). Every screen starts with `<app-page-header>` (title, breadcrumb trail, actions projected as content), and route `title`s become the tab title through `PageTitleStrategy`. Global styles and colour tokens are in `src/styles.scss`, shared SCSS partials (breakpoints) in `src/styles/`. Fonts (Roboto, Material Icons) are npm packages bundled into the build, so the app makes no third-party requests.
 - All HTTP goes through `core/api.service.ts`, which prefixes `Environment.apiUrl`. It's empty, so requests go to the origin that served the app: Express in production, and the dev server in development, which forwards `/api`, `/auth` and `/health` to the API on :3000 (`client/proxy.conf.json`). No CORS is needed.
 - Build configurations (`client/angular.json`, `client/src/environments/`):
   - `development`: debug mode (fixed "today" of 2026-05-17 plus a badge), dev login prefilled.

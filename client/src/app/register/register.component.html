@@ -1,9 +1,18 @@
 <div class="register-container">
+    <div class="brand">
+        <mat-icon>attach_money</mat-icon>
+        <span class="brand-title">Moped Finance</span>
+    </div>
     <mat-card appearance="outlined">
         <mat-card-header>
             <mat-card-title>Register</mat-card-title>
         </mat-card-header>
         <mat-card-content>
+            <!-- AUTH-2.8 -->
+            <p class="one-account">
+                This creates the only account on this Moped Finance instance, and it will own all of the
+                instance's data. Once it's created, registration closes and this page won't be available again.
+            </p>
             <form (ngSubmit)="onRegister()">
                 <mat-form-field class="full-width">
                     <mat-label>Username</mat-label>

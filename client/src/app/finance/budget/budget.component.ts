@@ -8,6 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { BudgetStreamType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { CalendarPeriod } from '@shared/core/enum';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { ModalService } from './../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
 import { FinanceBudgetFormModalComponent, BudgetFormModalData } from './budget-form-modal.component';
@@ -27,7 +28,8 @@ export interface BudgetTotals {
         MatTableModule,
         MatButtonModule,
         MatIconModule,
-        MatMenuModule
+        MatMenuModule,
+        PageHeaderComponent
     ],
     templateUrl: './budget.component.html',
     styleUrl: './budget.component.scss'

@@ -1,20 +1,13 @@
-@if (transaction(); as transaction) {
-    <div class="container">
-        <div class="breadcrumb-nav">
-            <a [routerLink]="['/transactions']" class="breadcrumb-link">Transactions</a>
-            <span class="breadcrumb-separator">/</span>
-            <a [routerLink]="['/transactions', transaction.id]" class="breadcrumb-link">Transaction Details</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-current">Edit Transaction</span>
-        </div>
-        <div class="header-section">
-            <h1 class="desktop-page-title">Edit Transaction</h1>
-        </div>
+<div class="container">
+    <app-page-header title="Edit Transaction"
+        [crumbs]="[{ label: 'Transactions', link: '/transactions' }, { label: 'Transaction Details', link: ['/transactions', transactionId] }]">
+    </app-page-header>
+    @if (transaction(); as transaction) {
         <app-transaction-form
             [transaction]="transaction"
             mode="edit"
             (save)="onSave($event)"
             (cancelled)="onCancel()">
         </app-transaction-form>
-    </div>
-}
+    }
+</div>

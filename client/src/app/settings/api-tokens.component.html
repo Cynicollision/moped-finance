@@ -1,12 +1,11 @@
+<app-page-header title="API Tokens" [crumbs]="[{ label: 'Settings', link: '/settings' }]">
+    <button mat-flat-button class="page-action" (click)="newToken()" aria-label="New token">
+        <mat-icon>add</mat-icon>
+        <span class="page-action-label">New token</span>
+    </button>
+</app-page-header>
+
 <mat-card class="settings-section">
-    <mat-card-header class="section-header">
-        <mat-card-title>API Tokens</mat-card-title>
-        <span class="spacer"></span>
-        <button mat-stroked-button (click)="newToken()">
-            <mat-icon>add</mat-icon>
-            New Token
-        </button>
-    </mat-card-header>
 
     <mat-card-content class="section-content">
         <p class="section-description">

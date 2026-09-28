@@ -1,0 +1,32 @@
+:host {
+    display: contents;
+}
+
+.mode-badge {
+    --badge-color: var(--color-debug);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--badge-color) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--badge-color) 20%, transparent);
+    color: var(--badge-color);
+
+    &.demo {
+        --badge-color: var(--color-demo);
+    }
+
+    mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        margin: 0;
+    }
+
+    span {
+        font-size: 11px;
+        font-weight: bold;
+        line-height: 1;
+    }
+}

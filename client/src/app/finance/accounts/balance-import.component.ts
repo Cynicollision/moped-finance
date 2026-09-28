@@ -7,13 +7,14 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BalanceImportResult } from '@shared/finance/contracts';
 import { Account } from '@shared/finance/types';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
 
 @Component({
     selector: 'app-balance-import',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule, RouterModule],
+    imports: [MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule, RouterModule, PageHeaderComponent],
     templateUrl: './balance-import.component.html',
     styleUrl: './balance-import.component.scss'
 })

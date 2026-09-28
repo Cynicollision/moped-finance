@@ -3,9 +3,9 @@ import { provideRouter } from '@angular/router';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { FinanceService } from './../finance.service';
-import { FinanceSummaryComponent } from './summary.component';
+import { DashboardComponent } from './dashboard.component';
 
-describe('FinanceSummaryComponent', () => {
+describe('DashboardComponent', () => {
     function account(name: string, group: AccountGroup, balance: number): Account {
         const isLiability = group === AccountGroup.CreditCard || group === AccountGroup.Loan;
         return {
@@ -29,11 +29,11 @@ describe('FinanceSummaryComponent', () => {
             fetchAccountBalanceHistory: vi.fn().mockResolvedValue([])
         };
         TestBed.configureTestingModule({
-            imports: [FinanceSummaryComponent],
+            imports: [DashboardComponent],
             providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }]
         });
 
-        const fixture = TestBed.createComponent(FinanceSummaryComponent);
+        const fixture = TestBed.createComponent(DashboardComponent);
         await fixture.whenStable();
         return fixture.nativeElement as HTMLElement;
     }

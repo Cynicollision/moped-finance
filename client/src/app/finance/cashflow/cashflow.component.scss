@@ -1,9 +1,5 @@
 @use 'breakpoints' as bp;
 
-.spending-container {
-    padding: 16px;
-}
-
 .section-card {
     margin-bottom: 24px;
 }
@@ -18,14 +14,6 @@
     border-bottom: 1px solid var(--border-color);
 }
 
-.header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-
 .card-title {
     margin: 0;
     font-size: 1.25rem;
@@ -36,8 +24,8 @@
     display: flex;
     gap: 16px;
     align-items: center;
-    justify-content: flex-end;
     flex-wrap: wrap;
+    margin-bottom: 24px;
 }
 
 .primary-controls {

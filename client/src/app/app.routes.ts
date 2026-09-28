@@ -11,7 +11,7 @@ import { NewInstitutionComponent } from './finance/institutions/new-institution.
 import { ViewInstitutionComponent } from './finance/institutions/view-institution.component';
 import { EditInstitutionComponent } from './finance/institutions/edit-institution.component';
 import { FinanceInstitutionsComponent } from './finance/institutions/institutions.component';
-import { FinanceSummaryComponent } from './finance/summary/summary.component';
+import { DashboardComponent } from './finance/dashboard/dashboard.component';
 import { FinanceCategoriesComponent } from './finance/categories/categories.component';
 import { AddTransactionComponent } from './finance/transactions/add-transaction.component';
 import { ImportTransactionsComponent } from './finance/transactions/import-transactions.component';
@@ -20,6 +20,7 @@ import { EditTransactionComponent } from './finance/transactions/edit-transactio
 import { FinanceTransactionsComponent } from './finance/transactions/transactions.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
+import { ApiTokensComponent } from './settings/api-tokens.component';
 import { SettingsComponent } from './settings/settings.component';
 
 export const routes: Routes = [
@@ -36,9 +37,12 @@ export const routes: Routes = [
         path: '',
         canActivate: [authGuard],
         children: [
-            { path: '', redirectTo: 'summary', pathMatch: 'full' },
-            { path: 'summary', component: FinanceSummaryComponent, title: 'Dashboard' },
+            { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+            { path: 'dashboard', component: DashboardComponent, title: 'Dashboard' },
+            { path: 'accounts/new', component: FinanceAddAccountComponent, title: 'Add Account' },
             { path: 'accounts/:accountId', component: FinanceAccountDetailsComponent, title: 'Account Details' },
+            { path: 'accounts/:accountId/edit', component: FinanceEditAccountComponent, title: 'Edit Account' },
+            { path: 'accounts/:accountId/import-balances', component: BalanceImportComponent, title: 'Import Balance History' },
             { path: 'transactions', component: FinanceTransactionsComponent, title: 'Transactions' },
             { path: 'transactions/new', component: AddTransactionComponent, title: 'Add Transaction' },
             { path: 'transactions/import', component: ImportTransactionsComponent, title: 'Import Transactions' },
@@ -46,15 +50,13 @@ export const routes: Routes = [
             { path: 'transactions/:transactionId/edit', component: EditTransactionComponent, title: 'Edit Transaction' },
             { path: 'cashflow', component: FinanceCashflowComponent, title: 'Cashflow' },
             { path: 'budget', component: FinanceBudgetComponent, title: 'Budget' },
-            { path: 'institutions', component: FinanceInstitutionsComponent, title: 'Institutions' },
-            { path: 'institutions/new', component: NewInstitutionComponent, title: 'Add Institution' },
-            { path: 'institutions/:id', component: ViewInstitutionComponent, title: 'View Institution' },
-            { path: 'institutions/:id/edit', component: EditInstitutionComponent, title: 'Edit Institution' },
-            { path: 'categories', component: FinanceCategoriesComponent, title: 'Categories' },
-            { path: 'institutions/:id/add-account', component: FinanceAddAccountComponent, title: 'Add Account' },
-            { path: 'accounts/:accountId/edit', component: FinanceEditAccountComponent, title: 'Edit Account' },
-            { path: 'accounts/:accountId/import-balances', component: BalanceImportComponent, title: 'Import Balance History' },
-            { path: 'settings', component: SettingsComponent, title: 'Settings' }
+            { path: 'settings', component: SettingsComponent, title: 'Settings' },
+            { path: 'settings/institutions', component: FinanceInstitutionsComponent, title: 'Institutions' },
+            { path: 'settings/institutions/new', component: NewInstitutionComponent, title: 'Add Institution' },
+            { path: 'settings/institutions/:id', component: ViewInstitutionComponent, title: 'View Institution' },
+            { path: 'settings/institutions/:id/edit', component: EditInstitutionComponent, title: 'Edit Institution' },
+            { path: 'settings/categories', component: FinanceCategoriesComponent, title: 'Categories' },
+            { path: 'settings/api-tokens', component: ApiTokensComponent, title: 'API Tokens' }
         ]
     },
     {

@@ -42,7 +42,7 @@ describe('FinanceCashflowComponent', () => {
             imports: [FinanceCashflowComponent],
             providers: [
                 provideRouter([]),
-                { provide: DateProviderService, useValue: { now: () => new Date(2026, 4, 17) } },
+                { provide: DateProviderService, useValue: { now: () => new Date(2026, 4, 17), today: () => '2026-05-17' } },
                 { provide: FinanceService, useValue: financeService }
             ]
         });

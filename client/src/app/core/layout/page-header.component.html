@@ -1,0 +1,28 @@
+<header class="page-header">
+    @if (crumbs().length > 0) {
+        <nav class="crumbs" aria-label="Breadcrumb">
+            <ol>
+                @for (crumb of crumbs(); track $index) {
+                    <li><a [routerLink]="crumb.link">{{ crumb.label }}</a></li>
+                }
+            </ol>
+        </nav>
+    }
+    <div class="title-row">
+        @if (parent(); as parent) {
+            <a mat-icon-button class="back" [routerLink]="parent.link" [attr.aria-label]="'Back to ' + parent.label">
+                <mat-icon>arrow_back</mat-icon>
+            </a>
+        }
+        <h1 class="title">{{ title() }}</h1>
+        <div class="actions">
+            <ng-content></ng-content>
+        </div>
+        @if (isCompact()) {
+            <div class="profile">
+                <app-mode-badge [iconOnly]="true"></app-mode-badge>
+                <app-profile-menu variant="avatar"></app-profile-menu>
+            </div>
+        }
+    </div>
+</header>

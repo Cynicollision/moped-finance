@@ -1,23 +1,25 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterLink, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
-import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { Environment } from './../environments/environment';
 import { AuthService } from './core/auth.service';
 import { LoadingOverlayComponent } from './core/loading/loading-overlay.component';
-import { DateProviderService } from './core/date-provider.service';
 import { LayoutService } from './core/layout/layout.service';
+import { ModeBadgeComponent } from './core/layout/mode-badge.component';
+import { ProfileMenuComponent } from './core/layout/profile-menu.component';
 
 interface NavItem {
     label: string;
     route: string;
     icon: string;
+    /** The first URL segments that belong to this section, so it stays highlighted on the screens below it. */
+    sections: string[];
 }
+
+/** How the navigation is shown: a bottom bar on phones, a rail on tablets, a side navigation on desktops. */
+type NavMode = 'bottom' | 'rail' | 'side';
 
 @Component({
     selector: 'app-root',
@@ -25,61 +27,49 @@ interface NavItem {
     imports: [
         RouterOutlet,
         RouterLink,
-        RouterLinkActive,
-        MatButtonModule,
         MatSidenavModule,
-        MatListModule,
         MatIconModule,
-        MatMenuModule,
-        LoadingOverlayComponent
+        LoadingOverlayComponent,
+        ModeBadgeComponent,
+        ProfileMenuComponent
     ],
     templateUrl: './app.html',
     styleUrl: './app.scss'
 })
 export class App {
     private layout = inject(LayoutService);
-    authService = inject(AuthService);
-    private dateProvider = inject(DateProviderService);
     private router = inject(Router);
+    readonly authService = inject(AuthService);
 
-    readonly isDebugMode = Environment.isDebugMode;
-    readonly isDemoMode = Environment.demoMode;
-
+    // APP-1.1
     readonly navItems: NavItem[] = [
-        { label: 'Accounts', route: '/summary', icon: 'account_balance_wallet' },
-        { label: 'Transactions', route: '/transactions', icon: 'credit_card' },
-        { label: 'Cashflow', route: '/cashflow', icon: 'bar_chart' },
-        { label: 'Budget', route: '/budget', icon: 'pie_chart' },
-        { label: 'Categories', route: '/categories', icon: 'category' },
-        { label: 'Institutions', route: '/institutions', icon: 'account_balance' }
+        { label: 'Dashboard', route: '/dashboard', icon: 'dashboard', sections: ['dashboard', 'accounts'] },
+        { label: 'Transactions', route: '/transactions', icon: 'receipt_long', sections: ['transactions'] },
+        { label: 'Cashflow', route: '/cashflow', icon: 'bar_chart', sections: ['cashflow'] },
+        { label: 'Budget', route: '/budget', icon: 'savings', sections: ['budget'] }
     ];
 
-    readonly currentNavItem = toSignal(
+    private readonly url = toSignal(
         this.router.events.pipe(
             filter(event => event instanceof NavigationEnd),
-            map(event => this.navItems.find(item => item.route === event.urlAfterRedirects) ?? null)
+            map(event => event.urlAfterRedirects)
         ),
-        { initialValue: null }
+        { initialValue: this.router.url }
     );
 
-    readonly debugDateLabel = computed(() => this.dateProvider.today().replace(/-/g, ''));
-
-    readonly userInitials = computed(() => {
-        const name = this.authService.currentUser()?.displayName || '';
-        if (!name) {
-            return '?';
-        }
-        const parts = name.split(' ');
-        if (parts.length > 1) {
-            return (parts[0][0] + parts[1][0]).toUpperCase();
-        }
-        return name[0].toUpperCase();
+    readonly activeRoute = computed(() => {
+        const section = this.url().split(/[/?#]/)[1];
+        return this.navItems.find(item => item.sections.includes(section))?.route ?? null;
     });
 
-    // Below the expanded size class the side navigation opens over the content from a menu button.
-    readonly isHandset = computed(() => !this.layout.atLeast('expanded'));
-
-    logout() {
-        this.authService.logout();
-    }
+    readonly navMode = computed<NavMode>(() => {
+        switch (this.layout.sizeClass()) {
+            case 'compact':
+                return 'bottom';
+            case 'medium':
+                return 'rail';
+            default:
+                return 'side';
+        }
+    });
 }

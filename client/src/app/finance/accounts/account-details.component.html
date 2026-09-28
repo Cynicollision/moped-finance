@@ -1,10 +1,6 @@
-<div class="summary-container details-container">
-    @if (account(); as account) {
-        <div class="breadcrumb-nav">
-            <a [routerLink]="['/']" class="breadcrumb-link">Accounts</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-current">{{ account.name }}</span>
-            <span class="spacer"></span>
+<div>
+    <app-page-header [title]="account()?.name ?? ''" [crumbs]="[{ label: 'Dashboard', link: '/dashboard' }]">
+        @if (account(); as account) {
             <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
                 <mat-icon>more_vert</mat-icon>
             </button>
@@ -36,8 +32,10 @@
                     <span>Download Balance History</span>
                 </button>
             </mat-menu>
-        </div>
+        }
+    </app-page-header>
 
+    @if (account(); as account) {
         <app-value-history [historyData]="historyData()" [currentValue]="account.balance || 0"
             [chartTypeOptions]="chartTypeOptions()" [selectedChartType]="derivedChartType()"
             [selectedTimeframe]="selectedTimeframe()" (timeframeChange)="onTimeframeChange($event)" class="full-width-card"

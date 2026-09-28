@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Transaction } from '@shared/finance/types';
+import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { TransactionFormComponent } from './transaction-form.component';
 import { FinanceService } from './../finance.service';
 import { ModalService } from './../../core/modal/modal.service';
@@ -12,11 +13,11 @@ import { ModalService } from './../../core/modal/modal.service';
     selector: 'app-finance-view-transaction',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        RouterLink,
         MatButtonModule,
         MatIconModule,
         MatMenuModule,
-        TransactionFormComponent
+        TransactionFormComponent,
+        PageHeaderComponent
     ],
     templateUrl: './view-transaction.component.html',
     styleUrl: './view-transaction.component.scss'

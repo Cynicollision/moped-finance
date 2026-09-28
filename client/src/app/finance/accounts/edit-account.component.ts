@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Account } from '@shared/finance/types';
+import { Account, Institution } from '@shared/finance/types';
+import { Crumb, PageHeaderComponent } from './../../core/layout/page-header.component';
 import { ModalService } from './../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
 import { AccountFormComponent } from './account-form.component';
@@ -13,8 +14,8 @@ import { AccountFormComponent } from './account-form.component';
     imports: [
         MatButtonModule,
         MatIconModule,
-        RouterLink,
-        AccountFormComponent
+        AccountFormComponent,
+        PageHeaderComponent
     ],
     templateUrl: './edit-account.component.html',
     styleUrl: './edit-account.component.scss'
@@ -27,15 +28,29 @@ export class FinanceEditAccountComponent implements OnInit {
 
     private accountId?: string;
     readonly accountData = signal<Account | undefined>(undefined);
+    readonly institutions = signal<Institution[]>([]);
+
+    readonly crumbs = computed<Crumb[]>(() => {
+        const crumbs: Crumb[] = [{ label: 'Dashboard', link: '/dashboard' }];
+        const account = this.accountData();
+        if (account) {
+            crumbs.push({ label: account.name, link: ['/accounts', account.id] });
+        }
+        return crumbs;
+    });
 
     async ngOnInit() {
         this.accountId = this.route.snapshot.paramMap.get('accountId') || undefined;
         if (this.accountId) {
-            const data = await this.financeService.fetchAccount(this.accountId);
+            const [data, institutions] = await Promise.all([
+                this.financeService.fetchAccount(this.accountId),
+                this.financeService.fetchInstitutions()
+            ]);
             if (!data) {
-                this.router.navigate(['/']); // fallback if not found
+                this.router.navigate(['/dashboard']);
             }
             else {
+                this.institutions.set((institutions ?? []).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })));
                 this.accountData.set(data);
             }
         }
@@ -44,11 +59,7 @@ export class FinanceEditAccountComponent implements OnInit {
     async onSave(updatedData: Partial<Account>) {
         const currentData = this.accountData();
         if (currentData) {
-            const updatedAccount: Account = {
-                ...currentData,
-                ...updatedData,
-                balance: Number(updatedData.balance) || 0
-            };
+            const updatedAccount: Account = { ...currentData, ...updatedData };
             const result = await this.financeService.saveAccount(updatedAccount);
             if (result) {
                 this.router.navigate(['/accounts', currentData.id]);
@@ -72,7 +83,7 @@ export class FinanceEditAccountComponent implements OnInit {
         if (confirmed) {
             const success = await this.financeService.deleteAccount(currentData.id);
             if (success) {
-                this.router.navigate(['/']); // go back to summary or institutions since account is deleted
+                this.router.navigate(['/dashboard']);
             }
         }
     }
@@ -83,7 +94,7 @@ export class FinanceEditAccountComponent implements OnInit {
             this.router.navigate(['/accounts', currentData.id]);
         }
         else {
-            this.router.navigate(['/']);
+            this.router.navigate(['/dashboard']);
         }
     }
 }
