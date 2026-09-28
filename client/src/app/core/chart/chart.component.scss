@@ -1,0 +1,14 @@
+:host {
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+// Chart.js watches this container and sizes the canvas to it, so it holds only the canvas and has no
+// padding. `min-width: 0` lets it shrink inside flex and grid layouts.
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+}

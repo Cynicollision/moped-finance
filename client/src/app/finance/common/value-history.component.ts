@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -8,7 +8,9 @@ import { HistoryTimeframe } from '@shared/core/enum';
 import { CalendarDateUtil } from '@shared/core/util';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { TotalValueHistory } from '@shared/finance/contracts';
-import { ChartComponent, ChartConfiguration } from './../../core/chart.component';
+import { ChartComponent, ChartConfiguration } from './../../core/chart/chart.component';
+import { ChartFormat } from './../../core/chart/chart-format';
+import { ChartThemeService } from './../../core/chart/chart-theme.service';
 import { SkeletonComponent } from './../../core/loading/skeleton.component';
 import { FinanceValuePeriodChangeComponent, ValuePeriodChange } from './value-period-change.component';
 
@@ -33,6 +35,8 @@ export const TimeframeOptions: TimeframeOption[] = [
     { value: HistoryTimeframe.YearToDate, label: 'Year To Date', shortLabel: 'YTD' },
     { value: HistoryTimeframe.PastOneYear, label: 'Past Year', shortLabel: '1Y' },
     { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years', shortLabel: '2Y' },
+    { value: HistoryTimeframe.PastFiveYears, label: 'Past 5 Years', shortLabel: '5Y' },
+    { value: HistoryTimeframe.PastTenYears, label: 'Past 10 Years', shortLabel: '10Y' },
     { value: HistoryTimeframe.All, label: 'All Time', shortLabel: 'All' }
 ];
 
@@ -53,6 +57,8 @@ export const TimeframeOptions: TimeframeOption[] = [
     styleUrl: './value-history.component.scss'
 })
 export class FinanceValueHistoryComponent {
+    private readonly chartTheme = inject(ChartThemeService);
+
     /** The chart's points; undefined while they load, which shows placeholders (APP-2.1). */
     readonly historyData = input.required<TotalValueHistory[] | undefined>();
     readonly title = input<string>();
@@ -90,6 +96,7 @@ export class FinanceValueHistoryComponent {
 
         const type = this.selectedChartType();
         const label = this.selectedChartLabel();
+        const colors = this.chartTheme.colors();
 
         // Determine label format based on timeframe duration
         const firstDate = ascendingData[0].date;
@@ -114,16 +121,13 @@ export class FinanceValueHistoryComponent {
                     {
                         label: label,
                         data: ascendingData.map(d => d.amount),
-                        borderColor: '#81c784', // --color-positive
-                        backgroundColor: 'rgba(129, 199, 132, 0.15)',
-                        fill: true,
-                        tension: 0.4
+                        borderColor: colors.positive,
+                        backgroundColor: ChartThemeService.withAlpha(colors.positive, 0.15),
+                        fill: true
                     }
                 ]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
                 interaction: {
                     mode: 'index',
                     intersect: false
@@ -136,15 +140,22 @@ export class FinanceValueHistoryComponent {
                     }
                 },
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        displayColors: false,
+                        callbacks: {
+                            label: context => ChartFormat.money(context.parsed.y ?? 0)
+                        }
+                    }
                 },
                 scales: {
                     x: {
                         grid: {
                             display: false
                         },
+                        // Chart.js drops labels that would overlap, so a narrow chart shows fewer.
                         ticks: {
-                            maxTicksLimit: window.innerWidth < 1000 ? 5 : 8,
+                            maxTicksLimit: 8,
                             maxRotation: 0,
                             autoSkip: true
                         }
@@ -153,27 +164,7 @@ export class FinanceValueHistoryComponent {
                         reverse: type === ValueHistoryType.Liabilities,
                         ticks: {
                             maxTicksLimit: 6,
-                            callback: function (value) {
-                                const num = Number(value);
-                                const absNum = Math.abs(num);
-                                const sign = num < 0 ? '-' : '';
-
-                                if (absNum >= 1000000) {
-                                    let formatted = (absNum / 1000000).toFixed(1);
-                                    if (formatted.endsWith('.0')) {
-                                        formatted = formatted.slice(0, -2);
-                                    }
-                                    return sign + '$' + formatted + 'M';
-                                }
-                                else if (absNum >= 1000) {
-                                    let formatted = (absNum / 1000).toFixed(1);
-                                    if (formatted.endsWith('.0')) {
-                                        formatted = formatted.slice(0, -2);
-                                    }
-                                    return sign + '$' + formatted + 'K';
-                                }
-                                return sign + '$' + absNum.toLocaleString();
-                            }
+                            callback: ChartFormat.moneyTick
                         }
                     }
                 }
