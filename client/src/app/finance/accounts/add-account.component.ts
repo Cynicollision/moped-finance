@@ -65,7 +65,7 @@ export class FinanceAddAccountComponent implements HasUnsavedChanges {
             isHidden: accountData.isHidden ?? false,
             isManual: true,
             isRetirement: accountData.isRetirement ?? false,
-            hideFromCashflow: accountData.hideFromCashflow ?? false
+            hideFromSpending: accountData.hideFromSpending ?? false
         };
 
         this.saving.set(true);

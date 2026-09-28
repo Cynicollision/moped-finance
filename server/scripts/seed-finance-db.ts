@@ -83,7 +83,7 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
                 isHidden: valueOf(accountsFile, row, CsvValue.boolean('IsHidden', row.values['IsHidden'])),
                 isManual: false,
                 isRetirement: valueOf(accountsFile, row, CsvValue.boolean('IsRetirement', row.values['IsRetirement'])),
-                hideFromCashflow: false,
+                hideFromSpending: false,
             }));
             accountIds.set(account.name.toLowerCase(), account.id);
         }

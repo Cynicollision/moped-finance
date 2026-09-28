@@ -56,7 +56,7 @@ describe('Transaction Routes', () => {
 
         const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Bank' }));
         const account = await accountsData.insert(FinanceEntityFactory.createAccount({
-            institutionId: inst.id!, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking, isHidden: false, isManual: false, isRetirement: false, hideFromCashflow: false, balance: 0
+            institutionId: inst.id!, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking, isHidden: false, isManual: false, isRetirement: false, hideFromSpending: false, balance: 0
         }));
         testAccountId = account.id!;
 
@@ -180,11 +180,11 @@ describe('Transaction Routes', () => {
         });
     });
 
-    describe('GET /cashflow', () => {
-        it('should return cashflow by category', async () => {
+    describe('GET /spending', () => {
+        it('should return spending by category', async () => {
             await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 500, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
 
-            const response = await request(app).get('/transactions/cashflow?period=Monthly&asOfDate=2026-06-15');
+            const response = await request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-06-15');
 
             expect(response.status).toBe(200);
             expect(response.body.length).toBe(1);
@@ -199,13 +199,13 @@ describe('Transaction Routes', () => {
             await insertTransaction({ date: '2026-04-30', amount: -100 });
             await insertTransaction({ date: '2026-05-01', amount: -1000 });
 
-            const response = await request(app).get('/transactions/cashflow?period=Monthly&asOfDate=2026-04-15');
+            const response = await request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-04-15');
 
             expect(response.body).toEqual([{ categoryId: testCategoryId, amount: -110 }]);
         });
 
         it('APP-5.7 should reject an asOfDate that is a timestamp rather than a date', async () => {
-            const response = await request(app).get('/transactions/cashflow?period=Monthly&asOfDate=2026-04-15T00:00:00.000Z');
+            const response = await request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-04-15T00:00:00.000Z');
 
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('asOfDate: Expected a date as YYYY-MM-DD');

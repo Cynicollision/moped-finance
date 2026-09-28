@@ -29,6 +29,13 @@
       "when": 1790619330269,
       "tag": "0003_budget_stream_type_from_category",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790626208891,
+      "tag": "0004_rename_hide_from_cashflow",
+      "breakpoints": true
     }
   ]
 }

@@ -18,7 +18,7 @@ export const accountSchema = financeSchema.table('accounts', {
     isHidden: boolean('is_hidden').notNull().default(false),
     isManual: boolean('is_manual').notNull().default(false),
     isRetirement: boolean('is_retirement').notNull().default(false),
-    hideFromCashflow: boolean('hide_from_cashflow').notNull().default(false),
+    hideFromSpending: boolean('hide_from_spending').notNull().default(false),
 }, (table) => [
     check('accounts_account_category_check', SchemaUtil.isOneOf(table.category, Object.values(AccountCategory))),
     check('accounts_account_group_check', SchemaUtil.isOneOf(table.group, Object.values(AccountGroup))),
@@ -35,7 +35,7 @@ export const createAccountSchema = createInsertSchema(accountSchema, {
     isHidden: z.boolean().optional(),
     isManual: z.boolean().optional(),
     isRetirement: z.boolean().optional(),
-    hideFromCashflow: z.boolean().optional(),
+    hideFromSpending: z.boolean().optional(),
 }).pick({
     name: true,
     institutionId: true,
@@ -45,7 +45,7 @@ export const createAccountSchema = createInsertSchema(accountSchema, {
     isHidden: true,
     isManual: true,
     isRetirement: true,
-    hideFromCashflow: true,
+    hideFromSpending: true,
 });
 
 export const updateAccountSchema = createAccountSchema.partial();

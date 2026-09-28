@@ -17,13 +17,13 @@ The first set was written by reading the running app and its code, so domains no
 | `CAT` | Categories and category groups | [categories.md](categories.md) |
 | `TXN` | Transactions, import/export | [transactions.md](transactions.md) |
 | `BUD` | Budget (recurring income and expense streams) | [budget.md](budget.md) |
-| `CASH` | Cashflow (actual income, expenses, savings for a period) | [cashflow.md](cashflow.md) |
+| `CASH` | Spending (actual income, expenses, savings for a period) | [spending.md](spending.md) |
 
 ## Verification against the running app
 
 The drafts were refined on 2026-09-25 by walking the running app (development build, so "today" is 2026-05-17) as a signed-in user with the sample data set, plus dry-run CSV imports. Nothing was saved, deleted or imported. Where the app disagreed with a draft, the requirement now states the observed behavior and the difference is called out in the domain's Known gaps.
 
-Covered: Accounts summary, Account Details and its menus, Edit Account, Add Account, Institutions (list, view, edit, delete rule), Transactions (list, filters, sorting, add form, view, delete dialog, import validation), Cashflow (all periods, Category/Group toggle, drill-down), Budget (screen and add dialog), Categories (screen and dialogs), the profile menu, and the handset-width navigation.
+Covered: Accounts summary, Account Details and its menus, Edit Account, Add Account, Institutions (list, view, edit, delete rule), Transactions (list, filters, sorting, add form, view, delete dialog, import validation), Spending (then called Cashflow; all periods, Category/Group toggle, drill-down), Budget (screen and add dialog), Categories (screen and dialogs), the profile menu, and the handset-width navigation.
 
 Not exercised, so still as first drafted from the code: Login and Register screens (the session was already signed in and Sign out was left alone), demo mode, saving any form, confirming an import, downloading CSVs, and the API-only rules (AUTH-3.4 to AUTH-3.5, AUTH-5.1).
 
@@ -86,6 +86,6 @@ Each domain file has an introduction, then one table per requirement, then up to
 | Necessity | Whether an expense category is `Essential` or `Discretionary`. |
 | Uncategorized | The built-in category for transactions that haven't been given one. |
 | Budget stream | A recurring planned income, expense or savings amount tied to a category, whose type decides which it is. |
-| Cashflow | Actual income and expenses for a calendar period, aggregated from transactions. |
+| Spending | Actual income and expenses for a calendar period, aggregated from transactions. |
 
 Note that "category" is overloaded: accounts have a *category* (Asset/Liability) and transactions have a *category* (Groceries, Salary, …). Requirements say "account category" for the former and "category" for the latter.

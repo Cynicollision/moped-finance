@@ -49,7 +49,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
         type: new FormControl<AccountType | null>(AccountType.Checking),
         isHidden: new FormControl<boolean>(false, { nonNullable: true }),
         isRetirement: new FormControl<boolean>(false, { nonNullable: true }),
-        hideFromCashflow: new FormControl<boolean>(false, { nonNullable: true })
+        hideFromSpending: new FormControl<boolean>(false, { nonNullable: true })
     });
 
     constructor() {
@@ -80,7 +80,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
                 type: account.type,
                 isHidden: account.isHidden,
                 isRetirement: account.isRetirement,
-                hideFromCashflow: account.hideFromCashflow
+                hideFromSpending: account.hideFromSpending
             }, { emitEvent: false });
         }
         else {

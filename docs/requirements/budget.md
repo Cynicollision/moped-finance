@@ -2,7 +2,7 @@
 
 The budget is a monthly plan: a list of **streams**, recurring planned income, expenses or savings, each tied to a category, with an amount and how often it recurs. Several streams can share a category, so the user can track individual subscriptions or bills. The screen totals them into monthly, quarterly and yearly figures so the user can see what they expect to earn, spend and save.
 
-Budget and Cashflow (CASH) are separate features that each show a little of the other. Budget shows what was actually spent, to help set amounts (BUD-1.8, BUD-1.9). Cashflow shows what was budgeted next to the actuals for its period (CASH-1.10).
+Budget and Spending (CASH) are separate features that each show a little of the other. Budget shows what was actually spent, to help set amounts (BUD-1.8, BUD-1.9). Spending shows what was budgeted next to the actuals for its period (CASH-1.10).
 
 Screen: **Budget** (`/budget`). Adding and editing happen in a side panel (a full-screen dialog on phones).
 
@@ -16,7 +16,7 @@ Screen: **Budget** (`/budget`). Adding and editing happen in a side panel (a ful
 | BUD-1.4 | The user can edit a stream from its row menu, in the same panel as BUD-1.3, and can delete one, after confirming, from its row menu or the panel's **Delete** button. Adding says "Income added", saving "Income saved" and deleting "Income deleted" (or Expense, or Savings; APP-2.8). | Implemented |
 | BUD-1.5 | Streams in each section shall be ordered Monthly, then Quarterly, then Yearly; within a recurrence by group name, then category name. | Implemented |
 | BUD-1.7 | The Expenses section shall show its total split into **Essential** and **Discretionary** (CAT-3.1), as well as combined. | Planned |
-| BUD-1.8 | Once a category is chosen in the stream's panel, it shall say "You've averaged *$amount* a month in *category* over the past 12 months.", counting the 12 full months before the current one and the same transactions Cashflow counts (CASH-1.2). For an Expense category it's the net spending; for a Transfer category, the money moved out of accounts only (the matching money in would cancel it). | Planned |
+| BUD-1.8 | Once a category is chosen in the stream's panel, it shall say "You've averaged *$amount* a month in *category* over the past 12 months.", counting the 12 full months before the current one and the same transactions Spending counts (CASH-1.2). For an Expense category it's the net spending; for a Transfer category, the money moved out of accounts only (the matching money in would cancel it). | Planned |
 | BUD-1.9 | Each section's list shall show, per category, the same 12-month average beside the streams' monthly total, so over- or under-budgeted categories stand out. | Planned |
 | BUD-1.10 | The summary card shall lead with **Left over**: income minus expenses minus savings for the chosen period (BUD-1.6), in green, or in red with a "-" when negative. | Implemented |
 | BUD-1.6 | The summary card shall have a **Monthly** / **Quarterly** / **Yearly** switch (default Monthly), and every total on the screen, the summary's **Income**, **Expenses** and **Savings** and each section's total, shall be for the chosen period, in whole dollars. Every stream is first converted to a monthly amount (quarterly divided by 3, yearly by 12); the quarterly total is 3 times the monthly total and the yearly total is 12 times it. | Implemented |

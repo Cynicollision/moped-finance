@@ -43,7 +43,7 @@ export class App {
     readonly navItems: NavItem[] = [
         { label: 'Dashboard', route: '/dashboard', icon: 'dashboard', sections: ['dashboard', 'accounts'] },
         { label: 'Transactions', route: '/transactions', icon: 'receipt_long', sections: ['transactions'] },
-        { label: 'Cashflow', route: '/cashflow', icon: 'bar_chart', sections: ['cashflow'] },
+        { label: 'Spending', route: '/spending', icon: 'bar_chart', sections: ['spending'] },
         { label: 'Budget', route: '/budget', icon: 'savings', sections: ['budget'] }
     ];
 

@@ -21,6 +21,9 @@ Nothing right now: the client baseline is done. Pull the next item up from Next.
 - [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
+### Essential and discretionary spending
+- [ ] Give expense categories a necessity (CAT-3): column and migration, the category dialogs, the Categories screen and server validation. Then show the Essential / Discretionary split on Spending (CASH-1.8) and Budget (BUD-1.7). Held back from the Spending redesign because it's mostly Categories work.
+
 ### Testing
 - [ ] Frontend coverage: services (`api`, `finance`, `auth`), `auth.guard`, the demo interceptor, and key components (transactions, imports).
 - [ ] Make server "now" injectable (via `DateTimeUtil`) so date-based logic is deterministic in tests.
@@ -42,7 +45,7 @@ Manual entry and import/export come first. Constraints for when this gets picked
 - [ ] Implement behind the existing sync endpoints.
 
 ### Chart library
-- [ ] Re-evaluate Chart.js when Cashflow gets more report and chart types (trends over months, category breakdowns). Compare it with alternatives such as ECharts on the chart types needed, touch interaction and bundle size. Chart.js stays until then (decided 2026-09-27).
+- [ ] Re-evaluate Chart.js when Spending gets more report and chart types (trends over months, category breakdowns). Compare it with alternatives such as ECharts on the chart types needed, touch interaction and bundle size. Chart.js stays until then (decided 2026-09-27).
 
 ### Demo mode
 - [ ] Populate demo mode from `server/seed-data/` (APP-4.3): `demo.interceptor.ts` answers everything but auth with an empty list. Needs the CSVs turned into client-side data (a build step or JSON) and in-browser create/edit/delete.
@@ -51,6 +54,6 @@ Manual entry and import/export come first. Constraints for when this gets picked
 
 ## Ideas
 
-- Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Cashflow does, and round at the edges. Revisit integer cents only if totals ever drift.
+- Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Spending does, and round at the edges. Revisit integer cents only if totals ever drift.
 - Project Claude Code skills (e.g. `new-finance-resource`, `verify`, `schema-change` once migrations exist). Skipped for now; revisit if the same multi-step instructions keep getting repeated.
 - Warn before reloading or closing the tab with unsaved changes (`beforeunload`). APP-2.7 covers only leaving within the app.

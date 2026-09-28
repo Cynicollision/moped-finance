@@ -1,4 +1,4 @@
-export type CashflowStream = {
+export type SpendingTotal = {
     categoryId: string;
     amount: number;
 };

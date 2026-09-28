@@ -1,6 +1,6 @@
 # Categories and Category Groups (`CAT`)
 
-Transactions and budget streams are classified with **categories**. Categories are organized into **category groups**, and each group has a **type** (Income, Expense or Transfer) that decides how its categories count in Budget and Cashflow. Expense categories also have a **necessity**, Essential or Discretionary, so the user can see how much of their spending they could cut. One built-in category, **Uncategorized**, holds transactions that haven't been given a category yet.
+Transactions and budget streams are classified with **categories**. Categories are organized into **category groups**, and each group has a **type** (Income, Expense or Transfer) that decides how its categories count in Budget and Spending. Expense categories also have a **necessity**, Essential or Discretionary, so the user can see how much of their spending they could cut. One built-in category, **Uncategorized**, holds transactions that haven't been given a category yet.
 
 Screens, both pages of Settings: **Categories** (`/settings/categories`, also in the profile menu, APP-1.5), where creating and editing happen in dialogs, and **Rules** (`/settings/rules`, CAT-8, listed in Settings and linked from the Categories menu).
 
@@ -33,8 +33,8 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 | ID | Requirement | Status |
 |---|---|---|
 | CAT-2.1 | A budget stream's type shall follow from its category's type: Income, Expense, or Savings for a Transfer category. Budget stream forms shall only offer active categories of the matching type; Uncategorized can't have streams. See BUD-1.1 and BUD-1.3. | Partial |
-| CAT-2.2 | Cashflow shall count categories of Income groups as income, ignore categories of Transfer groups, and count categories of Expense groups as expenses. Uncategorized amounts shall count by sign: money in as income, money out as expenses. See CASH-1.3. | Partial |
-| CAT-2.3 | Budget and Cashflow shall show how expenses split between Essential and Discretionary (BUD-1.7, CASH-1.8). | Planned |
+| CAT-2.2 | Spending shall count categories of Income groups as income, ignore categories of Transfer groups, and count categories of Expense groups as expenses. Uncategorized amounts shall count by sign: money in as income, money out as expenses. See CASH-1.3. | Partial |
+| CAT-2.3 | Budget and Spending shall show how expenses split between Essential and Discretionary (BUD-1.7, CASH-1.8). | Planned |
 
 ## CAT-3 The user can say which spending is essential
 
@@ -53,7 +53,7 @@ A category the user has stopped using can be made **inactive**, which keeps it o
 |---|---|---|
 | CAT-4.1 | An inactive category shall not be offered when adding or editing a transaction or a budget stream. | Planned |
 | CAT-4.2 | A transaction or budget stream that already has an inactive category shall keep it, and its edit form shall show it as the current value. | Planned |
-| CAT-4.3 | An inactive category shall still appear on the Categories screen (CAT-1.4), in the Transactions filters, in Cashflow and in exports, and shall still be matched by transaction import (TXN-3.4). | Implemented |
+| CAT-4.3 | An inactive category shall still appear on the Categories screen (CAT-1.4), in the Transactions filters, in Spending and in exports, and shall still be matched by transaction import (TXN-3.4). | Implemented |
 | CAT-4.4 | The user can delete a category from its edit dialog. The confirmation shall say how many transactions use it and ask which category they should move to: **Uncategorized** (the default) or any other active category. Confirming shall move the transactions and delete the category together, or do neither. | Planned |
 | CAT-4.5 | A category used by a budget stream shall not be deleted: "This category is used in a budget stream, which must be deleted or assigned to a different category first." | Implemented |
 
@@ -127,13 +127,13 @@ Default categories (E = Essential, D = Discretionary):
 - **Transfer groups are invisible (CAT-1.3).** The screen only renders Income and Expenses, so a Transfer group and its categories never show, and can't be edited there. The category dialog's group picker does offer Transfer groups, so moving a category into one makes it disappear from the screen.
 - **Group type can still be changed (CAT-1.14).** The Edit Group dialog offers **Type**, which reclassifies every category in the group at once.
 - **The group picker isn't sorted (CAT-1.19)** and shows the type in lower case ("Income (income)").
-- **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions with no category (it refuses when a budget stream uses it, CAT-4.5). Those transactions count as expenses in Cashflow but disappear from the Transactions list (TXN-1.11). The API already refuses to delete a group that has categories.
+- **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions with no category (it refuses when a budget stream uses it, CAT-4.5). Those transactions count as expenses in Spending but disappear from the Transactions list (TXN-1.11). The API already refuses to delete a group that has categories.
 - **Inactive categories are still offered (CAT-4.1)** in the transaction form and budget stream dialog. The API can return active categories only, but nothing asks it to.
-- **Uncategorized doesn't exist yet (CAT-5).** A transaction can have no category, and Cashflow labels those *Uncategorized* and counts them all as expenses. An instance that already has its own category named "Uncategorized" (the author's does) needs it merged into the built-in one when CAT-5 is built: its transactions move over and it's deleted. Transactions with no category move to it too.
+- **Uncategorized doesn't exist yet (CAT-5).** A transaction can have no category, and Spending labels those *Uncategorized* and counts them all as expenses. An instance that already has its own category named "Uncategorized" (the author's does) needs it merged into the built-in one when CAT-5 is built: its transactions move over and it's deleted. Transactions with no category move to it too.
 - **The code still says "class".** The type is `CategoryClass` in `shared/` and the `category_class` column; rename them to type when this domain is built.
 - **New users start empty (CAT-6).** The user must build the whole tree before they can add or import a transaction.
 
 ## Notes
 
 - The defaults (CAT-6.2) would be simplest to ship as a CSV in the CAT-7.1 format, loaded through the category import, so the list and the format can't drift apart.
-- Type is looked up through the category's group whenever Budget or Cashflow runs, which is why moving a category (CAT-1.16) needs no change to its transactions.
+- Type is looked up through the category's group whenever Budget or Spending runs, which is why moving a category (CAT-1.16) needs no change to its transactions.

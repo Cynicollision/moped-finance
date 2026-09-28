@@ -1,14 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
-import { CashflowStream, TransactionSearchOptions } from '@shared/finance/contracts';
+import { SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
 import { CategoryClass } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
-import { FinanceCashflowComponent } from './cashflow.component';
+import { FinanceSpendingComponent } from './spending.component';
 
-describe('FinanceCashflowComponent', () => {
+describe('FinanceSpendingComponent', () => {
     const created = { createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1) };
     const groups: CategoryGroup[] = [
         { id: 'income', name: 'Income', class: CategoryClass.Income, ...created },
@@ -23,7 +23,7 @@ describe('FinanceCashflowComponent', () => {
         { id: 'groceries', groupId: 'food', name: 'Groceries', icon: '🛒', isActive: true, ...created },
         { id: 'card', groupId: 'transfers', name: 'Card Payment', icon: '💳', isActive: true, ...created }
     ];
-    const streams: CashflowStream[] = [
+    const totals: SpendingTotal[] = [
         { categoryId: 'pay', amount: 4000 },
         { categoryId: 'rent', amount: -1500 },
         { categoryId: 'utilities', amount: -200 },
@@ -31,19 +31,19 @@ describe('FinanceCashflowComponent', () => {
         { categoryId: 'card', amount: -900 }
     ];
 
-    // Renders Cashflow once its categories and the period's totals have loaded. The transactions are the oldest and
+    // Renders Spending once its categories and the period's totals have loaded. The transactions are the oldest and
     // newest, which bound the years offered.
-    async function render(periodStreams = streams, oldest?: string, newest?: string) {
+    async function render(periodTotals = totals, oldest?: string, newest?: string) {
         const edge = (date?: string) => date ? [{ id: date, date }] : [];
         const financeService = {
             fetchCategories: vi.fn().mockResolvedValue(categories),
             fetchCategoryGroups: vi.fn().mockResolvedValue(groups),
-            fetchCashflowStreams: vi.fn().mockResolvedValue(periodStreams),
+            fetchSpendingTotals: vi.fn().mockResolvedValue(periodTotals),
             fetchTransactions: vi.fn((search: TransactionSearchOptions) =>
                 Promise.resolve(search.sortDirection === SortDirection.Asc ? edge(oldest) : edge(newest)))
         };
         TestBed.configureTestingModule({
-            imports: [FinanceCashflowComponent],
+            imports: [FinanceSpendingComponent],
             providers: [
                 provideRouter([]),
                 { provide: DateProviderService, useValue: { now: () => new Date(2026, 4, 17), today: () => '2026-05-17' } },
@@ -51,7 +51,7 @@ describe('FinanceCashflowComponent', () => {
             ]
         });
 
-        const fixture = TestBed.createComponent(FinanceCashflowComponent);
+        const fixture = TestBed.createComponent(FinanceSpendingComponent);
         await fixture.whenStable();
         return Object.assign(fixture, { financeService });
     }
@@ -83,14 +83,14 @@ describe('FinanceCashflowComponent', () => {
     });
 
     it('CASH-1.9 should show an expense category that is net money in as a negative expense', async () => {
-        const fixture = await render([...streams, { categoryId: 'groceries', amount: 320 }]);
+        const fixture = await render([...totals, { categoryId: 'groceries', amount: 320 }]);
 
         expect(sectionRows(fixture.nativeElement, 'Expenses')).toEqual(['🏠 Rent $1,500.00', '💡 Utilities $200.00', '🛒 Groceries -$20.00']);
         expect(summaryCards(fixture.nativeElement)[1]).toBe('$1,680');
     });
 
     it('CASH-1.1 should offer every year from the oldest transaction to the newest, and the current year', async () => {
-        const fixture = await render(streams, '2023-02-10', '2026-04-30');
+        const fixture = await render(totals, '2023-02-10', '2026-04-30');
 
         expect(fixture.componentInstance.years()).toEqual([2023, 2024, 2025, 2026]);
     });
@@ -119,14 +119,14 @@ describe('FinanceCashflowComponent', () => {
 
     it('CASH-1.2 should ask for each period by its first day, reloading when the period changes', async () => {
         const fixture = await render();
-        const { componentInstance: cashflow, financeService } = fixture;
+        const { componentInstance: spending, financeService } = fixture;
 
-        cashflow.selectedPeriod.set(CalendarPeriod.Quarterly);
+        spending.selectedPeriod.set(CalendarPeriod.Quarterly);
         await fixture.whenStable();
-        cashflow.selectedPeriod.set(CalendarPeriod.Yearly);
+        spending.selectedPeriod.set(CalendarPeriod.Yearly);
         await fixture.whenStable();
 
-        expect(financeService.fetchCashflowStreams.mock.calls).toEqual([
+        expect(financeService.fetchSpendingTotals.mock.calls).toEqual([
             [CalendarPeriod.Monthly, '2026-05-01'],
             [CalendarPeriod.Quarterly, '2026-04-01'],
             [CalendarPeriod.Yearly, '2026-01-01']

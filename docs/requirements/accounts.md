@@ -10,15 +10,15 @@ Screens: **Account Details** (`/accounts/:id`), **Add Account** (`/accounts/new`
 
 | ID | Requirement | Status |
 |---|---|---|
-| ACCT-1.1 | An account shall have a name (required, 1 to 100 characters), an institution, a type (required, ACCT-1.2), and the flags **Hide Account** (ACCT-1.9), **Retirement Account** (ACCT-1.8) and **Hide from Cashflow** (ACCT-1.7). It is manual or connected (ACCT-4.3), and open or closed (ACCT-6). | Partial |
+| ACCT-1.1 | An account shall have a name (required, 1 to 100 characters), an institution, a type (required, ACCT-1.2), and the flags **Hide Account** (ACCT-1.9), **Retirement Account** (ACCT-1.8) and **Hide from Spending** (ACCT-1.7). It is manual or connected (ACCT-4.3), and open or closed (ACCT-6). | Partial |
 | ACCT-1.2 | The user shall choose an account's kind with a single **Type** field, listed by group in this order. The type decides the group, and the group decides whether the account is an Asset or a Liability; the form shows both read-only. | Partial |
 | ACCT-1.3 | The user can add an account from the Institutions screen's **Add account** (INST-1.10), or from an institution card's **Add account** (INST-1.7), which selects that institution. The form asks for the **Institution** from a select of all institutions, sorted by name ignoring case. Its **Save Account** button stays disabled until the form is valid, and a missing name is flagged "Name is required". After saving, the app says "Account added" and opens the new account's Account Details; **Cancel** returns to the Institutions screen (asking first if the form was changed, APP-2.7). When there are no institutions, the screen says so and offers **Add institution**, which opens the Add Institution dialog (INST-1.4), instead of the form; the form appears once one is added. The added account is manual; accounts are connected from the institution (INST-2.3), so the form offers no "Connect" option. | Implemented |
 | ACCT-1.4 | A new account shall default to type Checking, all flags off, **Starting Balance** 0 and **As of** today (ACCT-2.2). | Partial |
 | ACCT-1.5 | The user can edit an account's name, type and flags from Account Details, then **Edit Account**. Saving returns to Account Details. For a manual account the form also offers **Institution**, a select of all institutions, so the account can move with its history and transactions. For a connected account the institution is shown read-only with "Disconnect this account to move it." (ACCT-4.5). Edit Account has no balance field; the balance changes through Update Balance (ACCT-2.2). | Partial |
 | ACCT-1.6 | The user can delete an account with **Delete Account** at the end of the Account Details menu (APP-2.4), after confirming. Deleting an account shall also delete its balance history and its transactions, and then says "Account deleted" and opens the Dashboard. | Implemented |
-| ACCT-1.7 | An account flagged **Hide from Cashflow** shall have its transactions left out of Cashflow totals (CASH-1.2). It still appears everywhere else. | Implemented |
+| ACCT-1.7 | An account flagged **Hide from Spending** shall have its transactions left out of Spending totals (CASH-1.2). It still appears everywhere else. | Implemented |
 | ACCT-1.8 | An account flagged **Retirement** shall show "(Retirement)" after its type on Account Details. The flag shall default on when the type is 401(k), IRA or Roth IRA, and off otherwise; the user can change it. | Partial |
-| ACCT-1.9 | An account flagged **Hide Account** shall be left out of everything except the Institutions screen and its own Account Details: the Dashboard's lists, totals and chart for every date (DASH-2.9), the Transactions list, search and filters (TXN-1.12), Cashflow (CASH-1.2), and the account choices in the transaction form (TXN-2.1). Hiding doesn't change the account's data or whether it's connected. | Partial |
+| ACCT-1.9 | An account flagged **Hide Account** shall be left out of everything except the Institutions screen and its own Account Details: the Dashboard's lists, totals and chart for every date (DASH-2.9), the Transactions list, search and filters (TXN-1.12), Spending (CASH-1.2), and the account choices in the transaction form (TXN-2.1). Hiding doesn't change the account's data or whether it's connected. | Partial |
 | ACCT-1.10 | Every type in ACCT-1.2, credit cards included, shall be creatable and editable in the form. | Partial |
 | ACCT-1.11 | The server shall refuse an account whose type isn't one of ACCT-1.2's, or is missing. The group and Asset/Liability shall always agree with the type. | Planned |
 | ACCT-1.12 | The Institutions screen shall show a hidden account dimmed with a crossed-out eye icon, like an inactive category (CAT-1.4), and a closed account dimmed with a "Closed" label. Both open Account Details, where every action still works (for example **Download Balance History**). | Planned |
@@ -96,7 +96,7 @@ A closed account is one the user no longer has, such as a savings account they e
 | ID | Requirement | Status |
 |---|---|---|
 | ACCT-6.1 | The user can close an account with **Close Account** on Account Details, after confirming. The dialog asks for a **Closed on** date (default today, not after today). If the balance on that date isn't 0, closing records a set entry of 0 on that date. A connected account is disconnected when it's closed (ACCT-4.5). | Planned |
-| ACCT-6.2 | A closed account shall be left out of the Dashboard's account lists (DASH-2.10) and out of the account choices in the transaction form (TXN-2.1). Its past balances still count in the Dashboard's chart and totals, and its transactions still appear in the Transactions list and count in Cashflow. | Planned |
+| ACCT-6.2 | A closed account shall be left out of the Dashboard's account lists (DASH-2.10) and out of the account choices in the transaction form (TXN-2.1). Its past balances still count in the Dashboard's chart and totals, and its transactions still appear in the Transactions list and count in Spending. | Planned |
 | ACCT-6.3 | Account Details shall show "Closed on *date*" for a closed account. The user can **Reopen Account**, which makes it open again without changing its balance history. | Planned |
 
 ## Known gaps
@@ -113,7 +113,7 @@ A closed account is one the user no longer has, such as a savings account they e
 ## Housekeeping
 
 - The shared `Account` type (`shared/finance/types/account.ts`) has `balanceHistory` and `transactions` fields that nothing sets or reads. Remove them.
-- The same type makes `isHidden`, `isRetirement`, `hideFromCashflow` and `balance` optional, though the columns are `NOT NULL` and the server always returns them. Make them required so the client doesn't need `?? false`.
+- The same type makes `isHidden`, `isRetirement`, `hideFromSpending` and `balance` optional, though the columns are `NOT NULL` and the server always returns them. Make them required so the client doesn't need `?? false`.
 - `AccountFormComponent` sets controls to `null as any` when a category or group has no options. The single Type field (ACCT-1.2) removes the dependent selects; delete this with them.
 
 ## Notes
