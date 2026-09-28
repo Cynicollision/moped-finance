@@ -73,6 +73,14 @@ describe('FinanceSpendingComponent', () => {
         expect(summaryCards(fixture.nativeElement)).toEqual(['$4,000', '$2,000', '$2,000', '50%']);
     });
 
+    it('CASH-1.3 should count uncategorized money in as income and money out as expenses', async () => {
+        const fixture = await render([...totals, { categoryId: '', amount: 50 }, { categoryId: '', amount: -80 }]);
+
+        expect(sectionRows(fixture.nativeElement, 'Income')).toEqual(['💼 Paycheck $4,000.00', 'Uncategorized $50.00']);
+        expect(sectionRows(fixture.nativeElement, 'Expenses'))
+            .toEqual(['🏠 Rent $1,500.00', '🛒 Groceries $300.00', '💡 Utilities $200.00', 'Uncategorized $80.00']);
+    });
+
     it('CASH-1.4 should show negative savings signed and red, and expenses never red', async () => {
         const fixture = await render([{ categoryId: 'pay', amount: 1000 }, { categoryId: 'rent', amount: -1500 }]);
         const element = fixture.nativeElement as HTMLElement;

@@ -225,6 +225,8 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     }
 
     public async retrieveSpendingByCategory(startDate: CalendarDate, endDate: CalendarDate): Promise<SpendingTotal[]> {
+        // Uncategorized money in and money out are totalled apart, since one is income and the other spending (CASH-1.3).
+        const uncategorizedIn = sql<boolean>`${transactionSchema.categoryId} is null and ${transactionSchema.amount} > 0`;
         const rows = await this.db
             .select({
                 categoryId: transactionSchema.categoryId,
@@ -235,9 +237,11 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .where(and(
                 gte(transactionSchema.date, startDate),
                 lte(transactionSchema.date, endDate),
+                eq(transactionSchema.isHidden, false),
+                eq(accountSchema.isHidden, false),
                 eq(accountSchema.hideFromSpending, false)
             ))
-            .groupBy(transactionSchema.categoryId);
+            .groupBy(transactionSchema.categoryId, uncategorizedIn);
 
         return rows.map(row => ({
             categoryId: row.categoryId ?? '',

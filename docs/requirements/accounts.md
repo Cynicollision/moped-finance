@@ -105,7 +105,7 @@ A closed account is one the user no longer has, such as a savings account they e
 - **No starting balance (ACCT-1.4, ACCT-2.2).** Add Account doesn't ask for one and there's no Update Balance, so a new account shows $0.00 until history is imported.
 - **Balance entries have no source (ACCT-5.1).** Every entry is effectively set; transactions don't touch balances yet.
 - **Current balance can be a future entry (ACCT-2.1).** The latest entry is used even when it's dated after today.
-- **Hide Account has no effect (ACCT-1.9).** The flag is saved and editable, but no screen or total filters hidden accounts out, and the Institutions screen doesn't mark them.
+- **Hide Account only affects Spending so far (ACCT-1.9).** Spending leaves hidden accounts out (CASH-1.2), but no other screen or total does, and the Institutions screen doesn't mark them.
 - **Manual vs. connected is a stored flag (ACCT-4.3).** The form no longer shows it and new accounts are saved manual, but it's still the `is_manual` column. Once connections exist, derive it from the link.
 - **"Last updated" is the record's edit date (ACCT-2.6),** not the date of the latest balance, so it can be later than the newest balance.
 - **Dry-run date range (ACCT-3.3).** A dry run with bad rows reports the date range of the valid rows only.
