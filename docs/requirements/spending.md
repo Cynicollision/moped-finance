@@ -9,8 +9,8 @@ Screen: **Spending** (`/spending`). It was called Cashflow until 2026-09-28; `/c
 | ID | Requirement | Status |
 |---|---|---|
 | CASH-1.1 | The user can choose the period to view: a **Year** (every year from the oldest transaction's to the newest's, and always the current year), a **Period** type (**Monthly**, **Quarterly**, **Yearly**), and, for Monthly, a **Month**, or, for Quarterly, a **Quarter** (Q1 to Q4). It shall open on the current year and month; switching to Quarterly selects the current quarter. | Implemented |
-| CASH-1.2 | The figures shall be built from the sum of transaction amounts per category for every transaction dated within the chosen period (both ends included). Transactions in an account flagged **Hide from Spending**, or in a hidden account (ACCT-1.9), and hidden transactions (TXN-1.8), shall be left out. Transactions in closed accounts (ACCT-6) count. | Partial |
-| CASH-1.3 | Amounts in categories of Income groups shall count as **income**, amounts in categories of Transfer groups shall be ignored, and amounts in categories of Expense groups shall count as **expenses**. Uncategorized amounts (CAT-5) shall count by sign: money in as income, money out as expenses. | Partial |
+| CASH-1.2 | The figures shall be built from the sum of transaction amounts per category for every transaction dated within the chosen period (both ends included). Transactions in an account flagged **Hide from Spending**, or in a hidden account (ACCT-1.9), and hidden transactions (TXN-1.8), shall be left out. Transactions in closed accounts (ACCT-6) count. | Implemented |
+| CASH-1.3 | Amounts in categories of Income groups shall count as **income**, amounts in categories of Transfer groups shall be ignored, and amounts in categories of Expense groups shall count as **expenses**. Uncategorized amounts (CAT-5) shall count by sign: money in as income, money out as expenses. | Implemented |
 | CASH-1.4 | Four summary cards shall show, in whole dollars: **Income** (green); **Expenses** (as a positive number, in the ordinary text color, APP-6.1); **Total Savings** (income minus expenses, green when zero or more, red when negative, shown as "-$3,734"); **Savings Rate** (savings as a percentage of income, 0% when there is no income, in plain text without red/green coloring). | Implemented |
 | CASH-1.5 | An **Income** card and an **Expenses** card shall list amounts, to the cent, by category (icon and name) or by category group (name only), largest amount first, in green for income and the ordinary text color for expenses (APP-6.1). A single **Category / Group** toggle on each card switches *both* cards together. | Implemented |
 | CASH-1.6 | Selecting a row shall open the Transactions screen pre-filtered to that category (or group) and to the period's first and last day (TXN-1.7); for example Q2 2026 opens with start 2026-04-01 and end 2026-06-30. Rows highlight on hover. The filtered list includes the refunds that were netted into the row's total (CASH open questions). | Implemented |
@@ -23,9 +23,6 @@ Screen: **Spending** (`/spending`). It was called Cashflow until 2026-09-28; `/c
 ## Known gaps
 
 - **No budget figures (CASH-1.10, CASH-1.11).**
-- **Uncategorized counts as expense regardless of sign (CASH-1.3).** Transactions with no category are all treated as expenses today.
-- **Hidden accounts are counted (CASH-1.2).** Only **Hide from Spending** is checked today.
-- **Hidden transactions are counted (CASH-1.2).** They're excluded from the Transactions list (TXN-1.8) but included in Spending.
 - **The Category/Group toggle is shared** by the Income and Expenses cards (CASH-1.5); switching it on one card changes the other, which isn't obvious from two separately labelled toggles.
 - **Savings Rate isn't colored** although Total Savings is (CASH-1.4).
 - **Income versus expense is decided in the browser.** The server returns totals per category and the screen applies CASH-1.3 using the categories and groups it has loaded.

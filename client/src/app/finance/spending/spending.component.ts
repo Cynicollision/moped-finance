@@ -146,8 +146,9 @@ export class FinanceSpendingComponent {
                 ? (cat ? `${cat.icon} ${cat.name}` : 'Uncategorized')
                 : (group?.name || 'Uncategorized');
 
+            // Uncategorized counts by sign: the server totals its money in and money out apart (CASH-1.3).
             // Spending is money out, so an expense row counts amounts the other way round.
-            const isIncome = group?.class === CategoryClass.Income;
+            const isIncome = group ? group.class === CategoryClass.Income : total.amount > 0;
             const rows = isIncome ? income : expense;
             const row = rows.get(id ?? '') ?? { id, name, amount: 0 };
             row.amount += isIncome ? total.amount : -total.amount;

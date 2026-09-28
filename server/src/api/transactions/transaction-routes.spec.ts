@@ -25,6 +25,7 @@ describe('Transaction Routes', () => {
     let mockLogger: jest.Mocked<AppLogger>;
     let testUserId: string;
 
+    let testInstitutionId: string;
     let testAccountId: string;
     let testCategoryId: string;
 
@@ -55,6 +56,7 @@ describe('Transaction Routes', () => {
         await TestDatabaseUtil.clearFinanceData(pglite);
 
         const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Bank' }));
+        testInstitutionId = inst.id!;
         const account = await accountsData.insert(FinanceEntityFactory.createAccount({
             institutionId: inst.id!, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking, isHidden: false, isManual: false, isRetirement: false, hideFromSpending: false, balance: 0
         }));
@@ -202,6 +204,59 @@ describe('Transaction Routes', () => {
             const response = await request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-04-15');
 
             expect(response.body).toEqual([{ categoryId: testCategoryId, amount: -110 }]);
+        });
+
+        // A second account alongside Checking, with the given flags.
+        async function insertAccount(flags: { isHidden?: boolean, hideFromSpending?: boolean }): Promise<string> {
+            const account = await accountsData.insert(FinanceEntityFactory.createAccount({
+                institutionId: testInstitutionId, name: 'Savings', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Savings,
+                isHidden: false, isManual: false, isRetirement: false, hideFromSpending: false, balance: 0, ...flags
+            }));
+            return account.id!;
+        }
+
+        function getJune(): request.Test {
+            return request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-06-15');
+        }
+
+        it('CASH-1.2 should leave out hidden transactions', async () => {
+            await insertTransaction({ amount: -10 });
+            await insertTransaction({ amount: -100, isHidden: true });
+
+            expect((await getJune()).body).toEqual([{ categoryId: testCategoryId, amount: -10 }]);
+        });
+
+        it('CASH-1.2 should leave out hidden accounts', async () => {
+            const hiddenAccountId = await insertAccount({ isHidden: true });
+            await insertTransaction({ amount: -10 });
+            await insertTransaction({ accountId: hiddenAccountId, amount: -100 });
+
+            expect((await getJune()).body).toEqual([{ categoryId: testCategoryId, amount: -10 }]);
+        });
+
+        it('ACCT-1.7 CASH-1.2 should leave out accounts flagged Hide from Spending', async () => {
+            const excludedAccountId = await insertAccount({ hideFromSpending: true });
+            await insertTransaction({ amount: -10 });
+            await insertTransaction({ accountId: excludedAccountId, amount: -100 });
+
+            expect((await getJune()).body).toEqual([{ categoryId: testCategoryId, amount: -10 }]);
+        });
+
+        it('CASH-1.3 should total uncategorized money in and money out separately', async () => {
+            await insertTransaction({ categoryId: '', amount: 25 });
+            await insertTransaction({ categoryId: '', amount: 15 });
+            await insertTransaction({ categoryId: '', amount: -60 });
+            await insertTransaction({ amount: 5 });
+            await insertTransaction({ amount: -30 });
+
+            const response = await getJune();
+
+            expect(response.body).toHaveLength(3);
+            expect(response.body).toEqual(expect.arrayContaining([
+                { categoryId: testCategoryId, amount: -25 },
+                { categoryId: '', amount: 40 },
+                { categoryId: '', amount: -60 }
+            ]));
         });
 
         it('APP-5.7 should reject an asOfDate that is a timestamp rather than a date', async () => {

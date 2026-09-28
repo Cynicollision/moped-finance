@@ -80,7 +80,7 @@ A split divides one transaction into **parts**, each with its own amount and cat
 - **Required fields (TXN-2.6).** The form only marks Account, Amount and Date as required. A missing Merchant or category fails at the server with a validation error toast rather than a message on the field.
 - **Inactive categories are offered in the form (TXN-2.7).**
 - **Every account is offered in the form (TXN-2.1),** in creation order, hidden ones included.
-- **Hidden transactions can't be seen again (TXN-1.13).** The API supports including them, but the UI has no toggle, so a transaction marked hidden is invisible in the app, though still exported and still counted in Spending (TXN-1.8).
+- **Hidden transactions can't be seen again (TXN-1.13).** The API supports including them, but the UI has no toggle, so a transaction marked hidden is invisible in the app, though still exported (TXN-1.8).
 - **The form asks for a signed amount (TXN-2.13).** Amount is a bare number (default 0), and money out must be typed as negative, which nothing on screen says.
 - **Amount filters compare signed values (TXN-1.14),** so "Min Amount 100" finds income of 100 or more but no expenses.
 - **Future-dated transactions are hidden by default (TXN-1.10).** The pre-filled End Date silently excludes anything after today, with no visual hint besides the date field itself. **Clear Filters** re-applies it.
