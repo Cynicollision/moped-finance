@@ -73,6 +73,50 @@ describe('DashboardComponent', () => {
         expect(element.querySelector('.large-value')!.textContent!.trim()).toBe('$5,500.00');
     });
 
+    it('APP-2.1 should show placeholders, not zeros, until the accounts load', async () => {
+        const financeService = {
+            fetchAllAccounts: vi.fn().mockReturnValue(new Promise(() => undefined)),
+            fetchTotalValueHistory: vi.fn().mockReturnValue(new Promise(() => undefined)),
+            fetchAccountBalanceHistory: vi.fn().mockResolvedValue([])
+        };
+        TestBed.configureTestingModule({
+            imports: [DashboardComponent],
+            providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }]
+        });
+
+        const fixture = TestBed.createComponent(DashboardComponent);
+        fixture.detectChanges();
+        const element = fixture.nativeElement as HTMLElement;
+
+        expect(element.textContent).not.toContain('$0.00');
+        expect(element.querySelectorAll('app-card-skeleton').length).toBeGreaterThan(0);
+        expect(element.querySelector('app-value-history app-skeleton')).not.toBeNull();
+    });
+
+    it('APP-2.9 should show a failed load in place, and load again on Retry', async () => {
+        const financeService = {
+            fetchAllAccounts: vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue([account('Checking', AccountGroup.Cash, 1200)]),
+            fetchTotalValueHistory: vi.fn().mockResolvedValue([]),
+            fetchAccountBalanceHistory: vi.fn().mockResolvedValue([])
+        };
+        TestBed.configureTestingModule({
+            imports: [DashboardComponent],
+            providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }]
+        });
+        const fixture = TestBed.createComponent(DashboardComponent);
+        await fixture.whenStable();
+        const element = fixture.nativeElement as HTMLElement;
+
+        expect(element.querySelector('app-load-error')).not.toBeNull();
+        expect(element.querySelector('.account-group')).toBeNull();
+
+        element.querySelector<HTMLButtonElement>('app-load-error button')!.click();
+        await fixture.whenStable();
+
+        expect(element.querySelector('app-load-error')).toBeNull();
+        expect(groupRows(element)).toEqual(['Cash $1,200.00']);
+    });
+
     it('should leave out groups with no accounts', async () => {
         const element = await render([account('Checking', AccountGroup.Cash, 10)]);
 

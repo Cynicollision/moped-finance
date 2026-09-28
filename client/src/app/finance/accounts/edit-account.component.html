@@ -1,9 +1,15 @@
 <div class="details-container">
     <app-page-header title="Edit Account" [crumbs]="crumbs()"></app-page-header>
 
-    @if (accountData(); as account) {
-        <app-account-form mode="edit" [account]="account" [institutions]="institutions()" (save)="onSave($event)"
-            (cancelled)="onCancel()">
+    @if (data.error(); as error) {
+        <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
+    }
+    @else if (accountData(); as account) {
+        <app-account-form mode="edit" [account]="account" [institutions]="institutions()" [saving]="saving()"
+            (save)="onSave($event)" (cancelled)="onCancel()">
         </app-account-form>
+    }
+    @else {
+        <app-card-skeleton [rows]="4"></app-card-skeleton>
     }
 </div>

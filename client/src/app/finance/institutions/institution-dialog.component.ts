@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Institution } from '@shared/finance/types';
@@ -29,6 +30,7 @@ export interface InstitutionDialogData {
     imports: [
         ReactiveFormsModule,
         MatButtonModule,
+        MatProgressSpinnerModule,
         MatDialogModule,
         MatFormFieldModule,
         MatInputModule,

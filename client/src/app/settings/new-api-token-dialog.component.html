@@ -46,6 +46,9 @@
         <button mat-button type="button" appModalCancel>Cancel</button>
         <button mat-flat-button type="submit" form="new-token-form"
             [disabled]="!form.controls.name.value.trim() || isSaving()">
+            @if (isSaving()) {
+                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+            }
             Create
         </button>
         }

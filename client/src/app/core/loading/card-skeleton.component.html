@@ -1,0 +1,7 @@
+<app-skeleton class="heading" width="35%" height="20px"></app-skeleton>
+@for (width of rowWidths(); track $index) {
+    <div class="row">
+        <app-skeleton [width]="width" height="16px"></app-skeleton>
+        <app-skeleton width="72px" height="16px"></app-skeleton>
+    </div>
+}

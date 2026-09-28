@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NewEntity } from '@shared/core/types';
 import { Transaction } from '@shared/finance/types';
@@ -25,6 +25,7 @@ export class AddTransactionComponent implements HasUnsavedChanges {
 
     private readonly form = viewChild(TransactionFormComponent);
     private saved = false;
+    readonly saving = signal(false);
 
     hasUnsavedChanges(): boolean {
         return !this.saved && (this.form()?.hasUnsavedChanges() ?? false);
@@ -44,7 +45,9 @@ export class AddTransactionComponent implements HasUnsavedChanges {
             splitParentId: ''
         };
 
+        this.saving.set(true);
         const created = await this.financeService.createTransaction(newTransaction);
+        this.saving.set(false);
         if (created) {
             this.saved = true;
             this.notificationService.success('Transaction added');

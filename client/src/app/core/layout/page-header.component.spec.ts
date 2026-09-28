@@ -7,7 +7,7 @@ import { LayoutService, SizeClass } from './layout.service';
 import { Crumb, PageHeaderComponent } from './page-header.component';
 
 describe('PageHeaderComponent', () => {
-    async function render(title: string, crumbs: Crumb[], sizeClass: SizeClass = 'expanded'): Promise<HTMLElement> {
+    async function render(title: string, crumbs: Crumb[], sizeClass: SizeClass = 'expanded', refreshing = false): Promise<HTMLElement> {
         const size = signal(sizeClass);
         TestBed.configureTestingModule({
             imports: [PageHeaderComponent],
@@ -22,9 +22,17 @@ describe('PageHeaderComponent', () => {
         const fixture = TestBed.createComponent(PageHeaderComponent);
         fixture.componentRef.setInput('title', title);
         fixture.componentRef.setInput('crumbs', crumbs);
+        fixture.componentRef.setInput('refreshing', refreshing);
         await fixture.whenStable();
         return fixture.nativeElement as HTMLElement;
     }
+
+    it('APP-2.1 should show a progress bar under the header only while the screen refreshes', async () => {
+        expect((await render('Dashboard', [])).querySelector('mat-progress-bar')).toBeNull();
+
+        TestBed.resetTestingModule();
+        expect((await render('Dashboard', [], 'expanded', true)).querySelector('mat-progress-bar')).not.toBeNull();
+    });
 
     it('APP-1.3 should show the title as the page heading, with no trail on a top-level screen', async () => {
         const element = await render('Transactions', []);

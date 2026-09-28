@@ -55,7 +55,10 @@
     <div class="actions-row">
         <button mat-button type="button" (click)="onCancelClick()">Cancel</button>
         <span class="spacer"></span>
-        <button mat-flat-button type="submit" [disabled]="!accountForm.valid">
+        <button mat-flat-button type="submit" [disabled]="!accountForm.valid || saving()">
+            @if (saving()) {
+                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+            }
             {{ mode() === 'create' ? 'Save Account' : 'Save Changes' }}
         </button>
     </div>

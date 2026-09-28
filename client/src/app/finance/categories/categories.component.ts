@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +8,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { CategoryGroup, Category } from '@shared/finance/types';
 import { CategoryClass } from '@shared/finance/enum';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
+import { LoadErrorComponent } from './../../core/loading/load-error.component';
+import { viewResource } from './../../core/loading/view-resource';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
@@ -29,37 +32,34 @@ interface GroupedCategories {
         MatIconModule,
         MatMenuModule,
         MatTooltipModule,
-        PageHeaderComponent
+        PageHeaderComponent,
+        CardSkeletonComponent,
+        LoadErrorComponent
     ],
     templateUrl: './categories.component.html',
     styleUrl: './categories.component.scss'
 })
-export class FinanceCategoriesComponent implements OnInit {
+export class FinanceCategoriesComponent {
     private financeService = inject(FinanceService);
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
 
-    private readonly groups = signal<CategoryGroup[]>([]);
-    private readonly categories = signal<Category[]>([]);
+    readonly data = viewResource({
+        loader: async () => {
+            const [groups, categories] = await Promise.all([
+                this.financeService.fetchCategoryGroups(),
+                this.financeService.fetchCategories(false)
+            ]);
+            return { groups, categories };
+        }
+    });
+    private readonly groups = computed(() => this.data.value()?.groups ?? []);
+    private readonly categories = computed(() => this.data.value()?.categories ?? []);
 
     readonly sections = computed(() => [
         { title: 'Income', groupedCategories: this.buildGrouped(CategoryClass.Income) },
         { title: 'Expenses', groupedCategories: this.buildGrouped(CategoryClass.Expense) }
     ]);
-
-    async ngOnInit() {
-        await this.loadData();
-    }
-
-    async loadData() {
-        const [groups, categories] = await Promise.all([
-            this.financeService.fetchCategoryGroups(),
-            this.financeService.fetchCategories(false)
-        ]);
-
-        this.groups.set(groups || []);
-        this.categories.set(categories || []);
-    }
 
     private buildGrouped(targetClass: CategoryClass): GroupedCategories[] {
         return this.groups()
@@ -92,7 +92,7 @@ export class FinanceCategoriesComponent implements OnInit {
             CategoryGroupFormModalComponent, data
         );
         if (changed) {
-            await this.loadData();
+            this.data.reload();
         }
     }
 
@@ -114,7 +114,7 @@ export class FinanceCategoriesComponent implements OnInit {
             CategoryFormModalComponent, data
         );
         if (changed) {
-            await this.loadData();
+            this.data.reload();
         }
     }
 }

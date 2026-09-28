@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Account, Institution } from '@shared/finance/types';
 import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
 
@@ -17,7 +18,8 @@ import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum
         MatFormFieldModule,
         MatInputModule,
         MatSelectModule,
-        MatCheckboxModule
+        MatCheckboxModule,
+        MatProgressSpinnerModule
     ],
     templateUrl: './account-form.component.html',
     styleUrl: './account-form.component.scss'
@@ -29,6 +31,8 @@ export class AccountFormComponent implements OnInit, OnChanges {
     readonly institutions = input<Institution[]>([]);
     /** The institution a new account starts at, when it's added from that institution. */
     readonly defaultInstitutionId = input<string | null>(null);
+    /** While the parent saves: Save is disabled and shows a spinner. */
+    readonly saving = input(false);
     readonly save = output<Partial<Account>>();
     readonly cancelled = output<void>();
 

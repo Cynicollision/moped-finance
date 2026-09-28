@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { NewEntity } from '@shared/core/types';
-import { Account, Institution } from '@shared/finance/types';
+import { Account } from '@shared/finance/types';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
+import { LoadErrorComponent } from './../../core/loading/load-error.component';
+import { viewResource } from './../../core/loading/view-resource';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { HasUnsavedChanges } from './../../core/unsaved-changes';
@@ -18,12 +21,14 @@ import { AccountFormComponent } from './account-form.component';
     imports: [
         MatButtonModule,
         AccountFormComponent,
-        PageHeaderComponent
+        PageHeaderComponent,
+        CardSkeletonComponent,
+        LoadErrorComponent
     ],
     templateUrl: './add-account.component.html',
     styleUrl: './add-account.component.scss'
 })
-export class FinanceAddAccountComponent implements OnInit, HasUnsavedChanges {
+export class FinanceAddAccountComponent implements HasUnsavedChanges {
     private financeService = inject(FinanceService);
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
@@ -33,12 +38,11 @@ export class FinanceAddAccountComponent implements OnInit, HasUnsavedChanges {
     private readonly form = viewChild(AccountFormComponent);
     private saved = false;
 
-    readonly institutions = signal<Institution[] | null>(null);
+    readonly institutions = viewResource({
+        loader: async () => (await this.financeService.fetchInstitutions()).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+    });
     readonly institutionId = this.route.snapshot.queryParamMap.get('institutionId');
-
-    async ngOnInit() {
-        await this.loadInstitutions();
-    }
+    readonly saving = signal(false);
 
     hasUnsavedChanges(): boolean {
         return !this.saved && (this.form()?.hasUnsavedChanges() ?? false);
@@ -47,13 +51,8 @@ export class FinanceAddAccountComponent implements OnInit, HasUnsavedChanges {
     async addInstitution() {
         const added = await this.modalService.open<InstitutionDialogComponent, InstitutionDialogData, boolean>(InstitutionDialogComponent, {});
         if (added) {
-            await this.loadInstitutions();
+            this.institutions.reload();
         }
-    }
-
-    private async loadInstitutions() {
-        const institutions = await this.financeService.fetchInstitutions() ?? [];
-        this.institutions.set(institutions.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })));
     }
 
     async onSave(accountData: Partial<Account>) {
@@ -69,7 +68,9 @@ export class FinanceAddAccountComponent implements OnInit, HasUnsavedChanges {
             hideFromCashflow: accountData.hideFromCashflow ?? false
         };
 
+        this.saving.set(true);
         const created = await this.financeService.createAccount(newAccount);
+        this.saving.set(false);
         if (created) {
             this.saved = true;
             this.notificationService.success('Account added');

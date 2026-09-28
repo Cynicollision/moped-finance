@@ -42,7 +42,10 @@
 
                 <div class="actions">
                     <button mat-flat-button type="submit"
-                        [disabled]="!username() || !displayName() || !password() || !confirmPassword()">
+                        [disabled]="!username() || !displayName() || !password() || !confirmPassword() || submitting()">
+                        @if (submitting()) {
+                            <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+                        }
                         Register
                     </button>
                 </div>

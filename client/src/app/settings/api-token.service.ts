@@ -9,8 +9,8 @@ import { ApiService } from './../core/api.service';
 export class ApiTokenService {
     private api = inject(ApiService);
 
-    async retrieveAll(): Promise<ApiToken[]> {
-        return await this.api.get<ApiToken[]>('auth/tokens') ?? [];
+    retrieveAll(): Promise<ApiToken[]> {
+        return this.api.load<ApiToken[]>('auth/tokens');
     }
 
     create(request: CreateApiTokenRequest): Promise<CreatedApiToken | undefined> {

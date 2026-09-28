@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, AfterViewInit, computed, inject, OnInit, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, AfterViewInit, computed, inject, linkedSignal, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
@@ -14,15 +15,20 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { startWith, map } from 'rxjs';
 import { SortDirection } from '@shared/core/enum';
 import { CalendarDateUtil } from '@shared/core/util';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
-import { Transaction, Category, Account, CategoryGroup } from '@shared/finance/types';
+import { Transaction } from '@shared/finance/types';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { describeRequestError } from './../../core/api.service';
 import { DateProviderService } from './../../core/date-provider.service';
+import { LoadErrorComponent } from './../../core/loading/load-error.component';
+import { SkeletonComponent } from './../../core/loading/skeleton.component';
+import { viewResource } from './../../core/loading/view-resource';
+import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
 
 @Component({
@@ -42,27 +48,28 @@ import { FinanceService } from './../finance.service';
         MatDatepickerModule,
         MatNativeDateModule,
         MatAutocompleteModule,
+        MatProgressSpinnerModule,
         MatSelectModule,
         RouterModule,
         MatMenuModule,
         MatDividerModule,
-        PageHeaderComponent
+        PageHeaderComponent,
+        LoadErrorComponent,
+        SkeletonComponent
     ],
     templateUrl: './transactions.component.html',
     styleUrl: './transactions.component.scss'
 })
-export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
+export class FinanceTransactionsComponent implements AfterViewInit {
     private financeService = inject(FinanceService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private dateProvider = inject(DateProviderService);
+    private notificationService = inject(NotificationService);
     readonly Math = Math;
 
     readonly displayedColumns: string[] = ['date', 'account', 'merchant', 'category', 'amount'];
     private readonly pageSize = 25;
-    readonly transactions = signal<Transaction[]>([]);
-    readonly hasMoreData = signal(true);
-    readonly loaded = signal(false);
 
     readonly sort = viewChild.required(MatSort);
 
@@ -77,71 +84,65 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
         group: new FormControl<string>('')
     });
 
-    readonly merchants = signal<string[]>([]);
-    readonly categories = signal<Category[]>([]);
-    readonly groups = signal<CategoryGroup[]>([]);
-    readonly accounts = signal<Account[]>([]);
+    // The filters' choices, and the names shown in the list.
+    readonly lookups = viewResource({
+        loader: async () => {
+            const [merchants, categories, accounts, groups] = await Promise.all([
+                this.financeService.fetchTransactionMerchants(),
+                this.financeService.fetchCategories(false),
+                this.financeService.fetchAllAccounts(),
+                this.financeService.fetchCategoryGroups()
+            ]);
+            return { merchants, categories, accounts, groups };
+        }
+    });
+    readonly merchants = computed(() => this.lookups.value()?.merchants ?? []);
+    readonly categories = computed(() => this.lookups.value()?.categories ?? []);
+    readonly groups = computed(() => this.lookups.value()?.groups ?? []);
+    readonly accounts = computed(() => this.lookups.value()?.accounts ?? []);
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
     private readonly groupMap = computed(() => new Map(this.groups().map(g => [g.id, g])));
     private readonly accountMap = computed(() => new Map(this.accounts().map(a => [a.id, a])));
 
-    readonly filteredMerchants = signal<string[]>([]);
-    readonly filteredCategories = signal<Category[]>([]);
-    readonly filteredGroups = signal<CategoryGroup[]>([]);
+    // What's typed in the filters' autocompletes. A chosen category or group is its ID, not text to match.
+    private readonly merchantText = toSignal(this.filterForm.controls.merchant.valueChanges, { initialValue: '' });
+    private readonly categoryText = toSignal(this.filterForm.controls.category.valueChanges, { initialValue: '' });
+    private readonly groupText = toSignal(this.filterForm.controls.group.valueChanges, { initialValue: '' });
 
-    async ngOnInit() {
-        const [merchants, categories, accounts, groups] = await Promise.all([
-            this.financeService.fetchTransactionMerchants(),
-            this.financeService.fetchCategories(false),
-            this.financeService.fetchAllAccounts(),
-            this.financeService.fetchCategoryGroups()
-        ]);
+    readonly filteredMerchants = computed(() => {
+        const text = (this.merchantText() || '').toLowerCase();
+        return this.merchants().filter(m => m.toLowerCase().includes(text));
+    });
+    readonly filteredCategories = computed(() => {
+        const text = (typeof this.categoryText() === 'string' ? this.categoryText()! : '').toLowerCase();
+        return this.categories().filter(c => c.name.toLowerCase().includes(text));
+    });
+    readonly filteredGroups = computed(() => {
+        const text = (typeof this.groupText() === 'string' ? this.groupText()! : '').toLowerCase();
+        return this.groups().filter(g => g.name.toLowerCase().includes(text));
+    });
 
-        this.merchants.set(merchants || []);
-        this.categories.set(categories || []);
-        this.groups.set(groups || []);
-        this.accounts.set(accounts || []);
+    /** The search the list shows: set from the filters and sort when they're applied. */
+    private readonly search = signal<TransactionSearchOptions | undefined>(undefined);
 
-        // Setup filter observers
-        this.setupTypeaheadFilters();
-    }
+    // The first page reloads when the search changes, keeping the old list on screen meanwhile.
+    readonly firstPage = viewResource({
+        params: () => this.search(),
+        loader: search => this.financeService.fetchTransactions({ ...search, limit: this.pageSize, offset: 0 })
+    });
 
-    private setupTypeaheadFilters() {
-        const _filterMerchants = (value: string): string[] => {
-            const filterValue = value.toLowerCase();
-            return this.merchants().filter(m => m.toLowerCase().includes(filterValue));
-        };
+    // Pages added with Load More, and whether the last page was full; both reset with each new first page.
+    private readonly morePages = linkedSignal<Transaction[] | undefined, Transaction[]>({
+        source: () => this.firstPage.value(),
+        computation: () => []
+    });
+    private readonly lastPageFull = linkedSignal(() => this.firstPage.value()?.length === this.pageSize);
+    readonly loadingMore = signal(false);
 
-        const _filterCategories = (value: string): Category[] => {
-            const filterValue = value.toLowerCase();
-            return this.categories().filter(c => c.name.toLowerCase().includes(filterValue));
-        };
-
-        const _filterGroups = (value: string): CategoryGroup[] => {
-            const filterValue = value.toLowerCase();
-            return this.groups().filter(g => g.name.toLowerCase().includes(filterValue));
-        };
-
-        // Merchant Filter
-        this.filterForm.controls.merchant.valueChanges.pipe(
-            startWith(''),
-            map(value => _filterMerchants(value || ''))
-        ).subscribe(filtered => this.filteredMerchants.set(filtered));
-
-        // Category Filter
-        this.filterForm.controls.category.valueChanges.pipe(
-            startWith(''),
-            map(value => typeof value === 'string' ? value : ''),
-            map(name => _filterCategories(name))
-        ).subscribe(filtered => this.filteredCategories.set(filtered));
-
-        // Group Filter
-        this.filterForm.controls.group.valueChanges.pipe(
-            startWith(''),
-            map(value => typeof value === 'string' ? value : ''),
-            map(name => _filterGroups(name))
-        ).subscribe(filtered => this.filteredGroups.set(filtered));
-    }
+    readonly transactions = computed(() => [...(this.firstPage.value() ?? []), ...this.morePages()]);
+    readonly hasMoreData = computed(() => this.lastPageFull());
+    readonly isLoaded = computed(() => this.firstPage.value() !== undefined);
+    readonly isRefreshing = computed(() => this.firstPage.isRefreshing() || this.lookups.isRefreshing());
 
     ngAfterViewInit() {
         const queryParams = this.route.snapshot.queryParamMap;
@@ -172,19 +173,15 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             this.filterForm.patchValue(patch);
         }
 
-        this.sort().sortChange.subscribe(() => this.loadData(true));
+        this.sort().sortChange.subscribe(() => this.applySearch());
 
         Promise.resolve().then(() => {
             this.sort().sort({ id: 'date', start: 'desc', disableClear: false });
         });
     }
 
-    async loadData(reset = false) {
-        if (reset) {
-            this.transactions.set([]);
-            this.hasMoreData.set(true);
-        }
-
+    /** Searches with the current filters and sort (TXN-1.7). */
+    applySearch() {
         const formValues = this.filterForm.value;
         const filters = [];
 
@@ -230,9 +227,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
                 break;
         }
 
-        const options: TransactionSearchOptions = {
-            limit: this.pageSize,
-            offset: this.transactions().length,
+        this.search.set({
             minAmount: formValues.minAmount ?? undefined,
             maxAmount: formValues.maxAmount ?? undefined,
             startDate: formValues.startDate ? CalendarDateUtil.fromDate(formValues.startDate) : undefined,
@@ -240,17 +235,27 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             filters: filters.length > 0 ? filters : undefined,
             sortKey,
             sortDirection
-        };
-
-        const newTransactions: Transaction[] = await this.financeService.fetchTransactions(options) || [];
-
-        this.hasMoreData.set(newTransactions.length === this.pageSize);
-        this.transactions.update(current => reset ? newTransactions : [...current, ...newTransactions]);
-        this.loaded.set(true);
+        });
     }
 
     async loadMore() {
-        await this.loadData();
+        const search = this.search();
+        if (!search || this.loadingMore()) {
+            return;
+        }
+
+        this.loadingMore.set(true);
+        try {
+            const page = await this.financeService.fetchTransactions({ ...search, limit: this.pageSize, offset: this.transactions().length });
+            this.morePages.update(pages => [...pages, ...page]);
+            this.lastPageFull.set(page.length === this.pageSize);
+        }
+        catch (error) {
+            this.notificationService.error(describeRequestError(error));
+        }
+        finally {
+            this.loadingMore.set(false);
+        }
     }
 
     onRowClick(row: Transaction) {
@@ -285,7 +290,7 @@ export class FinanceTransactionsComponent implements OnInit, AfterViewInit {
             account: '',
             group: ''
         });
-        this.loadData(true);
+        this.applySearch();
     }
 
     downloadTransactions() {

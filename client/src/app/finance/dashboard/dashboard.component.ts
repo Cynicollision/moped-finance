@@ -1,14 +1,16 @@
-import { ChangeDetectionStrategy, Component, inject, computed, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, computed, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { DateProviderService } from './../../core/date-provider.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterLink } from '@angular/router';
 import { HistoryTimeframe } from '@shared/core/enum';
-import { TotalValueHistory } from '@shared/finance/contracts';
 import { AccountGroup, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
+import { LoadErrorComponent } from './../../core/loading/load-error.component';
+import { viewResource } from './../../core/loading/view-resource';
 import { FinanceValueHistoryComponent, TimeframeOptions } from './../common/value-history.component';
 import { FinanceValuePeriodChangeComponent, ValuePeriodChange } from './../common/value-period-change.component';
 import { FinanceService } from './../finance.service';
@@ -40,21 +42,17 @@ const groupOrder: { group: AccountGroup; label: string; isLiability: boolean }[]
         RouterLink,
         PageHeaderComponent,
         FinanceValueHistoryComponent,
-        FinanceValuePeriodChangeComponent
+        FinanceValuePeriodChangeComponent,
+        CardSkeletonComponent,
+        LoadErrorComponent
     ],
     templateUrl: './dashboard.component.html',
     styleUrl: './dashboard.component.scss'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
     private financeService = inject(FinanceService);
     private dateProvider = inject(DateProviderService);
     readonly Math = Math;
-
-    readonly accounts = signal<Account[]>([]);
-    readonly groupPeriodChanges = signal<Map<AccountGroup, ValuePeriodChange>>(new Map());
-
-    // Chart Data payload provided to the child `<app-value-history>` component
-    readonly historyData = signal<TotalValueHistory[]>([]);
 
     // View State for Chart Options
     readonly selectedChartType = signal<ValueHistoryType>(ValueHistoryType.NetWorth);
@@ -70,21 +68,31 @@ export class DashboardComponent implements OnInit {
         return TimeframeOptions.find(t => t.value === this.selectedTimeframe())?.label || 'Period';
     });
 
-    async ngOnInit() {
-        this.accounts.set(await this.financeService.fetchAllAccounts() || []);
-        await this.updateChartData();
-        await this.updateGroupPeriodChanges();
-    }
+    readonly accounts = viewResource({ loader: () => this.financeService.fetchAllAccounts() });
 
-    async updateGroupPeriodChanges() {
-        const timeframe = this.selectedTimeframe();
+    // The chart (DASH-1.1, DASH-1.2): reloads when the view type or timeframe changes, keeping the old chart
+    // on screen meanwhile.
+    readonly history = viewResource({
+        params: () => ({ type: this.selectedChartType(), timeframe: this.selectedTimeframe() }),
+        loader: ({ type, timeframe }) => this.financeService.fetchTotalValueHistory(type, timeframe)
+    });
+
+    // Each group's change over the timeframe (DASH-2.2), once the accounts are known.
+    readonly groupChanges = viewResource({
+        params: () => {
+            const accounts = this.accounts.value();
+            return accounts ? { accounts, timeframe: this.selectedTimeframe() } : undefined;
+        },
+        loader: ({ accounts, timeframe }) => this.loadGroupChanges(accounts, timeframe)
+    });
+
+    readonly groupPeriodChanges = computed(() => this.groupChanges.value() ?? new Map<AccountGroup, ValuePeriodChange>());
+
+    readonly isRefreshing = computed(() =>
+        this.accounts.isRefreshing() || this.history.isRefreshing() || this.groupChanges.isRefreshing());
+
+    private async loadGroupChanges(accounts: Account[], timeframe: HistoryTimeframe): Promise<Map<AccountGroup, ValuePeriodChange>> {
         const asOfDate = this.dateProvider.today();
-
-        const accounts = this.accounts();
-        if (accounts.length === 0) {
-            return;
-        }
-
         const changes = new Map<AccountGroup, ValuePeriodChange>();
         const groupedAccounts = new Map<AccountGroup, Account[]>();
 
@@ -96,7 +104,8 @@ export class DashboardComponent implements OnInit {
             groupedAccounts.get(group)!.push(account);
         }
 
-        for (const [group, groupAccounts] of groupedAccounts.entries()) {
+        // Groups load in parallel, like the accounts within each.
+        await Promise.all([...groupedAccounts.entries()].map(async ([group, groupAccounts]) => {
             let startTotal = 0;
             let endTotal = 0;
             let hasData = false;
@@ -130,35 +139,24 @@ export class DashboardComponent implements OnInit {
                     isGood
                 });
             }
-        }
+        }));
 
-        this.groupPeriodChanges.set(changes);
+        return changes;
     }
 
-    async updateChartData() {
-        const data = await this.financeService.fetchTotalValueHistory(
-            this.selectedChartType(),
-            this.selectedTimeframe()
-        );
-
-        this.historyData.set(data || []);
-    }
-
-    // Event Handler passed from the child component up
     onChartTypeChange(type: ValueHistoryType) {
         this.selectedChartType.set(type);
-        this.updateChartData();
     }
 
-    // Event Handler passed from the child component up
     onTimeframeChange(timeframe: HistoryTimeframe) {
         this.selectedTimeframe.set(timeframe);
-        this.updateChartData();
-        this.updateGroupPeriodChanges();
     }
 
-    // Dynamic Summary value to hand down dependent on chart viewing mode
+    // The big number above the chart, for the chosen view type; undefined until the accounts load.
     readonly currentChartValue = computed(() => {
+        if (!this.accounts.value()) {
+            return undefined;
+        }
         switch (this.selectedChartType()) {
             case ValueHistoryType.NetWorth:
                 return this.summary().netWorth;
@@ -175,7 +173,7 @@ export class DashboardComponent implements OnInit {
         const groups: AccountGroupSummary[] = groupOrder.map(g => ({ ...g, total: 0, accounts: [] }));
         const byGroup = new Map(groups.map(g => [g.group, g]));
 
-        for (const account of this.accounts()) {
+        for (const account of this.accounts.value() ?? []) {
             const group = byGroup.get(account.group);
             if (group) {
                 group.total += Number(account.balance) || 0;

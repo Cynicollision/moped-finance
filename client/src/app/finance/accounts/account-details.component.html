@@ -1,5 +1,6 @@
 <div>
-    <app-page-header [title]="account()?.name ?? ''" [crumbs]="[{ label: 'Dashboard', link: '/dashboard' }]">
+    <app-page-header [title]="account()?.name ?? (details.error() ? 'Account' : '')" [crumbs]="[{ label: 'Dashboard', link: '/dashboard' }]"
+        [refreshing]="isRefreshing()">
         @if (account(); as account) {
             <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
                 <mat-icon>more_vert</mat-icon>
@@ -40,12 +41,20 @@
         }
     </app-page-header>
 
-    @if (account(); as account) {
-        <app-value-history [historyData]="historyData()" [currentValue]="account.balance || 0"
-            [chartTypeOptions]="chartTypeOptions()" [selectedChartType]="derivedChartType()"
-            [selectedTimeframe]="selectedTimeframe()" (timeframeChange)="onTimeframeChange($event)" class="full-width-card"
-            title="Current Balance">
-        </app-value-history>
+    @if (details.error(); as error) {
+        <app-load-error [message]="error" (retry)="details.reload()"></app-load-error>
+    }
+    @else if (account(); as account) {
+        @if (balances.error(); as error) {
+            <app-load-error [message]="error" (retry)="balances.reload()"></app-load-error>
+        }
+        @else {
+            <app-value-history [historyData]="historyData()" [currentValue]="account.balance || 0"
+                [chartTypeOptions]="chartTypeOptions()" [selectedChartType]="derivedChartType()"
+                [selectedTimeframe]="selectedTimeframe()" (timeframeChange)="onTimeframeChange($event)" class="full-width-card"
+                title="Current Balance">
+            </app-value-history>
+        }
 
         <mat-card appearance="outlined" class="account-summary-card">
             <mat-card-content class="summary-row">
@@ -111,6 +120,12 @@
                     Go To Transactions
                 </a>
             </div>
+        </div>
+    }
+    @else {
+        <div class="loading-cards">
+            <app-card-skeleton [rows]="4"></app-card-skeleton>
+            <app-card-skeleton [rows]="3"></app-card-skeleton>
         </div>
     }
 </div>

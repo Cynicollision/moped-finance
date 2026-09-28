@@ -1,13 +1,13 @@
-
-import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BalanceImportResult } from '@shared/finance/contracts';
-import { Account } from '@shared/finance/types';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { viewResource } from './../../core/loading/view-resource';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
 
@@ -19,38 +19,28 @@ interface ImportErrors {
 @Component({
     selector: 'app-balance-import',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule, RouterModule, PageHeaderComponent],
+    imports: [MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule, RouterModule, PageHeaderComponent],
     templateUrl: './balance-import.component.html',
     styleUrl: './balance-import.component.scss'
 })
-export class BalanceImportComponent implements OnInit {
+export class BalanceImportComponent {
     private financeService = inject(FinanceService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private notificationService = inject(NotificationService);
 
-    readonly accountId = signal<string | null>(null);
-    readonly account = signal<Account | null>(null);
+    readonly accountId = signal(this.route.snapshot.paramMap.get('accountId'));
+    // Only names the account in the breadcrumb, which says "Account" until then or if it fails.
+    private readonly accountData = viewResource({
+        params: () => this.accountId() ?? undefined,
+        loader: id => this.financeService.fetchAccount(id)
+    });
+    readonly account = computed(() => this.accountData.value() ?? null);
     readonly selectedFile = signal<File | null>(null);
     readonly isProcessing = signal<boolean>(false);
     readonly dryRunResults = signal<BalanceImportResult | null>(null);
     /** The dry run's summary and each failed row's message (TXN-3.7, ACCT-3.7). */
     readonly validationError = signal<ImportErrors | null>(null);
-
-    ngOnInit() {
-        const id = this.route.snapshot.paramMap.get('accountId');
-        if (id) {
-            this.accountId.set(id);
-            this.loadAccount(id);
-        }
-    }
-
-    async loadAccount(id: string) {
-        const acc = await this.financeService.fetchAccount(id);
-        if (acc) {
-            this.account.set(acc);
-        }
-    }
 
     onFileSelected(event: Event) {
         const file = (event.target as HTMLInputElement).files?.[0];

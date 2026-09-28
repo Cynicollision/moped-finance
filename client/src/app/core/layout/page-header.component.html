@@ -25,4 +25,7 @@
             </div>
         }
     </div>
+    @if (refreshing()) {
+        <mat-progress-bar class="progress" mode="indeterminate" aria-label="Refreshing"></mat-progress-bar>
+    }
 </header>

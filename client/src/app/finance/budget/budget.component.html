@@ -1,167 +1,176 @@
 <div class="budget-container">
-    <app-page-header title="Budget"></app-page-header>
+    <app-page-header title="Budget" [refreshing]="data.isRefreshing()"></app-page-header>
 
-    <!-- Income Section -->
-    <mat-card class="section-card" appearance="outlined">
-        <div class="card-header">
-            <h2>Income</h2>
-        </div>
-
-        <div class="summary-section">
-            <div class="summary-item">
-                <span class="label">Monthly Total</span>
-                <span class="value income-total">{{ incomeTotals().monthly | currency }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="label">Quarterly Total</span>
-                <span class="value income-total">{{ incomeTotals().quarterly | currency }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="label">Yearly Total</span>
-                <span class="value income-total income-yearly">{{ incomeTotals().yearly | currency }}</span>
-            </div>
-        </div>
-
-        <mat-card-content>
-            <table mat-table [dataSource]="incomeStreams()" class="budget-table">
-                <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef> Name </th>
-                    <td mat-cell *matCellDef="let s">
-                        <div class="name-primary">{{s.name}}</div>
-                        <div class="mobile-details">
-                            <span class="mobile-category">{{getCategoryName(s.categoryId)}}</span>
-                            <span class="mobile-meta">
-                                {{s.amount | currency}} • {{s.recurrence}}
-                            </span>
-                        </div>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="group">
-                    <th mat-header-cell *matHeaderCellDef> Group </th>
-                    <td mat-cell *matCellDef="let s"> {{getCategoryGroup(s.categoryId)}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="category">
-                    <th mat-header-cell *matHeaderCellDef> Category </th>
-                    <td mat-cell *matCellDef="let s"> {{getCategoryName(s.categoryId)}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="amount">
-                    <th mat-header-cell *matHeaderCellDef> Amount </th>
-                    <td mat-cell *matCellDef="let s"> {{s.amount | currency}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="recurrence">
-                    <th mat-header-cell *matHeaderCellDef> Recurrence </th>
-                    <td mat-cell *matCellDef="let s">
-                        {{s.recurrence}}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef></th>
-                    <td mat-cell *matCellDef="let s">
-                        <button mat-icon-button [matMenuTriggerFor]="budgetMenu" [matMenuTriggerData]="{stream: s}"
-                            title="Actions">
-                            <mat-icon>more_vert</mat-icon>
-                        </button>
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-            </table>
-
-            <div class="actions-section">
-                <button mat-flat-button (click)="startAdd(BudgetStreamType.Income)">
-                    <mat-icon>add</mat-icon> Add Income
-                </button>
+    @if (data.error(); as error) {
+        <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
+    }
+    @else if (data.value()) {
+        <!-- Income Section -->
+        <mat-card class="section-card" appearance="outlined">
+            <div class="card-header">
+                <h2>Income</h2>
             </div>
 
-        </mat-card-content>
-    </mat-card>
-
-    <!-- Expenses Section -->
-    <mat-card class="section-card" appearance="outlined">
-        <div class="card-header">
-            <h2>Expenses</h2>
-        </div>
-
-        <div class="summary-section">
-            <div class="summary-item">
-                <span class="label">Monthly Total</span>
-                <span class="value expense-total">{{ expenseTotals().monthly | currency }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="label">Quarterly Total</span>
-                <span class="value expense-total">{{ expenseTotals().quarterly | currency }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="label">Yearly Total</span>
-                <span class="value expense-total expense-yearly">{{ expenseTotals().yearly | currency }}</span>
-            </div>
-        </div>
-
-        <mat-card-content>
-            <table mat-table [dataSource]="expenseStreams()" class="budget-table">
-                <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef> Name </th>
-                    <td mat-cell *matCellDef="let s">
-                        <div class="name-primary">{{s.name}}</div>
-                        <div class="mobile-details">
-                            <span class="mobile-category">{{getCategoryName(s.categoryId)}}</span>
-                            <span class="mobile-meta">
-                                {{s.amount | currency}} • {{s.recurrence}}
-                            </span>
-                        </div>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="group">
-                    <th mat-header-cell *matHeaderCellDef> Group </th>
-                    <td mat-cell *matCellDef="let s"> {{getCategoryGroup(s.categoryId)}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="category">
-                    <th mat-header-cell *matHeaderCellDef> Category </th>
-                    <td mat-cell *matCellDef="let s"> {{getCategoryName(s.categoryId)}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="amount">
-                    <th mat-header-cell *matHeaderCellDef> Amount </th>
-                    <td mat-cell *matCellDef="let s"> {{s.amount | currency}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="recurrence">
-                    <th mat-header-cell *matHeaderCellDef> Recurrence </th>
-                    <td mat-cell *matCellDef="let s">
-                        {{s.recurrence}}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef></th>
-                    <td mat-cell *matCellDef="let s">
-                        <button mat-icon-button [matMenuTriggerFor]="budgetMenu" [matMenuTriggerData]="{stream: s}"
-                            title="Actions">
-                            <mat-icon>more_vert</mat-icon>
-                        </button>
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-            </table>
-
-            <div class="actions-section">
-                <button mat-flat-button (click)="startAdd(BudgetStreamType.Expense)">
-                    <mat-icon>add</mat-icon> Add Expense
-                </button>
+            <div class="summary-section">
+                <div class="summary-item">
+                    <span class="label">Monthly Total</span>
+                    <span class="value income-total">{{ incomeTotals().monthly | currency }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Quarterly Total</span>
+                    <span class="value income-total">{{ incomeTotals().quarterly | currency }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Yearly Total</span>
+                    <span class="value income-total income-yearly">{{ incomeTotals().yearly | currency }}</span>
+                </div>
             </div>
 
-        </mat-card-content>
-    </mat-card>
+            <mat-card-content>
+                <table mat-table [dataSource]="incomeStreams()" class="budget-table">
+                    <ng-container matColumnDef="name">
+                        <th mat-header-cell *matHeaderCellDef> Name </th>
+                        <td mat-cell *matCellDef="let s">
+                            <div class="name-primary">{{s.name}}</div>
+                            <div class="mobile-details">
+                                <span class="mobile-category">{{getCategoryName(s.categoryId)}}</span>
+                                <span class="mobile-meta">
+                                    {{s.amount | currency}} • {{s.recurrence}}
+                                </span>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="group">
+                        <th mat-header-cell *matHeaderCellDef> Group </th>
+                        <td mat-cell *matCellDef="let s"> {{getCategoryGroup(s.categoryId)}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="category">
+                        <th mat-header-cell *matHeaderCellDef> Category </th>
+                        <td mat-cell *matCellDef="let s"> {{getCategoryName(s.categoryId)}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="amount">
+                        <th mat-header-cell *matHeaderCellDef> Amount </th>
+                        <td mat-cell *matCellDef="let s"> {{s.amount | currency}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="recurrence">
+                        <th mat-header-cell *matHeaderCellDef> Recurrence </th>
+                        <td mat-cell *matCellDef="let s">
+                            {{s.recurrence}}
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="actions">
+                        <th mat-header-cell *matHeaderCellDef></th>
+                        <td mat-cell *matCellDef="let s">
+                            <button mat-icon-button [matMenuTriggerFor]="budgetMenu" [matMenuTriggerData]="{stream: s}"
+                                title="Actions">
+                                <mat-icon>more_vert</mat-icon>
+                            </button>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                </table>
+
+                <div class="actions-section">
+                    <button mat-flat-button (click)="startAdd(BudgetStreamType.Income)">
+                        <mat-icon>add</mat-icon> Add Income
+                    </button>
+                </div>
+
+            </mat-card-content>
+        </mat-card>
+
+        <!-- Expenses Section -->
+        <mat-card class="section-card" appearance="outlined">
+            <div class="card-header">
+                <h2>Expenses</h2>
+            </div>
+
+            <div class="summary-section">
+                <div class="summary-item">
+                    <span class="label">Monthly Total</span>
+                    <span class="value expense-total">{{ expenseTotals().monthly | currency }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Quarterly Total</span>
+                    <span class="value expense-total">{{ expenseTotals().quarterly | currency }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Yearly Total</span>
+                    <span class="value expense-total expense-yearly">{{ expenseTotals().yearly | currency }}</span>
+                </div>
+            </div>
+
+            <mat-card-content>
+                <table mat-table [dataSource]="expenseStreams()" class="budget-table">
+                    <ng-container matColumnDef="name">
+                        <th mat-header-cell *matHeaderCellDef> Name </th>
+                        <td mat-cell *matCellDef="let s">
+                            <div class="name-primary">{{s.name}}</div>
+                            <div class="mobile-details">
+                                <span class="mobile-category">{{getCategoryName(s.categoryId)}}</span>
+                                <span class="mobile-meta">
+                                    {{s.amount | currency}} • {{s.recurrence}}
+                                </span>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="group">
+                        <th mat-header-cell *matHeaderCellDef> Group </th>
+                        <td mat-cell *matCellDef="let s"> {{getCategoryGroup(s.categoryId)}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="category">
+                        <th mat-header-cell *matHeaderCellDef> Category </th>
+                        <td mat-cell *matCellDef="let s"> {{getCategoryName(s.categoryId)}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="amount">
+                        <th mat-header-cell *matHeaderCellDef> Amount </th>
+                        <td mat-cell *matCellDef="let s"> {{s.amount | currency}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="recurrence">
+                        <th mat-header-cell *matHeaderCellDef> Recurrence </th>
+                        <td mat-cell *matCellDef="let s">
+                            {{s.recurrence}}
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="actions">
+                        <th mat-header-cell *matHeaderCellDef></th>
+                        <td mat-cell *matCellDef="let s">
+                            <button mat-icon-button [matMenuTriggerFor]="budgetMenu" [matMenuTriggerData]="{stream: s}"
+                                title="Actions">
+                                <mat-icon>more_vert</mat-icon>
+                            </button>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                </table>
+
+                <div class="actions-section">
+                    <button mat-flat-button (click)="startAdd(BudgetStreamType.Expense)">
+                        <mat-icon>add</mat-icon> Add Expense
+                    </button>
+                </div>
+
+            </mat-card-content>
+        </mat-card>
+    }
+    @else {
+        <app-card-skeleton [rows]="4"></app-card-skeleton>
+        <app-card-skeleton [rows]="4"></app-card-skeleton>
+    }
 
 </div>
 

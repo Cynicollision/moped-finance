@@ -74,7 +74,8 @@ Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates wit
 ```
 client/src/app/
   core/       API/auth services, auth guard, DateProviderService, dialogs (modal/), notifications,
-              unsaved-changes guard, loading, demo mode
+              unsaved-changes guard, demo mode
+  core/loading/  viewResource, placeholders (skeletons) and the in-place load error
   core/layout/  LayoutService, the page header, profile menu and tab-title strategy
   finance/    one folder per screen area: accounts, budget, cashflow, categories,
               dashboard, institutions, transactions, common
@@ -83,7 +84,7 @@ client/src/app/
 ```
 
 - Standalone components, routes in `app.routes.ts`. The shell (`app.html`) shows the navigation as a bottom bar, rail or side navigation by window size (APP-1.2). Every screen starts with `<app-page-header>` (title, breadcrumb trail, actions projected as content), and route `title`s become the tab title through `PageTitleStrategy`. Global styles and colour tokens are in `src/styles.scss`, shared SCSS partials (breakpoints) in `src/styles/`. Fonts (Roboto, Material Icons) are npm packages bundled into the build, so the app makes no third-party requests.
-- All HTTP goes through `core/api.service.ts`, which prefixes `Environment.apiUrl`. It's empty, so requests go to the origin that served the app: Express in production, and the dev server in development, which forwards `/api`, `/auth` and `/health` to the API on :3000 (`client/proxy.conf.json`). No CORS is needed.
+- All HTTP goes through `core/api.service.ts`, which prefixes `Environment.apiUrl`. It's empty, so requests go to the origin that served the app: Express in production, and the dev server in development, which forwards `/api`, `/auth` and `/health` to the API on :3000 (`client/proxy.conf.json`). No CORS is needed. `ApiService.load` fetches what a screen shows and throws on failure, for `viewResource` to show in place (APP-2.9); `get`, `post`, `put` and `delete` are actions, whose failures show a snackbar (APP-2.2).
 - Build configurations (`client/angular.json`, `client/src/environments/`):
   - `development`: debug mode (fixed "today" of 2026-05-17 plus a badge), dev login prefilled.
   - `production`: default for `ng build`.

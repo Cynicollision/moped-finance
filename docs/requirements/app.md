@@ -21,14 +21,15 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 
 | ID | Requirement | Status |
 |---|---|---|
-| APP-2.1 | While any request to the server is in flight, the app shall show a loading overlay. | Implemented |
-| APP-2.2 | When a request fails, the app shall show an error message for 5 seconds, placed as in APP-2.8, with a **Close** button. For client errors it shall use the server's message; if the server can't be reached it shall say "Network or server error encountered." | Implemented |
+| APP-2.1 | There shall be no full-screen loading overlay. While a screen loads what it shows for the first time, it shall show grey placeholder shapes where the content will go, never zeros or an empty state that could pass for real data. When it reloads data already on screen (a new timeframe, period, filter or sort, or after a change), it shall keep that data on screen and show a thin progress bar under the page header until the new data arrives. While an action runs, its button shall be disabled and show a small spinner: Save and Create in forms and dialogs, **Validate Import** and **Begin Import**, **Load More**, **Login** and **Register**. | Implemented |
+| APP-2.2 | When an action fails (a save, delete, import or sign-in), the app shall show an error message for 5 seconds, placed as in APP-2.8, with a **Close** button. For client errors it shall use the server's message; if the server can't be reached it shall say "Network or server error encountered." | Implemented |
 | APP-2.3 | After a successful bulk import (balances or transactions) the app shall show a success notification with the number of records created. | Implemented |
 | APP-2.4 | A record is deleted from the ⋮ menu of the screen showing it (**Delete Account** on Account Details, **Delete** on Transaction Details and a budget stream's row), or with a **Delete** button at the bottom left of its dialog (institution, category group, budget stream), shown in the error (red) color. Deleting shall first ask for confirmation in a dialog that names the action and can be cancelled, whose confirm button (Delete, Revoke) is also red. There are no separate "Danger Zone" sections. | Implemented |
 | APP-2.5 | Screens shall adapt to the width available to them, for example by hiding secondary table columns and showing that detail under the primary column, and shall not scroll sideways at any window width. | Implemented |
 | APP-2.6 | Records with few fields (institution, category, category group, budget stream) are added and edited in a dialog; records with many fields or their own address (account, transaction) and the imports are full pages. A form dialog shall fill the screen on phones, with its buttons in a bar at the bottom, and be up to 560px wide on larger screens. Its **Cancel** and main action (**Save**) sit at the bottom right, and **Delete**, when offered, at the bottom left. Esc, a click outside the dialog and its close button close it like **Cancel**. Confirmations stay small on every screen. | Implemented |
 | APP-2.7 | Leaving a form with unsaved changes shall first ask "Discard changes?" ("Your changes haven't been saved.", **Keep editing** / **Discard**): closing a dialog in any way but saving, and leaving a full-page form (Add or Edit Account, Add or Edit Transaction) by **Cancel**, a link or the navigation. A form with no changes, or one just saved, closes or leaves without asking. | Implemented |
 | APP-2.8 | Creating, saving or deleting a record shall be confirmed with a short message naming it, such as "Account added", "Transaction saved", "Group deleted" or "Token revoked", shown for 4 seconds at the bottom of the screen: centred on phones, above the bottom navigation, and at the bottom right on larger screens. Messages have no Undo. | Implemented |
+| APP-2.9 | When a screen can't load what it shows, it shall say so in place of that content ("Couldn't load this", with the reason, such as "Network or server error encountered." or the server's message) with a **Retry** button that loads it again, rather than a passing notification over an empty screen. Where only part of a screen failed, such as the Dashboard's chart, only that part is replaced. | Implemented |
 
 ## APP-3 The app is identifiable as Moped Finance
 
@@ -72,7 +73,6 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 
 - **Red and signs aren't consistent yet (APP-6).** Cashflow shows expenses in red, transaction amounts have no "+", and forms take signed amounts (liabilities must be entered negative).
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.
-- **The loading overlay shows fake zeros (APP-2.1).** Every navigation and every timeframe or filter change dims the screen behind a spinner, and the blurred backdrop briefly shows an empty or zero state (an empty Budget, a $0.00 net worth) that looks like real data.
 
 ## Notes
 

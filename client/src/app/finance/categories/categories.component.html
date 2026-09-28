@@ -1,6 +1,6 @@
 <div class="categories-container">
-    <app-page-header title="Categories" [crumbs]="[{ label: 'Settings', link: '/settings' }]">
-        <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
+    <app-page-header title="Categories" [crumbs]="[{ label: 'Settings', link: '/settings' }]" [refreshing]="data.isRefreshing()">
+        <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options" [disabled]="!data.value()">
             <mat-icon>more_vert</mat-icon>
         </button>
         <mat-menu #menu="matMenu">
@@ -15,52 +15,62 @@
         </mat-menu>
     </app-page-header>
 
-    @for (section of sections(); track section.title) {
-        <div class="category-section-wrapper">
-            <div class="section-header">
-                <h2>{{section.title}}</h2>
-            </div>
-
-            <div class="group-list">
-                @for (item of section.groupedCategories; track item.group.id) {
-                    <mat-card class="group-card">
-                        <div class="group-header">
-                            <h3>{{item.group.name}}</h3>
-                            <button mat-button class="edit-btn" (click)="editGroup(item.group)">Edit</button>
-                        </div>
-                        <mat-card-content>
-                            <div class="category-list">
-                                @for (cat of item.categories; track cat.id) {
-                                    <div class="category-row" [class.inactive]="!cat.isActive">
-                                        <div class="category-info">
-                                            <span class="icon">{{cat.icon}}</span>
-                                            <span class="name">{{cat.name}}</span>
-                                        </div>
-                                        <div class="category-actions">
-                                            @if (!cat.isActive) {
-                                                <mat-icon class="hidden-icon" matTooltip="Hidden Category">visibility_off</mat-icon>
-                                            }
-                                            <button mat-icon-button (click)="editCategory(cat)" matTooltip="Edit Category"
-                                                class="edit-category-btn">
-                                                <mat-icon>edit</mat-icon>
-                                            </button>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                            <div class="add-category-row">
-                                <button mat-button (click)="startAddCategory(item.group.id)">Create Category</button>
-                            </div>
-                        </mat-card-content>
-                    </mat-card>
-                }
-
-                @if (section.groupedCategories.length === 0) {
-                    <div class="empty-state">
-                        No {{section.title | lowercase}} groups found.
-                    </div>
-                }
-            </div>
-        </div>
+    @if (data.error(); as error) {
+        <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
     }
+    @else if (data.value()) {
+        @for (section of sections(); track section.title) {
+            <div class="category-section-wrapper">
+                <div class="section-header">
+                    <h2>{{section.title}}</h2>
+                </div>
+
+                <div class="group-list">
+                    @for (item of section.groupedCategories; track item.group.id) {
+                        <mat-card class="group-card">
+                            <div class="group-header">
+                                <h3>{{item.group.name}}</h3>
+                                <button mat-button class="edit-btn" (click)="editGroup(item.group)">Edit</button>
+                            </div>
+                            <mat-card-content>
+                                <div class="category-list">
+                                    @for (cat of item.categories; track cat.id) {
+                                        <div class="category-row" [class.inactive]="!cat.isActive">
+                                            <div class="category-info">
+                                                <span class="icon">{{cat.icon}}</span>
+                                                <span class="name">{{cat.name}}</span>
+                                            </div>
+                                            <div class="category-actions">
+                                                @if (!cat.isActive) {
+                                                    <mat-icon class="hidden-icon" matTooltip="Hidden Category">visibility_off</mat-icon>
+                                                }
+                                                <button mat-icon-button (click)="editCategory(cat)" matTooltip="Edit Category"
+                                                    class="edit-category-btn">
+                                                    <mat-icon>edit</mat-icon>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="add-category-row">
+                                    <button mat-button (click)="startAddCategory(item.group.id)">Create Category</button>
+                                </div>
+                            </mat-card-content>
+                        </mat-card>
+                    }
+
+                    @if (section.groupedCategories.length === 0) {
+                        <div class="empty-state">
+                            No {{section.title | lowercase}} groups found.
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+    @else {
+        <app-card-skeleton [rows]="4"></app-card-skeleton>
+        <app-card-skeleton [rows]="4"></app-card-skeleton>
+    }
+
 </div>

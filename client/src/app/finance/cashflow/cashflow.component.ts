@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, LowerCasePipe, PercentPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -12,11 +12,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { CalendarPeriod } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
-import { CashflowStream } from '@shared/finance/contracts';
 import { CategoryClass } from '@shared/finance/enum';
-import { Category, CategoryGroup } from '@shared/finance/types';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { DateProviderService } from './../../core/date-provider.service';
+import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
+import { LoadErrorComponent } from './../../core/loading/load-error.component';
+import { viewResource } from './../../core/loading/view-resource';
 import { FinanceService } from './../finance.service';
 
 interface CashflowRow {
@@ -41,12 +42,14 @@ interface CashflowRow {
         MatButtonToggleModule,
         MatTableModule,
         MatIconModule,
-        PageHeaderComponent
+        PageHeaderComponent,
+        CardSkeletonComponent,
+        LoadErrorComponent
     ],
     templateUrl: './cashflow.component.html',
     styleUrl: './cashflow.component.scss'
 })
-export class FinanceCashflowComponent implements OnInit {
+export class FinanceCashflowComponent {
     private financeService = inject(FinanceService);
     private router = inject(Router);
     private dateProvider = inject(DateProviderService);
@@ -78,9 +81,33 @@ export class FinanceCashflowComponent implements OnInit {
     readonly selectedQuarter = signal(Math.floor(this.today.getMonth() / 3) + 1);
     readonly viewMode = signal<'category' | 'group'>('category');
 
-    private readonly categoryMap = signal(new Map<string, Category>());
-    private readonly groupMap = signal(new Map<string, CategoryGroup>());
-    private readonly cashflowStreams = signal<CashflowStream[]>([]);
+    readonly lookups = viewResource({
+        loader: async () => {
+            const [categories, groups] = await Promise.all([
+                this.financeService.fetchCategories(false),
+                this.financeService.fetchCategoryGroups()
+            ]);
+            return { categories, groups };
+        }
+    });
+
+    // The period's totals: reloads when the period changes, keeping the old ones on screen meanwhile.
+    readonly streams = viewResource({
+        params: () => ({ period: this.selectedPeriod(), asOfDate: this.getAsOfDate() }),
+        loader: ({ period, asOfDate }) => this.financeService.fetchCashflowStreams(period, asOfDate)
+    });
+
+    private readonly categoryMap = computed(() => new Map((this.lookups.value()?.categories ?? []).map(c => [c.id, c])));
+    private readonly groupMap = computed(() => new Map((this.lookups.value()?.groups ?? []).map(g => [g.id, g])));
+    private readonly cashflowStreams = computed(() => this.streams.value() ?? []);
+
+    readonly error = computed(() => this.lookups.error() ?? this.streams.error());
+    readonly isLoaded = computed(() => this.lookups.value() !== undefined && this.streams.value() !== undefined);
+
+    retry() {
+        this.lookups.reload();
+        this.streams.reload();
+    }
 
     private readonly rows = computed(() => {
         const viewMode = this.viewMode();
@@ -125,23 +152,6 @@ export class FinanceCashflowComponent implements OnInit {
     readonly totalExpenses = computed(() => this.expenseStreams().reduce((sum, row) => sum + Math.abs(row.amount), 0));
     readonly totalSavings = computed(() => this.totalIncome() - this.totalExpenses());
     readonly savingsRate = computed(() => this.totalIncome() > 0 ? this.totalSavings() / this.totalIncome() : 0);
-
-    async ngOnInit() {
-        const [categories, groups] = await Promise.all([
-            this.financeService.fetchCategories(false),
-            this.financeService.fetchCategoryGroups()
-        ]);
-        this.categoryMap.set(new Map((categories || []).map(c => [c.id, c])));
-        this.groupMap.set(new Map((groups || []).map(g => [g.id, g])));
-
-        await this.loadData();
-    }
-
-    async loadData() {
-        const asOfDate = this.getAsOfDate();
-        const streams = await this.financeService.fetchCashflowStreams(this.selectedPeriod(), asOfDate);
-        this.cashflowStreams.set(streams || []);
-    }
 
     /** The first day of the selected period. */
     private getAsOfDate(): CalendarDate {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -9,6 +9,9 @@ import { BudgetStreamType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { CalendarPeriod } from '@shared/core/enum';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
+import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
+import { LoadErrorComponent } from './../../core/loading/load-error.component';
+import { viewResource } from './../../core/loading/view-resource';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
@@ -30,12 +33,14 @@ export interface BudgetTotals {
         MatButtonModule,
         MatIconModule,
         MatMenuModule,
-        PageHeaderComponent
+        PageHeaderComponent,
+        CardSkeletonComponent,
+        LoadErrorComponent
     ],
     templateUrl: './budget.component.html',
     styleUrl: './budget.component.scss'
 })
-export class FinanceBudgetComponent implements OnInit {
+export class FinanceBudgetComponent {
     private financeService = inject(FinanceService);
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
@@ -43,9 +48,19 @@ export class FinanceBudgetComponent implements OnInit {
     readonly BudgetStreamType = BudgetStreamType;
     readonly displayedColumns: string[] = ['name', 'group', 'category', 'amount', 'recurrence', 'actions'];
 
-    private readonly categories = signal<Category[]>([]);
-    private readonly groups = signal<CategoryGroup[]>([]);
-    private readonly budgetStreams = signal<BudgetStream[]>([]);
+    readonly data = viewResource({
+        loader: async () => {
+            const [categories, groups, budgetStreams] = await Promise.all([
+                this.financeService.fetchCategories(false),
+                this.financeService.fetchCategoryGroups(),
+                this.financeService.fetchBudgetStreams()
+            ]);
+            return { categories, groups, budgetStreams };
+        }
+    });
+    private readonly categories = computed<Category[]>(() => this.data.value()?.categories ?? []);
+    private readonly groups = computed<CategoryGroup[]>(() => this.data.value()?.groups ?? []);
+    private readonly budgetStreams = computed<BudgetStream[]>(() => this.data.value()?.budgetStreams ?? []);
 
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
     private readonly groupMap = computed(() => new Map(this.groups().map(g => [g.id, g])));
@@ -55,22 +70,6 @@ export class FinanceBudgetComponent implements OnInit {
 
     readonly incomeTotals = computed(() => this.getTotals(this.incomeStreams()));
     readonly expenseTotals = computed(() => this.getTotals(this.expenseStreams()));
-
-    async ngOnInit() {
-        await this.loadData();
-    }
-
-    async loadData() {
-        const [categories, groups, budgetStreams] = await Promise.all([
-            this.financeService.fetchCategories(false),
-            this.financeService.fetchCategoryGroups(),
-            this.financeService.fetchBudgetStreams()
-        ]);
-
-        this.categories.set(categories || []);
-        this.groups.set(groups || []);
-        this.budgetStreams.set(budgetStreams || []);
-    }
 
     private streamsOfType(type: BudgetStreamType): BudgetStream[] {
         return this.budgetStreams()
@@ -164,14 +163,14 @@ export class FinanceBudgetComponent implements OnInit {
             FinanceBudgetFormModalComponent, data
         );
         if (changed) {
-            await this.loadData();
+            this.data.reload();
         }
     }
 
     async delete(stream: BudgetStream) {
         if (await confirmDeleteStream(this.modalService, stream) && await this.financeService.deleteBudgetStream(stream.id)) {
             this.notificationService.success(`${stream.type === BudgetStreamType.Income ? 'Income' : 'Expense'} deleted`);
-            await this.loadData();
+            this.data.reload();
         }
     }
 }
