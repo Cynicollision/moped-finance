@@ -36,12 +36,18 @@
                     <app-money class="headline" [amount]="totalSavings()" tone="favourable" digits="1.0-0"></app-money>
                     <span class="rate">{{ savingsRate() | percent:'1.0-0' }} of income</span>
                 </div>
+                @if (budgetedSavings() !== undefined) {
+                    <span class="budgeted">of <app-money [amount]="budgetedSavings()!" digits="1.0-0"></app-money> budgeted</span>
+                }
             </div>
             <div class="summary-figures">
                 @for (section of sections(); track section.title) {
                     <div class="figure">
                         <span class="label">{{ section.title }}</span>
                         <app-money class="value" [amount]="section.total" [tone]="section.tone" digits="1.0-0"></app-money>
+                        @if (section.budget !== undefined) {
+                            <span class="budgeted">of <app-money [amount]="section.budget" digits="1.0-0"></app-money> budgeted</span>
+                        }
                     </div>
                 }
             </div>
@@ -55,10 +61,25 @@
                 </div>
 
                 @if (section.rows.length) {
-                    <app-list [columns]="columns" [showHeader]="false">
+                    <app-list [columns]="columns()" [showHeader]="hasBudget()">
                         @for (row of section.rows; track row.id) {
                             <a appListRow routerLink="/transactions" [queryParams]="rowQueryParams(row)">
                                 <span appListCell="name">{{ row.name }}</span>
+                                @if (row.budget !== undefined) {
+                                    <span appListCell="budget">
+                                        <span class="narrow-only">Budget </span><app-money [amount]="row.budget" digits="1.0-0"></app-money>
+                                    </span>
+                                }
+                                @if (difference(row, section); as diff) {
+                                    <span appListCell="difference" class="difference" [class.bad]="diff.isBad">
+                                        @if (diff.amount) {
+                                            <app-money [amount]="diff.amount" digits="1.0-0"></app-money> {{ diff.text }}
+                                        }
+                                        @else {
+                                            {{ diff.text }}
+                                        }
+                                    </span>
+                                }
                                 <app-money appListCell="amount" [amount]="row.amount" [tone]="section.tone"></app-money>
                             </a>
                         }

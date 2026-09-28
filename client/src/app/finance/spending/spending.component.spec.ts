@@ -3,8 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
-import { CategoryClass } from '@shared/finance/enum';
-import { Category, CategoryGroup } from '@shared/finance/types';
+import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
+import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { LayoutService } from './../../core/layout/layout.service';
 import { FinanceService } from './../finance.service';
@@ -23,6 +23,7 @@ describe('FinanceSpendingComponent', () => {
         { id: 'rent', groupId: 'housing', name: 'Rent', icon: '🏠', isActive: true, ...created },
         { id: 'utilities', groupId: 'housing', name: 'Utilities', icon: '💡', isActive: true, ...created },
         { id: 'groceries', groupId: 'food', name: 'Groceries', icon: '🛒', isActive: true, ...created },
+        { id: 'dining', groupId: 'food', name: 'Dining', icon: '🍽️', isActive: true, ...created },
         { id: 'card', groupId: 'transfers', name: 'Card Payment', icon: '💳', isActive: true, ...created }
     ];
     const totals: SpendingTotal[] = [
@@ -33,13 +34,28 @@ describe('FinanceSpendingComponent', () => {
         { categoryId: 'card', amount: -900 }
     ];
 
-    // Renders Spending once its categories and the period's totals have loaded, with today 2026-05-17. The transactions
-    // are the oldest and newest, which bound the years offered.
-    async function render(periodTotals = totals, oldest?: string, newest?: string) {
+    function stream(categoryId: string, amount: number, recurrence = CalendarPeriod.Monthly): BudgetStream {
+        return { id: `${categoryId}-${amount}`, type: BudgetStreamType.Expense, name: categoryId, categoryId, amount, recurrence, ...created };
+    }
+
+    // Per month: $4,200 of pay, $2,150 of expenses (groceries quarterly), and $500 moved to savings.
+    const budget: BudgetStream[] = [
+        stream('pay', 4200),
+        stream('rent', 1500),
+        stream('groceries', 1200, CalendarPeriod.Quarterly),
+        stream('utilities', 150),
+        stream('dining', 100),
+        stream('card', 500)
+    ];
+
+    // Renders Spending once its categories, budget and the period's totals have loaded, with today 2026-05-17. The
+    // transactions are the oldest and newest, which bound the years offered.
+    async function render(periodTotals = totals, oldest?: string, newest?: string, budgetStreams: BudgetStream[] = []) {
         const edge = (date?: string) => date ? [{ id: date, date }] : [];
         const financeService = {
             fetchCategories: vi.fn().mockResolvedValue(categories),
             fetchCategoryGroups: vi.fn().mockResolvedValue(groups),
+            fetchBudgetStreams: vi.fn().mockResolvedValue(budgetStreams),
             fetchSpendingTotals: vi.fn().mockResolvedValue(periodTotals),
             fetchTransactions: vi.fn((search: TransactionSearchOptions) =>
                 Promise.resolve(search.sortDirection === SortDirection.Asc ? edge(oldest) : edge(newest)))
@@ -61,6 +77,10 @@ describe('FinanceSpendingComponent', () => {
 
     function text(element: Element | null): string {
         return element!.textContent!.replace(/\s+/g, ' ').trim();
+    }
+
+    function budgeted(element: HTMLElement): string[] {
+        return Array.from(element.querySelectorAll('.summary-card .budgeted')).map(text);
     }
 
     /** Saved, the savings rate, then Income and Expenses, as the summary card shows them. */
@@ -236,6 +256,64 @@ describe('FinanceSpendingComponent', () => {
         const selected = Array.from(document.querySelectorAll('.picker-option[aria-pressed="true"]')).map(text);
         expect(selected).toEqual(['May']);
         fixture.componentInstance.closePicker();
+    });
+
+    it('CASH-1.10 should show each budgeted category\'s budget and how the actual compares', async () => {
+        const { element } = await render(totals, undefined, undefined, budget);
+
+        expect(sectionRows(element, 'Income')).toEqual(['💼 Paycheck Budget $4,200 $200 under $4,000.00']);
+        expect(sectionRows(element, 'Expenses')).toEqual([
+            '🏠 Rent Budget $1,500 on budget $1,500.00',
+            '🛒 Groceries Budget $400 $100 under $300.00',
+            '💡 Utilities Budget $150 $50 over $200.00',
+            '🍽️ Dining Budget $100 $100 under $0.00'
+        ]);
+        // Under on income and over on an expense are the bad ones.
+        const bad = Array.from(element.querySelectorAll('.difference.bad')).map(text);
+        expect(bad).toEqual(['$200 under', '$50 over']);
+        expect(text(section(element, 'Expenses').querySelector('.app-list-header'))).toBe('Category Budget Difference Actual');
+    });
+
+    it('CASH-1.10 should multiply the monthly budget by the months in the period', async () => {
+        const fixture = await render(totals, undefined, undefined, budget);
+
+        fixture.componentInstance.selection.set({ period: CalendarPeriod.Quarterly, start: '2026-04-01' });
+        await fixture.whenStable();
+
+        expect(sectionRows(fixture.element, 'Expenses')[0]).toBe('🏠 Rent Budget $4,500 $3,000 under $1,500.00');
+        expect(sectionRows(fixture.element, 'Expenses')[1]).toBe('🛒 Groceries Budget $1,200 $900 under $300.00');
+    });
+
+    it('CASH-1.10 should give a group the budgets of its categories added up', async () => {
+        const fixture = await render(totals, undefined, undefined, budget);
+
+        fixture.componentInstance.viewMode.set('group');
+        await fixture.whenStable();
+
+        expect(sectionRows(fixture.element, 'Expenses')).toEqual([
+            'Housing Budget $1,650 $50 over $1,700.00',
+            'Food Budget $500 $200 under $300.00'
+        ]);
+    });
+
+    it('CASH-1.10 should leave out the budget columns when nothing is budgeted', async () => {
+        const { element } = await render();
+
+        expect(element.querySelector('.difference')).toBeNull();
+        expect(element.querySelector('.app-list-header')).toBeNull();
+    });
+
+    it('CASH-1.11 should show what was budgeted under Saved, Income and Expenses', async () => {
+        const { element } = await render(totals, undefined, undefined, budget);
+
+        expect(budgeted(element)).toEqual(['of $2,050 budgeted', 'of $4,200 budgeted', 'of $2,150 budgeted']);
+    });
+
+    it('CASH-1.11 should show a budgeted total only for a type with streams', async () => {
+        const { element } = await render(totals, undefined, undefined, [stream('rent', 1500)]);
+
+        expect(budgeted(element)).toEqual(['of -$1,500 budgeted', 'of $1,500 budgeted']);
+        expect(section(element, 'Income').querySelector('.difference')).toBeNull();
     });
 
     it('CASH-1.6 should open Transactions filtered to the row and every day of the period', async () => {

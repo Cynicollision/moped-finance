@@ -138,6 +138,35 @@ app-page-header {
     }
 }
 
+// A budgeted amount under an actual one (CASH-1.11).
+.budgeted {
+    font: var(--mat-sys-body-small);
+    color: var(--text-muted);
+}
+
+// A row's budget and difference (CASH-1.10). Narrow, they sit under the name, where "Budget" says what the first is.
+.difference {
+    color: var(--text-muted);
+}
+
+.app-list-cell.difference.bad {
+    color: var(--color-negative);
+}
+
+@include bp.content-from(bp.$expanded) {
+    .narrow-only {
+        display: none;
+    }
+}
+
+// Narrow, the difference follows the budget on the second line rather than lining up at the end.
+@include bp.content-below(bp.$expanded) {
+    .app-list-row .app-list-cell.difference {
+        justify-self: start;
+        text-align: start;
+    }
+}
+
 .empty {
     margin: 0;
     padding: 24px 16px;

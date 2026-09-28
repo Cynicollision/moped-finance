@@ -17,12 +17,11 @@ Screen: **Spending** (`/spending`). It was called Cashflow until 2026-09-28; `/c
 | CASH-1.7 | An empty section shall say "No income in this period." or "No expenses in this period." | Implemented |
 | CASH-1.8 | Spending shall show how the period's expenses split between **Essential** and **Discretionary** categories (CAT-3.1), as amounts and as shares of total expenses. | Planned |
 | CASH-1.9 | A category whose net for the period runs against its type (an Expense category whose refunds exceed its spending, or an Income category that's net money out) shall be shown as a negative amount in its section (for example "-$20.00" under Expenses) and reduce that section's total. The same applies to a group in Group view. | Implemented |
-| CASH-1.10 | In the Income and Expenses sections, a category with budget streams (BUD) shall show its budget for the period next to the actual amount, with the difference ("$40 under", "$25 over"). The period's budget is the streams' monthly total times the months in the period (1, 3 or 12). Over budget on an expense, or under on income, is shown in red. In Group view a group's budget is the sum of its categories'. | Planned |
-| CASH-1.11 | The summary card (CASH-1.4) shall show the period's budgeted **Income** and **Expenses** beneath the actual ones, when any streams of that type exist. | Planned |
+| CASH-1.10 | In the Income and Expenses sections, a category with budget streams (BUD) shall show its budget for the period and how the actual compares, in whole dollars: "$40 under", "$25 over" or "on budget". The period's budget is the streams' monthly total times the months in the period (1, 3 or 12), compared with the whole period even while it's still under way. Over budget on an expense, or under on income, is shown in red. A budgeted category with nothing in the period still shows, at $0.00, so the rows add up to the budget. In Group view a group's budget is the sum of its categories'. The **Budget** and **Difference** columns (with **Actual**) appear only when something is budgeted; on narrow screens (APP-7.1) they go under the name, "Budget $500 · $40 under". | Implemented |
+| CASH-1.11 | The summary card (CASH-1.4) shall show the period's budget under **Income** and **Expenses** ("of $8,200 budgeted") when any streams of that type exist, and under **Saved** the budgeted income less budgeted expenses when any Income or Expense streams exist. | Implemented |
 
 ## Known gaps
 
-- **No budget figures (CASH-1.10, CASH-1.11).**
 - **Income versus expense is decided in the browser.** The server returns totals per category and the screen applies CASH-1.3 using the categories and groups it has loaded.
 
 ## Notes
