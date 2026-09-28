@@ -10,13 +10,31 @@ import { MatInputModule } from '@angular/material/input';
 import { startWith, map } from 'rxjs';
 import { CalendarPeriod } from '@shared/core/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
-import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
+import { BudgetStreamType } from '@shared/finance/enum';
+import { BudgetStreamUtil } from '@shared/finance/util';
 import { ModalCancelDirective } from './../../core/modal/modal-cancel.directive';
 import { ModalLayoutComponent } from './../../core/modal/modal-layout.component';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { HasUnsavedChanges } from './../../core/unsaved-changes';
 import { FinanceService } from './../finance.service';
+
+const typeLabels: Record<BudgetStreamType, string> = {
+    [BudgetStreamType.Income]: 'Income',
+    [BudgetStreamType.Expense]: 'Expense',
+    [BudgetStreamType.Savings]: 'Savings'
+};
+
+const namePlaceholders: Record<BudgetStreamType, string> = {
+    [BudgetStreamType.Income]: 'e.g. Salary',
+    [BudgetStreamType.Expense]: 'e.g. Rent',
+    [BudgetStreamType.Savings]: 'e.g. Emergency fund'
+};
+
+/** "Income", "Expense" or "Savings", for titles and messages (BUD-1.3, BUD-1.4). */
+export function streamTypeLabel(type: BudgetStreamType): string {
+    return typeLabels[type];
+}
 
 /** Asks before deleting a budget stream (APP-2.4), from its dialog or its row menu. */
 export async function confirmDeleteStream(modalService: ModalService, stream: BudgetStream): Promise<boolean> {
@@ -37,8 +55,8 @@ export interface BudgetFormModalData {
 }
 
 /**
- * Adds, edits or deletes a budget stream (BUD-1.3, BUD-1.4). Saves and deletes itself and closes with true once
- * something changed.
+ * Adds, edits or deletes a budget stream (BUD-1.3, BUD-1.4), in a side panel (ModalOptions size 'panel'). Saves
+ * and deletes itself and closes with true once something changed.
  */
 @Component({
     selector: 'app-budget-form-modal',
@@ -67,8 +85,6 @@ export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChange
     readonly data = inject<BudgetFormModalData>(MAT_DIALOG_DATA);
 
     readonly budgetForm = this.fb.group({
-        id: [null as string | null],
-        type: [this.data.type, Validators.required],
         name: ['', Validators.required],
         categoryId: ['', Validators.required],
         amount: [0, [Validators.required, Validators.min(0)]],
@@ -80,16 +96,15 @@ export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChange
     readonly categories = signal<Category[]>([]);
     readonly filteredCategories = signal<Category[]>([]);
 
-    get typeString(): string {
-        return this.data.type === BudgetStreamType.Income ? 'Income' : 'Expense';
-    }
+    readonly typeString = streamTypeLabel(this.data.type);
+    readonly namePlaceholder = namePlaceholders[this.data.type];
 
     ngOnInit() {
-        const targetClass = this.data.type === BudgetStreamType.Income ? CategoryClass.Income : CategoryClass.Expense;
+        // Only categories whose class gives this type (BUD-1.1, BUD-1.3): Transfer categories for Savings.
         const groupMap = new Map(this.data.groups.map(g => [g.id, g]));
         const available = this.data.categories.filter(c => {
             const group = groupMap.get(c.groupId);
-            return group?.class === targetClass;
+            return !!group && BudgetStreamUtil.typeOf(group.class) === this.data.type;
         });
         this.categories.set(available);
 
@@ -136,8 +151,8 @@ export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChange
         }
 
         this.isSaving.set(true);
-        const { type, name, categoryId, amount, recurrence } = this.budgetForm.getRawValue();
-        const values = { type: type!, name: name!, categoryId: categoryId!, amount: amount!, recurrence: recurrence! };
+        const { name, categoryId, amount, recurrence } = this.budgetForm.getRawValue();
+        const values = { name: name!, categoryId: categoryId!, amount: amount!, recurrence: recurrence! };
         const saved = this.data.stream
             ? await this.financeService.saveBudgetStream({ ...this.data.stream, ...values })
             : await this.financeService.createBudgetStream(values);

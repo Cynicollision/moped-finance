@@ -1,9 +1,9 @@
 <app-modal-layout [title]="isEditing ? 'Edit ' + typeString : 'Add ' + typeString">
-    <form id="budget-form" [formGroup]="budgetForm" (ngSubmit)="save()" class="budget-form">
+    <form id="budget-form" [formGroup]="budgetForm" (ngSubmit)="save()">
         <div class="form-row">
             <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="e.g. Salary, Rent">
+                <input matInput formControlName="name" [placeholder]="namePlaceholder">
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -20,7 +20,8 @@
 
             <mat-form-field appearance="outline">
                 <mat-label>Amount</mat-label>
-                <input matInput type="number" formControlName="amount" prefix="$">
+                <span matTextPrefix>$&nbsp;</span>
+                <input matInput type="number" inputmode="decimal" min="0" formControlName="amount">
             </mat-form-field>
 
             <mat-form-field appearance="outline">

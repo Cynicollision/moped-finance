@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, WritableSignal, computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { LayoutService, SizeClass } from './../layout/layout.service';
 import { HasUnsavedChanges } from './../unsaved-changes';
-import { ModalService } from './modal.service';
+import { ModalOptions, ModalService } from './modal.service';
 
 @Component({
     selector: 'app-stub-form-dialog',
@@ -26,9 +26,9 @@ describe('ModalService', () => {
         return TestBed.inject(ModalService);
     }
 
-    async function open(service: ModalService) {
+    async function open(service: ModalService, options?: ModalOptions) {
         let closed = false;
-        const result = service.open(StubFormDialogComponent).then(() => {
+        const result = service.open(StubFormDialogComponent, undefined, options).then(() => {
             closed = true;
         });
         await settle();
@@ -104,5 +104,19 @@ describe('ModalService', () => {
 
         expect(document.querySelector('app-stub-form-dialog')).not.toBeNull();
         expect(document.querySelector('.full-screen-dialog')).toBeNull();
+    });
+
+    it('APP-2.6 should show a side panel on larger windows, and fill the screen on phones', async () => {
+        const service = setup('expanded');
+
+        const panel = await open(service, { size: 'panel' });
+        expect(document.querySelector('.side-panel-dialog app-stub-form-dialog')).not.toBeNull();
+        pressEscape();
+        await panel.result;
+
+        (TestBed.inject(LayoutService).sizeClass as WritableSignal<SizeClass>).set('compact');
+        await open(service, { size: 'panel' });
+        expect(document.querySelector('.full-screen-dialog app-stub-form-dialog')).not.toBeNull();
+        expect(document.querySelector('.side-panel-dialog')).toBeNull();
     });
 });

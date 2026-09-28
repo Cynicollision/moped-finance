@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { CalendarPeriod } from '@shared/core/enum';
-import { AccountCategory, AccountGroup, AccountType, BudgetStreamType, CategoryClass } from '@shared/finance/enum';
+import { AccountCategory, AccountGroup, AccountType, CategoryClass } from '@shared/finance/enum';
 import { FinanceAccountData } from '@server/api/accounts/account-data';
 import { FinanceBalanceHistoryData } from '@server/api/accounts/balance-history-data';
 import { FinanceBudgetStreamData } from '@server/api/budget/budget-stream-data';
@@ -116,10 +116,9 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
 
         const budgetStreamData = new FinanceBudgetStreamData(dbClient);
         const streamsFile = 'budget-streams.csv';
-        const streamRows = readRows(streamsFile, ['Type', 'Name', 'CategoryName', 'Recurrence', 'Amount']);
+        const streamRows = readRows(streamsFile, ['Name', 'CategoryName', 'Recurrence', 'Amount']);
         for (const row of streamRows) {
             await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
-                type: row.values['Type'] as BudgetStreamType,
                 name: row.values['Name'],
                 categoryId: idOf(categoryIds, row.values['CategoryName'], streamsFile, row),
                 recurrence: row.values['Recurrence'] as CalendarPeriod,

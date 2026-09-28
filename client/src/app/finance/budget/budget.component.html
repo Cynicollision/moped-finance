@@ -5,109 +5,69 @@
         <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
     }
     @else if (data.value()) {
-        <!-- Income Section -->
-        <mat-card class="section-card" appearance="outlined">
-            <div class="card-header">
-                <h2>Income</h2>
-            </div>
-
-            <div class="summary-section">
-                <div class="summary-item">
-                    <span class="label">Monthly Total</span>
-                    <app-money class="value" [amount]="incomeTotals().monthly" tone="favourable"></app-money>
+        <mat-card class="summary-card" appearance="outlined">
+            <div class="summary-top">
+                <div class="left-over">
+                    <span class="label">Left over</span>
+                    <app-money class="headline" [amount]="leftOver()" tone="favourable" digits="1.0-0"></app-money>
                 </div>
-                <div class="summary-item">
-                    <span class="label">Quarterly Total</span>
-                    <app-money class="value" [amount]="incomeTotals().quarterly" tone="favourable"></app-money>
-                </div>
-                <div class="summary-item">
-                    <span class="label">Yearly Total</span>
-                    <app-money class="value" [amount]="incomeTotals().yearly" tone="favourable"></app-money>
-                </div>
-            </div>
-
-            <mat-card-content>
-                <app-list [columns]="columns">
-                    @for (s of incomeStreams(); track s.id) {
-                        <div appListRow>
-                            <span appListCell="name">{{ s.name }}</span>
-                            <span appListCell="group">{{ getCategoryGroup(s.categoryId) }}</span>
-                            <span appListCell="category">{{ getCategoryName(s.categoryId) }}</span>
-                            <app-money appListCell="amount" [amount]="s.amount"></app-money>
-                            <span appListCell="recurrence">{{ s.recurrence }}</span>
-                            <span appListCell="actions">
-                                <button mat-icon-button [matMenuTriggerFor]="budgetMenu" [matMenuTriggerData]="{stream: s}"
-                                    [attr.aria-label]="'Actions for ' + s.name">
-                                    <mat-icon>more_vert</mat-icon>
-                                </button>
-                            </span>
-                        </div>
+                <mat-button-toggle-group class="period-toggle" [value]="period()" (change)="period.set($event.value)"
+                    hideSingleSelectionIndicator aria-label="Period">
+                    @for (p of periods; track p) {
+                        <mat-button-toggle [value]="p">{{ p }}</mat-button-toggle>
                     }
-                </app-list>
+                </mat-button-toggle-group>
+            </div>
+            <div class="summary-figures">
+                @for (section of sections(); track section.type) {
+                    <div class="figure">
+                        <span class="label">{{ section.title }}</span>
+                        <app-money class="value" [amount]="forPeriod(section.monthly)" [tone]="section.tone" digits="1.0-0"></app-money>
+                    </div>
+                }
+            </div>
+        </mat-card>
 
-                <div class="actions-section">
-                    <button mat-flat-button (click)="startAdd(BudgetStreamType.Income)">
-                        <mat-icon>add</mat-icon> Add Income
+        @for (section of sections(); track section.type) {
+            <mat-card class="section-card" appearance="outlined">
+                <div class="section-header">
+                    <h2>{{ section.title }}</h2>
+                    <app-money class="section-total" [amount]="forPeriod(section.monthly)" [tone]="section.tone" digits="1.0-0"></app-money>
+                    <button mat-button (click)="startAdd(section.type)" [attr.aria-label]="'Add ' + section.title">
+                        <mat-icon>add</mat-icon> Add
                     </button>
                 </div>
 
-            </mat-card-content>
-        </mat-card>
-
-        <!-- Expenses Section -->
-        <mat-card class="section-card" appearance="outlined">
-            <div class="card-header">
-                <h2>Expenses</h2>
-            </div>
-
-            <div class="summary-section">
-                <div class="summary-item">
-                    <span class="label">Monthly Total</span>
-                    <app-money class="value" [amount]="expenseTotals().monthly"></app-money>
-                </div>
-                <div class="summary-item">
-                    <span class="label">Quarterly Total</span>
-                    <app-money class="value" [amount]="expenseTotals().quarterly"></app-money>
-                </div>
-                <div class="summary-item">
-                    <span class="label">Yearly Total</span>
-                    <app-money class="value" [amount]="expenseTotals().yearly"></app-money>
-                </div>
-            </div>
-
-            <mat-card-content>
-                <app-list [columns]="columns">
-                    @for (s of expenseStreams(); track s.id) {
-                        <div appListRow>
-                            <span appListCell="name">{{ s.name }}</span>
-                            <span appListCell="group">{{ getCategoryGroup(s.categoryId) }}</span>
-                            <span appListCell="category">{{ getCategoryName(s.categoryId) }}</span>
-                            <app-money appListCell="amount" [amount]="s.amount"></app-money>
-                            <span appListCell="recurrence">{{ s.recurrence }}</span>
-                            <span appListCell="actions">
-                                <button mat-icon-button [matMenuTriggerFor]="budgetMenu" [matMenuTriggerData]="{stream: s}"
-                                    [attr.aria-label]="'Actions for ' + s.name">
-                                    <mat-icon>more_vert</mat-icon>
-                                </button>
-                            </span>
-                        </div>
-                    }
-                </app-list>
-
-                <div class="actions-section">
-                    <button mat-flat-button (click)="startAdd(BudgetStreamType.Expense)">
-                        <mat-icon>add</mat-icon> Add Expense
-                    </button>
-                </div>
-
-            </mat-card-content>
-        </mat-card>
+                @if (section.streams.length) {
+                    <app-list [columns]="columns">
+                        @for (s of section.streams; track s.id) {
+                            <div appListRow>
+                                <span appListCell="name">{{ s.name }}</span>
+                                <span appListCell="group">{{ getCategoryGroup(s.categoryId) }}</span>
+                                <span appListCell="category">{{ getCategoryName(s.categoryId) }}</span>
+                                <app-money appListCell="amount" [amount]="s.amount"></app-money>
+                                <span appListCell="recurrence">{{ s.recurrence }}</span>
+                                <span appListCell="actions">
+                                    <button mat-icon-button [matMenuTriggerFor]="budgetMenu" [matMenuTriggerData]="{stream: s}"
+                                        [attr.aria-label]="'Actions for ' + s.name">
+                                        <mat-icon>more_vert</mat-icon>
+                                    </button>
+                                </span>
+                            </div>
+                        }
+                    </app-list>
+                }
+                @else {
+                    <p class="empty">{{ section.empty }}</p>
+                }
+            </mat-card>
+        }
     }
     @else {
+        <app-card-skeleton [rows]="2"></app-card-skeleton>
         <app-card-skeleton [rows]="4"></app-card-skeleton>
         <app-card-skeleton [rows]="4"></app-card-skeleton>
     }
-
 </div>
 
 <mat-menu #budgetMenu="matMenu">

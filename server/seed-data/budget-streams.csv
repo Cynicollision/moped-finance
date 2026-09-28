@@ -1,15 +1,17 @@
-Type,Name,CategoryName,Recurrence,Amount
-income,Salary,Paycheck,Monthly,7200.00
-income,Savings interest,Interest,Monthly,40.00
-income,Brokerage dividends,Dividends,Quarterly,150.00
-expense,Mortgage,Mortgage Payment,Monthly,1850.00
-expense,Utilities,Utilities,Monthly,200.00
-expense,Internet and phone,Internet & Phone,Monthly,135.00
-expense,Groceries,Groceries,Monthly,700.00
-expense,Eating out,Restaurants,Monthly,250.00
-expense,Gas,Gas,Monthly,150.00
-expense,Car insurance,Auto Insurance,Quarterly,540.00
-expense,Streaming and apps,Subscriptions,Monthly,30.00
-expense,Gym,Fitness,Monthly,45.00
-expense,Vacations,Travel,Yearly,3000.00
-expense,Holiday gifts,Gifts,Yearly,1000.00
+Name,CategoryName,Recurrence,Amount
+Salary,Paycheck,Monthly,7200.00
+Savings interest,Interest,Monthly,40.00
+Brokerage dividends,Dividends,Quarterly,150.00
+Mortgage,Mortgage Payment,Monthly,1850.00
+Utilities,Utilities,Monthly,200.00
+Internet and phone,Internet & Phone,Monthly,135.00
+Groceries,Groceries,Monthly,700.00
+Eating out,Restaurants,Monthly,250.00
+Gas,Gas,Monthly,150.00
+Car insurance,Auto Insurance,Quarterly,540.00
+Streaming and apps,Subscriptions,Monthly,30.00
+Gym,Fitness,Monthly,45.00
+Vacations,Travel,Yearly,3000.00
+Holiday gifts,Gifts,Yearly,1000.00
+Emergency fund,Savings Transfer,Monthly,500.00
+Retirement,Investment Contribution,Monthly,1000.00

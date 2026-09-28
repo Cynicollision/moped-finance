@@ -46,6 +46,7 @@ const foreignKeyViolationMessages: Record<string, ForeignKeyMessages> = {
     },
     budget_streams_category_id_categories_id_fk: {
         missingReference: 'Category not found.',
+        stillReferenced: 'This category is used in a budget stream, which must be deleted or assigned to a different category first.',
     },
 };
 

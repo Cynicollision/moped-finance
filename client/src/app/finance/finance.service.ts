@@ -3,7 +3,7 @@ import { CalendarPeriod, HistoryTimeframe, SortDirection } from '@shared/core/en
 import { NewEntity } from '@shared/core/types';
 import { BalanceImportResult, CashflowStream, GetAccountBalanceHistoryOptions, TotalValueHistory, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
-import { Institution, Account, Category, CategoryGroup, Transaction, BalanceHistory, BudgetStream } from '@shared/finance/types';
+import { Institution, Account, Category, CategoryGroup, Transaction, BalanceHistory, BudgetStream, BudgetStreamFields } from '@shared/finance/types';
 import { ApiService } from './../core/api.service';
 import { DateProviderService } from './../core/date-provider.service';
 
@@ -174,11 +174,11 @@ export class FinanceService {
         return this.api.load<BudgetStream[]>(`${API_BASE_PATH}/budget-streams`);
     }
 
-    createBudgetStream(stream: NewEntity<BudgetStream>): Promise<BudgetStream | undefined> {
+    createBudgetStream(stream: NewEntity<BudgetStreamFields>): Promise<BudgetStream | undefined> {
         return this.api.post<BudgetStream>(`${API_BASE_PATH}/budget-streams`, stream);
     }
 
-    saveBudgetStream(stream: BudgetStream): Promise<BudgetStream | undefined> {
+    saveBudgetStream(stream: BudgetStreamFields): Promise<BudgetStream | undefined> {
         return this.api.put<BudgetStream>(`${API_BASE_PATH}/budget-streams/${stream.id}`, stream);
     }
 
