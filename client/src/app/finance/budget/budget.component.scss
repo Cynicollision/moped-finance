@@ -3,7 +3,7 @@
 .budget-container {
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 24px;
 
     @include bp.content-below(bp.$medium) {
         gap: 16px;
@@ -15,70 +15,88 @@ app-page-header {
     margin-bottom: 0;
 }
 
-.section-card {
-    .card-header {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        padding: 16px 16px 16px 16px;
-        border-bottom: 1px solid var(--border-color);
+.label {
+    font: var(--mat-sys-label-medium);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
 
-        h2 {
-            margin: 0;
-            font-weight: 500;
-            text-align: left;
+// Left over and the period switch, then each section's total (BUD-1.6, BUD-1.10).
+.summary-card {
+    padding: 20px;
+    gap: 20px;
+}
+
+.summary-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.left-over {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .headline {
+        font: var(--mat-sys-headline-medium);
+    }
+}
+
+.summary-figures {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+
+    .figure {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .value {
+        font: var(--mat-sys-title-large);
+    }
+}
+
+@include bp.content-below(bp.$medium) {
+    .period-toggle {
+        width: 100%;
+
+        mat-button-toggle {
             flex: 1;
         }
     }
+
+    .summary-figures .value {
+        font: var(--mat-sys-title-medium);
+    }
 }
 
-.summary-section {
+.section-header {
     display: flex;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: 16px 32px;
-    padding: 16px;
-    background-color: var(--bg-highlight);
+    align-items: center;
+    gap: 16px;
+    padding: 8px 8px 8px 16px;
     border-bottom: 1px solid var(--border-color);
 
-    .summary-item {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-        min-width: 100px;
-
-        .label {
-            font-size: 0.75rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
-
-        .value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            white-space: nowrap;
-        }
+    h2 {
+        flex: 1;
+        margin: 0;
+        font: var(--mat-sys-title-large);
     }
 
-    @include bp.content-below(bp.$medium) {
-        justify-content: space-between;
-        padding: 16px;
-        gap: 16px;
-
-        .summary-item {
-            flex: 1 1 auto;
-            align-items: center;
-            text-align: center;
-        }
+    .section-total {
+        font: var(--mat-sys-title-medium);
     }
 }
 
-.actions-section {
-    display: flex;
-    justify-content: flex-start;
-    padding-top: 16px;
+.empty {
+    margin: 0;
+    padding: 24px 16px;
+    color: var(--text-muted);
 }

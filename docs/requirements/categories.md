@@ -25,7 +25,7 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 | CAT-1.15 | The user can delete a group with the **Delete** button of its **Edit** dialog (APP-2.4), after confirming, when it has no categories. For a group that still has categories, Delete shall be disabled with the note "To delete this group, first move or delete its N categories." ("1 category" for one), and the server shall refuse: "Cannot delete a category group that still has categories." | Implemented |
 | CAT-1.16 | The user can move a category to any group, including a group of another type. Its transactions then count under the new type everywhere, past periods included; the transactions themselves don't change. | Implemented |
 | CAT-1.17 | Moving a category into an Expense group from another type shall require choosing its necessity in the same dialog. Moving it out of Expense shall clear its necessity. | Planned |
-| CAT-1.18 | A move that would change the type of a category used by a budget stream shall be refused with "This category is used in a budget stream, which must be deleted or assigned to a different category first." | Planned |
+| CAT-1.18 | Moving a category used by a budget stream to a group of another type shall move its streams with it: they take the new type (BUD-1.1) and show in that section of the Budget screen. | Implemented |
 | CAT-1.19 | The group picker in the category dialogs shall list groups by type (Income, Expense, Transfer), then by name, each shown as "*group name* (*Type*)", for example "Housing (Expense)". | Partial |
 
 ## CAT-2 Categories drive how money is reported
@@ -55,7 +55,7 @@ A category the user has stopped using can be made **inactive**, which keeps it o
 | CAT-4.2 | A transaction or budget stream that already has an inactive category shall keep it, and its edit form shall show it as the current value. | Planned |
 | CAT-4.3 | An inactive category shall still appear on the Categories screen (CAT-1.4), in the Transactions filters, in Cashflow and in exports, and shall still be matched by transaction import (TXN-3.4). | Implemented |
 | CAT-4.4 | The user can delete a category from its edit dialog. The confirmation shall say how many transactions use it and ask which category they should move to: **Uncategorized** (the default) or any other active category. Confirming shall move the transactions and delete the category together, or do neither. | Planned |
-| CAT-4.5 | A category used by a budget stream shall not be deleted: "This category is used in a budget stream, which must be deleted or assigned to a different category first." | Planned |
+| CAT-4.5 | A category used by a budget stream shall not be deleted: "This category is used in a budget stream, which must be deleted or assigned to a different category first." | Implemented |
 
 ## CAT-5 Transactions without a category are Uncategorized
 
@@ -127,7 +127,7 @@ Default categories (E = Essential, D = Discretionary):
 - **Transfer groups are invisible (CAT-1.3).** The screen only renders Income and Expenses, so a Transfer group and its categories never show, and can't be edited there. The category dialog's group picker does offer Transfer groups, so moving a category into one makes it disappear from the screen.
 - **Group type can still be changed (CAT-1.14).** The Edit Group dialog offers **Type**, which reclassifies every category in the group at once.
 - **The group picker isn't sorted (CAT-1.19)** and shows the type in lower case ("Income (income)").
-- **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions and budget streams with no category. Those transactions count as expenses in Cashflow but disappear from the Transactions list (TXN-1.11). The API already refuses to delete a group that has categories.
+- **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions with no category (it refuses when a budget stream uses it, CAT-4.5). Those transactions count as expenses in Cashflow but disappear from the Transactions list (TXN-1.11). The API already refuses to delete a group that has categories.
 - **Inactive categories are still offered (CAT-4.1)** in the transaction form and budget stream dialog. The API can return active categories only, but nothing asks it to.
 - **Uncategorized doesn't exist yet (CAT-5).** A transaction can have no category, and Cashflow labels those *Uncategorized* and counts them all as expenses. An instance that already has its own category named "Uncategorized" (the author's does) needs it merged into the built-in one when CAT-5 is built: its transactions move over and it's deleted. Transactions with no category move to it too.
 - **The code still says "class".** The type is `CategoryClass` in `shared/` and the `category_class` column; rename them to type when this domain is built.

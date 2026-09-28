@@ -1,11 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { CalendarPeriod } from '@shared/core/enum';
 import { BudgetStreamType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
-import { CalendarPeriod } from '@shared/core/enum';
+import { BudgetStreamUtil } from '@shared/finance/util';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { ListColumn, ListModule } from './../../core/list/list.component';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
@@ -13,15 +15,28 @@ import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
-import { MoneyComponent } from './../common/money.component';
+import { MoneyComponent, MoneyTone } from './../common/money.component';
 import { FinanceService } from './../finance.service';
-import { FinanceBudgetFormModalComponent, BudgetFormModalData, confirmDeleteStream } from './budget-form-modal.component';
+import { FinanceBudgetFormModalComponent, BudgetFormModalData, confirmDeleteStream, streamTypeLabel } from './budget-form-modal.component';
 
-export interface BudgetTotals {
+/** One of the screen's sections: Income, Expenses or Savings (BUD-1.2). */
+export interface BudgetSection {
+    type: BudgetStreamType;
+    title: string;
+    empty: string;
+    tone: MoneyTone;
+    streams: BudgetStream[];
+    /** What the section's streams come to per month (BUD-1.6). */
     monthly: number;
-    quarterly: number;
-    yearly: number;
 }
+
+const sectionText: Record<BudgetStreamType, Pick<BudgetSection, 'title' | 'empty' | 'tone'>> = {
+    [BudgetStreamType.Income]: { title: 'Income', empty: 'No income planned yet.', tone: 'favourable' },
+    [BudgetStreamType.Expense]: { title: 'Expenses', empty: 'No expenses planned yet.', tone: 'plain' },
+    [BudgetStreamType.Savings]: { title: 'Savings', empty: 'No savings planned yet.', tone: 'favourable' }
+};
+
+const recurrenceOrder = [CalendarPeriod.Monthly, CalendarPeriod.Quarterly, CalendarPeriod.Yearly];
 
 @Component({
     selector: 'app-finance-budget',
@@ -29,6 +44,7 @@ export interface BudgetTotals {
     imports: [
         MatCardModule,
         MatButtonModule,
+        MatButtonToggleModule,
         MatIconModule,
         MatMenuModule,
         PageHeaderComponent,
@@ -45,7 +61,7 @@ export class FinanceBudgetComponent {
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
 
-    readonly BudgetStreamType = BudgetStreamType;
+    readonly periods = recurrenceOrder;
     // Narrow: the name and amount, with the category and recurrence under the name (BUD-1.2).
     readonly columns: ListColumn[] = [
         { key: 'name', label: 'Name', width: 'minmax(0, 1.25fr)', compact: 'primary' },
@@ -68,80 +84,39 @@ export class FinanceBudgetComponent {
     });
     private readonly categories = computed<Category[]>(() => this.data.value()?.categories ?? []);
     private readonly groups = computed<CategoryGroup[]>(() => this.data.value()?.groups ?? []);
-    private readonly budgetStreams = computed<BudgetStream[]>(() => this.data.value()?.budgetStreams ?? []);
-
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
     private readonly groupMap = computed(() => new Map(this.groups().map(g => [g.id, g])));
 
-    readonly incomeStreams = computed(() => this.streamsOfType(BudgetStreamType.Income));
-    readonly expenseStreams = computed(() => this.streamsOfType(BudgetStreamType.Expense));
+    /** The period every total is shown for (BUD-1.6). */
+    readonly period = signal(CalendarPeriod.Monthly);
+    private readonly months = computed(() => BudgetStreamUtil.monthsIn(this.period()));
 
-    readonly incomeTotals = computed(() => this.getTotals(this.incomeStreams()));
-    readonly expenseTotals = computed(() => this.getTotals(this.expenseStreams()));
-
-    private streamsOfType(type: BudgetStreamType): BudgetStream[] {
-        return this.budgetStreams()
-            .filter(s => s.type === type)
-            .sort((a, b) => this.compareStreams(a, b));
-    }
-
-    private getTotals(streams: BudgetStream[]): BudgetTotals {
-        let totalMonthly = 0;
-
-        streams.forEach(s => {
-            switch (s.recurrence) {
-                case CalendarPeriod.Monthly:
-                    totalMonthly += s.amount;
-                    break;
-                case CalendarPeriod.Quarterly:
-                    totalMonthly += s.amount / 3;
-                    break;
-                case CalendarPeriod.Yearly:
-                    totalMonthly += s.amount / 12;
-                    break;
-            }
+    readonly sections = computed<BudgetSection[]>(() => {
+        const streams = this.data.value()?.budgetStreams ?? [];
+        return [BudgetStreamType.Income, BudgetStreamType.Expense, BudgetStreamType.Savings].map(type => {
+            const ofType = streams.filter(s => s.type === type).sort((a, b) => this.compareStreams(a, b));
+            const monthly = ofType.reduce((sum, s) => sum + BudgetStreamUtil.monthlyAmount(s), 0);
+            return { type, ...sectionText[type], streams: ofType, monthly };
         });
+    });
 
-        return {
-            monthly: totalMonthly,
-            quarterly: totalMonthly * 3,
-            yearly: totalMonthly * 12
-        };
+    /** Income less expenses and savings (BUD-1.10). */
+    readonly leftOver = computed(() => {
+        const [income, expenses, savings] = this.sections().map(section => section.monthly);
+        return this.forPeriod(income - expenses - savings);
+    });
+
+    /** A monthly amount over the chosen period. */
+    forPeriod(monthly: number): number {
+        return monthly * this.months();
     }
 
+    // Monthly, then Quarterly, then Yearly; then by group name and category name (BUD-1.5).
     private compareStreams(a: BudgetStream, b: BudgetStream): number {
-        const catA = this.categoryMap().get(a.categoryId);
-        const catB = this.categoryMap().get(b.categoryId);
-
-        const groupA = catA ? this.groupMap().get(catA.groupId)?.name || '' : '';
-        const groupB = catB ? this.groupMap().get(catB.groupId)?.name || '' : '';
-
-        // Sort by recurrence first: Monthly, Quarterly, Yearly
-        const periodOrder: Record<CalendarPeriod, number> = {
-            [CalendarPeriod.Monthly]: 1,
-            [CalendarPeriod.Quarterly]: 2,
-            [CalendarPeriod.Yearly]: 3
-        };
-
-        const orderA = periodOrder[a.recurrence] || 99;
-        const orderB = periodOrder[b.recurrence] || 99;
-
-        if (orderA !== orderB) {
-            return orderA - orderB;
-        }
-
-        if (groupA !== groupB) {
-            return groupA < groupB ? -1 : 1;
-        }
-
-        const nameA = catA?.name || '';
-        const nameB = catB?.name || '';
-
-        if (nameA !== nameB) {
-            return nameA < nameB ? -1 : 1;
-        }
-
-        return 0;
+        const byRecurrence = recurrenceOrder.indexOf(a.recurrence) - recurrenceOrder.indexOf(b.recurrence);
+        return byRecurrence
+            || this.getCategoryGroup(a.categoryId).localeCompare(this.getCategoryGroup(b.categoryId))
+            || (this.categoryMap().get(a.categoryId)?.name ?? '').localeCompare(this.categoryMap().get(b.categoryId)?.name ?? '');
     }
 
     getCategoryName(id: string) {
@@ -151,11 +126,7 @@ export class FinanceBudgetComponent {
 
     getCategoryGroup(id: string) {
         const cat = this.categoryMap().get(id);
-        if (!cat) {
-            return '';
-        }
-        const group = this.groupMap().get(cat.groupId);
-        return group ? group.name : '';
+        return (cat && this.groupMap().get(cat.groupId)?.name) ?? '';
     }
 
     async startAdd(type: BudgetStreamType) {
@@ -168,7 +139,7 @@ export class FinanceBudgetComponent {
 
     private async openStream(data: BudgetFormModalData) {
         const changed = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, boolean>(
-            FinanceBudgetFormModalComponent, data
+            FinanceBudgetFormModalComponent, data, { size: 'panel' }
         );
         if (changed) {
             this.data.reload();
@@ -177,7 +148,7 @@ export class FinanceBudgetComponent {
 
     async delete(stream: BudgetStream) {
         if (await confirmDeleteStream(this.modalService, stream) && await this.financeService.deleteBudgetStream(stream.id)) {
-            this.notificationService.success(`${stream.type === BudgetStreamType.Income ? 'Income' : 'Expense'} deleted`);
+            this.notificationService.success(`${streamTypeLabel(stream.type)} deleted`);
             this.data.reload();
         }
     }

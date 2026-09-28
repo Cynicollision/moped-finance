@@ -22,6 +22,13 @@
       "when": 1790511287135,
       "tag": "0002_api_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790619330269,
+      "tag": "0003_budget_stream_type_from_category",
+      "breakpoints": true
     }
   ]
 }

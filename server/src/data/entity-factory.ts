@@ -1,5 +1,5 @@
 import { NewEntity } from '@shared/core/types';
-import { Account, BalanceHistory, BudgetStream, Category, CategoryGroup, Institution, Transaction } from '@shared/finance/types';
+import { Account, BalanceHistory, BudgetStreamFields, Category, CategoryGroup, Institution, Transaction } from '@shared/finance/types';
 import { DateTimeUtil } from '@server/utility';
 import { EntityId } from './entity-id';
 
@@ -54,7 +54,7 @@ export class FinanceEntityFactory {
         return FinanceEntityFactory.createEntity<CategoryGroup>(FinanceEntityIdPrefix.CategoryGroup, group);
     }
 
-    public static createBudgetStream(stream: NewEntity<BudgetStream>): BudgetStream {
-        return FinanceEntityFactory.createEntity<BudgetStream>(FinanceEntityIdPrefix.BudgetStream, stream);
+    public static createBudgetStream(stream: NewEntity<BudgetStreamFields>): BudgetStreamFields {
+        return FinanceEntityFactory.createEntity<BudgetStreamFields>(FinanceEntityIdPrefix.BudgetStream, stream);
     }
 }

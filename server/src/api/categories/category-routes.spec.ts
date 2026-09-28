@@ -1,10 +1,12 @@
 import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
+import { CalendarPeriod } from '@shared/core/enum';
 import { CategoryClass } from '@shared/finance/enum';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { AppLogger } from '@server/logging';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
+import { FinanceBudgetStreamData } from './../budget/budget-stream-data';
 import { FinanceCategoryData } from './category-data';
 import { FinanceCategoryGroupData } from './category-groups/category-group-data';
 import { createCategoryRouter } from './category-routes';
@@ -228,6 +230,23 @@ describe('Category Routes', () => {
 
             const dbCategory = await categoriesData.retrieveSingle(category.id!);
             expect(dbCategory).toBeNull();
+        });
+
+        it('CAT-4.5 should refuse to delete a category used by a budget stream', async () => {
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Housing' }));
+            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
+            await new FinanceBudgetStreamData(dbClient).insert(FinanceEntityFactory.createBudgetStream({
+                categoryId: category.id!, name: 'Rent', recurrence: CalendarPeriod.Monthly, amount: 1500
+            }));
+
+            const response = await request(app).delete(`/categories/${category.id}`);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({
+                code: 'IN_USE',
+                message: 'This category is used in a budget stream, which must be deleted or assigned to a different category first.'
+            });
+            expect(await categoriesData.retrieveSingle(category.id!)).not.toBeNull();
         });
     });
 });

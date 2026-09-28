@@ -85,7 +85,7 @@ Each domain file has an introduction, then one table per requirement, then up to
 | Category group / category | Two-level classification of transactions and budget streams. A category group has a type (`Income`, `Expense`, `Transfer`) and contains categories. |
 | Necessity | Whether an expense category is `Essential` or `Discretionary`. |
 | Uncategorized | The built-in category for transactions that haven't been given one. |
-| Budget stream | A recurring planned income or expense amount tied to a category. |
+| Budget stream | A recurring planned income, expense or savings amount tied to a category, whose type decides which it is. |
 | Cashflow | Actual income and expenses for a calendar period, aggregated from transactions. |
 
 Note that "category" is overloaded: accounts have a *category* (Asset/Liability) and transactions have a *category* (Groceries, Salary, …). Requirements say "account category" for the former and "category" for the latter.

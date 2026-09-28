@@ -41,8 +41,9 @@
     }
 }
 
-// Full-screen on phones (APP-2.6): the content scrolls between a fixed header and action bar.
-:host-context(.full-screen-dialog) {
+// Full-screen on phones (APP-2.6), or a side panel: the content scrolls between a fixed header and action bar.
+:host-context(.full-screen-dialog),
+:host-context(.side-panel-dialog) {
     .modal-header {
         padding: 16px 16px 8px 16px !important;
     }

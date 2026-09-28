@@ -6,8 +6,12 @@ import { hasUnsavedChanges } from './../unsaved-changes';
 import { ConfirmModalComponent, ConfirmModalData } from './confirm-modal.component';
 
 export interface ModalOptions {
-    /** `form` (the default) fills the screen on phones (APP-2.6); `small`, for confirmations, never does. */
-    size?: 'form' | 'small';
+    /**
+     * `form` (the default) fills the screen on phones (APP-2.6); `small`, for confirmations, never does. `panel`
+     * fills the screen on phones too, and on larger screens is a side panel down the right edge, leaving the
+     * screen it edits in view.
+     */
+    size?: 'form' | 'small' | 'panel';
 }
 
 @Injectable({
@@ -25,17 +29,14 @@ export class ModalService {
      * @returns the result the dialog closed with, or undefined if it was dismissed
      */
     async open<T, D = unknown, R = unknown>(component: Type<T>, data?: D, options: ModalOptions = {}): Promise<R | undefined> {
-        const small = options.size === 'small';
-        const fullScreen = !small && this.layout.isCompact();
+        const size = options.size ?? 'form';
         const config: MatDialogConfig<D> = {
             data,
             // The first field, or the dialog itself when it has none (a confirmation).
             autoFocus: 'input:not([readonly])',
             // Closing goes through requestClose, so unsaved changes can be kept.
             disableClose: true,
-            ...(fullScreen
-                ? { width: '100vw', maxWidth: '100vw', height: '100%', maxHeight: '100%', panelClass: 'full-screen-dialog' }
-                : { width: small ? '400px' : '560px', maxWidth: 'calc(100vw - 32px)' })
+            ...this.sizeConfig(size)
         };
 
         const dialogRef = this.dialog.open<T, D, R>(component, config);
@@ -47,6 +48,19 @@ export class ModalService {
         const result = await firstValueFrom(dialogRef.afterClosed());
         dismissals.unsubscribe();
         return result;
+    }
+
+    private sizeConfig(size: ModalOptions['size']): MatDialogConfig {
+        if (size !== 'small' && this.layout.isCompact()) {
+            return { width: '100vw', maxWidth: '100vw', height: '100%', maxHeight: '100%', panelClass: 'full-screen-dialog' };
+        }
+        if (size === 'panel') {
+            return {
+                width: '400px', maxWidth: '100vw', height: '100%', maxHeight: '100%',
+                position: { top: '0', right: '0' }, panelClass: 'side-panel-dialog'
+            };
+        }
+        return { width: size === 'small' ? '400px' : '560px', maxWidth: 'calc(100vw - 32px)' };
     }
 
     /**

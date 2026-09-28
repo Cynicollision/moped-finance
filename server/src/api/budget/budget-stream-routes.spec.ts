@@ -57,14 +57,12 @@ describe('Budget Stream Routes', () => {
             const stream1 = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
                 categoryId: testCategoryId,
                 name: 'Utilities',
-                type: BudgetStreamType.Expense,
                 recurrence: CalendarPeriod.Monthly,
                 amount: 150.00
             }));
             const stream2 = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
                 categoryId: testCategoryId,
                 name: 'Salary',
-                type: BudgetStreamType.Income,
                 recurrence: CalendarPeriod.Monthly,
                 amount: 5000.00
             }));
@@ -82,7 +80,6 @@ describe('Budget Stream Routes', () => {
             const payload = {
                 name: 'Groceries',
                 categoryId: testCategoryId,
-                type: BudgetStreamType.Expense,
                 recurrence: CalendarPeriod.Monthly,
                 amount: 300.00
             };
@@ -102,7 +99,6 @@ describe('Budget Stream Routes', () => {
         it('should return 400 when schema validation fails (missing name)', async () => {
             const payload = {
                 categoryId: testCategoryId,
-                type: BudgetStreamType.Expense,
                 recurrence: CalendarPeriod.Monthly,
                 amount: 300.00
             };
@@ -116,12 +112,70 @@ describe('Budget Stream Routes', () => {
         });
     });
 
+    describe('type', () => {
+        async function categoryOfClass(categoryClass: CategoryClass, name: string): Promise<string> {
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: categoryClass, name: `${name} group` }));
+            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id, name, icon: 'star', isActive: true }));
+            return category.id;
+        }
+
+        it('BUD-1.1 should follow from the category: Income, Expense, or Savings for a Transfer', async () => {
+            const categories = [
+                await categoryOfClass(CategoryClass.Income, 'Paycheck'),
+                testCategoryId,
+                await categoryOfClass(CategoryClass.Transfer, 'Savings Transfer')
+            ];
+
+            const types = [];
+            for (const categoryId of categories) {
+                const response = await request(app).post('/budget-streams')
+                    .send({ name: 'Stream', categoryId, recurrence: CalendarPeriod.Monthly, amount: 100, type: BudgetStreamType.Income });
+                expect(response.status).toBe(201);
+                types.push(response.body.type);
+            }
+
+            expect(types).toEqual([BudgetStreamType.Income, BudgetStreamType.Expense, BudgetStreamType.Savings]);
+        });
+
+        it('BUD-1.1 should change with the category', async () => {
+            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
+                categoryId: testCategoryId, name: 'Emergency fund', recurrence: CalendarPeriod.Monthly, amount: 500
+            }));
+            const savings = await categoryOfClass(CategoryClass.Transfer, 'Savings Transfer');
+
+            const response = await request(app).put(`/budget-streams/${stream.id}`).send({ categoryId: savings });
+
+            expect(response.status).toBe(200);
+            expect(response.body.type).toBe(BudgetStreamType.Savings);
+        });
+
+        it('CAT-1.18 should follow the category into a group of another type', async () => {
+            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
+                categoryId: testCategoryId, name: 'Side job', recurrence: CalendarPeriod.Monthly, amount: 200
+            }));
+            const income = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Income, name: 'Work' }));
+            const category = (await categoriesData.retrieveSingle(testCategoryId))!;
+            await categoriesData.update({ ...category, groupId: income.id });
+
+            const response = await request(app).get('/budget-streams');
+
+            expect(response.body).toEqual([expect.objectContaining({ id: stream.id, type: BudgetStreamType.Income })]);
+        });
+
+        it('BUD-1.1 should reject a category that does not exist', async () => {
+            const response = await request(app).post('/budget-streams')
+                .send({ name: 'Stream', categoryId: 'missing', recurrence: CalendarPeriod.Monthly, amount: 100 });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe('Category not found.');
+        });
+    });
+
     describe('PUT /:id', () => {
         it('should update a budget stream when valid', async () => {
             const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
                 categoryId: testCategoryId,
                 name: 'Utilities',
-                type: BudgetStreamType.Expense,
                 recurrence: CalendarPeriod.Monthly,
                 amount: 150.00
             }));
@@ -141,7 +195,7 @@ describe('Budget Stream Routes', () => {
 
         it('BUD-1.4 should change only the fields sent', async () => {
             const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
-                categoryId: testCategoryId, name: 'Utilities', type: BudgetStreamType.Expense, recurrence: CalendarPeriod.Quarterly, amount: 150
+                categoryId: testCategoryId, name: 'Utilities', recurrence: CalendarPeriod.Quarterly, amount: 150
             }));
 
             const response = await request(app).put(`/budget-streams/${stream.id}`).send({ name: 'Power' });
@@ -164,7 +218,7 @@ describe('Budget Stream Routes', () => {
             [{ categoryId: '' }, 'categoryId:'],
             [{ categoryId: undefined }, 'categoryId:'],
         ])('BUD-1.1 should reject %p', async (override, message) => {
-            const payload = { categoryId: testCategoryId, name: 'Rent', type: BudgetStreamType.Expense, recurrence: CalendarPeriod.Monthly, amount: 100, ...override };
+            const payload = { categoryId: testCategoryId, name: 'Rent', recurrence: CalendarPeriod.Monthly, amount: 100, ...override };
 
             const response = await request(app).post('/budget-streams').send(payload);
 
@@ -178,7 +232,6 @@ describe('Budget Stream Routes', () => {
             const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
                 categoryId: testCategoryId,
                 name: 'Utilities',
-                type: BudgetStreamType.Expense,
                 recurrence: CalendarPeriod.Monthly,
                 amount: 150.00
             }));
