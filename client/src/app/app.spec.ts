@@ -31,20 +31,20 @@ describe('App', () => {
         return Array.from(nav.querySelectorAll('.nav-label')).map(label => label.textContent!.trim());
     }
 
-    it('APP-1.1 should offer Dashboard, Transactions, Cashflow and Budget, in that order', async () => {
+    it('APP-1.1 should offer Dashboard, Transactions, Spending and Budget, in that order', async () => {
         const element = await render('large');
 
         const nav = element.querySelector('nav[aria-label="Main"]')!;
-        expect(navLabels(nav)).toEqual(['Dashboard', 'Transactions', 'Cashflow', 'Budget']);
+        expect(navLabels(nav)).toEqual(['Dashboard', 'Transactions', 'Spending', 'Budget']);
         expect(Array.from(nav.querySelectorAll('a')).map(link => link.getAttribute('href')))
-            .toEqual(['/dashboard', '/transactions', '/cashflow', '/budget']);
+            .toEqual(['/dashboard', '/transactions', '/spending', '/budget']);
     });
 
     it('APP-1.2 should show a bottom navigation bar on phones', async () => {
         const element = await render('compact');
 
         expect(element.querySelector('mat-sidenav')).toBeNull();
-        expect(navLabels(element.querySelector('nav.bottom-nav')!)).toEqual(['Dashboard', 'Transactions', 'Cashflow', 'Budget']);
+        expect(navLabels(element.querySelector('nav.bottom-nav')!)).toEqual(['Dashboard', 'Transactions', 'Spending', 'Budget']);
     });
 
     it('APP-1.2 should show a navigation rail on tablets, and the side navigation from 840px', async () => {

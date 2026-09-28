@@ -14,7 +14,7 @@ export type Account = Entity & {
     isHidden?: boolean;
     isManual?: boolean;
     isRetirement?: boolean;
-    hideFromCashflow?: boolean;
+    hideFromSpending?: boolean;
 
     balanceHistory?: BalanceHistory[];
     transactions?: Transaction[];

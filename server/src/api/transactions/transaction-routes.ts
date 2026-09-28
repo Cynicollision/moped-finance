@@ -80,16 +80,16 @@ export function createTransactionRouter(logger: IAppLogger, accountData: IFinanc
         });
     });
 
-    // GET /cashflow - Get Cashflow by Category
-    const cashflowQuerySchema = z.object({
+    // GET /spending - Get Spending by Category
+    const spendingQuerySchema = z.object({
         period: z.enum(CalendarPeriod),
         asOfDate: QueryField.date().optional()
     });
 
-    router.get('/cashflow', (req, res) => {
-        const op: OperationDefinition = { domain, operation: 'getTransactionCashflowByCategory' };
-        handler.execute(req, res, op, { query: cashflowQuerySchema }, (context, { query }) => {
-            return controller.getTransactionCashflowByCategory(context, query.period, query.asOfDate);
+    router.get('/spending', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'getSpendingByCategory' };
+        handler.execute(req, res, op, { query: spendingQuerySchema }, (context, { query }) => {
+            return controller.getSpendingByCategory(context, query.period, query.asOfDate);
         });
     });
 

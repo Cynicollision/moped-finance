@@ -3,7 +3,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { Transaction } from '@shared/finance/types';
-import { CashflowStream, TransactionSearchOptions } from '@shared/finance/contracts';
+import { SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
@@ -27,7 +27,7 @@ export interface IFinanceTransactionData {
     search(options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
     retrieveForExport(accountId?: string): Promise<TransactionExport[]>;
     retrieveMerchants(): Promise<string[]>;
-    retrieveCashflowByCategory(startDate: CalendarDate, endDate: CalendarDate): Promise<CashflowStream[]>;
+    retrieveSpendingByCategory(startDate: CalendarDate, endDate: CalendarDate): Promise<SpendingTotal[]>;
     retrieveSingle(id: string): Promise<Transaction | null>;
     insert(transaction: Transaction): Promise<Transaction>;
     /** Inserts all of the transactions or, if any insert fails, none of them. */
@@ -224,7 +224,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         return mapRowToTransaction(rows[0]);
     }
 
-    public async retrieveCashflowByCategory(startDate: CalendarDate, endDate: CalendarDate): Promise<CashflowStream[]> {
+    public async retrieveSpendingByCategory(startDate: CalendarDate, endDate: CalendarDate): Promise<SpendingTotal[]> {
         const rows = await this.db
             .select({
                 categoryId: transactionSchema.categoryId,
@@ -235,7 +235,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .where(and(
                 gte(transactionSchema.date, startDate),
                 lte(transactionSchema.date, endDate),
-                eq(accountSchema.hideFromCashflow, false)
+                eq(accountSchema.hideFromSpending, false)
             ))
             .groupBy(transactionSchema.categoryId);
 

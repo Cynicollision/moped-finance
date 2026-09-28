@@ -29,7 +29,7 @@ function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number
         isHidden: row.isHidden,
         isManual: row.isManual,
         isRetirement: row.isRetirement,
-        hideFromCashflow: row.hideFromCashflow,
+        hideFromSpending: row.hideFromSpending,
         balance: Number(balance)
     };
 }
@@ -100,7 +100,7 @@ export class FinanceAccountData implements IFinanceAccountData {
                 isHidden: account.isHidden,
                 isManual: account.isManual,
                 isRetirement: account.isRetirement,
-                hideFromCashflow: account.hideFromCashflow
+                hideFromSpending: account.hideFromSpending
             })
             .returning();
 
@@ -118,7 +118,7 @@ export class FinanceAccountData implements IFinanceAccountData {
                 isHidden: account.isHidden,
                 isManual: account.isManual,
                 isRetirement: account.isRetirement,
-                hideFromCashflow: account.hideFromCashflow,
+                hideFromSpending: account.hideFromSpending,
                 updatedAt: DateTimeUtil.now()
             })
             .where((eq(accountSchema.id, account.id)))

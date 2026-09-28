@@ -21,7 +21,7 @@ import { viewResource } from './../../core/loading/view-resource';
 import { MoneyComponent, MoneyTone } from './../common/money.component';
 import { FinanceService } from './../finance.service';
 
-interface CashflowRow {
+interface SpendingRow {
     /** The category or group ID, depending on the view mode; undefined for uncategorized transactions. */
     id?: string;
     name: string;
@@ -30,7 +30,7 @@ interface CashflowRow {
 }
 
 @Component({
-    selector: 'app-finance-cashflow',
+    selector: 'app-finance-spending',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         PercentPipe,
@@ -49,10 +49,10 @@ interface CashflowRow {
         ListModule,
         MoneyComponent
     ],
-    templateUrl: './cashflow.component.html',
-    styleUrl: './cashflow.component.scss'
+    templateUrl: './spending.component.html',
+    styleUrl: './spending.component.scss'
 })
-export class FinanceCashflowComponent {
+export class FinanceSpendingComponent {
     private financeService = inject(FinanceService);
     private dateProvider = inject(DateProviderService);
 
@@ -111,30 +111,30 @@ export class FinanceCashflowComponent {
     });
 
     // The period's totals: reloads when the period changes, keeping the old ones on screen meanwhile.
-    readonly streams = viewResource({
+    readonly totals = viewResource({
         params: () => ({ period: this.selectedPeriod(), asOfDate: this.getAsOfDate() }),
-        loader: ({ period, asOfDate }) => this.financeService.fetchCashflowStreams(period, asOfDate)
+        loader: ({ period, asOfDate }) => this.financeService.fetchSpendingTotals(period, asOfDate)
     });
 
     private readonly categoryMap = computed(() => new Map((this.lookups.value()?.categories ?? []).map(c => [c.id, c])));
     private readonly groupMap = computed(() => new Map((this.lookups.value()?.groups ?? []).map(g => [g.id, g])));
-    private readonly cashflowStreams = computed(() => this.streams.value() ?? []);
+    private readonly categoryTotals = computed(() => this.totals.value() ?? []);
 
-    readonly error = computed(() => this.lookups.error() ?? this.streams.error());
-    readonly isLoaded = computed(() => this.lookups.value() !== undefined && this.streams.value() !== undefined);
+    readonly error = computed(() => this.lookups.error() ?? this.totals.error());
+    readonly isLoaded = computed(() => this.lookups.value() !== undefined && this.totals.value() !== undefined);
 
     retry() {
         this.lookups.reload();
-        this.streams.reload();
+        this.totals.reload();
     }
 
     private readonly rows = computed(() => {
         const viewMode = this.viewMode();
-        const income = new Map<string, CashflowRow>();
-        const expense = new Map<string, CashflowRow>();
+        const income = new Map<string, SpendingRow>();
+        const expense = new Map<string, SpendingRow>();
 
-        for (const stream of this.cashflowStreams()) {
-            const cat = stream.categoryId ? this.categoryMap().get(stream.categoryId) : undefined;
+        for (const total of this.categoryTotals()) {
+            const cat = total.categoryId ? this.categoryMap().get(total.categoryId) : undefined;
             const group = cat ? this.groupMap().get(cat.groupId) : undefined;
 
             if (group?.class === CategoryClass.Transfer) {
@@ -150,28 +150,28 @@ export class FinanceCashflowComponent {
             const isIncome = group?.class === CategoryClass.Income;
             const rows = isIncome ? income : expense;
             const row = rows.get(id ?? '') ?? { id, name, amount: 0 };
-            row.amount += isIncome ? stream.amount : -stream.amount;
+            row.amount += isIncome ? total.amount : -total.amount;
             rows.set(id ?? '', row);
         }
 
-        const largestFirst = (a: CashflowRow, b: CashflowRow) => b.amount - a.amount;
+        const largestFirst = (a: SpendingRow, b: SpendingRow) => b.amount - a.amount;
         return {
             income: [...income.values()].sort(largestFirst),
             expense: [...expense.values()].sort(largestFirst)
         };
     });
 
-    private readonly incomeStreams = computed(() => this.rows().income);
-    private readonly expenseStreams = computed(() => this.rows().expense);
+    private readonly incomeRows = computed(() => this.rows().income);
+    private readonly expenseRows = computed(() => this.rows().expense);
 
     // Income is green and expenses the ordinary colour (APP-6.1).
-    readonly sections = computed<{ title: string, rows: CashflowRow[], tone: MoneyTone }[]>(() => [
-        { title: 'Income', rows: this.incomeStreams(), tone: 'favourable' },
-        { title: 'Expenses', rows: this.expenseStreams(), tone: 'plain' }
+    readonly sections = computed<{ title: string, rows: SpendingRow[], tone: MoneyTone }[]>(() => [
+        { title: 'Income', rows: this.incomeRows(), tone: 'favourable' },
+        { title: 'Expenses', rows: this.expenseRows(), tone: 'plain' }
     ]);
 
-    readonly totalIncome = computed(() => this.incomeStreams().reduce((sum, row) => sum + row.amount, 0));
-    readonly totalExpenses = computed(() => this.expenseStreams().reduce((sum, row) => sum + row.amount, 0));
+    readonly totalIncome = computed(() => this.incomeRows().reduce((sum, row) => sum + row.amount, 0));
+    readonly totalExpenses = computed(() => this.expenseRows().reduce((sum, row) => sum + row.amount, 0));
     readonly totalSavings = computed(() => this.totalIncome() - this.totalExpenses());
     readonly savingsRate = computed(() => this.totalIncome() > 0 ? this.totalSavings() / this.totalIncome() : 0);
 
@@ -188,7 +188,7 @@ export class FinanceCashflowComponent {
     }
 
     /** The Transactions filters for a row: its category or group, and the period (CASH-1.6). */
-    rowQueryParams(row: CashflowRow): Record<string, string> {
+    rowQueryParams(row: SpendingRow): Record<string, string> {
         const queryParams: Record<string, string> = {};
 
         if (this.viewMode() === 'category' && row.id) {

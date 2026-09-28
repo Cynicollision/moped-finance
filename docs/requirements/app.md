@@ -6,7 +6,7 @@ Behavior that applies across the whole app: layout, navigation, feedback to the 
 
 | ID | Requirement | Status |
 |---|---|---|
-| APP-1.1 | Once signed in, the app shall show a navigation with these entries, in this order: **Dashboard** (`/dashboard`, DASH), **Transactions**, **Cashflow** and **Budget**. The current section shall be highlighted, including on the screens below it (Account Details and its screens are below Dashboard). Settings is reached from the profile menu (APP-1.5), not the navigation. | Implemented |
+| APP-1.1 | Once signed in, the app shall show a navigation with these entries, in this order: **Dashboard** (`/dashboard`, DASH), **Transactions**, **Spending** (`/spending`; its old URL, `/cashflow`, redirects there) and **Budget**. The current section shall be highlighted, including on the screens below it (Account Details and its screens are below Dashboard). Settings is reached from the profile menu (APP-1.5), not the navigation. | Implemented |
 | APP-1.2 | The navigation shall follow the window width: below 600px a bar along the bottom of the screen, 600px to 839px a rail down the left side with each entry's icon above its label, and from 840px a side navigation headed by the product name. It is always visible. | Implemented |
 | APP-1.3 | Every screen shall start with a header holding its title and, at the end of the row, its actions: a primary button and/or a menu. The title shall be in the same place and style on every screen, whether or not the screen has actions. Where the page area is narrower than 600px, a primary button shows only its icon. | Implemented |
 | APP-1.4 | The profile control shall show the user's initials and, in the side navigation, their display name. Initials are the first letters of the first two words of the display name, or the first letter if there is only one word. It sits at the bottom of the side navigation or rail, and on phones at the end of every screen's header, since the bottom bar has no room for it. | Implemented |
@@ -73,7 +73,7 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 
 | ID | Requirement | Status |
 |---|---|---|
-| APP-7.1 | Lists of records (Transactions, Account Details' recent transactions, Budget, Cashflow) shall show columns under headings when the page area is at least 840px wide. Narrower, each row shall show its main text and its amount on the first line, with details in smaller text on a second line, and leave out the rest. A list shall never scroll sideways. | Implemented |
+| APP-7.1 | Lists of records (Transactions, Account Details' recent transactions, Budget, Spending) shall show columns under headings when the page area is at least 840px wide. Narrower, each row shall show its main text and its amount on the first line, with details in smaller text on a second line, and leave out the rest. A list shall never scroll sideways. | Implemented |
 | APP-7.2 | A sortable list shall sort by its column headings when wide, with an arrow on the current one, and by a sort menu above the list when narrow. Choosing a new column sorts it in its natural direction; choosing the current one reverses it. | Implemented |
 
 ## Known gaps
@@ -83,4 +83,4 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 
 ## Notes
 
-- **Debug date and the server.** In development builds the client uses 2026-05-17 as today, while the server uses the real date for anything it computes on its own (for example a cashflow request with no as-of date). That's fine while the client always sends an as-of date.
+- **Debug date and the server.** In development builds the client uses 2026-05-17 as today, while the server uses the real date for anything it computes on its own (for example a spending request with no as-of date). That's fine while the client always sends an as-of date.

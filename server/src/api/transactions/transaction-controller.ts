@@ -1,7 +1,7 @@
 import { CalendarPeriod } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
-import { CashflowStream, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
+import { SpendingTotal, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
@@ -75,10 +75,10 @@ export class TransactionController {
         return Result.successDeleted();
     }
 
-    public async getTransactionCashflowByCategory(context: OperationContext, period: CalendarPeriod, asOfDate?: CalendarDate): Promise<OperationResult<CashflowStream[]>> {
+    public async getSpendingByCategory(context: OperationContext, period: CalendarPeriod, asOfDate?: CalendarDate): Promise<OperationResult<SpendingTotal[]>> {
         const { startDate, endDate } = CalendarDateUtil.getPeriod(period, asOfDate ?? DateTimeUtil.today());
-        const cashflow = await this.transactionData.retrieveCashflowByCategory(startDate, endDate);
-        return Result.success(cashflow);
+        const totals = await this.transactionData.retrieveSpendingByCategory(startDate, endDate);
+        return Result.success(totals);
     }
 
     public async exportTransactions(context: OperationContext, accountId?: string): Promise<OperationResult<string>> {

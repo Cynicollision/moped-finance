@@ -48,6 +48,10 @@ describe('app routes', () => {
         expect(await urlAfterVisiting('/no-such-screen')).toBe('/dashboard');
     });
 
+    it('APP-1.1 should send the old Cashflow URL to Spending', async () => {
+        expect(await urlAfterVisiting('/cashflow')).toBe('/spending');
+    });
+
     it('APP-1.9 should title the tab with the screen, then the product name', async () => {
         const title = TestBed.inject(Title);
 

@@ -1,6 +1,6 @@
 # Moped Finance
 
-A self-hosted, single-user personal finance app: track institutions, accounts and balances, transactions, a budget, and cashflow. Built with Angular, Node/Express and PostgreSQL.
+A self-hosted, single-user personal finance app: track institutions, accounts and balances, transactions, a budget, and spending. Built with Angular, Node/Express and PostgreSQL.
 
 ## Docs
 

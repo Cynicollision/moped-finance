@@ -7,7 +7,7 @@ import { FinanceAddAccountComponent } from './finance/accounts/add-account.compo
 import { BalanceImportComponent } from './finance/accounts/balance-import.component';
 import { FinanceEditAccountComponent } from './finance/accounts/edit-account.component';
 import { FinanceBudgetComponent } from './finance/budget/budget.component';
-import { FinanceCashflowComponent } from './finance/cashflow/cashflow.component';
+import { FinanceSpendingComponent } from './finance/spending/spending.component';
 import { FinanceInstitutionsComponent } from './finance/institutions/institutions.component';
 import { DashboardComponent } from './finance/dashboard/dashboard.component';
 import { FinanceCategoriesComponent } from './finance/categories/categories.component';
@@ -46,7 +46,9 @@ export const routes: Routes = [
             { path: 'transactions/import', component: ImportTransactionsComponent, title: 'Import Transactions' },
             { path: 'transactions/:transactionId', component: ViewTransactionComponent, title: 'View Transaction' },
             { path: 'transactions/:transactionId/edit', component: EditTransactionComponent, title: 'Edit Transaction', canDeactivate: [unsavedChangesGuard] },
-            { path: 'cashflow', component: FinanceCashflowComponent, title: 'Cashflow' },
+            { path: 'spending', component: FinanceSpendingComponent, title: 'Spending' },
+            // Spending was called Cashflow (APP-1.1).
+            { path: 'cashflow', redirectTo: 'spending' },
             { path: 'budget', component: FinanceBudgetComponent, title: 'Budget' },
             { path: 'settings', component: SettingsComponent, title: 'Settings' },
             { path: 'settings/institutions', component: FinanceInstitutionsComponent, title: 'Institutions' },

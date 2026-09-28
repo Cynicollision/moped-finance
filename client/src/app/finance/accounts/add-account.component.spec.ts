@@ -54,7 +54,7 @@ describe('FinanceAddAccountComponent', () => {
         expect(element.textContent).not.toMatch(/connect|coming soon/i);
         expect(labels(element)).toEqual([
             'Account Name', 'Institution', 'Category', 'Group', 'Type',
-            'Hide Account', 'Retirement Account', 'Hide from Cashflow'
+            'Hide Account', 'Retirement Account', 'Hide from Spending'
         ]);
     });
 
@@ -85,7 +85,7 @@ describe('FinanceAddAccountComponent', () => {
             isHidden: false,
             isManual: true,
             isRetirement: false,
-            hideFromCashflow: false
+            hideFromSpending: false
         });
         expect(notificationService.success).toHaveBeenCalledWith('Account added');
         expect(navigate).toHaveBeenCalledWith(['/accounts', 'new-account']);

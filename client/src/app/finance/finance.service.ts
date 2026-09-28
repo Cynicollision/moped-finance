@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { CalendarPeriod, HistoryTimeframe, SortDirection } from '@shared/core/enum';
 import { NewEntity } from '@shared/core/types';
-import { BalanceImportResult, CashflowStream, GetAccountBalanceHistoryOptions, TotalValueHistory, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
+import { BalanceImportResult, SpendingTotal, GetAccountBalanceHistoryOptions, TotalValueHistory, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import { Institution, Account, Category, CategoryGroup, Transaction, BalanceHistory, BudgetStream, BudgetStreamFields } from '@shared/finance/types';
 import { ApiService } from './../core/api.service';
@@ -186,9 +186,9 @@ export class FinanceService {
         return this.api.delete(`${API_BASE_PATH}/budget-streams/${id}`);
     }
 
-    // Cashflow
-    fetchCashflowStreams(period: CalendarPeriod, asOfDate: string): Promise<CashflowStream[]> {
-        return this.api.load<CashflowStream[]>(`${API_BASE_PATH}/transactions/cashflow?period=${period}&asOfDate=${asOfDate}`);
+    // Spending
+    fetchSpendingTotals(period: CalendarPeriod, asOfDate: string): Promise<SpendingTotal[]> {
+        return this.api.load<SpendingTotal[]>(`${API_BASE_PATH}/transactions/spending?period=${period}&asOfDate=${asOfDate}`);
     }
 
     private getTransactionUrlParams(options: TransactionSearchOptions): URLSearchParams {

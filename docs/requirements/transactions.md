@@ -1,6 +1,6 @@
 # Transactions (`TXN`)
 
-A transaction is one money movement on an account: a date, an amount (negative for money out, positive for money in), a merchant, and a category. Transactions feed Cashflow (CASH). On a manual account a transaction can also **adjust the balance** (ACCT-5); otherwise balances come only from balance history.
+A transaction is one money movement on an account: a date, an amount (negative for money out, positive for money in), a merchant, and a category. Transactions feed Spending (CASH). On a manual account a transaction can also **adjust the balance** (ACCT-5); otherwise balances come only from balance history.
 
 Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transaction**, **Edit Transaction**, **Import Transactions**. Account Details also shows recent transactions (ACCT-2.7).
 
@@ -15,8 +15,8 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-1.5 | A **Filters** panel, collapsed until opened, shall let the user narrow the list by: **Min Amount**, **Max Amount**, **Start Date**, **End Date**, **Group**, **Category**, **Account** (a select) and **Merchant**. Filters combine (all must match). **Apply Filters** runs the search and **Clear Filters** resets it. The panel's header says how many filters are applied ("2 active"), not counting End Date while it's today (TXN-1.10). On phones the panel is replaced by a **Filters** button in the page header, badged with that count, which opens the filters in a bottom sheet; applying or clearing closes it. | Implemented |
 | TXN-1.10 | The **End Date** filter shall start out set to today, and the list request sends it, so transactions dated after today are hidden until the user clears or changes it. **Clear Filters** puts End Date back to today rather than blank. Start Date starts empty. | Implemented |
 | TXN-1.6 | The merchant filter shall match any merchant *containing* the text, ignoring case, and suggest merchants the user has used before. The category and group filters shall suggest matching names as the user types. | Implemented |
-| TXN-1.7 | The screen shall accept pre-set filters from the link that opened it: account, category, group, start date and end date. Account Details' **Go To Transactions** and every row of Cashflow (CASH-1.6) use this. | Implemented |
-| TXN-1.8 | Transactions marked **hidden** shall be left out of everything by default: the list and search (unless shown with TXN-1.13), Account Details' recent transactions, Cashflow (CASH-1.2), and balance adjustments (TXN-2.10). Exports still include them, with `IsHidden` (TXN-3.1). | Partial |
+| TXN-1.7 | The screen shall accept pre-set filters from the link that opened it: account, category, group, start date and end date. Account Details' **Go To Transactions** and every row of Spending (CASH-1.6) use this. | Implemented |
+| TXN-1.8 | Transactions marked **hidden** shall be left out of everything by default: the list and search (unless shown with TXN-1.13), Account Details' recent transactions, Spending (CASH-1.2), and balance adjustments (TXN-2.10). Exports still include them, with `IsHidden` (TXN-3.1). | Partial |
 | TXN-1.9 | On narrow screens (APP-7.1) the date and category shall appear under the merchant, and the account shall be left out. | Implemented |
 | TXN-1.11 | Every transaction shall appear in the list and search, including those in Uncategorized (CAT-5.2), which can be filtered for like any other category. | Partial |
 | TXN-1.12 | Transactions in hidden accounts (ACCT-1.9) shall be left out of the list and search, and hidden accounts left out of the **Account** filter, unless the screen was opened filtered to that account (from its Account Details' **Go To Transactions**). Transactions in closed accounts (ACCT-6) are listed as usual. | Planned |
@@ -66,21 +66,21 @@ A split divides one transaction into **parts**, each with its own amount and cat
 | TXN-4.1 | The user can split any transaction that isn't already split, with **Split** on View Transaction's menu, into 2 to 20 parts. | Planned |
 | TXN-4.2 | Each part shall have an amount (not 0), a category, a merchant (defaulting to the transaction's) and notes. The parts' amounts shall add up exactly to the transaction's amount; the split dialog shows "Remaining: *amount*" and keeps **Save** disabled until it's $0.00. | Planned |
 | TXN-4.3 | The split dialog shall open with two parts. The last part's amount shall fill itself with the remainder as the user types the others, until the user edits it. **Add part** adds a new last part that takes over the remainder, so splitting in two needs only the first amount. | Planned |
-| TXN-4.4 | The Transactions list shall show each part as its own row, with the transaction's date and account, the part's merchant, category and amount, and a split icon. Filters and sorting apply to parts, so a category filter (and a Cashflow drill-down, CASH-1.6) finds just the matching part. Selecting a part opens the transaction. | Planned |
+| TXN-4.4 | The Transactions list shall show each part as its own row, with the transaction's date and account, the part's merchant, category and amount, and a split icon. Filters and sorting apply to parts, so a category filter (and a Spending drill-down, CASH-1.6) finds just the matching part. Selecting a part opens the transaction. | Planned |
 | TXN-4.5 | View Transaction shall show a split transaction's total and list its parts. **Edit split** reopens the split dialog; **Unsplit** (after confirming) turns it back into one transaction with the first part's category, merchant and notes. | Planned |
-| TXN-4.6 | Cashflow (CASH-1.2) and budget averages (BUD-1.8) shall count each part under its own category. | Planned |
+| TXN-4.6 | Spending (CASH-1.2) and budget averages (BUD-1.8) shall count each part under its own category. | Planned |
 | TXN-4.7 | A split transaction's amount, date and account can't be changed while it's split; Unsplit first. Hiding it hides all its parts, and it adjusts the balance (ACCT-5) once, by its total. | Planned |
 | TXN-4.8 | A synced transaction (TXN-2.12) can be split like any other; its parts belong to the user and sync doesn't change them. | Planned |
 | TXN-4.9 | **Download Transactions** shall write each part as its own row, with the transaction's date, account, original statement and hidden flag, and a `SplitId` column that's the same for every part of one transaction (blank otherwise). Import shall accept the column as optional and rebuild the split from rows sharing a `SplitId`, refusing a group whose rows don't share a date, account, original statement and hidden flag. | Planned |
 
 ## Known gaps
 
-- **Transactions with no category are missing from the list (TXN-1.11).** The list only returns transactions that have a category, so one whose category was deleted through the API disappears from it (while still counting in Cashflow). CAT-5 removes the case.
+- **Transactions with no category are missing from the list (TXN-1.11).** The list only returns transactions that have a category, so one whose category was deleted through the API disappears from it (while still counting in Spending). CAT-5 removes the case.
 - **A blank category fails import (TXN-3.4)** instead of going to Uncategorized.
 - **Required fields (TXN-2.6).** The form only marks Account, Amount and Date as required. A missing Merchant or category fails at the server with a validation error toast rather than a message on the field.
 - **Inactive categories are offered in the form (TXN-2.7).**
 - **Every account is offered in the form (TXN-2.1),** in creation order, hidden ones included.
-- **Hidden transactions can't be seen again (TXN-1.13).** The API supports including them, but the UI has no toggle, so a transaction marked hidden is invisible in the app, though still exported and still counted in Cashflow (TXN-1.8).
+- **Hidden transactions can't be seen again (TXN-1.13).** The API supports including them, but the UI has no toggle, so a transaction marked hidden is invisible in the app, though still exported and still counted in Spending (TXN-1.8).
 - **The form asks for a signed amount (TXN-2.13).** Amount is a bare number (default 0), and money out must be typed as negative, which nothing on screen says.
 - **Amount filters compare signed values (TXN-1.14),** so "Min Amount 100" finds income of 100 or more but no expenses.
 - **Future-dated transactions are hidden by default (TXN-1.10).** The pre-filled End Date silently excludes anything after today, with no visual hint besides the date field itself. **Clear Filters** re-applies it.

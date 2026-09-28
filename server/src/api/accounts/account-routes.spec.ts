@@ -98,7 +98,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
             const acc2 = await accountData.insert(FinanceEntityFactory.createAccount({
                 institutionId: testInstitutionId,
@@ -110,7 +110,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const response = await request(app).get('/accounts');
@@ -133,7 +133,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const balanceHistory: BalanceHistory[] = [{
@@ -183,7 +183,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const response = await request(app).get(`/accounts/${acc1.id}`);
@@ -212,7 +212,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: true,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             };
 
             const response = await request(app)
@@ -272,7 +272,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const payload = {
@@ -301,7 +301,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: true,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             };
 
             const response = await request(app)
@@ -325,7 +325,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const response = await request(app).delete(`/accounts/${acc1.id}`);
@@ -356,7 +356,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const balanceHistory: BalanceHistory[] = [
@@ -382,7 +382,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
             await balanceHistoryData.insertBulk(['2026-05-01', '2026-05-02', '2026-06-01', '2026-06-02'].map(date =>
                 FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 1, date })));
@@ -431,7 +431,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const response = await request(app)
@@ -455,7 +455,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             await transactionsData.insert(FinanceEntityFactory.createTransaction({
@@ -489,7 +489,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const response = await request(app)
@@ -519,7 +519,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const balanceHistory: BalanceHistory[] = [
@@ -560,7 +560,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const csvContent = 'Date,Balance,AccountName\n2026-06-06,100,Checking';
@@ -587,7 +587,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const csvContent = 'Date,Balance,AccountName\n2026-06-06,100,Checking\n2026-06-07,150,Checking';
@@ -614,7 +614,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const csvContent = 'Date,Balance,AccountName\n,100,Checking\n2026-06-06,,Checking';
@@ -639,7 +639,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const csvContent = 'Date,Balance,AccountName\n2026-06-06,100,Checking\n2026-06-06,200,Checking';
@@ -757,7 +757,7 @@ describe('Account Routes', () => {
                 isHidden: false,
                 isManual: false,
                 isRetirement: false,
-                hideFromCashflow: false
+                hideFromSpending: false
             }));
 
             const response = await request(app)
