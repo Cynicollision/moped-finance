@@ -100,11 +100,13 @@ export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChange
     readonly namePlaceholder = namePlaceholders[this.data.type];
 
     ngOnInit() {
-        // Only categories whose class gives this type (BUD-1.1, BUD-1.3): Transfer categories for Savings.
+        // Only categories whose type gives the stream's type (BUD-1.1, BUD-1.3): Transfer categories for Savings. Inactive
+        // ones are left out, except the one the stream already has (CAT-4.1, CAT-4.2).
         const groupMap = new Map(this.data.groups.map(g => [g.id, g]));
         const available = this.data.categories.filter(c => {
             const group = groupMap.get(c.groupId);
-            return !!group && BudgetStreamUtil.typeOf(group.type) === this.data.type;
+            const isOffered = c.isActive || c.id === this.data.stream?.categoryId;
+            return isOffered && !!group && BudgetStreamUtil.typeOf(group.type) === this.data.type;
         });
         this.categories.set(available);
 
