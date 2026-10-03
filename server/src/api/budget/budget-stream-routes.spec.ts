@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { CalendarPeriod } from '@shared/core/enum/calendar-period';
-import { CategoryClass } from '@shared/finance/enum';
+import { CategoryType } from '@shared/finance/enum';
 import { BudgetStreamType } from '@shared/finance/enum/budget-stream-type';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { AppLogger } from '@server/logging';
@@ -47,7 +47,7 @@ describe('Budget Stream Routes', () => {
     beforeEach(async () => {
         await TestDatabaseUtil.clearFinanceData(pglite);
 
-        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'General' }));
+        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'General' }));
         const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id, name: 'Misc', icon: 'star', isActive: true }));
         testCategoryId = category.id!;
     });
@@ -113,17 +113,17 @@ describe('Budget Stream Routes', () => {
     });
 
     describe('type', () => {
-        async function categoryOfClass(categoryClass: CategoryClass, name: string): Promise<string> {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: categoryClass, name: `${name} group` }));
+        async function categoryOfType(categoryType: CategoryType, name: string): Promise<string> {
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: categoryType, name: `${name} group` }));
             const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id, name, icon: 'star', isActive: true }));
             return category.id;
         }
 
         it('BUD-1.1 should follow from the category: Income, Expense, or Savings for a Transfer', async () => {
             const categories = [
-                await categoryOfClass(CategoryClass.Income, 'Paycheck'),
+                await categoryOfType(CategoryType.Income, 'Paycheck'),
                 testCategoryId,
-                await categoryOfClass(CategoryClass.Transfer, 'Savings Transfer')
+                await categoryOfType(CategoryType.Transfer, 'Savings Transfer')
             ];
 
             const types = [];
@@ -141,7 +141,7 @@ describe('Budget Stream Routes', () => {
             const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
                 categoryId: testCategoryId, name: 'Emergency fund', recurrence: CalendarPeriod.Monthly, amount: 500
             }));
-            const savings = await categoryOfClass(CategoryClass.Transfer, 'Savings Transfer');
+            const savings = await categoryOfType(CategoryType.Transfer, 'Savings Transfer');
 
             const response = await request(app).put(`/budget-streams/${stream.id}`).send({ categoryId: savings });
 
@@ -153,7 +153,7 @@ describe('Budget Stream Routes', () => {
             const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
                 categoryId: testCategoryId, name: 'Side job', recurrence: CalendarPeriod.Monthly, amount: 200
             }));
-            const income = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Income, name: 'Work' }));
+            const income = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Work' }));
             const category = (await categoriesData.retrieveSingle(testCategoryId))!;
             await categoriesData.update({ ...category, groupId: income.id });
 

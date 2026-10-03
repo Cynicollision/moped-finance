@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { CategoryClass } from '@shared/finance/enum';
+import { CategoryType } from '@shared/finance/enum';
 import { CategoryGroup } from '@shared/finance/types';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
@@ -8,7 +8,7 @@ import { FinanceService } from './../finance.service';
 import { CategoryGroupFormModalComponent, CategoryGroupFormModalData } from './category-group-form-modal.component';
 
 describe('CategoryGroupFormModalComponent', () => {
-    const housing = { id: 'grp-1', name: 'Housing', class: CategoryClass.Expense } as CategoryGroup;
+    const housing = { id: 'grp-1', name: 'Housing', type: CategoryType.Expense } as CategoryGroup;
 
     async function render(data: CategoryGroupFormModalData) {
         const financeService = {
@@ -47,12 +47,12 @@ describe('CategoryGroupFormModalComponent', () => {
         expect(save.closest('form')).toBeNull();
         expect(button(element, 'Delete')).toBeUndefined();
 
-        fixture.componentInstance.form.setValue({ id: null, name: 'Auto', class: CategoryClass.Expense });
+        fixture.componentInstance.form.setValue({ id: null, name: 'Auto', type: CategoryType.Expense });
         await fixture.whenStable();
         save.click();
         await fixture.whenStable();
 
-        expect(financeService.createCategoryGroup).toHaveBeenCalledWith({ name: 'Auto', class: CategoryClass.Expense });
+        expect(financeService.createCategoryGroup).toHaveBeenCalledWith({ name: 'Auto', type: CategoryType.Expense });
         expect(notificationService.success).toHaveBeenCalledWith('Group created');
         expect(dialogRef.close).toHaveBeenCalledWith(true);
     });

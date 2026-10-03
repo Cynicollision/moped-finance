@@ -130,7 +130,6 @@ Default categories (E = Essential, D = Discretionary):
 - **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions with no category (it refuses when a budget stream uses it, CAT-4.5). Those transactions count as expenses in Spending but disappear from the Transactions list (TXN-1.11). The API already refuses to delete a group that has categories.
 - **Inactive categories are still offered (CAT-4.1)** in the transaction form and budget stream dialog. The API can return active categories only, but nothing asks it to.
 - **Uncategorized doesn't exist yet (CAT-5).** A transaction can have no category; Spending labels those *Uncategorized* and counts them by sign (CASH-1.3). An instance that already has its own category named "Uncategorized" (the author's does) needs it merged into the built-in one when CAT-5 is built: its transactions move over and it's deleted. Transactions with no category move to it too.
-- **The code still says "class".** The type is `CategoryClass` in `shared/` and the `category_class` column; rename them to type when this domain is built.
 - **New users start empty (CAT-6).** The user must build the whole tree before they can add or import a transaction.
 
 ## Notes

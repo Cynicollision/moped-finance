@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CalendarPeriod } from '@shared/core/enum';
-import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
+import { BudgetStreamType, CategoryType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { ModalService } from './../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
@@ -10,9 +10,9 @@ import { FinanceBudgetFormModalComponent } from './budget-form-modal.component';
 
 describe('FinanceBudgetComponent', () => {
     const groups = [
-        { id: 'income', name: 'Income', class: CategoryClass.Income },
-        { id: 'housing', name: 'Housing', class: CategoryClass.Expense },
-        { id: 'food', name: 'Food', class: CategoryClass.Expense }
+        { id: 'income', name: 'Income', type: CategoryType.Income },
+        { id: 'housing', name: 'Housing', type: CategoryType.Expense },
+        { id: 'food', name: 'Food', type: CategoryType.Expense }
     ] as CategoryGroup[];
     const categories = [
         { id: 'pay', groupId: 'income', name: 'Paycheck', icon: '💼' },

@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
-import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
+import { BudgetStreamType, CategoryType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { LayoutService } from './../../core/layout/layout.service';
@@ -13,10 +13,10 @@ import { FinanceSpendingComponent } from './spending.component';
 describe('FinanceSpendingComponent', () => {
     const created = { createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1) };
     const groups: CategoryGroup[] = [
-        { id: 'income', name: 'Income', class: CategoryClass.Income, ...created },
-        { id: 'housing', name: 'Housing', class: CategoryClass.Expense, ...created },
-        { id: 'food', name: 'Food', class: CategoryClass.Expense, ...created },
-        { id: 'transfers', name: 'Transfers', class: CategoryClass.Transfer, ...created }
+        { id: 'income', name: 'Income', type: CategoryType.Income, ...created },
+        { id: 'housing', name: 'Housing', type: CategoryType.Expense, ...created },
+        { id: 'food', name: 'Food', type: CategoryType.Expense, ...created },
+        { id: 'transfers', name: 'Transfers', type: CategoryType.Transfer, ...created }
     ];
     const categories: Category[] = [
         { id: 'pay', groupId: 'income', name: 'Paycheck', icon: '💼', isActive: true, ...created },

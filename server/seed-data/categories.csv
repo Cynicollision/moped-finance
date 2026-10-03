@@ -1,4 +1,4 @@
-Class,Group,Icon,Name,IsActive
+Type,Group,Icon,Name,IsActive
 income,Income,💼,Paycheck,true
 income,Income,💸,Interest,true
 income,Income,📊,Dividends,true

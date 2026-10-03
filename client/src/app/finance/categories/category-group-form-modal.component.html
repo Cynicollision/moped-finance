@@ -8,8 +8,8 @@
 
             <mat-form-field appearance="outline">
                 <mat-label>Type</mat-label>
-                <mat-select formControlName="class">
-                    @for (opt of classOptions; track opt) {
+                <mat-select formControlName="type">
+                    @for (opt of typeOptions; track opt) {
                         <mat-option [value]="opt">
                             {{ opt | titlecase }}
                         </mat-option>

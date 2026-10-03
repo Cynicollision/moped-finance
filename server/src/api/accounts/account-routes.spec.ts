@@ -62,7 +62,7 @@ describe('Account Routes', () => {
         // Note: we need to use raw pglite exec because CategoryGroupData requires an import and we already have a long list.
         // It's simpler to just insert them directly via pglite.
         await pglite.exec(`
-            INSERT INTO finance.category_groups (id, name, category_class) VALUES ('g1', 'Test Group', 'expense');
+            INSERT INTO finance.category_groups (id, name, category_type) VALUES ('g1', 'Test Group', 'expense');
             INSERT INTO finance.categories (id, group_id, icon, name) VALUES ('cat1', 'g1', 'x', 'Test Category');
         `);
         testCategoryId = 'cat1';

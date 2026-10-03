@@ -11,7 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
-import { CategoryClass, TransactionsSortKey } from '@shared/finance/enum';
+import { CategoryType, TransactionsSortKey } from '@shared/finance/enum';
 import { BudgetStreamUtil } from '@shared/finance/util';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { LayoutService } from './../../core/layout/layout.service';
@@ -286,7 +286,7 @@ export class FinanceSpendingComponent {
         const rowFor = (categoryId: string, isUncategorizedIncome: boolean) => {
             const cat = categoryId ? this.categoryMap().get(categoryId) : undefined;
             const group = cat ? this.groupMap().get(cat.groupId) : undefined;
-            if (group?.class === CategoryClass.Transfer) {
+            if (group?.type === CategoryType.Transfer) {
                 return undefined;
             }
 
@@ -294,7 +294,7 @@ export class FinanceSpendingComponent {
             const name = viewMode === 'category'
                 ? (cat ? `${cat.icon} ${cat.name}` : 'Uncategorized')
                 : (group?.name || 'Uncategorized');
-            const isIncome = group ? group.class === CategoryClass.Income : isUncategorizedIncome;
+            const isIncome = group ? group.type === CategoryType.Income : isUncategorizedIncome;
             const rows = isIncome ? income : expense;
             const row = rows.get(id ?? '') ?? { id, name, amount: 0 };
             rows.set(id ?? '', row);

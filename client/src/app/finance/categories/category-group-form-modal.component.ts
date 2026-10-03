@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { CategoryGroup } from '@shared/finance/types';
-import { CategoryClass } from '@shared/finance/enum';
+import { CategoryType } from '@shared/finance/enum';
 import { ModalCancelDirective } from './../../core/modal/modal-cancel.directive';
 import { ModalLayoutComponent } from './../../core/modal/modal-layout.component';
 import { ModalService } from './../../core/modal/modal.service';
@@ -56,10 +56,10 @@ export class CategoryGroupFormModalComponent implements HasUnsavedChanges {
     readonly form = this.fb.group({
         id: [null as string | null],
         name: ['', Validators.required],
-        class: [CategoryClass.Expense, Validators.required]
+        type: [CategoryType.Expense, Validators.required]
     });
     readonly isEditing = !!this.data.group;
-    readonly classOptions = Object.values(CategoryClass);
+    readonly typeOptions = Object.values(CategoryType);
     readonly categoryCount = this.data.categoryCount ?? 0;
     readonly isSaving = signal(false);
 
@@ -79,8 +79,8 @@ export class CategoryGroupFormModalComponent implements HasUnsavedChanges {
         }
 
         this.isSaving.set(true);
-        const { name, class: groupClass } = this.form.getRawValue();
-        const values = { name: name!, class: groupClass! };
+        const { name, type: groupType } = this.form.getRawValue();
+        const values = { name: name!, type: groupType! };
         const saved = this.data.group
             ? await this.financeService.saveCategoryGroup({ ...this.data.group, ...values })
             : await this.financeService.createCategoryGroup(values);

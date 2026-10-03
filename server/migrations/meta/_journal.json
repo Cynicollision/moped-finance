@@ -36,6 +36,13 @@
       "when": 1790626208891,
       "tag": "0004_rename_hide_from_cashflow",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791043200000,
+      "tag": "0005_rename_category_class_to_type",
+      "breakpoints": true
     }
   ]
 }
