@@ -53,6 +53,8 @@ A database created before migrations existed (by the old `db:init`) can't be mig
 2. `npm run db:generate -- --name <what_changed>` in `server/`. Read the SQL it writes; drizzle-kit asks interactively when it can't tell a rename from a drop and add.
 3. Commit the SQL file and the updated `migrations/meta/`. The API restarts on the new `.sql` file and applies it.
 
+drizzle-kit can't ask its rename question without a terminal. To write a rename by hand, add the SQL file, copy the last snapshot with the change applied (new `id`, `prevId` set to the old `id`), and add a journal entry. Give the entry a `when` later than the previous one and no later than now: Drizzle applies a migration only if its `when` is later than the last one applied, so a future `when` makes it skip every migration generated after it. Then check that `npx drizzle-kit generate` reports no schema changes.
+
 Don't edit a migration once it's merged: databases that already ran it won't run it again. Fix mistakes with a new migration. If `main` gained a migration while your branch had one, delete yours, merge `main`, and generate again, since migrations are numbered and applied in order.
 
 ## Before opening a PR
