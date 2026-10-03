@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Transaction } from '@shared/finance/types';
+import { Category, Transaction } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 import { TransactionFormComponent, TransactionFormMode } from './transaction-form.component';
@@ -12,9 +12,9 @@ describe('TransactionFormComponent', () => {
         isHidden: false, isSplit: false, splitParentId: '', createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1)
     };
 
-    async function render(mode: TransactionFormMode, value: Transaction | null) {
+    async function render(mode: TransactionFormMode, value: Transaction | null, categories: Category[] = []) {
         const financeService = {
-            fetchCategories: vi.fn().mockResolvedValue([]),
+            fetchCategories: vi.fn().mockResolvedValue(categories),
             fetchAllAccounts: vi.fn().mockResolvedValue([])
         };
         TestBed.configureTestingModule({
@@ -66,5 +66,26 @@ describe('TransactionFormComponent', () => {
         fixture.componentInstance.onSave();
 
         expect(saved.map(t => t.date)).toEqual(['2026-05-17', '2026-04-30']);
+    });
+
+    describe('category choices', () => {
+        const categories = [
+            { id: 'food', groupId: 'g', name: 'Groceries', icon: '🛒', isActive: true },
+            { id: 'old', groupId: 'g', name: 'Old Gym', icon: '🏋️', isActive: false },
+            { id: 'older', groupId: 'g', name: 'Old Club', icon: '🎾', isActive: false }
+        ] as Category[];
+
+        it('CAT-4.1 should offer only active categories for a new transaction', async () => {
+            const { fixture } = await render('create', null, categories);
+
+            expect(fixture.componentInstance.categoryOptions().map(c => c.name)).toEqual(['Groceries']);
+        });
+
+        it('CAT-4.2 should keep offering an inactive category the transaction already has', async () => {
+            const { fixture } = await render('edit', { ...transaction, categoryId: 'old' }, categories);
+
+            expect(fixture.componentInstance.categoryOptions().map(c => c.name)).toEqual(['Groceries', 'Old Gym']);
+            expect(fixture.componentInstance.displayCategory('old')).toBe('🏋️ Old Gym');
+        });
     });
 });

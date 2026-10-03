@@ -32,7 +32,7 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-2.1 | A budget stream's type shall follow from its category's type: Income, Expense, or Savings for a Transfer category. Budget stream forms shall only offer active categories of the matching type; Uncategorized can't have streams. See BUD-1.1 and BUD-1.3. | Partial |
+| CAT-2.1 | A budget stream's type shall follow from its category's type: Income, Expense, or Savings for a Transfer category. Budget stream forms shall only offer active categories of the matching type; Uncategorized can't have streams. See BUD-1.1 and BUD-1.3. | Implemented |
 | CAT-2.2 | Spending shall count categories of Income groups as income, ignore categories of Transfer groups, and count categories of Expense groups as expenses. Uncategorized amounts shall count by sign: money in as income, money out as expenses. See CASH-1.3. | Implemented |
 | CAT-2.3 | Budget and Spending shall show how expenses split between Essential and Discretionary (BUD-1.7, CASH-1.8). | Planned |
 
@@ -51,8 +51,8 @@ A category the user has stopped using can be made **inactive**, which keeps it o
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-4.1 | An inactive category shall not be offered when adding or editing a transaction or a budget stream. | Planned |
-| CAT-4.2 | A transaction or budget stream that already has an inactive category shall keep it, and its edit form shall show it as the current value. | Planned |
+| CAT-4.1 | An inactive category shall not be offered when adding or editing a transaction or a budget stream. | Implemented |
+| CAT-4.2 | A transaction or budget stream that already has an inactive category shall keep it, and its edit form shall show it as the current value. | Implemented |
 | CAT-4.3 | An inactive category shall still appear on the Categories screen (CAT-1.4), in the Transactions filters, in Spending and in exports, and shall still be matched by transaction import (TXN-3.4). | Implemented |
 | CAT-4.4 | The user can delete a category from its edit dialog. The confirmation shall say how many transactions use it and ask which category they should move to: **Uncategorized** (the default) or any other active category. Confirming shall move the transactions and delete the category together, or do neither. | Planned |
 | CAT-4.5 | A category used by a budget stream shall not be deleted: "This category is used in a budget stream, which must be deleted or assigned to a different category first." | Implemented |
@@ -125,7 +125,6 @@ Default categories (E = Essential, D = Discretionary):
 
 - **No automatic categorization (CAT-8, CAT-9).** Every transaction's category is chosen by hand or given in the import file.
 - **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions with no category (it refuses when a budget stream uses it, CAT-4.5). Those transactions count as expenses in Spending but disappear from the Transactions list (TXN-1.11). The API already refuses to delete a group that has categories.
-- **Inactive categories are still offered (CAT-4.1)** in the transaction form and budget stream dialog. The API can return active categories only, but nothing asks it to.
 - **Uncategorized doesn't exist yet (CAT-5)**, so the Categories screen starts with the Income section (CAT-1.3, CAT-5.4). A transaction can have no category; Spending labels those *Uncategorized* and counts them by sign (CASH-1.3). An instance that already has its own category named "Uncategorized" (the author's does) needs it merged into the built-in one when CAT-5 is built: its transactions move over and it's deleted. Transactions with no category move to it too.
 - **New users start empty (CAT-6).** The user must build the whole tree before they can add or import a transaction.
 

@@ -15,10 +15,11 @@ describe('FinanceBudgetFormModalComponent', () => {
         { id: 'transfers', name: 'Transfers', type: CategoryType.Transfer }
     ] as CategoryGroup[];
     const categories = [
-        { id: 'pay', groupId: 'income', name: 'Paycheck', icon: '💼' },
-        { id: 'rent', groupId: 'housing', name: 'Rent', icon: '🏠' },
-        { id: 'savings', groupId: 'transfers', name: 'Savings Transfer', icon: '🔁' },
-        { id: 'invest', groupId: 'transfers', name: 'Investment Contribution', icon: '📈' }
+        { id: 'pay', groupId: 'income', name: 'Paycheck', icon: '💼', isActive: true },
+        { id: 'rent', groupId: 'housing', name: 'Rent', icon: '🏠', isActive: true },
+        { id: 'storage', groupId: 'housing', name: 'Storage Unit', icon: '📦', isActive: false },
+        { id: 'savings', groupId: 'transfers', name: 'Savings Transfer', icon: '🔁', isActive: true },
+        { id: 'invest', groupId: 'transfers', name: 'Investment Contribution', icon: '📈', isActive: true }
     ] as Category[];
 
     async function render(data: Partial<BudgetFormModalData> & { type: BudgetStreamType }) {
@@ -62,7 +63,7 @@ describe('FinanceBudgetFormModalComponent', () => {
         expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
 
-    it('BUD-1.4 should edit a stream, offering the categories of its type', async () => {
+    it('BUD-1.4 CAT-4.1 should edit a stream, offering the active categories of its type', async () => {
         const stream = {
             id: 'BS1', type: BudgetStreamType.Expense, name: 'Rent', categoryId: 'rent', recurrence: CalendarPeriod.Monthly, amount: 1500
         } as BudgetStream;
@@ -77,5 +78,14 @@ describe('FinanceBudgetFormModalComponent', () => {
 
         expect(financeService.saveBudgetStream).toHaveBeenCalledWith(expect.objectContaining({ id: 'BS1', amount: 1600, categoryId: 'rent' }));
         expect(notificationService.success).toHaveBeenCalledWith('Expense saved');
+    });
+
+    it('CAT-4.2 should keep offering an inactive category the stream already has', async () => {
+        const stream = {
+            id: 'BS2', type: BudgetStreamType.Expense, name: 'Storage', categoryId: 'storage', recurrence: CalendarPeriod.Monthly, amount: 90
+        } as BudgetStream;
+        const { fixture } = await render({ stream, type: stream.type });
+
+        expect(fixture.componentInstance.categories().map(c => c.name)).toEqual(['Rent', 'Storage Unit']);
     });
 });
