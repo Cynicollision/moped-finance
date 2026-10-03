@@ -12,7 +12,7 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 | CAT-1.2 | A category shall belong to exactly one group and have a name (required, at most 100 characters), an icon (required; free text, typically one emoji; labelled "Icon (Emoji)"), an **Active** flag (default on), and, in an Expense group, a necessity (CAT-3). | Partial |
 | CAT-1.3 | The Categories screen shall show three sections, **Income**, **Expenses** and **Transfers**, below Uncategorized (CAT-5.4). Each lists the groups of that type, sorted by name, as cards headed by the group's name and an **Edit** link, containing the group's categories with their icon, name and a pencil (edit) button, and ending with a **Create Category** button. Within a group, active categories come first, then inactive ones, each sorted by name. | Partial |
 | CAT-1.4 | An inactive category shall appear dimmed with a crossed-out eye icon. | Implemented |
-| CAT-1.5 | A section with no groups shall say "No income groups found.", "No expense groups found." or "No transfer groups found." | Partial |
+| CAT-1.5 | A section with no groups shall say "No income groups found.", "No expense groups found." or "No transfer groups found." | Implemented |
 | CAT-1.6 | The user can create a group from the screen's menu (**Create Group**), choosing its name and type (default Expense). | Implemented |
 | CAT-1.7 | The user can rename a group from its card (**Edit**). | Implemented |
 | CAT-1.8 | The user can create a category from the screen's menu (**Create Category**), or from a group's **Create Category** button, which pre-selects that group. If no group exists, the app shall refuse with "Please create a group first." | Implemented |
@@ -21,12 +21,12 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 | CAT-1.11 | Groups of class **Transfer** shall be shown and manageable on the Categories screen. | Retired (merged into CAT-1.3) |
 | CAT-1.12 | Category group names shall be unique, ignoring case. Saving a duplicate shall be rejected with "A category group with that name already exists." | Implemented |
 | CAT-1.13 | Category names shall be unique across all groups, ignoring case, so CSV import (TXN-3.4) matches exactly one category. Saving a duplicate shall be rejected with "A category with that name already exists." This includes the built-in "Uncategorized" (CAT-5.1). | Implemented |
-| CAT-1.14 | A group's type shall be chosen when the group is created and can't be changed afterwards. A group created with the wrong type is fixed by creating one of the right type and moving its categories into it (CAT-1.16). | Partial |
+| CAT-1.14 | A group's type shall be chosen when the group is created and can't be changed afterwards. The Edit Group dialog shall show it read-only, with the hint "To change it, move the categories to a group of another type.", and the server shall refuse a change. A group created with the wrong type is fixed by creating one of the right type and moving its categories into it (CAT-1.16). | Implemented |
 | CAT-1.15 | The user can delete a group with the **Delete** button of its **Edit** dialog (APP-2.4), after confirming, when it has no categories. For a group that still has categories, Delete shall be disabled with the note "To delete this group, first move or delete its N categories." ("1 category" for one), and the server shall refuse: "Cannot delete a category group that still has categories." | Implemented |
 | CAT-1.16 | The user can move a category to any group, including a group of another type. Its transactions then count under the new type everywhere, past periods included; the transactions themselves don't change. | Implemented |
 | CAT-1.17 | Moving a category into an Expense group from another type shall require choosing its necessity in the same dialog. Moving it out of Expense shall clear its necessity. | Planned |
 | CAT-1.18 | Moving a category used by a budget stream to a group of another type shall move its streams with it: they take the new type (BUD-1.1) and show in that section of the Budget screen. | Implemented |
-| CAT-1.19 | The group picker in the category dialogs shall list groups by type (Income, Expense, Transfer), then by name, each shown as "*group name* (*Type*)", for example "Housing (Expense)". | Partial |
+| CAT-1.19 | The group picker in the category dialogs shall list groups by type (Income, Expense, Transfer), then by name, each shown as "*group name* (*Type*)", for example "Housing (Expense)". | Implemented |
 
 ## CAT-2 Categories drive how money is reported
 
@@ -124,12 +124,9 @@ Default categories (E = Essential, D = Discretionary):
 ## Known gaps
 
 - **No automatic categorization (CAT-8, CAT-9).** Every transaction's category is chosen by hand or given in the import file.
-- **Transfer groups are invisible (CAT-1.3).** The screen only renders Income and Expenses, so a Transfer group and its categories never show, and can't be edited there. The category dialog's group picker does offer Transfer groups, so moving a category into one makes it disappear from the screen.
-- **Group type can still be changed (CAT-1.14).** The Edit Group dialog offers **Type**, which reclassifies every category in the group at once.
-- **The group picker isn't sorted (CAT-1.19)** and shows the type in lower case ("Income (income)").
 - **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions with no category (it refuses when a budget stream uses it, CAT-4.5). Those transactions count as expenses in Spending but disappear from the Transactions list (TXN-1.11). The API already refuses to delete a group that has categories.
 - **Inactive categories are still offered (CAT-4.1)** in the transaction form and budget stream dialog. The API can return active categories only, but nothing asks it to.
-- **Uncategorized doesn't exist yet (CAT-5).** A transaction can have no category; Spending labels those *Uncategorized* and counts them by sign (CASH-1.3). An instance that already has its own category named "Uncategorized" (the author's does) needs it merged into the built-in one when CAT-5 is built: its transactions move over and it's deleted. Transactions with no category move to it too.
+- **Uncategorized doesn't exist yet (CAT-5)**, so the Categories screen starts with the Income section (CAT-1.3, CAT-5.4). A transaction can have no category; Spending labels those *Uncategorized* and counts them by sign (CASH-1.3). An instance that already has its own category named "Uncategorized" (the author's does) needs it merged into the built-in one when CAT-5 is built: its transactions move over and it's deleted. Transactions with no category move to it too.
 - **New users start empty (CAT-6).** The user must build the whole tree before they can add or import a transaction.
 
 ## Notes

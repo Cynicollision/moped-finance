@@ -57,6 +57,19 @@ describe('CategoryGroupFormModalComponent', () => {
         expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
 
+    it('CAT-1.14 should keep a group\'s type when editing it', async () => {
+        const { fixture, element, financeService } = await render({ group: housing, categoryCount: 2 });
+        const form = fixture.componentInstance.form;
+
+        expect(form.controls.type.disabled).toBe(true);
+        expect(element.querySelector('mat-hint')!.textContent!.trim()).toBe('To change it, move the categories to a group of another type.');
+
+        form.patchValue({ name: 'Home' });
+        await fixture.componentInstance.save();
+
+        expect(financeService.saveCategoryGroup).toHaveBeenCalledWith({ ...housing, name: 'Home', type: CategoryType.Expense });
+    });
+
     it('CAT-1.15 should delete an empty group from its Edit dialog', async () => {
         const { fixture, element, financeService, notificationService, dialogRef } = await render({ group: housing, categoryCount: 0 });
 

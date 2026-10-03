@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,7 +25,6 @@ interface GroupedCategories {
     selector: 'app-finance-categories',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        LowerCasePipe,
         MatCardModule,
         MatButtonModule,
         MatIconModule,
@@ -56,9 +54,11 @@ export class FinanceCategoriesComponent {
     private readonly groups = computed(() => this.data.value()?.groups ?? []);
     private readonly categories = computed(() => this.data.value()?.categories ?? []);
 
+    // One section per type (CAT-1.3), each with its own empty message (CAT-1.5).
     readonly sections = computed(() => [
-        { title: 'Income', groupedCategories: this.buildGrouped(CategoryType.Income) },
-        { title: 'Expenses', groupedCategories: this.buildGrouped(CategoryType.Expense) }
+        { title: 'Income', empty: 'No income groups found.', groupedCategories: this.buildGrouped(CategoryType.Income) },
+        { title: 'Expenses', empty: 'No expense groups found.', groupedCategories: this.buildGrouped(CategoryType.Expense) },
+        { title: 'Transfers', empty: 'No transfer groups found.', groupedCategories: this.buildGrouped(CategoryType.Transfer) }
     ]);
 
     private buildGrouped(targetType: CategoryType): GroupedCategories[] {

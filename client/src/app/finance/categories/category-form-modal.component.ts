@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { CategoryType } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
 import { ModalCancelDirective } from './../../core/modal/modal-cancel.directive';
 import { ModalLayoutComponent } from './../../core/modal/modal-layout.component';
@@ -20,11 +22,14 @@ export interface CategoryFormModalData {
     initialGroupId?: string;
 }
 
+const typeOrder = Object.values(CategoryType);
+
 /** Creates or edits a category (CAT-1.8, CAT-1.9). Saves itself and closes with true once saved. */
 @Component({
     selector: 'app-category-form-modal',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TitleCasePipe,
         ReactiveFormsModule,
         MatDialogModule,
         MatButtonModule,
@@ -54,6 +59,9 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
         isActive: [true]
     });
     readonly isEditing = !!this.data.category;
+    /** The groups to choose from: Income, then Expense, then Transfer, each by name (CAT-1.19). */
+    readonly groups = [...this.data.groups].sort((a, b) =>
+        (typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type)) || a.name.localeCompare(b.name));
     readonly isSaving = signal(false);
 
     ngOnInit() {

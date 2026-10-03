@@ -60,9 +60,7 @@
                     }
 
                     @if (section.groupedCategories.length === 0) {
-                        <div class="empty-state">
-                            No {{section.title | lowercase}} groups found.
-                        </div>
+                        <div class="empty-state">{{ section.empty }}</div>
                     }
                 </div>
             </div>
