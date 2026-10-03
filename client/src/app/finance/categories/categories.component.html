@@ -41,6 +41,9 @@
                                                 <span class="name">{{cat.name}}</span>
                                             </div>
                                             <div class="category-actions">
+                                                @if (cat.necessity) {
+                                                    <span class="necessity">{{ cat.necessity | titlecase }}</span>
+                                                }
                                                 @if (!cat.isActive) {
                                                     <mat-icon class="hidden-icon" matTooltip="Hidden Category">visibility_off</mat-icon>
                                                 }

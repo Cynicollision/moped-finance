@@ -43,6 +43,13 @@
       "when": 1791043200000,
       "tag": "0005_rename_category_class_to_type",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791025777713,
+      "tag": "0006_category_necessity",
+      "breakpoints": true
     }
   ]
 }

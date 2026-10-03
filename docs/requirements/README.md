@@ -83,7 +83,7 @@ Each domain file has an introduction, then one table per requirement, then up to
 | Hidden account | Left out of everything but the Institutions screen and its own details, past included (ACCT-1.9). |
 | Closed account | No longer held: off the Dashboard lists, but its past still counts (ACCT-6). |
 | Category group / category | Two-level classification of transactions and budget streams. A category group has a type (`Income`, `Expense`, `Transfer`) and contains categories. |
-| Necessity | Whether an expense category is `Essential` or `Discretionary`. |
+| Necessity | Whether an expense category is `Essential` or `Discretionary`. Optional; an expense category without one is Unclassified. |
 | Uncategorized | The built-in category for transactions that haven't been given one. |
 | Budget stream | A recurring planned income, expense or savings amount tied to a category, whose type decides which it is. |
 | Spending | Actual income and expenses for a calendar period, aggregated from transactions. |

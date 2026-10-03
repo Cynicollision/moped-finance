@@ -1,27 +1,27 @@
-Type,Group,Icon,Name,IsActive
-income,Income,💼,Paycheck,true
-income,Income,💸,Interest,true
-income,Income,📊,Dividends,true
-income,Income,🎁,Other Income,true
-expense,Housing,🏠,Mortgage Payment,true
-expense,Housing,💡,Utilities,true
-expense,Housing,📱,Internet & Phone,true
-expense,Housing,🔧,Home Maintenance,true
-expense,Food,🛒,Groceries,true
-expense,Food,🍽️,Restaurants,true
-expense,Food,☕,Coffee,true
-expense,Transportation,⛽,Gas,true
-expense,Transportation,🚗,Auto Insurance,true
-expense,Transportation,🚇,Parking & Transit,true
-expense,Lifestyle,🛍️,Shopping,true
-expense,Lifestyle,🎬,Entertainment,true
-expense,Lifestyle,📺,Subscriptions,true
-expense,Lifestyle,✈️,Travel,true
-expense,Lifestyle,👔,Dry Cleaning,false
-expense,Health,🩺,Medical,true
-expense,Health,🏋️,Fitness,true
-expense,Giving,🎀,Gifts,true
-expense,Giving,❤️,Charity,true
-transfer,Transfers,💳,Credit Card Payment,true
-transfer,Transfers,🔁,Savings Transfer,true
-transfer,Transfers,📈,Investment Contribution,true
+Type,Group,Name,Icon,Necessity,IsActive
+Income,Income,Paycheck,💼,,true
+Income,Income,Interest,💸,,true
+Income,Income,Dividends,📊,,true
+Income,Income,Other Income,🎁,,true
+Expense,Housing,Mortgage Payment,🏠,Essential,true
+Expense,Housing,Utilities,💡,Essential,true
+Expense,Housing,Internet & Phone,📱,Essential,true
+Expense,Housing,Home Maintenance,🔧,Essential,true
+Expense,Food,Groceries,🛒,Essential,true
+Expense,Food,Restaurants,🍽️,Discretionary,true
+Expense,Food,Coffee,☕,Discretionary,true
+Expense,Transportation,Gas,⛽,Essential,true
+Expense,Transportation,Auto Insurance,🚗,Essential,true
+Expense,Transportation,Parking & Transit,🚇,Essential,true
+Expense,Lifestyle,Shopping,🛍️,Discretionary,true
+Expense,Lifestyle,Entertainment,🎬,Discretionary,true
+Expense,Lifestyle,Subscriptions,📺,Discretionary,true
+Expense,Lifestyle,Travel,✈️,Discretionary,true
+Expense,Lifestyle,Dry Cleaning,👔,,false
+Expense,Health,Medical,🩺,Essential,true
+Expense,Health,Fitness,🏋️,Discretionary,true
+Expense,Giving,Gifts,🎀,Discretionary,true
+Expense,Giving,Charity,❤️,,true
+Transfer,Transfers,Credit Card Payment,💳,,true
+Transfer,Transfers,Savings Transfer,🔁,,true
+Transfer,Transfers,Investment Contribution,📈,,true

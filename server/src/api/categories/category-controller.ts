@@ -1,3 +1,4 @@
+import { CategoryType } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
@@ -5,6 +6,8 @@ import { OperationContext, OperationResult, Result } from '@server/routing';
 import { IFinanceCategoryData } from './category-data';
 import { CreateCategoryRequest, UpdateCategoryRequest } from './category-schema';
 import { CreateCategoryGroupRequest, IFinanceCategoryGroupData, UpdateCategoryGroupRequest } from './category-groups';
+
+const necessityRefusal = 'Only expense categories can have a necessity.';
 
 export class CategoryController {
     constructor(
@@ -77,10 +80,16 @@ export class CategoryController {
     }
 
     public async createCategory(context: OperationContext, input: CreateCategoryRequest): Promise<OperationResult<Category>> {
+        const necessity = input.necessity ?? null;
+        if (necessity && !await this.isExpenseGroup(input.groupId)) {
+            return Result.userError(necessityRefusal);
+        }
+
         // A missing group fails the insert's foreign key, which OperationHandler reports as a 400.
         const category = FinanceEntityFactory.createCategory({
             ...input,
-            isActive: input.isActive ?? true
+            isActive: input.isActive ?? true,
+            necessity
         });
 
         const created = await this.categoryData.insert(category);
@@ -93,12 +102,29 @@ export class CategoryController {
             return Result.userErrorNotFound();
         }
 
-        const updated = await this.categoryData.update({ ...current, ...changes });
+        // A new necessity for a category outside Expense is refused. The one it had is cleared when it moves out, even if
+        // the request sends it back unchanged (CAT-1.17).
+        const merged = { ...current, ...changes };
+        if (merged.necessity && !await this.isExpenseGroup(merged.groupId)) {
+            if (changes.necessity && changes.necessity !== current.necessity) {
+                return Result.userError(necessityRefusal);
+            }
+            merged.necessity = null;
+        }
+
+        const updated = await this.categoryData.update({ ...merged, necessity: merged.necessity ?? null });
         if (!updated) {
             return Result.userErrorNotFound();
         }
 
         return Result.successUpdated(updated);
+    }
+
+    // Only Expense categories can have a necessity (CAT-3.4). A group that doesn't exist counts as Expense here, so the
+    // write goes ahead and its foreign key reports the missing group.
+    private async isExpenseGroup(groupId: string): Promise<boolean> {
+        const group = await this.groupData.retrieveSingle(groupId);
+        return !group || group.type === CategoryType.Expense;
     }
 
     public async deleteCategory(context: OperationContext, categoryId: string): Promise<OperationResult<void>> {

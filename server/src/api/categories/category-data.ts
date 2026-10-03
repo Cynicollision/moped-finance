@@ -1,5 +1,6 @@
 import { eq, and, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { CategoryNecessity } from '@shared/finance/enum';
 import { Category } from '@shared/finance/types';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
@@ -22,6 +23,7 @@ function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
         icon: row.icon,
         name: row.name,
         isActive: row.isActive,
+        necessity: row.necessity as CategoryNecessity | null,
     };
 }
 
@@ -70,7 +72,8 @@ export class FinanceCategoryData implements IFinanceCategoryData {
                 groupId: category.groupId,
                 icon: category.icon,
                 name: category.name,
-                isActive: category.isActive
+                isActive: category.isActive,
+                necessity: category.necessity
             })
             .returning();
 
@@ -84,6 +87,7 @@ export class FinanceCategoryData implements IFinanceCategoryData {
                 icon: category.icon,
                 name: category.name,
                 isActive: category.isActive,
+                necessity: category.necessity,
                 updatedAt: DateTimeUtil.now()
             })
             .where(eq(categorySchema.id, category.id!))

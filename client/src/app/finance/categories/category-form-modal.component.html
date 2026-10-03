@@ -22,6 +22,18 @@
                 </mat-select>
             </mat-form-field>
 
+            @if (isExpenseGroup()) {
+                <mat-form-field appearance="outline">
+                    <mat-label>Necessity</mat-label>
+                    <mat-select formControlName="necessity">
+                        @for (option of necessityOptions; track option.value) {
+                            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-hint>Essential: needed to live and work. Discretionary: could be cut.</mat-hint>
+                </mat-form-field>
+            }
+
             <mat-checkbox formControlName="isActive">Active</mat-checkbox>
         </div>
     </form>

@@ -1,6 +1,6 @@
 # Categories and Category Groups (`CAT`)
 
-Transactions and budget streams are classified with **categories**. Categories are organized into **category groups**, and each group has a **type** (Income, Expense or Transfer) that decides how its categories count in Budget and Spending. Expense categories also have a **necessity**, Essential or Discretionary, so the user can see how much of their spending they could cut. One built-in category, **Uncategorized**, holds transactions that haven't been given a category yet.
+Transactions and budget streams are classified with **categories**. Categories are organized into **category groups**, and each group has a **type** (Income, Expense or Transfer) that decides how its categories count in Budget and Spending. An Expense category can also have a **necessity**, Essential or Discretionary, so the user can see how much of their spending they could cut. It's optional: expense categories without one are **Unclassified**. One built-in category, **Uncategorized**, holds transactions that haven't been given a category yet.
 
 Screens, both pages of Settings: **Categories** (`/settings/categories`, also in the profile menu, APP-1.5), where creating and editing happen in dialogs, and **Rules** (`/settings/rules`, CAT-8, listed in Settings and linked from the Categories menu).
 
@@ -9,14 +9,14 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 | ID | Requirement | Status |
 |---|---|---|
 | CAT-1.1 | A category group shall have a name (required, at most 100 characters) and a type: **Income**, **Expense** or **Transfer**. The "Create Group" dialog labels the field **Type**, defaults it to Expense, and keeps **Save** disabled until a name is entered. | Implemented |
-| CAT-1.2 | A category shall belong to exactly one group and have a name (required, at most 100 characters), an icon (required; free text, typically one emoji; labelled "Icon (Emoji)"), an **Active** flag (default on), and, in an Expense group, a necessity (CAT-3). | Partial |
+| CAT-1.2 | A category shall belong to exactly one group and have a name (required, at most 100 characters), an icon (required; free text, typically one emoji; labelled "Icon (Emoji)"), an **Active** flag (default on), and, in an Expense group, an optional necessity (CAT-3). | Implemented |
 | CAT-1.3 | The Categories screen shall show three sections, **Income**, **Expenses** and **Transfers**, below Uncategorized (CAT-5.4). Each lists the groups of that type, sorted by name, as cards headed by the group's name and an **Edit** link, containing the group's categories with their icon, name and a pencil (edit) button, and ending with a **Create Category** button. Within a group, active categories come first, then inactive ones, each sorted by name. | Partial |
 | CAT-1.4 | An inactive category shall appear dimmed with a crossed-out eye icon. | Implemented |
 | CAT-1.5 | A section with no groups shall say "No income groups found.", "No expense groups found." or "No transfer groups found." | Implemented |
 | CAT-1.6 | The user can create a group from the screen's menu (**Create Group**), choosing its name and type (default Expense). | Implemented |
 | CAT-1.7 | The user can rename a group from its card (**Edit**). | Implemented |
 | CAT-1.8 | The user can create a category from the screen's menu (**Create Category**), or from a group's **Create Category** button, which pre-selects that group. If no group exists, the app shall refuse with "Please create a group first." | Implemented |
-| CAT-1.9 | The user can edit a category's name, icon, group, Active flag and necessity from its row. | Partial |
+| CAT-1.9 | The user can edit a category's name, icon, group, Active flag and necessity from its row. | Implemented |
 | CAT-1.10 | The user can delete a category (CAT-4.4) or an empty category group (CAT-1.15). | Partial |
 | CAT-1.11 | Groups of class **Transfer** shall be shown and manageable on the Categories screen. | Retired (merged into CAT-1.3) |
 | CAT-1.12 | Category group names shall be unique, ignoring case. Saving a duplicate shall be rejected with "A category group with that name already exists." | Implemented |
@@ -24,7 +24,7 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 | CAT-1.14 | A group's type shall be chosen when the group is created and can't be changed afterwards. The Edit Group dialog shall show it read-only, with the hint "To change it, move the categories to a group of another type.", and the server shall refuse a change. A group created with the wrong type is fixed by creating one of the right type and moving its categories into it (CAT-1.16). | Implemented |
 | CAT-1.15 | The user can delete a group with the **Delete** button of its **Edit** dialog (APP-2.4), after confirming, when it has no categories. For a group that still has categories, Delete shall be disabled with the note "To delete this group, first move or delete its N categories." ("1 category" for one), and the server shall refuse: "Cannot delete a category group that still has categories." | Implemented |
 | CAT-1.16 | The user can move a category to any group, including a group of another type. Its transactions then count under the new type everywhere, past periods included; the transactions themselves don't change. | Implemented |
-| CAT-1.17 | Moving a category into an Expense group from another type shall require choosing its necessity in the same dialog. Moving it out of Expense shall clear its necessity. | Planned |
+| CAT-1.17 | Moving a category into an Expense group from another type shall offer its necessity in the same dialog (CAT-3.2). Moving it out of Expense shall clear its necessity, in the dialog and on the server. | Implemented |
 | CAT-1.18 | Moving a category used by a budget stream to a group of another type shall move its streams with it: they take the new type (BUD-1.1) and show in that section of the Budget screen. | Implemented |
 | CAT-1.19 | The group picker in the category dialogs shall list groups by type (Income, Expense, Transfer), then by name, each shown as "*group name* (*Type*)", for example "Housing (Expense)". | Implemented |
 
@@ -34,16 +34,16 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 |---|---|---|
 | CAT-2.1 | A budget stream's type shall follow from its category's type: Income, Expense, or Savings for a Transfer category. Budget stream forms shall only offer active categories of the matching type; Uncategorized can't have streams. See BUD-1.1 and BUD-1.3. | Implemented |
 | CAT-2.2 | Spending shall count categories of Income groups as income, ignore categories of Transfer groups, and count categories of Expense groups as expenses. Uncategorized amounts shall count by sign: money in as income, money out as expenses. See CASH-1.3. | Implemented |
-| CAT-2.3 | Budget and Spending shall show how expenses split between Essential and Discretionary (BUD-1.7, CASH-1.8). | Planned |
+| CAT-2.3 | Budget and Spending shall show how expenses split between **Essential**, **Discretionary** and **Unclassified** (BUD-1.7, CASH-1.8). Unclassified is expense categories with no necessity, and on Spending also Uncategorized money out (CASH-1.3). It shows only when it has an amount. | Planned |
 
 ## CAT-3 The user can say which spending is essential
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-3.1 | Every Expense category shall have a necessity: **Essential** (spending needed to live and work, such as housing, utilities, groceries and insurance) or **Discretionary** (spending that could be cut, such as restaurants, entertainment and travel). Income and Transfer categories have no necessity. | Planned |
-| CAT-3.2 | The category dialogs shall show a **Necessity** field only while an Expense group is selected. It shall be required, with no default, and **Save** shall stay disabled until it's chosen. | Planned |
-| CAT-3.3 | The Categories screen shall show each expense category's necessity in its row. | Planned |
-| CAT-3.4 | The server shall refuse an Expense category without a necessity, and an Income or Transfer category with one. | Planned |
+| CAT-3.1 | An Expense category can have a necessity: **Essential** (spending needed to live and work, such as housing, utilities, groceries and insurance) or **Discretionary** (spending that could be cut, such as restaurants, entertainment and travel). It's optional; without one the category is Unclassified (CAT-2.3). Income and Transfer categories have no necessity. | Implemented |
+| CAT-3.2 | The category dialogs shall show a **Necessity** field only while an Expense group is selected, offering **Not set** (the default for a new category), **Essential** and **Discretionary**, with the hint "Essential: needed to live and work. Discretionary: could be cut." | Implemented |
+| CAT-3.3 | The Categories screen shall show an expense category's necessity in its row ("Essential" or "Discretionary"), and nothing when it has none. | Implemented |
+| CAT-3.4 | The server shall refuse a necessity on an Income or Transfer category: "Only expense categories can have a necessity." An Expense category may have none. | Implemented |
 
 ## CAT-4 The user can retire categories they no longer use
 
@@ -94,11 +94,11 @@ Default categories (E = Essential, D = Discretionary):
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-7.1 | **Download Categories** (Categories screen menu) shall produce a CSV named `Categories_<timestamp>.csv` with the header `Type,Group,Name,Icon,Necessity,IsActive`, one row per category, ordered by type, group and name, so the file re-imports unchanged. Type is `Income`, `Expense` or `Transfer`; Necessity is `Essential`, `Discretionary` or blank. Uncategorized and groups with no categories are not included. | Planned |
+| CAT-7.1 | **Download Categories** (Categories screen menu) shall produce a CSV named `Categories_<timestamp>.csv` with the header `Type,Group,Name,Icon,Necessity,IsActive`, one row per category, ordered by type, group and name, so the file re-imports unchanged. Type is `Income`, `Expense` or `Transfer`; Necessity is `Essential`, `Discretionary` or blank (always blank outside Expense). Uncategorized and groups with no categories are not included. | Planned |
 | CAT-7.2 | **Import Categories** (Categories screen menu) shall accept a CSV with the columns from CAT-7.1, validate it without saving first, and let the user confirm only when the dry run found no errors, as transaction import does (TXN-3.2, TXN-3.3, TXN-3.7). It shall be all-or-nothing (TXN-3.9). | Planned |
 | CAT-7.3 | Import shall only add. A row whose category name already exists (ignoring case, Uncategorized included) shall be skipped, not changed. The dry run shall report "Categories to create: N" and "Already exist (skipped): M". | Planned |
 | CAT-7.4 | A row's group shall be found by name, ignoring case. A group that doesn't exist shall be created with the row's type. A row whose group exists with a different type is an error ("Row 5: Group 'Food' is an Expense group, not Income."). | Planned |
-| CAT-7.5 | Each row shall be checked, with every problem in a row reported in one message: **Type** is required and one of the three types (any case); **Group** and **Name** are required, at most 100 characters; **Icon** is required, at most 50 characters; **Necessity** is required on Expense rows and must be blank on others; **IsActive** is true, false (any case) or blank (true). A second row with the same name as an earlier row is an error. | Planned |
+| CAT-7.5 | Each row shall be checked, with every problem in a row reported in one message: **Type** is required and one of the three types (any case); **Group** and **Name** are required, at most 100 characters; **Icon** is required, at most 50 characters; **Necessity** is blank or one of the two values (any case) on Expense rows, and must be blank on others; **IsActive** is true, false (any case) or blank (true). A second row with the same name as an earlier row is an error. | Planned |
 
 ## CAT-8 Transactions can be categorized automatically
 

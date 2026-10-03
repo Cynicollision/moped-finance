@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
-import { BudgetStreamType, CategoryType } from '@shared/finance/enum';
+import { BudgetStreamType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { LayoutService } from './../../core/layout/layout.service';
@@ -19,12 +19,12 @@ describe('FinanceSpendingComponent', () => {
         { id: 'transfers', name: 'Transfers', type: CategoryType.Transfer, ...created }
     ];
     const categories: Category[] = [
-        { id: 'pay', groupId: 'income', name: 'Paycheck', icon: '💼', isActive: true, ...created },
-        { id: 'rent', groupId: 'housing', name: 'Rent', icon: '🏠', isActive: true, ...created },
-        { id: 'utilities', groupId: 'housing', name: 'Utilities', icon: '💡', isActive: true, ...created },
-        { id: 'groceries', groupId: 'food', name: 'Groceries', icon: '🛒', isActive: true, ...created },
-        { id: 'dining', groupId: 'food', name: 'Dining', icon: '🍽️', isActive: true, ...created },
-        { id: 'card', groupId: 'transfers', name: 'Card Payment', icon: '💳', isActive: true, ...created }
+        { id: 'pay', groupId: 'income', name: 'Paycheck', icon: '💼', isActive: true, necessity: null, ...created },
+        { id: 'rent', groupId: 'housing', name: 'Rent', icon: '🏠', isActive: true, necessity: CategoryNecessity.Essential, ...created },
+        { id: 'utilities', groupId: 'housing', name: 'Utilities', icon: '💡', isActive: true, necessity: CategoryNecessity.Essential, ...created },
+        { id: 'groceries', groupId: 'food', name: 'Groceries', icon: '🛒', isActive: true, necessity: CategoryNecessity.Essential, ...created },
+        { id: 'dining', groupId: 'food', name: 'Dining', icon: '🍽️', isActive: true, necessity: CategoryNecessity.Discretionary, ...created },
+        { id: 'card', groupId: 'transfers', name: 'Card Payment', icon: '💳', isActive: true, necessity: null, ...created }
     ];
     const totals: SpendingTotal[] = [
         { categoryId: 'pay', amount: 4000 },

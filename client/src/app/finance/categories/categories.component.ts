@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,6 +26,7 @@ interface GroupedCategories {
     selector: 'app-finance-categories',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TitleCasePipe,
         MatCardModule,
         MatButtonModule,
         MatIconModule,

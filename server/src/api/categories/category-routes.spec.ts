@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { CalendarPeriod } from '@shared/core/enum';
-import { CategoryType } from '@shared/finance/enum';
+import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { AppLogger } from '@server/logging';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
@@ -226,6 +226,77 @@ describe('Category Routes', () => {
 
             const updated = await categoriesData.retrieveSingle(category.id!);
             expect(updated?.name).toBe('New Rent');
+        });
+    });
+
+    describe('necessity', () => {
+        const refusal = { code: 'BAD_REQUEST', message: 'Only expense categories can have a necessity.' };
+
+        async function groupOf(type: CategoryType, name: string) {
+            return groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type, name }));
+        }
+
+        it('CAT-3.1 should save an expense category with or without a necessity', async () => {
+            const food = await groupOf(CategoryType.Expense, 'Food');
+
+            const withOne = await request(app).post('/categories').send({ groupId: food.id, icon: '🛒', name: 'Groceries', necessity: CategoryNecessity.Essential });
+            const without = await request(app).post('/categories').send({ groupId: food.id, icon: '☕', name: 'Coffee' });
+
+            expect(withOne.status).toBe(201);
+            expect(withOne.body.necessity).toBe(CategoryNecessity.Essential);
+            expect(without.status).toBe(201);
+            expect(without.body.necessity).toBeNull();
+        });
+
+        it('CAT-3.4 should refuse a necessity on an income or transfer category', async () => {
+            const work = await groupOf(CategoryType.Income, 'Work');
+            const transfers = await groupOf(CategoryType.Transfer, 'Transfers');
+            const pay = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: work.id, name: 'Paycheck', icon: '💼', isActive: true }));
+
+            const create = await request(app).post('/categories').send({ groupId: transfers.id, icon: '💳', name: 'Card', necessity: CategoryNecessity.Essential });
+            const update = await request(app).put(`/categories/${pay.id}`).send({ necessity: CategoryNecessity.Discretionary });
+
+            expect(create.status).toBe(400);
+            expect(create.body).toEqual(refusal);
+            expect(update.status).toBe(400);
+            expect(update.body).toEqual(refusal);
+            expect((await categoriesData.retrieveSingle(pay.id))?.necessity).toBeNull();
+        });
+
+        it('CAT-3.4 should refuse an unknown necessity', async () => {
+            const food = await groupOf(CategoryType.Expense, 'Food');
+
+            const response = await request(app).post('/categories').send({ groupId: food.id, icon: '🛒', name: 'Groceries', necessity: 'optional' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('necessity');
+        });
+
+        it('CAT-1.17 should clear the necessity of a category moved out of Expense', async () => {
+            const food = await groupOf(CategoryType.Expense, 'Food');
+            const transfers = await groupOf(CategoryType.Transfer, 'Transfers');
+            const card = await categoriesData.insert(FinanceEntityFactory.createCategory({
+                groupId: food.id, name: 'Card', icon: '💳', isActive: true, necessity: CategoryNecessity.Discretionary
+            }));
+
+            // Sent back unchanged, as a client that edits the whole record does.
+            const response = await request(app).put(`/categories/${card.id}`).send({ ...card, groupId: transfers.id });
+
+            expect(response.status).toBe(200);
+            expect(response.body.necessity).toBeNull();
+            expect((await categoriesData.retrieveSingle(card.id))?.necessity).toBeNull();
+        });
+
+        it('CAT-3.1 should keep a necessity that an update leaves out', async () => {
+            const food = await groupOf(CategoryType.Expense, 'Food');
+            const rent = await categoriesData.insert(FinanceEntityFactory.createCategory({
+                groupId: food.id, name: 'Rent', icon: '🏠', isActive: true, necessity: CategoryNecessity.Essential
+            }));
+
+            const response = await request(app).put(`/categories/${rent.id}`).send({ name: 'Mortgage' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.necessity).toBe(CategoryNecessity.Essential);
         });
     });
 

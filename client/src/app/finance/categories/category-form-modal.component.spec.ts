@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { CategoryType } from '@shared/finance/enum';
-import { CategoryGroup } from '@shared/finance/types';
+import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
+import { Category, CategoryGroup } from '@shared/finance/types';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
@@ -17,12 +17,16 @@ describe('CategoryFormModalComponent', () => {
     ] as CategoryGroup[];
 
     async function render(data: CategoryFormModalData) {
+        const financeService = {
+            createCategory: vi.fn().mockResolvedValue({ id: 'new' }),
+            saveCategory: vi.fn().mockResolvedValue({ id: 'cat' })
+        };
         TestBed.configureTestingModule({
             imports: [CategoryFormModalComponent],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useValue: { close: vi.fn() } },
-                { provide: FinanceService, useValue: {} },
+                { provide: FinanceService, useValue: financeService },
                 { provide: NotificationService, useValue: { success: vi.fn() } },
                 { provide: ModalService, useValue: { requestClose: vi.fn() } }
             ]
@@ -30,7 +34,7 @@ describe('CategoryFormModalComponent', () => {
 
         const fixture = TestBed.createComponent(CategoryFormModalComponent);
         await fixture.whenStable();
-        return { fixture, element: fixture.nativeElement as HTMLElement };
+        return { fixture, element: fixture.nativeElement as HTMLElement, financeService };
     }
 
     it('CAT-1.19 should list groups by type, then name, labelled with their type', async () => {
@@ -47,5 +51,45 @@ describe('CategoryFormModalComponent', () => {
             'Housing (Expense)',
             'Transfers (Transfer)'
         ]);
+    });
+
+    function necessityField(element: HTMLElement): Element | undefined {
+        return Array.from(element.querySelectorAll('mat-form-field')).find(f => f.querySelector('mat-label')!.textContent === 'Necessity');
+    }
+
+    it('CAT-3.2 should offer an optional necessity only while an Expense group is selected', async () => {
+        const { fixture, element, financeService } = await render({ groups, initialGroupId: 'work' });
+        const form = fixture.componentInstance.form;
+
+        expect(necessityField(element)).toBeUndefined();
+
+        form.patchValue({ name: 'Groceries', icon: '🛒', groupId: 'food' });
+        await fixture.whenStable();
+        expect(necessityField(element)).toBeDefined();
+        expect(form.controls.necessity.value).toBeNull();
+        expect(form.valid).toBe(true);
+
+        form.patchValue({ necessity: CategoryNecessity.Essential });
+        await fixture.componentInstance.save();
+
+        expect(financeService.createCategory).toHaveBeenCalledWith(
+            { name: 'Groceries', icon: '🛒', groupId: 'food', isActive: true, necessity: CategoryNecessity.Essential }
+        );
+    });
+
+    it('CAT-1.17 should clear the necessity of a category moved out of Expense', async () => {
+        const category = {
+            id: 'cat', groupId: 'food', name: 'Card', icon: '💳', isActive: true, necessity: CategoryNecessity.Discretionary
+        } as Category;
+        const { fixture, element, financeService } = await render({ category, groups });
+
+        expect(necessityField(element)).toBeDefined();
+
+        fixture.componentInstance.form.patchValue({ groupId: 'transfers' });
+        await fixture.whenStable();
+        expect(necessityField(element)).toBeUndefined();
+        await fixture.componentInstance.save();
+
+        expect(financeService.saveCategory).toHaveBeenCalledWith(expect.objectContaining({ groupId: 'transfers', necessity: null }));
     });
 });

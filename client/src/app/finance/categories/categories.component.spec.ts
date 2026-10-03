@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { CategoryType } from '@shared/finance/enum';
+import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
@@ -69,5 +69,22 @@ describe('FinanceCategoriesComponent', () => {
             'No expense groups found.',
             'No transfer groups found.'
         ]);
+    });
+
+    it('CAT-3.3 should show an expense category\'s necessity in its row, when it has one', async () => {
+        const groups = [{ id: 'food', name: 'Food', type: CategoryType.Expense }] as CategoryGroup[];
+        const categories = [
+            { id: 'groceries', groupId: 'food', name: 'Groceries', icon: '🛒', isActive: true, necessity: CategoryNecessity.Essential },
+            { id: 'coffee', groupId: 'food', name: 'Coffee', icon: '☕', isActive: true, necessity: CategoryNecessity.Discretionary },
+            { id: 'snacks', groupId: 'food', name: 'Snacks', icon: '🍿', isActive: true, necessity: null }
+        ] as Category[];
+
+        const element = await render(groups, categories);
+
+        const rows = Array.from(element.querySelectorAll('.category-row')).map(row => [
+            row.querySelector('.name')!.textContent!.trim(),
+            row.querySelector('.necessity')?.textContent!.trim()
+        ]);
+        expect(rows).toEqual([['Coffee', 'Discretionary'], ['Groceries', 'Essential'], ['Snacks', undefined]]);
     });
 });
