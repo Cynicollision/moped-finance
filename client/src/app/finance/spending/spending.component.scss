@@ -23,7 +23,7 @@ app-page-header {
     letter-spacing: 0.05em;
 }
 
-// The period stepper, then the Category / Group switch (CASH-1.1, CASH-1.5).
+// The period stepper, then the Category / Group / Necessity switch (CASH-1.1, CASH-1.5).
 .controls {
     display: flex;
     justify-content: space-between;
@@ -50,8 +50,16 @@ app-page-header {
     ));
 }
 
-// Phones show "Sep 2026" and smaller arrows, so both controls fit one row at 360px.
+// Phones show "Sep 2026" and smaller arrows, and the switch gets a row of its own below the stepper.
 @include bp.content-below(bp.$medium) {
+    .view-toggle {
+        width: 100%;
+
+        mat-button-toggle {
+            flex: 1;
+        }
+    }
+
     .stepper {
         margin-left: -6px;
 
@@ -110,6 +118,15 @@ app-page-header {
 
     .value {
         font: var(--mat-sys-title-large);
+    }
+
+    // Expenses split into Essential, Discretionary and Unclassified, with each one's share (CASH-1.8).
+    .split {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font: var(--mat-sys-body-small);
+        color: var(--text-muted);
     }
 }
 

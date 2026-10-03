@@ -50,10 +50,10 @@ describe('FinanceSpendingComponent', () => {
 
     // Renders Spending once its categories, budget and the period's totals have loaded, with today 2026-05-17. The
     // transactions are the oldest and newest, which bound the years offered.
-    async function render(periodTotals = totals, oldest?: string, newest?: string, budgetStreams: BudgetStream[] = []) {
+    async function render(periodTotals = totals, oldest?: string, newest?: string, budgetStreams: BudgetStream[] = [], withCategories = categories) {
         const edge = (date?: string) => date ? [{ id: date, date }] : [];
         const financeService = {
-            fetchCategories: vi.fn().mockResolvedValue(categories),
+            fetchCategories: vi.fn().mockResolvedValue(withCategories),
             fetchCategoryGroups: vi.fn().mockResolvedValue(groups),
             fetchBudgetStreams: vi.fn().mockResolvedValue(budgetStreams),
             fetchSpendingTotals: vi.fn().mockResolvedValue(periodTotals),
@@ -115,7 +115,7 @@ describe('FinanceSpendingComponent', () => {
         const { element } = await render([{ categoryId: 'pay', amount: 1000 }, { categoryId: 'rent', amount: -1500 }]);
 
         expect(summary(element)).toEqual(['-$500', '-50% of income', '$1,000', '$1,500']);
-        const colours = Array.from(element.querySelectorAll('.summary-card app-money span')).map(span => span.className);
+        const colours = Array.from(element.querySelectorAll('.summary-card :is(.headline, .value) span')).map(span => span.className);
         expect(colours).toEqual(['money-negative', 'money-positive', '']);
     });
 
@@ -325,5 +325,66 @@ describe('FinanceSpendingComponent', () => {
         const rent = Array.from(fixture.element.querySelectorAll<HTMLAnchorElement>('a.app-list-row'))
             .find(row => row.textContent!.includes('Rent'))!;
         expect(rent.getAttribute('href')).toBe('/transactions?categoryId=rent&startDate=2026-04-01&endDate=2026-06-30');
+    });
+
+    describe('Essential and Discretionary', () => {
+        // Expenses of $2,180: $2,000 essential (rent, utilities, groceries), $100 discretionary (dining), $80 uncategorized.
+        const split = [...totals, { categoryId: 'dining', amount: -100 }, { categoryId: '', amount: -80 }];
+
+        function splitParts(element: HTMLElement): string[] {
+            return Array.from(element.querySelectorAll('.summary-card .split-part')).map(text);
+        }
+
+        function subheaders(element: HTMLElement): string[] {
+            return Array.from(section(element, 'Expenses').querySelectorAll('[appListSubheader]'))
+                .map(header => Array.from(header.children).map(text).join(' '));
+        }
+
+        it('CASH-1.8 should split expenses in the summary, with each part\'s share, in every view', async () => {
+            const fixture = await render(split);
+            const expected = ['Essential $2,000 · 92%', 'Discretionary $100 · 5%', 'Unclassified $80 · 4%'];
+
+            expect(splitParts(fixture.element)).toEqual(expected);
+
+            fixture.componentInstance.viewMode.set('group');
+            await fixture.whenStable();
+            expect(splitParts(fixture.element)).toEqual(expected);
+        });
+
+        it('CASH-1.8 should leave Unclassified out of the summary when it has no amount', async () => {
+            const { element } = await render();
+
+            expect(splitParts(element)).toEqual(['Essential $2,000 · 100%', 'Discretionary $0 · 0%']);
+        });
+
+        it('CASH-1.8 should leave the split out while no expense category has a necessity', async () => {
+            const { element } = await render(split, undefined, undefined, [], categories.map(c => ({ ...c, necessity: null })));
+
+            expect(splitParts(element)).toEqual([]);
+        });
+
+        it('CASH-1.8 should list expenses by category under each necessity in the Necessity view', async () => {
+            const fixture = await render(split);
+
+            fixture.componentInstance.viewMode.set('necessity');
+            await fixture.whenStable();
+
+            expect(subheaders(fixture.element)).toEqual(['Essential $2,000', 'Discretionary $100', 'Unclassified $80']);
+            expect(sectionRows(fixture.element, 'Expenses')).toEqual([
+                '🏠 Rent $1,500.00', '🛒 Groceries $300.00', '💡 Utilities $200.00', '🍽️ Dining $100.00', 'Uncategorized $80.00'
+            ]);
+            expect(sectionRows(fixture.element, 'Income')).toEqual(['💼 Paycheck $4,000.00']);
+            expect(section(fixture.element, 'Income').querySelector('[appListSubheader]')).toBeNull();
+        });
+
+        it('CASH-1.6 should open Transactions for a category from the Necessity view', async () => {
+            const fixture = await render(split);
+
+            fixture.componentInstance.viewMode.set('necessity');
+            await fixture.whenStable();
+
+            const rent = section(fixture.element, 'Expenses').querySelector<HTMLAnchorElement>('a.app-list-row')!;
+            expect(rent.getAttribute('href')).toBe('/transactions?categoryId=rent&startDate=2026-05-01&endDate=2026-05-31');
+        });
     });
 });

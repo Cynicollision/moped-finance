@@ -22,6 +22,7 @@
             hideSingleSelectionIndicator aria-label="Show by">
             <mat-button-toggle value="category">Category</mat-button-toggle>
             <mat-button-toggle value="group">Group</mat-button-toggle>
+            <mat-button-toggle value="necessity">Necessity</mat-button-toggle>
         </mat-button-toggle-group>
     </div>
 
@@ -48,6 +49,16 @@
                         @if (section.budget !== undefined) {
                             <span class="budgeted">of <app-money [amount]="section.budget" digits="1.0-0"></app-money> budgeted</span>
                         }
+                        @if (!section.isIncome && expenseSplit(); as split) {
+                            <div class="split">
+                                @for (part of split; track part.key) {
+                                    <span class="split-part">
+                                        {{ part.title }} <app-money [amount]="part.total" digits="1.0-0"></app-money>
+                                        · {{ part.share | percent:'1.0-0' }}
+                                    </span>
+                                }
+                            </div>
+                        }
                     </div>
                 }
             </div>
@@ -62,7 +73,8 @@
 
                 @if (section.rows.length) {
                     <app-list [columns]="columns()" [showHeader]="hasBudget()">
-                        @for (row of section.rows; track row.id) {
+                        <!-- Declared inside the list, so its cells find the list's columns. -->
+                        <ng-template #spendingRow let-row let-section="section">
                             <a appListRow routerLink="/transactions" [queryParams]="rowQueryParams(row)">
                                 <span appListCell="name">{{ row.name }}</span>
                                 @if (row.budget !== undefined) {
@@ -82,6 +94,24 @@
                                 }
                                 <app-money appListCell="amount" [amount]="row.amount" [tone]="section.tone"></app-money>
                             </a>
+                        </ng-template>
+
+                        <!-- Expenses by category under Essential, Discretionary and Unclassified (CASH-1.8). -->
+                        @if (section.parts; as parts) {
+                            @for (part of parts; track part.key) {
+                                <div appListSubheader>
+                                    <h3>{{ part.title }}</h3>
+                                    <app-money [amount]="part.total" [tone]="section.tone" digits="1.0-0"></app-money>
+                                </div>
+                                @for (row of part.rows; track row.id) {
+                                    <ng-container [ngTemplateOutlet]="spendingRow" [ngTemplateOutletContext]="{ $implicit: row, section }"></ng-container>
+                                }
+                            }
+                        }
+                        @else {
+                            @for (row of section.rows; track row.id) {
+                                <ng-container [ngTemplateOutlet]="spendingRow" [ngTemplateOutletContext]="{ $implicit: row, section }"></ng-container>
+                            }
                         }
                     </app-list>
                 }

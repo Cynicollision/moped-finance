@@ -34,7 +34,7 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 |---|---|---|
 | CAT-2.1 | A budget stream's type shall follow from its category's type: Income, Expense, or Savings for a Transfer category. Budget stream forms shall only offer active categories of the matching type; Uncategorized can't have streams. See BUD-1.1 and BUD-1.3. | Implemented |
 | CAT-2.2 | Spending shall count categories of Income groups as income, ignore categories of Transfer groups, and count categories of Expense groups as expenses. Uncategorized amounts shall count by sign: money in as income, money out as expenses. See CASH-1.3. | Implemented |
-| CAT-2.3 | Budget and Spending shall show how expenses split between **Essential**, **Discretionary** and **Unclassified** (BUD-1.7, CASH-1.8). Unclassified is expense categories with no necessity, and on Spending also Uncategorized money out (CASH-1.3). It shows only when it has an amount. | Partial |
+| CAT-2.3 | Budget and Spending shall show how expenses split between **Essential**, **Discretionary** and **Unclassified** (BUD-1.7, CASH-1.8). Unclassified is expense categories with no necessity, and on Spending also Uncategorized money out (CASH-1.3). It shows only when it has an amount. | Implemented |
 
 ## CAT-3 The user can say which spending is essential
 
@@ -123,7 +123,6 @@ Default categories (E = Essential, D = Discretionary):
 
 ## Known gaps
 
-- **Spending doesn't show the necessity split yet (CAT-2.3, CASH-1.8).** Budget does (BUD-1.7).
 - **No automatic categorization (CAT-8, CAT-9).** Every transaction's category is chosen by hand or given in the import file.
 - **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions with no category (it refuses when a budget stream uses it, CAT-4.5). Those transactions count as expenses in Spending but disappear from the Transactions list (TXN-1.11). The API already refuses to delete a group that has categories.
 - **Uncategorized doesn't exist yet (CAT-5)**, so the Categories screen starts with the Income section (CAT-1.3, CAT-5.4). A transaction can have no category; Spending labels those *Uncategorized* and counts them by sign (CASH-1.3). An instance that already has its own category named "Uncategorized" (the author's does) needs it merged into the built-in one when CAT-5 is built: its transactions move over and it's deleted. Transactions with no category move to it too.

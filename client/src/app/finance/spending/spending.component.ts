@@ -21,7 +21,11 @@ import { CardSkeletonComponent } from './../../core/loading/card-skeleton.compon
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
 import { MoneyComponent, MoneyTone } from './../common/money.component';
+import { ExpenseNecessity, expenseNecessities, expenseNecessityOf } from './../common/necessity';
 import { FinanceService } from './../finance.service';
+
+/** How the sections list their rows: by category, by group, or by category under each necessity (CASH-1.5, CASH-1.8). */
+export type SpendingViewMode = 'category' | 'group' | 'necessity';
 
 interface SpendingRow {
     /** The category or group ID, depending on the view mode; undefined for uncategorized transactions. */
@@ -31,6 +35,19 @@ interface SpendingRow {
     amount: number;
     /** The budget for the period, when the category (or one in the group) has budget streams (CASH-1.10). */
     budget?: number;
+    /** By category, an expense row's part of the split; Uncategorized money out is Unclassified (CAT-2.3). */
+    necessity?: ExpenseNecessity;
+}
+
+/** A part of the expenses split: its total in the summary, and its rows in the Necessity view (CASH-1.8). */
+export interface NecessityPart {
+    key: ExpenseNecessity;
+    title: string;
+    rows: SpendingRow[];
+    total: number;
+    budget?: number;
+    /** The part's share of all expenses; 0 when there are none. */
+    share: number;
 }
 
 /** How a row compares with its budget: "$40 under", "$25 over", or on budget (CASH-1.10). */
@@ -50,6 +67,8 @@ interface SpendingSection {
     budget?: number;
     tone: MoneyTone;
     empty: string;
+    /** Expenses in the Necessity view: the rows under Essential, Discretionary and Unclassified (CASH-1.8). */
+    parts?: NecessityPart[];
 }
 
 /** The period on screen: a month, quarter or year, by its first day (CASH-1.1). */
@@ -115,7 +134,7 @@ export class FinanceSpendingComponent {
     ];
     /** The budget and difference columns show only when there's a budget to compare with (CASH-1.10). */
     readonly columns = computed<ListColumn[]>(() => [
-        { key: 'name', label: this.viewMode() === 'category' ? 'Category' : 'Group', compact: 'primary' },
+        { key: 'name', label: this.viewMode() === 'group' ? 'Group' : 'Category', compact: 'primary' },
         ...(this.hasBudget() ? budgetColumns : []),
         { key: 'amount', label: 'Actual', width: '9rem', align: 'end', compact: 'trailing' }
     ]);
@@ -127,7 +146,7 @@ export class FinanceSpendingComponent {
         period: CalendarPeriod.Monthly,
         start: CalendarDateUtil.getPeriod(CalendarPeriod.Monthly, this.today).startDate
     });
-    readonly viewMode = signal<'category' | 'group'>('category');
+    readonly viewMode = signal<SpendingViewMode>('category');
 
     readonly lookups = viewResource({
         loader: async () => {
@@ -276,8 +295,11 @@ export class FinanceSpendingComponent {
 
     // The figures
 
-    private readonly rows = computed(() => {
-        const viewMode = this.viewMode();
+    // The rows by category, which the summary's split always needs (CASH-1.8), and the rows the view shows.
+    private readonly categoryRows = computed(() => this.buildRows(false));
+    private readonly rows = computed(() => this.viewMode() === 'group' ? this.buildRows(true) : this.categoryRows());
+
+    private buildRows(byGroup: boolean): { income: SpendingRow[]; expense: SpendingRow[] } {
         const income = new Map<string, SpendingRow>();
         const expense = new Map<string, SpendingRow>();
 
@@ -290,13 +312,14 @@ export class FinanceSpendingComponent {
                 return undefined;
             }
 
-            const id = viewMode === 'category' ? cat?.id : group?.id;
-            const name = viewMode === 'category'
-                ? (cat ? `${cat.icon} ${cat.name}` : 'Uncategorized')
-                : (group?.name || 'Uncategorized');
+            const id = byGroup ? group?.id : cat?.id;
+            const name = byGroup
+                ? (group?.name || 'Uncategorized')
+                : (cat ? `${cat.icon} ${cat.name}` : 'Uncategorized');
             const isIncome = group ? group.type === CategoryType.Income : isUncategorizedIncome;
             const rows = isIncome ? income : expense;
-            const row = rows.get(id ?? '') ?? { id, name, amount: 0 };
+            const necessity = isIncome || byGroup ? undefined : expenseNecessityOf(cat);
+            const row = rows.get(id ?? '') ?? { id, name, amount: 0, necessity };
             rows.set(id ?? '', row);
             return { row, isIncome };
         };
@@ -323,7 +346,7 @@ export class FinanceSpendingComponent {
             income: [...income.values()].sort(largestFirst),
             expense: [...expense.values()].sort(largestFirst)
         };
-    });
+    }
 
     readonly hasBudget = computed(() => [...this.rows().income, ...this.rows().expense].some(row => row.budget !== undefined));
 
@@ -345,9 +368,31 @@ export class FinanceSpendingComponent {
         },
         {
             title: 'Expenses', isIncome: false, rows: this.rows().expense, total: this.totalExpenses(), budget: this.budgetedExpenses(),
-            tone: 'plain', empty: 'No expenses in this period.'
+            tone: 'plain', empty: 'No expenses in this period.',
+            parts: this.viewMode() === 'necessity' ? this.splitByNecessity().filter(part => part.rows.length > 0) : undefined
         }
     ]);
+
+    /** Whether any expense category has a necessity; until one does, the summary leaves the split out (CASH-1.8). */
+    private readonly hasNecessities = computed(() => (this.lookups.value()?.categories ?? []).some(c => c.necessity));
+
+    /**
+     * The summary's split of expenses, in every view: Essential and Discretionary, and Unclassified when it has an
+     * amount (CASH-1.8).
+     */
+    readonly expenseSplit = computed(() => this.hasNecessities()
+        ? this.splitByNecessity().filter(part => part.key !== 'unclassified' || Math.round(part.total) !== 0)
+        : undefined);
+
+    private splitByNecessity(): NecessityPart[] {
+        const expenses = this.categoryRows().expense;
+        return expenseNecessities.map(({ key, label }) => {
+            const rows = expenses.filter(row => row.necessity === key);
+            const total = sumOf(rows, row => row.amount);
+            const share = this.totalExpenses() > 0 ? total / this.totalExpenses() : 0;
+            return { key, title: label, rows, total, budget: budgetOf(rows), share };
+        });
+    }
 
     /** How a row compares with its budget, in whole dollars; over on an expense, or under on income, is bad (CASH-1.10). */
     difference(row: SpendingRow, section: SpendingSection): BudgetDifference | undefined {
@@ -365,7 +410,7 @@ export class FinanceSpendingComponent {
     rowQueryParams(row: SpendingRow): Record<string, string> {
         const queryParams: Record<string, string> = {};
 
-        if (this.viewMode() === 'category' && row.id) {
+        if (this.viewMode() !== 'group' && row.id) {
             queryParams['categoryId'] = row.id;
         }
         else if (this.viewMode() === 'group' && row.id) {
