@@ -23,6 +23,15 @@
                     <div class="figure">
                         <span class="label">{{ section.title }}</span>
                         <app-money class="value" [amount]="forPeriod(section.monthly)" [tone]="section.tone" digits="1.0-0"></app-money>
+                        @if (section.type === 'expense' && expenseSplit(); as split) {
+                            <div class="split">
+                                @for (part of split; track part.key) {
+                                    <span class="split-part">
+                                        {{ part.title }} <app-money [amount]="forPeriod(part.monthly)" digits="1.0-0"></app-money>
+                                    </span>
+                                }
+                            </div>
+                        }
                     </div>
                 }
             </div>
@@ -40,7 +49,8 @@
 
                 @if (section.streams.length) {
                     <app-list [columns]="columns">
-                        @for (s of section.streams; track s.id) {
+                        <!-- Declared inside the list, so its cells find the list's columns. -->
+                        <ng-template #streamRow let-s>
                             <div appListRow>
                                 <span appListCell="name">{{ s.name }}</span>
                                 <span appListCell="group">{{ getCategoryGroup(s.categoryId) }}</span>
@@ -54,6 +64,26 @@
                                     </button>
                                 </span>
                             </div>
+                        </ng-template>
+
+                        <!-- Expenses under Essential, Discretionary and Unclassified, once any has a necessity (BUD-1.7). -->
+                        @if (section.necessityParts; as parts) {
+                            @for (part of parts; track part.key) {
+                                @if (part.streams.length) {
+                                    <div appListSubheader>
+                                        <h3>{{ part.title }}</h3>
+                                        <app-money [amount]="forPeriod(part.monthly)" digits="1.0-0"></app-money>
+                                    </div>
+                                    @for (s of part.streams; track s.id) {
+                                        <ng-container [ngTemplateOutlet]="streamRow" [ngTemplateOutletContext]="{ $implicit: s }"></ng-container>
+                                    }
+                                }
+                            }
+                        }
+                        @else {
+                            @for (s of section.streams; track s.id) {
+                                <ng-container [ngTemplateOutlet]="streamRow" [ngTemplateOutletContext]="{ $implicit: s }"></ng-container>
+                            }
                         }
                     </app-list>
                 }

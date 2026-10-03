@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -16,8 +17,17 @@ import { viewResource } from './../../core/loading/view-resource';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { MoneyComponent, MoneyTone } from './../common/money.component';
+import { ExpenseNecessity, expenseNecessities, expenseNecessityOf } from './../common/necessity';
 import { FinanceService } from './../finance.service';
 import { FinanceBudgetFormModalComponent, BudgetFormModalData, confirmDeleteStream, streamTypeLabel } from './budget-form-modal.component';
+
+/** Some of a section's streams with what they come to per month: one part of the expenses split (BUD-1.7). */
+export interface NecessityPart {
+    key: ExpenseNecessity;
+    title: string;
+    streams: BudgetStream[];
+    monthly: number;
+}
 
 /** One of the screen's sections: Income, Expenses or Savings (BUD-1.2). */
 export interface BudgetSection {
@@ -28,6 +38,11 @@ export interface BudgetSection {
     streams: BudgetStream[];
     /** What the section's streams come to per month (BUD-1.6). */
     monthly: number;
+    /**
+     * Expenses only, once any of their categories has a necessity: the streams split into Essential, Discretionary and
+     * Unclassified, each part in the section's order (BUD-1.7).
+     */
+    necessityParts?: NecessityPart[];
 }
 
 const sectionText: Record<BudgetStreamType, Pick<BudgetSection, 'title' | 'empty' | 'tone'>> = {
@@ -38,10 +53,15 @@ const sectionText: Record<BudgetStreamType, Pick<BudgetSection, 'title' | 'empty
 
 const recurrenceOrder = [CalendarPeriod.Monthly, CalendarPeriod.Quarterly, CalendarPeriod.Yearly];
 
+function monthlyTotal(streams: BudgetStream[]): number {
+    return streams.reduce((sum, s) => sum + BudgetStreamUtil.monthlyAmount(s), 0);
+}
+
 @Component({
     selector: 'app-finance-budget',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        NgTemplateOutlet,
         MatCardModule,
         MatButtonModule,
         MatButtonToggleModule,
@@ -95,10 +115,26 @@ export class FinanceBudgetComponent {
         const streams = this.data.value()?.budgetStreams ?? [];
         return [BudgetStreamType.Income, BudgetStreamType.Expense, BudgetStreamType.Savings].map(type => {
             const ofType = streams.filter(s => s.type === type).sort((a, b) => this.compareStreams(a, b));
-            const monthly = ofType.reduce((sum, s) => sum + BudgetStreamUtil.monthlyAmount(s), 0);
-            return { type, ...sectionText[type], streams: ofType, monthly };
+            const necessityParts = type === BudgetStreamType.Expense ? this.splitByNecessity(ofType) : undefined;
+            return { type, ...sectionText[type], streams: ofType, monthly: monthlyTotal(ofType), necessityParts };
         });
     });
+
+    /** The summary's split of expenses: Essential and Discretionary, and Unclassified when it has an amount (BUD-1.7). */
+    readonly expenseSplit = computed(() => this.sections()
+        .find(section => section.type === BudgetStreamType.Expense)?.necessityParts
+        ?.filter(part => part.key !== 'unclassified' || part.monthly !== 0));
+
+    private splitByNecessity(streams: BudgetStream[]): NecessityPart[] | undefined {
+        const necessityOf = (stream: BudgetStream) => expenseNecessityOf(this.categoryMap().get(stream.categoryId));
+        if (streams.every(stream => necessityOf(stream) === 'unclassified')) {
+            return undefined;
+        }
+        return expenseNecessities.map(({ key, label }) => {
+            const ofNecessity = streams.filter(stream => necessityOf(stream) === key);
+            return { key, title: label, streams: ofNecessity, monthly: monthlyTotal(ofNecessity) };
+        });
+    }
 
     /** Income less expenses and savings (BUD-1.10). */
     readonly leftOver = computed(() => {

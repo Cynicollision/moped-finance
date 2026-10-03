@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CalendarPeriod } from '@shared/core/enum';
-import { BudgetStreamType, CategoryType } from '@shared/finance/enum';
+import { BudgetStreamType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { ModalService } from './../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
@@ -31,9 +31,9 @@ describe('FinanceBudgetComponent', () => {
         stream(BudgetStreamType.Income, 'Salary', 'pay', 3000)
     ];
 
-    async function render(budgetStreams = streams) {
+    async function render(budgetStreams = streams, withCategories = categories) {
         const financeService = {
-            fetchCategories: vi.fn().mockResolvedValue(categories),
+            fetchCategories: vi.fn().mockResolvedValue(withCategories),
             fetchCategoryGroups: vi.fn().mockResolvedValue(groups),
             fetchBudgetStreams: vi.fn().mockResolvedValue(budgetStreams)
         };
@@ -108,5 +108,50 @@ describe('FinanceBudgetComponent', () => {
         expect(modalService.open).toHaveBeenCalledWith(
             FinanceBudgetFormModalComponent, expect.objectContaining({ type: BudgetStreamType.Savings }), { size: 'panel' }
         );
+    });
+
+    describe('Essential and Discretionary', () => {
+        const withNecessity = (necessities: Record<string, CategoryNecessity>) =>
+            categories.map(c => ({ ...c, necessity: necessities[c.id] ?? null }));
+
+        function split(element: HTMLElement): string[] {
+            return Array.from(element.querySelectorAll('.summary-card .split-part')).map(part => part.textContent!.replace(/\s+/g, ' ').trim());
+        }
+
+        function subheaders(element: HTMLElement): string[] {
+            return Array.from(section(element, 'Expenses').querySelectorAll('[appListSubheader]'))
+                .map(header => Array.from(header.children).map(child => child.textContent!.trim()).join(' '));
+        }
+
+        it('BUD-1.7 should split expenses into Essential and Discretionary, in the summary and the list', async () => {
+            const { fixture, element } = await render(streams, withNecessity({
+                rent: CategoryNecessity.Essential, insurance: CategoryNecessity.Essential, groceries: CategoryNecessity.Discretionary
+            }));
+
+            // Essential: rent 1,500 and insurance 50 a month. Discretionary: groceries 100 and takeout 100 a month.
+            expect(split(element)).toEqual(['Essential $1,550', 'Discretionary $200']);
+            expect(subheaders(element)).toEqual(['Essential $1,550', 'Discretionary $200']);
+            expect(streamNames(element, 'Expenses')).toEqual(['Rent', 'Home insurance', 'Takeout', 'Groceries']);
+
+            fixture.componentInstance.period.set(CalendarPeriod.Yearly);
+            await fixture.whenStable();
+
+            expect(split(element)).toEqual(['Essential $18,600', 'Discretionary $2,400']);
+        });
+
+        it('BUD-1.7 should show Unclassified only when it has an amount', async () => {
+            const { element } = await render(streams, withNecessity({ rent: CategoryNecessity.Essential }));
+
+            expect(split(element)).toEqual(['Essential $1,500', 'Discretionary $0', 'Unclassified $250']);
+            expect(subheaders(element)).toEqual(['Essential $1,500', 'Unclassified $250']);
+            expect(streamNames(element, 'Expenses')).toEqual(['Rent', 'Takeout', 'Groceries', 'Home insurance']);
+        });
+
+        it('BUD-1.7 should leave the split out while no expense category has a necessity', async () => {
+            const { element } = await render();
+
+            expect(split(element)).toEqual([]);
+            expect(subheaders(element)).toEqual([]);
+        });
     });
 });
