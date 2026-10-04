@@ -61,15 +61,6 @@ app-page-header {
     .value {
         font: var(--mat-sys-title-large);
     }
-
-    // Expenses split into Essential, Discretionary and Unclassified (BUD-1.7).
-    .split {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        font: var(--mat-sys-body-small);
-        color: var(--text-muted);
-    }
 }
 
 @include bp.content-below(bp.$medium) {
