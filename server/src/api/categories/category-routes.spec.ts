@@ -112,14 +112,24 @@ describe('Category Routes', () => {
             expect(updated?.name).toBe('New Name');
         });
 
-        it('CAT-1.14 should refuse to change a group\'s type', async () => {
+        it('CAT-1.14 should refuse to change the type of a group that has categories', async () => {
             const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' }));
+            await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Paycheck', icon: 'cash', isActive: true }));
 
             const response = await request(app).put(`/categories/groups/${group.id}`).send({ ...group, type: CategoryType.Expense });
 
             expect(response.status).toBe(400);
-            expect(response.body.message).toBe('A category group\'s type can\'t be changed. Move its categories to a group of the right type instead.');
+            expect(response.body.message).toBe('A category group\'s type can\'t be changed while it has categories.');
             expect((await groupsData.retrieveSingle(group.id!))?.type).toBe(CategoryType.Income);
+        });
+
+        it('CAT-1.14 should change the type of an empty group', async () => {
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' }));
+
+            const response = await request(app).put(`/categories/groups/${group.id}`).send({ ...group, type: CategoryType.Expense });
+
+            expect(response.status).toBe(200);
+            expect((await groupsData.retrieveSingle(group.id!))?.type).toBe(CategoryType.Expense);
         });
     });
 
