@@ -35,7 +35,7 @@ The app itself only speaks plain HTTP. Choose one of these:
 
 ## Still to decide
 
-These are tracked in `TODO.md` under "Next":
+These are tracked in `TODO.md` under "Now":
 
 - Backup and restore for the database volume.
 - How images are delivered (GHCR from CI, or built on the host).
