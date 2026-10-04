@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
-import { AppLogger } from '@server/logging';
+import { IAppLogger } from '@server/logging';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
 import { FinanceAccountData } from './../accounts';
 import { FinanceInstitutionData } from './institution-data';
@@ -15,7 +15,7 @@ describe('Institution Routes', () => {
     let pglite: PGlite;
     let institutionsData: FinanceInstitutionData;
     let accountData: FinanceAccountData;
-    let mockLogger: jest.Mocked<AppLogger>;
+    let mockLogger: jest.Mocked<IAppLogger>;
     let testUserId: string;
 
     beforeAll(async () => {

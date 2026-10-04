@@ -5,7 +5,7 @@ import { SortDirection } from '@shared/core/enum';
 import { AccountCategory, AccountGroup, AccountType, CategoryType, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
-import { AppLogger } from '@server/logging';
+import { IAppLogger } from '@server/logging';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
 import { FinanceAccountData } from './../accounts';
@@ -23,7 +23,7 @@ describe('Transaction Routes', () => {
     let categoriesData: FinanceCategoryData;
     let groupsData: FinanceCategoryGroupData;
     let institutionsData: FinanceInstitutionData;
-    let mockLogger: jest.Mocked<AppLogger>;
+    let mockLogger: jest.Mocked<IAppLogger>;
     let testUserId: string;
 
     let testInstitutionId: string;

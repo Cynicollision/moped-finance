@@ -23,8 +23,6 @@ Nothing right now: the client baseline is done. Pull the next item up from Next.
 
 ### Testing
 - [ ] Frontend coverage: services (`api`, `finance`, `auth`), `auth.guard`, the demo interceptor, and key components (transactions, imports).
-- [ ] Make server "now" injectable (via `DateTimeUtil`) so date-based logic is deterministic in tests.
-- [ ] `TestExpressUtil.createMockLogger` should mock `IAppLogger`, not `AppLogger` (`server/src/utility/testing/express-util.ts`).
 
 ### Tooling
 - [ ] Install Prettier (already configured in `client/package.json` but not a dependency) and apply it to both packages. Its config doesn't set `tabWidth`, so it would default to 2 spaces; set 4 to match `docs/conventions.md` and `.editorconfig`, and move the config to a root `.prettierrc` so it covers the server too. Prettier always writes `} else {`, which conflicts with the convention of `else` on a new line (enforced in the client by `@stylistic/brace-style`), so decide which gives: drop the convention, or use Prettier only for HTML and SCSS. Until then the client lint checks TypeScript indentation, but nothing checks HTML or SCSS formatting.
