@@ -16,7 +16,7 @@
                 <mat-select formControlName="groupId">
                     @for (group of data.groups; track group.id) {
                         <mat-option [value]="group.id">
-                            {{group.name}} ({{group.class}})
+                            {{group.name}} ({{group.type}})
                         </mat-option>
                     }
                 </mat-select>

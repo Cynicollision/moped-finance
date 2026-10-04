@@ -1,13 +1,13 @@
 import { CalendarPeriod } from './../../core/enum';
 import { BudgetStreamType } from './../enum/budget-stream-type';
-import { CategoryClass } from './../enum/category-class';
+import { CategoryType } from './../enum/category-type';
 import { BudgetStreamUtil } from './budget-stream-util';
 
 describe('BudgetStreamUtil', () => {
     it('BUD-1.1 should take a stream\'s type from its category\'s class', () => {
-        expect(BudgetStreamUtil.typeOf(CategoryClass.Income)).toBe(BudgetStreamType.Income);
-        expect(BudgetStreamUtil.typeOf(CategoryClass.Expense)).toBe(BudgetStreamType.Expense);
-        expect(BudgetStreamUtil.typeOf(CategoryClass.Transfer)).toBe(BudgetStreamType.Savings);
+        expect(BudgetStreamUtil.typeOf(CategoryType.Income)).toBe(BudgetStreamType.Income);
+        expect(BudgetStreamUtil.typeOf(CategoryType.Expense)).toBe(BudgetStreamType.Expense);
+        expect(BudgetStreamUtil.typeOf(CategoryType.Transfer)).toBe(BudgetStreamType.Savings);
     });
 
     it('BUD-1.6 should convert a stream to a monthly amount', () => {

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CalendarPeriod } from '@shared/core/enum';
-import { BudgetStreamType, CategoryClass } from '@shared/finance/enum';
+import { BudgetStreamType, CategoryType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
@@ -10,9 +10,9 @@ import { BudgetFormModalData, FinanceBudgetFormModalComponent } from './budget-f
 
 describe('FinanceBudgetFormModalComponent', () => {
     const groups = [
-        { id: 'income', name: 'Income', class: CategoryClass.Income },
-        { id: 'housing', name: 'Housing', class: CategoryClass.Expense },
-        { id: 'transfers', name: 'Transfers', class: CategoryClass.Transfer }
+        { id: 'income', name: 'Income', type: CategoryType.Income },
+        { id: 'housing', name: 'Housing', type: CategoryType.Expense },
+        { id: 'transfers', name: 'Transfers', type: CategoryType.Transfer }
     ] as CategoryGroup[];
     const categories = [
         { id: 'pay', groupId: 'income', name: 'Paycheck', icon: '💼' },

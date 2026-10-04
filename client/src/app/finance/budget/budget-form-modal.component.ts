@@ -104,7 +104,7 @@ export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChange
         const groupMap = new Map(this.data.groups.map(g => [g.id, g]));
         const available = this.data.categories.filter(c => {
             const group = groupMap.get(c.groupId);
-            return !!group && BudgetStreamUtil.typeOf(group.class) === this.data.type;
+            return !!group && BudgetStreamUtil.typeOf(group.type) === this.data.type;
         });
         this.categories.set(available);
 

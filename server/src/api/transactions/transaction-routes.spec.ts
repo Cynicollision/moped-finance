@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { SortDirection } from '@shared/core/enum';
-import { AccountCategory, AccountGroup, AccountType, CategoryClass, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { AccountCategory, AccountGroup, AccountType, CategoryType, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { AppLogger } from '@server/logging';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
@@ -62,7 +62,7 @@ describe('Transaction Routes', () => {
         }));
         testAccountId = account.id!;
 
-        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Food' }));
+        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Food' }));
         const category = await categoriesData.insert(FinanceEntityFactory.createCategory({
             groupId: group.id!, name: 'Groceries', icon: 'apple', isActive: true
         }));
@@ -602,7 +602,7 @@ describe('Transaction Routes', () => {
             const savings = await accountsData.insert(FinanceEntityFactory.createAccount({
                 institutionId: inst.id, name: 'savings', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Savings
             }));
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ class: CategoryClass.Expense, name: 'Home' }));
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Home' }));
             const rent = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id, name: 'rent', icon: 'home', isActive: true }));
 
             const checkingGroceries = await insertTransaction({ merchant: 'A' });

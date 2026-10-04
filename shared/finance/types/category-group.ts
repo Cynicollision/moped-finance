@@ -1,7 +1,7 @@
 import { Entity } from './../../core/types';
-import { CategoryClass } from './../enum/category-class';
+import { CategoryType } from './../enum/category-type';
 
 export type CategoryGroup = Entity & {
-    class: CategoryClass;
+    type: CategoryType;
     name: string;
 };

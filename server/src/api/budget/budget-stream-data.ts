@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CalendarPeriod } from '@shared/core/enum';
-import { CategoryClass } from '@shared/finance/enum';
+import { CategoryType } from '@shared/finance/enum';
 import { BudgetStream, BudgetStreamFields } from '@shared/finance/types';
 import { BudgetStreamUtil } from '@shared/finance/util';
 import { IDatabaseClient } from '@server/data';
@@ -18,14 +18,14 @@ export interface IFinanceBudgetStreamData {
     delete(id: string): Promise<boolean>;
 }
 
-function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect, categoryClass: string): BudgetStream {
+function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect, categoryType: string): BudgetStream {
     return {
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         name: row.name,
         categoryId: row.categoryId,
-        type: BudgetStreamUtil.typeOf(categoryClass as CategoryClass),
+        type: BudgetStreamUtil.typeOf(categoryType as CategoryType),
         recurrence: row.recurrence as CalendarPeriod,
         amount: Number(row.amount),
     };
@@ -38,29 +38,29 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
         this.db = dbClient.drizzle;
     }
 
-    // Each stream with its category's class, which decides its type (BUD-1.1).
-    private selectWithClass() {
-        return this.db.select({ stream: budgetStreamSchema, categoryClass: categoryGroupSchema.class })
+    // Each stream with its category's type, which decides the stream's type (BUD-1.1).
+    private selectWithCategoryType() {
+        return this.db.select({ stream: budgetStreamSchema, categoryType: categoryGroupSchema.type })
             .from(budgetStreamSchema)
             .innerJoin(categorySchema, eq(categorySchema.id, budgetStreamSchema.categoryId))
             .innerJoin(categoryGroupSchema, eq(categoryGroupSchema.id, categorySchema.groupId));
     }
 
     public async retrieveAll(): Promise<BudgetStream[]> {
-        const rows = await this.selectWithClass();
+        const rows = await this.selectWithCategoryType();
 
-        return rows.map(row => mapRowToBudgetStream(row.stream, row.categoryClass));
+        return rows.map(row => mapRowToBudgetStream(row.stream, row.categoryType));
     }
 
     public async retrieveSingle(id: string): Promise<BudgetStream | null> {
-        const rows = await this.selectWithClass()
+        const rows = await this.selectWithCategoryType()
             .where(eq(budgetStreamSchema.id, id));
 
         if (rows.length === 0) {
             return null;
         }
 
-        return mapRowToBudgetStream(rows[0].stream, rows[0].categoryClass);
+        return mapRowToBudgetStream(rows[0].stream, rows[0].categoryType);
     }
 
     public async delete(id: string): Promise<boolean> {

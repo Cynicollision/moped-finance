@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CategoryGroup, Category } from '@shared/finance/types';
-import { CategoryClass } from '@shared/finance/enum';
+import { CategoryType } from '@shared/finance/enum';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
@@ -57,13 +57,13 @@ export class FinanceCategoriesComponent {
     private readonly categories = computed(() => this.data.value()?.categories ?? []);
 
     readonly sections = computed(() => [
-        { title: 'Income', groupedCategories: this.buildGrouped(CategoryClass.Income) },
-        { title: 'Expenses', groupedCategories: this.buildGrouped(CategoryClass.Expense) }
+        { title: 'Income', groupedCategories: this.buildGrouped(CategoryType.Income) },
+        { title: 'Expenses', groupedCategories: this.buildGrouped(CategoryType.Expense) }
     ]);
 
-    private buildGrouped(targetClass: CategoryClass): GroupedCategories[] {
+    private buildGrouped(targetType: CategoryType): GroupedCategories[] {
         return this.groups()
-            .filter(g => g.class === targetClass)
+            .filter(g => g.type === targetType)
             .sort((a, b) => a.name.localeCompare(b.name))
             .map(group => ({
                 group,

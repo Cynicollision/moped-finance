@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CategoryGroup } from '@shared/finance/types';
-import { CategoryClass } from '@shared/finance/enum';
+import { CategoryType } from '@shared/finance/enum';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { categoryGroupSchema } from './category-group-schema';
@@ -19,7 +19,7 @@ function mapRowToCategoryGroup(row: typeof categoryGroupSchema.$inferSelect): Ca
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-        class: row.class as CategoryClass,
+        type: row.type as CategoryType,
         name: row.name,
     };
 }
@@ -59,7 +59,7 @@ export class FinanceCategoryGroupData implements IFinanceCategoryGroupData {
         const rows = await this.db.insert(categoryGroupSchema)
             .values({
                 id: group.id,
-                class: group.class,
+                type: group.type,
                 name: group.name
             })
             .returning();
@@ -70,7 +70,7 @@ export class FinanceCategoryGroupData implements IFinanceCategoryGroupData {
     public async update(group: CategoryGroup): Promise<CategoryGroup | null> {
         const rows = await this.db.update(categoryGroupSchema)
             .set({
-                class: group.class,
+                type: group.type,
                 name: group.name,
                 updatedAt: DateTimeUtil.now()
             })
