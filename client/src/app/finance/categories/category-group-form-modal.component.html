@@ -15,15 +15,12 @@
                         </mat-option>
                     }
                 </mat-select>
-                @if (isEditing) {
-                    <mat-hint>To change it, move the categories to a group of another type.</mat-hint>
-                }
             </mat-form-field>
         </div>
     </form>
     @if (isEditing && categoryCount > 0) {
-        <p class="delete-note">
-            To delete this group, first move or delete its {{ categoryCount }} {{ categoryCount === 1 ? 'category' : 'categories' }}.
+        <p class="locked-note">
+            To change the type or delete this group, first move or delete its {{ categoryCount }} {{ categoryCount === 1 ? 'category' : 'categories' }}.
         </p>
     }
 
