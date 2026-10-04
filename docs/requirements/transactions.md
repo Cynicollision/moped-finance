@@ -33,7 +33,7 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-2.4 | The user can delete a transaction with **Delete** in the Transaction Details menu, after confirming in a "Delete Transaction" dialog ("Delete this transaction? This can't be undone.", **Cancel** / **Delete**). Deleting says "Transaction deleted" and returns to Transactions. | Implemented |
 | TXN-2.5 | The server shall reject a new transaction for an account that doesn't exist ("Account not found."), or without a merchant. | Implemented |
 | TXN-2.6 | The user shall be told which required fields are missing before saving (merchant and category included). | Partial |
-| TXN-2.7 | The **Category** field shall default to Uncategorized (CAT-5.2) and offer only active categories (CAT-4.1), plus the transaction's current category when editing (CAT-4.2). | Planned |
+| TXN-2.7 | The **Category** field shall default to Uncategorized (CAT-5.2) and offer only active categories (CAT-4.1), plus the transaction's current category when editing (CAT-4.2). | Partial |
 | TXN-2.8 | For a manual account (ACCT-4.3), Add and Edit Transaction shall show an **Adjust balance** checkbox, checked by default on Add. Saving with it checked changes the account's balance history as in ACCT-5.2 and ACCT-5.3. The checkbox isn't shown for a connected account. | Planned |
 | TXN-2.9 | View Transaction shall show **Adjusts balance** ("Yes" or "No") for a transaction in a manual account. | Planned |
 | TXN-2.10 | A hidden transaction shall not adjust its account's balance. Hiding a transaction that adjusts the balance undoes its effect, and un-hiding it applies it again (ACCT-5.3). | Planned |
@@ -78,7 +78,7 @@ A split divides one transaction into **parts**, each with its own amount and cat
 - **Transactions with no category are missing from the list (TXN-1.11).** The list only returns transactions that have a category, so one whose category was deleted through the API disappears from it (while still counting in Spending). CAT-5 removes the case.
 - **A blank category fails import (TXN-3.4)** instead of going to Uncategorized.
 - **Required fields (TXN-2.6).** The form only marks Account, Amount and Date as required. A missing Merchant or category fails at the server with a validation error toast rather than a message on the field.
-- **Inactive categories are offered in the form (TXN-2.7).**
+- **No Uncategorized default (TXN-2.7).** The Category field starts empty, since Uncategorized doesn't exist yet (CAT-5).
 - **Every account is offered in the form (TXN-2.1),** in creation order, hidden ones included.
 - **Hidden transactions can't be seen again (TXN-1.13).** The API supports including them, but the UI has no toggle, so a transaction marked hidden is invisible in the app, though still exported (TXN-1.8).
 - **The form asks for a signed amount (TXN-2.13).** Amount is a bare number (default 0), and money out must be typed as negative, which nothing on screen says.

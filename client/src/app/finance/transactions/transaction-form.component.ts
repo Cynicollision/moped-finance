@@ -83,6 +83,11 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     readonly categories = computed(() => this.lookups.value()?.categories ?? []);
     readonly accounts = computed(() => this.lookups.value()?.accounts ?? []);
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
+    /** The categories to choose from: active ones, plus the one the transaction already has (CAT-4.1, CAT-4.2). */
+    readonly categoryOptions = computed(() => {
+        const currentId = this.transaction()?.categoryId;
+        return this.categories().filter(c => c.isActive || c.id === currentId);
+    });
 
     ngOnInit() {
         this.updateFormState();
