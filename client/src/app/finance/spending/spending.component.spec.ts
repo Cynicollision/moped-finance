@@ -327,6 +327,15 @@ describe('FinanceSpendingComponent', () => {
         expect(rent.getAttribute('href')).toBe('/transactions?categoryId=rent&startDate=2026-04-01&endDate=2026-06-30');
     });
 
+    it('CASH-1.5 should put the Category / Group switch between the summary and the sections', async () => {
+        const { element } = await render();
+
+        const order = Array.from(element.querySelectorAll('.summary-card, .view-toggle, .section-card'))
+            .map(e => ['summary-card', 'view-toggle', 'section-card'].find(name => e.classList.contains(name)));
+        expect(order).toEqual(['summary-card', 'view-toggle', 'section-card', 'section-card']);
+        expect(Array.from(element.querySelectorAll('mat-button-toggle')).map(text)).toEqual(['Category', 'Group']);
+    });
+
     describe('Essential and Discretionary', () => {
         // Expenses of $2,180: $2,000 essential (rent, utilities, groceries), $100 discretionary (dining), $80 uncategorized.
         const split = [...totals, { categoryId: 'dining', amount: -100 }, { categoryId: '', amount: -80 }];
@@ -336,21 +345,8 @@ describe('FinanceSpendingComponent', () => {
                 .map(header => Array.from(header.children).map(text).join(' '));
         }
 
-        it('CASH-1.8 should show no necessity split in Category and Group views', async () => {
+        it('CASH-1.8 should list expenses by category under each necessity in the Category view', async () => {
             const fixture = await render(split);
-
-            expect(section(fixture.element, 'Expenses').querySelector('[appListSubheader]')).toBeNull();
-
-            fixture.componentInstance.viewMode.set('group');
-            await fixture.whenStable();
-            expect(section(fixture.element, 'Expenses').querySelector('[appListSubheader]')).toBeNull();
-        });
-
-        it('CASH-1.8 should list expenses by category under each necessity in the Necessity view', async () => {
-            const fixture = await render(split);
-
-            fixture.componentInstance.viewMode.set('necessity');
-            await fixture.whenStable();
 
             expect(subheaders(fixture.element)).toEqual(['Essential · 92% $2,000', 'Discretionary · 5% $100', 'Unclassified · 4% $80']);
             expect(sectionRows(fixture.element, 'Expenses')).toEqual([
@@ -372,14 +368,20 @@ describe('FinanceSpendingComponent', () => {
             expect(uncategorizedLink()).toBe('/transactions?categoryId=uncategorized&startDate=2026-05-01&endDate=2026-05-31');
         });
 
-        it('CASH-1.6 should open Transactions for a category from the Necessity view', async () => {
+        it('CASH-1.8 should list groups without necessity headings in the Group view', async () => {
             const fixture = await render(split);
 
-            fixture.componentInstance.viewMode.set('necessity');
+            fixture.componentInstance.viewMode.set('group');
             await fixture.whenStable();
 
-            const rent = section(fixture.element, 'Expenses').querySelector<HTMLAnchorElement>('a.app-list-row')!;
-            expect(rent.getAttribute('href')).toBe('/transactions?categoryId=rent&startDate=2026-05-01&endDate=2026-05-31');
+            expect(subheaders(fixture.element)).toEqual([]);
+        });
+
+        it('CASH-1.8 should leave the headings out while no category has a necessity', async () => {
+            const { element } = await render(split, undefined, undefined, [], categories.map(c => ({ ...c, necessity: null })));
+
+            expect(subheaders(element)).toEqual([]);
+            expect(sectionRows(element, 'Expenses')[0]).toBe('🏠 Rent $1,500.00');
         });
     });
 });
