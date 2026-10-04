@@ -203,6 +203,27 @@ describe('Category Routes', () => {
             expect(category?.name).toBe('Rent');
         });
 
+        it('CAT-5.3 should refuse to name a category Uncategorized', async () => {
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' }));
+            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Other', icon: '❔', isActive: true }));
+            const refusal = 'Uncategorized is reserved for transactions without a category.';
+
+            const created = await request(app).post('/categories').send({ groupId: group.id, icon: '❔', name: ' uncategorized ', isActive: true });
+            const renamed = await request(app).put(`/categories/${category.id}`).send({ name: 'Uncategorized' });
+
+            expect([created.status, created.body.message]).toEqual([400, refusal]);
+            expect([renamed.status, renamed.body.message]).toEqual([400, refusal]);
+        });
+
+        it('CAT-5.3 should let a category from before CAT-5 keep the name Uncategorized', async () => {
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' }));
+            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Uncategorized', icon: '❔', isActive: true }));
+
+            const response = await request(app).put(`/categories/${category.id}`).send({ ...category, icon: '❓' });
+
+            expect(response.status).toBe(200);
+        });
+
         it('APP-5.5 should reject a category whose group does not exist', async () => {
             const payload = { groupId: 'no-such-group', icon: 'home', name: 'Rent', isActive: true };
 

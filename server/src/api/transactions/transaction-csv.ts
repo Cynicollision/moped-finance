@@ -1,4 +1,5 @@
 import { Transaction } from '@shared/finance/types';
+import { Uncategorized } from '@shared/finance/util';
 import { CsvColumn, CsvFile, CsvValue } from '@server/csv';
 import { FinanceEntityFactory } from '@server/data';
 import { TransactionExport } from './transaction-data';
@@ -26,7 +27,13 @@ export type TransactionCsvLookups = {
 };
 
 export type TransactionCsvReadResult =
-    | { success: true, transactions: Transaction[], failedRowMessages: string[] }
+    | {
+        success: true,
+        transactions: Transaction[],
+        failedRowMessages: string[],
+        /** CategoryNames that match no category, by first spelling, with the rows that use them (TXN-3.4). */
+        unmatchedCategories: { name: string, rowNumbers: number[] }[]
+    }
     | { success: false, message: string };
 
 /** The transaction CSV format shared by export and import (TXN-3.1, TXN-3.2). */
@@ -48,6 +55,7 @@ export class TransactionCsv {
 
         const transactions: Transaction[] = [];
         const failedRowMessages: string[] = [];
+        const unmatchedCategories = new Map<string, { name: string, rowNumbers: number[] }>();
 
         for (const row of csv.rows) {
             const values = row.values;
@@ -58,12 +66,15 @@ export class TransactionCsv {
                 errors.push(`Account name '${values['AccountName']}' not found.`);
             }
 
-            const categoryId = lookups.categoryIds.get(values['CategoryName'].toLowerCase());
-            if (!values['CategoryName']) {
-                errors.push('Category is required.');
-            }
-            else if (!categoryId) {
-                errors.push(`Category name '${values['CategoryName']}' not found.`);
+            // A blank CategoryName, "Uncategorized", or a name that isn't a category leaves the row uncategorized. The
+            // last is reported, so the user can catch a typo before importing (TXN-3.4).
+            const categoryName = values['CategoryName'].trim();
+            const categoryId = lookups.categoryIds.get(categoryName.toLowerCase()) ?? '';
+            if (categoryName && !categoryId && !Uncategorized.isName(categoryName)) {
+                const key = categoryName.toLowerCase();
+                const unmatched = unmatchedCategories.get(key) ?? { name: categoryName, rowNumbers: [] };
+                unmatched.rowNumbers.push(row.rowNumber);
+                unmatchedCategories.set(key, unmatched);
             }
 
             if (values['Merchant'].length > maxMerchantLength) {
@@ -79,7 +90,7 @@ export class TransactionCsv {
                 }
             }
 
-            if (errors.length > 0 || !accountId || !categoryId || !date.success || !amount.success || !isHidden.success) {
+            if (errors.length > 0 || !accountId || !date.success || !amount.success || !isHidden.success) {
                 failedRowMessages.push(`Row ${row.rowNumber}: ${errors.join(' ')}`);
                 continue;
             }
@@ -98,6 +109,6 @@ export class TransactionCsv {
             }));
         }
 
-        return { success: true, transactions, failedRowMessages };
+        return { success: true, transactions, failedRowMessages, unmatchedCategories: [...unmatchedCategories.values()] };
     }
 }

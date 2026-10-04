@@ -124,6 +124,13 @@ export class ImportTransactionsComponent {
         this.isProcessing.set(false);
     }
 
+    /** The rows that use an unmatched category name: "row 4", "rows 4, 9", or the first ten "and 3 more". */
+    rowsText(rowNumbers: number[]): string {
+        const shown = rowNumbers.slice(0, 10).join(', ');
+        const more = rowNumbers.length > 10 ? ` and ${rowNumbers.length - 10} more` : '';
+        return `${rowNumbers.length === 1 ? 'row' : 'rows'} ${shown}${more}`;
+    }
+
     cancelImport() {
         this.selectedFile.set(null);
         this.dryRunResults.set(null);

@@ -59,7 +59,16 @@
     color: var(--color-negative);
 }
 
-.error-rows {
+.error-rows,
+.unmatched-rows {
     margin: 8px 0 0;
     padding-left: 20px;
+}
+
+.unmatched-categories p {
+    margin: 8px 0 0;
+}
+
+.notice-icon {
+    color: var(--mat-sys-primary);
 }

@@ -1,6 +1,6 @@
 # Categories and Category Groups (`CAT`)
 
-Transactions and budget streams are classified with **categories**. Categories are organized into **category groups**, and each group has a **type** (Income, Expense or Transfer) that decides how its categories count in Budget and Spending. An Expense category can also have a **necessity**, Essential or Discretionary, so the user can see how much of their spending they could cut. It's optional: expense categories without one are **Unclassified**. One built-in category, **Uncategorized**, holds transactions that haven't been given a category yet.
+Transactions and budget streams are classified with **categories**. Categories are organized into **category groups**, and each group has a **type** (Income, Expense or Transfer) that decides how its categories count in Budget and Spending. An Expense category can also have a **necessity**, Essential or Discretionary, so the user can see how much of their spending they could cut. It's optional: expense categories without one are **Unclassified**. A transaction with no category is **Uncategorized**: a state rather than a category, so it has no group, type or necessity.
 
 Screens, both pages of Settings: **Categories** (`/settings/categories`, also in the profile menu, APP-1.5), where creating and editing happen in dialogs, and **Rules** (`/settings/rules`, CAT-8, listed in Settings and linked from the Categories menu).
 
@@ -10,7 +10,7 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 |---|---|---|
 | CAT-1.1 | A category group shall have a name (required, at most 100 characters) and a type: **Income**, **Expense** or **Transfer**. The "Create Group" dialog labels the field **Type**, defaults it to Expense, and keeps **Save** disabled until a name is entered. | Implemented |
 | CAT-1.2 | A category shall belong to exactly one group and have a name (required, at most 100 characters), an icon (required; free text, typically one emoji; labelled "Icon (Emoji)"), an **Active** flag (default on), and, in an Expense group, an optional necessity (CAT-3). | Implemented |
-| CAT-1.3 | The Categories screen shall show three sections, **Income**, **Expenses** and **Transfers**, below Uncategorized (CAT-5.4). Each lists the groups of that type, sorted by name, as cards headed by the group's name and an **Edit** link, containing the group's categories with their icon, name and a pencil (edit) button, and ending with a **Create Category** button. Within a group, active categories come first, then inactive ones, each sorted by name. | Partial |
+| CAT-1.3 | The Categories screen shall show three sections, **Income**, **Expenses** and **Transfers**. Each lists the groups of that type, sorted by name, as cards headed by the group's name and an **Edit** link, containing the group's categories with their icon, name and a pencil (edit) button, and ending with a **Create Category** button. Within a group, active categories come first, then inactive ones, each sorted by name. | Implemented |
 | CAT-1.4 | An inactive category shall appear dimmed with a crossed-out eye icon. | Implemented |
 | CAT-1.5 | A section with no groups shall say "No income groups found.", "No expense groups found." or "No transfer groups found." | Implemented |
 | CAT-1.6 | The user can create a group from the screen's menu (**Create Group**), choosing its name and type (default Expense). | Implemented |
@@ -20,7 +20,7 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 | CAT-1.10 | The user can delete a category (CAT-4.4) or an empty category group (CAT-1.15). | Partial |
 | CAT-1.11 | Groups of class **Transfer** shall be shown and manageable on the Categories screen. | Retired (merged into CAT-1.3) |
 | CAT-1.12 | Category group names shall be unique, ignoring case. Saving a duplicate shall be rejected with "A category group with that name already exists." | Implemented |
-| CAT-1.13 | Category names shall be unique across all groups, ignoring case, so CSV import (TXN-3.4) matches exactly one category. Saving a duplicate shall be rejected with "A category with that name already exists." This includes the built-in "Uncategorized" (CAT-5.1). | Implemented |
+| CAT-1.13 | Category names shall be unique across all groups, ignoring case, so CSV import (TXN-3.4) matches exactly one category. Saving a duplicate shall be rejected with "A category with that name already exists." No category can be named Uncategorized (CAT-5.3). | Implemented |
 | CAT-1.14 | A group's type shall be chosen when the group is created and can't be changed afterwards. The Edit Group dialog shall show it read-only, with the hint "To change it, move the categories to a group of another type.", and the server shall refuse a change. A group created with the wrong type is fixed by creating one of the right type and moving its categories into it (CAT-1.16). | Implemented |
 | CAT-1.15 | The user can delete a group with the **Delete** button of its **Edit** dialog (APP-2.4), after confirming, when it has no categories. For a group that still has categories, Delete shall be disabled with the note "To delete this group, first move or delete its N categories." ("1 category" for one), and the server shall refuse: "Cannot delete a category group that still has categories." | Implemented |
 | CAT-1.16 | The user can move a category to any group, including a group of another type. Its transactions then count under the new type everywhere, past periods included; the transactions themselves don't change. | Implemented |
@@ -61,18 +61,19 @@ A category the user has stopped using can be made **inactive**, which keeps it o
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-5.1 | There shall always be exactly one built-in category, **Uncategorized** (icon ❓), in no group. It shall exist as soon as the database is created, before anyone registers. | Planned |
-| CAT-5.2 | Every transaction shall have a category. A transaction saved without one, an imported row with a blank category (TXN-3.4), and a transaction whose category is deleted (CAT-4.4) get Uncategorized. | Planned |
-| CAT-5.3 | Uncategorized can't be renamed, moved to a group, made inactive or deleted. The user can change its icon. | Planned |
-| CAT-5.4 | The Categories screen shall show Uncategorized above the three sections, with its icon, name, an edit button (icon only), and the explanation "Transactions stay here until you or a rule gives them a category." | Planned |
-| CAT-5.5 | A new, imported or synced transaction with no category that neither learning (CAT-9) nor a rule (CAT-8) categorizes shall get Uncategorized. | Planned |
+| CAT-5.1 | A transaction with no category is **Uncategorized**. It's a state, not a category: it has no group, type or necessity, can't have budget streams, and isn't listed on the Categories screen. Spending counts it by sign (CASH-1.3). | Implemented |
+| CAT-5.2 | A transaction saved without a category, an imported row whose category is blank, "Uncategorized" or not one of the user's categories (TXN-3.4), and a transaction whose category is deleted (CAT-4.4) are Uncategorized. | Implemented |
+| CAT-5.3 | No category can be named Uncategorized (ignoring case and surrounding spaces). Creating or renaming one shall be refused with "Uncategorized is reserved for transactions without a category." | Implemented |
+| CAT-5.4 | Wherever a transaction's category is shown (the Transactions list, a transaction's details, Spending), an uncategorized one shall read "Uncategorized". The Transactions Category filter and the transaction form's Category field shall offer Uncategorized as a choice (TXN-1.11, TXN-2.7). | Implemented |
+| CAT-5.5 | A new, imported or synced transaction with no category that neither learning (CAT-9) nor a rule (CAT-8) categorizes shall be Uncategorized. | Planned |
+| CAT-5.6 | An instance that has a category named Uncategorized from before CAT-5 shall have it converted on upgrade: its transactions become Uncategorized and it's deleted, unless a budget stream uses it. | Implemented |
 
 ## CAT-6 A new instance starts with a useful set of categories
 
 | ID | Requirement | Status |
 |---|---|---|
 | CAT-6.1 | The Register screen shall ask how to start: **Start with default categories** (selected) or **Start empty**. See AUTH-2.9. | Planned |
-| CAT-6.2 | **Start with default categories** shall create the groups and categories listed below when registration completes. **Start empty** shall create none, leaving only Uncategorized (CAT-5.1). | Planned |
+| CAT-6.2 | **Start with default categories** shall create the groups and categories listed below when registration completes. **Start empty** shall create none. | Planned |
 
 Default categories (E = Essential, D = Discretionary):
 
@@ -94,9 +95,9 @@ Default categories (E = Essential, D = Discretionary):
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-7.1 | **Download Categories** (Categories screen menu) shall produce a CSV named `Categories_<timestamp>.csv` with the header `Type,Group,Name,Icon,Necessity,IsActive`, one row per category, ordered by type, group and name, so the file re-imports unchanged. Type is `Income`, `Expense` or `Transfer`; Necessity is `Essential`, `Discretionary` or blank (always blank outside Expense). Uncategorized and groups with no categories are not included. | Planned |
+| CAT-7.1 | **Download Categories** (Categories screen menu) shall produce a CSV named `Categories_<timestamp>.csv` with the header `Type,Group,Name,Icon,Necessity,IsActive`, one row per category, ordered by type, group and name, so the file re-imports unchanged. Type is `Income`, `Expense` or `Transfer`; Necessity is `Essential`, `Discretionary` or blank (always blank outside Expense). Groups with no categories are not included. | Planned |
 | CAT-7.2 | **Import Categories** (Categories screen menu) shall accept a CSV with the columns from CAT-7.1, validate it without saving first, and let the user confirm only when the dry run found no errors, as transaction import does (TXN-3.2, TXN-3.3, TXN-3.7). It shall be all-or-nothing (TXN-3.9). | Planned |
-| CAT-7.3 | Import shall only add. A row whose category name already exists (ignoring case, Uncategorized included) shall be skipped, not changed. The dry run shall report "Categories to create: N" and "Already exist (skipped): M". | Planned |
+| CAT-7.3 | Import shall only add. A row whose category name already exists (ignoring case) shall be skipped, not changed, and one named Uncategorized is an error (CAT-5.3). The dry run shall report "Categories to create: N" and "Already exist (skipped): M". | Planned |
 | CAT-7.4 | A row's group shall be found by name, ignoring case. A group that doesn't exist shall be created with the row's type. A row whose group exists with a different type is an error ("Row 5: Group 'Food' is an Expense group, not Income."). | Planned |
 | CAT-7.5 | Each row shall be checked, with every problem in a row reported in one message: **Type** is required and one of the three types (any case); **Group** and **Name** are required, at most 100 characters; **Icon** is required, at most 50 characters; **Necessity** is blank or one of the two values (any case) on Expense rows, and must be blank on others; **IsActive** is true, false (any case) or blank (true). A second row with the same name as an earlier row is an error. | Planned |
 
@@ -124,9 +125,8 @@ Default categories (E = Essential, D = Discretionary):
 ## Known gaps
 
 - **No automatic categorization (CAT-8, CAT-9).** Every transaction's category is chosen by hand or given in the import file.
-- **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions with no category (it refuses when a budget stream uses it, CAT-4.5). Those transactions count as expenses in Spending but disappear from the Transactions list (TXN-1.11). The API already refuses to delete a group that has categories.
-- **Uncategorized doesn't exist yet (CAT-5)**, so the Categories screen starts with the Income section (CAT-1.3, CAT-5.4). A transaction can have no category; Spending labels those *Uncategorized* and counts them by sign (CASH-1.3). An instance that already has its own category named "Uncategorized" (the author's does) needs it merged into the built-in one when CAT-5 is built: its transactions move over and it's deleted. Transactions with no category move to it too.
-- **New users start empty (CAT-6).** The user must build the whole tree before they can add or import a transaction.
+- **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions Uncategorized (it refuses when a budget stream uses it, CAT-4.5). The API already refuses to delete a group that has categories.
+- **New users start empty (CAT-6).** The user builds every group and category by hand; until then, every transaction is Uncategorized.
 
 ## Notes
 

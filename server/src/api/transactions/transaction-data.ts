@@ -1,10 +1,11 @@
-import { AnyColumn, eq, and, desc, asc, ilike, sum, gte, lte, sql, SQL } from 'drizzle-orm';
+import { AnyColumn, eq, and, desc, asc, ilike, isNull, sum, gte, lte, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { Transaction } from '@shared/finance/types';
 import { SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { Uncategorized } from '@shared/finance/util';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
@@ -168,7 +169,9 @@ export class FinanceTransactionData implements IFinanceTransactionData {
                     conditions.push(ilike(transactionSchema.merchant, `%${escapeLikePattern(filter.value)}%`));
                 }
                 else if (filter.key === TransactionsFilterKey.Category) {
-                    conditions.push(eq(transactionSchema.categoryId, filter.value));
+                    conditions.push(filter.value === Uncategorized.filterValue
+                        ? isNull(transactionSchema.categoryId)
+                        : eq(transactionSchema.categoryId, filter.value));
                 }
                 else if (filter.key === TransactionsFilterKey.AccountId) {
                     conditions.push(eq(transactionSchema.accountId, filter.value));

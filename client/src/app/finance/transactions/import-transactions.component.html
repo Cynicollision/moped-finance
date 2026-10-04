@@ -38,8 +38,21 @@
                     <p>Please review the validated results before finalizing the import.</p>
                     <ul>
                         <li>Transactions to create: {{ results.createdCount || 0 }}</li>
+                        <li>Uncategorized: {{ results.uncategorizedCount || 0 }}</li>
                         <li>Rows with errors: {{ results.failedRowMessages.length }}</li>
                     </ul>
+                    <!-- Unknown category names import as Uncategorized; listed so a typo can be fixed first (TXN-3.4). -->
+                    @if (results.unmatchedCategories?.length) {
+                        <div class="unmatched-categories">
+                            <strong class="icon-heading"><mat-icon class="notice-icon">help_outline</mat-icon> Categories not found:</strong>
+                            <p>These names don't match any of your categories, so their rows will be imported as Uncategorized. If one is a typo, fix the file and validate it again.</p>
+                            <ul class="unmatched-rows">
+                                @for (category of results.unmatchedCategories; track category.name) {
+                                    <li>'{{ category.name }}': {{ rowsText(category.rowNumbers) }}</li>
+                                }
+                            </ul>
+                        </div>
+                    }
                     <div class="actions mt-24">
                         <button mat-flat-button (click)="confirmImport()"
                             [disabled]="isProcessing()">

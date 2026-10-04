@@ -81,6 +81,22 @@ describe('TransactionFormComponent', () => {
             expect(fixture.componentInstance.categoryOptions().map(c => c.name)).toEqual(['Groceries']);
         });
 
+        it('CAT-5.2 should show an empty category as Uncategorized, and save it that way', async () => {
+            const { fixture, saved, element } = await render('create', null, categories);
+            fixture.componentInstance.transactionForm.patchValue({ accountId: 'acct', amount: -5 });
+
+            fixture.componentInstance.onSave();
+
+            expect(saved[0].categoryId).toBe('');
+            expect(element.querySelector<HTMLInputElement>('input[formControlName="category"]')!.placeholder).toBe('Uncategorized');
+        });
+
+        it('CAT-5.2 should show Uncategorized when viewing a transaction with no category', async () => {
+            const { element } = await render('readonly', { ...transaction, categoryId: '' }, categories);
+
+            expect(readonlyValue(element, 'Category')).toBe('Uncategorized');
+        });
+
         it('CAT-4.2 should keep offering an inactive category the transaction already has', async () => {
             const { fixture } = await render('edit', { ...transaction, categoryId: 'old' }, categories);
 

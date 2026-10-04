@@ -14,6 +14,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { CalendarDateUtil } from '@shared/core/util';
 import { Transaction } from '@shared/finance/types';
+import { Uncategorized } from '@shared/finance/util';
 import { DateProviderService } from './../../core/date-provider.service';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
@@ -58,6 +59,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
 
     private financeService = inject(FinanceService);
     private dateProvider = inject(DateProviderService);
+    readonly Uncategorized = Uncategorized;
 
 
     readonly transactionForm = new FormGroup({

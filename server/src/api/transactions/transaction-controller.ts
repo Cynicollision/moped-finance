@@ -118,24 +118,26 @@ export class TransactionController {
             return Result.userError(csv.message);
         }
 
-        const { transactions, failedRowMessages } = csv;
+        const { transactions, failedRowMessages, unmatchedCategories } = csv;
         const isValidToImport = failedRowMessages.length === 0;
+        const uncategorizedCount = transactions.filter(t => !t.categoryId).length;
+        const report = { failedRowMessages, isValidToImport, uncategorizedCount, unmatchedCategories };
 
         // All or nothing: a file with any bad row saves nothing. The dry run reports the rows so the user
         // can fix the file; a real import of a bad file (which the client doesn't send) is a 400.
         if (!isValidToImport) {
             const summary = `Found errors in ${failedRowMessages.length} of ${transactions.length + failedRowMessages.length} rows.`;
-            const result: TransactionImportResult = { createdCount: 0, failedRowMessages, isValidToImport, resultMessage: summary };
+            const result: TransactionImportResult = { ...report, createdCount: 0, resultMessage: summary };
             return dryRun
                 ? Result.success(result)
                 : Result.userError(`Nothing was imported. ${summary}`, 'INVALID_IMPORT', result);
         }
 
         if (dryRun) {
-            return Result.success({ createdCount: transactions.length, failedRowMessages, isValidToImport, resultMessage: `Ready to import ${transactions.length} transactions.` });
+            return Result.success({ ...report, createdCount: transactions.length, resultMessage: `Ready to import ${transactions.length} transactions.` });
         }
 
         await this.transactionData.insertBulk(transactions);
-        return Result.successCreated({ createdCount: transactions.length, failedRowMessages, isValidToImport, resultMessage: `Imported ${transactions.length} transactions.` });
+        return Result.successCreated({ ...report, createdCount: transactions.length, resultMessage: `Imported ${transactions.length} transactions.` });
     }
 }
