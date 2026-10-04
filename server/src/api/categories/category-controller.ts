@@ -39,6 +39,11 @@ export class CategoryController {
             return Result.userErrorNotFound();
         }
 
+        // A group keeps the type it was created with; its categories move to a group of another type instead (CAT-1.14).
+        if (changes.type !== undefined && changes.type !== current.type) {
+            return Result.userError('A category group\'s type can\'t be changed. Move its categories to a group of the right type instead.');
+        }
+
         const updated = await this.groupData.update({ ...current, ...changes });
         if (!updated) {
             return Result.userErrorNotFound();

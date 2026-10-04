@@ -24,7 +24,7 @@ export interface CategoryGroupFormModalData {
 }
 
 /**
- * Creates, edits or deletes a category group (CAT-1.6, CAT-1.7, CAT-1.15). Saves and deletes itself and closes
+ * Creates, edits or deletes a category group (CAT-1.6, CAT-1.7, CAT-1.14, CAT-1.15). Saves and deletes itself and closes
  * with true once something changed.
  */
 @Component({
@@ -66,6 +66,8 @@ export class CategoryGroupFormModalComponent implements HasUnsavedChanges {
     constructor() {
         if (this.data.group) {
             this.form.patchValue(this.data.group);
+            // A group keeps the type it was created with (CAT-1.14).
+            this.form.controls.type.disable();
         }
     }
 

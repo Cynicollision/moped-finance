@@ -111,6 +111,16 @@ describe('Category Routes', () => {
             const updated = await groupsData.retrieveSingle(group.id!);
             expect(updated?.name).toBe('New Name');
         });
+
+        it('CAT-1.14 should refuse to change a group\'s type', async () => {
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' }));
+
+            const response = await request(app).put(`/categories/groups/${group.id}`).send({ ...group, type: CategoryType.Expense });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe('A category group\'s type can\'t be changed. Move its categories to a group of the right type instead.');
+            expect((await groupsData.retrieveSingle(group.id!))?.type).toBe(CategoryType.Income);
+        });
     });
 
     describe('DELETE /categories/groups/:id', () => {
