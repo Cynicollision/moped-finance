@@ -14,6 +14,7 @@ module.exports = {
         '^@server/(.*)$': '<rootDir>/src/$1',
     },
     testMatch: ['**/*.spec.ts'],
+    setupFilesAfterEnv: ['<rootDir>/src/utility/testing/jest-setup.ts'],
     verbose: true,
     clearMocks: true,
     resetMocks: true,

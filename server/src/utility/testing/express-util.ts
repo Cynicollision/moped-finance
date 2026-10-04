@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import { AppLogger } from '@server/logging';
+import { IAppLogger } from '@server/logging';
 import { buildErrorHandler } from '@server/routing';
 
 export class TestExpressUtil {
@@ -22,12 +22,11 @@ export class TestExpressUtil {
         return app;
     }
 
-    // TODO: replace w/ IAppLogger implementation
-    public static createMockLogger(): jest.Mocked<AppLogger> {
+    public static createMockLogger(): jest.Mocked<IAppLogger> {
         return {
             info: jest.fn(),
             error: jest.fn(),
-            warn: jest.fn(),
-        } as any;
+            warn: jest.fn()
+        };
     }
 }
