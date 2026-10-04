@@ -153,9 +153,18 @@ describe('Account Routes', () => {
             expect(response.body[0].amount).toBe(2500.00);
         });
 
-        it('should use default timeframe and asOfDate when not provided', async () => {
+        it('should default to the past thirty days up to today', async () => {
+            DateTimeUtil.setClock(new Date('2026-06-01T16:00:00Z'));
+            const acc1 = await accountData.insert(FinanceEntityFactory.createAccount({
+                institutionId: testInstitutionId, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking
+            }));
+            await balanceHistoryData.insertBulk(['2026-05-01', '2026-05-02', '2026-06-01', '2026-06-02'].map(date =>
+                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 1, date })));
+
             const response = await request(app).get('/accounts/total-value-history?type=NetWorth');
+
             expect(response.status).toBe(200);
+            expect(response.body.map((v: { date: string }) => v.date)).toEqual(['2026-06-01', '2026-05-02']);
         });
 
         it('should return 400 when type is missing', async () => {

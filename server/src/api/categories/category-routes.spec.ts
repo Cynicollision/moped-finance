@@ -4,7 +4,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { CalendarPeriod } from '@shared/core/enum';
 import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
-import { AppLogger } from '@server/logging';
+import { IAppLogger } from '@server/logging';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
 import { FinanceBudgetStreamData } from './../budget/budget-stream-data';
 import { FinanceCategoryData } from './category-data';
@@ -17,7 +17,7 @@ describe('Category Routes', () => {
     let pglite: PGlite;
     let categoriesData: FinanceCategoryData;
     let groupsData: FinanceCategoryGroupData;
-    let mockLogger: jest.Mocked<AppLogger>;
+    let mockLogger: jest.Mocked<IAppLogger>;
     let testUserId: string;
 
     beforeAll(async () => {

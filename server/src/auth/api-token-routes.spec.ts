@@ -92,11 +92,13 @@ describe('API Tokens', () => {
         });
 
         it('AUTH-11.2 should set the expiry from the chosen expiration, or none', async () => {
+            DateTimeUtil.setClock(new Date('2026-05-01T12:00:00Z'));
+
             const expiring = (await agent.post('/auth/tokens').send({ ...readWrite, expiresInDays: 30 })).body.apiToken;
             const permanent = (await agent.post('/auth/tokens').send({ ...readWrite, expiresInDays: null })).body.apiToken;
 
-            const days = (Date.parse(expiring.expiresAt) - Date.parse(expiring.createdAt)) / (24 * 60 * 60 * 1000);
-            expect(days).toBeCloseTo(30, 5);
+            expect(expiring.createdAt).toBe('2026-05-01T12:00:00.000Z');
+            expect(expiring.expiresAt).toBe('2026-05-31T12:00:00.000Z');
             expect(permanent.expiresAt).toBeNull();
         });
 
@@ -168,10 +170,15 @@ describe('API Tokens', () => {
         });
 
         it('AUTH-11.7 should refuse an expired token', async () => {
-            const token = await createToken();
-            await pglite.query('UPDATE core.api_tokens SET expires_at = $1', [DateTimeUtil.addMilliseconds(DateTimeUtil.now(), -1000)]);
+            DateTimeUtil.setClock(new Date('2026-05-01T12:00:00Z'));
+            const token = await createToken({ ...readWrite, expiresInDays: 30 });
+            const use = () => request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`);
 
-            const response = await request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`);
+            DateTimeUtil.setClock(new Date('2026-05-31T11:59:59Z'));
+            expect((await use()).status).toBe(200);
+
+            DateTimeUtil.setClock(new Date('2026-05-31T12:00:01Z'));
+            const response = await use();
 
             expect(response.status).toBe(401);
             expect(response.body.message).toBe('Invalid or expired API token.');
@@ -224,16 +231,22 @@ describe('API Tokens', () => {
         });
 
         it('AUTH-11.10 should record when a token was last used, at most once a minute', async () => {
+            DateTimeUtil.setClock(new Date('2026-05-01T12:00:00Z'));
             const token = await createToken();
             const lastUsed = async () => (await agent.get('/auth/tokens')).body[0].lastUsedAt;
+            const use = () => request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`);
+            expect(await lastUsed()).toBeNull();
 
-            await request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`);
-            const first = await lastUsed();
-            expect(first).not.toBeNull();
-            expect(Math.abs(Date.parse(first) - Date.now())).toBeLessThan(60 * 1000);
+            await use();
+            expect(await lastUsed()).toBe('2026-05-01T12:00:00.000Z');
 
-            await request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`);
-            expect(await lastUsed()).toBe(first);
+            DateTimeUtil.setClock(new Date('2026-05-01T12:00:59Z'));
+            await use();
+            expect(await lastUsed()).toBe('2026-05-01T12:00:00.000Z');
+
+            DateTimeUtil.setClock(new Date('2026-05-01T12:01:01Z'));
+            await use();
+            expect(await lastUsed()).toBe('2026-05-01T12:01:01.000Z');
         });
 
         it('AUTH-11.11 should keep tokens working after the password changes', async () => {

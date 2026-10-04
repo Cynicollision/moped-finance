@@ -5,7 +5,7 @@ import { CalendarPeriod } from '@shared/core/enum/calendar-period';
 import { CategoryType } from '@shared/finance/enum';
 import { BudgetStreamType } from '@shared/finance/enum/budget-stream-type';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
-import { AppLogger } from '@server/logging';
+import { IAppLogger } from '@server/logging';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
 import { FinanceBudgetStreamData } from './budget-stream-data';
 import { createBudgetStreamRouter } from './budget-stream-routes';
@@ -19,7 +19,7 @@ describe('Budget Stream Routes', () => {
     let budgetStreamData: FinanceBudgetStreamData;
     let categoriesData: FinanceCategoryData;
     let groupsData: FinanceCategoryGroupData;
-    let mockLogger: jest.Mocked<AppLogger>;
+    let mockLogger: jest.Mocked<IAppLogger>;
     let testUserId: string;
     let testCategoryId: string;
 

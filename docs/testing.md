@@ -20,7 +20,7 @@ The pattern, as used by every `server/src/**/*-routes.spec.ts`:
 
 Finance data isn't scoped by user (AUTH-7), so there's no ownership to test. For endpoints that take an ID, test that a missing one returns 404. For a new unique constraint, test that a duplicate returns 400 with its message. To test how an operation behaves when the database fails part way (for example that an import rolls back), add a PL/pgSQL trigger that raises on a chosen row, and drop it in a `finally` (see the import tests in `transaction-routes.spec.ts`). `server/src/data/database-error-util.spec.ts` also checks that every unique index and foreign key in the schema has a message in `DatabaseErrorUtil`.
 
-Dates: server code gets "now" from `DateTimeUtil.now()`, which isn't injectable yet. Tests that depend on the current period should pass an explicit date (for example the `asOfDate` query param) instead of relying on the real clock, or use Jest's fake timers (`date-time-util.spec.ts`).
+Dates: server code gets "now" and "today" from `DateTimeUtil`. To test behaviour that depends on the time (a default period, token expiry), fix it with `DateTimeUtil.setClock(new Date('2026-05-01T12:00:00Z'))` and move it on with another call (`api-token-routes.spec.ts`). A setup file (`server/src/utility/testing/jest-setup.ts`) puts the real clock back after every test. It doesn't stop timers, unlike Jest's fake timers, so PGlite and Supertest keep working.
 
 `shared/` has no runner of its own: its specs (`shared/**/*.spec.ts`) run with the server's Jest.
 
