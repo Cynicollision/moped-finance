@@ -115,7 +115,7 @@ describe('Transaction Routes', () => {
         );
     }
 
-    function importCsv(rows: string, query: string = ''): request.Test {
+    function importCsv(rows: string, query = ''): request.Test {
         return request(app)
             .post(`/transactions/import${query}`)
             .attach('file', Buffer.from(csvHeader + rows), 'import.csv');

@@ -1,6 +1,7 @@
 import { CookieOptions, RequestHandler } from 'express';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
+import { Pool } from 'pg';
 import { IDatabaseClient } from '@server/data';
 
 const PgStore = connectPgSimple(session);
@@ -8,12 +9,12 @@ const PgStore = connectPgSimple(session);
 export const SESSION_COOKIE_NAME = 'connect.sid';
 const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // AUTH-3.2
 
-export type SessionConfig = {
+export interface SessionConfig {
     secret: string;
     /** True when users reach the app over HTTPS (USE_HTTPS): the cookie is then only sent over HTTPS. */
     secureCookie: boolean;
     store: session.Store;
-};
+}
 
 export class SessionUtil {
     /** The session cookie's attributes. Logout clears the cookie with the same ones, or the browser keeps it. */
@@ -32,7 +33,8 @@ export class SessionUtil {
      */
     public static createStore(dbClient: IDatabaseClient, pruneExpired = true): session.Store {
         return new PgStore({
-            pool: (dbClient.drizzle as any).$client,
+            // The driver client under Drizzle: a pg Pool in the server, PGlite (which answers the same calls) in tests.
+            pool: (dbClient.drizzle as unknown as { $client: Pool }).$client,
             schemaName: 'core',
             tableName: 'sessions',
             createTableIfMissing: false, // created by a migration

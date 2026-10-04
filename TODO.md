@@ -15,10 +15,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 - [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
-### Tooling
-- [ ] Add ESLint to the server (typescript-eslint, matching `client/eslint.config.js`) and run it in CI.
-- [ ] `ng build` warns NG8107 in `import-transactions.component.html`: `results.unmatchedCategories?.length` uses `?.` on a property that's never undefined. Drop the `?`, or make the field optional in `TransactionImportResult` if the server can leave it out.
-
 ### Tests
 - [ ] Name existing tests after the requirement they cover (`it('ACCT-1.5 should ...')`), as the conventions ask for new ones. Server tests are about half done: `account-routes.spec.ts` (15 of 39), `category-routes.spec.ts` (12 of 24), `auth-routes.spec.ts` (9 of 18), `institution-routes.spec.ts` (1 of 11), `budget-stream-routes.spec.ts` (6 of 12), `transaction-routes.spec.ts` (38 of 53). The client is mostly done; the stragglers are `login`, `register`, `auth.service`, `finance.service`, `layout.service` and `chart.component` specs. Leave tests of plumbing that no requirement covers (utilities, `calendar-date-util.spec.ts`) as they are; don't invent requirements to name them after. A test that turns out to check behavior the requirements don't describe is worth a note in the domain's Known gaps. One PR per package.
 

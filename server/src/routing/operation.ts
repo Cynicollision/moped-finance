@@ -6,10 +6,10 @@ import { DatabaseErrorUtil } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { Result } from './result-factory';
 
-export type OperationDefinition = {
+export interface OperationDefinition {
     domain: string;
     operation: string;
-};
+}
 
 export interface ResultFileMeta {
     fileName: string;
@@ -30,24 +30,24 @@ export interface OperationResult<T = void> {
 }
 
 /** Zod schemas for the parts of a request an operation reads. Each one that's given is parsed before the operation runs. */
-export type RequestSchemas = {
+export interface RequestSchemas {
     params?: z.ZodType;
     query?: z.ZodType;
     body?: z.ZodType;
-};
+}
 
-type ParsedPart<S, K extends keyof RequestSchemas> = S extends { [P in K]: infer Schema }
-    ? Schema extends z.ZodType
-        ? z.output<Schema>
-        : undefined
-    : undefined;
+type ParsedPart<S, K extends keyof RequestSchemas> =
+    S extends Record<K, infer Schema> ? (Schema extends z.ZodType ? z.output<Schema> : undefined) : undefined;
 
 /** The parsed, typed request parts handed to an operation; a part without a schema is `undefined`. */
-export type RequestInput<S extends RequestSchemas> = {
+export interface RequestInput<S extends RequestSchemas> {
     params: ParsedPart<S, 'params'>;
     query: ParsedPart<S, 'query'>;
     body: ParsedPart<S, 'body'>;
-};
+}
+
+/** The schemas of an operation that reads no request parts. */
+type NoSchemas = Record<never, never>;
 
 type Operation<T, S extends RequestSchemas> = (
     context: OperationContext,
@@ -88,7 +88,7 @@ export class OperationHandler {
         req: Request,
         res: Response,
         operationDef: OperationDefinition,
-        operation: Operation<T, {}>
+        operation: Operation<T, NoSchemas>
     ): Promise<OperationResult<T>>;
     execute<T, S extends RequestSchemas>(
         req: Request,
@@ -101,7 +101,7 @@ export class OperationHandler {
         req: Request,
         res: Response,
         operationDef: OperationDefinition,
-        schemasOrOperation: RequestSchemas | Operation<T, {}>,
+        schemasOrOperation: RequestSchemas | Operation<T, NoSchemas>,
         maybeOperation?: Operation<T, RequestSchemas>
     ): Promise<OperationResult<T>> {
         const schemas = typeof schemasOrOperation === 'function' ? {} : schemasOrOperation;
@@ -130,14 +130,15 @@ export class OperationHandler {
             }
 
             return this.sendResult(res, result);
-        } catch (error: any) {
+        } catch (error) {
             const constraintError = DatabaseErrorUtil.getConstraintViolation(error);
             if (constraintError) {
                 this.logger.warn(userId, `Operation failed: ${constraintError.message}`, context);
                 return this.sendResult(res, Result.userError(constraintError.message, constraintError.code));
             }
 
-            this.logger.error(userId, 'Internal error: ' + (error?.message ?? error), context);
+            const message = error instanceof Error ? error.message : String(error);
+            this.logger.error(userId, 'Internal error: ' + message, context);
             return this.sendResult(res, Result.internalError('An unexpected error occurred'));
         }
     }
@@ -147,7 +148,7 @@ export class OperationHandler {
         operationDef: OperationDefinition,
         schemas: RequestSchemas
     ): { success: true; input: RequestInput<RequestSchemas> } | { success: false; message: string } {
-        const input: Record<string, unknown> = { params: undefined, query: undefined, body: undefined };
+        const input: Record<keyof RequestSchemas, unknown> = { params: undefined, query: undefined, body: undefined };
 
         for (const part of Object.keys(requestPartNames) as (keyof RequestSchemas)[]) {
             const schema = schemas[part];
@@ -171,7 +172,7 @@ export class OperationHandler {
     }
 
     private sendResult<T>(res: Response, result: OperationResult<T>): OperationResult<T> {
-        let statusCode = 200;
+        let statusCode: number;
         switch (result.status) {
             case OperationStatus.Success:
             case OperationStatus.SuccessUpdated:

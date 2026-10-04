@@ -45,6 +45,10 @@ jobs:
         run: npx tsc --noEmit
         working-directory: server
 
+      - name: Lint server and shared
+        run: npm run lint
+        working-directory: server
+
       - name: Check migrations match the Drizzle schema
         run: |
           npx drizzle-kit generate

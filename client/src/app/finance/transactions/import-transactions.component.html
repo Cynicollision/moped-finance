@@ -45,7 +45,7 @@
                         <li>Rows with errors: {{ results.failedRowMessages.length }}</li>
                     </ul>
                     <!-- Unknown category names import as Uncategorized; listed so a typo can be fixed first (TXN-3.4). -->
-                    @if (results.unmatchedCategories?.length) {
+                    @if (results.unmatchedCategories.length) {
                         <div class="unmatched-categories">
                             <strong class="icon-heading"
                                 ><mat-icon class="notice-icon">help_outline</mat-icon> Categories not found:</strong

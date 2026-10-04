@@ -4,14 +4,14 @@ import { Result } from '@server/routing';
 import { ApiTokenController } from './api-token-controller';
 import { UserContext } from './user-context';
 
-export type AuthMiddleware = {
+export interface AuthMiddleware {
     /** Finance API: signs the request in with an API token (AUTH-11.6) if it sends one; otherwise the session applies. */
     resolveUser: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     /** Finance API: needs a session or token, and a read-only token may only read (AUTH-11.8). */
     requireAuth: (req: Request, res: Response, next: NextFunction) => void;
     /** Account and token management: needs a browser session; API tokens are ignored (AUTH-11.9). */
     requireSession: (req: Request, res: Response, next: NextFunction) => void;
-};
+}
 
 const READ_METHODS = ['GET', 'HEAD'];
 

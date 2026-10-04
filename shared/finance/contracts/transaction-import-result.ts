@@ -1,4 +1,4 @@
-export type TransactionImportResult = {
+export interface TransactionImportResult {
     /** Rows created, or that would be created on a dry run. */
     createdCount: number;
     /** One message per invalid row, such as "Row 3: Amount 'abc' is not a number." */
@@ -10,4 +10,4 @@ export type TransactionImportResult = {
     uncategorizedCount: number;
     /** CategoryNames that match no category, with the rows (numbered as in the file) that use them, so typos show. */
     unmatchedCategories: { name: string; rowNumbers: number[] }[];
-};
+}

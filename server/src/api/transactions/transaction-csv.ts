@@ -17,14 +17,14 @@ const columns: CsvColumn<TransactionExport>[] = [
 
 const maxMerchantLength = 255;
 
-export type TransactionCsvLookups = {
+export interface TransactionCsvLookups {
     /** Account IDs by lower-cased name. */
     accountIds: Map<string, string>;
     /** Category IDs by lower-cased name. */
     categoryIds: Map<string, string>;
     /** When set, every row goes to this account and AccountName is ignored (TXN-3.5). */
     targetAccountId?: string;
-};
+}
 
 export type TransactionCsvReadResult =
     | {

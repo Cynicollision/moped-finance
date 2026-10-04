@@ -1,6 +1,6 @@
 import { CalendarDate } from './../../core/types';
 
-export type BalanceImportResult = {
+export interface BalanceImportResult {
     /** Earliest and latest dates in the file; the import replaces existing balances in this range. */
     startDate: CalendarDate;
     endDate: CalendarDate;
@@ -11,4 +11,4 @@ export type BalanceImportResult = {
     resultMessage: string;
     /** True when no row has an error. Imports are all-or-nothing, so only a valid file is saved. */
     isValidToImport: boolean;
-};
+}

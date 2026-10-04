@@ -7,11 +7,7 @@ export class TestExpressUtil {
      * Creates an Express app configured for testing a specific router, with the app's error handler.
      * Injects a mock user into the request to simulate the auth middleware.
      */
-    public static createTestApp(
-        router: Router,
-        routePath: string,
-        mockUserId: string = 'test-user-id'
-    ): express.Express {
+    public static createTestApp(router: Router, routePath: string, mockUserId = 'test-user-id'): express.Express {
         const app = express();
         app.use(express.json());
 

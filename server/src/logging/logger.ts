@@ -11,11 +11,11 @@ export enum LogBehavior {
     Database = 'database'
 }
 
-export type LoggerConfig = {
+export interface LoggerConfig {
     error: LogBehavior;
     warn: LogBehavior;
     info: LogBehavior;
-};
+}
 
 export interface IAppLogger {
     error(userId: string, message: string, context?: OperationContext): void;

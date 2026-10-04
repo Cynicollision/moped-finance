@@ -17,7 +17,10 @@ const uniqueViolationMessages: Record<string, string> = {
 // - stillReferenced: a delete would orphan rows that point at this one. ON DELETE RESTRICT raises 23001;
 //   NO ACTION (the default) raises 23503 with 'is still referenced' in the detail.
 // Keys that cascade or set null on delete only need missingReference.
-type ForeignKeyMessages = { missingReference: string; stillReferenced?: string };
+interface ForeignKeyMessages {
+    missingReference: string;
+    stillReferenced?: string;
+}
 
 const foreignKeyViolationMessages: Record<string, ForeignKeyMessages> = {
     api_tokens_user_id_users_id_fk: {
@@ -114,12 +117,12 @@ export class DatabaseErrorUtil {
 
     // Drizzle wraps driver errors, so the Postgres error may be the error itself or its `cause`.
     private static findPostgresError(error: unknown): PostgresError | undefined {
-        let current: any = error;
-        while (current) {
-            if (typeof current.code === 'string') {
-                return current;
+        let current = error;
+        while (typeof current === 'object' && current !== null) {
+            if (typeof (current as { code?: unknown }).code === 'string') {
+                return current as PostgresError;
             }
-            current = current.cause;
+            current = (current as { cause?: unknown }).cause;
         }
         return undefined;
     }

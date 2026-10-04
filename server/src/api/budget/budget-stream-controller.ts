@@ -11,7 +11,7 @@ export class BudgetStreamController {
         private budgetStreamData: IFinanceBudgetStreamData
     ) {}
 
-    public async getBudgetStreams(context: OperationContext): Promise<OperationResult<BudgetStream[]>> {
+    public async getBudgetStreams(_context: OperationContext): Promise<OperationResult<BudgetStream[]>> {
         const streams = await this.budgetStreamData.retrieveAll();
         return Result.success(streams);
     }

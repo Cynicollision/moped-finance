@@ -52,7 +52,7 @@ export class Result {
         };
     }
 
-    public static userError<T>(message: string, code: string = 'BAD_REQUEST', details?: unknown): OperationResult<T> {
+    public static userError<T>(message: string, code = 'BAD_REQUEST', details?: unknown): OperationResult<T> {
         return {
             success: false,
             status: OperationStatus.UserError,
@@ -65,10 +65,7 @@ export class Result {
         };
     }
 
-    public static userErrorNotFound<T>(
-        message: string = 'Resource not found',
-        code: string = 'NOT_FOUND'
-    ): OperationResult<T> {
+    public static userErrorNotFound<T>(message = 'Resource not found', code = 'NOT_FOUND'): OperationResult<T> {
         return {
             success: false,
             status: OperationStatus.NotFound,
@@ -80,10 +77,7 @@ export class Result {
         };
     }
 
-    public static unauthorized<T>(
-        message: string = 'Not authorized',
-        code: string = 'UNAUTHORIZED'
-    ): OperationResult<T> {
+    public static unauthorized<T>(message = 'Not authorized', code = 'UNAUTHORIZED'): OperationResult<T> {
         return {
             success: false,
             status: OperationStatus.Unauthorized,
@@ -95,7 +89,7 @@ export class Result {
         };
     }
 
-    public static forbidden<T>(message: string = 'Forbidden', code: string = 'FORBIDDEN'): OperationResult<T> {
+    public static forbidden<T>(message = 'Forbidden', code = 'FORBIDDEN'): OperationResult<T> {
         return {
             success: false,
             status: OperationStatus.Forbidden,
@@ -108,8 +102,8 @@ export class Result {
     }
 
     public static internalError<T>(
-        message: string = 'An unexpected error occurred',
-        code: string = 'INTERNAL_ERROR'
+        message = 'An unexpected error occurred',
+        code = 'INTERNAL_ERROR'
     ): OperationResult<T> {
         return {
             success: false,

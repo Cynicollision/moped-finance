@@ -24,7 +24,7 @@ export class InstitutionController {
         return Result.success(institution);
     }
 
-    public async getInstitutions(context: OperationContext): Promise<OperationResult<Institution[]>> {
+    public async getInstitutions(_context: OperationContext): Promise<OperationResult<Institution[]>> {
         const institutions = await this.institutionData.retrieveAll();
         return Result.success(institutions);
     }
@@ -80,7 +80,10 @@ export class InstitutionController {
         return Result.successDeleted();
     }
 
-    public async syncInstitution(context: OperationContext, institutionId: string): Promise<OperationResult<any>> {
+    public async syncInstitution(
+        _context: OperationContext,
+        _institutionId: string
+    ): Promise<OperationResult<{ message: string }>> {
         // TODO: implement sync logic
         return Result.successCreated({ message: 'Sync institution logic stub' });
     }

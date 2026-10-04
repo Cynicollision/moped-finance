@@ -1,20 +1,20 @@
 import Papa from 'papaparse';
 
 /** One data row. `rowNumber` counts the header as row 1, matching what a spreadsheet shows for simple files. */
-export type CsvRow = {
+export interface CsvRow {
     rowNumber: number;
     /** Trimmed text by header name; a column missing from this row is ''. */
     values: Record<string, string>;
     /** Set when the row has the wrong number of columns. */
     error?: string;
-};
+}
 
 export type CsvReadResult = { success: true; rows: CsvRow[] } | { success: false; message: string };
 
-export type CsvColumn<T> = {
+export interface CsvColumn<T> {
     header: string;
     value: (row: T) => string | number | boolean;
-};
+}
 
 export class CsvFile {
     /**
@@ -27,7 +27,7 @@ export class CsvFile {
             return { success: false, message: 'No file provided.' };
         }
 
-        const text = file.toString('utf8').replace(/^﻿/, '');
+        const text = file.toString('utf8').replace(/^\uFEFF/, '');
         const parsed = Papa.parse<Record<string, string | undefined>>(text, {
             header: true,
             skipEmptyLines: 'greedy',

@@ -56,7 +56,7 @@ export class TransactionController {
         return Result.success(transactions);
     }
 
-    public async getTransactionMerchants(context: OperationContext): Promise<OperationResult<string[]>> {
+    public async getTransactionMerchants(_context: OperationContext): Promise<OperationResult<string[]>> {
         const merchantNames = await this.transactionData.retrieveMerchants();
         return Result.success(merchantNames);
     }

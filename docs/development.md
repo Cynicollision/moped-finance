@@ -12,7 +12,7 @@ Any OS works. Development has mostly happened on Windows with Docker Desktop's W
 ## First-time setup
 
 1. Copy `.env.example` to `.env` and fill in the Postgres credentials and the `SEED_USER_*` values. `SESSION_SECRET` is optional; without it the server generates one and keeps it in the database. The compose file sets `PGHOST` inside the container, so `.env` only needs it for running scripts from the host.
-2. Install dependencies: `npm ci` in the repository root (Prettier), `client/` and `server/`. The API container installs its own, but the host copies are needed for editor support and tests.
+2. Install dependencies: `npm ci` in the repository root (Prettier), `client/` and `server/`. The API container installs its own, but the host copies are needed for editor support and tests. Optionally, `git config blame.ignoreRevsFile .git-blame-ignore-revs` makes `git blame` skip formatting-only commits, as GitHub does.
 3. Start the stack: `docker compose up -d`.
 4. Seed a user plus sample data: `docker compose exec api npm run db:seed`. The API creates the tables itself when it starts.
 
@@ -62,7 +62,7 @@ Don't edit a migration once it's merged: databases that already ran it won't run
 ## Before opening a PR
 
 - `npm run format` in the repository root (or `npm run format:check` to only check)
-- `npm test` in `server/`, and `npx tsc --noEmit` in `server/`
+- `npm test`, `npx tsc --noEmit` and `npm run lint` in `server/` (the lint covers `shared/` too)
 - `npx ng test --watch=false`, `npx ng lint` and `npx ng build` in `client/`
 
 See [testing.md](testing.md) for how the tests are set up.
