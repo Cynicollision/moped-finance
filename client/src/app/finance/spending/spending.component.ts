@@ -24,8 +24,8 @@ import { MoneyComponent, MoneyTone } from './../common/money.component';
 import { ExpenseNecessity, expenseNecessities, expenseNecessityOf } from './../common/necessity';
 import { FinanceService } from './../finance.service';
 
-/** How the sections list their rows: by category, by group, or by category under each necessity (CASH-1.5, CASH-1.8). */
-export type SpendingViewMode = 'category' | 'group' | 'necessity';
+/** How the sections list their rows: by category (expenses under each necessity, CASH-1.8), or by group (CASH-1.5). */
+export type SpendingViewMode = 'category' | 'group';
 
 interface SpendingRow {
     /** The category or group ID, depending on the view mode; undefined for uncategorized transactions. */
@@ -368,11 +368,16 @@ export class FinanceSpendingComponent {
         {
             title: 'Expenses', isIncome: false, rows: this.rows().expense, total: this.totalExpenses(), budget: this.budgetedExpenses(),
             tone: 'plain', empty: 'No expenses in this period.',
-            parts: this.viewMode() === 'necessity' ? this.splitByNecessity().filter(part => part.rows.length > 0) : undefined
+            parts: this.viewMode() === 'category' && this.hasNecessities()
+                ? this.splitByNecessity().filter(part => part.rows.length > 0)
+                : undefined
         }
     ]);
 
-    /** Expenses by category under Essential, Discretionary and Unclassified, for the Necessity view (CASH-1.8). */
+    /** Whether any category has a necessity; until one does, the Category view lists expenses without headings (CASH-1.8). */
+    private readonly hasNecessities = computed(() => (this.lookups.value()?.categories ?? []).some(c => c.necessity));
+
+    /** Expenses by category under Essential, Discretionary and Unclassified, for the Category view (CASH-1.8). */
     private splitByNecessity(): NecessityPart[] {
         const expenses = this.rows().expense;
         return expenseNecessities.map(({ key, label }) => {

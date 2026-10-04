@@ -23,13 +23,10 @@ app-page-header {
     letter-spacing: 0.05em;
 }
 
-// The period stepper, then the Category / Group / Necessity switch (CASH-1.1, CASH-1.5).
+// The period stepper (CASH-1.1).
 .controls {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
 }
 
 .stepper {
@@ -44,13 +41,16 @@ app-page-header {
     font: var(--mat-sys-title-medium);
 }
 
+// The Category / Group switch, between the summary and the sections (CASH-1.5).
 .view-toggle {
+    align-self: flex-start;
+
     @include mat.button-toggle-overrides((
         height: 36px
     ));
 }
 
-// Phones show "Sep 2026" and smaller arrows, and the switch gets a row of its own below the stepper.
+// Phones show "Sep 2026" and smaller arrows, and the switch spans the width.
 @include bp.content-below(bp.$medium) {
     .view-toggle {
         width: 100%;

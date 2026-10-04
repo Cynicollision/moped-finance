@@ -1,7 +1,7 @@
 <div class="spending-container">
     <app-page-header title="Spending" [refreshing]="totals.isRefreshing()"></app-page-header>
 
-    <!-- The period stepper and the view switch share one row (CASH-1.1, CASH-1.5). -->
+    <!-- The period stepper (CASH-1.1). -->
     <div class="controls">
         <div class="stepper">
             <button mat-icon-button (click)="step(-1)" [disabled]="!canStepBack()" [attr.aria-label]="'Previous ' + periodNoun()">
@@ -17,13 +17,6 @@
                 <mat-icon>chevron_right</mat-icon>
             </button>
         </div>
-
-        <mat-button-toggle-group class="view-toggle" [value]="viewMode()" (change)="viewMode.set($event.value)"
-            hideSingleSelectionIndicator aria-label="Show by">
-            <mat-button-toggle value="category">Category</mat-button-toggle>
-            <mat-button-toggle value="group">Group</mat-button-toggle>
-            <mat-button-toggle value="necessity">Necessity</mat-button-toggle>
-        </mat-button-toggle-group>
     </div>
 
     @if (error(); as error) {
@@ -53,6 +46,13 @@
                 }
             </div>
         </mat-card>
+
+        <!-- Between the summary and the sections it changes (CASH-1.5). -->
+        <mat-button-toggle-group class="view-toggle" [value]="viewMode()" (change)="viewMode.set($event.value)"
+            hideSingleSelectionIndicator aria-label="Show by">
+            <mat-button-toggle value="category">Category</mat-button-toggle>
+            <mat-button-toggle value="group">Group</mat-button-toggle>
+        </mat-button-toggle-group>
 
         @for (section of sections(); track section.title) {
             <mat-card class="section-card" appearance="outlined">
