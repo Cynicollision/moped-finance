@@ -147,17 +147,6 @@ app-page-header {
     }
 }
 
-// Expenses split into Essential, Discretionary and Unclassified, with each one's share (CASH-1.8).
-.split {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 16px;
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--border-color);
-    font: var(--mat-sys-body-small);
-    color: var(--text-muted);
-}
-
 .app-list-subheader .share {
     color: var(--text-muted);
 }

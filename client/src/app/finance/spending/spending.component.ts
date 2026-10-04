@@ -296,8 +296,7 @@ export class FinanceSpendingComponent {
     // The figures
 
     // The rows by category, which the summary's split always needs (CASH-1.8), and the rows the view shows.
-    private readonly categoryRows = computed(() => this.buildRows(false));
-    private readonly rows = computed(() => this.viewMode() === 'group' ? this.buildRows(true) : this.categoryRows());
+    private readonly rows = computed(() => this.buildRows(this.viewMode() === 'group'));
 
     private buildRows(byGroup: boolean): { income: SpendingRow[]; expense: SpendingRow[] } {
         const income = new Map<string, SpendingRow>();
@@ -373,19 +372,9 @@ export class FinanceSpendingComponent {
         }
     ]);
 
-    /** Whether any expense category has a necessity; until one does, the summary leaves the split out (CASH-1.8). */
-    private readonly hasNecessities = computed(() => (this.lookups.value()?.categories ?? []).some(c => c.necessity));
-
-    /**
-     * The summary's split of expenses, in every view: Essential and Discretionary, and Unclassified when it has an
-     * amount (CASH-1.8).
-     */
-    readonly expenseSplit = computed(() => this.hasNecessities()
-        ? this.splitByNecessity().filter(part => part.key !== 'unclassified' || Math.round(part.total) !== 0)
-        : undefined);
-
+    /** Expenses by category under Essential, Discretionary and Unclassified, for the Necessity view (CASH-1.8). */
     private splitByNecessity(): NecessityPart[] {
-        const expenses = this.categoryRows().expense;
+        const expenses = this.rows().expense;
         return expenseNecessities.map(({ key, label }) => {
             const rows = expenses.filter(row => row.necessity === key);
             const total = sumOf(rows, row => row.amount);

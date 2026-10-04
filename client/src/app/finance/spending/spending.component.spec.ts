@@ -331,37 +331,19 @@ describe('FinanceSpendingComponent', () => {
         // Expenses of $2,180: $2,000 essential (rent, utilities, groceries), $100 discretionary (dining), $80 uncategorized.
         const split = [...totals, { categoryId: 'dining', amount: -100 }, { categoryId: '', amount: -80 }];
 
-        function splitParts(element: HTMLElement): string[] {
-            return Array.from(section(element, 'Expenses').querySelectorAll('.split-part')).map(text);
-        }
-
         function subheaders(element: HTMLElement): string[] {
             return Array.from(section(element, 'Expenses').querySelectorAll('[appListSubheader]'))
                 .map(header => Array.from(header.children).map(text).join(' '));
         }
 
-        it('CASH-1.8 should split expenses under the Expenses heading, with each part\'s share, by category and by group', async () => {
+        it('CASH-1.8 should show no necessity split in Category and Group views', async () => {
             const fixture = await render(split);
-            const expected = ['Essential $2,000 · 92%', 'Discretionary $100 · 5%', 'Unclassified $80 · 4%'];
 
-            expect(splitParts(fixture.element)).toEqual(expected);
-            expect(fixture.element.querySelector('.summary-card .split-part')).toBeNull();
+            expect(section(fixture.element, 'Expenses').querySelector('[appListSubheader]')).toBeNull();
 
             fixture.componentInstance.viewMode.set('group');
             await fixture.whenStable();
-            expect(splitParts(fixture.element)).toEqual(expected);
-        });
-
-        it('CASH-1.8 should leave Unclassified out of the split when it has no amount', async () => {
-            const { element } = await render();
-
-            expect(splitParts(element)).toEqual(['Essential $2,000 · 100%', 'Discretionary $0 · 0%']);
-        });
-
-        it('CASH-1.8 should leave the split out while no expense category has a necessity', async () => {
-            const { element } = await render(split, undefined, undefined, [], categories.map(c => ({ ...c, necessity: null })));
-
-            expect(splitParts(element)).toEqual([]);
+            expect(section(fixture.element, 'Expenses').querySelector('[appListSubheader]')).toBeNull();
         });
 
         it('CASH-1.8 should list expenses by category under each necessity in the Necessity view', async () => {
@@ -371,7 +353,6 @@ describe('FinanceSpendingComponent', () => {
             await fixture.whenStable();
 
             expect(subheaders(fixture.element)).toEqual(['Essential · 92% $2,000', 'Discretionary · 5% $100', 'Unclassified · 4% $80']);
-            expect(splitParts(fixture.element)).toEqual([]);
             expect(sectionRows(fixture.element, 'Expenses')).toEqual([
                 '🏠 Rent $1,500.00', '🛒 Groceries $300.00', '💡 Utilities $200.00', '🍽️ Dining $100.00', 'Uncategorized $80.00'
             ]);
