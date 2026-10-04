@@ -120,14 +120,6 @@ app-page-header {
         font: var(--mat-sys-title-large);
     }
 
-    // Expenses split into Essential, Discretionary and Unclassified, with each one's share (CASH-1.8).
-    .split {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        font: var(--mat-sys-body-small);
-        color: var(--text-muted);
-    }
 }
 
 @include bp.content-below(bp.$medium) {
@@ -153,6 +145,21 @@ app-page-header {
     .section-total {
         font: var(--mat-sys-title-medium);
     }
+}
+
+// Expenses split into Essential, Discretionary and Unclassified, with each one's share (CASH-1.8).
+.split {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-color);
+    font: var(--mat-sys-body-small);
+    color: var(--text-muted);
+}
+
+.app-list-subheader .share {
+    color: var(--text-muted);
 }
 
 // A budgeted amount under an actual one (CASH-1.11).

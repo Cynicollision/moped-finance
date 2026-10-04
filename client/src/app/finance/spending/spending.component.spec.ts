@@ -332,7 +332,7 @@ describe('FinanceSpendingComponent', () => {
         const split = [...totals, { categoryId: 'dining', amount: -100 }, { categoryId: '', amount: -80 }];
 
         function splitParts(element: HTMLElement): string[] {
-            return Array.from(element.querySelectorAll('.summary-card .split-part')).map(text);
+            return Array.from(section(element, 'Expenses').querySelectorAll('.split-part')).map(text);
         }
 
         function subheaders(element: HTMLElement): string[] {
@@ -340,18 +340,19 @@ describe('FinanceSpendingComponent', () => {
                 .map(header => Array.from(header.children).map(text).join(' '));
         }
 
-        it('CASH-1.8 should split expenses in the summary, with each part\'s share, in every view', async () => {
+        it('CASH-1.8 should split expenses under the Expenses heading, with each part\'s share, by category and by group', async () => {
             const fixture = await render(split);
             const expected = ['Essential $2,000 · 92%', 'Discretionary $100 · 5%', 'Unclassified $80 · 4%'];
 
             expect(splitParts(fixture.element)).toEqual(expected);
+            expect(fixture.element.querySelector('.summary-card .split-part')).toBeNull();
 
             fixture.componentInstance.viewMode.set('group');
             await fixture.whenStable();
             expect(splitParts(fixture.element)).toEqual(expected);
         });
 
-        it('CASH-1.8 should leave Unclassified out of the summary when it has no amount', async () => {
+        it('CASH-1.8 should leave Unclassified out of the split when it has no amount', async () => {
             const { element } = await render();
 
             expect(splitParts(element)).toEqual(['Essential $2,000 · 100%', 'Discretionary $0 · 0%']);
@@ -369,7 +370,8 @@ describe('FinanceSpendingComponent', () => {
             fixture.componentInstance.viewMode.set('necessity');
             await fixture.whenStable();
 
-            expect(subheaders(fixture.element)).toEqual(['Essential $2,000', 'Discretionary $100', 'Unclassified $80']);
+            expect(subheaders(fixture.element)).toEqual(['Essential · 92% $2,000', 'Discretionary · 5% $100', 'Unclassified · 4% $80']);
+            expect(splitParts(fixture.element)).toEqual([]);
             expect(sectionRows(fixture.element, 'Expenses')).toEqual([
                 '🏠 Rent $1,500.00', '🛒 Groceries $300.00', '💡 Utilities $200.00', '🍽️ Dining $100.00', 'Uncategorized $80.00'
             ]);

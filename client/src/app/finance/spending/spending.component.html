@@ -49,16 +49,6 @@
                         @if (section.budget !== undefined) {
                             <span class="budgeted">of <app-money [amount]="section.budget" digits="1.0-0"></app-money> budgeted</span>
                         }
-                        @if (!section.isIncome && expenseSplit(); as split) {
-                            <div class="split">
-                                @for (part of split; track part.key) {
-                                    <span class="split-part">
-                                        {{ part.title }} <app-money [amount]="part.total" digits="1.0-0"></app-money>
-                                        · {{ part.share | percent:'1.0-0' }}
-                                    </span>
-                                }
-                            </div>
-                        }
                     </div>
                 }
             </div>
@@ -70,6 +60,17 @@
                     <h2>{{ section.title }}</h2>
                     <app-money class="section-total" [amount]="section.total" [tone]="section.tone" digits="1.0-0"></app-money>
                 </div>
+                <!-- How expenses split by necessity, in the views that don't already group them that way (CASH-1.8). -->
+                @if (!section.isIncome && !section.parts && expenseSplit(); as split) {
+                    <div class="split">
+                        @for (part of split; track part.key) {
+                            <span class="split-part">
+                                {{ part.title }} <app-money [amount]="part.total" digits="1.0-0"></app-money>
+                                · {{ part.share | percent:'1.0-0' }}
+                            </span>
+                        }
+                    </div>
+                }
 
                 @if (section.rows.length) {
                     <app-list [columns]="columns()" [showHeader]="hasBudget()">
@@ -100,7 +101,7 @@
                         @if (section.parts; as parts) {
                             @for (part of parts; track part.key) {
                                 <div appListSubheader>
-                                    <h3>{{ part.title }}</h3>
+                                    <h3>{{ part.title }} <span class="share">· {{ part.share | percent:'1.0-0' }}</span></h3>
                                     <app-money [amount]="part.total" [tone]="section.tone" digits="1.0-0"></app-money>
                                 </div>
                                 @for (row of part.rows; track row.id) {
