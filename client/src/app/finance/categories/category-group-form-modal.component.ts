@@ -19,7 +19,7 @@ import { FinanceService } from './../finance.service';
 export interface CategoryGroupFormModalData {
     /** The group to edit; leave out to create one. */
     group?: CategoryGroup;
-    /** How many categories the group holds. It can only be deleted with none (CAT-1.15). */
+    /** How many categories the group holds. Its type can only change, and it can only be deleted, with none (CAT-1.14, CAT-1.15). */
     categoryCount?: number;
 }
 
@@ -66,7 +66,9 @@ export class CategoryGroupFormModalComponent implements HasUnsavedChanges {
     constructor() {
         if (this.data.group) {
             this.form.patchValue(this.data.group);
-            // A group keeps the type it was created with (CAT-1.14).
+        }
+        // A group's type decides how its categories count, so it only changes while the group is empty (CAT-1.14).
+        if (this.categoryCount > 0) {
             this.form.controls.type.disable();
         }
     }
