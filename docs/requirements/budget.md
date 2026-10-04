@@ -15,7 +15,7 @@ Screen: **Budget** (`/budget`). Adding and editing happen in a side panel (a ful
 | BUD-1.3 | The user can add a stream with a section's **Add** button (labelled "Add Income", "Add Expense" or "Add Savings" for screen readers), which opens an "Add Income" / "Add Expense" / "Add Savings" side panel on the right (full screen on phones, APP-2.6) with **Name\***, **Category\*** (a type-to-search list), **Amount\*** (default 0) and **Recurrence\*** (default Monthly), and **Cancel** / **Save** buttons; Save stays disabled until the form is valid. The section decides which categories are offered: those whose type gives the stream's type (BUD-1.1), active ones only (CAT-2.1, CAT-4.1). | Implemented |
 | BUD-1.4 | The user can edit a stream from its row menu, in the same panel as BUD-1.3, and can delete one, after confirming, from its row menu or the panel's **Delete** button. Adding says "Income added", saving "Income saved" and deleting "Income deleted" (or Expense, or Savings; APP-2.8). | Implemented |
 | BUD-1.5 | Streams in each section shall be ordered Monthly, then Quarterly, then Yearly; within a recurrence by group name, then category name. | Implemented |
-| BUD-1.7 | The Expenses section shall show its total split into **Essential** and **Discretionary** (CAT-3.1), as well as combined. | Planned |
+| BUD-1.7 | Once any expense stream's category has a necessity (CAT-3.1), the screen shall show expenses split into **Essential**, **Discretionary** and **Unclassified** (CAT-2.3), for the chosen period (BUD-1.6). The Expenses section shall list its streams under a heading for each part that has streams, with that part's total, keeping BUD-1.5's order within each; the section's own total stays the combined one. | Implemented |
 | BUD-1.8 | Once a category is chosen in the stream's panel, it shall say "You've averaged *$amount* a month in *category* over the past 12 months.", counting the 12 full months before the current one and the same transactions Spending counts (CASH-1.2). For an Expense category it's the net spending; for a Transfer category, the money moved out of accounts only (the matching money in would cancel it). | Planned |
 | BUD-1.9 | Each section's list shall show, per category, the same 12-month average beside the streams' monthly total, so over- or under-budgeted categories stand out. | Planned |
 | BUD-1.10 | The summary card shall lead with **Left over**: income minus expenses minus savings for the chosen period (BUD-1.6), in green, or in red with a "-" when negative. | Implemented |
@@ -24,7 +24,6 @@ Screen: **Budget** (`/budget`). Adding and editing happen in a side panel (a ful
 ## Known gaps
 
 - **No 12-month averages yet (BUD-1.8, BUD-1.9).** They need a server endpoint for the actual amounts per category.
-- **No Essential / Discretionary split (BUD-1.7).**
 
 ## Notes
 

@@ -40,6 +40,18 @@ export interface ListSort {
 })
 export class ListRowDirective { }
 
+/**
+ * A heading inside an `app-list` that starts a run of rows, with its title and, at the end, a subtotal:
+ * `<div appListSubheader><h3>Essential</h3><app-money ...></app-money></div>`.
+ */
+@Directive({
+    selector: '[appListSubheader]',
+    host: {
+        class: 'app-list-subheader'
+    }
+})
+export class ListSubheaderDirective { }
+
 /** A cell of an `app-list` row, named by its column's key. */
 @Directive({
     selector: '[appListCell]',
@@ -149,4 +161,4 @@ export class ListComponent {
     }
 }
 
-export const ListModule = [ListComponent, ListRowDirective, ListCellDirective] as const;
+export const ListModule = [ListComponent, ListRowDirective, ListSubheaderDirective, ListCellDirective] as const;

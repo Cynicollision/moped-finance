@@ -67,6 +67,30 @@ mat-card .app-list {
     color: var(--text-muted);
 }
 
+// A heading for the rows below it, with a subtotal at the end.
+.app-list .app-list-subheader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 16px 8px;
+    background-color: var(--bg-highlight);
+    font: var(--mat-sys-title-small);
+
+    > * {
+        margin: 0;
+        font: inherit;
+    }
+
+    &:not(:first-child) {
+        border-top: 1px solid var(--border-color);
+    }
+
+    + .app-list-row {
+        border-top: 1px solid var(--border-color);
+    }
+}
+
 // A sortable heading: its arrow shows when it's the sort, and on hover or focus otherwise.
 .app-list .app-list-sort {
     display: inline-flex;
@@ -123,7 +147,8 @@ mat-card .app-list {
     .app-list .app-list-header {
         display: none;
 
-        + .app-list-row {
+        + .app-list-row,
+        + .app-list-subheader {
             border-top: none;
         }
     }

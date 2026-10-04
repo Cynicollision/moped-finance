@@ -22,7 +22,7 @@ Nothing right now: the client baseline is done. Pull the next item up from Next.
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
 ### Essential and discretionary spending
-- [ ] Show the Essential / Discretionary / Unclassified split (CAT-2.3) on Budget (BUD-1.7: the summary, and the Expenses streams grouped by necessity with subtotals) and Spending (CASH-1.8: the summary in every view, and a Necessity view beside Category and Group).
+- [ ] Show the Essential / Discretionary / Unclassified split (CAT-2.3) on Spending (CASH-1.8): the summary in every view, and a Necessity view beside Category and Group. Budget has it (BUD-1.7).
 
 ### Testing
 - [ ] Frontend coverage: services (`api`, `finance`, `auth`), `auth.guard`, the demo interceptor, and key components (transactions, imports).
