@@ -1,0 +1,12 @@
+# Prettier formats the code (TypeScript, JavaScript, HTML, SCSS); see docs/conventions.md.
+# It also skips everything in .gitignore.
+*.md
+*.json
+*.yml
+*.yaml
+*.sql
+*.csv
+.claude/
+.agents/
+client/dist/
+client/.angular/

@@ -6,21 +6,15 @@ Rules that apply across the codebase. Match the surrounding code for anything no
 
 - UTF-8, LF line endings, final newline, no trailing whitespace. `.editorconfig` sets this for editors and `.gitattributes` makes Git store and check out LF on every OS.
 
+## Formatting
+
+- **Prettier formats the code**: TypeScript, JavaScript, HTML and SCSS in every package, from the root `.prettierrc.json` (4-space indentation, 120 columns, single quotes, no trailing commas). Run `npm run format` at the repository root before committing; CI fails on anything it would change. Don't hand-format against it.
+- Files Prettier doesn't format (JSON, YAML, SQL, Markdown) follow `.editorconfig`: 4-space indentation, 2 for YAML and SQL.
+
 ## TypeScript
 
-- **Indentation**: 4 spaces (also HTML, SCSS and JSON; YAML and SQL use 2).
 - **Import order**: external packages, then `@shared/*`, then `@server/*` (server only), then relative imports.
 - **Parent-folder imports** start with `./`: write `./../transactions/transaction-data`, not `../transactions/transaction-data`.
-- **`else` and `catch`** go on a new line, not on the closing-brace line:
-
-  ```typescript
-  if (condition) {
-      // ...
-  }
-  else {
-      // ...
-  }
-  ```
 
 ## Dates
 
@@ -55,7 +49,7 @@ Rules that apply across the codebase. Match the surrounding code for anything no
 - Get "today" from `DateProviderService` (`today()` for a calendar date, `now()` for a date picker's `Date`), never `new Date()`, so debug mode's fixed date applies everywhere. Angular's `date` pipe reads a `YYYY-MM-DD` string as that local day, so pass calendar dates to it as they are.
 - **Breakpoints** are Material 3's window size classes (compact below 600px, medium, expanded from 840px, large from 1200px), defined once in `src/styles/_breakpoints.scss` and `LayoutService` (`core/layout/layout.service.ts`). Lay out a screen's content with `@use 'breakpoints' as bp;` and the `bp.content-below(...)` / `bp.content-from(...)` mixins, which query the width of the page area rather than the window, so the side navigation can't make a screen overflow. Use `LayoutService` only for decisions that need TypeScript; don't write raw `@media` widths or use `BreakpointObserver` directly.
 - **Colours** come from the tokens in `src/styles.scss` (`--bg-card`, `--text-muted`, `--color-positive`, ...) or Material's `--mat-sys-*` variables, never literal values, so a light theme only has to change the theme. `color="warn"` does nothing under Material 3; a destructive button uses the `danger-button` class.
-- `npx ng lint` (angular-eslint) checks these conventions where a rule exists, including TypeScript indentation and `else`/`catch` placement.
+- `npx ng lint` (angular-eslint) checks these conventions where a rule exists.
 
 ## Tests
 
