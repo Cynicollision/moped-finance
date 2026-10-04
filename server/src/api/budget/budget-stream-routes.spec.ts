@@ -47,25 +47,33 @@ describe('Budget Stream Routes', () => {
     beforeEach(async () => {
         await TestDatabaseUtil.clearFinanceData(pglite);
 
-        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'General' }));
-        const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id, name: 'Misc', icon: 'star', isActive: true }));
+        const group = await groupsData.insert(
+            FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'General' })
+        );
+        const category = await categoriesData.insert(
+            FinanceEntityFactory.createCategory({ groupId: group.id, name: 'Misc', icon: 'star', isActive: true })
+        );
         testCategoryId = category.id!;
     });
 
     describe('GET /', () => {
         it('should return a list of budget streams when successful', async () => {
-            const stream1 = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
-                categoryId: testCategoryId,
-                name: 'Utilities',
-                recurrence: CalendarPeriod.Monthly,
-                amount: 150.00
-            }));
-            const stream2 = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
-                categoryId: testCategoryId,
-                name: 'Salary',
-                recurrence: CalendarPeriod.Monthly,
-                amount: 5000.00
-            }));
+            const stream1 = await budgetStreamData.insert(
+                FinanceEntityFactory.createBudgetStream({
+                    categoryId: testCategoryId,
+                    name: 'Utilities',
+                    recurrence: CalendarPeriod.Monthly,
+                    amount: 150.0
+                })
+            );
+            const stream2 = await budgetStreamData.insert(
+                FinanceEntityFactory.createBudgetStream({
+                    categoryId: testCategoryId,
+                    name: 'Salary',
+                    recurrence: CalendarPeriod.Monthly,
+                    amount: 5000.0
+                })
+            );
 
             const response = await request(app).get('/budget-streams');
 
@@ -81,12 +89,10 @@ describe('Budget Stream Routes', () => {
                 name: 'Groceries',
                 categoryId: testCategoryId,
                 recurrence: CalendarPeriod.Monthly,
-                amount: 300.00
+                amount: 300.0
             };
 
-            const response = await request(app)
-                .post('/budget-streams')
-                .send(payload);
+            const response = await request(app).post('/budget-streams').send(payload);
 
             expect(response.status).toBe(201);
             expect(response.body.name).toBe('Groceries');
@@ -100,12 +106,10 @@ describe('Budget Stream Routes', () => {
             const payload = {
                 categoryId: testCategoryId,
                 recurrence: CalendarPeriod.Monthly,
-                amount: 300.00
+                amount: 300.0
             };
 
-            const response = await request(app)
-                .post('/budget-streams')
-                .send(payload);
+            const response = await request(app).post('/budget-streams').send(payload);
 
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('name:');
@@ -114,8 +118,12 @@ describe('Budget Stream Routes', () => {
 
     describe('type', () => {
         async function categoryOfType(categoryType: CategoryType, name: string): Promise<string> {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: categoryType, name: `${name} group` }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id, name, icon: 'star', isActive: true }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: categoryType, name: `${name} group` })
+            );
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id, name, icon: 'star', isActive: true })
+            );
             return category.id;
         }
 
@@ -128,8 +136,13 @@ describe('Budget Stream Routes', () => {
 
             const types = [];
             for (const categoryId of categories) {
-                const response = await request(app).post('/budget-streams')
-                    .send({ name: 'Stream', categoryId, recurrence: CalendarPeriod.Monthly, amount: 100, type: BudgetStreamType.Income });
+                const response = await request(app).post('/budget-streams').send({
+                    name: 'Stream',
+                    categoryId,
+                    recurrence: CalendarPeriod.Monthly,
+                    amount: 100,
+                    type: BudgetStreamType.Income
+                });
                 expect(response.status).toBe(201);
                 types.push(response.body.type);
             }
@@ -138,9 +151,14 @@ describe('Budget Stream Routes', () => {
         });
 
         it('BUD-1.1 should change with the category', async () => {
-            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
-                categoryId: testCategoryId, name: 'Emergency fund', recurrence: CalendarPeriod.Monthly, amount: 500
-            }));
+            const stream = await budgetStreamData.insert(
+                FinanceEntityFactory.createBudgetStream({
+                    categoryId: testCategoryId,
+                    name: 'Emergency fund',
+                    recurrence: CalendarPeriod.Monthly,
+                    amount: 500
+                })
+            );
             const savings = await categoryOfType(CategoryType.Transfer, 'Savings Transfer');
 
             const response = await request(app).put(`/budget-streams/${stream.id}`).send({ categoryId: savings });
@@ -150,10 +168,17 @@ describe('Budget Stream Routes', () => {
         });
 
         it('CAT-1.18 should follow the category into a group of another type', async () => {
-            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
-                categoryId: testCategoryId, name: 'Side job', recurrence: CalendarPeriod.Monthly, amount: 200
-            }));
-            const income = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Work' }));
+            const stream = await budgetStreamData.insert(
+                FinanceEntityFactory.createBudgetStream({
+                    categoryId: testCategoryId,
+                    name: 'Side job',
+                    recurrence: CalendarPeriod.Monthly,
+                    amount: 200
+                })
+            );
+            const income = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Work' })
+            );
             const category = (await categoriesData.retrieveSingle(testCategoryId))!;
             await categoriesData.update({ ...category, groupId: income.id });
 
@@ -163,7 +188,8 @@ describe('Budget Stream Routes', () => {
         });
 
         it('BUD-1.1 should reject a category that does not exist', async () => {
-            const response = await request(app).post('/budget-streams')
+            const response = await request(app)
+                .post('/budget-streams')
                 .send({ name: 'Stream', categoryId: 'missing', recurrence: CalendarPeriod.Monthly, amount: 100 });
 
             expect(response.status).toBe(400);
@@ -173,35 +199,47 @@ describe('Budget Stream Routes', () => {
 
     describe('PUT /:id', () => {
         it('should update a budget stream when valid', async () => {
-            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
-                categoryId: testCategoryId,
-                name: 'Utilities',
-                recurrence: CalendarPeriod.Monthly,
-                amount: 150.00
-            }));
+            const stream = await budgetStreamData.insert(
+                FinanceEntityFactory.createBudgetStream({
+                    categoryId: testCategoryId,
+                    name: 'Utilities',
+                    recurrence: CalendarPeriod.Monthly,
+                    amount: 150.0
+                })
+            );
 
-            const payload = { ...stream, amount: 180.00 };
+            const payload = { ...stream, amount: 180.0 };
 
-            const response = await request(app)
-                .put(`/budget-streams/${stream.id}`)
-                .send(payload);
+            const response = await request(app).put(`/budget-streams/${stream.id}`).send(payload);
 
             expect(response.status).toBe(200);
-            expect(response.body.amount).toBe(180.00);
+            expect(response.body.amount).toBe(180.0);
 
             const dbStream = await budgetStreamData.retrieveSingle(stream.id!);
-            expect(dbStream?.amount).toBe(180.00);
+            expect(dbStream?.amount).toBe(180.0);
         });
 
         it('BUD-1.4 should change only the fields sent', async () => {
-            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
-                categoryId: testCategoryId, name: 'Utilities', recurrence: CalendarPeriod.Quarterly, amount: 150
-            }));
+            const stream = await budgetStreamData.insert(
+                FinanceEntityFactory.createBudgetStream({
+                    categoryId: testCategoryId,
+                    name: 'Utilities',
+                    recurrence: CalendarPeriod.Quarterly,
+                    amount: 150
+                })
+            );
 
             const response = await request(app).put(`/budget-streams/${stream.id}`).send({ name: 'Power' });
 
             expect(response.status).toBe(200);
-            expect(response.body).toEqual(expect.objectContaining({ name: 'Power', amount: 150, recurrence: CalendarPeriod.Quarterly, categoryId: testCategoryId }));
+            expect(response.body).toEqual(
+                expect.objectContaining({
+                    name: 'Power',
+                    amount: 150,
+                    recurrence: CalendarPeriod.Quarterly,
+                    categoryId: testCategoryId
+                })
+            );
         });
 
         it('BUD-1.4 should return 404 when update target does not exist', async () => {
@@ -216,9 +254,15 @@ describe('Budget Stream Routes', () => {
             [{ amount: -1 }, 'amount:'],
             [{ amount: 1e10 }, 'amount:'],
             [{ categoryId: '' }, 'categoryId:'],
-            [{ categoryId: undefined }, 'categoryId:'],
+            [{ categoryId: undefined }, 'categoryId:']
         ])('BUD-1.1 should reject %p', async (override, message) => {
-            const payload = { categoryId: testCategoryId, name: 'Rent', recurrence: CalendarPeriod.Monthly, amount: 100, ...override };
+            const payload = {
+                categoryId: testCategoryId,
+                name: 'Rent',
+                recurrence: CalendarPeriod.Monthly,
+                amount: 100,
+                ...override
+            };
 
             const response = await request(app).post('/budget-streams').send(payload);
 
@@ -229,12 +273,14 @@ describe('Budget Stream Routes', () => {
 
     describe('DELETE /:id', () => {
         it('should delete a budget stream', async () => {
-            const stream = await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
-                categoryId: testCategoryId,
-                name: 'Utilities',
-                recurrence: CalendarPeriod.Monthly,
-                amount: 150.00
-            }));
+            const stream = await budgetStreamData.insert(
+                FinanceEntityFactory.createBudgetStream({
+                    categoryId: testCategoryId,
+                    name: 'Utilities',
+                    recurrence: CalendarPeriod.Monthly,
+                    amount: 150.0
+                })
+            );
 
             const response = await request(app).delete(`/budget-streams/${stream.id}`);
 

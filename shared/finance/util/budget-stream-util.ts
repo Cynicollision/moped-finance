@@ -16,7 +16,6 @@ const monthsPerPeriod: Record<CalendarPeriod, number> = {
 };
 
 export class BudgetStreamUtil {
-
     /** A stream's type follows from its category's type: Income, Expense, or Savings for a Transfer (BUD-1.1). */
     public static typeOf(categoryType: CategoryType): BudgetStreamType {
         return typeByCategoryType[categoryType];

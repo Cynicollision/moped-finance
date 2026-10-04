@@ -42,9 +42,12 @@ describe('CalendarDateUtil', () => {
         [CalendarPeriod.Quarterly, '2026-05-17', '2026-04-01', '2026-06-30'],
         [CalendarPeriod.Quarterly, '2026-12-31', '2026-10-01', '2026-12-31'],
         [CalendarPeriod.Yearly, '2026-05-17', '2026-01-01', '2026-12-31']
-    ])('CASH-1.2 should give the whole %s period around %s, both ends included', (period, asOfDate, startDate, endDate) => {
-        expect(CalendarDateUtil.getPeriod(period, asOfDate)).toEqual({ startDate, endDate });
-    });
+    ])(
+        'CASH-1.2 should give the whole %s period around %s, both ends included',
+        (period, asOfDate, startDate, endDate) => {
+            expect(CalendarDateUtil.getPeriod(period, asOfDate)).toEqual({ startDate, endDate });
+        }
+    );
 
     it.each([
         [HistoryTimeframe.PastThirtyDays, '2026-04-17'],

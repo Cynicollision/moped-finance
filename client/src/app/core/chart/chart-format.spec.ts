@@ -7,11 +7,18 @@ describe('ChartFormat', () => {
     });
 
     it('ACCT-2.12 should use no decimals where the ticks are already distinct', () => {
-        expect(ChartFormat.moneyLabels([0, 200000, 400000, 600000, 800000, 1000000])).toEqual(['$0', '$200K', '$400K', '$600K', '$800K', '$1M']);
+        expect(ChartFormat.moneyLabels([0, 200000, 400000, 600000, 800000, 1000000])).toEqual([
+            '$0',
+            '$200K',
+            '$400K',
+            '$600K',
+            '$800K',
+            '$1M'
+        ]);
         expect(ChartFormat.moneyLabels([0, 250, 500])).toEqual(['$0', '$250', '$500']);
     });
 
-    it('ACCT-2.12 should show a liability\'s negative ticks with a minus sign', () => {
+    it("ACCT-2.12 should show a liability's negative ticks with a minus sign", () => {
         expect(ChartFormat.moneyLabels([-132600, -132550, -132500])).toEqual(['-$132.60K', '-$132.55K', '-$132.50K']);
     });
 

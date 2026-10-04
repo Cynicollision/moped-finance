@@ -3,21 +3,19 @@
         <div class="form-row">
             <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="e.g. Fuel">
+                <input matInput formControlName="name" placeholder="e.g. Fuel" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
                 <mat-label>Icon (Emoji)</mat-label>
-                <input matInput formControlName="icon" placeholder="⛽">
+                <input matInput formControlName="icon" placeholder="⛽" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
                 <mat-label>Group</mat-label>
                 <mat-select formControlName="groupId">
                     @for (group of groups; track group.id) {
-                        <mat-option [value]="group.id">
-                            {{ group.name }} ({{ group.type | titlecase }})
-                        </mat-option>
+                        <mat-option [value]="group.id"> {{ group.name }} ({{ group.type | titlecase }}) </mat-option>
                     }
                 </mat-select>
             </mat-form-field>

@@ -7,7 +7,7 @@ const dbConfig = {
     password: process.env.PGPASSWORD,
     host: process.env.PGHOST,
     database: process.env.PGDATABASE,
-    port: parseInt(process.env.PGPORT || '5432'),
+    port: parseInt(process.env.PGPORT || '5432')
 };
 
 const pool = new Pool(dbConfig);
@@ -15,7 +15,9 @@ const pool = new Pool(dbConfig);
 const { SEED_USER_USERNAME, SEED_USER_DISPLAY_NAME, SEED_USER_PASSWORD } = process.env;
 
 if (!SEED_USER_USERNAME || !SEED_USER_DISPLAY_NAME || !SEED_USER_PASSWORD) {
-    throw new Error('❌ Missing required environment variables: SEED_USER_USERNAME, SEED_USER_DISPLAY_NAME, or SEED_USER_PASSWORD must be defined in your .env file.');
+    throw new Error(
+        '❌ Missing required environment variables: SEED_USER_USERNAME, SEED_USER_DISPLAY_NAME, or SEED_USER_PASSWORD must be defined in your .env file.'
+    );
 }
 
 (async () => {
@@ -29,20 +31,13 @@ if (!SEED_USER_USERNAME || !SEED_USER_DISPLAY_NAME || !SEED_USER_PASSWORD) {
 
         await client.query(
             'INSERT INTO core.users (id, display_name, username, password_hash) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING',
-            [
-                userId,
-                SEED_USER_DISPLAY_NAME,
-                SEED_USER_USERNAME,
-                defaultHash
-            ]
+            [userId, SEED_USER_DISPLAY_NAME, SEED_USER_USERNAME, defaultHash]
         );
         console.log(`✅ Seeded 1 core.user (${SEED_USER_USERNAME}) with ID: ${userId}`);
-    }
-    catch (err) {
+    } catch (err) {
         console.error('❌ Core seeding failed:', err);
         process.exit(1);
-    }
-    finally {
+    } finally {
         client.release();
         await pool.end();
     }

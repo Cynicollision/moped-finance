@@ -54,7 +54,9 @@ describe('CategoryFormModalComponent', () => {
     });
 
     function necessityField(element: HTMLElement): Element | undefined {
-        return Array.from(element.querySelectorAll('mat-form-field')).find(f => f.querySelector('mat-label')!.textContent === 'Necessity');
+        return Array.from(element.querySelectorAll('mat-form-field')).find(
+            f => f.querySelector('mat-label')!.textContent === 'Necessity'
+        );
     }
 
     it('CAT-3.2 should offer an optional necessity only while an Expense group is selected', async () => {
@@ -72,14 +74,23 @@ describe('CategoryFormModalComponent', () => {
         form.patchValue({ necessity: CategoryNecessity.Essential });
         await fixture.componentInstance.save();
 
-        expect(financeService.createCategory).toHaveBeenCalledWith(
-            { name: 'Groceries', icon: '🛒', groupId: 'food', isActive: true, necessity: CategoryNecessity.Essential }
-        );
+        expect(financeService.createCategory).toHaveBeenCalledWith({
+            name: 'Groceries',
+            icon: '🛒',
+            groupId: 'food',
+            isActive: true,
+            necessity: CategoryNecessity.Essential
+        });
     });
 
     it('CAT-1.17 should clear the necessity of a category moved out of Expense', async () => {
         const category = {
-            id: 'cat', groupId: 'food', name: 'Card', icon: '💳', isActive: true, necessity: CategoryNecessity.Discretionary
+            id: 'cat',
+            groupId: 'food',
+            name: 'Card',
+            icon: '💳',
+            isActive: true,
+            necessity: CategoryNecessity.Discretionary
         } as Category;
         const { fixture, element, financeService } = await render({ category, groups });
 
@@ -90,6 +101,8 @@ describe('CategoryFormModalComponent', () => {
         expect(necessityField(element)).toBeUndefined();
         await fixture.componentInstance.save();
 
-        expect(financeService.saveCategory).toHaveBeenCalledWith(expect.objectContaining({ groupId: 'transfers', necessity: null }));
+        expect(financeService.saveCategory).toHaveBeenCalledWith(
+            expect.objectContaining({ groupId: 'transfers', necessity: null })
+        );
     });
 });

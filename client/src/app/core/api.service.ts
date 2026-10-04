@@ -17,8 +17,7 @@ export function describeRequestError(error: unknown): string {
     if (error.status >= 400 && error.status < 500) {
         if (typeof error.error?.message === 'string') {
             return error.error.message;
-        }
-        else if (typeof error.error === 'string') {
+        } else if (typeof error.error === 'string') {
             return error.error;
         }
     }
@@ -58,15 +57,16 @@ export class ApiService {
     }
 
     async delete(path: string): Promise<boolean> {
-        const result = await this.handleRequest(firstValueFrom(this.http.delete(`${this.baseUrl}/${path}`)).then(() => true));
+        const result = await this.handleRequest(
+            firstValueFrom(this.http.delete(`${this.baseUrl}/${path}`)).then(() => true)
+        );
         return result ?? false;
     }
 
     private async handleRequest<T>(request: Promise<T>): Promise<T | undefined> {
         try {
             return await request;
-        }
-        catch (error) {
+        } catch (error) {
             this.notificationService.error(describeRequestError(error));
             return undefined;
         }

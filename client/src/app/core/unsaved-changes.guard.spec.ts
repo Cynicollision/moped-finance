@@ -8,7 +8,13 @@ describe('unsavedChangesGuard', () => {
         const modalService = { confirmDiscard: vi.fn().mockResolvedValue(discard) };
         TestBed.configureTestingModule({ providers: [{ provide: ModalService, useValue: modalService }] });
         const result = TestBed.runInInjectionContext(() =>
-            unsavedChangesGuard(component, {} as ActivatedRouteSnapshot, {} as RouterStateSnapshot, {} as RouterStateSnapshot));
+            unsavedChangesGuard(
+                component,
+                {} as ActivatedRouteSnapshot,
+                {} as RouterStateSnapshot,
+                {} as RouterStateSnapshot
+            )
+        );
         return { result, modalService };
     }
 

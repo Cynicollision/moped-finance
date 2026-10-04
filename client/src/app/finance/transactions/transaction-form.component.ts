@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, SimpleChanges, OnChanges, input, output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    computed,
+    inject,
+    OnInit,
+    SimpleChanges,
+    OnChanges,
+    input,
+    output
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
@@ -61,7 +71,6 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     private dateProvider = inject(DateProviderService);
     readonly Uncategorized = Uncategorized;
 
-
     readonly transactionForm = new FormGroup({
         accountId: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
         amount: new FormControl<number>(0, { nonNullable: true, validators: [Validators.required] }),
@@ -115,8 +124,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
                 notes: transaction.notes || '',
                 isHidden: transaction.isHidden || false
             });
-        }
-        else if (mode === 'create') {
+        } else if (mode === 'create') {
             this.transactionForm.reset({
                 accountId: this.defaultAccountId() || '',
                 date: this.dateProvider.now(),
@@ -127,8 +135,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
 
         if (mode === 'readonly') {
             this.transactionForm.disable();
-        }
-        else {
+        } else {
             // All fields stay editable in edit mode, including bank-provided ones (amount, merchant, account).
             this.transactionForm.enable();
         }

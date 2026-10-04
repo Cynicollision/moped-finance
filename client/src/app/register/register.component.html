@@ -10,28 +10,28 @@
         <mat-card-content>
             <!-- AUTH-2.8 -->
             <p class="one-account">
-                This creates the only account on this Moped Finance instance, and it will own all of the
-                instance's data. Once it's created, registration closes and this page won't be available again.
+                This creates the only account on this Moped Finance instance, and it will own all of the instance's
+                data. Once it's created, registration closes and this page won't be available again.
             </p>
             <form (ngSubmit)="onRegister()">
                 <mat-form-field class="full-width">
                     <mat-label>Username</mat-label>
-                    <input matInput [(ngModel)]="username" name="username" required>
+                    <input matInput [(ngModel)]="username" name="username" required />
                 </mat-form-field>
 
                 <mat-form-field class="full-width">
                     <mat-label>Display Name</mat-label>
-                    <input matInput [(ngModel)]="displayName" name="displayName" required>
+                    <input matInput [(ngModel)]="displayName" name="displayName" required />
                 </mat-form-field>
 
                 <mat-form-field class="full-width">
                     <mat-label>Password</mat-label>
-                    <input matInput type="password" [(ngModel)]="password" name="password" required>
+                    <input matInput type="password" [(ngModel)]="password" name="password" required />
                 </mat-form-field>
 
                 <mat-form-field class="full-width">
                     <mat-label>Confirm Password</mat-label>
-                    <input matInput type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required>
+                    <input matInput type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required />
                 </mat-form-field>
 
                 @if (errorMessage()) {
@@ -41,19 +41,24 @@
                 }
 
                 <div class="actions">
-                    <button mat-flat-button type="submit"
-                        [disabled]="!username() || !displayName() || !password() || !confirmPassword() || submitting()">
+                    <button
+                        mat-flat-button
+                        type="submit"
+                        [disabled]="!username() || !displayName() || !password() || !confirmPassword() || submitting()"
+                    >
                         @if (submitting()) {
-                            <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+                            <mat-progress-spinner
+                                class="button-spinner"
+                                mode="indeterminate"
+                                diameter="18"
+                            ></mat-progress-spinner>
                         }
                         Register
                     </button>
                 </div>
             </form>
 
-            <div class="login-prompt">
-                Already have an account? <a routerLink="/login">Login here</a>
-            </div>
+            <div class="login-prompt">Already have an account? <a routerLink="/login">Login here</a></div>
         </mat-card-content>
     </mat-card>
 </div>

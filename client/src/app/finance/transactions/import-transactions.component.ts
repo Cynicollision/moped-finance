@@ -19,7 +19,15 @@ interface ImportErrors {
 @Component({
     selector: 'app-import-transactions',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule, RouterModule, PageHeaderComponent],
+    imports: [
+        MatButtonModule,
+        MatCardModule,
+        MatIconModule,
+        MatProgressSpinnerModule,
+        MatSnackBarModule,
+        RouterModule,
+        PageHeaderComponent
+    ],
     templateUrl: './import-transactions.component.html',
     styleUrl: './import-transactions.component.scss'
 })
@@ -78,8 +86,7 @@ export class ImportTransactionsComponent {
         if (response) {
             if (response.isValidToImport) {
                 this.dryRunResults.set(response);
-            }
-            else {
+            } else {
                 this.validationError.set({
                     message: response.resultMessage || 'An unknown validation error occurred.',
                     rows: response.failedRowMessages
@@ -108,12 +115,10 @@ export class ImportTransactionsComponent {
                 const id = this.accountId();
                 if (id) {
                     this.router.navigate(['/accounts', id]);
-                }
-                else {
+                } else {
                     this.router.navigate(['/transactions']);
                 }
-            }
-            else {
+            } else {
                 this.validationError.set({
                     message: response.resultMessage || 'An unknown error occurred during import.',
                     rows: response.failedRowMessages

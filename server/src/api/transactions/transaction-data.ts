@@ -62,7 +62,7 @@ function getSearchOrder(sortKey: TransactionsSortKey, direction: SortDirection):
         [TransactionsSortKey.Amount]: transactionSchema.amount,
         [TransactionsSortKey.Merchant]: transactionSchema.merchant,
         [TransactionsSortKey.Account]: sql`lower(${accountSchema.name})`,
-        [TransactionsSortKey.Category]: sql`lower(${categorySchema.name})`,
+        [TransactionsSortKey.Category]: sql`lower(${categorySchema.name})`
     };
 
     const primary = direction === SortDirection.Asc ? asc(columns[sortKey]) : desc(columns[sortKey]);
@@ -167,16 +167,15 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             for (const filter of options.filters) {
                 if (filter.key === TransactionsFilterKey.Merchant) {
                     conditions.push(ilike(transactionSchema.merchant, `%${escapeLikePattern(filter.value)}%`));
-                }
-                else if (filter.key === TransactionsFilterKey.Category) {
-                    conditions.push(filter.value === Uncategorized.filterValue
-                        ? isNull(transactionSchema.categoryId)
-                        : eq(transactionSchema.categoryId, filter.value));
-                }
-                else if (filter.key === TransactionsFilterKey.AccountId) {
+                } else if (filter.key === TransactionsFilterKey.Category) {
+                    conditions.push(
+                        filter.value === Uncategorized.filterValue
+                            ? isNull(transactionSchema.categoryId)
+                            : eq(transactionSchema.categoryId, filter.value)
+                    );
+                } else if (filter.key === TransactionsFilterKey.AccountId) {
                     conditions.push(eq(transactionSchema.accountId, filter.value));
-                }
-                else if (filter.key === TransactionsFilterKey.Group) {
+                } else if (filter.key === TransactionsFilterKey.Group) {
                     conditions.push(eq(categorySchema.groupId, filter.value));
                 }
             }
@@ -191,7 +190,12 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
             .leftJoin(categorySchema, eq(categorySchema.id, transactionSchema.categoryId))
             .where(and(...conditions))
-            .orderBy(...getSearchOrder(options.sortKey ?? TransactionsSortKey.Date, options.sortDirection ?? SortDirection.Desc))
+            .orderBy(
+                ...getSearchOrder(
+                    options.sortKey ?? TransactionsSortKey.Date,
+                    options.sortDirection ?? SortDirection.Desc
+                )
+            )
             .$dynamic();
 
         if (options.limit !== undefined) {
@@ -207,7 +211,8 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     }
 
     public async retrieveMerchants(): Promise<string[]> {
-        const rows = await this.db.select({ merchant: transactionSchema.merchant })
+        const rows = await this.db
+            .select({ merchant: transactionSchema.merchant })
             .from(transactionSchema)
             .groupBy(transactionSchema.merchant)
             .orderBy(transactionSchema.merchant);
@@ -216,9 +221,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     }
 
     public async retrieveSingle(id: string): Promise<Transaction | null> {
-        const rows = await this.db.select()
-            .from(transactionSchema)
-            .where(eq(transactionSchema.id, id));
+        const rows = await this.db.select().from(transactionSchema).where(eq(transactionSchema.id, id));
 
         if (rows.length === 0) {
             return null;
@@ -237,13 +240,15 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             })
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
-            .where(and(
-                gte(transactionSchema.date, startDate),
-                lte(transactionSchema.date, endDate),
-                eq(transactionSchema.isHidden, false),
-                eq(accountSchema.isHidden, false),
-                eq(accountSchema.hideFromSpending, false)
-            ))
+            .where(
+                and(
+                    gte(transactionSchema.date, startDate),
+                    lte(transactionSchema.date, endDate),
+                    eq(transactionSchema.isHidden, false),
+                    eq(accountSchema.isHidden, false),
+                    eq(accountSchema.hideFromSpending, false)
+                )
+            )
             .groupBy(transactionSchema.categoryId, uncategorizedIn);
 
         return rows.map(row => ({
@@ -253,9 +258,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     }
 
     public async insert(transaction: Transaction): Promise<Transaction> {
-        const rows = await this.db.insert(transactionSchema)
-            .values(mapTransactionToRow(transaction))
-            .returning();
+        const rows = await this.db.insert(transactionSchema).values(mapTransactionToRow(transaction)).returning();
 
         return mapRowToTransaction(rows[0]);
     }
@@ -263,7 +266,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     public async insertBulk(transactions: Transaction[]): Promise<void> {
         // One transaction, so a failure in any chunk rolls back the earlier ones. Chunks keep each
         // statement under Postgres's 65,535 bind-parameter limit (11 columns per row).
-        await this.db.transaction(async (tx) => {
+        await this.db.transaction(async tx => {
             for (let i = 0; i < transactions.length; i += bulkInsertChunkSize) {
                 const chunk = transactions.slice(i, i + bulkInsertChunkSize);
                 await tx.insert(transactionSchema).values(chunk.map(mapTransactionToRow));
@@ -272,7 +275,8 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     }
 
     public async update(transaction: Transaction): Promise<Transaction | null> {
-        const rows = await this.db.update(transactionSchema)
+        const rows = await this.db
+            .update(transactionSchema)
             .set({
                 accountId: transaction.accountId,
                 merchant: transaction.merchant,
@@ -295,7 +299,8 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     }
 
     public async delete(id: string): Promise<boolean> {
-        const result = await this.db.delete(transactionSchema)
+        const result = await this.db
+            .delete(transactionSchema)
             .where(eq(transactionSchema.id, id))
             .returning({ id: transactionSchema.id });
 

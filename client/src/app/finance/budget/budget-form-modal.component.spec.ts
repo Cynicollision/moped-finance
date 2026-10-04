@@ -43,29 +43,50 @@ describe('FinanceBudgetFormModalComponent', () => {
 
         const fixture = TestBed.createComponent(FinanceBudgetFormModalComponent);
         await fixture.whenStable();
-        return { fixture, element: fixture.nativeElement as HTMLElement, financeService, dialogRef, notificationService };
+        return {
+            fixture,
+            element: fixture.nativeElement as HTMLElement,
+            financeService,
+            dialogRef,
+            notificationService
+        };
     }
 
     it('BUD-1.3 should offer only Transfer categories for Savings, and save without a type', async () => {
-        const { fixture, element, financeService, notificationService, dialogRef } = await render({ type: BudgetStreamType.Savings });
+        const { fixture, element, financeService, notificationService, dialogRef } = await render({
+            type: BudgetStreamType.Savings
+        });
         const form = fixture.componentInstance;
 
         expect(element.querySelector('.header-content')!.textContent!.trim()).toBe('Add Savings');
         expect(form.categories().map(c => c.name)).toEqual(['Savings Transfer', 'Investment Contribution']);
 
-        form.budgetForm.setValue({ name: 'Emergency fund', categoryId: 'savings', amount: 500, recurrence: CalendarPeriod.Monthly });
+        form.budgetForm.setValue({
+            name: 'Emergency fund',
+            categoryId: 'savings',
+            amount: 500,
+            recurrence: CalendarPeriod.Monthly
+        });
         await form.save();
 
-        expect(financeService.createBudgetStream).toHaveBeenCalledWith(
-            { name: 'Emergency fund', categoryId: 'savings', amount: 500, recurrence: CalendarPeriod.Monthly }
-        );
+        expect(financeService.createBudgetStream).toHaveBeenCalledWith({
+            name: 'Emergency fund',
+            categoryId: 'savings',
+            amount: 500,
+            recurrence: CalendarPeriod.Monthly
+        });
         expect(notificationService.success).toHaveBeenCalledWith('Savings added');
         expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
 
     it('BUD-1.4 CAT-4.1 should edit a stream, offering the active categories of its type', async () => {
         const stream = {
-            id: 'BS1', type: BudgetStreamType.Expense, name: 'Rent', categoryId: 'rent', recurrence: CalendarPeriod.Monthly, amount: 1500
+            id: 'BS1',
+            type: BudgetStreamType.Expense,
+            name: 'Rent',
+            categoryId: 'rent',
+            recurrence: CalendarPeriod.Monthly,
+            amount: 1500
         } as BudgetStream;
         const { fixture, element, financeService, notificationService } = await render({ stream, type: stream.type });
         const form = fixture.componentInstance;
@@ -76,13 +97,20 @@ describe('FinanceBudgetFormModalComponent', () => {
         form.budgetForm.patchValue({ amount: 1600 });
         await form.save();
 
-        expect(financeService.saveBudgetStream).toHaveBeenCalledWith(expect.objectContaining({ id: 'BS1', amount: 1600, categoryId: 'rent' }));
+        expect(financeService.saveBudgetStream).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 'BS1', amount: 1600, categoryId: 'rent' })
+        );
         expect(notificationService.success).toHaveBeenCalledWith('Expense saved');
     });
 
     it('CAT-4.2 should keep offering an inactive category the stream already has', async () => {
         const stream = {
-            id: 'BS2', type: BudgetStreamType.Expense, name: 'Storage', categoryId: 'storage', recurrence: CalendarPeriod.Monthly, amount: 90
+            id: 'BS2',
+            type: BudgetStreamType.Expense,
+            name: 'Storage',
+            categoryId: 'storage',
+            recurrence: CalendarPeriod.Monthly,
+            amount: 90
         } as BudgetStream;
         const { fixture } = await render({ stream, type: stream.type });
 

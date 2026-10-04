@@ -23,8 +23,7 @@ export function buildHealthRouter(deps: HealthCheckDependencies): Router {
         try {
             await deps.pingDatabase();
             res.status(200).json({ status: 'ok' });
-        }
-        catch {
+        } catch {
             res.status(503).json({ status: 'database-unavailable' });
         }
     });

@@ -4,7 +4,7 @@ import { CategoryType } from './../enum/category-type';
 import { BudgetStreamUtil } from './budget-stream-util';
 
 describe('BudgetStreamUtil', () => {
-    it('BUD-1.1 should take a stream\'s type from its category\'s class', () => {
+    it("BUD-1.1 should take a stream's type from its category's class", () => {
         expect(BudgetStreamUtil.typeOf(CategoryType.Income)).toBe(BudgetStreamType.Income);
         expect(BudgetStreamUtil.typeOf(CategoryType.Expense)).toBe(BudgetStreamType.Expense);
         expect(BudgetStreamUtil.typeOf(CategoryType.Transfer)).toBe(BudgetStreamType.Savings);

@@ -23,7 +23,7 @@ const dbClient = DatabaseClient.fromConfig({
     password: process.env.PGPASSWORD,
     host: process.env.PGHOST || 'localhost',
     database: process.env.PGDATABASE,
-    port: parseInt(process.env.PGPORT || '5432'),
+    port: parseInt(process.env.PGPORT || '5432')
 });
 
 function readFile(fileName: string): Buffer {
@@ -67,24 +67,40 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         const institutionIds = new Map<string, string>();
         const accountIds = new Map<string, string>();
         const accountsFile = 'accounts.csv';
-        for (const row of readRows(accountsFile, ['InstitutionName', 'Name', 'Category', 'Group', 'Type', 'IsHidden', 'IsRetirement'])) {
+        for (const row of readRows(accountsFile, [
+            'InstitutionName',
+            'Name',
+            'Category',
+            'Group',
+            'Type',
+            'IsHidden',
+            'IsRetirement'
+        ])) {
             let institutionId = institutionIds.get(row.values['InstitutionName'].toLowerCase());
             if (!institutionId) {
-                const institution = await institutionData.insert(FinanceEntityFactory.createInstitution({ name: row.values['InstitutionName'] }));
+                const institution = await institutionData.insert(
+                    FinanceEntityFactory.createInstitution({ name: row.values['InstitutionName'] })
+                );
                 institutionId = institution.id;
                 institutionIds.set(institution.name.toLowerCase(), institution.id);
             }
-            const account = await accountData.insert(FinanceEntityFactory.createAccount({
-                institutionId,
-                name: row.values['Name'],
-                category: row.values['Category'] as AccountCategory,
-                group: row.values['Group'] as AccountGroup,
-                type: (row.values['Type'] || null) as AccountType | null,
-                isHidden: valueOf(accountsFile, row, CsvValue.boolean('IsHidden', row.values['IsHidden'])),
-                isManual: false,
-                isRetirement: valueOf(accountsFile, row, CsvValue.boolean('IsRetirement', row.values['IsRetirement'])),
-                hideFromSpending: false,
-            }));
+            const account = await accountData.insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId,
+                    name: row.values['Name'],
+                    category: row.values['Category'] as AccountCategory,
+                    group: row.values['Group'] as AccountGroup,
+                    type: (row.values['Type'] || null) as AccountType | null,
+                    isHidden: valueOf(accountsFile, row, CsvValue.boolean('IsHidden', row.values['IsHidden'])),
+                    isManual: false,
+                    isRetirement: valueOf(
+                        accountsFile,
+                        row,
+                        CsvValue.boolean('IsRetirement', row.values['IsRetirement'])
+                    ),
+                    hideFromSpending: false
+                })
+            );
             accountIds.set(account.name.toLowerCase(), account.id);
         }
         console.log(`✅ ${institutionIds.size} institutions, ${accountIds.size} accounts`);
@@ -97,20 +113,24 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         for (const row of readRows(categoriesFile, ['Type', 'Group', 'Name', 'Icon', 'Necessity', 'IsActive'])) {
             let groupId = groupIds.get(row.values['Group'].toLowerCase());
             if (!groupId) {
-                const group = await groupData.insert(FinanceEntityFactory.createCategoryGroup({
-                    type: row.values['Type'].toLowerCase() as CategoryType,
-                    name: row.values['Group'],
-                }));
+                const group = await groupData.insert(
+                    FinanceEntityFactory.createCategoryGroup({
+                        type: row.values['Type'].toLowerCase() as CategoryType,
+                        name: row.values['Group']
+                    })
+                );
                 groupId = group.id;
                 groupIds.set(group.name.toLowerCase(), group.id);
             }
-            const category = await categoryData.insert(FinanceEntityFactory.createCategory({
-                groupId,
-                icon: row.values['Icon'],
-                name: row.values['Name'],
-                isActive: valueOf(categoriesFile, row, CsvValue.boolean('IsActive', row.values['IsActive'])),
-                necessity: (row.values['Necessity'].toLowerCase() || null) as CategoryNecessity | null,
-            }));
+            const category = await categoryData.insert(
+                FinanceEntityFactory.createCategory({
+                    groupId,
+                    icon: row.values['Icon'],
+                    name: row.values['Name'],
+                    isActive: valueOf(categoriesFile, row, CsvValue.boolean('IsActive', row.values['IsActive'])),
+                    necessity: (row.values['Necessity'].toLowerCase() || null) as CategoryNecessity | null
+                })
+            );
             categoryIds.set(category.name.toLowerCase(), category.id);
         }
         console.log(`✅ ${groupIds.size} category groups, ${categoryIds.size} categories`);
@@ -119,12 +139,14 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         const streamsFile = 'budget-streams.csv';
         const streamRows = readRows(streamsFile, ['Name', 'CategoryName', 'Recurrence', 'Amount']);
         for (const row of streamRows) {
-            await budgetStreamData.insert(FinanceEntityFactory.createBudgetStream({
-                name: row.values['Name'],
-                categoryId: idOf(categoryIds, row.values['CategoryName'], streamsFile, row),
-                recurrence: row.values['Recurrence'] as CalendarPeriod,
-                amount: valueOf(streamsFile, row, CsvValue.amount('Amount', row.values['Amount'])),
-            }));
+            await budgetStreamData.insert(
+                FinanceEntityFactory.createBudgetStream({
+                    name: row.values['Name'],
+                    categoryId: idOf(categoryIds, row.values['CategoryName'], streamsFile, row),
+                    recurrence: row.values['Recurrence'] as CalendarPeriod,
+                    amount: valueOf(streamsFile, row, CsvValue.amount('Amount', row.values['Amount']))
+                })
+            );
         }
         console.log(`✅ ${streamRows.length} budget streams`);
 
@@ -139,19 +161,22 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         console.log(`✅ ${transactions.transactions.length} transactions`);
 
         const balancesFile = 'balance-history.csv';
-        const balances = readRows(balancesFile, ['Date', 'AccountName', 'Balance']).map(row => FinanceEntityFactory.createBalanceHistory({
-            accountId: idOf(accountIds, row.values['AccountName'], balancesFile, row),
-            date: valueOf(balancesFile, row, CsvValue.date('Date', row.values['Date'])),
-            balance: valueOf(balancesFile, row, CsvValue.amount('Balance', row.values['Balance'])),
-        }));
+        const balances = readRows(balancesFile, ['Date', 'AccountName', 'Balance']).map(row =>
+            FinanceEntityFactory.createBalanceHistory({
+                accountId: idOf(accountIds, row.values['AccountName'], balancesFile, row),
+                date: valueOf(balancesFile, row, CsvValue.date('Date', row.values['Date'])),
+                balance: valueOf(balancesFile, row, CsvValue.amount('Balance', row.values['Balance']))
+            })
+        );
         await new FinanceBalanceHistoryData(dbClient).insertBulk(balances);
         console.log(`✅ ${balances.length} balance history entries`);
-    }
-    catch (err) {
-        console.error('❌ Finance seeding failed. It expects an empty finance schema; run db:reset to start over.', err);
+    } catch (err) {
+        console.error(
+            '❌ Finance seeding failed. It expects an empty finance schema; run db:reset to start over.',
+            err
+        );
         process.exitCode = 1;
-    }
-    finally {
+    } finally {
         await dbClient.close();
     }
 })();

@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, TemplateRef, computed, inject, linkedSignal, signal, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    TemplateRef,
+    computed,
+    inject,
+    linkedSignal,
+    signal,
+    viewChild
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -222,7 +231,10 @@ export class FinanceTransactionsComponent {
     }
 
     openFilters() {
-        this.filtersSheetRef = this.bottomSheet.open(this.filtersSheet(), { ariaLabel: 'Filters', autoFocus: 'dialog' });
+        this.filtersSheetRef = this.bottomSheet.open(this.filtersSheet(), {
+            ariaLabel: 'Filters',
+            autoFocus: 'dialog'
+        });
     }
 
     applyFilters() {
@@ -268,14 +280,16 @@ export class FinanceTransactionsComponent {
 
         this.loadingMore.set(true);
         try {
-            const page = await this.financeService.fetchTransactions({ ...search, limit: this.pageSize, offset: this.transactions().length });
+            const page = await this.financeService.fetchTransactions({
+                ...search,
+                limit: this.pageSize,
+                offset: this.transactions().length
+            });
             this.morePages.update(pages => [...pages, ...page]);
             this.lastPageFull.set(page.length === this.pageSize);
-        }
-        catch (error) {
+        } catch (error) {
             this.notificationService.error(describeRequestError(error));
-        }
-        finally {
+        } finally {
             this.loadingMore.set(false);
         }
     }
@@ -295,7 +309,7 @@ export class FinanceTransactionsComponent {
     }
 
     // An empty filter shows nothing, rather than Uncategorized.
-    readonly displayCategory = (id: string): string => id ? this.getCategoryName(id) : '';
+    readonly displayCategory = (id: string): string => (id ? this.getCategoryName(id) : '');
 
     readonly displayGroup = (id: string): string => {
         const group = this.groupMap().get(id);

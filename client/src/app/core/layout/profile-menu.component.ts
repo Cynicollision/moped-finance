@@ -27,11 +27,17 @@ export class ProfileMenuComponent {
     readonly displayName = computed(() => this.authService.currentUser()?.displayName ?? '');
 
     readonly initials = computed(() => {
-        const words = this.displayName().split(' ').filter(word => word.length > 0);
+        const words = this.displayName()
+            .split(' ')
+            .filter(word => word.length > 0);
         if (words.length === 0) {
             return '?';
         }
-        return words.slice(0, 2).map(word => word[0]).join('').toUpperCase();
+        return words
+            .slice(0, 2)
+            .map(word => word[0])
+            .join('')
+            .toUpperCase();
     });
 
     logout() {

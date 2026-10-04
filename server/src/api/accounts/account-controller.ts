@@ -1,5 +1,11 @@
 import { CalendarDateUtil } from '@shared/core/util';
-import { BalanceImportResult, GetAccountBalanceHistoryOptions, TotalValueHistory, TotalValueHistoryOptions, TransactionSearchOptions } from '@shared/finance/contracts';
+import {
+    BalanceImportResult,
+    GetAccountBalanceHistoryOptions,
+    TotalValueHistory,
+    TotalValueHistoryOptions,
+    TransactionSearchOptions
+} from '@shared/finance/contracts';
 import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
@@ -17,8 +23,7 @@ export class AccountController {
         private accountData: IFinanceAccountData,
         private balanceHistoryData: IFinanceBalanceHistoryData,
         private transactionData: IFinanceTransactionData
-    ) {
-    }
+    ) {}
 
     public async getAccount(context: OperationContext, accountId: string): Promise<OperationResult<Account>> {
         const account = await this.accountData.retrieveSingle(accountId);
@@ -33,7 +38,10 @@ export class AccountController {
         return Result.success(accounts);
     }
 
-    public async createAccount(context: OperationContext, input: CreateAccountRequest): Promise<OperationResult<Account>> {
+    public async createAccount(
+        context: OperationContext,
+        input: CreateAccountRequest
+    ): Promise<OperationResult<Account>> {
         // A missing institution fails the insert's foreign key, which OperationHandler reports as a 400.
         const account = FinanceEntityFactory.createAccount({
             ...input,
@@ -44,7 +52,11 @@ export class AccountController {
         return Result.successCreated(created);
     }
 
-    public async updateAccount(context: OperationContext, accountId: string, changes: UpdateAccountRequest): Promise<OperationResult<Account>> {
+    public async updateAccount(
+        context: OperationContext,
+        accountId: string,
+        changes: UpdateAccountRequest
+    ): Promise<OperationResult<Account>> {
         const current = await this.accountData.retrieveSingle(accountId);
         if (!current) {
             return Result.userErrorNotFound();
@@ -67,7 +79,11 @@ export class AccountController {
         return Result.successDeleted();
     }
 
-    public async getAccountTransactions(context: OperationContext, accountId: string, options: TransactionSearchOptions): Promise<OperationResult<Transaction[]>> {
+    public async getAccountTransactions(
+        context: OperationContext,
+        accountId: string,
+        options: TransactionSearchOptions
+    ): Promise<OperationResult<Transaction[]>> {
         const account = await this.accountData.retrieveSingle(accountId);
         if (!account) {
             return Result.userErrorNotFound();
@@ -77,7 +93,11 @@ export class AccountController {
         return Result.success(transactions);
     }
 
-    public async getAccountBalanceHistory(context: OperationContext, accountId: string, options: GetAccountBalanceHistoryOptions): Promise<OperationResult<BalanceHistory[]>> {
+    public async getAccountBalanceHistory(
+        context: OperationContext,
+        accountId: string,
+        options: GetAccountBalanceHistoryOptions
+    ): Promise<OperationResult<BalanceHistory[]>> {
         const account = await this.accountData.retrieveSingle(accountId);
         if (!account) {
             return Result.userErrorNotFound();
@@ -88,9 +108,16 @@ export class AccountController {
         return Result.success(history);
     }
 
-    public async getTotalValueHistory(context: OperationContext, options: TotalValueHistoryOptions): Promise<OperationResult<TotalValueHistory[]>> {
+    public async getTotalValueHistory(
+        context: OperationContext,
+        options: TotalValueHistoryOptions
+    ): Promise<OperationResult<TotalValueHistory[]>> {
         const startDate = CalendarDateUtil.getTimeframeStart(options.timeframe, options.asOfDate);
-        const totalValueHistory = await this.balanceHistoryData.retrieveSumByDate(options.type, startDate, options.asOfDate);
+        const totalValueHistory = await this.balanceHistoryData.retrieveSumByDate(
+            options.type,
+            startDate,
+            options.asOfDate
+        );
         return Result.success(totalValueHistory);
     }
 
@@ -112,7 +139,12 @@ export class AccountController {
         return Result.successFile('text/csv', fileName, BalanceHistoryCsv.write(history));
     }
 
-    public async importBalanceHistory(context: OperationContext, accountId: string, file: Buffer | undefined, dryRun: boolean): Promise<OperationResult<BalanceImportResult>> {
+    public async importBalanceHistory(
+        context: OperationContext,
+        accountId: string,
+        file: Buffer | undefined,
+        dryRun: boolean
+    ): Promise<OperationResult<BalanceImportResult>> {
         const account = await this.accountData.retrieveSingle(accountId);
         if (!account) {
             return Result.userErrorNotFound();
@@ -129,17 +161,38 @@ export class AccountController {
         // All or nothing, as for transaction import: a file with any bad row saves nothing.
         if (!isValidToImport) {
             const summary = `Found errors in ${failedRowMessages.length} of ${records.length + failedRowMessages.length} rows.`;
-            const result: BalanceImportResult = { startDate, endDate, createdCount: 0, failedRowMessages, isValidToImport, resultMessage: summary };
+            const result: BalanceImportResult = {
+                startDate,
+                endDate,
+                createdCount: 0,
+                failedRowMessages,
+                isValidToImport,
+                resultMessage: summary
+            };
             return dryRun
                 ? Result.success(result)
                 : Result.userError(`Nothing was imported. ${summary}`, 'INVALID_IMPORT', result);
         }
 
         if (dryRun) {
-            return Result.success({ startDate, endDate, createdCount: records.length, failedRowMessages, isValidToImport, resultMessage: `Will replace balances from ${startDate} to ${endDate}.` });
+            return Result.success({
+                startDate,
+                endDate,
+                createdCount: records.length,
+                failedRowMessages,
+                isValidToImport,
+                resultMessage: `Will replace balances from ${startDate} to ${endDate}.`
+            });
         }
 
         await this.balanceHistoryData.replaceRange(accountId, startDate, endDate, records);
-        return Result.successCreated({ startDate, endDate, createdCount: records.length, failedRowMessages, isValidToImport, resultMessage: `Imported ${records.length} balance records.` });
+        return Result.successCreated({
+            startDate,
+            endDate,
+            createdCount: records.length,
+            failedRowMessages,
+            isValidToImport,
+            resultMessage: `Imported ${records.length} balance records.`
+        });
     }
 }

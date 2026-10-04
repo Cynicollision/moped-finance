@@ -6,19 +6,18 @@ import { BalanceHistoryExport } from './balance-history-data';
 const columns: CsvColumn<BalanceHistoryExport>[] = [
     { header: 'Date', value: b => b.date },
     { header: 'AccountName', value: b => b.accountName },
-    { header: 'Balance', value: b => b.balance },
+    { header: 'Balance', value: b => b.balance }
 ];
 
 // AccountName is written for readability but ignored on import: the account comes from the URL.
 const requiredHeaders = ['Date', 'Balance'];
 
 export type BalanceHistoryCsvReadResult =
-    | { success: true, records: BalanceHistory[], failedRowMessages: string[], startDate: string, endDate: string }
-    | { success: false, message: string };
+    | { success: true; records: BalanceHistory[]; failedRowMessages: string[]; startDate: string; endDate: string }
+    | { success: false; message: string };
 
 /** The balance history CSV format shared by export and import (ACCT-3.1, ACCT-3.2). */
 export class BalanceHistoryCsv {
-
     public static write(history: BalanceHistoryExport[]): string {
         return CsvFile.write(columns, history);
     }
@@ -65,11 +64,13 @@ export class BalanceHistoryCsv {
             startDate = !startDate || date.value < startDate ? date.value : startDate;
             endDate = !endDate || date.value > endDate ? date.value : endDate;
 
-            records.push(FinanceEntityFactory.createBalanceHistory({
-                accountId,
-                date: date.value,
-                balance: balance.value
-            }));
+            records.push(
+                FinanceEntityFactory.createBalanceHistory({
+                    accountId,
+                    date: date.value,
+                    balance: balance.value
+                })
+            );
         }
 
         return { success: true, records, failedRowMessages, startDate, endDate };

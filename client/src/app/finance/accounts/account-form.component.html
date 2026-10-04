@@ -1,11 +1,9 @@
 <form [formGroup]="accountForm" (ngSubmit)="onSubmit()" class="manual-form">
     <mat-form-field appearance="outline" class="full-width">
         <mat-label>Account Name</mat-label>
-        <input matInput formControlName="name" placeholder="e.g. Checking 1234">
+        <input matInput formControlName="name" placeholder="e.g. Checking 1234" />
         @if (accountForm.controls.name.hasError('required')) {
-            <mat-error>
-                Name is required
-            </mat-error>
+            <mat-error> Name is required </mat-error>
         }
     </mat-form-field>
     <mat-form-field appearance="outline" class="full-width">
@@ -16,9 +14,7 @@
             }
         </mat-select>
         @if (accountForm.controls.institutionId.hasError('required')) {
-            <mat-error>
-                Institution is required
-            </mat-error>
+            <mat-error> Institution is required </mat-error>
         }
     </mat-form-field>
     <div class="row">
@@ -26,7 +22,7 @@
             <mat-label>Category</mat-label>
             <mat-select formControlName="category">
                 @for (cat of categories; track cat) {
-                    <mat-option [value]="cat">{{cat}}</mat-option>
+                    <mat-option [value]="cat">{{ cat }}</mat-option>
                 }
             </mat-select>
         </mat-form-field>
@@ -34,7 +30,7 @@
             <mat-label>Group</mat-label>
             <mat-select formControlName="group">
                 @for (grp of groups(); track grp) {
-                    <mat-option [value]="grp">{{grp}}</mat-option>
+                    <mat-option [value]="grp">{{ grp }}</mat-option>
                 }
             </mat-select>
         </mat-form-field>
@@ -42,7 +38,7 @@
             <mat-label>Type</mat-label>
             <mat-select formControlName="type">
                 @for (typ of types(); track typ) {
-                    <mat-option [value]="typ">{{typ}}</mat-option>
+                    <mat-option [value]="typ">{{ typ }}</mat-option>
                 }
             </mat-select>
         </mat-form-field>

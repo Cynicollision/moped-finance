@@ -21,9 +21,10 @@ export function buildErrorHandler(logger: IAppLogger): ErrorRequestHandler {
         const userId = UserContext.fromRequest(req).getId();
 
         if (err instanceof multer.MulterError) {
-            const message = err.code === 'LIMIT_FILE_SIZE'
-                ? `File is too large (maximum ${maxUploadFileSizeBytes / (1024 * 1024)} MB).`
-                : 'Invalid upload: send one file in the "file" field.';
+            const message =
+                err.code === 'LIMIT_FILE_SIZE'
+                    ? `File is too large (maximum ${maxUploadFileSizeBytes / (1024 * 1024)} MB).`
+                    : 'Invalid upload: send one file in the "file" field.';
 
             logger.warn(userId, `Upload rejected (${err.code}) on ${req.method} ${req.originalUrl}`);
             res.status(400).json(Result.userError(message).error);

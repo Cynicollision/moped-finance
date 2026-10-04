@@ -5,7 +5,7 @@ import { TransactionsFilterKey, TransactionsSortKey } from './../enum';
 export type TransactionSearchFilterItem = {
     key: TransactionsFilterKey;
     value: string;
-}
+};
 
 export type TransactionSearchOptions = {
     sortKey?: TransactionsSortKey;

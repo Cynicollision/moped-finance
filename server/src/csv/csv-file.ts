@@ -9,9 +9,7 @@ export type CsvRow = {
     error?: string;
 };
 
-export type CsvReadResult =
-    | { success: true, rows: CsvRow[] }
-    | { success: false, message: string };
+export type CsvReadResult = { success: true; rows: CsvRow[] } | { success: false; message: string };
 
 export type CsvColumn<T> = {
     header: string;
@@ -19,7 +17,6 @@ export type CsvColumn<T> = {
 };
 
 export class CsvFile {
-
     /**
      * Parses a CSV with a header row. File-level problems (no file, unparseable, a required header
      * missing, no data rows) fail the whole read. A row with the wrong number of columns comes back
@@ -42,8 +39,7 @@ export class CsvFile {
         for (const error of parsed.errors) {
             if (error.type === 'FieldMismatch' && error.row !== undefined) {
                 rowErrors.set(error.row, `Expected ${headers.length} columns.`);
-            }
-            else {
+            } else {
                 return { success: false, message: `Could not parse the CSV file: ${error.message}` };
             }
         }

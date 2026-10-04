@@ -37,8 +37,9 @@ describe('ImportTransactionsComponent', () => {
     it('TXN-3.8 should list the columns the file needs', async () => {
         const { element } = await render({});
 
-        expect(element.querySelector('mat-card-content strong')!.textContent)
-            .toBe('Date, AccountName, Merchant, CategoryName, Amount, OriginalStatement, Notes, IsHidden');
+        expect(element.querySelector('mat-card-content strong')!.textContent).toBe(
+            'Date, AccountName, Merchant, CategoryName, Amount, OriginalStatement, Notes, IsHidden'
+        );
     });
 
     it('TXN-3.4 should count Uncategorized rows and list category names that match no category', async () => {
@@ -56,7 +57,9 @@ describe('ImportTransactionsComponent', () => {
         await validate(fixture);
 
         expect(Array.from(element.querySelectorAll('.dry-run-results > ul li')).map(li => li.textContent)).toEqual([
-            'Transactions to create: 20', 'Uncategorized: 15', 'Rows with errors: 0'
+            'Transactions to create: 20',
+            'Uncategorized: 15',
+            'Rows with errors: 0'
         ]);
         expect(Array.from(element.querySelectorAll('.unmatched-rows li')).map(li => li.textContent)).toEqual([
             "'Groceriez': row 4",
@@ -67,7 +70,11 @@ describe('ImportTransactionsComponent', () => {
 
     it('TXN-3.4 should leave out the category notice when every name matches', async () => {
         const { fixture, element } = await render({
-            isValidToImport: true, createdCount: 2, failedRowMessages: [], uncategorizedCount: 1, unmatchedCategories: []
+            isValidToImport: true,
+            createdCount: 2,
+            failedRowMessages: [],
+            uncategorizedCount: 1,
+            unmatchedCategories: []
         });
 
         await validate(fixture);

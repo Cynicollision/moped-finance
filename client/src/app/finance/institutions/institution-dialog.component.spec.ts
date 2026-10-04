@@ -63,7 +63,10 @@ describe('InstitutionDialogComponent', () => {
     });
 
     it('INST-1.6 should rename an institution', async () => {
-        const { fixture, element, financeService, notificationService } = await render({ institution: firstBank, accountCount: 0 });
+        const { fixture, element, financeService, notificationService } = await render({
+            institution: firstBank,
+            accountCount: 0
+        });
 
         expect(element.textContent).toContain('Edit Institution');
         await typeName(fixture, 'First National');
@@ -84,19 +87,27 @@ describe('InstitutionDialogComponent', () => {
     });
 
     it('INST-1.8 should delete an institution with no accounts, after confirming', async () => {
-        const { fixture, element, financeService, dialogRef, notificationService, modalService } = await render({ institution: firstBank, accountCount: 0 });
+        const { fixture, element, financeService, dialogRef, notificationService, modalService } = await render({
+            institution: firstBank,
+            accountCount: 0
+        });
 
         button(element, 'Delete').click();
         await fixture.whenStable();
 
-        expect(modalService.confirm).toHaveBeenCalledWith(expect.objectContaining({ title: 'Delete Institution', isWarn: true }));
+        expect(modalService.confirm).toHaveBeenCalledWith(
+            expect.objectContaining({ title: 'Delete Institution', isWarn: true })
+        );
         expect(financeService.deleteInstitution).toHaveBeenCalledWith('inst-1');
         expect(notificationService.success).toHaveBeenCalledWith('Institution deleted');
         expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
 
     it('INST-1.8 should not delete when the user cancels the confirmation', async () => {
-        const { fixture, element, financeService, dialogRef } = await render({ institution: firstBank, accountCount: 0 }, false);
+        const { fixture, element, financeService, dialogRef } = await render(
+            { institution: firstBank, accountCount: 0 },
+            false
+        );
 
         button(element, 'Delete').click();
         await fixture.whenStable();
@@ -109,6 +120,8 @@ describe('InstitutionDialogComponent', () => {
         const { element } = await render({ institution: firstBank, accountCount: 2 });
 
         expect(button(element, 'Delete').disabled).toBe(true);
-        expect(element.querySelector('.delete-note')!.textContent!.trim()).toBe('To delete this institution, first delete its 2 accounts.');
+        expect(element.querySelector('.delete-note')!.textContent!.trim()).toBe(
+            'To delete this institution, first delete its 2 accounts.'
+        );
     });
 });

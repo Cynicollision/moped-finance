@@ -11,7 +11,11 @@ describe('MoneyComponent', () => {
         }
         await fixture.whenStable();
         const span = (fixture.nativeElement as HTMLElement).querySelector('span')!;
-        const colour = span.classList.contains('money-positive') ? 'green' : span.classList.contains('money-negative') ? 'red' : 'plain';
+        const colour = span.classList.contains('money-positive')
+            ? 'green'
+            : span.classList.contains('money-negative')
+              ? 'red'
+              : 'plain';
         return { text: span.textContent!.trim(), colour };
     }
 

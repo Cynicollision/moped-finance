@@ -11,13 +11,26 @@ import { ViewTransactionComponent } from './view-transaction.component';
 
 describe('ViewTransactionComponent', () => {
     const transaction: Transaction = {
-        id: 't1', date: '2026-05-01', accountId: 'acct', categoryId: '', amount: -10, merchant: 'Corner Shop', originalStatement: '', notes: '',
-        isHidden: false, isSplit: false, splitParentId: '', createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1)
+        id: 't1',
+        date: '2026-05-01',
+        accountId: 'acct',
+        categoryId: '',
+        amount: -10,
+        merchant: 'Corner Shop',
+        originalStatement: '',
+        notes: '',
+        isHidden: false,
+        isSplit: false,
+        splitParentId: '',
+        createdAt: new Date(2026, 0, 1),
+        updatedAt: new Date(2026, 0, 1)
     };
 
     // Renders Transaction Details once it has loaded, unless `loaded` is false.
-    async function render(fetchTransaction: Mock = vi.fn().mockResolvedValue(transaction),
-        options: { confirm?: boolean, deleted?: boolean, loaded?: boolean } = {}) {
+    async function render(
+        fetchTransaction: Mock = vi.fn().mockResolvedValue(transaction),
+        options: { confirm?: boolean; deleted?: boolean; loaded?: boolean } = {}
+    ) {
         const financeService = {
             fetchTransaction,
             fetchCategories: vi.fn().mockResolvedValue([]),
@@ -30,8 +43,14 @@ describe('ViewTransactionComponent', () => {
             imports: [ViewTransactionComponent],
             providers: [
                 provideRouter([]),
-                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ transactionId: 't1' }) } } },
-                { provide: DateProviderService, useValue: { now: () => new Date(2026, 4, 17), today: () => '2026-05-17' } },
+                {
+                    provide: ActivatedRoute,
+                    useValue: { snapshot: { paramMap: convertToParamMap({ transactionId: 't1' }) } }
+                },
+                {
+                    provide: DateProviderService,
+                    useValue: { now: () => new Date(2026, 4, 17), today: () => '2026-05-17' }
+                },
                 { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
                 { provide: FinanceService, useValue: financeService },
                 { provide: ModalService, useValue: modalService },
@@ -43,26 +62,36 @@ describe('ViewTransactionComponent', () => {
         const fixture = TestBed.createComponent(ViewTransactionComponent);
         if (options.loaded ?? true) {
             await fixture.whenStable();
-        }
-        else {
+        } else {
             fixture.detectChanges();
         }
-        return { fixture, element: fixture.nativeElement as HTMLElement, financeService, modalService, notificationService, navigate };
+        return {
+            fixture,
+            element: fixture.nativeElement as HTMLElement,
+            financeService,
+            modalService,
+            notificationService,
+            navigate
+        };
     }
 
     async function chooseFromMenu(fixture: Awaited<ReturnType<typeof render>>['fixture'], label: string) {
         const element = fixture.nativeElement as HTMLElement;
         element.querySelector<HTMLButtonElement>('button[aria-label="More options"]')!.click();
         await fixture.whenStable();
-        const item = Array.from(document.querySelectorAll<HTMLButtonElement>('.mat-mdc-menu-item'))
-            .find(button => button.textContent!.includes(label))!;
+        const item = Array.from(document.querySelectorAll<HTMLButtonElement>('.mat-mdc-menu-item')).find(button =>
+            button.textContent!.includes(label)
+        )!;
         item.click();
         await fixture.whenStable();
     }
 
     it('TXN-2.2 APP-2.1 should show placeholders, then the transaction read-only', async () => {
         let resolve!: (t: Transaction) => void;
-        const { fixture, element, financeService } = await render(vi.fn().mockReturnValue(new Promise(r => resolve = r)), { loaded: false });
+        const { fixture, element, financeService } = await render(
+            vi.fn().mockReturnValue(new Promise(r => (resolve = r))),
+            { loaded: false }
+        );
 
         expect(element.querySelector('app-card-skeleton')).not.toBeNull();
         expect(element.querySelector('app-transaction-form')).toBeNull();
@@ -76,8 +105,10 @@ describe('ViewTransactionComponent', () => {
         expect(element.querySelector('form button[type="submit"]')).toBeNull();
     });
 
-    it('APP-2.9 should say when the transaction can\'t be loaded, and load it again on Retry', async () => {
-        const { fixture, element, financeService } = await render(vi.fn().mockRejectedValue(new Error('Transaction not found.')));
+    it("APP-2.9 should say when the transaction can't be loaded, and load it again on Retry", async () => {
+        const { fixture, element, financeService } = await render(
+            vi.fn().mockRejectedValue(new Error('Transaction not found.'))
+        );
 
         expect(element.querySelector('app-load-error')).not.toBeNull();
 
@@ -103,9 +134,13 @@ describe('ViewTransactionComponent', () => {
 
         await chooseFromMenu(fixture, 'Delete');
 
-        expect(modalService.confirm).toHaveBeenCalledWith(expect.objectContaining({
-            title: 'Delete Transaction', message: "Delete this transaction? This can't be undone.", confirmLabel: 'Delete'
-        }));
+        expect(modalService.confirm).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: 'Delete Transaction',
+                message: "Delete this transaction? This can't be undone.",
+                confirmLabel: 'Delete'
+            })
+        );
         expect(financeService.deleteTransaction).toHaveBeenCalledWith('t1');
         expect(notificationService.success).toHaveBeenCalledWith('Transaction deleted');
         expect(navigate).toHaveBeenCalledWith(['/transactions']);

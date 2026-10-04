@@ -6,7 +6,7 @@ import { viewResource } from './view-resource';
 describe('viewResource', () => {
     /** A loader whose calls stay pending until the test settles them. */
     function deferredLoader<P, T>() {
-        const calls: { params: P, resolve: (value: T) => void, reject: (error: unknown) => void }[] = [];
+        const calls: { params: P; resolve: (value: T) => void; reject: (error: unknown) => void }[] = [];
         const loader = (params: P) => new Promise<T>((resolve, reject) => calls.push({ params, resolve, reject }));
         return { loader, calls };
     }

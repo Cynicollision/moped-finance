@@ -23,11 +23,13 @@ export class SecretData {
      * Safe to call from two servers starting at once: both get the value that was stored first.
      */
     public async retrieveOrCreate(name: string): Promise<string> {
-        await this.db.insert(secretSchema)
+        await this.db
+            .insert(secretSchema)
             .values({ name, value: randomBytes(32).toString('base64url') })
             .onConflictDoNothing();
 
-        const rows = await this.db.select({ value: secretSchema.value })
+        const rows = await this.db
+            .select({ value: secretSchema.value })
             .from(secretSchema)
             .where(eq(secretSchema.name, name));
 

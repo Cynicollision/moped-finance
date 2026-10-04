@@ -58,9 +58,21 @@ export class FinanceCategoriesComponent {
 
     // One section per type (CAT-1.3), each with its own empty message (CAT-1.5).
     readonly sections = computed(() => [
-        { title: 'Income', empty: 'No income groups found.', groupedCategories: this.buildGrouped(CategoryType.Income) },
-        { title: 'Expenses', empty: 'No expense groups found.', groupedCategories: this.buildGrouped(CategoryType.Expense) },
-        { title: 'Transfers', empty: 'No transfer groups found.', groupedCategories: this.buildGrouped(CategoryType.Transfer) }
+        {
+            title: 'Income',
+            empty: 'No income groups found.',
+            groupedCategories: this.buildGrouped(CategoryType.Income)
+        },
+        {
+            title: 'Expenses',
+            empty: 'No expense groups found.',
+            groupedCategories: this.buildGrouped(CategoryType.Expense)
+        },
+        {
+            title: 'Transfers',
+            empty: 'No transfer groups found.',
+            groupedCategories: this.buildGrouped(CategoryType.Transfer)
+        }
     ]);
 
     private buildGrouped(targetType: CategoryType): GroupedCategories[] {
@@ -90,9 +102,11 @@ export class FinanceCategoriesComponent {
     }
 
     private async openGroup(data: CategoryGroupFormModalData) {
-        const changed = await this.modalService.open<CategoryGroupFormModalComponent, CategoryGroupFormModalData, boolean>(
-            CategoryGroupFormModalComponent, data
-        );
+        const changed = await this.modalService.open<
+            CategoryGroupFormModalComponent,
+            CategoryGroupFormModalData,
+            boolean
+        >(CategoryGroupFormModalComponent, data);
         if (changed) {
             this.data.reload();
         }
@@ -113,7 +127,8 @@ export class FinanceCategoriesComponent {
 
     private async openCategory(data: CategoryFormModalData) {
         const changed = await this.modalService.open<CategoryFormModalComponent, CategoryFormModalData, boolean>(
-            CategoryFormModalComponent, data
+            CategoryFormModalComponent,
+            data
         );
         if (changed) {
             this.data.reload();

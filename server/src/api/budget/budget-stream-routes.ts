@@ -15,7 +15,7 @@ export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: I
     // GET / - Get Budget Streams
     router.get('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getBudgetStreams' };
-        handler.execute(req, res, op, (context) => {
+        handler.execute(req, res, op, context => {
             return controller.getBudgetStreams(context);
         });
     });
@@ -31,9 +31,15 @@ export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: I
     // PUT /:id - Update Budget Stream
     router.put('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'saveBudgetStream' };
-        handler.execute(req, res, op, { params: idParamsSchema, body: updateBudgetStreamSchema }, (context, { params, body }) => {
-            return controller.saveBudgetStream(context, params.id, body);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, body: updateBudgetStreamSchema },
+            (context, { params, body }) => {
+                return controller.saveBudgetStream(context, params.id, body);
+            }
+        );
     });
 
     // DELETE /:id - Delete Budget Stream

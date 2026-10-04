@@ -23,11 +23,13 @@ import { SettingsComponent } from './settings/settings.component';
 
 export const routes: Routes = [
     {
-        path: 'login', component: LoginComponent,
+        path: 'login',
+        component: LoginComponent,
         title: 'Login'
     },
     {
-        path: 'register', component: RegisterComponent,
+        path: 'register',
+        component: RegisterComponent,
         canActivate: [registrationGuard],
         title: 'Register'
     },
@@ -37,15 +39,39 @@ export const routes: Routes = [
         children: [
             { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
             { path: 'dashboard', component: DashboardComponent, title: 'Dashboard' },
-            { path: 'accounts/new', component: FinanceAddAccountComponent, title: 'Add Account', canDeactivate: [unsavedChangesGuard] },
+            {
+                path: 'accounts/new',
+                component: FinanceAddAccountComponent,
+                title: 'Add Account',
+                canDeactivate: [unsavedChangesGuard]
+            },
             { path: 'accounts/:accountId', component: FinanceAccountDetailsComponent, title: 'Account Details' },
-            { path: 'accounts/:accountId/edit', component: FinanceEditAccountComponent, title: 'Edit Account', canDeactivate: [unsavedChangesGuard] },
-            { path: 'accounts/:accountId/import-balances', component: BalanceImportComponent, title: 'Import Balance History' },
+            {
+                path: 'accounts/:accountId/edit',
+                component: FinanceEditAccountComponent,
+                title: 'Edit Account',
+                canDeactivate: [unsavedChangesGuard]
+            },
+            {
+                path: 'accounts/:accountId/import-balances',
+                component: BalanceImportComponent,
+                title: 'Import Balance History'
+            },
             { path: 'transactions', component: FinanceTransactionsComponent, title: 'Transactions' },
-            { path: 'transactions/new', component: AddTransactionComponent, title: 'Add Transaction', canDeactivate: [unsavedChangesGuard] },
+            {
+                path: 'transactions/new',
+                component: AddTransactionComponent,
+                title: 'Add Transaction',
+                canDeactivate: [unsavedChangesGuard]
+            },
             { path: 'transactions/import', component: ImportTransactionsComponent, title: 'Import Transactions' },
             { path: 'transactions/:transactionId', component: ViewTransactionComponent, title: 'View Transaction' },
-            { path: 'transactions/:transactionId/edit', component: EditTransactionComponent, title: 'Edit Transaction', canDeactivate: [unsavedChangesGuard] },
+            {
+                path: 'transactions/:transactionId/edit',
+                component: EditTransactionComponent,
+                title: 'Edit Transaction',
+                canDeactivate: [unsavedChangesGuard]
+            },
             { path: 'spending', component: FinanceSpendingComponent, title: 'Spending' },
             // Spending was called Cashflow (APP-1.1).
             { path: 'cashflow', redirectTo: 'spending' },

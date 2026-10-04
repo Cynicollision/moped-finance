@@ -13,7 +13,11 @@ describe('NotificationService', () => {
                 { provide: MatSnackBar, useValue: snackBar },
                 {
                     provide: LayoutService,
-                    useValue: { sizeClass: size, isCompact: computed(() => size() === 'compact'), hasBottomNav: signal(hasBottomNav) }
+                    useValue: {
+                        sizeClass: size,
+                        isCompact: computed(() => size() === 'compact'),
+                        hasBottomNav: signal(hasBottomNav)
+                    }
                 }
             ]
         });
@@ -38,11 +42,15 @@ describe('NotificationService', () => {
 
         service.success('Account saved');
 
-        expect(snackBar.open).toHaveBeenCalledWith('Account saved', undefined, expect.objectContaining({
-            horizontalPosition: 'center',
-            verticalPosition: 'bottom',
-            panelClass: ['snackbar-above-bottom-nav']
-        }));
+        expect(snackBar.open).toHaveBeenCalledWith(
+            'Account saved',
+            undefined,
+            expect.objectContaining({
+                horizontalPosition: 'center',
+                verticalPosition: 'bottom',
+                panelClass: ['snackbar-above-bottom-nav']
+            })
+        );
     });
 
     it('APP-2.2 should show an error for 5 seconds with a Close button', () => {

@@ -7,7 +7,6 @@ import { Environment } from './../../environments/environment';
     providedIn: 'root'
 })
 export class DateProviderService {
-
     /** The current instant; for a calendar date, use `today()`. */
     now(): Date {
         // eslint-disable-next-line no-restricted-syntax -- the one place that reads the real clock

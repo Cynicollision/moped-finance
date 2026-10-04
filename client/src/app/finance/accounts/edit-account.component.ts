@@ -13,12 +13,7 @@ import { AccountFormComponent } from './account-form.component';
 @Component({
     selector: 'app-edit-account',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        AccountFormComponent,
-        CardSkeletonComponent,
-        LoadErrorComponent,
-        PageHeaderComponent
-    ],
+    imports: [AccountFormComponent, CardSkeletonComponent, LoadErrorComponent, PageHeaderComponent],
     templateUrl: './edit-account.component.html',
     styleUrl: './edit-account.component.scss'
 })
@@ -41,7 +36,12 @@ export class FinanceEditAccountComponent implements HasUnsavedChanges {
                 this.financeService.fetchAccount(accountId),
                 this.financeService.fetchInstitutions()
             ]);
-            return { account, institutions: institutions.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })) };
+            return {
+                account,
+                institutions: institutions.sort((a, b) =>
+                    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+                )
+            };
         }
     });
     readonly accountData = computed(() => this.data.value()?.account);
@@ -79,8 +79,7 @@ export class FinanceEditAccountComponent implements HasUnsavedChanges {
         const currentData = this.accountData();
         if (currentData) {
             this.router.navigate(['/accounts', currentData.id]);
-        }
-        else {
+        } else {
             this.router.navigate(['/dashboard']);
         }
     }

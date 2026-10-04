@@ -11,8 +11,7 @@ const TOKEN_PREFIX = 'mf_';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export class ApiTokenController {
-
-    constructor(private apiTokenData: IApiTokenData) { }
+    constructor(private apiTokenData: IApiTokenData) {}
 
     async retrieveAll(): Promise<OperationResult<ApiToken[]>> {
         return Result.success(await this.apiTokenData.retrieveAll());
@@ -31,7 +30,8 @@ export class ApiTokenController {
             access: input.access,
             tokenHash: ApiTokenController.hash(token),
             lastUsedAt: null,
-            expiresAt: input.expiresInDays === null ? null : DateTimeUtil.addMilliseconds(now, input.expiresInDays * DAY_MS)
+            expiresAt:
+                input.expiresInDays === null ? null : DateTimeUtil.addMilliseconds(now, input.expiresInDays * DAY_MS)
         });
 
         return Result.successCreated({ apiToken, token });

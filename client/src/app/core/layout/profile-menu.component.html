@@ -4,10 +4,13 @@
         <span class="profile-name">{{ displayName() }}</span>
         <mat-icon class="profile-arrow">{{ above() ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
     </button>
-}
-@else {
-    <button type="button" class="avatar-trigger" [matMenuTriggerFor]="profileMenu"
-        [attr.aria-label]="'Profile menu for ' + displayName()">
+} @else {
+    <button
+        type="button"
+        class="avatar-trigger"
+        [matMenuTriggerFor]="profileMenu"
+        [attr.aria-label]="'Profile menu for ' + displayName()"
+    >
         <span class="avatar">{{ initials() }}</span>
     </button>
 }

@@ -91,7 +91,7 @@ export class InstitutionDialogComponent implements HasUnsavedChanges {
             confirmLabel: 'Delete',
             isWarn: true
         });
-        if (confirmed && await this.financeService.deleteInstitution(this.institution.id)) {
+        if (confirmed && (await this.financeService.deleteInstitution(this.institution.id))) {
             this.notificationService.success('Institution deleted');
             this.dialogRef.close(true);
         }

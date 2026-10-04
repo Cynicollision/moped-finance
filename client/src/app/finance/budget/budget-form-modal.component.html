@@ -3,17 +3,15 @@
         <div class="form-row">
             <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" [placeholder]="namePlaceholder">
+                <input matInput formControlName="name" [placeholder]="namePlaceholder" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
                 <mat-label>Category</mat-label>
-                <input type="text" matInput formControlName="categoryId" [matAutocomplete]="autoCategory">
+                <input type="text" matInput formControlName="categoryId" [matAutocomplete]="autoCategory" />
                 <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
                     @for (cat of filteredCategories(); track cat.id) {
-                        <mat-option [value]="cat.id">
-                            {{cat.icon}} {{cat.name}}
-                        </mat-option>
+                        <mat-option [value]="cat.id"> {{ cat.icon }} {{ cat.name }} </mat-option>
                     }
                 </mat-autocomplete>
             </mat-form-field>
@@ -21,7 +19,7 @@
             <mat-form-field appearance="outline">
                 <mat-label>Amount</mat-label>
                 <span matTextPrefix>$&nbsp;</span>
-                <input matInput type="number" inputmode="decimal" min="0" formControlName="amount">
+                <input matInput type="number" inputmode="decimal" min="0" formControlName="amount" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -29,7 +27,7 @@
                 <mat-select formControlName="recurrence">
                     @for (opt of recurrenceOptions; track opt) {
                         <mat-option [value]="opt">
-                            {{opt}}
+                            {{ opt }}
                         </mat-option>
                     }
                 </mat-select>

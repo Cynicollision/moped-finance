@@ -21,7 +21,14 @@ export interface Crumb {
 @Component({
     selector: 'app-page-header',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressBarModule, ModeBadgeComponent, ProfileMenuComponent],
+    imports: [
+        RouterLink,
+        MatButtonModule,
+        MatIconModule,
+        MatProgressBarModule,
+        ModeBadgeComponent,
+        ProfileMenuComponent
+    ],
     templateUrl: './page-header.component.html',
     styleUrl: './page-header.component.scss'
 })

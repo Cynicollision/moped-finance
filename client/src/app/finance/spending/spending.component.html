@@ -4,16 +4,34 @@
     <!-- The period stepper (CASH-1.1). -->
     <div class="controls">
         <div class="stepper">
-            <button mat-icon-button (click)="step(-1)" [disabled]="!canStepBack()" [attr.aria-label]="'Previous ' + periodNoun()">
+            <button
+                mat-icon-button
+                (click)="step(-1)"
+                [disabled]="!canStepBack()"
+                [attr.aria-label]="'Previous ' + periodNoun()"
+            >
                 <mat-icon>chevron_left</mat-icon>
             </button>
-            <button mat-button #pickerTrigger class="period-button" cdkOverlayOrigin #pickerOrigin="cdkOverlayOrigin"
-                (click)="openPicker()" aria-haspopup="dialog" [attr.aria-expanded]="isPopoverOpen()"
-                [attr.aria-label]="periodLabel() + ', choose a period'">
+            <button
+                mat-button
+                #pickerTrigger
+                class="period-button"
+                cdkOverlayOrigin
+                #pickerOrigin="cdkOverlayOrigin"
+                (click)="openPicker()"
+                aria-haspopup="dialog"
+                [attr.aria-expanded]="isPopoverOpen()"
+                [attr.aria-label]="periodLabel() + ', choose a period'"
+            >
                 {{ periodText() }}
                 <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
             </button>
-            <button mat-icon-button (click)="step(1)" [disabled]="!canStepForward()" [attr.aria-label]="'Next ' + periodNoun()">
+            <button
+                mat-icon-button
+                (click)="step(1)"
+                [disabled]="!canStepForward()"
+                [attr.aria-label]="'Next ' + periodNoun()"
+            >
                 <mat-icon>chevron_right</mat-icon>
             </button>
         </div>
@@ -21,26 +39,34 @@
 
     @if (error(); as error) {
         <app-load-error [message]="error" (retry)="retry()"></app-load-error>
-    }
-    @else if (isLoaded()) {
+    } @else if (isLoaded()) {
         <mat-card class="summary-card" appearance="outlined">
             <div class="saved">
                 <span class="label">Saved</span>
                 <div class="saved-figures">
                     <app-money class="headline" [amount]="totalSavings()" tone="favourable" digits="1.0-0"></app-money>
-                    <span class="rate">{{ savingsRate() | percent:'1.0-0' }} of income</span>
+                    <span class="rate">{{ savingsRate() | percent: '1.0-0' }} of income</span>
                 </div>
                 @if (budgetedSavings() !== undefined) {
-                    <span class="budgeted">of <app-money [amount]="budgetedSavings()!" digits="1.0-0"></app-money> budgeted</span>
+                    <span class="budgeted"
+                        >of <app-money [amount]="budgetedSavings()!" digits="1.0-0"></app-money> budgeted</span
+                    >
                 }
             </div>
             <div class="summary-figures">
                 @for (section of sections(); track section.title) {
                     <div class="figure">
                         <span class="label">{{ section.title }}</span>
-                        <app-money class="value" [amount]="section.total" [tone]="section.tone" digits="1.0-0"></app-money>
+                        <app-money
+                            class="value"
+                            [amount]="section.total"
+                            [tone]="section.tone"
+                            digits="1.0-0"
+                        ></app-money>
                         @if (section.budget !== undefined) {
-                            <span class="budgeted">of <app-money [amount]="section.budget" digits="1.0-0"></app-money> budgeted</span>
+                            <span class="budgeted"
+                                >of <app-money [amount]="section.budget" digits="1.0-0"></app-money> budgeted</span
+                            >
                         }
                     </div>
                 }
@@ -48,8 +74,13 @@
         </mat-card>
 
         <!-- Between the summary and the sections it changes (CASH-1.5). -->
-        <mat-button-toggle-group class="view-toggle" [value]="viewMode()" (change)="viewMode.set($event.value)"
-            hideSingleSelectionIndicator aria-label="Show by">
+        <mat-button-toggle-group
+            class="view-toggle"
+            [value]="viewMode()"
+            (change)="viewMode.set($event.value)"
+            hideSingleSelectionIndicator
+            aria-label="Show by"
+        >
             <mat-button-toggle value="category">Category</mat-button-toggle>
             <mat-button-toggle value="group">Group</mat-button-toggle>
         </mat-button-toggle-group>
@@ -58,7 +89,12 @@
             <mat-card class="section-card" appearance="outlined">
                 <div class="section-header">
                     <h2>{{ section.title }}</h2>
-                    <app-money class="section-total" [amount]="section.total" [tone]="section.tone" digits="1.0-0"></app-money>
+                    <app-money
+                        class="section-total"
+                        [amount]="section.total"
+                        [tone]="section.tone"
+                        digits="1.0-0"
+                    ></app-money>
                 </div>
 
                 @if (section.rows.length) {
@@ -69,15 +105,16 @@
                                 <span appListCell="name">{{ row.name }}</span>
                                 @if (row.budget !== undefined) {
                                     <span appListCell="budget">
-                                        <span class="narrow-only">Budget </span><app-money [amount]="row.budget" digits="1.0-0"></app-money>
+                                        <span class="narrow-only">Budget </span
+                                        ><app-money [amount]="row.budget" digits="1.0-0"></app-money>
                                     </span>
                                 }
                                 @if (difference(row, section); as diff) {
                                     <span appListCell="difference" class="difference" [class.bad]="diff.isBad">
                                         @if (diff.amount) {
-                                            <app-money [amount]="diff.amount" digits="1.0-0"></app-money> {{ diff.text }}
-                                        }
-                                        @else {
+                                            <app-money [amount]="diff.amount" digits="1.0-0"></app-money>
+                                            {{ diff.text }}
+                                        } @else {
                                             {{ diff.text }}
                                         }
                                     </span>
@@ -90,28 +127,34 @@
                         @if (section.parts; as parts) {
                             @for (part of parts; track part.key) {
                                 <div appListSubheader>
-                                    <h3>{{ part.title }} <span class="share">· {{ part.share | percent:'1.0-0' }}</span></h3>
+                                    <h3>
+                                        {{ part.title }}
+                                        <span class="share">· {{ part.share | percent: '1.0-0' }}</span>
+                                    </h3>
                                     <app-money [amount]="part.total" [tone]="section.tone" digits="1.0-0"></app-money>
                                 </div>
                                 @for (row of part.rows; track row.id) {
-                                    <ng-container [ngTemplateOutlet]="spendingRow" [ngTemplateOutletContext]="{ $implicit: row, section }"></ng-container>
+                                    <ng-container
+                                        [ngTemplateOutlet]="spendingRow"
+                                        [ngTemplateOutletContext]="{ $implicit: row, section }"
+                                    ></ng-container>
                                 }
                             }
-                        }
-                        @else {
+                        } @else {
                             @for (row of section.rows; track row.id) {
-                                <ng-container [ngTemplateOutlet]="spendingRow" [ngTemplateOutletContext]="{ $implicit: row, section }"></ng-container>
+                                <ng-container
+                                    [ngTemplateOutlet]="spendingRow"
+                                    [ngTemplateOutletContext]="{ $implicit: row, section }"
+                                ></ng-container>
                             }
                         }
                     </app-list>
-                }
-                @else {
+                } @else {
                     <p class="empty">{{ section.empty }}</p>
                 }
             </mat-card>
         }
-    }
-    @else {
+    } @else {
         <app-card-skeleton [rows]="2"></app-card-skeleton>
         <app-card-skeleton [rows]="4"></app-card-skeleton>
         <app-card-skeleton [rows]="4"></app-card-skeleton>
@@ -119,9 +162,16 @@
 </div>
 
 <!-- The picker opens below the period on wider screens... -->
-<ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="pickerOrigin" [cdkConnectedOverlayOpen]="isPopoverOpen()"
-    cdkConnectedOverlayHasBackdrop cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-    (backdropClick)="closePicker()" (overlayKeydown)="$event.key === 'Escape' && closePicker()" (detach)="closePicker()">
+<ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="pickerOrigin"
+    [cdkConnectedOverlayOpen]="isPopoverOpen()"
+    cdkConnectedOverlayHasBackdrop
+    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+    (backdropClick)="closePicker()"
+    (overlayKeydown)="$event.key === 'Escape' && closePicker()"
+    (detach)="closePicker()"
+>
     <div class="period-popover" role="dialog" aria-label="Choose a period" cdkTrapFocus cdkTrapFocusAutoCapture>
         <ng-container [ngTemplateOutlet]="pickerContent"></ng-container>
     </div>
@@ -137,8 +187,13 @@
 
 <ng-template #pickerContent>
     <div class="period-picker">
-        <mat-button-toggle-group class="picker-type" [value]="pickerPeriod()" (change)="pickerPeriod.set($event.value)"
-            hideSingleSelectionIndicator aria-label="Period type">
+        <mat-button-toggle-group
+            class="picker-type"
+            [value]="pickerPeriod()"
+            (change)="pickerPeriod.set($event.value)"
+            hideSingleSelectionIndicator
+            aria-label="Period type"
+        >
             @for (type of periodTypes; track type.value) {
                 <mat-button-toggle [value]="type.value">{{ type.label }}</mat-button-toggle>
             }
@@ -146,11 +201,21 @@
 
         @if (pickerPeriod() !== CalendarPeriod.Yearly) {
             <div class="picker-year">
-                <button mat-icon-button (click)="stepPickerYear(-1)" [disabled]="!canPickPreviousYear()" aria-label="Previous year">
+                <button
+                    mat-icon-button
+                    (click)="stepPickerYear(-1)"
+                    [disabled]="!canPickPreviousYear()"
+                    aria-label="Previous year"
+                >
                     <mat-icon>chevron_left</mat-icon>
                 </button>
                 <span class="picker-year-label">{{ pickerYear() }}</span>
-                <button mat-icon-button (click)="stepPickerYear(1)" [disabled]="!canPickNextYear()" aria-label="Next year">
+                <button
+                    mat-icon-button
+                    (click)="stepPickerYear(1)"
+                    [disabled]="!canPickNextYear()"
+                    aria-label="Next year"
+                >
                     <mat-icon>chevron_right</mat-icon>
                 </button>
             </div>
@@ -158,8 +223,14 @@
 
         <div class="picker-grid" [class.quarters]="pickerPeriod() === CalendarPeriod.Quarterly">
             @for (option of pickerOptions(); track option.start) {
-                <button mat-button class="picker-option" [class.selected]="isSelected(option)"
-                    [attr.aria-pressed]="isSelected(option)" [attr.aria-label]="option.ariaLabel" (click)="pick(option)">
+                <button
+                    mat-button
+                    class="picker-option"
+                    [class.selected]="isSelected(option)"
+                    [attr.aria-pressed]="isSelected(option)"
+                    [attr.aria-label]="option.ariaLabel"
+                    (click)="pick(option)"
+                >
                     {{ option.label }}
                 </button>
             }

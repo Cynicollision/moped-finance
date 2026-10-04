@@ -1,7 +1,15 @@
 <div class="container">
-    <app-page-header title="Add Transaction" [crumbs]="[{ label: 'Transactions', link: '/transactions' }]"></app-page-header>
+    <app-page-header
+        title="Add Transaction"
+        [crumbs]="[{ label: 'Transactions', link: '/transactions' }]"
+    ></app-page-header>
 
-    <app-transaction-form mode="create" [defaultAccountId]="defaultAccountId" [saving]="saving()" (save)="onSave($event)"
-        (cancelled)="onCancel()">
+    <app-transaction-form
+        mode="create"
+        [defaultAccountId]="defaultAccountId"
+        [saving]="saving()"
+        (save)="onSave($event)"
+        (cancelled)="onCancel()"
+    >
     </app-transaction-form>
 </div>

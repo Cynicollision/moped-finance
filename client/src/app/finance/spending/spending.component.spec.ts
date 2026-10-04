@@ -20,11 +20,51 @@ describe('FinanceSpendingComponent', () => {
     ];
     const categories: Category[] = [
         { id: 'pay', groupId: 'income', name: 'Paycheck', icon: '💼', isActive: true, necessity: null, ...created },
-        { id: 'rent', groupId: 'housing', name: 'Rent', icon: '🏠', isActive: true, necessity: CategoryNecessity.Essential, ...created },
-        { id: 'utilities', groupId: 'housing', name: 'Utilities', icon: '💡', isActive: true, necessity: CategoryNecessity.Essential, ...created },
-        { id: 'groceries', groupId: 'food', name: 'Groceries', icon: '🛒', isActive: true, necessity: CategoryNecessity.Essential, ...created },
-        { id: 'dining', groupId: 'food', name: 'Dining', icon: '🍽️', isActive: true, necessity: CategoryNecessity.Discretionary, ...created },
-        { id: 'card', groupId: 'transfers', name: 'Card Payment', icon: '💳', isActive: true, necessity: null, ...created }
+        {
+            id: 'rent',
+            groupId: 'housing',
+            name: 'Rent',
+            icon: '🏠',
+            isActive: true,
+            necessity: CategoryNecessity.Essential,
+            ...created
+        },
+        {
+            id: 'utilities',
+            groupId: 'housing',
+            name: 'Utilities',
+            icon: '💡',
+            isActive: true,
+            necessity: CategoryNecessity.Essential,
+            ...created
+        },
+        {
+            id: 'groceries',
+            groupId: 'food',
+            name: 'Groceries',
+            icon: '🛒',
+            isActive: true,
+            necessity: CategoryNecessity.Essential,
+            ...created
+        },
+        {
+            id: 'dining',
+            groupId: 'food',
+            name: 'Dining',
+            icon: '🍽️',
+            isActive: true,
+            necessity: CategoryNecessity.Discretionary,
+            ...created
+        },
+        {
+            id: 'card',
+            groupId: 'transfers',
+            name: 'Card Payment',
+            icon: '💳',
+            isActive: true,
+            necessity: null,
+            ...created
+        }
     ];
     const totals: SpendingTotal[] = [
         { categoryId: 'pay', amount: 4000 },
@@ -35,7 +75,15 @@ describe('FinanceSpendingComponent', () => {
     ];
 
     function stream(categoryId: string, amount: number, recurrence = CalendarPeriod.Monthly): BudgetStream {
-        return { id: `${categoryId}-${amount}`, type: BudgetStreamType.Expense, name: categoryId, categoryId, amount, recurrence, ...created };
+        return {
+            id: `${categoryId}-${amount}`,
+            type: BudgetStreamType.Expense,
+            name: categoryId,
+            categoryId,
+            amount,
+            recurrence,
+            ...created
+        };
     }
 
     // Per month: $4,200 of pay, $2,150 of expenses (groceries quarterly), and $500 moved to savings.
@@ -50,21 +98,31 @@ describe('FinanceSpendingComponent', () => {
 
     // Renders Spending once its categories, budget and the period's totals have loaded, with today 2026-05-17. The
     // transactions are the oldest and newest, which bound the years offered.
-    async function render(periodTotals = totals, oldest?: string, newest?: string, budgetStreams: BudgetStream[] = [], withCategories = categories) {
-        const edge = (date?: string) => date ? [{ id: date, date }] : [];
+    async function render(
+        periodTotals = totals,
+        oldest?: string,
+        newest?: string,
+        budgetStreams: BudgetStream[] = [],
+        withCategories = categories
+    ) {
+        const edge = (date?: string) => (date ? [{ id: date, date }] : []);
         const financeService = {
             fetchCategories: vi.fn().mockResolvedValue(withCategories),
             fetchCategoryGroups: vi.fn().mockResolvedValue(groups),
             fetchBudgetStreams: vi.fn().mockResolvedValue(budgetStreams),
             fetchSpendingTotals: vi.fn().mockResolvedValue(periodTotals),
             fetchTransactions: vi.fn((search: TransactionSearchOptions) =>
-                Promise.resolve(search.sortDirection === SortDirection.Asc ? edge(oldest) : edge(newest)))
+                Promise.resolve(search.sortDirection === SortDirection.Asc ? edge(oldest) : edge(newest))
+            )
         };
         TestBed.configureTestingModule({
             imports: [FinanceSpendingComponent],
             providers: [
                 provideRouter([]),
-                { provide: DateProviderService, useValue: { now: () => new Date(2026, 4, 17), today: () => '2026-05-17' } },
+                {
+                    provide: DateProviderService,
+                    useValue: { now: () => new Date(2026, 4, 17), today: () => '2026-05-17' }
+                },
                 { provide: LayoutService, useValue: { isCompact: signal(false) } },
                 { provide: FinanceService, useValue: financeService }
             ]
@@ -93,12 +151,15 @@ describe('FinanceSpendingComponent', () => {
     }
 
     function section(element: HTMLElement, title: string): Element {
-        return Array.from(element.querySelectorAll('.section-card')).find(card => text(card.querySelector('h2')) === title)!;
+        return Array.from(element.querySelectorAll('.section-card')).find(
+            card => text(card.querySelector('h2')) === title
+        )!;
     }
 
     function sectionRows(element: HTMLElement, title: string): string[] {
-        return Array.from(section(element, title).querySelectorAll('a.app-list-row'))
-            .map(row => Array.from(row.querySelectorAll('.app-list-cell')).map(text).join(' '));
+        return Array.from(section(element, title).querySelectorAll('a.app-list-row')).map(row =>
+            Array.from(row.querySelectorAll('.app-list-cell')).map(text).join(' ')
+        );
     }
 
     function button(element: HTMLElement, label: string): HTMLButtonElement {
@@ -112,10 +173,15 @@ describe('FinanceSpendingComponent', () => {
     });
 
     it('CASH-1.4 should show negative savings signed and red, and expenses never red', async () => {
-        const { element } = await render([{ categoryId: 'pay', amount: 1000 }, { categoryId: 'rent', amount: -1500 }]);
+        const { element } = await render([
+            { categoryId: 'pay', amount: 1000 },
+            { categoryId: 'rent', amount: -1500 }
+        ]);
 
         expect(summary(element)).toEqual(['-$500', '-50% of income', '$1,000', '$1,500']);
-        const colours = Array.from(element.querySelectorAll('.summary-card :is(.headline, .value) span')).map(span => span.className);
+        const colours = Array.from(element.querySelectorAll('.summary-card :is(.headline, .value) span')).map(
+            span => span.className
+        );
         expect(colours).toEqual(['money-negative', 'money-positive', '']);
     });
 
@@ -136,14 +202,22 @@ describe('FinanceSpendingComponent', () => {
         const { element } = await render([...totals, { categoryId: '', amount: 50 }, { categoryId: '', amount: -80 }]);
 
         expect(sectionRows(element, 'Income')).toEqual(['💼 Paycheck $4,000.00', 'Uncategorized $50.00']);
-        expect(sectionRows(element, 'Expenses'))
-            .toEqual(['🏠 Rent $1,500.00', '🛒 Groceries $300.00', '💡 Utilities $200.00', 'Uncategorized $80.00']);
+        expect(sectionRows(element, 'Expenses')).toEqual([
+            '🏠 Rent $1,500.00',
+            '🛒 Groceries $300.00',
+            '💡 Utilities $200.00',
+            'Uncategorized $80.00'
+        ]);
     });
 
     it('CASH-1.9 should show an expense category that is net money in as a negative expense', async () => {
         const { element } = await render([...totals, { categoryId: 'groceries', amount: 320 }]);
 
-        expect(sectionRows(element, 'Expenses')).toEqual(['🏠 Rent $1,500.00', '💡 Utilities $200.00', '🛒 Groceries -$20.00']);
+        expect(sectionRows(element, 'Expenses')).toEqual([
+            '🏠 Rent $1,500.00',
+            '💡 Utilities $200.00',
+            '🛒 Groceries -$20.00'
+        ]);
         expect(summary(element)[3]).toBe('$1,680');
     });
 
@@ -151,7 +225,11 @@ describe('FinanceSpendingComponent', () => {
         const { element } = await render();
 
         expect(sectionRows(element, 'Income')).toEqual(['💼 Paycheck $4,000.00']);
-        expect(sectionRows(element, 'Expenses')).toEqual(['🏠 Rent $1,500.00', '🛒 Groceries $300.00', '💡 Utilities $200.00']);
+        expect(sectionRows(element, 'Expenses')).toEqual([
+            '🏠 Rent $1,500.00',
+            '🛒 Groceries $300.00',
+            '💡 Utilities $200.00'
+        ]);
     });
 
     it('CASH-1.5 should switch both sections to category groups with the one Category / Group toggle', async () => {
@@ -159,7 +237,9 @@ describe('FinanceSpendingComponent', () => {
         const { element } = fixture;
 
         expect(element.querySelectorAll('mat-button-toggle-group.view-toggle')).toHaveLength(1);
-        Array.from(element.querySelectorAll<HTMLButtonElement>('.view-toggle button')).find(b => text(b) === 'Group')!.click();
+        Array.from(element.querySelectorAll<HTMLButtonElement>('.view-toggle button'))
+            .find(b => text(b) === 'Group')!
+            .click();
         await fixture.whenStable();
 
         expect(sectionRows(element, 'Income')).toEqual(['Income $4,000.00']);
@@ -258,7 +338,7 @@ describe('FinanceSpendingComponent', () => {
         fixture.componentInstance.closePicker();
     });
 
-    it('CASH-1.10 should show each budgeted category\'s budget and how the actual compares', async () => {
+    it("CASH-1.10 should show each budgeted category's budget and how the actual compares", async () => {
         const { element } = await render(totals, undefined, undefined, budget);
 
         expect(sectionRows(element, 'Income')).toEqual(['💼 Paycheck Budget $4,200 $200 under $4,000.00']);
@@ -271,7 +351,9 @@ describe('FinanceSpendingComponent', () => {
         // Under on income and over on an expense are the bad ones.
         const bad = Array.from(element.querySelectorAll('.difference.bad')).map(text);
         expect(bad).toEqual(['$200 under', '$50 over']);
-        expect(text(section(element, 'Expenses').querySelector('.app-list-header'))).toBe('Category Budget Difference Actual');
+        expect(text(section(element, 'Expenses').querySelector('.app-list-header'))).toBe(
+            'Category Budget Difference Actual'
+        );
     });
 
     it('CASH-1.10 should multiply the monthly budget by the months in the period', async () => {
@@ -322,16 +404,18 @@ describe('FinanceSpendingComponent', () => {
         fixture.componentInstance.selection.set({ period: CalendarPeriod.Quarterly, start: '2026-04-01' });
         await fixture.whenStable();
 
-        const rent = Array.from(fixture.element.querySelectorAll<HTMLAnchorElement>('a.app-list-row'))
-            .find(row => row.textContent!.includes('Rent'))!;
+        const rent = Array.from(fixture.element.querySelectorAll<HTMLAnchorElement>('a.app-list-row')).find(row =>
+            row.textContent!.includes('Rent')
+        )!;
         expect(rent.getAttribute('href')).toBe('/transactions?categoryId=rent&startDate=2026-04-01&endDate=2026-06-30');
     });
 
     it('CASH-1.5 should put the Category / Group switch between the summary and the sections', async () => {
         const { element } = await render();
 
-        const order = Array.from(element.querySelectorAll('.summary-card, .view-toggle, .section-card'))
-            .map(e => ['summary-card', 'view-toggle', 'section-card'].find(name => e.classList.contains(name)));
+        const order = Array.from(element.querySelectorAll('.summary-card, .view-toggle, .section-card')).map(e =>
+            ['summary-card', 'view-toggle', 'section-card'].find(name => e.classList.contains(name))
+        );
         expect(order).toEqual(['summary-card', 'view-toggle', 'section-card', 'section-card']);
         expect(Array.from(element.querySelectorAll('mat-button-toggle')).map(text)).toEqual(['Category', 'Group']);
     });
@@ -341,16 +425,25 @@ describe('FinanceSpendingComponent', () => {
         const split = [...totals, { categoryId: 'dining', amount: -100 }, { categoryId: '', amount: -80 }];
 
         function subheaders(element: HTMLElement): string[] {
-            return Array.from(section(element, 'Expenses').querySelectorAll('[appListSubheader]'))
-                .map(header => Array.from(header.children).map(text).join(' '));
+            return Array.from(section(element, 'Expenses').querySelectorAll('[appListSubheader]')).map(header =>
+                Array.from(header.children).map(text).join(' ')
+            );
         }
 
         it('CASH-1.8 should list expenses by category under each necessity in the Category view', async () => {
             const fixture = await render(split);
 
-            expect(subheaders(fixture.element)).toEqual(['Essential · 92% $2,000', 'Discretionary · 5% $100', 'Unclassified · 4% $80']);
+            expect(subheaders(fixture.element)).toEqual([
+                'Essential · 92% $2,000',
+                'Discretionary · 5% $100',
+                'Unclassified · 4% $80'
+            ]);
             expect(sectionRows(fixture.element, 'Expenses')).toEqual([
-                '🏠 Rent $1,500.00', '🛒 Groceries $300.00', '💡 Utilities $200.00', '🍽️ Dining $100.00', 'Uncategorized $80.00'
+                '🏠 Rent $1,500.00',
+                '🛒 Groceries $300.00',
+                '💡 Utilities $200.00',
+                '🍽️ Dining $100.00',
+                'Uncategorized $80.00'
             ]);
             expect(sectionRows(fixture.element, 'Income')).toEqual(['💼 Paycheck $4,000.00']);
             expect(section(fixture.element, 'Income').querySelector('[appListSubheader]')).toBeNull();
@@ -358,14 +451,20 @@ describe('FinanceSpendingComponent', () => {
 
         it('CASH-1.6 TXN-1.11 should open Transactions filtered to Uncategorized from an uncategorized row, by category or group', async () => {
             const fixture = await render(split);
-            const uncategorizedLink = () => Array.from(section(fixture.element, 'Expenses').querySelectorAll<HTMLAnchorElement>('a.app-list-row'))
-                .find(row => row.textContent!.includes('Uncategorized'))!.getAttribute('href');
+            const uncategorizedLink = () =>
+                Array.from(section(fixture.element, 'Expenses').querySelectorAll<HTMLAnchorElement>('a.app-list-row'))
+                    .find(row => row.textContent!.includes('Uncategorized'))!
+                    .getAttribute('href');
 
-            expect(uncategorizedLink()).toBe('/transactions?categoryId=uncategorized&startDate=2026-05-01&endDate=2026-05-31');
+            expect(uncategorizedLink()).toBe(
+                '/transactions?categoryId=uncategorized&startDate=2026-05-01&endDate=2026-05-31'
+            );
 
             fixture.componentInstance.viewMode.set('group');
             await fixture.whenStable();
-            expect(uncategorizedLink()).toBe('/transactions?categoryId=uncategorized&startDate=2026-05-01&endDate=2026-05-31');
+            expect(uncategorizedLink()).toBe(
+                '/transactions?categoryId=uncategorized&startDate=2026-05-01&endDate=2026-05-31'
+            );
         });
 
         it('CASH-1.8 should list groups without necessity headings in the Group view', async () => {
@@ -378,7 +477,13 @@ describe('FinanceSpendingComponent', () => {
         });
 
         it('CASH-1.8 should leave the headings out while no category has a necessity', async () => {
-            const { element } = await render(split, undefined, undefined, [], categories.map(c => ({ ...c, necessity: null })));
+            const { element } = await render(
+                split,
+                undefined,
+                undefined,
+                [],
+                categories.map(c => ({ ...c, necessity: null }))
+            );
 
             expect(subheaders(element)).toEqual([]);
             expect(sectionRows(element, 'Expenses')[0]).toBe('🏠 Rent $1,500.00');

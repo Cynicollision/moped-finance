@@ -25,7 +25,12 @@ describe('ConfirmModalComponent', () => {
     }
 
     it('APP-2.4 should name the action and show a destructive confirm button in the error color', () => {
-        const element = render({ title: 'Delete Transaction', message: 'Are you sure?', confirmLabel: 'Delete', isWarn: true });
+        const element = render({
+            title: 'Delete Transaction',
+            message: 'Are you sure?',
+            confirmLabel: 'Delete',
+            isWarn: true
+        });
 
         expect(element.textContent).toContain('Delete Transaction');
         expect(confirmButton(element).textContent?.trim()).toBe('Delete');

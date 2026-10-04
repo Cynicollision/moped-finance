@@ -28,7 +28,13 @@ export class MoneyComponent {
 
     readonly text = computed(() => {
         const amount = this.amount();
-        const size = formatCurrency(Math.abs(amount), this.locale, getCurrencySymbol('USD', 'narrow', this.locale), 'USD', this.digits());
+        const size = formatCurrency(
+            Math.abs(amount),
+            this.locale,
+            getCurrencySymbol('USD', 'narrow', this.locale),
+            'USD',
+            this.digits()
+        );
         if (this.tone() === 'transaction') {
             return amount > 0 ? `+${size}` : size;
         }

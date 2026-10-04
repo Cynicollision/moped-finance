@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { OperationStatus } from '@shared/core/enum'
+import { OperationStatus } from '@shared/core/enum';
 import { UserContext } from '@server/auth';
 import { DatabaseErrorUtil } from '@server/data';
 import { IAppLogger } from '@server/logging';
@@ -9,7 +9,7 @@ import { Result } from './result-factory';
 export type OperationDefinition = {
     domain: string;
     operation: string;
-}
+};
 
 export interface ResultFileMeta {
     fileName: string;
@@ -37,7 +37,9 @@ export type RequestSchemas = {
 };
 
 type ParsedPart<S, K extends keyof RequestSchemas> = S extends { [P in K]: infer Schema }
-    ? (Schema extends z.ZodType ? z.output<Schema> : undefined)
+    ? Schema extends z.ZodType
+        ? z.output<Schema>
+        : undefined
     : undefined;
 
 /** The parsed, typed request parts handed to an operation; a part without a schema is `undefined`. */
@@ -47,12 +49,15 @@ export type RequestInput<S extends RequestSchemas> = {
     body: ParsedPart<S, 'body'>;
 };
 
-type Operation<T, S extends RequestSchemas> = (context: OperationContext, input: RequestInput<S>) => Promise<OperationResult<T>>;
+type Operation<T, S extends RequestSchemas> = (
+    context: OperationContext,
+    input: RequestInput<S>
+) => Promise<OperationResult<T>>;
 
 const requestPartNames: Record<keyof RequestSchemas, string> = {
     params: 'params',
     query: 'query params',
-    body: 'body',
+    body: 'body'
 };
 
 export class OperationContext {
@@ -72,20 +77,37 @@ export class OperationContext {
 }
 
 export class OperationHandler {
-
-    constructor(private logger: IAppLogger) {
-    }
+    constructor(private logger: IAppLogger) {}
 
     /**
      * Runs an operation and sends its result. When `schemas` are given, the matching request parts are
      * parsed first: a failure is a 400 naming each invalid field, and the operation receives the parsed
      * values (with coercions, defaults and transforms applied) as `input`. The request itself isn't modified.
      */
-    execute<T>(req: Request, res: Response, operationDef: OperationDefinition, operation: Operation<T, {}>): Promise<OperationResult<T>>;
-    execute<T, S extends RequestSchemas>(req: Request, res: Response, operationDef: OperationDefinition, schemas: S, operation: Operation<T, S>): Promise<OperationResult<T>>;
-    async execute<T>(req: Request, res: Response, operationDef: OperationDefinition, schemasOrOperation: RequestSchemas | Operation<T, {}>, maybeOperation?: Operation<T, RequestSchemas>): Promise<OperationResult<T>> {
+    execute<T>(
+        req: Request,
+        res: Response,
+        operationDef: OperationDefinition,
+        operation: Operation<T, {}>
+    ): Promise<OperationResult<T>>;
+    execute<T, S extends RequestSchemas>(
+        req: Request,
+        res: Response,
+        operationDef: OperationDefinition,
+        schemas: S,
+        operation: Operation<T, S>
+    ): Promise<OperationResult<T>>;
+    async execute<T>(
+        req: Request,
+        res: Response,
+        operationDef: OperationDefinition,
+        schemasOrOperation: RequestSchemas | Operation<T, {}>,
+        maybeOperation?: Operation<T, RequestSchemas>
+    ): Promise<OperationResult<T>> {
         const schemas = typeof schemasOrOperation === 'function' ? {} : schemasOrOperation;
-        const operation = (typeof schemasOrOperation === 'function' ? schemasOrOperation : maybeOperation!) as Operation<T, RequestSchemas>;
+        const operation = (
+            typeof schemasOrOperation === 'function' ? schemasOrOperation : maybeOperation!
+        ) as Operation<T, RequestSchemas>;
 
         const context = new OperationContext(operationDef, req);
         const userId = context.user.getId();
@@ -103,14 +125,12 @@ export class OperationHandler {
 
             if (!result.success) {
                 this.logger.warn(userId, `Operation failed: ${result.error?.message}`, context);
-            }
-            else {
+            } else {
                 this.logger.info(userId, 'Successfully completed operation', context);
             }
 
             return this.sendResult(res, result);
-        }
-        catch (error: any) {
+        } catch (error: any) {
             const constraintError = DatabaseErrorUtil.getConstraintViolation(error);
             if (constraintError) {
                 this.logger.warn(userId, `Operation failed: ${constraintError.message}`, context);
@@ -122,7 +142,11 @@ export class OperationHandler {
         }
     }
 
-    private parseRequest(req: Request, operationDef: OperationDefinition, schemas: RequestSchemas): { success: true, input: RequestInput<RequestSchemas> } | { success: false, message: string } {
+    private parseRequest(
+        req: Request,
+        operationDef: OperationDefinition,
+        schemas: RequestSchemas
+    ): { success: true; input: RequestInput<RequestSchemas> } | { success: false; message: string } {
         const input: Record<string, unknown> = { params: undefined, query: undefined, body: undefined };
 
         for (const part of Object.keys(requestPartNames) as (keyof RequestSchemas)[]) {
@@ -134,7 +158,10 @@ export class OperationHandler {
             const result = schema.safeParse(req[part]);
             if (!result.success) {
                 const issues = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
-                return { success: false, message: `Invalid ${operationDef.domain} request ${requestPartNames[part]}: ${issues}` };
+                return {
+                    success: false,
+                    message: `Invalid ${operationDef.domain} request ${requestPartNames[part]}: ${issues}`
+                };
             }
 
             input[part] = result.data;
@@ -178,16 +205,13 @@ export class OperationHandler {
             res.setHeader('Content-Type', result.file.contentType);
             res.attachment(result.file.fileName);
             res.send(result.data);
-        }
-        else if (result.success) {
+        } else if (result.success) {
             if (result.data !== undefined) {
                 res.status(statusCode).json(result.data);
-            }
-            else {
+            } else {
                 res.status(statusCode).send();
             }
-        }
-        else {
+        } else {
             res.status(statusCode).json(result.error);
         }
 

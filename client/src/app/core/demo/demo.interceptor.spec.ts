@@ -37,7 +37,7 @@ describe('demoInterceptor', () => {
         return response as Promise<T>;
     }
 
-    it('APP-4.2 should answer a signed-out visitor\'s session check with no user, not an error', async () => {
+    it("APP-4.2 should answer a signed-out visitor's session check with no user, not an error", async () => {
         const { get } = setup();
 
         expect(await get('/auth/me')).toBeNull();

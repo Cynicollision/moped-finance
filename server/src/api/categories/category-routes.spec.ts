@@ -49,8 +49,12 @@ describe('Category Routes', () => {
     // ---------------------------------------------------------
     describe('GET /categories/groups', () => {
         it('should return a list of category groups', async () => {
-            const g1 = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' }));
-            const g2 = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Bills' }));
+            const g1 = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' })
+            );
+            const g2 = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Bills' })
+            );
 
             const response = await request(app).get('/categories/groups');
 
@@ -62,7 +66,9 @@ describe('Category Routes', () => {
 
     describe('GET /categories/groups/:id', () => {
         it('should return a single category group', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' })
+            );
 
             const response = await request(app).get(`/categories/groups/${group.id}`);
 
@@ -100,7 +106,9 @@ describe('Category Routes', () => {
 
     describe('PUT /categories/groups/:id', () => {
         it('should update a category group', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Old Name' }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Old Name' })
+            );
 
             const payload = { ...group, name: 'New Name' };
             const response = await request(app).put(`/categories/groups/${group.id}`).send(payload);
@@ -113,20 +121,35 @@ describe('Category Routes', () => {
         });
 
         it('CAT-1.14 should refuse to change the type of a group that has categories', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' }));
-            await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Paycheck', icon: 'cash', isActive: true }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' })
+            );
+            await categoriesData.insert(
+                FinanceEntityFactory.createCategory({
+                    groupId: group.id!,
+                    name: 'Paycheck',
+                    icon: 'cash',
+                    isActive: true
+                })
+            );
 
-            const response = await request(app).put(`/categories/groups/${group.id}`).send({ ...group, type: CategoryType.Expense });
+            const response = await request(app)
+                .put(`/categories/groups/${group.id}`)
+                .send({ ...group, type: CategoryType.Expense });
 
             expect(response.status).toBe(400);
-            expect(response.body.message).toBe('A category group\'s type can\'t be changed while it has categories.');
+            expect(response.body.message).toBe("A category group's type can't be changed while it has categories.");
             expect((await groupsData.retrieveSingle(group.id!))?.type).toBe(CategoryType.Income);
         });
 
         it('CAT-1.14 should change the type of an empty group', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' })
+            );
 
-            const response = await request(app).put(`/categories/groups/${group.id}`).send({ ...group, type: CategoryType.Expense });
+            const response = await request(app)
+                .put(`/categories/groups/${group.id}`)
+                .send({ ...group, type: CategoryType.Expense });
 
             expect(response.status).toBe(200);
             expect((await groupsData.retrieveSingle(group.id!))?.type).toBe(CategoryType.Expense);
@@ -135,7 +158,9 @@ describe('Category Routes', () => {
 
     describe('DELETE /categories/groups/:id', () => {
         it('should delete a category group', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' })
+            );
 
             const response = await request(app).delete(`/categories/groups/${group.id}`);
 
@@ -146,13 +171,25 @@ describe('Category Routes', () => {
         });
 
         it('APP-5.5 should refuse to delete a group that still has categories', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Food' }));
-            await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Groceries', icon: 'apple', isActive: true }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Food' })
+            );
+            await categoriesData.insert(
+                FinanceEntityFactory.createCategory({
+                    groupId: group.id!,
+                    name: 'Groceries',
+                    icon: 'apple',
+                    isActive: true
+                })
+            );
 
             const response = await request(app).delete(`/categories/groups/${group.id}`);
 
             expect(response.status).toBe(400);
-            expect(response.body).toEqual({ code: 'IN_USE', message: 'Cannot delete a category group that still has categories.' });
+            expect(response.body).toEqual({
+                code: 'IN_USE',
+                message: 'Cannot delete a category group that still has categories.'
+            });
             expect(await groupsData.retrieveSingle(group.id!)).not.toBeNull();
         });
     });
@@ -162,8 +199,12 @@ describe('Category Routes', () => {
     // ---------------------------------------------------------
     describe('GET /categories', () => {
         it('should return a list of categories', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
+            );
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true })
+            );
 
             const response = await request(app).get('/categories');
 
@@ -182,8 +223,12 @@ describe('Category Routes', () => {
 
     describe('GET /categories/:id', () => {
         it('should return a single category', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
+            );
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true })
+            );
 
             const response = await request(app).get(`/categories/${category.id}`);
 
@@ -194,7 +239,9 @@ describe('Category Routes', () => {
 
     describe('POST /categories', () => {
         it('should create a new category', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
+            );
 
             const payload = {
                 groupId: group.id,
@@ -214,11 +261,17 @@ describe('Category Routes', () => {
         });
 
         it('CAT-5.3 should refuse to name a category Uncategorized', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Other', icon: '❔', isActive: true }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' })
+            );
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Other', icon: '❔', isActive: true })
+            );
             const refusal = 'Uncategorized is reserved for transactions without a category.';
 
-            const created = await request(app).post('/categories').send({ groupId: group.id, icon: '❔', name: ' uncategorized ', isActive: true });
+            const created = await request(app)
+                .post('/categories')
+                .send({ groupId: group.id, icon: '❔', name: ' uncategorized ', isActive: true });
             const renamed = await request(app).put(`/categories/${category.id}`).send({ name: 'Uncategorized' });
 
             expect([created.status, created.body.message]).toEqual([400, refusal]);
@@ -226,10 +279,21 @@ describe('Category Routes', () => {
         });
 
         it('CAT-5.3 should let a category from before CAT-5 keep the name Uncategorized', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Uncategorized', icon: '❔', isActive: true }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' })
+            );
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({
+                    groupId: group.id!,
+                    name: 'Uncategorized',
+                    icon: '❔',
+                    isActive: true
+                })
+            );
 
-            const response = await request(app).put(`/categories/${category.id}`).send({ ...category, icon: '❓' });
+            const response = await request(app)
+                .put(`/categories/${category.id}`)
+                .send({ ...category, icon: '❓' });
 
             expect(response.status).toBe(200);
         });
@@ -246,8 +310,12 @@ describe('Category Routes', () => {
 
     describe('PUT /categories/:id', () => {
         it('should update a category', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
+            );
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true })
+            );
 
             const payload = { ...category, name: 'New Rent' };
             const response = await request(app).put(`/categories/${category.id}`).send(payload);
@@ -270,8 +338,12 @@ describe('Category Routes', () => {
         it('CAT-3.1 should save an expense category with or without a necessity', async () => {
             const food = await groupOf(CategoryType.Expense, 'Food');
 
-            const withOne = await request(app).post('/categories').send({ groupId: food.id, icon: '🛒', name: 'Groceries', necessity: CategoryNecessity.Essential });
-            const without = await request(app).post('/categories').send({ groupId: food.id, icon: '☕', name: 'Coffee' });
+            const withOne = await request(app)
+                .post('/categories')
+                .send({ groupId: food.id, icon: '🛒', name: 'Groceries', necessity: CategoryNecessity.Essential });
+            const without = await request(app)
+                .post('/categories')
+                .send({ groupId: food.id, icon: '☕', name: 'Coffee' });
 
             expect(withOne.status).toBe(201);
             expect(withOne.body.necessity).toBe(CategoryNecessity.Essential);
@@ -282,10 +354,16 @@ describe('Category Routes', () => {
         it('CAT-3.4 should refuse a necessity on an income or transfer category', async () => {
             const work = await groupOf(CategoryType.Income, 'Work');
             const transfers = await groupOf(CategoryType.Transfer, 'Transfers');
-            const pay = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: work.id, name: 'Paycheck', icon: '💼', isActive: true }));
+            const pay = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: work.id, name: 'Paycheck', icon: '💼', isActive: true })
+            );
 
-            const create = await request(app).post('/categories').send({ groupId: transfers.id, icon: '💳', name: 'Card', necessity: CategoryNecessity.Essential });
-            const update = await request(app).put(`/categories/${pay.id}`).send({ necessity: CategoryNecessity.Discretionary });
+            const create = await request(app)
+                .post('/categories')
+                .send({ groupId: transfers.id, icon: '💳', name: 'Card', necessity: CategoryNecessity.Essential });
+            const update = await request(app)
+                .put(`/categories/${pay.id}`)
+                .send({ necessity: CategoryNecessity.Discretionary });
 
             expect(create.status).toBe(400);
             expect(create.body).toEqual(refusal);
@@ -297,7 +375,9 @@ describe('Category Routes', () => {
         it('CAT-3.4 should refuse an unknown necessity', async () => {
             const food = await groupOf(CategoryType.Expense, 'Food');
 
-            const response = await request(app).post('/categories').send({ groupId: food.id, icon: '🛒', name: 'Groceries', necessity: 'optional' });
+            const response = await request(app)
+                .post('/categories')
+                .send({ groupId: food.id, icon: '🛒', name: 'Groceries', necessity: 'optional' });
 
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('necessity');
@@ -306,12 +386,20 @@ describe('Category Routes', () => {
         it('CAT-1.17 should clear the necessity of a category moved out of Expense', async () => {
             const food = await groupOf(CategoryType.Expense, 'Food');
             const transfers = await groupOf(CategoryType.Transfer, 'Transfers');
-            const card = await categoriesData.insert(FinanceEntityFactory.createCategory({
-                groupId: food.id, name: 'Card', icon: '💳', isActive: true, necessity: CategoryNecessity.Discretionary
-            }));
+            const card = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({
+                    groupId: food.id,
+                    name: 'Card',
+                    icon: '💳',
+                    isActive: true,
+                    necessity: CategoryNecessity.Discretionary
+                })
+            );
 
             // Sent back unchanged, as a client that edits the whole record does.
-            const response = await request(app).put(`/categories/${card.id}`).send({ ...card, groupId: transfers.id });
+            const response = await request(app)
+                .put(`/categories/${card.id}`)
+                .send({ ...card, groupId: transfers.id });
 
             expect(response.status).toBe(200);
             expect(response.body.necessity).toBeNull();
@@ -320,9 +408,15 @@ describe('Category Routes', () => {
 
         it('CAT-3.1 should keep a necessity that an update leaves out', async () => {
             const food = await groupOf(CategoryType.Expense, 'Food');
-            const rent = await categoriesData.insert(FinanceEntityFactory.createCategory({
-                groupId: food.id, name: 'Rent', icon: '🏠', isActive: true, necessity: CategoryNecessity.Essential
-            }));
+            const rent = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({
+                    groupId: food.id,
+                    name: 'Rent',
+                    icon: '🏠',
+                    isActive: true,
+                    necessity: CategoryNecessity.Essential
+                })
+            );
 
             const response = await request(app).put(`/categories/${rent.id}`).send({ name: 'Mortgage' });
 
@@ -333,8 +427,12 @@ describe('Category Routes', () => {
 
     describe('DELETE /categories/:id', () => {
         it('should delete a category', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
+            );
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true })
+            );
 
             const response = await request(app).delete(`/categories/${category.id}`);
 
@@ -345,18 +443,28 @@ describe('Category Routes', () => {
         });
 
         it('CAT-4.5 should refuse to delete a category used by a budget stream', async () => {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' }));
-            const category = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true }));
-            await new FinanceBudgetStreamData(dbClient).insert(FinanceEntityFactory.createBudgetStream({
-                categoryId: category.id!, name: 'Rent', recurrence: CalendarPeriod.Monthly, amount: 1500
-            }));
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
+            );
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true })
+            );
+            await new FinanceBudgetStreamData(dbClient).insert(
+                FinanceEntityFactory.createBudgetStream({
+                    categoryId: category.id!,
+                    name: 'Rent',
+                    recurrence: CalendarPeriod.Monthly,
+                    amount: 1500
+                })
+            );
 
             const response = await request(app).delete(`/categories/${category.id}`);
 
             expect(response.status).toBe(400);
             expect(response.body).toEqual({
                 code: 'IN_USE',
-                message: 'This category is used in a budget stream, which must be deleted or assigned to a different category first.'
+                message:
+                    'This category is used in a budget stream, which must be deleted or assigned to a different category first.'
             });
             expect(await categoriesData.retrieveSingle(category.id!)).not.toBeNull();
         });

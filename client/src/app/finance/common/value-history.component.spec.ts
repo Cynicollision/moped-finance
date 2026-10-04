@@ -7,14 +7,17 @@ import { FinanceValueHistoryComponent } from './value-history.component';
 describe('FinanceValueHistoryComponent', () => {
     function create(dates: string[]) {
         const fixture = TestBed.createComponent(FinanceValueHistoryComponent);
-        fixture.componentRef.setInput('historyData', dates.map(date => ({ date, amount: 1, type: ValueHistoryType.NetWorth })));
+        fixture.componentRef.setInput(
+            'historyData',
+            dates.map(date => ({ date, amount: 1, type: ValueHistoryType.NetWorth }))
+        );
         fixture.componentRef.setInput('chartTypeOptions', []);
         fixture.componentRef.setInput('selectedChartType', ValueHistoryType.NetWorth);
         fixture.componentRef.setInput('selectedTimeframe', HistoryTimeframe.PastThirtyDays);
         return fixture.componentInstance;
     }
 
-    it('DASH-1.1 should label the chart with each entry\'s own date, oldest first', () => {
+    it("DASH-1.1 should label the chart with each entry's own date, oldest first", () => {
         const history = create(['2026-05-02', '2026-04-30', '2026-05-01']);
 
         expect(history.chartConfig()!.data.labels).toEqual(['Apr 30', 'May 1', 'May 2']);
@@ -23,10 +26,10 @@ describe('FinanceValueHistoryComponent', () => {
     it('DASH-1.1 should label by month over more than six months', () => {
         const history = create(['2026-05-01', '2025-06-01']);
 
-        expect(history.chartConfig()!.data.labels).toEqual(['Jun \'25', 'May \'26']);
+        expect(history.chartConfig()!.data.labels).toEqual(["Jun '25", "May '26"]);
     });
 
-    async function render(chartTypeOptions: { value: ValueHistoryType, label: string }[]) {
+    async function render(chartTypeOptions: { value: ValueHistoryType; label: string }[]) {
         const fixture = TestBed.createComponent(FinanceValueHistoryComponent);
         fixture.componentRef.setInput('historyData', [
             { date: '2026-05-01', amount: 1, type: ValueHistoryType.NetWorth },
@@ -57,7 +60,11 @@ describe('FinanceValueHistoryComponent', () => {
         title.click();
         await fixture.whenStable();
         const items = Array.from(document.querySelectorAll<HTMLElement>('.mat-mdc-menu-item'));
-        expect(items.map(item => item.querySelector('span')!.textContent)).toEqual(['Net Worth', 'Total Assets', 'Total Liabilities']);
+        expect(items.map(item => item.querySelector('span')!.textContent)).toEqual([
+            'Net Worth',
+            'Total Assets',
+            'Total Liabilities'
+        ]);
         items[1].click();
 
         expect(chosen).toEqual([ValueHistoryType.Assets]);
@@ -77,10 +84,21 @@ describe('FinanceValueHistoryComponent', () => {
         fixture.componentInstance.timeframeChange.subscribe(timeframe => chosen.push(timeframe));
 
         const toggles = Array.from(element.querySelectorAll<HTMLButtonElement>('.timeframes button'));
-        expect(toggles.map(toggle => toggle.textContent!.trim())).toEqual(['30D', '60D', '90D', 'YTD', '1Y', '2Y', '5Y', '10Y', 'All']);
+        expect(toggles.map(toggle => toggle.textContent!.trim())).toEqual([
+            '30D',
+            '60D',
+            '90D',
+            'YTD',
+            '1Y',
+            '2Y',
+            '5Y',
+            '10Y',
+            'All'
+        ]);
         expect(toggles[4].getAttribute('aria-label')).toBe('Past Year');
-        expect(element.querySelector('.chart-wrapper')!.compareDocumentPosition(element.querySelector('.timeframes')!))
-            .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+        expect(
+            element.querySelector('.chart-wrapper')!.compareDocumentPosition(element.querySelector('.timeframes')!)
+        ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 
         toggles[4].click();
 

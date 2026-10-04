@@ -25,7 +25,7 @@ function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number
         name: row.name,
         category: row.category as AccountCategory,
         group: row.group as AccountGroup,
-        type: (row.type as AccountType | null),
+        type: row.type as AccountType | null,
         isHidden: row.isHidden,
         isManual: row.isManual,
         isRetirement: row.isRetirement,
@@ -42,7 +42,8 @@ export class FinanceAccountData implements IFinanceAccountData {
     }
 
     private getLatestBalanceSubquery() {
-        return this.db.select({ balance: balanceHistorySchema.balance })
+        return this.db
+            .select({ balance: balanceHistorySchema.balance })
             .from(balanceHistorySchema)
             .where(eq(balanceHistorySchema.accountId, accountSchema.id))
             .orderBy(desc(balanceHistorySchema.date))
@@ -89,7 +90,8 @@ export class FinanceAccountData implements IFinanceAccountData {
     }
 
     public async insert(account: Account): Promise<Account> {
-        const rows = await this.db.insert(accountSchema)
+        const rows = await this.db
+            .insert(accountSchema)
             .values({
                 id: account.id,
                 institutionId: account.institutionId,
@@ -108,7 +110,8 @@ export class FinanceAccountData implements IFinanceAccountData {
     }
 
     public async update(account: Account): Promise<Account | null> {
-        const rows = await this.db.update(accountSchema)
+        const rows = await this.db
+            .update(accountSchema)
             .set({
                 institutionId: account.institutionId,
                 name: account.name,
@@ -121,7 +124,7 @@ export class FinanceAccountData implements IFinanceAccountData {
                 hideFromSpending: account.hideFromSpending,
                 updatedAt: DateTimeUtil.now()
             })
-            .where((eq(accountSchema.id, account.id)))
+            .where(eq(accountSchema.id, account.id))
             .returning();
 
         if (rows.length === 0) {
@@ -137,8 +140,9 @@ export class FinanceAccountData implements IFinanceAccountData {
     }
 
     public async delete(id: string): Promise<boolean> {
-        const result = await this.db.delete(accountSchema)
-            .where((eq(accountSchema.id, id)))
+        const result = await this.db
+            .delete(accountSchema)
+            .where(eq(accountSchema.id, id))
             .returning({ id: accountSchema.id });
 
         return result.length > 0;

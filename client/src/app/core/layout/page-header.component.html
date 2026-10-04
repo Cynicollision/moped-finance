@@ -3,7 +3,9 @@
         <nav class="crumbs" aria-label="Breadcrumb">
             <ol>
                 @for (crumb of crumbs(); track $index) {
-                    <li><a [routerLink]="crumb.link">{{ crumb.label }}</a></li>
+                    <li>
+                        <a [routerLink]="crumb.link">{{ crumb.label }}</a>
+                    </li>
                 }
             </ol>
         </nav>

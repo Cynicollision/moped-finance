@@ -12,7 +12,7 @@ import { PageTitleStrategy } from './core/layout/page-title.strategy';
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: ''
 })
-class StubScreenComponent { }
+class StubScreenComponent {}
 
 // The app's routes with every screen swapped for an empty one, so navigation runs the real paths, guards,
 // redirects and titles without the screens loading data.
@@ -32,7 +32,10 @@ describe('app routes', () => {
             providers: [
                 provideRouter(withStubScreens(routes)),
                 { provide: TitleStrategy, useClass: PageTitleStrategy },
-                { provide: AuthService, useValue: { currentUser: signal({ id: '1', displayName: 'Ada', username: 'ada' }) } }
+                {
+                    provide: AuthService,
+                    useValue: { currentUser: signal({ id: '1', displayName: 'Ada', username: 'ada' }) }
+                }
             ]
         });
         harness = await RouterTestingHarness.create();

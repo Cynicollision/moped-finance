@@ -10,6 +10,4 @@ export const Environment = {
     devPassword: 'password'
 };
 
-export const envProviders: (Provider | EnvironmentProviders)[] = [
-    provideHttpClient()
-];
+export const envProviders: (Provider | EnvironmentProviders)[] = [provideHttpClient()];

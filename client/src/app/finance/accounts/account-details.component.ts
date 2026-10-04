@@ -25,7 +25,21 @@ import { FinanceService } from './../finance.service';
 @Component({
     selector: 'app-finance-accounts',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DatePipe, FinanceValueHistoryComponent, RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, MatDividerModule, PageHeaderComponent, CardSkeletonComponent, LoadErrorComponent, ListModule, MoneyComponent],
+    imports: [
+        DatePipe,
+        FinanceValueHistoryComponent,
+        RouterLink,
+        MatButtonModule,
+        MatCardModule,
+        MatIconModule,
+        MatMenuModule,
+        MatDividerModule,
+        PageHeaderComponent,
+        CardSkeletonComponent,
+        LoadErrorComponent,
+        ListModule,
+        MoneyComponent
+    ],
     templateUrl: './account-details.component.html',
     styleUrl: './account-details.component.scss'
 })
@@ -63,15 +77,22 @@ export class FinanceAccountDetailsComponent {
 
     // The chart reloads when the timeframe changes, keeping the old one on screen meanwhile (ACCT-2.4).
     readonly balances = viewResource({
-        params: () => this.accountId ? { accountId: this.accountId, timeframe: this.selectedTimeframe() } : undefined,
+        params: () => (this.accountId ? { accountId: this.accountId, timeframe: this.selectedTimeframe() } : undefined),
         loader: ({ accountId, timeframe }) =>
-            this.financeService.fetchAccountBalanceHistory(accountId, { asOfDate: this.dateProvider.today(), timeframe })
+            this.financeService.fetchAccountBalanceHistory(accountId, {
+                asOfDate: this.dateProvider.today(),
+                timeframe
+            })
     });
 
     readonly account = computed(() => this.details.value()?.account);
     readonly transactions = computed<Transaction[]>(() => this.details.value()?.transactions ?? []);
-    private readonly categoryMap = computed(() => new Map((this.details.value()?.categories ?? []).map(c => [c.id, c])));
-    private readonly institutionMap = computed(() => new Map((this.details.value()?.institutions ?? []).map(i => [i.id, i])));
+    private readonly categoryMap = computed(
+        () => new Map((this.details.value()?.categories ?? []).map(c => [c.id, c]))
+    );
+    private readonly institutionMap = computed(
+        () => new Map((this.details.value()?.institutions ?? []).map(i => [i.id, i]))
+    );
 
     readonly isRefreshing = computed(() => this.details.isRefreshing() || this.balances.isRefreshing());
 
@@ -99,10 +120,12 @@ export class FinanceAccountDetailsComponent {
 
     readonly chartTypeOptions = computed(() => {
         const type = this.derivedChartType();
-        return [{
-            value: type,
-            label: type === ValueHistoryType.Liabilities ? 'Total Liabilities' : 'Total Assets'
-        }];
+        return [
+            {
+                value: type,
+                label: type === ValueHistoryType.Liabilities ? 'Total Liabilities' : 'Total Assets'
+            }
+        ];
     });
 
     getCategoryName(id: string): string {
@@ -160,7 +183,7 @@ export class FinanceAccountDetailsComponent {
             confirmLabel: 'Delete',
             isWarn: true
         });
-        if (confirmed && await this.financeService.deleteAccount(account.id)) {
+        if (confirmed && (await this.financeService.deleteAccount(account.id))) {
             this.notificationService.success('Account deleted');
             this.router.navigate(['/dashboard']);
         }

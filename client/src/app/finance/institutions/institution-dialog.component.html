@@ -2,7 +2,7 @@
     <form id="institution-form" [formGroup]="form" (ngSubmit)="save()">
         <mat-form-field appearance="outline" class="full-width">
             <mat-label>Name</mat-label>
-            <input matInput formControlName="name" maxlength="100">
+            <input matInput formControlName="name" maxlength="100" />
             @if (form.controls.name.hasError('required')) {
                 <mat-error>Name is required</mat-error>
             }

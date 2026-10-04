@@ -3,7 +3,6 @@ import { DateTimeUtil } from '@server/utility';
 import { OperationResult } from './operation';
 
 export class Result {
-
     public static success<T>(data?: T): OperationResult<T> {
         return {
             success: true,
@@ -66,7 +65,10 @@ export class Result {
         };
     }
 
-    public static userErrorNotFound<T>(message: string = 'Resource not found', code: string = 'NOT_FOUND'): OperationResult<T> {
+    public static userErrorNotFound<T>(
+        message: string = 'Resource not found',
+        code: string = 'NOT_FOUND'
+    ): OperationResult<T> {
         return {
             success: false,
             status: OperationStatus.NotFound,
@@ -78,7 +80,10 @@ export class Result {
         };
     }
 
-    public static unauthorized<T>(message: string = 'Not authorized', code: string = 'UNAUTHORIZED'): OperationResult<T> {
+    public static unauthorized<T>(
+        message: string = 'Not authorized',
+        code: string = 'UNAUTHORIZED'
+    ): OperationResult<T> {
         return {
             success: false,
             status: OperationStatus.Unauthorized,
@@ -102,7 +107,10 @@ export class Result {
         };
     }
 
-    public static internalError<T>(message: string = 'An unexpected error occurred', code: string = 'INTERNAL_ERROR'): OperationResult<T> {
+    public static internalError<T>(
+        message: string = 'An unexpected error occurred',
+        code: string = 'INTERNAL_ERROR'
+    ): OperationResult<T> {
         return {
             success: false,
             status: OperationStatus.UnhandledError,

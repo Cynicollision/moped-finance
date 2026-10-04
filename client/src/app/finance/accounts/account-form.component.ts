@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnChanges, SimpleChanges, input, output, signal } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    OnInit,
+    OnChanges,
+    SimpleChanges,
+    input,
+    output,
+    signal
+} from '@angular/core';
 import { FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -43,7 +52,10 @@ export class AccountFormComponent implements OnInit, OnChanges {
     readonly accountForm = new FormGroup({
         name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
         institutionId: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-        category: new FormControl<AccountCategory>(AccountCategory.Asset, { nonNullable: true, validators: [Validators.required] }),
+        category: new FormControl<AccountCategory>(AccountCategory.Asset, {
+            nonNullable: true,
+            validators: [Validators.required]
+        }),
         group: new FormControl<AccountGroup | null>(AccountGroup.Cash, { validators: [Validators.required] }),
         // Null for groups that have no account types (credit cards).
         type: new FormControl<AccountType | null>(AccountType.Checking),
@@ -72,18 +84,20 @@ export class AccountFormComponent implements OnInit, OnChanges {
             this.updateAvailableGroups(account.category);
             this.updateAvailableTypes(account.group);
 
-            this.accountForm.patchValue({
-                name: account.name,
-                institutionId: account.institutionId,
-                category: account.category,
-                group: account.group,
-                type: account.type,
-                isHidden: account.isHidden,
-                isRetirement: account.isRetirement,
-                hideFromSpending: account.hideFromSpending
-            }, { emitEvent: false });
-        }
-        else {
+            this.accountForm.patchValue(
+                {
+                    name: account.name,
+                    institutionId: account.institutionId,
+                    category: account.category,
+                    group: account.group,
+                    type: account.type,
+                    isHidden: account.isHidden,
+                    isRetirement: account.isRetirement,
+                    hideFromSpending: account.hideFromSpending
+                },
+                { emitEvent: false }
+            );
+        } else {
             this.updateAvailableGroups(AccountCategory.Asset);
             this.updateAvailableTypes(AccountGroup.Cash);
             this.accountForm.controls.institutionId.setValue(this.defaultInstitutionId() ?? '', { emitEvent: false });
@@ -97,8 +111,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
             const group = this.accountForm.controls.group.value;
             if (groups.length === 0) {
                 this.accountForm.controls.group.setValue(null);
-            }
-            else if (!group || !groups.includes(group)) {
+            } else if (!group || !groups.includes(group)) {
                 this.accountForm.controls.group.setValue(groups[0]);
             }
         });
@@ -109,8 +122,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
             const type = this.accountForm.controls.type.value;
             if (types.length === 0) {
                 this.accountForm.controls.type.setValue(null);
-            }
-            else if (!type || !types.includes(type)) {
+            } else if (!type || !types.includes(type)) {
                 this.accountForm.controls.type.setValue(types[0]);
             }
         });
@@ -119,11 +131,9 @@ export class AccountFormComponent implements OnInit, OnChanges {
     private updateAvailableGroups(category: AccountCategory) {
         if (category === AccountCategory.Asset) {
             this.groups.set([AccountGroup.Cash, AccountGroup.Investment, AccountGroup.RealEstate]);
-        }
-        else if (category === AccountCategory.Liability) {
+        } else if (category === AccountCategory.Liability) {
             this.groups.set([AccountGroup.CreditCard, AccountGroup.Loan]);
-        }
-        else {
+        } else {
             this.groups.set([]);
         }
     }
@@ -137,7 +147,12 @@ export class AccountFormComponent implements OnInit, OnChanges {
             case AccountGroup.Cash:
                 return [AccountType.Checking, AccountType.Savings];
             case AccountGroup.Investment:
-                return [AccountType.Retirement_401k, AccountType.Retirement_IRA, AccountType.Brokerage, AccountType.HSA];
+                return [
+                    AccountType.Retirement_401k,
+                    AccountType.Retirement_IRA,
+                    AccountType.Brokerage,
+                    AccountType.HSA
+                ];
             case AccountGroup.RealEstate:
                 return [AccountType.PrimaryResidence];
             case AccountGroup.Loan:

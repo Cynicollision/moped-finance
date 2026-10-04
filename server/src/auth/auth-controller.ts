@@ -9,7 +9,7 @@ import { IUserData } from './user-data';
 export class AuthController {
     private readonly saltRounds = 10;
 
-    constructor(private userData: IUserData) { }
+    constructor(private userData: IUserData) {}
 
     async loginUser(username: string, password?: string): Promise<OperationResult<User>> {
         if (!password) {
@@ -37,7 +37,7 @@ export class AuthController {
 
     async createUser(username: string, name: string, password: string): Promise<OperationResult<User>> {
         // Single-user app: only the first user can register (AUTH-2.7).
-        if (!await this.isRegistrationOpen()) {
+        if (!(await this.isRegistrationOpen())) {
             return Result.userError('Registration is closed.', 'REGISTRATION_CLOSED');
         }
 
@@ -85,6 +85,6 @@ export class AuthController {
     }
 
     private async isRegistrationOpen(): Promise<boolean> {
-        return await this.userData.retrieveCount() === 0;
+        return (await this.userData.retrieveCount()) === 0;
     }
 }

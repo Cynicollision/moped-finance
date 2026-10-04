@@ -3,7 +3,6 @@ import { CalendarDateUtil } from '@shared/core/util';
 
 /** Instants (timestamps) and "today". Calendar dates (`date` columns, YYYY-MM-DD) use `CalendarDateUtil`. */
 export class DateTimeUtil {
-
     private static readonly systemClock = (): Date => new Date();
     private static clock: () => Date = DateTimeUtil.systemClock;
 

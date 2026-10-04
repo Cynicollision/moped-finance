@@ -39,8 +39,7 @@ export function viewResource<T, P = true>(options: ViewResourceOptions<T, P>): V
                     loaded.set(value);
                 }
                 return value;
-            }
-            catch (error) {
+            } catch (error) {
                 if (!abortSignal.aborted) {
                     loaded.set(undefined);
                 }
@@ -50,12 +49,12 @@ export function viewResource<T, P = true>(options: ViewResourceOptions<T, P>): V
         }
     });
 
-    const value = computed(() => ref.status() === 'error' ? undefined : loaded());
+    const value = computed(() => (ref.status() === 'error' ? undefined : loaded()));
 
     return {
         value,
         isRefreshing: computed(() => ref.isLoading() && value() !== undefined),
-        error: computed(() => ref.status() === 'error' ? ref.error()?.message : undefined),
+        error: computed(() => (ref.status() === 'error' ? ref.error()?.message : undefined)),
         reload: () => {
             ref.reload();
         }

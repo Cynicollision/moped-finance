@@ -108,7 +108,7 @@ export class CategoryGroupFormModalComponent implements HasUnsavedChanges {
             confirmLabel: 'Delete',
             isWarn: true
         });
-        if (confirmed && await this.financeService.deleteCategoryGroup(group.id)) {
+        if (confirmed && (await this.financeService.deleteCategoryGroup(group.id))) {
             this.notificationService.success('Group deleted');
             this.dialogRef.close(true);
         }

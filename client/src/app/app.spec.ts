@@ -17,8 +17,18 @@ describe('App', () => {
             providers: [
                 provideRouter([]),
                 { provide: AuthService, useValue: { currentUser: signal(currentUser), logout: vi.fn() } },
-                { provide: DateProviderService, useValue: { now: () => new Date(2026, 0, 1), today: () => '2026-01-01' } },
-                { provide: LayoutService, useValue: { sizeClass: size, isCompact: computed(() => size() === 'compact'), hasBottomNav: signal(false) } }
+                {
+                    provide: DateProviderService,
+                    useValue: { now: () => new Date(2026, 0, 1), today: () => '2026-01-01' }
+                },
+                {
+                    provide: LayoutService,
+                    useValue: {
+                        sizeClass: size,
+                        isCompact: computed(() => size() === 'compact'),
+                        hasBottomNav: signal(false)
+                    }
+                }
             ]
         });
 
@@ -36,15 +46,24 @@ describe('App', () => {
 
         const nav = element.querySelector('nav[aria-label="Main"]')!;
         expect(navLabels(nav)).toEqual(['Dashboard', 'Transactions', 'Spending', 'Budget']);
-        expect(Array.from(nav.querySelectorAll('a')).map(link => link.getAttribute('href')))
-            .toEqual(['/dashboard', '/transactions', '/spending', '/budget']);
+        expect(Array.from(nav.querySelectorAll('a')).map(link => link.getAttribute('href'))).toEqual([
+            '/dashboard',
+            '/transactions',
+            '/spending',
+            '/budget'
+        ]);
     });
 
     it('APP-1.2 should show a bottom navigation bar on phones', async () => {
         const element = await render('compact');
 
         expect(element.querySelector('mat-sidenav')).toBeNull();
-        expect(navLabels(element.querySelector('nav.bottom-nav')!)).toEqual(['Dashboard', 'Transactions', 'Spending', 'Budget']);
+        expect(navLabels(element.querySelector('nav.bottom-nav')!)).toEqual([
+            'Dashboard',
+            'Transactions',
+            'Spending',
+            'Budget'
+        ]);
     });
 
     it('APP-1.2 should show a navigation rail on tablets, and the side navigation from 840px', async () => {

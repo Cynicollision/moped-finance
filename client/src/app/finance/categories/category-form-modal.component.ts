@@ -62,8 +62,9 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
     });
     readonly isEditing = !!this.data.category;
     /** The groups to choose from: Income, then Expense, then Transfer, each by name (CAT-1.19). */
-    readonly groups = [...this.data.groups].sort((a, b) =>
-        (typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type)) || a.name.localeCompare(b.name));
+    readonly groups = [...this.data.groups].sort(
+        (a, b) => typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type) || a.name.localeCompare(b.name)
+    );
     readonly isSaving = signal(false);
 
     /** Necessity applies only to Expense categories, and is optional (CAT-3.2). */
@@ -72,14 +73,17 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
         { value: CategoryNecessity.Essential, label: 'Essential' },
         { value: CategoryNecessity.Discretionary, label: 'Discretionary' }
     ];
-    private readonly groupId = toSignal(this.form.controls.groupId.valueChanges, { initialValue: this.form.controls.groupId.value });
-    readonly isExpenseGroup = computed(() => this.data.groups.find(g => g.id === this.groupId())?.type === CategoryType.Expense);
+    private readonly groupId = toSignal(this.form.controls.groupId.valueChanges, {
+        initialValue: this.form.controls.groupId.value
+    });
+    readonly isExpenseGroup = computed(
+        () => this.data.groups.find(g => g.id === this.groupId())?.type === CategoryType.Expense
+    );
 
     ngOnInit() {
         if (this.data.category) {
             this.form.patchValue(this.data.category);
-        }
-        else if (this.data.initialGroupId) {
+        } else if (this.data.initialGroupId) {
             this.form.patchValue({ groupId: this.data.initialGroupId });
         }
     }
@@ -97,7 +101,11 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
         const { name, icon, groupId, isActive, necessity } = this.form.getRawValue();
         // Moving a category out of Expense clears its necessity (CAT-1.17).
         const values = {
-            name: name!, icon: icon!, groupId: groupId!, isActive: isActive ?? true, necessity: this.isExpenseGroup() ? necessity : null
+            name: name!,
+            icon: icon!,
+            groupId: groupId!,
+            isActive: isActive ?? true,
+            necessity: this.isExpenseGroup() ? necessity : null
         };
         const saved = this.data.category
             ? await this.financeService.saveCategory({ ...this.data.category, ...values })

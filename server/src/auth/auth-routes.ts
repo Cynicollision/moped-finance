@@ -7,7 +7,12 @@ import { AuthMiddleware } from './auth-middleware';
 import { SESSION_COOKIE_NAME } from './session';
 
 /** `sessionCookie` is the session cookie's options (`SessionUtil.cookieOptions`), which logout clears it with. */
-export function buildAuthRouter(logger: IAppLogger, controller: AuthController, middleware: AuthMiddleware, sessionCookie: CookieOptions) {
+export function buildAuthRouter(
+    logger: IAppLogger,
+    controller: AuthController,
+    middleware: AuthMiddleware,
+    sessionCookie: CookieOptions
+) {
     const domain = 'Auth';
     const handler = new OperationHandler(logger);
     const router = Router();
@@ -83,14 +88,14 @@ export function buildAuthRouter(logger: IAppLogger, controller: AuthController, 
     // POST /logout - Logout
     router.post('/logout', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'logout' };
-        handler.execute(req, res, op, async (context) => {
+        handler.execute(req, res, op, async context => {
             const session = context.req.session;
             if (!session) {
                 return Result.success();
             }
 
-            return new Promise<OperationResult<void>>((resolve) => {
-                session.destroy((err) => {
+            return new Promise<OperationResult<void>>(resolve => {
+                session.destroy(err => {
                     if (err) {
                         return resolve(Result.internalError('Could not log out.'));
                     }
@@ -107,7 +112,7 @@ export function buildAuthRouter(logger: IAppLogger, controller: AuthController, 
     // GET /me - Get Current User
     router.get('/me', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'me' };
-        handler.execute(req, res, op, async (context) => {
+        handler.execute(req, res, op, async context => {
             return Result.success(context.req.session.user);
         });
     });

@@ -46,7 +46,7 @@ export class NewApiTokenDialogComponent implements HasUnsavedChanges {
         { value: ApiTokenAccess.ReadOnly, label: 'Read-only' },
         { value: ApiTokenAccess.ReadWrite, label: 'Read & write' }
     ];
-    readonly expirationOptions: { days: number | null, label: string }[] = [
+    readonly expirationOptions: { days: number | null; label: string }[] = [
         { days: 30, label: '30 days' },
         { days: 90, label: '90 days' },
         { days: 365, label: '1 year' },
@@ -93,8 +93,7 @@ export class NewApiTokenDialogComponent implements HasUnsavedChanges {
         // select the text and copy it the older way.
         if (navigator.clipboard) {
             await navigator.clipboard.writeText(token);
-        }
-        else {
+        } else {
             this.tokenInput()?.nativeElement.select();
             document.execCommand('copy');
         }

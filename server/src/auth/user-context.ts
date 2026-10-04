@@ -3,10 +3,9 @@ import { ApiTokenAccess } from '@shared/core/enum';
 import { User } from '@shared/core/types';
 
 export class UserContext {
-
     private static readonly anonymousUserId = 'anonymous';
 
-    private constructor(private req: Request) { }
+    private constructor(private req: Request) {}
 
     static fromRequest(req: Request): UserContext {
         return new UserContext(req);

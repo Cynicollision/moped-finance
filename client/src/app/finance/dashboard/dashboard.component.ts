@@ -86,12 +86,18 @@ export class DashboardComponent {
         loader: ({ accounts, timeframe }) => this.loadGroupChanges(accounts, timeframe)
     });
 
-    readonly groupPeriodChanges = computed(() => this.groupChanges.value() ?? new Map<AccountGroup, ValuePeriodChange>());
+    readonly groupPeriodChanges = computed(
+        () => this.groupChanges.value() ?? new Map<AccountGroup, ValuePeriodChange>()
+    );
 
-    readonly isRefreshing = computed(() =>
-        this.accounts.isRefreshing() || this.history.isRefreshing() || this.groupChanges.isRefreshing());
+    readonly isRefreshing = computed(
+        () => this.accounts.isRefreshing() || this.history.isRefreshing() || this.groupChanges.isRefreshing()
+    );
 
-    private async loadGroupChanges(accounts: Account[], timeframe: HistoryTimeframe): Promise<Map<AccountGroup, ValuePeriodChange>> {
+    private async loadGroupChanges(
+        accounts: Account[],
+        timeframe: HistoryTimeframe
+    ): Promise<Map<AccountGroup, ValuePeriodChange>> {
         const asOfDate = this.dateProvider.today();
         const changes = new Map<AccountGroup, ValuePeriodChange>();
         const groupedAccounts = new Map<AccountGroup, Account[]>();
@@ -105,41 +111,48 @@ export class DashboardComponent {
         }
 
         // Groups load in parallel, like the accounts within each.
-        await Promise.all([...groupedAccounts.entries()].map(async ([group, groupAccounts]) => {
-            let startTotal = 0;
-            let endTotal = 0;
-            let hasData = false;
+        await Promise.all(
+            [...groupedAccounts.entries()].map(async ([group, groupAccounts]) => {
+                let startTotal = 0;
+                let endTotal = 0;
+                let hasData = false;
 
-            await Promise.all(groupAccounts.map(async account => {
-                const history = await this.financeService.fetchAccountBalanceHistory(account.id, { asOfDate, timeframe });
-                if (history && history.length > 0) {
-                    const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date));
-                    startTotal += Number(sorted[0].balance);
-                    endTotal += Number(sorted[sorted.length - 1].balance);
-                    hasData = true;
+                await Promise.all(
+                    groupAccounts.map(async account => {
+                        const history = await this.financeService.fetchAccountBalanceHistory(account.id, {
+                            asOfDate,
+                            timeframe
+                        });
+                        if (history && history.length > 0) {
+                            const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date));
+                            startTotal += Number(sorted[0].balance);
+                            endTotal += Number(sorted[sorted.length - 1].balance);
+                            hasData = true;
+                        }
+                    })
+                );
+
+                if (hasData) {
+                    const changeAmount = endTotal - startTotal;
+                    const changePercentage = startTotal !== 0 ? (changeAmount / Math.abs(startTotal)) * 100 : 0;
+
+                    let isPositive = changeAmount >= 0;
+                    let isGood = isPositive;
+
+                    if (group === AccountGroup.CreditCard || group === AccountGroup.Loan) {
+                        isPositive = changeAmount < 0;
+                        isGood = !isPositive;
+                    }
+
+                    changes.set(group, {
+                        amount: Math.abs(changeAmount),
+                        percentage: Math.abs(changePercentage),
+                        isPositive,
+                        isGood
+                    });
                 }
-            }));
-
-            if (hasData) {
-                const changeAmount = endTotal - startTotal;
-                const changePercentage = startTotal !== 0 ? (changeAmount / Math.abs(startTotal)) * 100 : 0;
-
-                let isPositive = changeAmount >= 0;
-                let isGood = isPositive;
-
-                if (group === AccountGroup.CreditCard || group === AccountGroup.Loan) {
-                    isPositive = changeAmount < 0;
-                    isGood = !isPositive;
-                }
-
-                changes.set(group, {
-                    amount: Math.abs(changeAmount),
-                    percentage: Math.abs(changePercentage),
-                    isPositive,
-                    isGood
-                });
-            }
-        }));
+            })
+        );
 
         return changes;
     }

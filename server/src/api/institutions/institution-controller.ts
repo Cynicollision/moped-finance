@@ -11,10 +11,12 @@ export class InstitutionController {
         private logger: IAppLogger,
         private institutionData: IFinanceInstitutionData,
         private accountData: IFinanceAccountData
-    ) {
-    }
+    ) {}
 
-    public async getInstitution(context: OperationContext, institutionId: string): Promise<OperationResult<Institution>> {
+    public async getInstitution(
+        context: OperationContext,
+        institutionId: string
+    ): Promise<OperationResult<Institution>> {
         const institution = await this.institutionData.retrieveSingle(institutionId);
         if (!institution) {
             return Result.userErrorNotFound();
@@ -27,7 +29,10 @@ export class InstitutionController {
         return Result.success(institutions);
     }
 
-    public async getInstitutionAccounts(context: OperationContext, institutionId: string): Promise<OperationResult<Account[]>> {
+    public async getInstitutionAccounts(
+        context: OperationContext,
+        institutionId: string
+    ): Promise<OperationResult<Account[]>> {
         const current = await this.institutionData.retrieveSingle(institutionId);
         if (!current) {
             return Result.userErrorNotFound();
@@ -37,13 +42,20 @@ export class InstitutionController {
         return Result.success(accounts);
     }
 
-    public async createInstitution(context: OperationContext, input: CreateInstitutionRequest): Promise<OperationResult<Institution>> {
+    public async createInstitution(
+        context: OperationContext,
+        input: CreateInstitutionRequest
+    ): Promise<OperationResult<Institution>> {
         const institution = FinanceEntityFactory.createInstitution(input);
         const created = await this.institutionData.insert(institution);
         return Result.successCreated(created);
     }
 
-    public async updateInstitution(context: OperationContext, institutionId: string, changes: UpdateInstitutionRequest): Promise<OperationResult<Institution>> {
+    public async updateInstitution(
+        context: OperationContext,
+        institutionId: string,
+        changes: UpdateInstitutionRequest
+    ): Promise<OperationResult<Institution>> {
         const current = await this.institutionData.retrieveSingle(institutionId);
         if (!current) {
             return Result.userErrorNotFound();

@@ -27,7 +27,9 @@ class ListHostComponent {
         { key: 'category', label: 'Category', compact: 'secondary' },
         { key: 'amount', label: 'Amount', align: 'end', sort: 'asc', compact: 'trailing' }
     ];
-    readonly rows = [{ id: 1, date: 'May 1', account: 'Checking', merchant: 'FreshMart', category: 'Groceries', amount: '$12.00' }];
+    readonly rows = [
+        { id: 1, date: 'May 1', account: 'Checking', merchant: 'FreshMart', category: 'Groceries', amount: '$12.00' }
+    ];
     readonly sort = signal<ListSort>({ key: 'date', direction: 'desc' });
 }
 
@@ -44,24 +46,40 @@ describe('ListComponent', () => {
         const { list } = await render();
 
         expect(list.style.getPropertyValue('--list-areas')).toBe('"date account merchant category amount"');
-        expect(list.style.getPropertyValue('--list-columns')).toBe('8rem minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)');
-        const headings = Array.from(list.querySelectorAll('.app-list-header .app-list-cell')).map(cell => cell.textContent!.trim());
-        expect(headings).toEqual(['Date arrow_downward', 'Account', 'Merchant arrow_upward', 'Category', 'Amount arrow_upward']);
+        expect(list.style.getPropertyValue('--list-columns')).toBe(
+            '8rem minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)'
+        );
+        const headings = Array.from(list.querySelectorAll('.app-list-header .app-list-cell')).map(cell =>
+            cell.textContent!.trim()
+        );
+        expect(headings).toEqual([
+            'Date arrow_downward',
+            'Account',
+            'Merchant arrow_upward',
+            'Category',
+            'Amount arrow_upward'
+        ]);
     });
 
     it('APP-7.1 should put the primary cell over the secondary ones, and trailing cells beside both, when narrow', async () => {
         const { list } = await render();
 
-        expect(list.style.getPropertyValue('--list-compact-areas')).toBe('"merchant merchant amount" "date category amount"');
+        expect(list.style.getPropertyValue('--list-compact-areas')).toBe(
+            '"merchant merchant amount" "date category amount"'
+        );
         expect(list.style.getPropertyValue('--list-compact-columns')).toBe('auto minmax(0, 1fr) auto');
-        const places = Array.from(list.querySelectorAll('a .app-list-cell')).map(cell => cell.getAttribute('data-compact'));
+        const places = Array.from(list.querySelectorAll('a .app-list-cell')).map(cell =>
+            cell.getAttribute('data-compact')
+        );
         expect(places).toEqual(['secondary', 'hidden', 'primary', 'secondary', 'trailing']);
     });
 
     it('APP-7.2 should sort a newly chosen column in its first direction, and reverse the current one', async () => {
         const { fixture, list } = await render();
-        const heading = (label: string) => Array.from(list.querySelectorAll<HTMLButtonElement>('.app-list-header button'))
-            .find(button => button.textContent!.includes(label))!;
+        const heading = (label: string) =>
+            Array.from(list.querySelectorAll<HTMLButtonElement>('.app-list-header button')).find(button =>
+                button.textContent!.includes(label)
+            )!;
 
         expect(list.querySelectorAll('.app-list-header button').length).toBe(3);
 
@@ -86,7 +104,11 @@ describe('ListComponent', () => {
         trigger.click();
         await fixture.whenStable();
         const items = Array.from(document.querySelectorAll<HTMLButtonElement>('.mat-mdc-menu-item'));
-        expect(items.map(item => item.textContent!.replace(/arrow_(upward|downward)/, '').trim())).toEqual(['Date', 'Merchant', 'Amount']);
+        expect(items.map(item => item.textContent!.replace(/arrow_(upward|downward)/, '').trim())).toEqual([
+            'Date',
+            'Merchant',
+            'Amount'
+        ]);
 
         items[2].click();
         expect(fixture.componentInstance.sort()).toEqual({ key: 'amount', direction: 'asc' });

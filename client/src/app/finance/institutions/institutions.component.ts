@@ -21,7 +21,16 @@ interface InstitutionGroup {
 @Component({
     selector: 'app-finance-institutions',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, PageHeaderComponent, CardSkeletonComponent, LoadErrorComponent],
+    imports: [
+        RouterLink,
+        MatButtonModule,
+        MatCardModule,
+        MatIconModule,
+        MatMenuModule,
+        PageHeaderComponent,
+        CardSkeletonComponent,
+        LoadErrorComponent
+    ],
     templateUrl: './institutions.component.html',
     styleUrl: './institutions.component.scss'
 })

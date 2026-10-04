@@ -71,11 +71,25 @@ describe('FinanceCategoriesComponent', () => {
         ]);
     });
 
-    it('CAT-3.3 should show an expense category\'s necessity in its row, when it has one', async () => {
+    it("CAT-3.3 should show an expense category's necessity in its row, when it has one", async () => {
         const groups = [{ id: 'food', name: 'Food', type: CategoryType.Expense }] as CategoryGroup[];
         const categories = [
-            { id: 'groceries', groupId: 'food', name: 'Groceries', icon: '🛒', isActive: true, necessity: CategoryNecessity.Essential },
-            { id: 'coffee', groupId: 'food', name: 'Coffee', icon: '☕', isActive: true, necessity: CategoryNecessity.Discretionary },
+            {
+                id: 'groceries',
+                groupId: 'food',
+                name: 'Groceries',
+                icon: '🛒',
+                isActive: true,
+                necessity: CategoryNecessity.Essential
+            },
+            {
+                id: 'coffee',
+                groupId: 'food',
+                name: 'Coffee',
+                icon: '☕',
+                isActive: true,
+                necessity: CategoryNecessity.Discretionary
+            },
             { id: 'snacks', groupId: 'food', name: 'Snacks', icon: '🍿', isActive: true, necessity: null }
         ] as Category[];
 
@@ -85,6 +99,10 @@ describe('FinanceCategoriesComponent', () => {
             row.querySelector('.name')!.textContent!.trim(),
             row.querySelector('.necessity')?.textContent!.trim()
         ]);
-        expect(rows).toEqual([['Coffee', 'Discretionary'], ['Groceries', 'Essential'], ['Snacks', undefined]]);
+        expect(rows).toEqual([
+            ['Coffee', 'Discretionary'],
+            ['Groceries', 'Essential'],
+            ['Snacks', undefined]
+        ]);
     });
 });

@@ -1,8 +1,14 @@
 <div class="container">
     <app-page-header title="Transactions" [refreshing]="isRefreshing()">
         @if (isCompact()) {
-            <button mat-icon-button (click)="openFilters()" aria-label="Filters" [matBadge]="activeFilterCount()"
-                [matBadgeHidden]="activeFilterCount() === 0" matBadgeOverlap>
+            <button
+                mat-icon-button
+                (click)="openFilters()"
+                aria-label="Filters"
+                [matBadge]="activeFilterCount()"
+                [matBadgeHidden]="activeFilterCount() === 0"
+                matBadgeOverlap
+            >
                 <mat-icon>filter_list</mat-icon>
             </button>
         }
@@ -43,24 +49,19 @@
 
     @if (firstPage.error(); as error) {
         <app-load-error [message]="error" (retry)="firstPage.reload()"></app-load-error>
-    }
-    @else if (!isLoaded()) {
+    } @else if (!isLoaded()) {
         <div class="loading-rows" aria-busy="true" aria-label="Loading">
             @for (row of [1, 2, 3, 4, 5, 6]; track row) {
                 <app-skeleton height="20px"></app-skeleton>
             }
         </div>
-    }
-    @else if (transactions().length === 0) {
-        <div class="no-transactions-message">
-            No transactions found
-        </div>
-    }
-    @else {
+    } @else if (transactions().length === 0) {
+        <div class="no-transactions-message">No transactions found</div>
+    } @else {
         <app-list [columns]="columns" [sort]="sort()" (sortChange)="onSortChange($event)">
             @for (t of transactions(); track t.id) {
                 <a appListRow [routerLink]="['/transactions', t.id]">
-                    <span appListCell="date">{{ t.date | date:'mediumDate' }}</span>
+                    <span appListCell="date">{{ t.date | date: 'mediumDate' }}</span>
                     <span appListCell="account">{{ getAccountName(t.accountId) }}</span>
                     <span appListCell="merchant">{{ t.merchant }}</span>
                     <span appListCell="category">{{ getCategoryName(t.categoryId) }}</span>
@@ -74,7 +75,11 @@
         <div class="footer">
             <button mat-stroked-button (click)="loadMore()" [disabled]="loadingMore()">
                 @if (loadingMore()) {
-                    <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+                    <mat-progress-spinner
+                        class="button-spinner"
+                        mode="indeterminate"
+                        diameter="18"
+                    ></mat-progress-spinner>
                 }
                 Load More
             </button>
@@ -87,23 +92,23 @@
         <div class="filter-row">
             <mat-form-field appearance="outline">
                 <mat-label>Min Amount</mat-label>
-                <input matInput type="number" formControlName="minAmount">
+                <input matInput type="number" formControlName="minAmount" />
             </mat-form-field>
             <mat-form-field appearance="outline">
                 <mat-label>Max Amount</mat-label>
-                <input matInput type="number" formControlName="maxAmount">
+                <input matInput type="number" formControlName="maxAmount" />
             </mat-form-field>
         </div>
         <div class="filter-row">
             <mat-form-field appearance="outline">
                 <mat-label>Start Date</mat-label>
-                <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+                <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
                 <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
                 <mat-datepicker #startPicker></mat-datepicker>
             </mat-form-field>
             <mat-form-field appearance="outline">
                 <mat-label>End Date</mat-label>
-                <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+                <input matInput [matDatepicker]="endPicker" formControlName="endDate" />
                 <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
                 <mat-datepicker #endPicker></mat-datepicker>
             </mat-form-field>
@@ -111,24 +116,22 @@
         <div class="filter-row responsive-filter-row">
             <mat-form-field appearance="outline">
                 <mat-label>Group</mat-label>
-                <input type="text" matInput formControlName="group" [matAutocomplete]="autoGroup">
+                <input type="text" matInput formControlName="group" [matAutocomplete]="autoGroup" />
                 <mat-autocomplete #autoGroup="matAutocomplete" [displayWith]="displayGroup">
                     @for (g of filteredGroups(); track g.id) {
-                        <mat-option [value]="g.id">{{g.name}}</mat-option>
+                        <mat-option [value]="g.id">{{ g.name }}</mat-option>
                     }
                 </mat-autocomplete>
             </mat-form-field>
             <mat-form-field appearance="outline">
                 <mat-label>Category</mat-label>
-                <input type="text" matInput formControlName="category" [matAutocomplete]="autoCategory">
+                <input type="text" matInput formControlName="category" [matAutocomplete]="autoCategory" />
                 <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
                     @if (offersUncategorized()) {
                         <mat-option [value]="Uncategorized.filterValue">{{ Uncategorized.name }}</mat-option>
                     }
                     @for (c of filteredCategories(); track c.id) {
-                        <mat-option [value]="c.id">
-                            {{c.icon}} {{c.name}}
-                        </mat-option>
+                        <mat-option [value]="c.id"> {{ c.icon }} {{ c.name }} </mat-option>
                     }
                 </mat-autocomplete>
             </mat-form-field>
@@ -140,17 +143,17 @@
                     <mat-option>-- None --</mat-option>
                     @for (account of accounts(); track account.id) {
                         <mat-option [value]="account.id">
-                            {{account.name}}
+                            {{ account.name }}
                         </mat-option>
                     }
                 </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
                 <mat-label>Merchant</mat-label>
-                <input type="text" matInput formControlName="merchant" [matAutocomplete]="autoMerchant">
+                <input type="text" matInput formControlName="merchant" [matAutocomplete]="autoMerchant" />
                 <mat-autocomplete #autoMerchant="matAutocomplete">
                     @for (m of filteredMerchants(); track m) {
-                        <mat-option [value]="m">{{m}}</mat-option>
+                        <mat-option [value]="m">{{ m }}</mat-option>
                     }
                 </mat-autocomplete>
             </mat-form-field>

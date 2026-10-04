@@ -6,11 +6,14 @@ describe('ChartComponent', () => {
     // jsdom has no canvas drawing or ResizeObserver: give Chart.js a 2D context that ignores drawing, and an
     // observer that never fires.
     beforeEach(() => {
-        vi.stubGlobal('ResizeObserver', class {
-            observe = vi.fn();
-            unobserve = vi.fn();
-            disconnect = vi.fn();
-        });
+        vi.stubGlobal(
+            'ResizeObserver',
+            class {
+                observe = vi.fn();
+                unobserve = vi.fn();
+                disconnect = vi.fn();
+            }
+        );
         vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function (this: HTMLCanvasElement) {
             return fakeContext(this);
         });

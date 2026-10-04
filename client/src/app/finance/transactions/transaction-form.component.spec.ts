@@ -8,8 +8,19 @@ import { TransactionFormComponent, TransactionFormMode } from './transaction-for
 // Tests run with TZ=America/New_York (vitest-base.config.mjs), where a date read as UTC midnight is the day before.
 describe('TransactionFormComponent', () => {
     const transaction: Transaction = {
-        id: 't1', date: '2026-05-01', accountId: 'acct', categoryId: '', amount: -10, merchant: 'Shop', originalStatement: '', notes: '',
-        isHidden: false, isSplit: false, splitParentId: '', createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1)
+        id: 't1',
+        date: '2026-05-01',
+        accountId: 'acct',
+        categoryId: '',
+        amount: -10,
+        merchant: 'Shop',
+        originalStatement: '',
+        notes: '',
+        isHidden: false,
+        isSplit: false,
+        splitParentId: '',
+        createdAt: new Date(2026, 0, 1),
+        updatedAt: new Date(2026, 0, 1)
     };
 
     async function render(mode: TransactionFormMode, value: Transaction | null, categories: Category[] = []) {
@@ -37,12 +48,13 @@ describe('TransactionFormComponent', () => {
     }
 
     function readonlyValue(element: HTMLElement, label: string): string {
-        const field = Array.from(element.querySelectorAll('.readonly-field'))
-            .find(f => f.querySelector('.label')!.textContent === label)!;
+        const field = Array.from(element.querySelectorAll('.readonly-field')).find(
+            f => f.querySelector('.label')!.textContent === label
+        )!;
         return field.querySelector('.value')!.textContent!.trim();
     }
 
-    it('TXN-2.2 should show the transaction\'s own date', async () => {
+    it("TXN-2.2 should show the transaction's own date", async () => {
         const { element } = await render('readonly', transaction);
 
         expect(readonlyValue(element, 'Date')).toBe('May 1, 2026');
@@ -88,7 +100,9 @@ describe('TransactionFormComponent', () => {
             fixture.componentInstance.onSave();
 
             expect(saved[0].categoryId).toBe('');
-            expect(element.querySelector<HTMLInputElement>('input[formControlName="category"]')!.placeholder).toBe('Uncategorized');
+            expect(element.querySelector<HTMLInputElement>('input[formControlName="category"]')!.placeholder).toBe(
+                'Uncategorized'
+            );
         });
 
         it('CAT-5.2 should show Uncategorized when viewing a transaction with no category', async () => {

@@ -57,8 +57,7 @@ export class EditTransactionComponent implements HasUnsavedChanges {
     onCancel() {
         if (this.transactionId) {
             this.router.navigate(['/transactions', this.transactionId]);
-        }
-        else {
+        } else {
             this.router.navigate(['/transactions']);
         }
     }

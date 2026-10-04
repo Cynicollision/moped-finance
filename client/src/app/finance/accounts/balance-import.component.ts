@@ -19,7 +19,15 @@ interface ImportErrors {
 @Component({
     selector: 'app-balance-import',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule, RouterModule, PageHeaderComponent],
+    imports: [
+        MatButtonModule,
+        MatCardModule,
+        MatIconModule,
+        MatProgressSpinnerModule,
+        MatSnackBarModule,
+        RouterModule,
+        PageHeaderComponent
+    ],
     templateUrl: './balance-import.component.html',
     styleUrl: './balance-import.component.scss'
 })
@@ -67,8 +75,7 @@ export class BalanceImportComponent {
         if (response) {
             if (response.isValidToImport) {
                 this.dryRunResults.set(response);
-            }
-            else {
+            } else {
                 this.validationError.set({
                     message: response.resultMessage || 'An unknown validation error occurred.',
                     rows: response.failedRowMessages
@@ -96,8 +103,7 @@ export class BalanceImportComponent {
             if (response.isValidToImport) {
                 this.notificationService.success(`Successfully imported ${response.createdCount || 0} records.`);
                 this.router.navigate(['/accounts', id]);
-            }
-            else {
+            } else {
                 this.validationError.set({
                     message: response.resultMessage || 'An unknown error occurred during import.',
                     rows: response.failedRowMessages

@@ -9,7 +9,7 @@ const uniqueViolationMessages: Record<string, string> = {
     institutions_name_unique_idx: 'An institution with that name already exists.',
     category_groups_name_unique_idx: 'A category group with that name already exists.',
     categories_name_unique_idx: 'A category with that name already exists.',
-    balance_history_account_id_date_unique: 'An account can only have one balance per date.',
+    balance_history_account_id_date_unique: 'An account can only have one balance per date.'
 };
 
 // A foreign key fails in one of two directions, with the same constraint name:
@@ -17,37 +17,38 @@ const uniqueViolationMessages: Record<string, string> = {
 // - stillReferenced: a delete would orphan rows that point at this one. ON DELETE RESTRICT raises 23001;
 //   NO ACTION (the default) raises 23503 with 'is still referenced' in the detail.
 // Keys that cascade or set null on delete only need missingReference.
-type ForeignKeyMessages = { missingReference: string, stillReferenced?: string };
+type ForeignKeyMessages = { missingReference: string; stillReferenced?: string };
 
 const foreignKeyViolationMessages: Record<string, ForeignKeyMessages> = {
     api_tokens_user_id_users_id_fk: {
-        missingReference: 'User not found.',
+        missingReference: 'User not found.'
     },
     accounts_institution_id_institutions_id_fk: {
         missingReference: 'Institution not found.',
-        stillReferenced: 'Cannot delete an institution that still has accounts.',
+        stillReferenced: 'Cannot delete an institution that still has accounts.'
     },
     balance_history_account_id_accounts_id_fk: {
-        missingReference: 'Account not found.',
+        missingReference: 'Account not found.'
     },
     categories_group_id_category_groups_id_fk: {
         missingReference: 'Category group not found.',
-        stillReferenced: 'Cannot delete a category group that still has categories.',
+        stillReferenced: 'Cannot delete a category group that still has categories.'
     },
     transactions_account_id_accounts_id_fk: {
-        missingReference: 'Account not found.',
+        missingReference: 'Account not found.'
     },
     transactions_category_id_categories_id_fk: {
-        missingReference: 'Category not found.',
+        missingReference: 'Category not found.'
     },
     transactions_split_parent_id_transactions_id_fk: {
         missingReference: 'Split parent transaction not found.',
-        stillReferenced: 'Cannot delete a transaction that has split transactions.',
+        stillReferenced: 'Cannot delete a transaction that has split transactions.'
     },
     budget_streams_category_id_categories_id_fk: {
         missingReference: 'Category not found.',
-        stillReferenced: 'This category is used in a budget stream, which must be deleted or assigned to a different category first.',
-    },
+        stillReferenced:
+            'This category is used in a budget stream, which must be deleted or assigned to a different category first.'
+    }
 };
 
 const genericForeignKeyMessage = 'The request refers to a record that does not exist, or the record is still in use.';
@@ -64,7 +65,6 @@ interface PostgresError {
 }
 
 export class DatabaseErrorUtil {
-
     /**
      * Returns a user-facing error if the error is a unique, foreign-key or restrict violation, otherwise undefined.
      * The message comes from the tables above, never from the database error itself.
@@ -81,7 +81,10 @@ export class DatabaseErrorUtil {
         }
 
         if (pgError?.code === RESTRICT_VIOLATION) {
-            return { code: 'IN_USE', message: foreignKeyViolationMessages[constraint]?.stillReferenced ?? genericForeignKeyMessage };
+            return {
+                code: 'IN_USE',
+                message: foreignKeyViolationMessages[constraint]?.stillReferenced ?? genericForeignKeyMessage
+            };
         }
 
         if (pgError?.code === FOREIGN_KEY_VIOLATION) {
