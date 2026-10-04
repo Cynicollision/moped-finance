@@ -12,14 +12,18 @@ import { createTransactionSchema, updateTransactionSchema } from './transaction-
 
 const domain = 'Transaction';
 
-const searchFiltersSchema = z.array(z.object({
-    key: z.enum(TransactionsFilterKey),
-    value: z.string()
-}));
+const searchFiltersSchema = z.array(
+    z.object({
+        key: z.enum(TransactionsFilterKey),
+        value: z.string()
+    })
+);
 
 export const transactionSearchQuerySchema = z.object({
     sortKey: z.enum(TransactionsSortKey).optional(),
-    sortDirection: z.preprocess((val) => typeof val === 'string' ? val.toUpperCase() : val, z.enum(SortDirection)).optional(),
+    sortDirection: z
+        .preprocess(val => (typeof val === 'string' ? val.toUpperCase() : val), z.enum(SortDirection))
+        .optional(),
     offset: z.coerce.number().int().min(0).optional().default(0),
     limit: z.coerce.number().int().min(1).max(500).optional().default(50),
     minAmount: z.coerce.number().optional(),
@@ -27,31 +31,38 @@ export const transactionSearchQuerySchema = z.object({
     startDate: QueryField.date().optional(),
     endDate: QueryField.date().optional(),
     // A JSON array of { key, value }.
-    filters: z.string().optional().transform((v, ctx) => {
-        if (!v) {
-            return undefined;
-        }
+    filters: z
+        .string()
+        .optional()
+        .transform((v, ctx) => {
+            if (!v) {
+                return undefined;
+            }
 
-        let json: unknown;
-        try {
-            json = JSON.parse(v);
-        }
-        catch {
-            ctx.addIssue({ code: 'custom', message: 'Invalid JSON' });
-            return z.NEVER;
-        }
+            let json: unknown;
+            try {
+                json = JSON.parse(v);
+            } catch {
+                ctx.addIssue({ code: 'custom', message: 'Invalid JSON' });
+                return z.NEVER;
+            }
 
-        const filters = searchFiltersSchema.safeParse(json);
-        if (!filters.success) {
-            ctx.addIssue({ code: 'custom', message: 'Expected an array of { key, value } filters' });
-            return z.NEVER;
-        }
-        return filters.data;
-    }),
+            const filters = searchFiltersSchema.safeParse(json);
+            if (!filters.success) {
+                ctx.addIssue({ code: 'custom', message: 'Expected an array of { key, value } filters' });
+                return z.NEVER;
+            }
+            return filters.data;
+        }),
     includeHidden: QueryField.boolean().optional()
 });
 
-export function createTransactionRouter(logger: IAppLogger, accountData: IFinanceAccountData, categoryData: IFinanceCategoryData, transactionsData: IFinanceTransactionData) {
+export function createTransactionRouter(
+    logger: IAppLogger,
+    accountData: IFinanceAccountData,
+    categoryData: IFinanceCategoryData,
+    transactionsData: IFinanceTransactionData
+) {
     const router = Router();
     const controller = new TransactionController(logger, accountData, categoryData, transactionsData);
     const handler = new OperationHandler(logger);
@@ -75,7 +86,7 @@ export function createTransactionRouter(logger: IAppLogger, accountData: IFinanc
     // GET /merchants - Get Unique Merchants
     router.get('/merchants', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getTransactionMerchants' };
-        handler.execute(req, res, op, (context) => {
+        handler.execute(req, res, op, context => {
             return controller.getTransactionMerchants(context);
         });
     });
@@ -129,9 +140,15 @@ export function createTransactionRouter(logger: IAppLogger, accountData: IFinanc
     // PUT /:id - Update Transaction
     router.put('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'saveTransaction' };
-        handler.execute(req, res, op, { params: idParamsSchema, body: updateTransactionSchema }, (context, { params, body }) => {
-            return controller.saveTransaction(context, params.id, body);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, body: updateTransactionSchema },
+            (context, { params, body }) => {
+                return controller.saveTransaction(context, params.id, body);
+            }
+        );
     });
 
     // DELETE /:id - Delete Transaction

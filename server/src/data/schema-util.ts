@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { CalendarDateUtil } from '@shared/core/util';
 
 export class SchemaUtil {
-
     /** Largest absolute value a `DECIMAL(12, 2)` money column holds. */
     public static readonly maxMoneyAmount = 9_999_999_999.99;
 

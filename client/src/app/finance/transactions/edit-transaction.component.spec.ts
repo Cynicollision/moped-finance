@@ -9,13 +9,24 @@ import { TransactionFormComponent } from './transaction-form.component';
 
 describe('EditTransactionComponent', () => {
     const transaction: Transaction = {
-        id: 't1', date: '2026-05-01', accountId: 'acct', categoryId: '', amount: -10, merchant: 'Corner Shop', originalStatement: '', notes: '',
-        isHidden: false, isSplit: false, splitParentId: '', createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1)
+        id: 't1',
+        date: '2026-05-01',
+        accountId: 'acct',
+        categoryId: '',
+        amount: -10,
+        merchant: 'Corner Shop',
+        originalStatement: '',
+        notes: '',
+        isHidden: false,
+        isSplit: false,
+        splitParentId: '',
+        createdAt: new Date(2026, 0, 1),
+        updatedAt: new Date(2026, 0, 1)
     };
 
     async function render(saveResult: Transaction | undefined) {
         let finishSave!: (t: Transaction | undefined) => void;
-        const saved = new Promise<Transaction | undefined>(r => finishSave = r);
+        const saved = new Promise<Transaction | undefined>(r => (finishSave = r));
         const financeService = {
             fetchTransaction: vi.fn().mockResolvedValue(transaction),
             fetchCategories: vi.fn().mockResolvedValue([]),
@@ -27,8 +38,14 @@ describe('EditTransactionComponent', () => {
             imports: [EditTransactionComponent],
             providers: [
                 provideRouter([]),
-                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ transactionId: 't1' }) } } },
-                { provide: DateProviderService, useValue: { now: () => new Date(2026, 4, 17), today: () => '2026-05-17' } },
+                {
+                    provide: ActivatedRoute,
+                    useValue: { snapshot: { paramMap: convertToParamMap({ transactionId: 't1' }) } }
+                },
+                {
+                    provide: DateProviderService,
+                    useValue: { now: () => new Date(2026, 4, 17), today: () => '2026-05-17' }
+                },
                 { provide: FinanceService, useValue: financeService },
                 { provide: NotificationService, useValue: notificationService }
             ]
@@ -65,7 +82,9 @@ describe('EditTransactionComponent', () => {
 
         const saving = await save();
 
-        expect(financeService.saveTransaction).toHaveBeenCalledWith(expect.objectContaining({ id: 't1', merchant: 'Corner Shop Ltd', date: '2026-05-01' }));
+        expect(financeService.saveTransaction).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 't1', merchant: 'Corner Shop Ltd', date: '2026-05-01' })
+        );
         expect(element.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true);
         expect(element.querySelector('button[type="submit"] .button-spinner')).not.toBeNull();
 
@@ -87,10 +106,12 @@ describe('EditTransactionComponent', () => {
         expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
     });
 
-    it('should go back to the transaction\'s details on Cancel', async () => {
+    it("should go back to the transaction's details on Cancel", async () => {
         const { element, navigate } = await render(transaction);
 
-        Array.from(element.querySelectorAll<HTMLButtonElement>('form button')).find(b => b.textContent!.trim() === 'Cancel')!.click();
+        Array.from(element.querySelectorAll<HTMLButtonElement>('form button'))
+            .find(b => b.textContent!.trim() === 'Cancel')!
+            .click();
 
         expect(navigate).toHaveBeenCalledWith(['/transactions', 't1']);
     });

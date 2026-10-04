@@ -6,7 +6,7 @@ export type TotalValueHistoryOptions = {
     asOfDate: CalendarDate;
     type: ValueHistoryType;
     timeframe: HistoryTimeframe;
-}
+};
 
 export type TotalValueHistory = {
     date: CalendarDate;

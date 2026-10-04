@@ -3,7 +3,7 @@
         <div class="form-row">
             <mat-form-field appearance="outline">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="e.g. Auto & Transport">
+                <input matInput formControlName="name" placeholder="e.g. Auto & Transport" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -20,7 +20,8 @@
     </form>
     @if (isEditing && categoryCount > 0) {
         <p class="locked-note">
-            To change the type or delete this group, first move or delete its {{ categoryCount }} {{ categoryCount === 1 ? 'category' : 'categories' }}.
+            To change the type or delete this group, first move or delete its {{ categoryCount }}
+            {{ categoryCount === 1 ? 'category' : 'categories' }}.
         </p>
     }
 

@@ -2,7 +2,17 @@ import express, { Request, Response } from 'express';
 import { Server } from 'http';
 import path from 'path';
 import { buildFinanceRouter } from '@server/api';
-import { ApiTokenController, ApiTokenData, buildApiTokenRouter, buildAuthRouter, buildAuthMiddleware, AuthController, SecretData, SessionUtil, UserData } from '@server/auth';
+import {
+    ApiTokenController,
+    ApiTokenData,
+    buildApiTokenRouter,
+    buildAuthRouter,
+    buildAuthMiddleware,
+    AuthController,
+    SecretData,
+    SessionUtil,
+    UserData
+} from '@server/auth';
 import { DatabaseClient, DatabaseClientConfig } from '@server/data';
 import { buildHealthRouter } from '@server/health';
 import { AppLogger } from '@server/logging';
@@ -17,7 +27,7 @@ const dbConfig: DatabaseClientConfig = {
     password: process.env.PGPASSWORD || '',
     host: process.env.PGHOST || 'localhost',
     database: process.env.PGDATABASE || '',
-    port: parseInt(process.env.PGPORT || '5432'),
+    port: parseInt(process.env.PGPORT || '5432')
 };
 
 const dbClient = DatabaseClient.fromConfig(dbConfig);
@@ -35,17 +45,22 @@ function buildApp(sessionSecret: string): express.Express {
     app.use(buildSecurityHeaders(useHttps));
 
     // Health check (unauthenticated; used by Docker)
-    app.use('/health', buildHealthRouter({
-        pingDatabase: () => dbClient.ping(),
-        isShuttingDown: () => isShuttingDown
-    }));
+    app.use(
+        '/health',
+        buildHealthRouter({
+            pingDatabase: () => dbClient.ping(),
+            isShuttingDown: () => isShuttingDown
+        })
+    );
 
     app.use(express.json());
-    app.use(SessionUtil.buildMiddleware({
-        secret: sessionSecret,
-        secureCookie: useHttps,
-        store: SessionUtil.createStore(dbClient)
-    }));
+    app.use(
+        SessionUtil.buildMiddleware({
+            secret: sessionSecret,
+            secureCookie: useHttps,
+            store: SessionUtil.createStore(dbClient)
+        })
+    );
 
     // Auth module
     const userData = new UserData(dbClient);
@@ -84,8 +99,7 @@ let server: Server | undefined;
 async function start(): Promise<void> {
     try {
         await dbClient.migrate(path.join(__dirname, 'migrations'));
-    }
-    catch (error: any) {
+    } catch (error: any) {
         // Drizzle wraps the Postgres error (e.g. "relation already exists") as `cause`; its own message is the failed query.
         console.error(`Database migration failed: ${error?.cause?.message ?? error?.message ?? error}`);
         if (error?.cause) {
@@ -105,8 +119,7 @@ async function start(): Promise<void> {
     if (!sessionSecret) {
         try {
             sessionSecret = await new SecretData(dbClient).retrieveOrCreate('session');
-        }
-        catch (error: any) {
+        } catch (error: any) {
             console.error(`Could not read or create the session secret: ${error?.message ?? error}`);
             await dbClient.close().catch(() => undefined);
             process.exit(1);
@@ -141,11 +154,10 @@ function shutdown(signal: NodeJS.Signals): void {
     }, SHUTDOWN_TIMEOUT_MS);
     forceExit.unref();
 
-    activeServer.close(async (serverError) => {
+    activeServer.close(async serverError => {
         try {
             await dbClient.close();
-        }
-        catch (poolError: any) {
+        } catch (poolError: any) {
             console.error(`Failed to close the database pool: ${poolError?.message ?? poolError}`);
         }
 

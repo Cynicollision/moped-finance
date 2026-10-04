@@ -21,7 +21,12 @@ describe('ModalService', () => {
     function setup(sizeClass: SizeClass = 'expanded') {
         const size = signal(sizeClass);
         TestBed.configureTestingModule({
-            providers: [{ provide: LayoutService, useValue: { sizeClass: size, isCompact: computed(() => size() === 'compact') } }]
+            providers: [
+                {
+                    provide: LayoutService,
+                    useValue: { sizeClass: size, isCompact: computed(() => size() === 'compact') }
+                }
+            ]
         });
         return TestBed.inject(ModalService);
     }

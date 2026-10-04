@@ -13,7 +13,12 @@ import { IFinanceBalanceHistoryData } from './balance-history-data';
 
 const domain = 'Account';
 
-export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAccountData, balanceHistoryData: IFinanceBalanceHistoryData, transactionData: IFinanceTransactionData) {
+export function createAccountRouter(
+    logger: IAppLogger,
+    accountData: IFinanceAccountData,
+    balanceHistoryData: IFinanceBalanceHistoryData,
+    transactionData: IFinanceTransactionData
+) {
     const router = Router();
     const controller = new AccountController(logger, accountData, balanceHistoryData, transactionData);
     const handler = new OperationHandler(logger);
@@ -21,7 +26,7 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
     // GET / - Get all accounts
     router.get('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getAccounts' };
-        handler.execute(req, res, op, (context) => {
+        handler.execute(req, res, op, context => {
             return controller.getAccounts(context);
         });
     });
@@ -63,9 +68,15 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
     // PUT /:id - Update Account
     router.put('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'saveAccount' };
-        handler.execute(req, res, op, { params: idParamsSchema, body: updateAccountSchema }, (context, { params, body }) => {
-            return controller.updateAccount(context, params.id, body);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, body: updateAccountSchema },
+            (context, { params, body }) => {
+                return controller.updateAccount(context, params.id, body);
+            }
+        );
     });
 
     // DELETE /:id - Delete Account
@@ -84,20 +95,32 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
 
     router.get('/:id/balance-history', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getAccountBalanceHistory' };
-        handler.execute(req, res, op, { params: idParamsSchema, query: balanceHistoryQuerySchema }, (context, { params, query }) => {
-            return controller.getAccountBalanceHistory(context, params.id, {
-                timeframe: query.timeframe,
-                asOfDate: query.asOfDate ?? DateTimeUtil.today()
-            });
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, query: balanceHistoryQuerySchema },
+            (context, { params, query }) => {
+                return controller.getAccountBalanceHistory(context, params.id, {
+                    timeframe: query.timeframe,
+                    asOfDate: query.asOfDate ?? DateTimeUtil.today()
+                });
+            }
+        );
     });
 
     // GET /:id/transactions - Get Account Transactions
     router.get('/:id/transactions', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getTransactions' };
-        handler.execute(req, res, op, { params: idParamsSchema, query: transactionSearchQuerySchema }, (context, { params, query }) => {
-            return controller.getAccountTransactions(context, params.id, query);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, query: transactionSearchQuerySchema },
+            (context, { params, query }) => {
+                return controller.getAccountTransactions(context, params.id, query);
+            }
+        );
     });
 
     // POST /:id/sync - Sync Account
@@ -123,9 +146,15 @@ export function createAccountRouter(logger: IAppLogger, accountData: IFinanceAcc
 
     router.post('/:id/import-balances', singleFileUpload, (req, res) => {
         const op: OperationDefinition = { domain, operation: 'importBalanceHistory' };
-        handler.execute(req, res, op, { params: idParamsSchema, query: importBalancesQuerySchema }, (context, { params, query }) => {
-            return controller.importBalanceHistory(context, params.id, req.file?.buffer, query.dryRun);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, query: importBalancesQuerySchema },
+            (context, { params, query }) => {
+                return controller.importBalanceHistory(context, params.id, req.file?.buffer, query.dryRun);
+            }
+        );
     });
 
     return router;

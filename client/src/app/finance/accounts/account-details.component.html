@@ -1,6 +1,9 @@
 <div>
-    <app-page-header [title]="account()?.name ?? (details.error() ? 'Account' : '')" [crumbs]="[{ label: 'Dashboard', link: '/dashboard' }]"
-        [refreshing]="isRefreshing()">
+    <app-page-header
+        [title]="account()?.name ?? (details.error() ? 'Account' : '')"
+        [crumbs]="[{ label: 'Dashboard', link: '/dashboard' }]"
+        [refreshing]="isRefreshing()"
+    >
         @if (account(); as account) {
             <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
                 <mat-icon>more_vert</mat-icon>
@@ -43,16 +46,20 @@
 
     @if (details.error(); as error) {
         <app-load-error [message]="error" (retry)="details.reload()"></app-load-error>
-    }
-    @else if (account(); as account) {
+    } @else if (account(); as account) {
         @if (balances.error(); as error) {
             <app-load-error [message]="error" (retry)="balances.reload()"></app-load-error>
-        }
-        @else {
-            <app-value-history [historyData]="historyData()" [currentValue]="account.balance || 0"
-                [chartTypeOptions]="chartTypeOptions()" [selectedChartType]="derivedChartType()"
-                [selectedTimeframe]="selectedTimeframe()" (timeframeChange)="onTimeframeChange($event)" class="full-width-card"
-                title="Current Balance">
+        } @else {
+            <app-value-history
+                [historyData]="historyData()"
+                [currentValue]="account.balance || 0"
+                [chartTypeOptions]="chartTypeOptions()"
+                [selectedChartType]="derivedChartType()"
+                [selectedTimeframe]="selectedTimeframe()"
+                (timeframeChange)="onTimeframeChange($event)"
+                class="full-width-card"
+                title="Current Balance"
+            >
             </app-value-history>
         }
 
@@ -68,7 +75,7 @@
                 </div>
                 <div class="summary-item">
                     <span class="label">Last Updated</span>
-                    <span class="value">{{ account.updatedAt | date:'mediumDate' }}</span>
+                    <span class="value">{{ account.updatedAt | date: 'mediumDate' }}</span>
                 </div>
             </mat-card-content>
         </mat-card>
@@ -77,12 +84,11 @@
             <h3>Recent Transactions</h3>
             @if (transactions().length === 0) {
                 <p class="no-transactions">No transactions yet.</p>
-            }
-            @else {
+            } @else {
                 <app-list [columns]="columns">
                     @for (t of transactions(); track t.id) {
                         <a appListRow [routerLink]="['/transactions', t.id]">
-                            <span appListCell="date">{{ t.date | date:'mediumDate' }}</span>
+                            <span appListCell="date">{{ t.date | date: 'mediumDate' }}</span>
                             <span appListCell="merchant">{{ t.merchant }}</span>
                             <span appListCell="category">{{ getCategoryName(t.categoryId) }}</span>
                             <app-money appListCell="amount" [amount]="t.amount" tone="transaction"></app-money>
@@ -92,14 +98,12 @@
             }
 
             <div class="footer-actions">
-                <a mat-stroked-button [routerLink]="['/transactions']"
-                    [queryParams]="{ accountId: account.id }">
+                <a mat-stroked-button [routerLink]="['/transactions']" [queryParams]="{ accountId: account.id }">
                     Go To Transactions
                 </a>
             </div>
         </div>
-    }
-    @else {
+    } @else {
         <div class="loading-cards">
             <app-card-skeleton [rows]="4"></app-card-skeleton>
             <app-card-skeleton [rows]="3"></app-card-skeleton>

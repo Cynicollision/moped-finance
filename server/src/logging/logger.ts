@@ -24,9 +24,10 @@ export interface IAppLogger {
 }
 
 export class AppLogger implements IAppLogger {
-
-    constructor(private logData: ILogData, private config: LoggerConfig) {
-    }
+    constructor(
+        private logData: ILogData,
+        private config: LoggerConfig
+    ) {}
 
     public static forPgDatabase(db: IDatabaseClient, config: LoggerConfig): AppLogger {
         const logData = new LogData(db);
@@ -67,8 +68,10 @@ export class AppLogger implements IAppLogger {
         if (behavior === LogBehavior.Database) {
             // Not awaited, so logging never slows a request. The catch matters: if the database is
             // down, an unhandled rejection here would crash the process. The entry still reaches the console below.
-            this.logData.create(logEntry).catch((error) => {
-                console.error(`[${DateTimeUtil.getCurrentTimestamp()}] [ERROR] Failed to write log entry to the database: ${error?.message ?? error}`);
+            this.logData.create(logEntry).catch(error => {
+                console.error(
+                    `[${DateTimeUtil.getCurrentTimestamp()}] [ERROR] Failed to write log entry to the database: ${error?.message ?? error}`
+                );
             });
         }
 

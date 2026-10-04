@@ -34,7 +34,9 @@ describe('ProfileMenuComponent', () => {
     it('APP-1.5 should offer Institutions, Categories, Settings and Sign out', async () => {
         const { items } = await openMenu('Ada Lovelace');
 
-        expect(items.map(item => [item.querySelector('mat-icon + span')!.textContent, item.getAttribute('href')])).toEqual([
+        expect(
+            items.map(item => [item.querySelector('mat-icon + span')!.textContent, item.getAttribute('href')])
+        ).toEqual([
             ['Institutions', '/settings/institutions'],
             ['Categories', '/settings/categories'],
             ['Settings', '/settings'],

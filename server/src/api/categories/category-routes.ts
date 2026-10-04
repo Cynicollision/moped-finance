@@ -9,7 +9,11 @@ import { IFinanceCategoryGroupData, createCategoryGroupSchema, updateCategoryGro
 
 const domain = 'Category';
 
-export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanceCategoryData, groupsData: IFinanceCategoryGroupData) {
+export function createCategoryRouter(
+    logger: IAppLogger,
+    categoriesData: IFinanceCategoryData,
+    groupsData: IFinanceCategoryGroupData
+) {
     const router = Router();
     const controller = new CategoryController(logger, categoriesData, groupsData);
     const handler = new OperationHandler(logger);
@@ -19,7 +23,7 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
     // GET /groups - Get Category Groups
     router.get('/groups', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getGroups' };
-        handler.execute(req, res, op, (context) => {
+        handler.execute(req, res, op, context => {
             return controller.getGroups(context);
         });
     });
@@ -43,9 +47,15 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
     // PUT /groups/:id - Update Category Group
     router.put('/groups/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'updateGroup' };
-        handler.execute(req, res, op, { params: idParamsSchema, body: updateCategoryGroupSchema }, (context, { params, body }) => {
-            return controller.updateGroup(context, params.id, body);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, body: updateCategoryGroupSchema },
+            (context, { params, body }) => {
+                return controller.updateGroup(context, params.id, body);
+            }
+        );
     });
 
     // DELETE /groups/:id - Delete Category Group
@@ -89,9 +99,15 @@ export function createCategoryRouter(logger: IAppLogger, categoriesData: IFinanc
     // PUT /:id - Update Category
     router.put('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'updateCategory' };
-        handler.execute(req, res, op, { params: idParamsSchema, body: updateCategorySchema }, (context, { params, body }) => {
-            return controller.updateCategory(context, params.id, body);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, body: updateCategorySchema },
+            (context, { params, body }) => {
+                return controller.updateCategory(context, params.id, body);
+            }
+        );
     });
 
     // DELETE /:id - Delete Category

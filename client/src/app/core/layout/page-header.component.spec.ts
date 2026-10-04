@@ -7,14 +7,25 @@ import { LayoutService, SizeClass } from './layout.service';
 import { Crumb, PageHeaderComponent } from './page-header.component';
 
 describe('PageHeaderComponent', () => {
-    async function render(title: string, crumbs: Crumb[], sizeClass: SizeClass = 'expanded', refreshing = false): Promise<HTMLElement> {
+    async function render(
+        title: string,
+        crumbs: Crumb[],
+        sizeClass: SizeClass = 'expanded',
+        refreshing = false
+    ): Promise<HTMLElement> {
         const size = signal(sizeClass);
         TestBed.configureTestingModule({
             imports: [PageHeaderComponent],
             providers: [
                 provideRouter([]),
-                { provide: LayoutService, useValue: { sizeClass: size, isCompact: computed(() => size() === 'compact') } },
-                { provide: AuthService, useValue: { currentUser: signal({ id: '1', displayName: 'Ada Lovelace', username: 'ada' }) } },
+                {
+                    provide: LayoutService,
+                    useValue: { sizeClass: size, isCompact: computed(() => size() === 'compact') }
+                },
+                {
+                    provide: AuthService,
+                    useValue: { currentUser: signal({ id: '1', displayName: 'Ada Lovelace', username: 'ada' }) }
+                },
                 { provide: DateProviderService, useValue: { today: () => '2026-05-17' } }
             ]
         });
@@ -49,8 +60,10 @@ describe('PageHeaderComponent', () => {
             { label: 'First Bank', link: ['/settings/institutions', 'inst-1'] }
         ]);
 
-        const links = Array.from(element.querySelectorAll<HTMLAnchorElement>('nav.crumbs a'))
-            .map(link => [link.textContent, link.getAttribute('href')]);
+        const links = Array.from(element.querySelectorAll<HTMLAnchorElement>('nav.crumbs a')).map(link => [
+            link.textContent,
+            link.getAttribute('href')
+        ]);
         expect(links).toEqual([
             ['Settings', '/settings'],
             ['Institutions', '/settings/institutions'],
@@ -60,10 +73,14 @@ describe('PageHeaderComponent', () => {
     });
 
     it('APP-1.8 should give phones a back arrow to the last crumb', async () => {
-        const element = await render('Import Balance History', [
-            { label: 'Dashboard', link: '/dashboard' },
-            { label: 'Checking', link: ['/accounts', 'acct-1'] }
-        ], 'compact');
+        const element = await render(
+            'Import Balance History',
+            [
+                { label: 'Dashboard', link: '/dashboard' },
+                { label: 'Checking', link: ['/accounts', 'acct-1'] }
+            ],
+            'compact'
+        );
 
         const back = element.querySelector<HTMLAnchorElement>('a.back')!;
         expect(back.getAttribute('href')).toBe('/accounts/acct-1');

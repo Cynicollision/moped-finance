@@ -1,0 +1,12 @@
+{
+    "name": "moped-finance",
+    "private": true,
+    "description": "Repository-wide tooling. The app's packages are client/ and server/, each with its own dependencies.",
+    "scripts": {
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
+    },
+    "devDependencies": {
+        "prettier": "3.9.9"
+    }
+}

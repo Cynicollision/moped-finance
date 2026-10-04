@@ -8,7 +8,11 @@ import { createInstitutionSchema, updateInstitutionSchema } from './institution-
 
 const domain = 'Institution';
 
-export function createInstitutionRouter(logger: IAppLogger, institutionsData: IFinanceInstitutionData, accountData: IFinanceAccountData) {
+export function createInstitutionRouter(
+    logger: IAppLogger,
+    institutionsData: IFinanceInstitutionData,
+    accountData: IFinanceAccountData
+) {
     const router = Router();
     const controller = new InstitutionController(logger, institutionsData, accountData);
     const handler = new OperationHandler(logger);
@@ -16,7 +20,7 @@ export function createInstitutionRouter(logger: IAppLogger, institutionsData: IF
     // GET / - Get Institutions
     router.get('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getInstitutions' };
-        handler.execute(req, res, op, (context) => {
+        handler.execute(req, res, op, context => {
             return controller.getInstitutions(context);
         });
     });
@@ -48,9 +52,15 @@ export function createInstitutionRouter(logger: IAppLogger, institutionsData: IF
     // PUT /:id - Update Institution
     router.put('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'updateInstitution' };
-        handler.execute(req, res, op, { params: idParamsSchema, body: updateInstitutionSchema }, (context, { params, body }) => {
-            return controller.updateInstitution(context, params.id, body);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, body: updateInstitutionSchema },
+            (context, { params, body }) => {
+                return controller.updateInstitution(context, params.id, body);
+            }
+        );
     });
 
     // DELETE /:id - Delete Institution

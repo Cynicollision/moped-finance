@@ -20,12 +20,10 @@ export class DemoDataService {
         if (stored) {
             try {
                 this.data = JSON.parse(stored);
-            }
-            catch {
+            } catch {
                 this.initData();
             }
-        }
-        else {
+        } else {
             this.initData();
         }
     }

@@ -19,7 +19,10 @@ export interface DatabaseClientConfig {
 export class DatabaseClient implements IDatabaseClient {
     public readonly drizzle: NodePgDatabase;
 
-    constructor(drizzleInstance: NodePgDatabase, private pool?: Pool) {
+    constructor(
+        drizzleInstance: NodePgDatabase,
+        private pool?: Pool
+    ) {
         this.drizzle = drizzleInstance;
     }
 
@@ -31,8 +34,10 @@ export class DatabaseClient implements IDatabaseClient {
         // An idle client can lose its connection (e.g. Postgres restarting). Without a listener,
         // the pool re-emits that as an unhandled 'error' event and the process exits.
         // The pool discards the broken client on its own; logging is all that's needed.
-        pool.on('error', (error) => {
-            console.error(`[${DateTimeUtil.getCurrentTimestamp()}] [ERROR] Postgres pool: idle client error: ${error.message}`);
+        pool.on('error', error => {
+            console.error(
+                `[${DateTimeUtil.getCurrentTimestamp()}] [ERROR] Postgres pool: idle client error: ${error.message}`
+            );
         });
 
         return new DatabaseClient(drizzle(pool), pool);

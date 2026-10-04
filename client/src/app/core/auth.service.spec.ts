@@ -20,7 +20,12 @@ describe('AuthService', () => {
             ]
         });
         const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-        return { auth: TestBed.inject(AuthService), http: TestBed.inject(HttpTestingController), navigate, notificationService };
+        return {
+            auth: TestBed.inject(AuthService),
+            http: TestBed.inject(HttpTestingController),
+            navigate,
+            notificationService
+        };
     }
 
     it('should take the signed-in user from the session', async () => {
@@ -66,7 +71,10 @@ describe('AuthService', () => {
         const { auth, http, navigate, notificationService } = setup();
 
         const login = auth.login('owner', 'wrong');
-        http.expectOne('/auth/login').flush({ message: 'Invalid username or password.' }, { status: 401, statusText: 'Unauthorized' });
+        http.expectOne('/auth/login').flush(
+            { message: 'Invalid username or password.' },
+            { status: 401, statusText: 'Unauthorized' }
+        );
         await login;
 
         expect(auth.currentUser()).toBeNull();
@@ -87,7 +95,7 @@ describe('AuthService', () => {
         expect(navigate).toHaveBeenCalledWith(['/budget']);
     });
 
-    it('AUTH-2.7 should treat registration as closed when its status can\'t be read', async () => {
+    it("AUTH-2.7 should treat registration as closed when its status can't be read", async () => {
         const { auth, http } = setup();
 
         const open = auth.isRegistrationOpen();

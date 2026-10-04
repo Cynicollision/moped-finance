@@ -11,7 +11,7 @@ module.exports = {
     roots: ['<rootDir>', '<rootDir>/../shared'],
     moduleNameMapper: {
         '^@shared/(.*)$': '<rootDir>/../shared/$1',
-        '^@server/(.*)$': '<rootDir>/src/$1',
+        '^@server/(.*)$': '<rootDir>/src/$1'
     },
     testMatch: ['**/*.spec.ts'],
     setupFilesAfterEnv: ['<rootDir>/src/utility/testing/jest-setup.ts'],
@@ -19,5 +19,5 @@ module.exports = {
     clearMocks: true,
     resetMocks: true,
     restoreMocks: true,
-    testTimeout: 15000,
+    testTimeout: 15000
 };

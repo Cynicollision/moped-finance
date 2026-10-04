@@ -19,10 +19,12 @@ export class TransactionController {
         private accountData: IFinanceAccountData,
         private categoryData: IFinanceCategoryData,
         private transactionData: IFinanceTransactionData
-    ) {
-    }
+    ) {}
 
-    public async getTransaction(context: OperationContext, transactionId: string): Promise<OperationResult<Transaction>> {
+    public async getTransaction(
+        context: OperationContext,
+        transactionId: string
+    ): Promise<OperationResult<Transaction>> {
         const transaction = await this.transactionData.retrieveSingle(transactionId);
         if (!transaction) {
             return Result.userErrorNotFound();
@@ -30,7 +32,10 @@ export class TransactionController {
         return Result.success(transaction);
     }
 
-    public async createTransaction(context: OperationContext, input: CreateTransactionRequest): Promise<OperationResult<Transaction>> {
+    public async createTransaction(
+        context: OperationContext,
+        input: CreateTransactionRequest
+    ): Promise<OperationResult<Transaction>> {
         // A missing account or category fails the insert's foreign key, which OperationHandler reports as a 400.
         const transaction = FinanceEntityFactory.createTransaction({
             ...input,
@@ -42,7 +47,11 @@ export class TransactionController {
         return Result.successCreated(created);
     }
 
-    public async getTransactions(context: OperationContext, options: TransactionSearchOptions, accountId?: string): Promise<OperationResult<Transaction[]>> {
+    public async getTransactions(
+        context: OperationContext,
+        options: TransactionSearchOptions,
+        accountId?: string
+    ): Promise<OperationResult<Transaction[]>> {
         const transactions = await this.transactionData.search(options, accountId);
         return Result.success(transactions);
     }
@@ -52,7 +61,11 @@ export class TransactionController {
         return Result.success(merchantNames);
     }
 
-    public async saveTransaction(context: OperationContext, transactionId: string, changes: UpdateTransactionRequest): Promise<OperationResult<Transaction>> {
+    public async saveTransaction(
+        context: OperationContext,
+        transactionId: string,
+        changes: UpdateTransactionRequest
+    ): Promise<OperationResult<Transaction>> {
         const current = await this.transactionData.retrieveSingle(transactionId);
         if (!current) {
             return Result.userErrorNotFound();
@@ -75,7 +88,11 @@ export class TransactionController {
         return Result.successDeleted();
     }
 
-    public async getSpendingByCategory(context: OperationContext, period: CalendarPeriod, asOfDate?: CalendarDate): Promise<OperationResult<SpendingTotal[]>> {
+    public async getSpendingByCategory(
+        context: OperationContext,
+        period: CalendarPeriod,
+        asOfDate?: CalendarDate
+    ): Promise<OperationResult<SpendingTotal[]>> {
         const { startDate, endDate } = CalendarDateUtil.getPeriod(period, asOfDate ?? DateTimeUtil.today());
         const totals = await this.transactionData.retrieveSpendingByCategory(startDate, endDate);
         return Result.success(totals);
@@ -97,7 +114,12 @@ export class TransactionController {
         return Result.successFile('text/csv', fileName, TransactionCsv.write(transactions));
     }
 
-    public async importTransactions(context: OperationContext, file: Buffer | undefined, dryRun: boolean, targetAccountId?: string): Promise<OperationResult<TransactionImportResult>> {
+    public async importTransactions(
+        context: OperationContext,
+        file: Buffer | undefined,
+        dryRun: boolean,
+        targetAccountId?: string
+    ): Promise<OperationResult<TransactionImportResult>> {
         // Checked up front: a dry run inserts nothing, so the foreign key can't catch a bad account.
         if (targetAccountId && !(await this.accountData.retrieveSingle(targetAccountId))) {
             return Result.userError('Account not found.');
@@ -134,10 +156,18 @@ export class TransactionController {
         }
 
         if (dryRun) {
-            return Result.success({ ...report, createdCount: transactions.length, resultMessage: `Ready to import ${transactions.length} transactions.` });
+            return Result.success({
+                ...report,
+                createdCount: transactions.length,
+                resultMessage: `Ready to import ${transactions.length} transactions.`
+            });
         }
 
         await this.transactionData.insertBulk(transactions);
-        return Result.successCreated({ ...report, createdCount: transactions.length, resultMessage: `Imported ${transactions.length} transactions.` });
+        return Result.successCreated({
+            ...report,
+            createdCount: transactions.length,
+            resultMessage: `Imported ${transactions.length} transactions.`
+        });
     }
 }

@@ -53,12 +53,10 @@ export class RegisterComponent {
         try {
             const returnUrl = this.route.snapshot.queryParams['returnUrl'];
             await this.authService.register(this.username(), this.displayName(), this.password(), returnUrl);
-        }
-        catch (error) {
+        } catch (error) {
             // API service handles showing notifications, but we can set local error if needed.
             this.errorMessage.set(error instanceof Error ? error.message : 'An error occurred during registration.');
-        }
-        finally {
+        } finally {
             this.submitting.set(false);
         }
     }

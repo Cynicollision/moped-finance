@@ -23,14 +23,7 @@ type NavMode = 'bottom' | 'rail' | 'side';
 @Component({
     selector: 'app-root',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        RouterOutlet,
-        RouterLink,
-        MatSidenavModule,
-        MatIconModule,
-        ModeBadgeComponent,
-        ProfileMenuComponent
-    ],
+    imports: [RouterOutlet, RouterLink, MatSidenavModule, MatIconModule, ModeBadgeComponent, ProfileMenuComponent],
     templateUrl: './app.html',
     styleUrl: './app.scss'
 })
@@ -72,6 +65,8 @@ export class App {
     });
 
     constructor() {
-        effect(() => this.layout.hasBottomNav.set(this.navMode() === 'bottom' && this.authService.currentUser() !== null));
+        effect(() =>
+            this.layout.hasBottomNav.set(this.navMode() === 'bottom' && this.authService.currentUser() !== null)
+        );
     }
 }

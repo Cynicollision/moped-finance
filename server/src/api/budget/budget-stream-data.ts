@@ -27,7 +27,7 @@ function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect, categ
         categoryId: row.categoryId,
         type: BudgetStreamUtil.typeOf(categoryType as CategoryType),
         recurrence: row.recurrence as CalendarPeriod,
-        amount: Number(row.amount),
+        amount: Number(row.amount)
     };
 }
 
@@ -40,7 +40,8 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
 
     // Each stream with its category's type, which decides the stream's type (BUD-1.1).
     private selectWithCategoryType() {
-        return this.db.select({ stream: budgetStreamSchema, categoryType: categoryGroupSchema.type })
+        return this.db
+            .select({ stream: budgetStreamSchema, categoryType: categoryGroupSchema.type })
             .from(budgetStreamSchema)
             .innerJoin(categorySchema, eq(categorySchema.id, budgetStreamSchema.categoryId))
             .innerJoin(categoryGroupSchema, eq(categoryGroupSchema.id, categorySchema.groupId));
@@ -53,8 +54,7 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
     }
 
     public async retrieveSingle(id: string): Promise<BudgetStream | null> {
-        const rows = await this.selectWithCategoryType()
-            .where(eq(budgetStreamSchema.id, id));
+        const rows = await this.selectWithCategoryType().where(eq(budgetStreamSchema.id, id));
 
         if (rows.length === 0) {
             return null;
@@ -64,7 +64,8 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
     }
 
     public async delete(id: string): Promise<boolean> {
-        const result = await this.db.delete(budgetStreamSchema)
+        const result = await this.db
+            .delete(budgetStreamSchema)
             .where(eq(budgetStreamSchema.id, id))
             .returning({ id: budgetStreamSchema.id });
 
@@ -72,27 +73,27 @@ export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
     }
 
     public async insert(stream: BudgetStreamFields): Promise<BudgetStream> {
-        await this.db.insert(budgetStreamSchema)
-            .values({
-                id: stream.id,
-                name: stream.name,
-                categoryId: stream.categoryId,
-                recurrence: stream.recurrence,
-                amount: String(stream.amount),
-            });
+        await this.db.insert(budgetStreamSchema).values({
+            id: stream.id,
+            name: stream.name,
+            categoryId: stream.categoryId,
+            recurrence: stream.recurrence,
+            amount: String(stream.amount)
+        });
 
         // Read back through the category, for the type.
         return (await this.retrieveSingle(stream.id))!;
     }
 
     public async update(stream: BudgetStreamFields): Promise<BudgetStream | null> {
-        const rows = await this.db.update(budgetStreamSchema)
+        const rows = await this.db
+            .update(budgetStreamSchema)
             .set({
                 name: stream.name,
                 categoryId: stream.categoryId,
                 recurrence: stream.recurrence,
                 amount: String(stream.amount),
-                updatedAt: DateTimeUtil.now(),
+                updatedAt: DateTimeUtil.now()
             })
             .where(eq(budgetStreamSchema.id, stream.id))
             .returning({ id: budgetStreamSchema.id });

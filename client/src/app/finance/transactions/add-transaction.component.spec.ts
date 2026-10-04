@@ -22,7 +22,10 @@ describe('AddTransactionComponent', () => {
             providers: [
                 provideRouter([]),
                 { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } } },
-                { provide: DateProviderService, useValue: { now: () => new Date(2026, 4, 17), today: () => '2026-05-17' } },
+                {
+                    provide: DateProviderService,
+                    useValue: { now: () => new Date(2026, 4, 17), today: () => '2026-05-17' }
+                },
                 { provide: FinanceService, useValue: financeService },
                 { provide: NotificationService, useValue: notificationService }
             ]
@@ -48,7 +51,9 @@ describe('AddTransactionComponent', () => {
     });
 
     it('TXN-2.1 TXN-2.7 should create the transaction, Uncategorized when no category is chosen, then say so', async () => {
-        const { fixture, form, submit, financeService, notificationService, navigate } = await render({}, { id: 't1' } as Transaction);
+        const { fixture, form, submit, financeService, notificationService, navigate } = await render({}, {
+            id: 't1'
+        } as Transaction);
         form.patchValue({ accountId: 'acct', amount: -12.5, merchant: 'Bakery' });
         form.markAsDirty();
         expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
@@ -56,8 +61,16 @@ describe('AddTransactionComponent', () => {
         await submit();
 
         expect(financeService.createTransaction).toHaveBeenCalledWith({
-            accountId: 'acct', categoryId: '', date: '2026-05-17', amount: -12.5, merchant: 'Bakery', originalStatement: '', notes: '',
-            isHidden: false, isSplit: false, splitParentId: ''
+            accountId: 'acct',
+            categoryId: '',
+            date: '2026-05-17',
+            amount: -12.5,
+            merchant: 'Bakery',
+            originalStatement: '',
+            notes: '',
+            isHidden: false,
+            isSplit: false,
+            splitParentId: ''
         });
         expect(notificationService.success).toHaveBeenCalledWith('Transaction added');
         expect(navigate).toHaveBeenCalledWith(['/transactions']);

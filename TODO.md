@@ -16,7 +16,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
 ### Tooling
-- [ ] Install Prettier (already configured in `client/package.json` but not a dependency) and apply it to both packages. Its config doesn't set `tabWidth`, so it would default to 2 spaces; set 4 to match `docs/conventions.md` and `.editorconfig`, and move the config to a root `.prettierrc` so it covers the server too. Prettier always writes `} else {`, which conflicts with the convention of `else` on a new line (enforced in the client by `@stylistic/brace-style`), so decide which gives: drop the convention, or use Prettier only for HTML and SCSS. Until then the client lint checks TypeScript indentation, but nothing checks HTML or SCSS formatting.
 - [ ] Add ESLint to the server (typescript-eslint, matching `client/eslint.config.js`) and run it in CI.
 - [ ] `ng build` warns NG8107 in `import-transactions.component.html`: `results.unmatchedCategories?.length` uses `?.` on a property that's never undefined. Drop the `?`, or make the field optional in `TransactionImportResult` if the server can leave it out.
 

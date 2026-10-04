@@ -34,7 +34,8 @@ export class UserData implements IUserData {
     }
 
     public async create(user: User, passwordHash: string): Promise<User> {
-        const rows = await this.db.insert(userSchema)
+        const rows = await this.db
+            .insert(userSchema)
             .values({
                 id: user.id,
                 username: user.username,
@@ -90,7 +91,8 @@ export class UserData implements IUserData {
     }
 
     public async updatePassword(id: string, passwordHash: string): Promise<void> {
-        const rows = await this.db.update(userSchema)
+        const rows = await this.db
+            .update(userSchema)
             .set({
                 passwordHash: passwordHash,
                 updatedAt: DateTimeUtil.now()

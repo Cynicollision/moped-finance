@@ -18,13 +18,7 @@ import { AccountFormComponent } from './account-form.component';
 @Component({
     selector: 'app-finance-add-account',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        MatButtonModule,
-        AccountFormComponent,
-        PageHeaderComponent,
-        CardSkeletonComponent,
-        LoadErrorComponent
-    ],
+    imports: [MatButtonModule, AccountFormComponent, PageHeaderComponent, CardSkeletonComponent, LoadErrorComponent],
     templateUrl: './add-account.component.html',
     styleUrl: './add-account.component.scss'
 })
@@ -39,7 +33,10 @@ export class FinanceAddAccountComponent implements HasUnsavedChanges {
     private saved = false;
 
     readonly institutions = viewResource({
-        loader: async () => (await this.financeService.fetchInstitutions()).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+        loader: async () =>
+            (await this.financeService.fetchInstitutions()).sort((a, b) =>
+                a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+            )
     });
     readonly institutionId = this.route.snapshot.queryParamMap.get('institutionId');
     readonly saving = signal(false);
@@ -49,7 +46,10 @@ export class FinanceAddAccountComponent implements HasUnsavedChanges {
     }
 
     async addInstitution() {
-        const added = await this.modalService.open<InstitutionDialogComponent, InstitutionDialogData, boolean>(InstitutionDialogComponent, {});
+        const added = await this.modalService.open<InstitutionDialogComponent, InstitutionDialogData, boolean>(
+            InstitutionDialogComponent,
+            {}
+        );
         if (added) {
             this.institutions.reload();
         }

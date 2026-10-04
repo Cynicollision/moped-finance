@@ -25,13 +25,12 @@ export class LogData implements ILogData {
     }
 
     public async create(log: LogEntry): Promise<void> {
-        await this.db.insert(logSchema)
-            .values({
-                id: log.id,
-                userId: log.contextUserId,
-                level: log.level,
-                context: log.context,
-                message: log.message
-            });
+        await this.db.insert(logSchema).values({
+            id: log.id,
+            userId: log.contextUserId,
+            level: log.level,
+            context: log.context,
+            message: log.message
+        });
     }
 }

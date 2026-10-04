@@ -31,7 +31,13 @@ describe('LayoutService', () => {
     }
 
     it('should classify widths by the Material 3 window size classes', () => {
-        const cases: [number, string][] = [[375, 'compact'], [600, 'medium'], [839, 'medium'], [840, 'expanded'], [1200, 'large']];
+        const cases: [number, string][] = [
+            [375, 'compact'],
+            [600, 'medium'],
+            [839, 'medium'],
+            [840, 'expanded'],
+            [1200, 'large']
+        ];
 
         for (const [width, sizeClass] of cases) {
             TestBed.resetTestingModule();

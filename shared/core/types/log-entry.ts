@@ -5,4 +5,4 @@ export type LogEntry = Entity & {
     level: string;
     context: string;
     message: string;
-}
+};

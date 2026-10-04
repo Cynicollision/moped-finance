@@ -28,7 +28,11 @@ export class ModalService {
      *
      * @returns the result the dialog closed with, or undefined if it was dismissed
      */
-    async open<T, D = unknown, R = unknown>(component: Type<T>, data?: D, options: ModalOptions = {}): Promise<R | undefined> {
+    async open<T, D = unknown, R = unknown>(
+        component: Type<T>,
+        data?: D,
+        options: ModalOptions = {}
+    ): Promise<R | undefined> {
         const size = options.size ?? 'form';
         const config: MatDialogConfig<D> = {
             data,
@@ -52,12 +56,22 @@ export class ModalService {
 
     private sizeConfig(size: ModalOptions['size']): MatDialogConfig {
         if (size !== 'small' && this.layout.isCompact()) {
-            return { width: '100vw', maxWidth: '100vw', height: '100%', maxHeight: '100%', panelClass: 'full-screen-dialog' };
+            return {
+                width: '100vw',
+                maxWidth: '100vw',
+                height: '100%',
+                maxHeight: '100%',
+                panelClass: 'full-screen-dialog'
+            };
         }
         if (size === 'panel') {
             return {
-                width: '400px', maxWidth: '100vw', height: '100%', maxHeight: '100%',
-                position: { top: '0', right: '0' }, panelClass: 'side-panel-dialog'
+                width: '400px',
+                maxWidth: '100vw',
+                height: '100%',
+                maxHeight: '100%',
+                position: { top: '0', right: '0' },
+                panelClass: 'side-panel-dialog'
             };
         }
         return { width: size === 'small' ? '400px' : '560px', maxWidth: 'calc(100vw - 32px)' };
@@ -73,11 +87,10 @@ export class ModalService {
         }
         this.closing.add(dialogRef);
         try {
-            if (!hasUnsavedChanges(dialogRef.componentInstance) || await this.confirmDiscard()) {
+            if (!hasUnsavedChanges(dialogRef.componentInstance) || (await this.confirmDiscard())) {
                 dialogRef.close();
             }
-        }
-        finally {
+        } finally {
             this.closing.delete(dialogRef);
         }
     }
@@ -86,7 +99,7 @@ export class ModalService {
     async confirmDiscard(): Promise<boolean> {
         const confirmed = await this.confirm({
             title: 'Discard changes?',
-            message: 'Your changes haven\'t been saved.',
+            message: "Your changes haven't been saved.",
             confirmLabel: 'Discard',
             cancelLabel: 'Keep editing',
             isWarn: true
@@ -100,6 +113,8 @@ export class ModalService {
      * @returns true if the user confirmed
      */
     async confirm(data: ConfirmModalData): Promise<boolean | undefined> {
-        return this.open<ConfirmModalComponent, ConfirmModalData, boolean>(ConfirmModalComponent, data, { size: 'small' });
+        return this.open<ConfirmModalComponent, ConfirmModalData, boolean>(ConfirmModalComponent, data, {
+            size: 'small'
+        });
     }
 }

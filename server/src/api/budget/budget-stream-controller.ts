@@ -8,22 +8,29 @@ import { CreateBudgetStreamRequest, UpdateBudgetStreamRequest } from './budget-s
 export class BudgetStreamController {
     constructor(
         private logger: IAppLogger,
-        private budgetStreamData: IFinanceBudgetStreamData) {
-    }
+        private budgetStreamData: IFinanceBudgetStreamData
+    ) {}
 
     public async getBudgetStreams(context: OperationContext): Promise<OperationResult<BudgetStream[]>> {
         const streams = await this.budgetStreamData.retrieveAll();
         return Result.success(streams);
     }
 
-    public async createBudgetStream(context: OperationContext, input: CreateBudgetStreamRequest): Promise<OperationResult<BudgetStream>> {
+    public async createBudgetStream(
+        context: OperationContext,
+        input: CreateBudgetStreamRequest
+    ): Promise<OperationResult<BudgetStream>> {
         // A missing category fails the insert's foreign key, which OperationHandler reports as a 400.
         const budgetStream = FinanceEntityFactory.createBudgetStream(input);
         const created = await this.budgetStreamData.insert(budgetStream);
         return Result.successCreated(created);
     }
 
-    public async saveBudgetStream(context: OperationContext, budgetStreamId: string, changes: UpdateBudgetStreamRequest): Promise<OperationResult<BudgetStream>> {
+    public async saveBudgetStream(
+        context: OperationContext,
+        budgetStreamId: string,
+        changes: UpdateBudgetStreamRequest
+    ): Promise<OperationResult<BudgetStream>> {
         const current = await this.budgetStreamData.retrieveSingle(budgetStreamId);
         if (!current) {
             return Result.userErrorNotFound();

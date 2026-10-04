@@ -45,9 +45,11 @@ app-page-header {
 .view-toggle {
     align-self: flex-start;
 
-    @include mat.button-toggle-overrides((
-        height: 36px
-    ));
+    @include mat.button-toggle-overrides(
+        (
+            height: 36px
+        )
+    );
 }
 
 // Phones show "Sep 2026" and smaller arrows, and the switch spans the width.
@@ -69,10 +71,12 @@ app-page-header {
     .period-button {
         min-width: 6.5rem;
 
-        @include mat.button-overrides((
-            text-horizontal-padding: 6px,
-            text-with-icon-horizontal-padding: 6px
-        ));
+        @include mat.button-overrides(
+            (
+                text-horizontal-padding: 6px,
+                text-with-icon-horizontal-padding: 6px
+            )
+        );
     }
 }
 
@@ -119,7 +123,6 @@ app-page-header {
     .value {
         font: var(--mat-sys-title-large);
     }
-
 }
 
 @include bp.content-below(bp.$medium) {

@@ -32,7 +32,13 @@ describe('CategoryGroupFormModalComponent', () => {
 
         const fixture = TestBed.createComponent(CategoryGroupFormModalComponent);
         await fixture.whenStable();
-        return { fixture, element: fixture.nativeElement as HTMLElement, financeService, dialogRef, notificationService };
+        return {
+            fixture,
+            element: fixture.nativeElement as HTMLElement,
+            financeService,
+            dialogRef,
+            notificationService
+        };
     }
 
     function button(element: HTMLElement, label: string): HTMLButtonElement | undefined {
@@ -66,7 +72,11 @@ describe('CategoryGroupFormModalComponent', () => {
         form.patchValue({ name: 'Home' });
         await fixture.componentInstance.save();
 
-        expect(financeService.saveCategoryGroup).toHaveBeenCalledWith({ ...housing, name: 'Home', type: CategoryType.Expense });
+        expect(financeService.saveCategoryGroup).toHaveBeenCalledWith({
+            ...housing,
+            name: 'Home',
+            type: CategoryType.Expense
+        });
     });
 
     it('CAT-1.14 should change the type of an empty group', async () => {
@@ -82,7 +92,10 @@ describe('CategoryGroupFormModalComponent', () => {
     });
 
     it('CAT-1.15 should delete an empty group from its Edit dialog', async () => {
-        const { fixture, element, financeService, notificationService, dialogRef } = await render({ group: housing, categoryCount: 0 });
+        const { fixture, element, financeService, notificationService, dialogRef } = await render({
+            group: housing,
+            categoryCount: 0
+        });
 
         button(element, 'Delete')!.click();
         await fixture.whenStable();
@@ -92,12 +105,13 @@ describe('CategoryGroupFormModalComponent', () => {
         expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
 
-    it('CAT-1.14 CAT-1.15 should explain why a group with categories keeps its type and can\'t be deleted', async () => {
+    it("CAT-1.14 CAT-1.15 should explain why a group with categories keeps its type and can't be deleted", async () => {
         const { element } = await render({ group: housing, categoryCount: 1 });
 
         expect(button(element, 'Delete')!.disabled).toBe(true);
         expect(element.querySelector('mat-hint')).toBeNull();
-        expect(element.querySelector('.locked-note')!.textContent!.trim())
-            .toBe('To change the type or delete this group, first move or delete its 1 category.');
+        expect(element.querySelector('.locked-note')!.textContent!.trim()).toBe(
+            'To change the type or delete this group, first move or delete its 1 category.'
+        );
     });
 });

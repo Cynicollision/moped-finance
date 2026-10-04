@@ -1,12 +1,27 @@
 import { Injectable, inject } from '@angular/core';
 import { CalendarPeriod, HistoryTimeframe, SortDirection } from '@shared/core/enum';
 import { NewEntity } from '@shared/core/types';
-import { BalanceImportResult, SpendingTotal, GetAccountBalanceHistoryOptions, TotalValueHistory, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
+import {
+    BalanceImportResult,
+    SpendingTotal,
+    GetAccountBalanceHistoryOptions,
+    TotalValueHistory,
+    TransactionImportResult,
+    TransactionSearchOptions
+} from '@shared/finance/contracts';
 import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
-import { Institution, Account, Category, CategoryGroup, Transaction, BalanceHistory, BudgetStream, BudgetStreamFields } from '@shared/finance/types';
+import {
+    Institution,
+    Account,
+    Category,
+    CategoryGroup,
+    Transaction,
+    BalanceHistory,
+    BudgetStream,
+    BudgetStreamFields
+} from '@shared/finance/types';
 import { ApiService } from './../core/api.service';
 import { DateProviderService } from './../core/date-provider.service';
-
 
 const API_BASE_PATH = 'api/v1';
 
@@ -104,8 +119,15 @@ export class FinanceService {
         return this.api.load<BalanceHistory[]>(url);
     }
 
-    importBalanceHistory(accountId: string, formData: FormData, dryRun: boolean): Promise<BalanceImportResult | undefined> {
-        return this.api.post<BalanceImportResult>(`${API_BASE_PATH}/accounts/${accountId}/import-balances?dryRun=${dryRun}`, formData);
+    importBalanceHistory(
+        accountId: string,
+        formData: FormData,
+        dryRun: boolean
+    ): Promise<BalanceImportResult | undefined> {
+        return this.api.post<BalanceImportResult>(
+            `${API_BASE_PATH}/accounts/${accountId}/import-balances?dryRun=${dryRun}`,
+            formData
+        );
     }
 
     getExportBalanceHistoryUrl(accountId: string): string {
@@ -149,7 +171,11 @@ export class FinanceService {
         return this.api.post<Transaction>(`${API_BASE_PATH}/transactions`, transaction);
     }
 
-    importTransactions(formData: FormData, dryRun: boolean, accountId?: string | null): Promise<TransactionImportResult | undefined> {
+    importTransactions(
+        formData: FormData,
+        dryRun: boolean,
+        accountId?: string | null
+    ): Promise<TransactionImportResult | undefined> {
         let url = `${API_BASE_PATH}/transactions/import?dryRun=${dryRun}`;
         if (accountId) {
             url += `&accountId=${accountId}`;
@@ -188,7 +214,9 @@ export class FinanceService {
 
     // Spending
     fetchSpendingTotals(period: CalendarPeriod, asOfDate: string): Promise<SpendingTotal[]> {
-        return this.api.load<SpendingTotal[]>(`${API_BASE_PATH}/transactions/spending?period=${period}&asOfDate=${asOfDate}`);
+        return this.api.load<SpendingTotal[]>(
+            `${API_BASE_PATH}/transactions/spending?period=${period}&asOfDate=${asOfDate}`
+        );
     }
 
     private getTransactionUrlParams(options: TransactionSearchOptions): URLSearchParams {

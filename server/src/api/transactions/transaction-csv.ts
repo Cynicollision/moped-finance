@@ -12,7 +12,7 @@ const columns: CsvColumn<TransactionExport>[] = [
     { header: 'Amount', value: t => t.amount },
     { header: 'OriginalStatement', value: t => t.originalStatement },
     { header: 'Notes', value: t => t.notes },
-    { header: 'IsHidden', value: t => t.isHidden },
+    { header: 'IsHidden', value: t => t.isHidden }
 ];
 
 const maxMerchantLength = 255;
@@ -28,17 +28,16 @@ export type TransactionCsvLookups = {
 
 export type TransactionCsvReadResult =
     | {
-        success: true,
-        transactions: Transaction[],
-        failedRowMessages: string[],
-        /** CategoryNames that match no category, by first spelling, with the rows that use them (TXN-3.4). */
-        unmatchedCategories: { name: string, rowNumbers: number[] }[]
-    }
-    | { success: false, message: string };
+          success: true;
+          transactions: Transaction[];
+          failedRowMessages: string[];
+          /** CategoryNames that match no category, by first spelling, with the rows that use them (TXN-3.4). */
+          unmatchedCategories: { name: string; rowNumbers: number[] }[];
+      }
+    | { success: false; message: string };
 
 /** The transaction CSV format shared by export and import (TXN-3.1, TXN-3.2). */
 export class TransactionCsv {
-
     public static write(transactions: TransactionExport[]): string {
         return CsvFile.write(columns, transactions);
     }
@@ -48,14 +47,17 @@ export class TransactionCsv {
      * transaction and each invalid row gets one message listing all of its problems.
      */
     public static read(file: Buffer | undefined, lookups: TransactionCsvLookups): TransactionCsvReadResult {
-        const csv = CsvFile.read(file, columns.map(c => c.header));
+        const csv = CsvFile.read(
+            file,
+            columns.map(c => c.header)
+        );
         if (!csv.success) {
             return csv;
         }
 
         const transactions: Transaction[] = [];
         const failedRowMessages: string[] = [];
-        const unmatchedCategories = new Map<string, { name: string, rowNumbers: number[] }>();
+        const unmatchedCategories = new Map<string, { name: string; rowNumbers: number[] }>();
 
         for (const row of csv.rows) {
             const values = row.values;
@@ -95,20 +97,27 @@ export class TransactionCsv {
                 continue;
             }
 
-            transactions.push(FinanceEntityFactory.createTransaction({
-                accountId,
-                categoryId,
-                date: date.value,
-                amount: amount.value,
-                merchant: values['Merchant'],
-                originalStatement: values['OriginalStatement'],
-                notes: values['Notes'],
-                isHidden: isHidden.value,
-                isSplit: false,
-                splitParentId: ''
-            }));
+            transactions.push(
+                FinanceEntityFactory.createTransaction({
+                    accountId,
+                    categoryId,
+                    date: date.value,
+                    amount: amount.value,
+                    merchant: values['Merchant'],
+                    originalStatement: values['OriginalStatement'],
+                    notes: values['Notes'],
+                    isHidden: isHidden.value,
+                    isSplit: false,
+                    splitParentId: ''
+                })
+            );
         }
 
-        return { success: true, transactions, failedRowMessages, unmatchedCategories: [...unmatchedCategories.values()] };
+        return {
+            success: true,
+            transactions,
+            failedRowMessages,
+            unmatchedCategories: [...unmatchedCategories.values()]
+        };
     }
 }

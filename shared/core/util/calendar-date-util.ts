@@ -3,11 +3,10 @@ import { CalendarDate } from './../types';
 
 const calendarDatePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-type DateParts = { year: number, month: number, day: number };
+type DateParts = { year: number; month: number; day: number };
 
 /** Works with `CalendarDate`s (YYYY-MM-DD) as calendar days, so results don't depend on the time zone. */
 export class CalendarDateUtil {
-
     /** True for a real date written YYYY-MM-DD; false for other formats and impossible dates such as 2026-02-30. */
     public static isValid(value: string): boolean {
         const match = calendarDatePattern.exec(value);
@@ -50,7 +49,10 @@ export class CalendarDateUtil {
     }
 
     /** The first and last days of the month, quarter or year that `asOfDate` is in, both included. */
-    public static getPeriod(period: CalendarPeriod, asOfDate: CalendarDate): { startDate: CalendarDate, endDate: CalendarDate } {
+    public static getPeriod(
+        period: CalendarPeriod,
+        asOfDate: CalendarDate
+    ): { startDate: CalendarDate; endDate: CalendarDate } {
         const { year, month } = this.parse(asOfDate);
         let firstMonth: number;
         let monthCount: number;
@@ -77,15 +79,24 @@ export class CalendarDateUtil {
     /** The first day of a history timeframe that ends on `asOfDate`. */
     public static getTimeframeStart(timeframe: HistoryTimeframe, asOfDate: CalendarDate): CalendarDate {
         switch (timeframe) {
-            case HistoryTimeframe.PastThirtyDays: return this.addDays(asOfDate, -30);
-            case HistoryTimeframe.PastSixtyDays: return this.addDays(asOfDate, -60);
-            case HistoryTimeframe.PastNinetyDays: return this.addDays(asOfDate, -90);
-            case HistoryTimeframe.PastOneYear: return this.addYears(asOfDate, -1);
-            case HistoryTimeframe.PastTwoYears: return this.addYears(asOfDate, -2);
-            case HistoryTimeframe.PastFiveYears: return this.addYears(asOfDate, -5);
-            case HistoryTimeframe.PastTenYears: return this.addYears(asOfDate, -10);
-            case HistoryTimeframe.YearToDate: return `${asOfDate.substring(0, 4)}-01-01`;
-            case HistoryTimeframe.All: return '1970-01-01';
+            case HistoryTimeframe.PastThirtyDays:
+                return this.addDays(asOfDate, -30);
+            case HistoryTimeframe.PastSixtyDays:
+                return this.addDays(asOfDate, -60);
+            case HistoryTimeframe.PastNinetyDays:
+                return this.addDays(asOfDate, -90);
+            case HistoryTimeframe.PastOneYear:
+                return this.addYears(asOfDate, -1);
+            case HistoryTimeframe.PastTwoYears:
+                return this.addYears(asOfDate, -2);
+            case HistoryTimeframe.PastFiveYears:
+                return this.addYears(asOfDate, -5);
+            case HistoryTimeframe.PastTenYears:
+                return this.addYears(asOfDate, -10);
+            case HistoryTimeframe.YearToDate:
+                return `${asOfDate.substring(0, 4)}-01-01`;
+            case HistoryTimeframe.All:
+                return '1970-01-01';
         }
     }
 

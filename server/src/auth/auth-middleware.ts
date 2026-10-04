@@ -11,7 +11,7 @@ export type AuthMiddleware = {
     requireAuth: (req: Request, res: Response, next: NextFunction) => void;
     /** Account and token management: needs a browser session; API tokens are ignored (AUTH-11.9). */
     requireSession: (req: Request, res: Response, next: NextFunction) => void;
-}
+};
 
 const READ_METHODS = ['GET', 'HEAD'];
 
@@ -33,8 +33,7 @@ export function buildAuthMiddleware(apiTokenController: ApiTokenController): Aut
 
             UserContext.setApiTokenUser(req, grant.user, grant.access);
             next();
-        }
-        catch (error) {
+        } catch (error) {
             // A database error: let the app's error handler log it and answer 500
             next(error);
         }
@@ -44,11 +43,9 @@ export function buildAuthMiddleware(apiTokenController: ApiTokenController): Aut
         const context = UserContext.fromRequest(req);
         if (!context.getUser()) {
             res.status(401).json(Result.unauthorized().error);
-        }
-        else if (context.getApiTokenAccess() === ApiTokenAccess.ReadOnly && !READ_METHODS.includes(req.method)) {
+        } else if (context.getApiTokenAccess() === ApiTokenAccess.ReadOnly && !READ_METHODS.includes(req.method)) {
             res.status(403).json(Result.forbidden('This API token is read-only.', 'READ_ONLY_API_TOKEN').error);
-        }
-        else {
+        } else {
             next();
         }
     };
@@ -56,8 +53,7 @@ export function buildAuthMiddleware(apiTokenController: ApiTokenController): Aut
     const requireSession = (req: Request, res: Response, next: NextFunction) => {
         if (req.session?.user) {
             next();
-        }
-        else {
+        } else {
             res.status(401).json(Result.unauthorized().error);
         }
     };

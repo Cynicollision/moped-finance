@@ -18,7 +18,15 @@ import { NewApiTokenDialogComponent } from './new-api-token-dialog.component';
 // The API Tokens page of Settings (AUTH-11.1, AUTH-11.5)
 @Component({
     selector: 'app-api-tokens',
-    imports: [DatePipe, MatButtonModule, MatCardModule, MatIconModule, PageHeaderComponent, LoadErrorComponent, SkeletonComponent],
+    imports: [
+        DatePipe,
+        MatButtonModule,
+        MatCardModule,
+        MatIconModule,
+        PageHeaderComponent,
+        LoadErrorComponent,
+        SkeletonComponent
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './api-tokens.component.html',
     styleUrl: './api-tokens.component.scss'
@@ -52,7 +60,7 @@ export class ApiTokensComponent {
             confirmLabel: 'Revoke',
             isWarn: true
         });
-        if (confirmed && await this.apiTokenService.revoke(token.id)) {
+        if (confirmed && (await this.apiTokenService.revoke(token.id))) {
             this.notificationService.success('Token revoked');
             this.tokens.reload();
         }

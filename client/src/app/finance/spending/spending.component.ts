@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, ElementRef, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    ElementRef,
+    TemplateRef,
+    computed,
+    inject,
+    signal,
+    viewChild
+} from '@angular/core';
 import { NgTemplateOutlet, PercentPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -84,7 +93,20 @@ interface PeriodOption {
     start: CalendarDate;
 }
 
-const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+];
 
 // On phones the budget and difference go under the name (CASH-1.10).
 const budgetColumns: ListColumn[] = [
@@ -151,9 +173,13 @@ export class FinanceSpendingComponent {
     readonly lookups = viewResource({
         loader: async () => {
             // The oldest and newest transactions bound the years to choose from (CASH-1.1).
-            const edgeTransaction = (sortDirection: SortDirection) => this.financeService.fetchTransactions({
-                sortKey: TransactionsSortKey.Date, sortDirection, limit: 1, offset: 0
-            });
+            const edgeTransaction = (sortDirection: SortDirection) =>
+                this.financeService.fetchTransactions({
+                    sortKey: TransactionsSortKey.Date,
+                    sortDirection,
+                    limit: 1,
+                    offset: 0
+                });
             const [categories, groups, budgetStreams, [first], [last]] = await Promise.all([
                 this.financeService.fetchCategories(false),
                 this.financeService.fetchCategoryGroups(),
@@ -178,10 +204,15 @@ export class FinanceSpendingComponent {
     // period they're for, so the budgets beside them match until the new ones arrive.
     readonly totals = viewResource({
         params: () => this.selection(),
-        loader: async ({ period, start }) => ({ period, totals: await this.financeService.fetchSpendingTotals(period, start) })
+        loader: async ({ period, start }) => ({
+            period,
+            totals: await this.financeService.fetchSpendingTotals(period, start)
+        })
     });
 
-    private readonly categoryMap = computed(() => new Map((this.lookups.value()?.categories ?? []).map(c => [c.id, c])));
+    private readonly categoryMap = computed(
+        () => new Map((this.lookups.value()?.categories ?? []).map(c => [c.id, c]))
+    );
     private readonly groupMap = computed(() => new Map((this.lookups.value()?.groups ?? []).map(g => [g.id, g])));
     private readonly categoryTotals = computed(() => this.totals.value()?.totals ?? []);
 
@@ -189,11 +220,16 @@ export class FinanceSpendingComponent {
     private readonly monthlyBudgets = computed(() => {
         const budgets = new Map<string, number>();
         for (const stream of this.lookups.value()?.budgetStreams ?? []) {
-            budgets.set(stream.categoryId, (budgets.get(stream.categoryId) ?? 0) + BudgetStreamUtil.monthlyAmount(stream));
+            budgets.set(
+                stream.categoryId,
+                (budgets.get(stream.categoryId) ?? 0) + BudgetStreamUtil.monthlyAmount(stream)
+            );
         }
         return budgets;
     });
-    private readonly budgetMonths = computed(() => BudgetStreamUtil.monthsIn(this.totals.value()?.period ?? this.selection().period));
+    private readonly budgetMonths = computed(() =>
+        BudgetStreamUtil.monthsIn(this.totals.value()?.period ?? this.selection().period)
+    );
 
     readonly error = computed(() => this.lookups.error() ?? this.totals.error());
     readonly isLoaded = computed(() => this.lookups.value() !== undefined && this.totals.value() !== undefined);
@@ -245,10 +281,16 @@ export class FinanceSpendingComponent {
         switch (this.pickerPeriod()) {
             case CalendarPeriod.Monthly:
                 return monthNames.map((name, i) => ({
-                    label: name.slice(0, 3), ariaLabel: `${name} ${year}`, start: firstDay(year, i)
+                    label: name.slice(0, 3),
+                    ariaLabel: `${name} ${year}`,
+                    start: firstDay(year, i)
                 }));
             case CalendarPeriod.Quarterly:
-                return [1, 2, 3, 4].map(q => ({ label: `Q${q}`, ariaLabel: `Q${q} ${year}`, start: firstDay(year, (q - 1) * 3) }));
+                return [1, 2, 3, 4].map(q => ({
+                    label: `Q${q}`,
+                    ariaLabel: `Q${q} ${year}`,
+                    start: firstDay(year, (q - 1) * 3)
+                }));
             default:
                 return this.years().map(y => ({ label: `${y}`, ariaLabel: `${y}`, start: firstDay(y, 0) }));
         }
@@ -263,9 +305,11 @@ export class FinanceSpendingComponent {
         this.pickerYear.set(yearOf(start));
 
         if (this.isCompact()) {
-            this.pickerSheetRef = this.bottomSheet.open(this.pickerSheet(), { ariaLabel: 'Choose a period', autoFocus: 'dialog' });
-        }
-        else {
+            this.pickerSheetRef = this.bottomSheet.open(this.pickerSheet(), {
+                ariaLabel: 'Choose a period',
+                autoFocus: 'dialog'
+            });
+        } else {
             this.isPopoverOpen.set(true);
         }
     }
@@ -312,9 +356,7 @@ export class FinanceSpendingComponent {
             }
 
             const id = byGroup ? group?.id : cat?.id;
-            const name = byGroup
-                ? (group?.name || 'Uncategorized')
-                : (cat ? `${cat.icon} ${cat.name}` : 'Uncategorized');
+            const name = byGroup ? group?.name || 'Uncategorized' : cat ? `${cat.icon} ${cat.name}` : 'Uncategorized';
             const isIncome = group ? group.type === CategoryType.Income : isUncategorizedIncome;
             const rows = isIncome ? income : expense;
             const necessity = isIncome || byGroup ? undefined : expenseNecessityOf(cat);
@@ -340,37 +382,53 @@ export class FinanceSpendingComponent {
             }
         }
 
-        const largestFirst = (a: SpendingRow, b: SpendingRow) => (b.amount - a.amount) || ((b.budget ?? 0) - (a.budget ?? 0));
+        const largestFirst = (a: SpendingRow, b: SpendingRow) =>
+            b.amount - a.amount || (b.budget ?? 0) - (a.budget ?? 0);
         return {
             income: [...income.values()].sort(largestFirst),
             expense: [...expense.values()].sort(largestFirst)
         };
     }
 
-    readonly hasBudget = computed(() => [...this.rows().income, ...this.rows().expense].some(row => row.budget !== undefined));
+    readonly hasBudget = computed(() =>
+        [...this.rows().income, ...this.rows().expense].some(row => row.budget !== undefined)
+    );
 
     readonly totalIncome = computed(() => sumOf(this.rows().income, row => row.amount));
     readonly totalExpenses = computed(() => sumOf(this.rows().expense, row => row.amount));
     readonly totalSavings = computed(() => this.totalIncome() - this.totalExpenses());
-    readonly savingsRate = computed(() => this.totalIncome() > 0 ? this.totalSavings() / this.totalIncome() : 0);
+    readonly savingsRate = computed(() => (this.totalIncome() > 0 ? this.totalSavings() / this.totalIncome() : 0));
 
     private readonly budgetedIncome = computed(() => budgetOf(this.rows().income));
     private readonly budgetedExpenses = computed(() => budgetOf(this.rows().expense));
     /** Budgeted income less budgeted expenses, when either has streams (CASH-1.11). */
-    readonly budgetedSavings = computed(() => this.hasBudget() ? (this.budgetedIncome() ?? 0) - (this.budgetedExpenses() ?? 0) : undefined);
+    readonly budgetedSavings = computed(() =>
+        this.hasBudget() ? (this.budgetedIncome() ?? 0) - (this.budgetedExpenses() ?? 0) : undefined
+    );
 
     // Income is green and expenses the ordinary colour (APP-6.1).
     readonly sections = computed<SpendingSection[]>(() => [
         {
-            title: 'Income', isIncome: true, rows: this.rows().income, total: this.totalIncome(), budget: this.budgetedIncome(),
-            tone: 'favourable', empty: 'No income in this period.'
+            title: 'Income',
+            isIncome: true,
+            rows: this.rows().income,
+            total: this.totalIncome(),
+            budget: this.budgetedIncome(),
+            tone: 'favourable',
+            empty: 'No income in this period.'
         },
         {
-            title: 'Expenses', isIncome: false, rows: this.rows().expense, total: this.totalExpenses(), budget: this.budgetedExpenses(),
-            tone: 'plain', empty: 'No expenses in this period.',
-            parts: this.viewMode() === 'category' && this.hasNecessities()
-                ? this.splitByNecessity().filter(part => part.rows.length > 0)
-                : undefined
+            title: 'Expenses',
+            isIncome: false,
+            rows: this.rows().expense,
+            total: this.totalExpenses(),
+            budget: this.budgetedExpenses(),
+            tone: 'plain',
+            empty: 'No expenses in this period.',
+            parts:
+                this.viewMode() === 'category' && this.hasNecessities()
+                    ? this.splitByNecessity().filter(part => part.rows.length > 0)
+                    : undefined
         }
     ]);
 
@@ -397,7 +455,11 @@ export class FinanceSpendingComponent {
         if (over === 0) {
             return { amount: 0, text: 'on budget', isBad: false };
         }
-        return { amount: Math.abs(over), text: over > 0 ? 'over' : 'under', isBad: section.isIncome ? over < 0 : over > 0 };
+        return {
+            amount: Math.abs(over),
+            text: over > 0 ? 'over' : 'under',
+            isBad: section.isIncome ? over < 0 : over > 0
+        };
     }
 
     /** The Transactions filters for a row: its category or group, and the period (CASH-1.6). */
@@ -407,11 +469,9 @@ export class FinanceSpendingComponent {
         // An uncategorized row opens the Uncategorized filter, in either view (TXN-1.11).
         if (!row.id) {
             queryParams['categoryId'] = Uncategorized.filterValue;
-        }
-        else if (this.viewMode() === 'group') {
+        } else if (this.viewMode() === 'group') {
             queryParams['group'] = row.id;
-        }
-        else {
+        } else {
             queryParams['categoryId'] = row.id;
         }
 

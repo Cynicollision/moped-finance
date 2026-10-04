@@ -39,8 +39,11 @@ describe('DashboardComponent', () => {
     }
 
     function groupRows(element: HTMLElement): string[] {
-        return Array.from(element.querySelectorAll('.account-group .group-header-row'))
-            .map(row => Array.from(row.children).map(span => span.textContent!.trim()).join(' '));
+        return Array.from(element.querySelectorAll('.account-group .group-header-row')).map(row =>
+            Array.from(row.children)
+                .map(span => span.textContent!.trim())
+                .join(' ')
+        );
     }
 
     it('DASH-2.3 should list each account with a link to its details once the accounts load', async () => {
@@ -59,7 +62,9 @@ describe('DashboardComponent', () => {
         ]);
 
         expect(groupRows(element)).toEqual(['Credit Cards $250.50', 'Loans $100,000.00']);
-        const balances = Array.from(element.querySelectorAll('.account-group .row-item span')).map(e => e.textContent!.trim());
+        const balances = Array.from(element.querySelectorAll('.account-group .row-item span')).map(e =>
+            e.textContent!.trim()
+        );
         expect(balances).toEqual(['$250.50', '$100,000.00']);
     });
 
@@ -95,7 +100,10 @@ describe('DashboardComponent', () => {
 
     it('APP-2.9 should show a failed load in place, and load again on Retry', async () => {
         const financeService = {
-            fetchAllAccounts: vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue([account('Checking', AccountGroup.Cash, 1200)]),
+            fetchAllAccounts: vi
+                .fn()
+                .mockRejectedValueOnce(new Error('offline'))
+                .mockResolvedValue([account('Checking', AccountGroup.Cash, 1200)]),
             fetchTotalValueHistory: vi.fn().mockResolvedValue([]),
             fetchAccountBalanceHistory: vi.fn().mockResolvedValue([])
         };

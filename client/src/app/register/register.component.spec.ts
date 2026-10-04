@@ -98,6 +98,8 @@ describe('RegisterComponent', () => {
         expect(explanation.textContent).toMatch(/only account/);
         expect(explanation.textContent).toMatch(/own all of the instance's data/);
         expect(explanation.textContent).toMatch(/registration closes/);
-        expect(explanation.compareDocumentPosition(element.querySelector('form')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(
+            explanation.compareDocumentPosition(element.querySelector('form')!) & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
     });
 });

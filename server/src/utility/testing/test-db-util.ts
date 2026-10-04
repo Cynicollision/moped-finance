@@ -7,7 +7,7 @@ import { User } from '@shared/core/types/user';
 import { DatabaseClient } from '@server/data';
 
 export class TestDatabaseUtil {
-    public static async createMockDatabase(): Promise<{ dbClient: DatabaseClient, pglite: PGlite }> {
+    public static async createMockDatabase(): Promise<{ dbClient: DatabaseClient; pglite: PGlite }> {
         const pglite = new PGlite();
         const memoryDrizzle = drizzle(pglite);
 
@@ -51,7 +51,9 @@ export class TestDatabaseUtil {
     }
 
     public static async clearFinanceData(pglite: PGlite): Promise<void> {
-        await pglite.exec('TRUNCATE finance.institutions, finance.accounts, finance.category_groups, finance.categories, finance.transactions, finance.budget_streams, finance.balance_history CASCADE;');
+        await pglite.exec(
+            'TRUNCATE finance.institutions, finance.accounts, finance.category_groups, finance.categories, finance.transactions, finance.budget_streams, finance.balance_history CASCADE;'
+        );
     }
 
     public static async clearCoreData(pglite: PGlite): Promise<void> {

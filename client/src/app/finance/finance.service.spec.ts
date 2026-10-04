@@ -19,7 +19,11 @@ describe('FinanceService', () => {
                 { provide: DateProviderService, useValue: { today: () => '2026-05-17' } }
             ]
         });
-        return { finance: TestBed.inject(FinanceService), http: TestBed.inject(HttpTestingController), notificationService };
+        return {
+            finance: TestBed.inject(FinanceService),
+            http: TestBed.inject(HttpTestingController),
+            notificationService
+        };
     }
 
     it('should send every transaction search option the screen sets, and leave out the rest', async () => {
@@ -59,7 +63,7 @@ describe('FinanceService', () => {
         await none;
     });
 
-    it('should load an account\'s ten most recent transactions', async () => {
+    it("should load an account's ten most recent transactions", async () => {
         const { finance, http } = setup();
 
         const recent = finance.fetchAccountRecentTransactions('a1');
@@ -68,11 +72,13 @@ describe('FinanceService', () => {
         expect(await recent).toEqual([]);
     });
 
-    it('APP-4.1 should ask for value history as of the app\'s today', async () => {
+    it("APP-4.1 should ask for value history as of the app's today", async () => {
         const { finance, http } = setup();
 
         const history = finance.fetchTotalValueHistory(ValueHistoryType.NetWorth, HistoryTimeframe.PastThirtyDays);
-        http.expectOne('/api/v1/accounts/total-value-history?asOfDate=2026-05-17&type=NetWorth&timeframe=PastThirtyDays').flush([]);
+        http.expectOne(
+            '/api/v1/accounts/total-value-history?asOfDate=2026-05-17&type=NetWorth&timeframe=PastThirtyDays'
+        ).flush([]);
         await history;
 
         const spending = finance.fetchSpendingTotals(CalendarPeriod.Monthly, '2026-04-15');
@@ -130,12 +136,18 @@ describe('FinanceService', () => {
         const { finance, http, notificationService } = setup();
 
         const load = finance.fetchTransaction('t1');
-        http.expectOne('/api/v1/transactions/t1').flush({ message: 'Transaction not found.' }, { status: 404, statusText: 'Not Found' });
+        http.expectOne('/api/v1/transactions/t1').flush(
+            { message: 'Transaction not found.' },
+            { status: 404, statusText: 'Not Found' }
+        );
         await expect(load).rejects.toBeDefined();
         expect(notificationService.error).not.toHaveBeenCalled();
 
         const create = finance.createCategory({ groupId: 'g', name: 'Dup' } as never);
-        http.expectOne('/api/v1/categories').flush({ message: 'A category with that name already exists.' }, { status: 400, statusText: 'Bad Request' });
+        http.expectOne('/api/v1/categories').flush(
+            { message: 'A category with that name already exists.' },
+            { status: 400, statusText: 'Bad Request' }
+        );
         expect(await create).toBeUndefined();
         expect(notificationService.error).toHaveBeenCalledWith('A category with that name already exists.');
     });

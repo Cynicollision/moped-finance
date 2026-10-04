@@ -1,4 +1,8 @@
-<app-page-header title="API Tokens" [crumbs]="[{ label: 'Settings', link: '/settings' }]" [refreshing]="tokens.isRefreshing()">
+<app-page-header
+    title="API Tokens"
+    [crumbs]="[{ label: 'Settings', link: '/settings' }]"
+    [refreshing]="tokens.isRefreshing()"
+>
     <button mat-flat-button class="page-action" (click)="newToken()" aria-label="New token">
         <mat-icon>add</mat-icon>
         <span class="page-action-label">New token</span>
@@ -6,7 +10,6 @@
 </app-page-header>
 
 <mat-card class="settings-section">
-
     <mat-card-content class="section-content">
         <p class="section-description">
             Let scripts and tools call the API without signing in. Send the token in the header
@@ -15,45 +18,43 @@
 
         @if (tokens.error(); as error) {
             <app-load-error [message]="error" (retry)="tokens.reload()"></app-load-error>
-        }
-        @else if (tokens.value(); as tokens) {
+        } @else if (tokens.value(); as tokens) {
             @if (tokens.length === 0) {
-            <p class="empty-state">No API tokens yet.</p>
-            }
-            @else {
-            <div class="token-list">
-                @for (token of tokens; track token.id) {
-                <div class="token-row">
-                    <div class="token-main">
-                        <span class="token-name">{{ token.name }}</span>
-                        <span class="token-access">{{ accessLabel(token.access) }}</span>
-                    </div>
-                    <dl class="token-dates">
-                        <div>
-                            <dt>Created</dt>
-                            <dd>{{ token.createdAt | date: 'mediumDate' }}</dd>
+                <p class="empty-state">No API tokens yet.</p>
+            } @else {
+                <div class="token-list">
+                    @for (token of tokens; track token.id) {
+                        <div class="token-row">
+                            <div class="token-main">
+                                <span class="token-name">{{ token.name }}</span>
+                                <span class="token-access">{{ accessLabel(token.access) }}</span>
+                            </div>
+                            <dl class="token-dates">
+                                <div>
+                                    <dt>Created</dt>
+                                    <dd>{{ token.createdAt | date: 'mediumDate' }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Last used</dt>
+                                    <dd>{{ token.lastUsedAt ? (token.lastUsedAt | date: 'medium') : 'Never' }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Expires</dt>
+                                    @if (isExpired(token)) {
+                                        <dd class="expired">Expired</dd>
+                                    } @else {
+                                        <dd>
+                                            {{ token.expiresAt ? (token.expiresAt | date: 'mediumDate') : 'Never' }}
+                                        </dd>
+                                    }
+                                </div>
+                            </dl>
+                            <button mat-button class="revoke-button" (click)="revoke(token)">Revoke</button>
                         </div>
-                        <div>
-                            <dt>Last used</dt>
-                            <dd>{{ token.lastUsedAt ? (token.lastUsedAt | date: 'medium') : 'Never' }}</dd>
-                        </div>
-                        <div>
-                            <dt>Expires</dt>
-                            @if (isExpired(token)) {
-                            <dd class="expired">Expired</dd>
-                            }
-                            @else {
-                            <dd>{{ token.expiresAt ? (token.expiresAt | date: 'mediumDate') : 'Never' }}</dd>
-                            }
-                        </div>
-                    </dl>
-                    <button mat-button class="revoke-button" (click)="revoke(token)">Revoke</button>
+                    }
                 </div>
-                }
-            </div>
             }
-        }
-        @else {
+        } @else {
             <div class="token-list" aria-busy="true" aria-label="Loading">
                 <app-skeleton width="40%" height="20px"></app-skeleton>
                 <app-skeleton width="70%" height="16px"></app-skeleton>

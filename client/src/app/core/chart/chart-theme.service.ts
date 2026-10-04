@@ -41,8 +41,7 @@ export class ChartThemeService {
                 positive: read('--color-positive'),
                 negative: read('--color-negative')
             };
-        }
-        finally {
+        } finally {
             probe.remove();
         }
     }

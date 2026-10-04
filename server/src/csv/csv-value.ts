@@ -1,8 +1,6 @@
 import { SchemaUtil } from '@server/data';
 
-export type CsvValueResult<T> =
-    | { success: true, value: T }
-    | { success: false, message: string };
+export type CsvValueResult<T> = { success: true; value: T } | { success: false; message: string };
 
 const isoDatePattern = /^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/;
 const usDatePattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
@@ -10,7 +8,6 @@ const amountPattern = /^([+-])?\$?(\d+|\d{1,3}(?:,\d{3})+)(?:\.(\d+))?$/;
 
 /** Parses the text of one CSV cell. Messages name the field, so they read well as "Row N: <message>". */
 export class CsvValue {
-
     /**
      * Accepts YYYY-MM-DD, an ISO timestamp (its date part, so older exports re-import) and M/D/YYYY.
      * Returns YYYY-MM-DD. Impossible dates such as 2026-02-30 are rejected.
@@ -25,11 +22,9 @@ export class CsvValue {
         const us = usDatePattern.exec(text);
         if (iso) {
             [year, month, day] = [Number(iso[1]), Number(iso[2]), Number(iso[3])];
-        }
-        else if (us) {
+        } else if (us) {
             [year, month, day] = [Number(us[3]), Number(us[1]), Number(us[2])];
-        }
-        else {
+        } else {
             return { success: false, message: `${field} '${text}' is not a date; use YYYY-MM-DD or M/D/YYYY.` };
         }
 

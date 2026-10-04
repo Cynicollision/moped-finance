@@ -3,12 +3,13 @@
 
     <mat-card appearance="outlined" class="import-card">
         <mat-card-content>
-            <p>Select a CSV file containing your transactions. The file must have the following columns:
+            <p>
+                Select a CSV file containing your transactions. The file must have the following columns:
                 <strong>Date, AccountName, Merchant, CategoryName, Amount, OriginalStatement, Notes, IsHidden</strong>.
             </p>
 
             <div class="file-upload-section">
-                <input type="file" #fileInput (change)="onFileSelected($event)" accept=".csv" class="hidden-input">
+                <input type="file" #fileInput (change)="onFileSelected($event)" accept=".csv" class="hidden-input" />
                 <button mat-stroked-button (click)="fileInput.click()" [disabled]="isProcessing()">
                     <mat-icon>attach_file</mat-icon>
                     Choose CSV File
@@ -20,7 +21,9 @@
 
             @if (validationError(); as error) {
                 <div class="validation-error">
-                    <strong class="icon-heading"><mat-icon class="error-icon">error_outline</mat-icon> Validation Error:</strong>
+                    <strong class="icon-heading"
+                        ><mat-icon class="error-icon">error_outline</mat-icon> Validation Error:</strong
+                    >
                     <p>{{ error.message }}</p>
                     @if (error.rows.length > 0) {
                         <ul class="error-rows">
@@ -44,8 +47,13 @@
                     <!-- Unknown category names import as Uncategorized; listed so a typo can be fixed first (TXN-3.4). -->
                     @if (results.unmatchedCategories?.length) {
                         <div class="unmatched-categories">
-                            <strong class="icon-heading"><mat-icon class="notice-icon">help_outline</mat-icon> Categories not found:</strong>
-                            <p>These names don't match any of your categories, so their rows will be imported as Uncategorized. If one is a typo, fix the file and validate it again.</p>
+                            <strong class="icon-heading"
+                                ><mat-icon class="notice-icon">help_outline</mat-icon> Categories not found:</strong
+                            >
+                            <p>
+                                These names don't match any of your categories, so their rows will be imported as
+                                Uncategorized. If one is a typo, fix the file and validate it again.
+                            </p>
                             <ul class="unmatched-rows">
                                 @for (category of results.unmatchedCategories; track category.name) {
                                     <li>'{{ category.name }}': {{ rowsText(category.rowNumbers) }}</li>
@@ -54,23 +62,28 @@
                         </div>
                     }
                     <div class="actions mt-24">
-                        <button mat-flat-button (click)="confirmImport()"
-                            [disabled]="isProcessing()">
+                        <button mat-flat-button (click)="confirmImport()" [disabled]="isProcessing()">
                             @if (isProcessing()) {
-                                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+                                <mat-progress-spinner
+                                    class="button-spinner"
+                                    mode="indeterminate"
+                                    diameter="18"
+                                ></mat-progress-spinner>
                             }
                             Begin Import
                         </button>
                         <button mat-button (click)="cancelImport()" [disabled]="isProcessing()">Cancel</button>
                     </div>
                 </div>
-            }
-            @else {
+            } @else {
                 <div class="actions mt-24">
-                    <button mat-flat-button (click)="validateImport()"
-                        [disabled]="!selectedFile() || isProcessing()">
+                    <button mat-flat-button (click)="validateImport()" [disabled]="!selectedFile() || isProcessing()">
                         @if (isProcessing()) {
-                            <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+                            <mat-progress-spinner
+                                class="button-spinner"
+                                mode="indeterminate"
+                                diameter="18"
+                            ></mat-progress-spinner>
                         }
                         Validate Import
                     </button>

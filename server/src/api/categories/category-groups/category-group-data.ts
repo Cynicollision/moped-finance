@@ -20,7 +20,7 @@ function mapRowToCategoryGroup(row: typeof categoryGroupSchema.$inferSelect): Ca
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         type: row.type as CategoryType,
-        name: row.name,
+        name: row.name
     };
 }
 
@@ -37,8 +37,7 @@ export class FinanceCategoryGroupData implements IFinanceCategoryGroupData {
     }
 
     public async retrieveSingle(id: string): Promise<CategoryGroup | null> {
-        const rows = await this.db.select().from(categoryGroupSchema)
-            .where(eq(categoryGroupSchema.id, id));
+        const rows = await this.db.select().from(categoryGroupSchema).where(eq(categoryGroupSchema.id, id));
 
         if (rows.length === 0) {
             return null;
@@ -48,7 +47,8 @@ export class FinanceCategoryGroupData implements IFinanceCategoryGroupData {
     }
 
     public async delete(id: string): Promise<boolean> {
-        const result = await this.db.delete(categoryGroupSchema)
+        const result = await this.db
+            .delete(categoryGroupSchema)
             .where(eq(categoryGroupSchema.id, id))
             .returning({ id: categoryGroupSchema.id });
 
@@ -56,7 +56,8 @@ export class FinanceCategoryGroupData implements IFinanceCategoryGroupData {
     }
 
     public async insert(group: CategoryGroup): Promise<CategoryGroup> {
-        const rows = await this.db.insert(categoryGroupSchema)
+        const rows = await this.db
+            .insert(categoryGroupSchema)
             .values({
                 id: group.id,
                 type: group.type,
@@ -68,7 +69,8 @@ export class FinanceCategoryGroupData implements IFinanceCategoryGroupData {
     }
 
     public async update(group: CategoryGroup): Promise<CategoryGroup | null> {
-        const rows = await this.db.update(categoryGroupSchema)
+        const rows = await this.db
+            .update(categoryGroupSchema)
             .set({
                 type: group.type,
                 name: group.name,

@@ -11,8 +11,7 @@
                             </div>
                             <app-mode-badge></app-mode-badge>
                         </div>
-                    }
-                    @else {
+                    } @else {
                         <div class="rail-top">
                             <app-mode-badge [iconOnly]="true"></app-mode-badge>
                         </div>
@@ -20,8 +19,12 @@
 
                     <nav class="nav-list" aria-label="Main">
                         @for (item of navItems; track item.route) {
-                            <a class="nav-item" [routerLink]="item.route" [class.active]="activeRoute() === item.route"
-                                [attr.aria-current]="activeRoute() === item.route ? 'page' : null">
+                            <a
+                                class="nav-item"
+                                [routerLink]="item.route"
+                                [class.active]="activeRoute() === item.route"
+                                [attr.aria-current]="activeRoute() === item.route ? 'page' : null"
+                            >
                                 <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
                                 <span class="nav-label">{{ item.label }}</span>
                             </a>
@@ -48,19 +51,21 @@
     @if (navMode() === 'bottom') {
         <nav class="bottom-nav" aria-label="Main">
             @for (item of navItems; track item.route) {
-                <a class="nav-item" [routerLink]="item.route" [class.active]="activeRoute() === item.route"
-                    [attr.aria-current]="activeRoute() === item.route ? 'page' : null">
+                <a
+                    class="nav-item"
+                    [routerLink]="item.route"
+                    [class.active]="activeRoute() === item.route"
+                    [attr.aria-current]="activeRoute() === item.route ? 'page' : null"
+                >
                     <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
                     <span class="nav-label">{{ item.label }}</span>
                 </a>
             }
         </nav>
     }
-}
-@else {
+} @else {
     <!-- Signed out: no navigation or profile control, only Login or Register (APP-1.7). -->
     <main class="signed-out">
         <router-outlet></router-outlet>
     </main>
 }
-

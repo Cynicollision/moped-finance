@@ -4,4 +4,4 @@ import { CalendarDate } from './../../core/types';
 export type GetAccountBalanceHistoryOptions = {
     asOfDate: CalendarDate;
     timeframe: HistoryTimeframe;
-}
+};

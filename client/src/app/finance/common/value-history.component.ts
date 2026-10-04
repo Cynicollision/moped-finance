@@ -202,7 +202,8 @@ export class FinanceValueHistoryComponent {
             isGood = !isPositive;
         }
 
-        const timeframeLabel = this.timeframeOptions().find(t => t.value === this.selectedTimeframe())?.label || 'Period';
+        const timeframeLabel =
+            this.timeframeOptions().find(t => t.value === this.selectedTimeframe())?.label || 'Period';
 
         return {
             amount: Math.abs(changeAmount), // Absolute value for display (- is handled by arrow/positivity)

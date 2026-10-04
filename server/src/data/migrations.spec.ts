@@ -35,26 +35,59 @@ describe('Data migrations', () => {
     }
 
     async function categoryOf(transactionId: string): Promise<string | null> {
-        const result = await pglite.query<{ category_id: string | null }>('SELECT category_id FROM finance.transactions WHERE id = $1', [transactionId]);
+        const result = await pglite.query<{ category_id: string | null }>(
+            'SELECT category_id FROM finance.transactions WHERE id = $1',
+            [transactionId]
+        );
         return result.rows[0].category_id;
     }
 
     describe('0007_uncategorized_state', () => {
-        it('CAT-5.6 should make an Uncategorized category\'s transactions uncategorized and delete it', async () => {
+        it("CAT-5.6 should make an Uncategorized category's transactions uncategorized and delete it", async () => {
             const groups = new FinanceCategoryGroupData(dbClient);
             const categories = new FinanceCategoryData(dbClient);
-            const group = await groups.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' }));
-            const uncategorized = await categories.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Uncategorized', icon: '❓', isActive: true }));
-            const rent = await categories.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true }));
-            const institution = await new FinanceInstitutionData(dbClient).insert(FinanceEntityFactory.createInstitution({ name: 'Bank' }));
-            const account = await new FinanceAccountData(dbClient).insert(FinanceEntityFactory.createAccount({
-                institutionId: institution.id!, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking
-            }));
+            const group = await groups.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' })
+            );
+            const uncategorized = await categories.insert(
+                FinanceEntityFactory.createCategory({
+                    groupId: group.id!,
+                    name: 'Uncategorized',
+                    icon: '❓',
+                    isActive: true
+                })
+            );
+            const rent = await categories.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
+            );
+            const institution = await new FinanceInstitutionData(dbClient).insert(
+                FinanceEntityFactory.createInstitution({ name: 'Bank' })
+            );
+            const account = await new FinanceAccountData(dbClient).insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: institution.id!,
+                    name: 'Checking',
+                    category: AccountCategory.Asset,
+                    group: AccountGroup.Cash,
+                    type: AccountType.Checking
+                })
+            );
             const transactions = new FinanceTransactionData(dbClient);
-            const transaction = (categoryId: string) => transactions.insert(FinanceEntityFactory.createTransaction({
-                accountId: account.id!, categoryId, date: '2026-06-01', amount: -10, merchant: 'Shop',
-                originalStatement: '', notes: '', isHidden: false, isSplit: false, splitParentId: ''
-            }));
+            const transaction = (categoryId: string) =>
+                transactions.insert(
+                    FinanceEntityFactory.createTransaction({
+                        accountId: account.id!,
+                        categoryId,
+                        date: '2026-06-01',
+                        amount: -10,
+                        merchant: 'Shop',
+                        originalStatement: '',
+                        notes: '',
+                        isHidden: false,
+                        isSplit: false,
+                        splitParentId: ''
+                    })
+                );
             const t1 = await transaction(uncategorized.id!);
             const t2 = await transaction(rent.id!);
 
@@ -67,12 +100,26 @@ describe('Data migrations', () => {
         });
 
         it('CAT-5.6 should keep an Uncategorized category that a budget stream uses', async () => {
-            const group = await new FinanceCategoryGroupData(dbClient).insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' }));
+            const group = await new FinanceCategoryGroupData(dbClient).insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' })
+            );
             const categories = new FinanceCategoryData(dbClient);
-            const uncategorized = await categories.insert(FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'uncategorized', icon: '❓', isActive: true }));
-            await new FinanceBudgetStreamData(dbClient).insert(FinanceEntityFactory.createBudgetStream({
-                categoryId: uncategorized.id!, name: 'Buffer', recurrence: CalendarPeriod.Monthly, amount: 100
-            }));
+            const uncategorized = await categories.insert(
+                FinanceEntityFactory.createCategory({
+                    groupId: group.id!,
+                    name: 'uncategorized',
+                    icon: '❓',
+                    isActive: true
+                })
+            );
+            await new FinanceBudgetStreamData(dbClient).insert(
+                FinanceEntityFactory.createBudgetStream({
+                    categoryId: uncategorized.id!,
+                    name: 'Buffer',
+                    recurrence: CalendarPeriod.Monthly,
+                    amount: 100
+                })
+            );
 
             await runMigration('0007_uncategorized_state');
 

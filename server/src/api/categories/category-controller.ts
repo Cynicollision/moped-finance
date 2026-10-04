@@ -18,8 +18,7 @@ export class CategoryController {
         private logger: IAppLogger,
         private categoryData: IFinanceCategoryData,
         private groupData: IFinanceCategoryGroupData
-    ) {
-    }
+    ) {}
 
     public async getGroup(context: OperationContext, groupId: string): Promise<OperationResult<CategoryGroup>> {
         const group = await this.groupData.retrieveSingle(groupId);
@@ -34,13 +33,20 @@ export class CategoryController {
         return Result.success(groups);
     }
 
-    public async createGroup(context: OperationContext, input: CreateCategoryGroupRequest): Promise<OperationResult<CategoryGroup>> {
+    public async createGroup(
+        context: OperationContext,
+        input: CreateCategoryGroupRequest
+    ): Promise<OperationResult<CategoryGroup>> {
         const group = FinanceEntityFactory.createCategoryGroup(input);
         const created = await this.groupData.insert(group);
         return Result.successCreated(created);
     }
 
-    public async updateGroup(context: OperationContext, groupId: string, changes: UpdateCategoryGroupRequest): Promise<OperationResult<CategoryGroup>> {
+    public async updateGroup(
+        context: OperationContext,
+        groupId: string,
+        changes: UpdateCategoryGroupRequest
+    ): Promise<OperationResult<CategoryGroup>> {
         const current = await this.groupData.retrieveSingle(groupId);
         if (!current) {
             return Result.userErrorNotFound();
@@ -50,7 +56,7 @@ export class CategoryController {
         if (changes.type !== undefined && changes.type !== current.type) {
             const categories = await this.categoryData.retrieveAll();
             if (categories.some(category => category.groupId === groupId)) {
-                return Result.userError('A category group\'s type can\'t be changed while it has categories.');
+                return Result.userError("A category group's type can't be changed while it has categories.");
             }
         }
 
@@ -81,18 +87,24 @@ export class CategoryController {
         return Result.success(category);
     }
 
-    public async getCategories(context: OperationContext, activeOnly: boolean = false): Promise<OperationResult<Category[]>> {
+    public async getCategories(
+        context: OperationContext,
+        activeOnly: boolean = false
+    ): Promise<OperationResult<Category[]>> {
         const categories = await this.categoryData.retrieveAll(activeOnly);
         return Result.success(categories);
     }
 
-    public async createCategory(context: OperationContext, input: CreateCategoryRequest): Promise<OperationResult<Category>> {
+    public async createCategory(
+        context: OperationContext,
+        input: CreateCategoryRequest
+    ): Promise<OperationResult<Category>> {
         if (Uncategorized.isName(input.name)) {
             return Result.userError(reservedNameRefusal);
         }
 
         const necessity = input.necessity ?? null;
-        if (necessity && !await this.isExpenseGroup(input.groupId)) {
+        if (necessity && !(await this.isExpenseGroup(input.groupId))) {
             return Result.userError(necessityRefusal);
         }
 
@@ -107,7 +119,11 @@ export class CategoryController {
         return Result.successCreated(created);
     }
 
-    public async updateCategory(context: OperationContext, categoryId: string, changes: UpdateCategoryRequest): Promise<OperationResult<Category>> {
+    public async updateCategory(
+        context: OperationContext,
+        categoryId: string,
+        changes: UpdateCategoryRequest
+    ): Promise<OperationResult<Category>> {
         const current = await this.categoryData.retrieveSingle(categoryId);
         if (!current) {
             return Result.userErrorNotFound();
@@ -121,7 +137,7 @@ export class CategoryController {
         // A new necessity for a category outside Expense is refused. The one it had is cleared when it moves out, even if
         // the request sends it back unchanged (CAT-1.17).
         const merged = { ...current, ...changes };
-        if (merged.necessity && !await this.isExpenseGroup(merged.groupId)) {
+        if (merged.necessity && !(await this.isExpenseGroup(merged.groupId))) {
             if (changes.necessity && changes.necessity !== current.necessity) {
                 return Result.userError(necessityRefusal);
             }

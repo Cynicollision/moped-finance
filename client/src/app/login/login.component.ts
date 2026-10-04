@@ -45,8 +45,7 @@ export class LoginComponent implements OnInit {
             this.submitting.set(true);
             try {
                 await this.authService.login(this.username(), this.password(), returnUrl);
-            }
-            finally {
+            } finally {
                 this.submitting.set(false);
             }
         }

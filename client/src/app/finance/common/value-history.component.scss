@@ -49,9 +49,11 @@
     width: fit-content;
     margin-top: 16px;
 
-    @include mat.button-toggle-overrides((
-        height: 36px
-    ));
+    @include mat.button-toggle-overrides(
+        (
+            height: 36px
+        )
+    );
 
     mat-button-toggle {
         min-width: 56px;

@@ -2,18 +2,22 @@
 
 @if (accounts.error(); as error) {
     <app-load-error [message]="error" (retry)="accounts.reload()"></app-load-error>
-}
-@else {
+} @else {
     <div class="summary-container">
         @if (history.error(); as error) {
             <app-load-error [message]="error" (retry)="history.reload()"></app-load-error>
-        }
-        @else {
+        } @else {
             <!-- Value History Chart Card -->
-            <app-value-history [historyData]="history.value()" [currentValue]="currentChartValue()"
-                [chartTypeOptions]="chartTypeOptions" [selectedChartType]="selectedChartType()"
-                [selectedTimeframe]="selectedTimeframe()" (chartTypeChange)="onChartTypeChange($event)"
-                (timeframeChange)="onTimeframeChange($event)" class="full-width-card">
+            <app-value-history
+                [historyData]="history.value()"
+                [currentValue]="currentChartValue()"
+                [chartTypeOptions]="chartTypeOptions"
+                [selectedChartType]="selectedChartType()"
+                [selectedTimeframe]="selectedTimeframe()"
+                (chartTypeChange)="onChartTypeChange($event)"
+                (timeframeChange)="onTimeframeChange($event)"
+                class="full-width-card"
+            >
             </app-value-history>
         }
     </div>
@@ -29,7 +33,9 @@
                             <div class="group-header stacked">
                                 <div class="group-header-row">
                                     <span class="header-label">{{ group.label }}</span>
-                                    <span class="header-total">{{ (group.isLiability ? Math.abs(group.total) : group.total) | currency }}</span>
+                                    <span class="header-total">{{
+                                        (group.isLiability ? Math.abs(group.total) : group.total) | currency
+                                    }}</span>
                                 </div>
                                 @if (groupPeriodChanges().get(group.group); as change) {
                                     <app-value-period-change [change]="change" [label]="selectedTimeframeLabel()">
@@ -39,7 +45,10 @@
                             @for (account of group.accounts; track account.id) {
                                 <div class="row-item indented">
                                     <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
-                                    <span>{{ (group.isLiability ? Math.abs(account.balance ?? 0) : account.balance) | currency }}</span>
+                                    <span>{{
+                                        (group.isLiability ? Math.abs(account.balance ?? 0) : account.balance)
+                                            | currency
+                                    }}</span>
                                 </div>
                                 @if (!$last) {
                                     <mat-divider></mat-divider>
@@ -92,8 +101,7 @@
                     </div>
                 </mat-card-content>
             </mat-card>
-        }
-        @else {
+        } @else {
             <app-card-skeleton class="full-width-card" [rows]="5"></app-card-skeleton>
             <app-card-skeleton class="summary-card" [rows]="3"></app-card-skeleton>
             <app-card-skeleton class="summary-card" [rows]="2"></app-card-skeleton>

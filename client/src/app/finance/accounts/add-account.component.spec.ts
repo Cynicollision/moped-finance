@@ -29,7 +29,10 @@ describe('FinanceAddAccountComponent', () => {
             imports: [FinanceAddAccountComponent],
             providers: [
                 provideRouter([]),
-                { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(institutionId ? { institutionId } : {}) } } },
+                {
+                    provide: ActivatedRoute,
+                    useValue: { snapshot: { queryParamMap: convertToParamMap(institutionId ? { institutionId } : {}) } }
+                },
                 { provide: FinanceService, useValue: financeService },
                 { provide: ModalService, useValue: modalService },
                 { provide: NotificationService, useValue: notificationService },
@@ -40,11 +43,19 @@ describe('FinanceAddAccountComponent', () => {
 
         const fixture = TestBed.createComponent(FinanceAddAccountComponent);
         await fixture.whenStable();
-        return { fixture, element: fixture.nativeElement as HTMLElement, financeService, modalService, notificationService };
+        return {
+            fixture,
+            element: fixture.nativeElement as HTMLElement,
+            financeService,
+            modalService,
+            notificationService
+        };
     }
 
     function labels(element: HTMLElement): string[] {
-        return Array.from(element.querySelectorAll('mat-label, mat-checkbox label')).map(label => label.textContent!.trim());
+        return Array.from(element.querySelectorAll('mat-label, mat-checkbox label')).map(label =>
+            label.textContent!.trim()
+        );
     }
 
     it('ACCT-1.3 should go straight to the form, with no Connect option, Manual Account checkbox or Balance field', async () => {
@@ -53,24 +64,38 @@ describe('FinanceAddAccountComponent', () => {
         expect(element.querySelector('app-account-form')).not.toBeNull();
         expect(element.textContent).not.toMatch(/connect|coming soon/i);
         expect(labels(element)).toEqual([
-            'Account Name', 'Institution', 'Category', 'Group', 'Type',
-            'Hide Account', 'Retirement Account', 'Hide from Spending'
+            'Account Name',
+            'Institution',
+            'Category',
+            'Group',
+            'Type',
+            'Hide Account',
+            'Retirement Account',
+            'Hide from Spending'
         ]);
     });
 
     it('ACCT-1.3 should list institutions by name and start at the one it was opened from', async () => {
-        const { fixture } = await render([institution('inst-2', 'credit union'), institution('inst-1', 'Big Bank')], 'inst-2');
+        const { fixture } = await render(
+            [institution('inst-2', 'credit union'), institution('inst-1', 'Big Bank')],
+            'inst-2'
+        );
 
-        const form = fixture.debugElement.query(By.directive(AccountFormComponent)).componentInstance as AccountFormComponent;
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
         expect(form.institutions().map(i => i.name)).toEqual(['Big Bank', 'credit union']);
         expect(form.accountForm.controls.institutionId.value).toBe('inst-2');
     });
 
     it('ACCT-1.3 should save a manual account, say so, and open its details', async () => {
-        const { fixture, element, financeService, notificationService } = await render([institution('inst-1', 'First Bank')], 'inst-1');
+        const { fixture, element, financeService, notificationService } = await render(
+            [institution('inst-1', 'First Bank')],
+            'inst-1'
+        );
         const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-        const form = fixture.debugElement.query(By.directive(AccountFormComponent)).componentInstance as AccountFormComponent;
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
         form.accountForm.controls.name.setValue('Joint Checking');
         await fixture.whenStable();
         element.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
@@ -94,7 +119,8 @@ describe('FinanceAddAccountComponent', () => {
 
     it('APP-2.7 should have unsaved changes once the form is edited', async () => {
         const { fixture } = await render([institution('inst-1', 'First Bank')]);
-        const form = fixture.debugElement.query(By.directive(AccountFormComponent)).componentInstance as AccountFormComponent;
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
 
         expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
         form.accountForm.controls.name.setValue('Joint Checking');

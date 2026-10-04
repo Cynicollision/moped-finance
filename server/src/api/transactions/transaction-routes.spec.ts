@@ -2,7 +2,14 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { SortDirection } from '@shared/core/enum';
-import { AccountCategory, AccountGroup, AccountType, CategoryType, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import {
+    AccountCategory,
+    AccountGroup,
+    AccountType,
+    CategoryType,
+    TransactionsFilterKey,
+    TransactionsSortKey
+} from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { IAppLogger } from '@server/logging';
@@ -58,25 +65,54 @@ describe('Transaction Routes', () => {
 
         const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Bank' }));
         testInstitutionId = inst.id!;
-        const account = await accountsData.insert(FinanceEntityFactory.createAccount({
-            institutionId: inst.id!, name: 'Checking', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking, isHidden: false, isManual: false, isRetirement: false, hideFromSpending: false, balance: 0
-        }));
+        const account = await accountsData.insert(
+            FinanceEntityFactory.createAccount({
+                institutionId: inst.id!,
+                name: 'Checking',
+                category: AccountCategory.Asset,
+                group: AccountGroup.Cash,
+                type: AccountType.Checking,
+                isHidden: false,
+                isManual: false,
+                isRetirement: false,
+                hideFromSpending: false,
+                balance: 0
+            })
+        );
         testAccountId = account.id!;
 
-        const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Food' }));
-        const category = await categoriesData.insert(FinanceEntityFactory.createCategory({
-            groupId: group.id!, name: 'Groceries', icon: 'apple', isActive: true
-        }));
+        const group = await groupsData.insert(
+            FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Food' })
+        );
+        const category = await categoriesData.insert(
+            FinanceEntityFactory.createCategory({
+                groupId: group.id!,
+                name: 'Groceries',
+                icon: 'apple',
+                isActive: true
+            })
+        );
         testCategoryId = category.id!;
     });
 
     const csvHeader = 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n';
 
     function insertTransaction(fields: Partial<Transaction> = {}): Promise<Transaction> {
-        return transactionsData.insert(FinanceEntityFactory.createTransaction({
-            accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant',
-            isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '', ...fields
-        }));
+        return transactionsData.insert(
+            FinanceEntityFactory.createTransaction({
+                accountId: testAccountId,
+                categoryId: testCategoryId,
+                date: '2026-06-06',
+                amount: 100,
+                merchant: 'Test Merchant',
+                isHidden: false,
+                isSplit: false,
+                originalStatement: '',
+                notes: '',
+                splitParentId: '',
+                ...fields
+            })
+        );
     }
 
     function importCsv(rows: string, query: string = ''): request.Test {
@@ -92,8 +128,34 @@ describe('Transaction Routes', () => {
 
     describe('GET /', () => {
         it('should return a list of transactions when successful with default options', async () => {
-            const txn1 = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant 1', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
-            const txn2 = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-07', amount: 200, merchant: 'Test Merchant 2', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn1 = await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: testAccountId,
+                    categoryId: testCategoryId,
+                    date: '2026-06-06',
+                    amount: 100,
+                    merchant: 'Test Merchant 1',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: ''
+                })
+            );
+            const txn2 = await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: testAccountId,
+                    categoryId: testCategoryId,
+                    date: '2026-06-07',
+                    amount: 200,
+                    merchant: 'Test Merchant 2',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: ''
+                })
+            );
 
             const response = await request(app).get('/transactions');
 
@@ -103,7 +165,20 @@ describe('Transaction Routes', () => {
         });
 
         it('should parse and pass all search options correctly', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn = await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: testAccountId,
+                    categoryId: testCategoryId,
+                    date: '2026-06-06',
+                    amount: 100,
+                    merchant: 'Test Merchant',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: ''
+                })
+            );
 
             const filters = [
                 { key: TransactionsFilterKey.Category, value: testCategoryId },
@@ -137,13 +212,11 @@ describe('Transaction Routes', () => {
                 accountId: testAccountId,
                 categoryId: testCategoryId,
                 date: '2026-06-06',
-                amount: 300.00,
+                amount: 300.0,
                 merchant: 'Groceries'
             };
 
-            const response = await request(app)
-                .post('/transactions')
-                .send(payload);
+            const response = await request(app).post('/transactions').send(payload);
 
             expect(response.status).toBe(201);
             expect(response.body.merchant).toBe('Groceries');
@@ -162,9 +235,7 @@ describe('Transaction Routes', () => {
                 merchant: 'Groceries'
             };
 
-            const response = await request(app)
-                .post('/transactions')
-                .send(payload);
+            const response = await request(app).post('/transactions').send(payload);
 
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('amount');
@@ -173,8 +244,34 @@ describe('Transaction Routes', () => {
 
     describe('GET /merchants', () => {
         it('should return a list of merchants', async () => {
-            await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Amazon', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
-            await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Walmart', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: testAccountId,
+                    categoryId: testCategoryId,
+                    date: '2026-06-06',
+                    amount: 100,
+                    merchant: 'Amazon',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: ''
+                })
+            );
+            await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: testAccountId,
+                    categoryId: testCategoryId,
+                    date: '2026-06-06',
+                    amount: 100,
+                    merchant: 'Walmart',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: ''
+                })
+            );
 
             const response = await request(app).get('/transactions/merchants');
 
@@ -185,7 +282,20 @@ describe('Transaction Routes', () => {
 
     describe('GET /spending', () => {
         it('should return spending by category', async () => {
-            await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 500, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: testAccountId,
+                    categoryId: testCategoryId,
+                    date: '2026-06-06',
+                    amount: 500,
+                    merchant: 'Test Merchant',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: ''
+                })
+            );
 
             const response = await request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-06-15');
 
@@ -208,11 +318,22 @@ describe('Transaction Routes', () => {
         });
 
         // A second account alongside Checking, with the given flags.
-        async function insertAccount(flags: { isHidden?: boolean, hideFromSpending?: boolean }): Promise<string> {
-            const account = await accountsData.insert(FinanceEntityFactory.createAccount({
-                institutionId: testInstitutionId, name: 'Savings', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Savings,
-                isHidden: false, isManual: false, isRetirement: false, hideFromSpending: false, balance: 0, ...flags
-            }));
+        async function insertAccount(flags: { isHidden?: boolean; hideFromSpending?: boolean }): Promise<string> {
+            const account = await accountsData.insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: testInstitutionId,
+                    name: 'Savings',
+                    category: AccountCategory.Asset,
+                    group: AccountGroup.Cash,
+                    type: AccountType.Savings,
+                    isHidden: false,
+                    isManual: false,
+                    isRetirement: false,
+                    hideFromSpending: false,
+                    balance: 0,
+                    ...flags
+                })
+            );
             return account.id!;
         }
 
@@ -253,15 +374,19 @@ describe('Transaction Routes', () => {
             const response = await getJune();
 
             expect(response.body).toHaveLength(3);
-            expect(response.body).toEqual(expect.arrayContaining([
-                { categoryId: testCategoryId, amount: -25 },
-                { categoryId: '', amount: 40 },
-                { categoryId: '', amount: -60 }
-            ]));
+            expect(response.body).toEqual(
+                expect.arrayContaining([
+                    { categoryId: testCategoryId, amount: -25 },
+                    { categoryId: '', amount: 40 },
+                    { categoryId: '', amount: -60 }
+                ])
+            );
         });
 
         it('APP-5.7 should reject an asOfDate that is a timestamp rather than a date', async () => {
-            const response = await request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-04-15T00:00:00.000Z');
+            const response = await request(app).get(
+                '/transactions/spending?period=Monthly&asOfDate=2026-04-15T00:00:00.000Z'
+            );
 
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('asOfDate: Expected a date as YYYY-MM-DD');
@@ -270,7 +395,20 @@ describe('Transaction Routes', () => {
 
     describe('GET /:id', () => {
         it('should return a single transaction when found', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn = await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: testAccountId,
+                    categoryId: testCategoryId,
+                    date: '2026-06-06',
+                    amount: 100,
+                    merchant: 'Test Merchant',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: ''
+                })
+            );
 
             const response = await request(app).get(`/transactions/${txn.id}`);
 
@@ -287,17 +425,28 @@ describe('Transaction Routes', () => {
 
     describe('PUT /:id', () => {
         it('should update a transaction when valid', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn = await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: testAccountId,
+                    categoryId: testCategoryId,
+                    date: '2026-06-06',
+                    amount: 100,
+                    merchant: 'Test Merchant',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: ''
+                })
+            );
 
             const payload = {
                 ...txn,
-                amount: 120.00,
+                amount: 120.0,
                 merchant: 'Updated Merchant'
             };
 
-            const response = await request(app)
-                .put(`/transactions/${txn.id}`)
-                .send(payload);
+            const response = await request(app).put(`/transactions/${txn.id}`).send(payload);
 
             expect(response.status).toBe(200);
             expect(response.body.amount).toBe(120);
@@ -305,9 +454,15 @@ describe('Transaction Routes', () => {
         });
 
         it('should return 404 when update target does not exist', async () => {
-            const response = await request(app)
-                .put('/transactions/txn-1')
-                .send({ amount: 100, merchant: 'Updated', date: '2026-06-06', accountId: testAccountId, categoryId: testCategoryId, isHidden: false, isSplit: false });
+            const response = await request(app).put('/transactions/txn-1').send({
+                amount: 100,
+                merchant: 'Updated',
+                date: '2026-06-06',
+                accountId: testAccountId,
+                categoryId: testCategoryId,
+                isHidden: false,
+                isSplit: false
+            });
 
             expect(response.status).toBe(404);
             expect(response.body.message).toContain('not found');
@@ -316,7 +471,20 @@ describe('Transaction Routes', () => {
 
     describe('DELETE /:id', () => {
         it('should delete a transaction', async () => {
-            const txn = await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            const txn = await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: testAccountId,
+                    categoryId: testCategoryId,
+                    date: '2026-06-06',
+                    amount: 100,
+                    merchant: 'Test Merchant',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: ''
+                })
+            );
 
             const response = await request(app).delete(`/transactions/${txn.id}`);
 
@@ -336,13 +504,28 @@ describe('Transaction Routes', () => {
 
     describe('GET /export', () => {
         it('should return a CSV file of exported transactions', async () => {
-            await transactionsData.insert(FinanceEntityFactory.createTransaction({ accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 100, merchant: 'Test Merchant', isHidden: false, isSplit: false, originalStatement: '', notes: '', splitParentId: '' }));
+            await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: testAccountId,
+                    categoryId: testCategoryId,
+                    date: '2026-06-06',
+                    amount: 100,
+                    merchant: 'Test Merchant',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: ''
+                })
+            );
 
             const response = await request(app).get('/transactions/export');
 
             expect(response.status).toBe(200);
             expect(response.header['content-type']).toContain('text/csv');
-            expect(response.text).toContain('Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden');
+            expect(response.text).toContain(
+                'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden'
+            );
             expect(response.text).toContain('Test Merchant');
         });
 
@@ -363,7 +546,8 @@ describe('Transaction Routes', () => {
 
     describe('POST /import', () => {
         it('should process a CSV file and return import statistics', async () => {
-            const csvContent = 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,Groceries,100,,,false';
+            const csvContent =
+                'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,Groceries,100,,,false';
 
             const response = await request(app)
                 .post('/transactions/import')
@@ -375,7 +559,8 @@ describe('Transaction Routes', () => {
         });
 
         it('should perform a dry run without saving when dryRun=true', async () => {
-            const csvContent = 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,Groceries,100,,,false';
+            const csvContent =
+                'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,Groceries,100,,,false';
 
             const response = await request(app)
                 .post('/transactions/import?dryRun=true')
@@ -384,7 +569,13 @@ describe('Transaction Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.createdCount).toBe(1);
 
-            const txns = await transactionsData.search({ limit: 10, offset: 0, sortKey: TransactionsSortKey.Date, sortDirection: SortDirection.Desc, includeHidden: true });
+            const txns = await transactionsData.search({
+                limit: 10,
+                offset: 0,
+                sortKey: TransactionsSortKey.Date,
+                sortDirection: SortDirection.Desc,
+                includeHidden: true
+            });
             expect(txns.length).toBe(0);
         });
 
@@ -401,22 +592,34 @@ describe('Transaction Routes', () => {
             const dryRun = await importCsv(rows, '?dryRun=true');
 
             expect(dryRun.status).toBe(200);
-            expect(dryRun.body).toEqual(expect.objectContaining({
-                isValidToImport: true,
-                createdCount: 6,
-                uncategorizedCount: 5,
-                unmatchedCategories: [{ name: 'Groceriez', rowNumbers: [4, 6] }, { name: 'Mystery', rowNumbers: [7] }]
-            }));
+            expect(dryRun.body).toEqual(
+                expect.objectContaining({
+                    isValidToImport: true,
+                    createdCount: 6,
+                    uncategorizedCount: 5,
+                    unmatchedCategories: [
+                        { name: 'Groceriez', rowNumbers: [4, 6] },
+                        { name: 'Mystery', rowNumbers: [7] }
+                    ]
+                })
+            );
 
             const response = await importCsv(rows);
 
             expect(response.status).toBe(201);
             const saved = await transactionsData.search({ limit: 10, includeHidden: true });
-            expect(saved.filter(t => !t.categoryId).map(t => t.merchant).sort()).toEqual(['Blank', 'Named', 'Other', 'Typo', 'Typo again']);
+            expect(
+                saved
+                    .filter(t => !t.categoryId)
+                    .map(t => t.merchant)
+                    .sort()
+            ).toEqual(['Blank', 'Named', 'Other', 'Typo', 'Typo again']);
         });
 
         it('TXN-3.9 should save nothing and return 400 with the row errors when a confirmed import has a bad row', async () => {
-            const response = await importCsv('2026-06-06,Checking,Good,Groceries,100,,,false\n2026-06-07,Checking,Bad,Groceries,abc,,,false');
+            const response = await importCsv(
+                '2026-06-06,Checking,Good,Groceries,100,,,false\n2026-06-07,Checking,Bad,Groceries,abc,,,false'
+            );
 
             expect(response.status).toBe(400);
             expect(response.body.code).toBe('INVALID_IMPORT');
@@ -437,14 +640,17 @@ describe('Transaction Routes', () => {
             `);
 
             try {
-                const response = await importCsv('2026-06-06,Checking,One,Groceries,1,,,false\n2026-06-07,Checking,Two,Groceries,2,,,false\n2026-06-08,Checking,Boom,Groceries,3,,,false');
+                const response = await importCsv(
+                    '2026-06-06,Checking,One,Groceries,1,,,false\n2026-06-07,Checking,Two,Groceries,2,,,false\n2026-06-08,Checking,Boom,Groceries,3,,,false'
+                );
 
                 expect(response.status).toBe(500);
                 expect(response.body).toEqual({ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' });
                 expect(await countTransactions()).toBe(0);
-            }
-            finally {
-                await pglite.exec('DROP TRIGGER reject_boom ON finance.transactions; DROP FUNCTION finance.reject_boom();');
+            } finally {
+                await pglite.exec(
+                    'DROP TRIGGER reject_boom ON finance.transactions; DROP FUNCTION finance.reject_boom();'
+                );
             }
         });
 
@@ -462,7 +668,7 @@ describe('Transaction Routes', () => {
             ['', 'Date is required.'],
             ['17/05/2026', "Date '17/05/2026' is not a valid date."],
             ['2026-5-7', "Date '2026-5-7' is not a date; use YYYY-MM-DD or M/D/YYYY."],
-            ['yesterday', "Date 'yesterday' is not a date; use YYYY-MM-DD or M/D/YYYY."],
+            ['yesterday', "Date 'yesterday' is not a date; use YYYY-MM-DD or M/D/YYYY."]
         ])('TXN-3.10 should reject the date %p', async (date, message) => {
             const response = await importCsv(`${date},Checking,Test,Groceries,1,,,false`, '?dryRun=true');
 
@@ -472,7 +678,7 @@ describe('Transaction Routes', () => {
         it.each([
             ['', 'Amount is required.'],
             ['12abc', "Amount '12abc' is not a number."],
-            ['10000000000', "Amount '10000000000' is too large."],
+            ['10000000000', "Amount '10000000000' is too large."]
         ])('TXN-3.10 should reject the amount %p', async (amount, message) => {
             const response = await importCsv(`2026-06-06,Checking,Test,Groceries,${amount},,,false`, '?dryRun=true');
 
@@ -480,7 +686,10 @@ describe('Transaction Routes', () => {
         });
 
         it('TXN-3.10 should reject a merchant longer than 255 characters', async () => {
-            const response = await importCsv(`2026-06-06,Checking,${'m'.repeat(256)},Groceries,1,,,false`, '?dryRun=true');
+            const response = await importCsv(
+                `2026-06-06,Checking,${'m'.repeat(256)},Groceries,1,,,false`,
+                '?dryRun=true'
+            );
 
             expect(response.body.failedRowMessages).toEqual(['Row 2: Merchant is longer than 255 characters.']);
         });
@@ -492,22 +701,34 @@ describe('Transaction Routes', () => {
         });
 
         it('TXN-3.10 should accept M/D/YYYY dates, ISO timestamps, and amounts with $ and thousands separators', async () => {
-            const response = await importCsv('5/7/2026,Checking,A,Groceries,"-$1,234.56",,,TRUE\n2026-05-08T00:00:00.000Z,checking,B,groceries,+12,,,');
+            const response = await importCsv(
+                '5/7/2026,Checking,A,Groceries,"-$1,234.56",,,TRUE\n2026-05-08T00:00:00.000Z,checking,B,groceries,+12,,,'
+            );
 
             expect(response.status).toBe(201);
             expect(response.body.createdCount).toBe(2);
 
-            const saved = await transactionsData.search({ sortKey: TransactionsSortKey.Date, sortDirection: SortDirection.Asc, includeHidden: true });
+            const saved = await transactionsData.search({
+                sortKey: TransactionsSortKey.Date,
+                sortDirection: SortDirection.Asc,
+                includeHidden: true
+            });
             expect(saved.map(t => [t.date.substring(0, 10), t.amount, t.isHidden])).toEqual([
                 ['2026-05-07', -1234.56, true],
-                ['2026-05-08', 12, false],
+                ['2026-05-08', 12, false]
             ]);
         });
 
         it('TXN-3.2 should refuse a file with missing columns with a 400', async () => {
             const response = await request(app)
                 .post('/transactions/import?dryRun=true')
-                .attach('file', Buffer.from('Date,AccountName,Merchant,CategoryName,Amount,Notes\n2026-06-06,Checking,Test,Groceries,1,'), 'import.csv');
+                .attach(
+                    'file',
+                    Buffer.from(
+                        'Date,AccountName,Merchant,CategoryName,Amount,Notes\n2026-06-06,Checking,Test,Groceries,1,'
+                    ),
+                    'import.csv'
+                );
 
             expect(response.status).toBe(400);
             expect(response.body.message).toBe('Missing required CSV headers: OriginalStatement, IsHidden');
@@ -528,7 +749,10 @@ describe('Transaction Routes', () => {
         });
 
         it('TXN-3.5 should put every row in the target account, ignoring AccountName', async () => {
-            const response = await importCsv('2026-06-06,Someone Else,Test,Groceries,1,,,false', `?accountId=${testAccountId}`);
+            const response = await importCsv(
+                '2026-06-06,Someone Else,Test,Groceries,1,,,false',
+                `?accountId=${testAccountId}`
+            );
 
             expect(response.status).toBe(201);
             const saved = await transactionsData.search({ includeHidden: true });
@@ -536,14 +760,23 @@ describe('Transaction Routes', () => {
         });
 
         it('TXN-3.5 should refuse an import into an account that does not exist', async () => {
-            const response = await importCsv('2026-06-06,Checking,Test,Groceries,1,,,false', '?dryRun=true&accountId=missing');
+            const response = await importCsv(
+                '2026-06-06,Checking,Test,Groceries,1,,,false',
+                '?dryRun=true&accountId=missing'
+            );
 
             expect(response.status).toBe(400);
             expect(response.body.message).toBe('Account not found.');
         });
 
         it('TXN-3.1 should re-import its own export unchanged', async () => {
-            await insertTransaction({ date: '2026-06-06', amount: -12.5, merchant: 'Café, "Quoted"', notes: 'Line one', isHidden: true });
+            await insertTransaction({
+                date: '2026-06-06',
+                amount: -12.5,
+                merchant: 'Café, "Quoted"',
+                notes: 'Line one',
+                isHidden: true
+            });
             const exported = await request(app).get('/transactions/export');
             await pglite.exec('DELETE FROM finance.transactions');
 
@@ -553,7 +786,15 @@ describe('Transaction Routes', () => {
 
             expect(response.status).toBe(201);
             const saved = await transactionsData.search({ includeHidden: true });
-            expect(saved).toEqual([expect.objectContaining({ date: '2026-06-06', amount: -12.5, merchant: 'Café, "Quoted"', notes: 'Line one', isHidden: true })]);
+            expect(saved).toEqual([
+                expect.objectContaining({
+                    date: '2026-06-06',
+                    amount: -12.5,
+                    merchant: 'Café, "Quoted"',
+                    notes: 'Line one',
+                    isHidden: true
+                })
+            ]);
         });
 
         it('APP-5.4 should reject a file larger than 5 MB', async () => {
@@ -569,7 +810,8 @@ describe('Transaction Routes', () => {
         });
 
         it('APP-5.4 should reject more than one file', async () => {
-            const csvContent = 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,Groceries,100,,,false';
+            const csvContent =
+                'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,Groceries,100,,,false';
 
             const response = await request(app)
                 .post('/transactions/import?dryRun=true')
@@ -604,7 +846,17 @@ describe('Transaction Routes', () => {
 
     describe('POST / (invalid requests)', () => {
         it('APP-5.5 should reject a transaction whose category does not exist', async () => {
-            const payload = { accountId: testAccountId, categoryId: 'no-such-category', date: '2026-06-06', amount: 10, merchant: 'Test', isHidden: false, isSplit: false, originalStatement: '', notes: '' };
+            const payload = {
+                accountId: testAccountId,
+                categoryId: 'no-such-category',
+                date: '2026-06-06',
+                amount: 10,
+                merchant: 'Test',
+                isHidden: false,
+                isSplit: false,
+                originalStatement: '',
+                notes: ''
+            };
 
             const response = await request(app).post('/transactions').send(payload);
 
@@ -647,17 +899,31 @@ describe('Transaction Routes', () => {
 
         it('TXN-1.2 should sort by account name and by category name, ignoring case', async () => {
             const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Other Bank' }));
-            const savings = await accountsData.insert(FinanceEntityFactory.createAccount({
-                institutionId: inst.id, name: 'savings', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Savings
-            }));
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Home' }));
-            const rent = await categoriesData.insert(FinanceEntityFactory.createCategory({ groupId: group.id, name: 'rent', icon: 'home', isActive: true }));
+            const savings = await accountsData.insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: inst.id,
+                    name: 'savings',
+                    category: AccountCategory.Asset,
+                    group: AccountGroup.Cash,
+                    type: AccountType.Savings
+                })
+            );
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Home' })
+            );
+            const rent = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id, name: 'rent', icon: 'home', isActive: true })
+            );
 
             const checkingGroceries = await insertTransaction({ merchant: 'A' });
             const savingsRent = await insertTransaction({ accountId: savings.id, categoryId: rent.id, merchant: 'B' });
 
-            const byAccount = await request(app).get('/transactions').query({ sortKey: TransactionsSortKey.Account, sortDirection: 'desc' });
-            const byCategory = await request(app).get('/transactions').query({ sortKey: TransactionsSortKey.Category, sortDirection: 'asc' });
+            const byAccount = await request(app)
+                .get('/transactions')
+                .query({ sortKey: TransactionsSortKey.Account, sortDirection: 'desc' });
+            const byCategory = await request(app)
+                .get('/transactions')
+                .query({ sortKey: TransactionsSortKey.Category, sortDirection: 'asc' });
 
             expect(byAccount.body.map((t: Transaction) => t.id)).toEqual([savingsRent.id, checkingGroceries.id]);
             expect(byCategory.body.map((t: Transaction) => t.id)).toEqual([checkingGroceries.id, savingsRent.id]);
@@ -668,7 +934,9 @@ describe('Transaction Routes', () => {
                 await insertTransaction({ date });
             }
 
-            const response = await request(app).get('/transactions').query({ startDate: '2026-06-06', endDate: '2026-06-07' });
+            const response = await request(app)
+                .get('/transactions')
+                .query({ startDate: '2026-06-06', endDate: '2026-06-07' });
 
             expect(response.body.map((t: Transaction) => t.date)).toEqual(['2026-06-07', '2026-06-06']);
         });
@@ -677,17 +945,22 @@ describe('Transaction Routes', () => {
             await insertTransaction({ merchant: '100% Juice' });
             await insertTransaction({ merchant: '1000 Things' });
 
-            const response = await request(app).get('/transactions').query({ filters: JSON.stringify([{ key: TransactionsFilterKey.Merchant, value: '100%' }]) });
+            const response = await request(app)
+                .get('/transactions')
+                .query({ filters: JSON.stringify([{ key: TransactionsFilterKey.Merchant, value: '100%' }]) });
 
             expect(response.body.map((t: Transaction) => t.merchant)).toEqual(['100% Juice']);
         });
 
         it.each([
             [{ filters: 'not json' }, 'filters: Invalid JSON'],
-            [{ filters: JSON.stringify([{ key: 'nope', value: 'x' }]) }, 'filters: Expected an array of { key, value } filters'],
+            [
+                { filters: JSON.stringify([{ key: 'nope', value: 'x' }]) },
+                'filters: Expected an array of { key, value } filters'
+            ],
             [{ startDate: 'not a date' }, 'startDate: Expected a date as YYYY-MM-DD'],
             [{ endDate: '2026-06-06T00:00:00.000Z' }, 'endDate: Expected a date as YYYY-MM-DD'],
-            [{ sortKey: 'account_id' }, 'sortKey:'],
+            [{ sortKey: 'account_id' }, 'sortKey:']
         ])('APP-5.7 should reject invalid search options %p', async (query, message) => {
             const response = await request(app).get('/transactions').query(query);
 
@@ -698,7 +971,13 @@ describe('Transaction Routes', () => {
 
     describe('POST / and PUT /:id (references and field rules)', () => {
         it('TXN-2.5 should reject a transaction whose account does not exist', async () => {
-            const payload = { accountId: 'no-such-account', categoryId: testCategoryId, date: '2026-06-06', amount: 10, merchant: 'Test' };
+            const payload = {
+                accountId: 'no-such-account',
+                categoryId: testCategoryId,
+                date: '2026-06-06',
+                amount: 10,
+                merchant: 'Test'
+            };
 
             const response = await request(app).post('/transactions').send(payload);
 
@@ -707,7 +986,13 @@ describe('Transaction Routes', () => {
         });
 
         it('APP-5.7 should reject an amount too large for the database', async () => {
-            const payload = { accountId: testAccountId, categoryId: testCategoryId, date: '2026-06-06', amount: 1e10, merchant: 'Test' };
+            const payload = {
+                accountId: testAccountId,
+                categoryId: testCategoryId,
+                date: '2026-06-06',
+                amount: 1e10,
+                merchant: 'Test'
+            };
 
             const response = await request(app).post('/transactions').send(payload);
 
@@ -716,7 +1001,13 @@ describe('Transaction Routes', () => {
         });
 
         it('APP-5.7 should reject a date that is not a date', async () => {
-            const payload = { accountId: testAccountId, categoryId: testCategoryId, date: 'soon', amount: 1, merchant: 'Test' };
+            const payload = {
+                accountId: testAccountId,
+                categoryId: testCategoryId,
+                date: 'soon',
+                amount: 1,
+                merchant: 'Test'
+            };
 
             const response = await request(app).post('/transactions').send(payload);
 
@@ -730,14 +1021,28 @@ describe('Transaction Routes', () => {
             const response = await request(app).put(`/transactions/${txn.id}`).send({ merchant: 'Renamed' });
 
             expect(response.status).toBe(200);
-            expect(response.body).toEqual(expect.objectContaining({ merchant: 'Renamed', notes: 'Keep me', amount: -5, categoryId: testCategoryId, date: txn.date }));
+            expect(response.body).toEqual(
+                expect.objectContaining({
+                    merchant: 'Renamed',
+                    notes: 'Keep me',
+                    amount: -5,
+                    categoryId: testCategoryId,
+                    date: txn.date
+                })
+            );
         });
 
         it('TXN-2.3 should move a transaction to another account', async () => {
             const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Other Bank' }));
-            const other = await accountsData.insert(FinanceEntityFactory.createAccount({
-                institutionId: inst.id, name: 'Other', category: AccountCategory.Asset, group: AccountGroup.Cash, type: AccountType.Checking
-            }));
+            const other = await accountsData.insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: inst.id,
+                    name: 'Other',
+                    category: AccountCategory.Asset,
+                    group: AccountGroup.Cash,
+                    type: AccountType.Checking
+                })
+            );
             const txn = await insertTransaction();
 
             const response = await request(app).put(`/transactions/${txn.id}`).send({ accountId: other.id });

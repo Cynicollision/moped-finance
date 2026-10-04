@@ -1,12 +1,20 @@
 import { NewEntity } from '@shared/core/types';
-import { Account, BalanceHistory, BudgetStreamFields, Category, CategoryGroup, Institution, Transaction } from '@shared/finance/types';
+import {
+    Account,
+    BalanceHistory,
+    BudgetStreamFields,
+    Category,
+    CategoryGroup,
+    Institution,
+    Transaction
+} from '@shared/finance/types';
 import { DateTimeUtil } from '@server/utility';
 import { EntityId } from './entity-id';
 
 export enum CoreEntityIdPrefix {
     User = 'U',
     Log = 'LOG',
-    ApiToken = 'TOK',
+    ApiToken = 'TOK'
 }
 
 export enum FinanceEntityIdPrefix {
@@ -16,12 +24,14 @@ export enum FinanceEntityIdPrefix {
     Institution = 'IN',
     Category = 'CT',
     CategoryGroup = 'CTG',
-    BudgetStream = 'BS',
+    BudgetStream = 'BS'
 }
 
 export class FinanceEntityFactory {
-
-    private static createEntity<T extends { id: string, createdAt: Date, updatedAt: Date }>(prefix: string, newEntity: NewEntity<T>): T {
+    private static createEntity<T extends { id: string; createdAt: Date; updatedAt: Date }>(
+        prefix: string,
+        newEntity: NewEntity<T>
+    ): T {
         return {
             ...newEntity,
             id: newEntity.id || EntityId.generate(prefix),
@@ -46,8 +56,13 @@ export class FinanceEntityFactory {
         return FinanceEntityFactory.createEntity<Institution>(FinanceEntityIdPrefix.Institution, institution);
     }
 
-    public static createCategory(category: Omit<NewEntity<Category>, 'necessity'> & Partial<Pick<Category, 'necessity'>>): Category {
-        return FinanceEntityFactory.createEntity<Category>(FinanceEntityIdPrefix.Category, { necessity: null, ...category });
+    public static createCategory(
+        category: Omit<NewEntity<Category>, 'necessity'> & Partial<Pick<Category, 'necessity'>>
+    ): Category {
+        return FinanceEntityFactory.createEntity<Category>(FinanceEntityIdPrefix.Category, {
+            necessity: null,
+            ...category
+        });
     }
 
     public static createCategoryGroup(group: NewEntity<CategoryGroup>): CategoryGroup {

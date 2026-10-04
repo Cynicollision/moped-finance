@@ -16,14 +16,9 @@
     </app-page-header>
     @if (data.error(); as error) {
         <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
-    }
-    @else if (transaction(); as transaction) {
-        <app-transaction-form
-            [transaction]="transaction"
-            mode="readonly">
-        </app-transaction-form>
-    }
-    @else {
+    } @else if (transaction(); as transaction) {
+        <app-transaction-form [transaction]="transaction" mode="readonly"> </app-transaction-form>
+    } @else {
         <app-card-skeleton [rows]="5"></app-card-skeleton>
     }
 </div>

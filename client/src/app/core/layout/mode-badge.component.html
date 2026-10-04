@@ -5,8 +5,7 @@
             <span>Demo Mode</span>
         }
     </div>
-}
-@else if (isDebugMode) {
+} @else if (isDebugMode) {
     <div class="mode-badge debug" title="Debug Mode: {{ debugDateLabel() }}">
         <mat-icon>bug_report</mat-icon>
         @if (!iconOnly()) {

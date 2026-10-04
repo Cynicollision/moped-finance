@@ -8,12 +8,11 @@ import { authGuard } from './auth.guard';
 describe('authGuard', () => {
     function runGuard(user: User | null, url: string) {
         TestBed.configureTestingModule({
-            providers: [
-                provideRouter([]),
-                { provide: AuthService, useValue: { currentUser: signal(user) } }
-            ]
+            providers: [provideRouter([]), { provide: AuthService, useValue: { currentUser: signal(user) } }]
         });
-        return TestBed.runInInjectionContext(() => authGuard({} as ActivatedRouteSnapshot, { url } as RouterStateSnapshot));
+        return TestBed.runInInjectionContext(() =>
+            authGuard({} as ActivatedRouteSnapshot, { url } as RouterStateSnapshot)
+        );
     }
 
     it('AUTH-3.3 should let a signed-in user through', () => {
@@ -24,6 +23,8 @@ describe('authGuard', () => {
         const result = runGuard(null, '/accounts/a1?timeframe=PastYear');
 
         expect(result).toBeInstanceOf(UrlTree);
-        expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/login?returnUrl=%2Faccounts%2Fa1%3Ftimeframe%3DPastYear');
+        expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe(
+            '/login?returnUrl=%2Faccounts%2Fa1%3Ftimeframe%3DPastYear'
+        );
     });
 });

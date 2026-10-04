@@ -10,8 +10,10 @@ describe('NewApiTokenDialogComponent', () => {
     let mockApiTokenService: any;
     let mockDialogRef: any;
 
-    const createButton = () => [...fixture.nativeElement.querySelectorAll('button')]
-        .find((b: HTMLButtonElement) => b.textContent?.trim() === 'Create') as HTMLButtonElement;
+    const createButton = () =>
+        [...fixture.nativeElement.querySelectorAll('button')].find(
+            (b: HTMLButtonElement) => b.textContent?.trim() === 'Create'
+        ) as HTMLButtonElement;
 
     beforeEach(async () => {
         mockApiTokenService = {
@@ -54,7 +56,11 @@ describe('NewApiTokenDialogComponent', () => {
         await component.create();
         fixture.detectChanges();
 
-        expect(mockApiTokenService.create).toHaveBeenCalledWith({ name: 'Sync job', access: ApiTokenAccess.ReadWrite, expiresInDays: null });
+        expect(mockApiTokenService.create).toHaveBeenCalledWith({
+            name: 'Sync job',
+            access: ApiTokenAccess.ReadWrite,
+            expiresInDays: null
+        });
         expect(fixture.nativeElement.querySelector('input[readonly]').value).toBe('mf_secret');
         expect(fixture.nativeElement.textContent).toContain("Copy this token now. You won't be able to see it again.");
     });

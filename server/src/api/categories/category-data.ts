@@ -23,7 +23,7 @@ function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
         icon: row.icon,
         name: row.name,
         isActive: row.isActive,
-        necessity: row.necessity as CategoryNecessity | null,
+        necessity: row.necessity as CategoryNecessity | null
     };
 }
 
@@ -41,14 +41,15 @@ export class FinanceCategoryData implements IFinanceCategoryData {
             conditions.push(eq(categorySchema.isActive, true));
         }
 
-        const rows = await this.db.select().from(categorySchema).where(and(...conditions));
+        const rows = await this.db
+            .select()
+            .from(categorySchema)
+            .where(and(...conditions));
         return rows.map(mapRowToCategory);
     }
 
     public async retrieveSingle(id: string): Promise<Category | null> {
-        const rows = await this.db.select()
-            .from(categorySchema)
-            .where(eq(categorySchema.id, id));
+        const rows = await this.db.select().from(categorySchema).where(eq(categorySchema.id, id));
 
         if (rows.length === 0) {
             return null;
@@ -58,7 +59,8 @@ export class FinanceCategoryData implements IFinanceCategoryData {
     }
 
     public async delete(id: string): Promise<boolean> {
-        const result = await this.db.delete(categorySchema)
+        const result = await this.db
+            .delete(categorySchema)
             .where(eq(categorySchema.id, id))
             .returning({ id: categorySchema.id });
 
@@ -66,7 +68,8 @@ export class FinanceCategoryData implements IFinanceCategoryData {
     }
 
     public async insert(category: Category): Promise<Category> {
-        const rows = await this.db.insert(categorySchema)
+        const rows = await this.db
+            .insert(categorySchema)
             .values({
                 id: category.id,
                 groupId: category.groupId,
@@ -81,7 +84,8 @@ export class FinanceCategoryData implements IFinanceCategoryData {
     }
 
     public async update(category: Category): Promise<Category | null> {
-        const rows = await this.db.update(categorySchema)
+        const rows = await this.db
+            .update(categorySchema)
             .set({
                 groupId: category.groupId,
                 icon: category.icon,

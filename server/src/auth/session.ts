@@ -13,7 +13,7 @@ export type SessionConfig = {
     /** True when users reach the app over HTTPS (USE_HTTPS): the cookie is then only sent over HTTPS. */
     secureCookie: boolean;
     store: session.Store;
-}
+};
 
 export class SessionUtil {
     /** The session cookie's attributes. Logout clears the cookie with the same ones, or the browser keeps it. */

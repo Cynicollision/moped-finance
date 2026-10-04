@@ -123,19 +123,21 @@ export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChange
             return this.categories().filter(c => c.name.toLowerCase().includes(filterValue));
         };
 
-        this.budgetForm.controls.categoryId.valueChanges.pipe(
-            startWith(''),
-            map(value => {
-                if (typeof value === 'string') {
-                    return value;
-                }
-                // If it's an ID (from patchValue), we need to find the name if we want to filter,
-                // but since we display name in the input, usually value is the name or empty.
-                const cat = this.categories().find(c => c.id === value);
-                return cat ? cat.name : '';
-            }),
-            map(name => _filterCategories(name))
-        ).subscribe(filtered => this.filteredCategories.set(filtered));
+        this.budgetForm.controls.categoryId.valueChanges
+            .pipe(
+                startWith(''),
+                map(value => {
+                    if (typeof value === 'string') {
+                        return value;
+                    }
+                    // If it's an ID (from patchValue), we need to find the name if we want to filter,
+                    // but since we display name in the input, usually value is the name or empty.
+                    const cat = this.categories().find(c => c.id === value);
+                    return cat ? cat.name : '';
+                }),
+                map(name => _filterCategories(name))
+            )
+            .subscribe(filtered => this.filteredCategories.set(filtered));
     }
 
     displayCategory = (id: string): string => {
@@ -172,8 +174,10 @@ export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChange
             return;
         }
 
-        if (await confirmDeleteStream(this.modalService, stream)
-            && await this.financeService.deleteBudgetStream(stream.id)) {
+        if (
+            (await confirmDeleteStream(this.modalService, stream)) &&
+            (await this.financeService.deleteBudgetStream(stream.id))
+        ) {
             this.notificationService.success(`${this.typeString} deleted`);
             this.dialogRef.close(true);
         }

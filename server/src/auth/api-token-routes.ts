@@ -9,7 +9,11 @@ import { AuthMiddleware } from './auth-middleware';
  * Managing API tokens (AUTH-11). Mounted at /auth/tokens and needs a browser session: a token can't be used to
  * create or revoke tokens (AUTH-11.9).
  */
-export function buildApiTokenRouter(logger: IAppLogger, controller: ApiTokenController, middleware: AuthMiddleware): Router {
+export function buildApiTokenRouter(
+    logger: IAppLogger,
+    controller: ApiTokenController,
+    middleware: AuthMiddleware
+): Router {
     const domain = 'ApiToken';
     const handler = new OperationHandler(logger);
     const router = Router();

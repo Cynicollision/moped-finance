@@ -19,7 +19,12 @@ import { NotificationService } from './../../core/notification.service';
 import { MoneyComponent, MoneyTone } from './../common/money.component';
 import { ExpenseNecessity, expenseNecessities, expenseNecessityOf } from './../common/necessity';
 import { FinanceService } from './../finance.service';
-import { FinanceBudgetFormModalComponent, BudgetFormModalData, confirmDeleteStream, streamTypeLabel } from './budget-form-modal.component';
+import {
+    FinanceBudgetFormModalComponent,
+    BudgetFormModalData,
+    confirmDeleteStream,
+    streamTypeLabel
+} from './budget-form-modal.component';
 
 /** Some of a section's streams with what they come to per month: one part of the expenses split (BUD-1.7). */
 export interface NecessityPart {
@@ -145,9 +150,13 @@ export class FinanceBudgetComponent {
     // Monthly, then Quarterly, then Yearly; then by group name and category name (BUD-1.5).
     private compareStreams(a: BudgetStream, b: BudgetStream): number {
         const byRecurrence = recurrenceOrder.indexOf(a.recurrence) - recurrenceOrder.indexOf(b.recurrence);
-        return byRecurrence
-            || this.getCategoryGroup(a.categoryId).localeCompare(this.getCategoryGroup(b.categoryId))
-            || (this.categoryMap().get(a.categoryId)?.name ?? '').localeCompare(this.categoryMap().get(b.categoryId)?.name ?? '');
+        return (
+            byRecurrence ||
+            this.getCategoryGroup(a.categoryId).localeCompare(this.getCategoryGroup(b.categoryId)) ||
+            (this.categoryMap().get(a.categoryId)?.name ?? '').localeCompare(
+                this.categoryMap().get(b.categoryId)?.name ?? ''
+            )
+        );
     }
 
     getCategoryName(id: string) {
@@ -170,7 +179,9 @@ export class FinanceBudgetComponent {
 
     private async openStream(data: BudgetFormModalData) {
         const changed = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, boolean>(
-            FinanceBudgetFormModalComponent, data, { size: 'panel' }
+            FinanceBudgetFormModalComponent,
+            data,
+            { size: 'panel' }
         );
         if (changed) {
             this.data.reload();
@@ -178,7 +189,10 @@ export class FinanceBudgetComponent {
     }
 
     async delete(stream: BudgetStream) {
-        if (await confirmDeleteStream(this.modalService, stream) && await this.financeService.deleteBudgetStream(stream.id)) {
+        if (
+            (await confirmDeleteStream(this.modalService, stream)) &&
+            (await this.financeService.deleteBudgetStream(stream.id))
+        ) {
             this.notificationService.success(`${streamTypeLabel(stream.type)} deleted`);
             this.data.reload();
         }

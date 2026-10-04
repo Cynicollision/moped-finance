@@ -8,7 +8,7 @@ export default defineConfig({
         './src/data/database-schemas.ts',
         './src/auth/*-data.ts',
         './src/logging/log-data.ts',
-        './src/api/**/*-schema.ts',
+        './src/api/**/*-schema.ts'
     ],
-    out: './migrations',
+    out: './migrations'
 });

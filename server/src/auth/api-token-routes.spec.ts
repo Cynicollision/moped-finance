@@ -36,9 +36,23 @@ describe('API Tokens', () => {
         const middleware = buildAuthMiddleware(apiTokenController);
         app = express();
         app.use(express.json());
-        app.use(SessionUtil.buildMiddleware({ secret: 'test-secret', secureCookie: false, store: SessionUtil.createStore(dbClient, false) }));
+        app.use(
+            SessionUtil.buildMiddleware({
+                secret: 'test-secret',
+                secureCookie: false,
+                store: SessionUtil.createStore(dbClient, false)
+            })
+        );
         app.use('/auth/tokens', buildApiTokenRouter(logger, apiTokenController, middleware));
-        app.use('/auth', buildAuthRouter(logger, new AuthController(new UserData(dbClient)), middleware, SessionUtil.cookieOptions(false)));
+        app.use(
+            '/auth',
+            buildAuthRouter(
+                logger,
+                new AuthController(new UserData(dbClient)),
+                middleware,
+                SessionUtil.cookieOptions(false)
+            )
+        );
         app.use('/api', buildFinanceRouter(logger, dbClient, middleware));
     });
 
@@ -95,7 +109,8 @@ describe('API Tokens', () => {
             DateTimeUtil.setClock(new Date('2026-05-01T12:00:00Z'));
 
             const expiring = (await agent.post('/auth/tokens').send({ ...readWrite, expiresInDays: 30 })).body.apiToken;
-            const permanent = (await agent.post('/auth/tokens').send({ ...readWrite, expiresInDays: null })).body.apiToken;
+            const permanent = (await agent.post('/auth/tokens').send({ ...readWrite, expiresInDays: null })).body
+                .apiToken;
 
             expect(expiring.createdAt).toBe('2026-05-01T12:00:00.000Z');
             expect(expiring.expiresAt).toBe('2026-05-31T12:00:00.000Z');
@@ -121,7 +136,9 @@ describe('API Tokens', () => {
 
             expect((await agent.delete(`/auth/tokens/${id}`)).status).toBe(204);
             expect((await agent.get('/auth/tokens')).body).toEqual([]);
-            expect((await request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`)).status).toBe(401);
+            expect(
+                (await request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`)).status
+            ).toBe(401);
         });
 
         it('should return 404 when revoking a token that does not exist', async () => {
@@ -199,7 +216,10 @@ describe('API Tokens', () => {
         it('AUTH-11.8 should let a read-write token write', async () => {
             const token = await createToken(readWrite);
 
-            const response = await request(app).post('/api/v1/institutions').set('Authorization', `Bearer ${token}`).send({ name: 'Bank' });
+            const response = await request(app)
+                .post('/api/v1/institutions')
+                .set('Authorization', `Bearer ${token}`)
+                .send({ name: 'Bank' });
 
             expect(response.status).toBe(201);
             expect(response.body.name).toBe('Bank');
@@ -226,7 +246,10 @@ describe('API Tokens', () => {
             const bearer = { Authorization: `Bearer ${token}` };
 
             expect((await request(app).get('/auth/me').set(bearer)).body).toEqual({});
-            const password = await request(app).put('/auth/password').set(bearer).send({ oldPassword: 'password123', newPassword: 'changed' });
+            const password = await request(app)
+                .put('/auth/password')
+                .set(bearer)
+                .send({ oldPassword: 'password123', newPassword: 'changed' });
             expect(password.status).toBe(401);
         });
 
@@ -252,10 +275,14 @@ describe('API Tokens', () => {
         it('AUTH-11.11 should keep tokens working after the password changes', async () => {
             const token = await createToken();
 
-            const change = await agent.put('/auth/password').send({ oldPassword: 'password123', newPassword: 'changed' });
+            const change = await agent
+                .put('/auth/password')
+                .send({ oldPassword: 'password123', newPassword: 'changed' });
             expect(change.status).toBe(200);
 
-            expect((await request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`)).status).toBe(200);
+            expect(
+                (await request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`)).status
+            ).toBe(200);
         });
     });
 });

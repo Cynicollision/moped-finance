@@ -57,7 +57,9 @@ describe('Institution Routes', () => {
 
     describe('GET /institutions/:id', () => {
         it('should return a single institution when found', async () => {
-            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
+            const institution = await institutionsData.insert(
+                FinanceEntityFactory.createInstitution({ name: 'Chase' })
+            );
 
             const response = await request(app).get(`/institutions/${institution.id}`);
 
@@ -80,9 +82,7 @@ describe('Institution Routes', () => {
                 name: 'Chase'
             };
 
-            const response = await request(app)
-                .post('/institutions')
-                .send(payload);
+            const response = await request(app).post('/institutions').send(payload);
 
             expect(response.status).toBe(201);
             expect(response.body.name).toBe('Chase');
@@ -95,9 +95,7 @@ describe('Institution Routes', () => {
         it('should return 400 when the name is already taken, ignoring case', async () => {
             await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
 
-            const response = await request(app)
-                .post('/institutions')
-                .send({ name: 'CHASE' });
+            const response = await request(app).post('/institutions').send({ name: 'CHASE' });
 
             expect(response.status).toBe(400);
             expect(response.body.message).toBe('An institution with that name already exists.');
@@ -106,9 +104,7 @@ describe('Institution Routes', () => {
         it('should return 400 when schema validation fails (missing name)', async () => {
             const payload = {};
 
-            const response = await request(app)
-                .post('/institutions')
-                .send(payload);
+            const response = await request(app).post('/institutions').send(payload);
 
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('name:');
@@ -118,15 +114,15 @@ describe('Institution Routes', () => {
 
     describe('PUT /institutions/:id', () => {
         it('should update an institution when input is valid', async () => {
-            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Old Chase' }));
+            const institution = await institutionsData.insert(
+                FinanceEntityFactory.createInstitution({ name: 'Old Chase' })
+            );
 
             const payload = {
                 name: 'Updated Chase'
             };
 
-            const response = await request(app)
-                .put(`/institutions/${institution.id}`)
-                .send(payload);
+            const response = await request(app).put(`/institutions/${institution.id}`).send(payload);
 
             expect(response.status).toBe(200);
             expect(response.body.name).toBe('Updated Chase');
@@ -141,9 +137,7 @@ describe('Institution Routes', () => {
                 name: 'Updated Chase'
             };
 
-            const response = await request(app)
-                .put(`/institutions/${institutionId}`)
-                .send(payload);
+            const response = await request(app).put(`/institutions/${institutionId}`).send(payload);
 
             expect(response.status).toBe(404);
             expect(response.body.message).toContain('not found');
@@ -152,7 +146,9 @@ describe('Institution Routes', () => {
 
     describe('DELETE /institutions/:id', () => {
         it('should delete an institution', async () => {
-            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
+            const institution = await institutionsData.insert(
+                FinanceEntityFactory.createInstitution({ name: 'Chase' })
+            );
 
             const response = await request(app).delete(`/institutions/${institution.id}`);
 
@@ -172,29 +168,37 @@ describe('Institution Routes', () => {
         });
 
         it('INST-1.9 should return 400 when deleting an institution with associated accounts', async () => {
-            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
+            const institution = await institutionsData.insert(
+                FinanceEntityFactory.createInstitution({ name: 'Chase' })
+            );
 
-            await accountData.insert(FinanceEntityFactory.createAccount({
-                institutionId: institution.id,
-                name: 'Checking',
-                category: AccountCategory.Asset,
-                group: AccountGroup.Cash,
-                type: AccountType.Checking
-            }));
+            await accountData.insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: institution.id,
+                    name: 'Checking',
+                    category: AccountCategory.Asset,
+                    group: AccountGroup.Cash,
+                    type: AccountType.Checking
+                })
+            );
 
             const response = await request(app).delete(`/institutions/${institution.id}`);
 
             expect(response.status).toBe(400);
-            expect(response.body).toEqual({ code: 'IN_USE', message: 'Cannot delete an institution that still has accounts.' });
+            expect(response.body).toEqual({
+                code: 'IN_USE',
+                message: 'Cannot delete an institution that still has accounts.'
+            });
         });
     });
 
     describe('POST /institutions/:id/sync', () => {
         xit('should return sync stub success', async () => {
-            const institution = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
+            const institution = await institutionsData.insert(
+                FinanceEntityFactory.createInstitution({ name: 'Chase' })
+            );
 
-            const response = await request(app)
-                .post(`/institutions/${institution.id}/sync`);
+            const response = await request(app).post(`/institutions/${institution.id}/sync`);
 
             expect(response.status).toBe(201);
             expect(response.body.message).toContain('Sync institution logic stub');

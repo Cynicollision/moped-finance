@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, inject, input, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    afterRenderEffect,
+    inject,
+    input,
+    viewChild
+} from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { ChartThemeService } from './chart-theme.service';
 

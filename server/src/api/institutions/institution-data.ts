@@ -18,7 +18,7 @@ function mapRowToInstitution(row: typeof institutionSchema.$inferSelect): Instit
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
-        name: row.name,
+        name: row.name
     };
 }
 
@@ -30,16 +30,13 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
     }
 
     public async retrieveAll(): Promise<Institution[]> {
-        const rows = await this.db.select()
-            .from(institutionSchema);
+        const rows = await this.db.select().from(institutionSchema);
 
         return rows.map(mapRowToInstitution);
     }
 
     public async retrieveSingle(id: string): Promise<Institution | null> {
-        const rows = await this.db.select()
-            .from(institutionSchema)
-            .where(eq(institutionSchema.id, id));
+        const rows = await this.db.select().from(institutionSchema).where(eq(institutionSchema.id, id));
 
         if (rows.length === 0) {
             return null;
@@ -49,7 +46,8 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
     }
 
     public async delete(id: string): Promise<boolean> {
-        const result = await this.db.delete(institutionSchema)
+        const result = await this.db
+            .delete(institutionSchema)
             .where(eq(institutionSchema.id, id))
             .returning({ id: institutionSchema.id });
 
@@ -57,10 +55,11 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
     }
 
     public async insert(institution: Institution): Promise<Institution> {
-        const rows = await this.db.insert(institutionSchema)
+        const rows = await this.db
+            .insert(institutionSchema)
             .values({
                 id: institution.id,
-                name: institution.name,
+                name: institution.name
             })
             .returning();
 
@@ -68,10 +67,11 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
     }
 
     public async update(institution: Institution): Promise<Institution | null> {
-        const rows = await this.db.update(institutionSchema)
+        const rows = await this.db
+            .update(institutionSchema)
             .set({
                 name: institution.name,
-                updatedAt: DateTimeUtil.now(),
+                updatedAt: DateTimeUtil.now()
             })
             .where(eq(institutionSchema.id, institution.id!))
             .returning();

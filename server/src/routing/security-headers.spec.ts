@@ -6,7 +6,9 @@ describe('buildSecurityHeaders', () => {
     async function headersFor(useHttps: boolean) {
         const app = express();
         app.use(buildSecurityHeaders(useHttps));
-        app.get('/', (_req, res) => { res.send('ok'); });
+        app.get('/', (_req, res) => {
+            res.send('ok');
+        });
         const response = await request(app).get('/');
         return response.headers;
     }

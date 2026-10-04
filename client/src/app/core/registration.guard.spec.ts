@@ -6,9 +6,8 @@ import { registrationGuard } from './registration.guard';
 describe('registrationGuard', () => {
     let mockAuthService: any;
 
-    const runGuard = () => TestBed.runInInjectionContext(
-        () => registrationGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
-    );
+    const runGuard = () =>
+        TestBed.runInInjectionContext(() => registrationGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot));
 
     beforeEach(() => {
         mockAuthService = {
@@ -16,10 +15,7 @@ describe('registrationGuard', () => {
         };
 
         TestBed.configureTestingModule({
-            providers: [
-                provideRouter([]),
-                { provide: AuthService, useValue: mockAuthService }
-            ]
+            providers: [provideRouter([]), { provide: AuthService, useValue: mockAuthService }]
         });
     });
 

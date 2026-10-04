@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, Directive, ViewEncapsulation, computed, inject, input, output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    Directive,
+    ViewEncapsulation,
+    computed,
+    inject,
+    input,
+    output
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -38,7 +47,7 @@ export interface ListSort {
         class: 'app-list-row'
     }
 })
-export class ListRowDirective { }
+export class ListRowDirective {}
 
 /**
  * A heading inside an `app-list` that starts a run of rows, with its title and, at the end, a subtotal:
@@ -50,7 +59,7 @@ export class ListRowDirective { }
         class: 'app-list-subheader'
     }
 })
-export class ListSubheaderDirective { }
+export class ListSubheaderDirective {}
 
 /** A cell of an `app-list` row, named by its column's key. */
 @Directive({
@@ -112,11 +121,23 @@ export class ListComponent {
     readonly sortableColumns = computed(() => this.columns().filter(c => c.sort));
     readonly sortColumn = computed(() => this.columns().find(c => c.key === this.sort()?.key));
 
-    readonly wideColumns = computed(() => this.columns().map(c => c.width ?? 'minmax(0, 1fr)').join(' '));
-    readonly wideAreas = computed(() => `"${this.columns().map(c => c.key).join(' ')}"`);
+    readonly wideColumns = computed(() =>
+        this.columns()
+            .map(c => c.width ?? 'minmax(0, 1fr)')
+            .join(' ')
+    );
+    readonly wideAreas = computed(
+        () =>
+            `"${this.columns()
+                .map(c => c.key)
+                .join(' ')}"`
+    );
 
     private readonly compactPlaces = computed(() => {
-        const keysIn = (place: ListCompactPlace) => this.columns().filter(c => c.compact === place).map(c => c.key);
+        const keysIn = (place: ListCompactPlace) =>
+            this.columns()
+                .filter(c => c.compact === place)
+                .map(c => c.key);
         return { primary: keysIn('primary')[0] ?? '.', secondary: keysIn('secondary'), trailing: keysIn('trailing') };
     });
 
@@ -139,9 +160,8 @@ export class ListComponent {
     /** Sorts by a column: the column's first direction when it's newly chosen, or the other way when it's current. */
     sortBy(column: ListColumn) {
         const current = this.sort();
-        const direction: ListSortDirection = current?.key === column.key
-            ? (current.direction === 'asc' ? 'desc' : 'asc')
-            : column.sort ?? 'asc';
+        const direction: ListSortDirection =
+            current?.key === column.key ? (current.direction === 'asc' ? 'desc' : 'asc') : (column.sort ?? 'asc');
         this.sortChange.emit({ key: column.key, direction });
     }
 

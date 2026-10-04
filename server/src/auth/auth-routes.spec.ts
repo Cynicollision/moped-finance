@@ -28,17 +28,24 @@ describe('Auth Routes', () => {
     function buildApp(options: { secureCookie: boolean } = { secureCookie: false }): express.Express {
         const controller = new AuthController(userData);
         const middleware = buildAuthMiddleware(new ApiTokenController(new ApiTokenData(dbClient)));
-        const authRoutes = buildAuthRouter(mockLogger, controller, middleware, SessionUtil.cookieOptions(options.secureCookie));
+        const authRoutes = buildAuthRouter(
+            mockLogger,
+            controller,
+            middleware,
+            SessionUtil.cookieOptions(options.secureCookie)
+        );
 
         const testApp = express();
         // Lets a test stand in for an HTTPS reverse proxy with X-Forwarded-Proto
         testApp.set('trust proxy', 1);
         testApp.use(express.json());
-        testApp.use(SessionUtil.buildMiddleware({
-            secret: 'test-secret',
-            secureCookie: options.secureCookie,
-            store: SessionUtil.createStore(dbClient, false)
-        }));
+        testApp.use(
+            SessionUtil.buildMiddleware({
+                secret: 'test-secret',
+                secureCookie: options.secureCookie,
+                store: SessionUtil.createStore(dbClient, false)
+            })
+        );
         testApp.use('/auth', authRoutes);
         return testApp;
     }
@@ -258,18 +265,25 @@ describe('Auth Routes', () => {
         });
 
         it('AUTH-3.8 should clear the cookie with the attributes it was set with', async () => {
-            const registerResponse = await agent.post('/auth/register').send({ username: 'u', name: 'U', password: 'p' });
+            const registerResponse = await agent
+                .post('/auth/register')
+                .send({ username: 'u', name: 'U', password: 'p' });
             const logoutResponse = await agent.post('/auth/logout');
 
             const cleared = sessionCookie(logoutResponse);
             expect(cleared).toMatch(/Expires=Thu, 01 Jan 1970/);
-            const attributes = (cookie: string) => cookie.split('; ').filter(a => /^(Path|HttpOnly|Secure|SameSite)/.test(a)).sort();
+            const attributes = (cookie: string) =>
+                cookie
+                    .split('; ')
+                    .filter(a => /^(Path|HttpOnly|Secure|SameSite)/.test(a))
+                    .sort();
             expect(attributes(cleared)).toEqual(attributes(sessionCookie(registerResponse)));
         });
 
         it('AUTH-3.8 should clear a secure cookie with Secure behind an HTTPS proxy', async () => {
             const httpsAgent = request.agent(buildApp({ secureCookie: true }));
-            const registerResponse = await httpsAgent.post('/auth/register')
+            const registerResponse = await httpsAgent
+                .post('/auth/register')
                 .set('X-Forwarded-Proto', 'https')
                 .send({ username: 'u', name: 'U', password: 'p' });
             expect(sessionCookie(registerResponse)).toContain('; Secure');
@@ -296,7 +310,9 @@ describe('Auth Routes', () => {
             // The cookie is sent again with a new expiry, and the stored session is extended to match
             const expires = Date.parse(sessionCookie(response).match(/Expires=([^;]+)/)![1]);
             expect(Math.abs(expires - (Date.now() + 24 * 60 * 60 * 1000))).toBeLessThan(60 * 1000);
-            const rows = await pglite.query<{ hours: number }>('SELECT EXTRACT(EPOCH FROM expire - now()) / 3600 AS hours FROM core.sessions');
+            const rows = await pglite.query<{ hours: number }>(
+                'SELECT EXTRACT(EPOCH FROM expire - now()) / 3600 AS hours FROM core.sessions'
+            );
             expect(rows.rows).toHaveLength(1);
             expect(Number(rows.rows[0].hours)).toBeCloseTo(24, 1);
         });
@@ -307,7 +323,10 @@ describe('Auth Routes', () => {
             // The same browser, now talking to a newly started server
             const restartedAgent = request.agent(buildApp());
             const cookie = (await agent.get('/auth/me')).headers['set-cookie'] as unknown as string[];
-            const response = await restartedAgent.get('/auth/me').set('Cookie', cookie.map(c => c.split(';')[0]));
+            const response = await restartedAgent.get('/auth/me').set(
+                'Cookie',
+                cookie.map(c => c.split(';')[0])
+            );
 
             expect(response.body.username).toBe('restartuser');
         });

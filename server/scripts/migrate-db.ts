@@ -7,7 +7,7 @@ const dbClient = DatabaseClient.fromConfig({
     password: process.env.PGPASSWORD,
     host: process.env.PGHOST || 'localhost',
     database: process.env.PGDATABASE,
-    port: parseInt(process.env.PGPORT || '5432'),
+    port: parseInt(process.env.PGPORT || '5432')
 });
 
 (async () => {
@@ -15,12 +15,10 @@ const dbClient = DatabaseClient.fromConfig({
         console.log('🏗️  Applying migrations...');
         await dbClient.migrate(path.join(__dirname, './../migrations'));
         console.log('✅ Migrations applied.');
-    }
-    catch (err) {
+    } catch (err) {
         console.error('❌ Migration failed:', err);
         process.exitCode = 1;
-    }
-    finally {
+    } finally {
         await dbClient.close();
     }
 })();
