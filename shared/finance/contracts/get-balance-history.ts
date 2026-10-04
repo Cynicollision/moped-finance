@@ -1,7 +1,7 @@
 import { HistoryTimeframe } from './../../core/enum';
 import { CalendarDate } from './../../core/types';
 
-export type GetAccountBalanceHistoryOptions = {
+export interface GetAccountBalanceHistoryOptions {
     asOfDate: CalendarDate;
     timeframe: HistoryTimeframe;
-};
+}

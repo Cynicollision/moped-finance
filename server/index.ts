@@ -99,11 +99,12 @@ let server: Server | undefined;
 async function start(): Promise<void> {
     try {
         await dbClient.migrate(path.join(__dirname, 'migrations'));
-    } catch (error: any) {
+    } catch (error) {
         // Drizzle wraps the Postgres error (e.g. "relation already exists") as `cause`; its own message is the failed query.
-        console.error(`Database migration failed: ${error?.cause?.message ?? error?.message ?? error}`);
-        if (error?.cause) {
-            console.error(error.message);
+        const cause = (error as { cause?: unknown } | undefined)?.cause;
+        console.error(`Database migration failed: ${errorMessage(cause ?? error)}`);
+        if (cause) {
+            console.error(errorMessage(error));
         }
         await dbClient.close().catch(() => undefined);
         process.exit(1);
@@ -119,14 +120,18 @@ async function start(): Promise<void> {
     if (!sessionSecret) {
         try {
             sessionSecret = await new SecretData(dbClient).retrieveOrCreate('session');
-        } catch (error: any) {
-            console.error(`Could not read or create the session secret: ${error?.message ?? error}`);
+        } catch (error) {
+            console.error(`Could not read or create the session secret: ${errorMessage(error)}`);
             await dbClient.close().catch(() => undefined);
             process.exit(1);
         }
     }
 
     server = buildApp(sessionSecret).listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+function errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
 }
 
 // Graceful shutdown: on SIGTERM (docker stop) or SIGINT (Ctrl+C), stop accepting connections,
@@ -157,8 +162,8 @@ function shutdown(signal: NodeJS.Signals): void {
     activeServer.close(async serverError => {
         try {
             await dbClient.close();
-        } catch (poolError: any) {
-            console.error(`Failed to close the database pool: ${poolError?.message ?? poolError}`);
+        } catch (poolError) {
+            console.error(`Failed to close the database pool: ${errorMessage(poolError)}`);
         }
 
         if (serverError) {

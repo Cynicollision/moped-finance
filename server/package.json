@@ -13,6 +13,7 @@
         "db:seed:core": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/seed-core-db.ts dotenv_config_path=../.env",
         "db:seed:finance": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/seed-finance-db.ts dotenv_config_path=../.env",
         "db:reset": "npm run db:drop && npm run db:migrate && npm run db:seed",
+        "lint": "eslint . ../shared",
         "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
         "test:watch": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
     },
@@ -33,6 +34,7 @@
     },
     "devDependencies": {
         "@electric-sql/pglite": "^0.5.2",
+        "@eslint/js": "^10.0.1",
         "@types/bcrypt": "^5.0.2",
         "@types/connect-pg-simple": "^7.0.3",
         "@types/express": "^4.17.21",
@@ -45,6 +47,7 @@
         "@types/supertest": "^7.2.0",
         "cross-env": "^10.1.0",
         "drizzle-kit": "^0.31.11",
+        "eslint": "^10.12.0",
         "jest": "^30.3.0",
         "nodemon": "^3.1.0",
         "supertest": "^7.2.2",
@@ -52,6 +55,7 @@
         "ts-node": "^10.9.2",
         "tsc-alias": "^1.9.5",
         "tsconfig-paths": "^4.2.0",
-        "typescript": "^5.3.3"
+        "typescript": "^5.3.3",
+        "typescript-eslint": "^8.59.2"
     }
 }

@@ -33,7 +33,7 @@ export class AccountController {
         return Result.success(account);
     }
 
-    public async getAccounts(context: OperationContext): Promise<OperationResult<Account[]>> {
+    public async getAccounts(_context: OperationContext): Promise<OperationResult<Account[]>> {
         const accounts = await this.accountData.retrieveAll();
         return Result.success(accounts);
     }
@@ -121,7 +121,10 @@ export class AccountController {
         return Result.success(totalValueHistory);
     }
 
-    public async syncAccount(context: OperationContext, accountId: string): Promise<OperationResult<any>> {
+    public async syncAccount(
+        _context: OperationContext,
+        _accountId: string
+    ): Promise<OperationResult<{ message: string }>> {
         // TODO: implement sync/synchronization logic
         return Result.success({ message: 'Sync account logic stub' });
     }

@@ -12,7 +12,6 @@ import { FinanceAccountData } from './account-data';
 import { createAccountRouter } from './account-routes';
 import { FinanceBalanceHistoryData } from './balance-history-data';
 import { FinanceTransactionData } from './../transactions/transaction-data';
-import { FinanceCategoryData } from './../categories/category-data';
 import { FinanceInstitutionData } from './../institutions/institution-data';
 
 describe('Account Routes', () => {
@@ -22,7 +21,6 @@ describe('Account Routes', () => {
     let accountData: FinanceAccountData;
     let balanceHistoryData: FinanceBalanceHistoryData;
     let transactionsData: FinanceTransactionData;
-    let categoriesData: FinanceCategoryData;
     let institutionData: FinanceInstitutionData;
     let mockLogger: jest.Mocked<IAppLogger>;
     let testUserId: string;
@@ -69,7 +67,7 @@ describe('Account Routes', () => {
         testCategoryId = 'cat1';
     });
 
-    function insertAccount(name: string = 'Checking') {
+    function insertAccount(name = 'Checking') {
         return accountData.insert(
             FinanceEntityFactory.createAccount({
                 institutionId: testInstitutionId,
@@ -81,7 +79,7 @@ describe('Account Routes', () => {
         );
     }
 
-    function importBalances(accountId: string, csv: string, query: string = ''): request.Test {
+    function importBalances(accountId: string, csv: string, query = ''): request.Test {
         return request(app)
             .post(`/accounts/${accountId}/import-balances${query}`)
             .attach('file', Buffer.from(csv), 'import.csv');

@@ -13,14 +13,14 @@ export class UserContext {
 
     /** Signs this request in with an API token (AUTH-11.6). Nothing is stored in the session. */
     static setApiTokenUser(req: Request, user: User, access: ApiTokenAccess): void {
-        (req as any).user = user;
-        (req as any).apiTokenAccess = access;
+        req.user = user;
+        req.apiTokenAccess = access;
     }
 
     public getUser(): User | undefined {
         // An API token takes precedence over the session (AUTH-11.7)
-        if ((this.req as any).user) {
-            return (this.req as any).user;
+        if (this.req.user) {
+            return this.req.user;
         }
 
         return this.req.session?.user;
@@ -28,7 +28,7 @@ export class UserContext {
 
     /** The access of the API token this request was signed in with, or undefined for a browser session. */
     public getApiTokenAccess(): ApiTokenAccess | undefined {
-        return (this.req as any).apiTokenAccess;
+        return this.req.apiTokenAccess;
     }
 
     public getId(): string {

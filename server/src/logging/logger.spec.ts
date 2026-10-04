@@ -9,7 +9,7 @@ describe('AppLogger', () => {
             warn: LogBehavior.Ignore,
             info: LogBehavior.Ignore
         });
-        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
         const unhandled = jest.fn();
         process.on('unhandledRejection', unhandled);
 

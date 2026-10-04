@@ -13,7 +13,7 @@ import { categorySchema } from './../categories/category-schema';
 import { transactionSchema } from './transaction-schema';
 
 /** A transaction as written to CSV: the date as YYYY-MM-DD and the amount exactly as stored. */
-export type TransactionExport = {
+export interface TransactionExport {
     date: string;
     accountName: string;
     merchant: string;
@@ -22,7 +22,7 @@ export type TransactionExport = {
     originalStatement: string;
     notes: string;
     isHidden: boolean;
-};
+}
 
 export interface IFinanceTransactionData {
     search(options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;

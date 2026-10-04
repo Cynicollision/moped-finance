@@ -3,7 +3,11 @@ import { CalendarDate } from './../types';
 
 const calendarDatePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-type DateParts = { year: number; month: number; day: number };
+interface DateParts {
+    year: number;
+    month: number;
+    day: number;
+}
 
 /** Works with `CalendarDate`s (YYYY-MM-DD) as calendar days, so results don't depend on the time zone. */
 export class CalendarDateUtil {

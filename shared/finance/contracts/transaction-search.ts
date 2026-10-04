@@ -2,12 +2,12 @@ import { SortDirection } from './../../core/enum';
 import { CalendarDate } from './../../core/types';
 import { TransactionsFilterKey, TransactionsSortKey } from './../enum';
 
-export type TransactionSearchFilterItem = {
+export interface TransactionSearchFilterItem {
     key: TransactionsFilterKey;
     value: string;
-};
+}
 
-export type TransactionSearchOptions = {
+export interface TransactionSearchOptions {
     sortKey?: TransactionsSortKey;
     sortDirection?: SortDirection;
     offset?: number;
@@ -18,4 +18,4 @@ export type TransactionSearchOptions = {
     endDate?: CalendarDate;
     filters?: TransactionSearchFilterItem[];
     includeHidden?: boolean;
-};
+}

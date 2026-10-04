@@ -28,7 +28,7 @@ export class CategoryController {
         return Result.success(group);
     }
 
-    public async getGroups(context: OperationContext): Promise<OperationResult<CategoryGroup[]>> {
+    public async getGroups(_context: OperationContext): Promise<OperationResult<CategoryGroup[]>> {
         const groups = await this.groupData.retrieveAll();
         return Result.success(groups);
     }
@@ -87,10 +87,7 @@ export class CategoryController {
         return Result.success(category);
     }
 
-    public async getCategories(
-        context: OperationContext,
-        activeOnly: boolean = false
-    ): Promise<OperationResult<Category[]>> {
+    public async getCategories(context: OperationContext, activeOnly = false): Promise<OperationResult<Category[]>> {
         const categories = await this.categoryData.retrieveAll(activeOnly);
         return Result.success(categories);
     }

@@ -1,7 +1,7 @@
-export type User = {
+export interface User {
     id: string;
     createdAt: Date;
     updatedAt: Date;
     displayName: string;
     username: string;
-};
+}

@@ -9,11 +9,11 @@ import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
 
 /** A balance as written to CSV: the date as YYYY-MM-DD and the balance exactly as stored. */
-export type BalanceHistoryExport = {
+export interface BalanceHistoryExport {
     date: string;
     accountName: string;
     balance: string;
-};
+}
 
 type Transaction = Parameters<Parameters<NodePgDatabase['transaction']>[0]>[0];
 

@@ -31,7 +31,11 @@ export const apiTokenSchema = coreSchema.table(
 export type NewApiToken = ApiToken & { userId: string; tokenHash: string };
 
 /** A valid token's owner and access, for authenticating a request. */
-export type ApiTokenGrant = { tokenId: string; access: ApiTokenAccess; user: User };
+export interface ApiTokenGrant {
+    tokenId: string;
+    access: ApiTokenAccess;
+    user: User;
+}
 
 // Last used is accurate to the minute (AUTH-11.10), so a script making many calls doesn't write on every one.
 const LAST_USED_RESOLUTION_MS = 60 * 1000;

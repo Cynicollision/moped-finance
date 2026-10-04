@@ -1,3 +1,3 @@
-export type RegistrationStatus = {
+export interface RegistrationStatus {
     isOpen: boolean;
-};
+}
