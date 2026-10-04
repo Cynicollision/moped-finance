@@ -22,6 +22,19 @@
                 </mat-select>
             </mat-form-field>
 
+            @if (isExpenseGroup()) {
+                <!-- Not set is null, which a select shows as empty, so the placeholder says it. -->
+                <mat-form-field appearance="outline" floatLabel="always">
+                    <mat-label>Necessity</mat-label>
+                    <mat-select formControlName="necessity" placeholder="Not set">
+                        @for (option of necessityOptions; track option.value) {
+                            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-hint>Essential: needed to live and work. Discretionary: could be cut.</mat-hint>
+                </mat-form-field>
+            }
+
             <mat-checkbox formControlName="isActive">Active</mat-checkbox>
         </div>
     </form>

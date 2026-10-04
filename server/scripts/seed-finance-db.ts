@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { CalendarPeriod } from '@shared/core/enum';
-import { AccountCategory, AccountGroup, AccountType, CategoryType } from '@shared/finance/enum';
+import { AccountCategory, AccountGroup, AccountType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { FinanceAccountData } from '@server/api/accounts/account-data';
 import { FinanceBalanceHistoryData } from '@server/api/accounts/balance-history-data';
 import { FinanceBudgetStreamData } from '@server/api/budget/budget-stream-data';
@@ -94,11 +94,11 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         const groupIds = new Map<string, string>();
         const categoryIds = new Map<string, string>();
         const categoriesFile = 'categories.csv';
-        for (const row of readRows(categoriesFile, ['Type', 'Group', 'Icon', 'Name', 'IsActive'])) {
+        for (const row of readRows(categoriesFile, ['Type', 'Group', 'Name', 'Icon', 'Necessity', 'IsActive'])) {
             let groupId = groupIds.get(row.values['Group'].toLowerCase());
             if (!groupId) {
                 const group = await groupData.insert(FinanceEntityFactory.createCategoryGroup({
-                    type: row.values['Type'] as CategoryType,
+                    type: row.values['Type'].toLowerCase() as CategoryType,
                     name: row.values['Group'],
                 }));
                 groupId = group.id;
@@ -109,6 +109,7 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
                 icon: row.values['Icon'],
                 name: row.values['Name'],
                 isActive: valueOf(categoriesFile, row, CsvValue.boolean('IsActive', row.values['IsActive'])),
+                necessity: (row.values['Necessity'].toLowerCase() || null) as CategoryNecessity | null,
             }));
             categoryIds.set(category.name.toLowerCase(), category.id);
         }

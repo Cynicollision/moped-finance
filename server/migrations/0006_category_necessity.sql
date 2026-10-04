@@ -1,0 +1,2 @@
+ALTER TABLE "finance"."categories" ADD COLUMN "necessity" varchar(50);--> statement-breakpoint
+ALTER TABLE "finance"."categories" ADD CONSTRAINT "categories_necessity_check" CHECK ("finance"."categories"."necessity" IN ('essential', 'discretionary'));

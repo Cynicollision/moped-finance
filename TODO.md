@@ -22,7 +22,7 @@ Nothing right now: the client baseline is done. Pull the next item up from Next.
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
 ### Essential and discretionary spending
-- [ ] Give expense categories a necessity (CAT-3): column and migration, the category dialogs, the Categories screen and server validation. Then show the Essential / Discretionary split on Spending (CASH-1.8) and Budget (BUD-1.7). Held back from the Spending redesign because it's mostly Categories work.
+- [ ] Show the Essential / Discretionary / Unclassified split (CAT-2.3) on Budget (BUD-1.7: the summary, and the Expenses streams grouped by necessity with subtotals) and Spending (CASH-1.8: the summary in every view, and a Necessity view beside Category and Group).
 
 ### Testing
 - [ ] Frontend coverage: services (`api`, `finance`, `auth`), `auth.guard`, the demo interceptor, and key components (transactions, imports).

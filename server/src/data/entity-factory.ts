@@ -46,8 +46,8 @@ export class FinanceEntityFactory {
         return FinanceEntityFactory.createEntity<Institution>(FinanceEntityIdPrefix.Institution, institution);
     }
 
-    public static createCategory(category: NewEntity<Category>): Category {
-        return FinanceEntityFactory.createEntity<Category>(FinanceEntityIdPrefix.Category, category);
+    public static createCategory(category: Omit<NewEntity<Category>, 'necessity'> & Partial<Pick<Category, 'necessity'>>): Category {
+        return FinanceEntityFactory.createEntity<Category>(FinanceEntityIdPrefix.Category, { necessity: null, ...category });
     }
 
     public static createCategoryGroup(group: NewEntity<CategoryGroup>): CategoryGroup {

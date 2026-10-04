@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -8,7 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { CategoryType } from '@shared/finance/enum';
+import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
 import { ModalCancelDirective } from './../../core/modal/modal-cancel.directive';
 import { ModalLayoutComponent } from './../../core/modal/modal-layout.component';
@@ -24,7 +25,7 @@ export interface CategoryFormModalData {
 
 const typeOrder = Object.values(CategoryType);
 
-/** Creates or edits a category (CAT-1.8, CAT-1.9). Saves itself and closes with true once saved. */
+/** Creates or edits a category (CAT-1.8, CAT-1.9, CAT-3.2). Saves itself and closes with true once saved. */
 @Component({
     selector: 'app-category-form-modal',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,13 +57,23 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
         name: ['', Validators.required],
         icon: ['', Validators.required],
         groupId: ['', Validators.required],
-        isActive: [true]
+        isActive: [true],
+        necessity: [null as CategoryNecessity | null]
     });
     readonly isEditing = !!this.data.category;
     /** The groups to choose from: Income, then Expense, then Transfer, each by name (CAT-1.19). */
     readonly groups = [...this.data.groups].sort((a, b) =>
         (typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type)) || a.name.localeCompare(b.name));
     readonly isSaving = signal(false);
+
+    /** Necessity applies only to Expense categories, and is optional (CAT-3.2). */
+    readonly necessityOptions = [
+        { value: null, label: 'Not set' },
+        { value: CategoryNecessity.Essential, label: 'Essential' },
+        { value: CategoryNecessity.Discretionary, label: 'Discretionary' }
+    ];
+    private readonly groupId = toSignal(this.form.controls.groupId.valueChanges, { initialValue: this.form.controls.groupId.value });
+    readonly isExpenseGroup = computed(() => this.data.groups.find(g => g.id === this.groupId())?.type === CategoryType.Expense);
 
     ngOnInit() {
         if (this.data.category) {
@@ -83,8 +94,11 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
         }
 
         this.isSaving.set(true);
-        const { name, icon, groupId, isActive } = this.form.getRawValue();
-        const values = { name: name!, icon: icon!, groupId: groupId!, isActive: isActive ?? true };
+        const { name, icon, groupId, isActive, necessity } = this.form.getRawValue();
+        // Moving a category out of Expense clears its necessity (CAT-1.17).
+        const values = {
+            name: name!, icon: icon!, groupId: groupId!, isActive: isActive ?? true, necessity: this.isExpenseGroup() ? necessity : null
+        };
         const saved = this.data.category
             ? await this.financeService.saveCategory({ ...this.data.category, ...values })
             : await this.financeService.createCategory(values);
