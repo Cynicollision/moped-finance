@@ -221,6 +221,9 @@ export class FinanceService {
         if (options.filters) {
             params.append('filters', JSON.stringify(options.filters));
         }
+        if (options.includeHidden !== undefined) {
+            params.append('includeHidden', options.includeHidden.toString());
+        }
 
         return params;
     }

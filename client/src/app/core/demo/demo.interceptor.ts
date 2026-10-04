@@ -1,6 +1,6 @@
-import { HttpInterceptorFn, HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { of, delay, throwError } from 'rxjs';
+import { of, delay } from 'rxjs';
 import { DemoDataService } from './demo-data.service';
 
 export const demoInterceptor: HttpInterceptorFn = (req) => {
@@ -9,14 +9,9 @@ export const demoInterceptor: HttpInterceptorFn = (req) => {
     // Simulate network delay
     const simulateDelay = 300;
 
+    // Like the server, answer a signed-out visitor with no user rather than an error, which would show a snackbar.
     if (req.url.includes('auth/me')) {
-        const user = demoData.getMe();
-        if (user) {
-            return of(new HttpResponse({ status: 200, body: user })).pipe(delay(simulateDelay));
-        }
-        else {
-            return throwError(() => new HttpErrorResponse({ status: 401, error: { message: 'Unauthorized' } }));
-        }
+        return of(new HttpResponse({ status: 200, body: demoData.getMe() })).pipe(delay(simulateDelay));
     }
 
     // Check before 'auth/register', which is a prefix of this URL.
