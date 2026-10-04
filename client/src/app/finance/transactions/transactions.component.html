@@ -122,6 +122,9 @@
                 <mat-label>Category</mat-label>
                 <input type="text" matInput formControlName="category" [matAutocomplete]="autoCategory">
                 <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
+                    @if (offersUncategorized()) {
+                        <mat-option [value]="Uncategorized.filterValue">{{ Uncategorized.name }}</mat-option>
+                    }
                     @for (c of filteredCategories(); track c.id) {
                         <mat-option [value]="c.id">
                             {{c.icon}} {{c.name}}

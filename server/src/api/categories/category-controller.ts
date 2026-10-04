@@ -1,5 +1,6 @@
 import { CategoryType } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
+import { Uncategorized } from '@shared/finance/util';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
@@ -8,6 +9,9 @@ import { CreateCategoryRequest, UpdateCategoryRequest } from './category-schema'
 import { CreateCategoryGroupRequest, IFinanceCategoryGroupData, UpdateCategoryGroupRequest } from './category-groups';
 
 const necessityRefusal = 'Only expense categories can have a necessity.';
+
+// Uncategorized is the state of a transaction with no category, so no category can take its name (CAT-5.3).
+const reservedNameRefusal = 'Uncategorized is reserved for transactions without a category.';
 
 export class CategoryController {
     constructor(
@@ -83,6 +87,10 @@ export class CategoryController {
     }
 
     public async createCategory(context: OperationContext, input: CreateCategoryRequest): Promise<OperationResult<Category>> {
+        if (Uncategorized.isName(input.name)) {
+            return Result.userError(reservedNameRefusal);
+        }
+
         const necessity = input.necessity ?? null;
         if (necessity && !await this.isExpenseGroup(input.groupId)) {
             return Result.userError(necessityRefusal);
@@ -103,6 +111,11 @@ export class CategoryController {
         const current = await this.categoryData.retrieveSingle(categoryId);
         if (!current) {
             return Result.userErrorNotFound();
+        }
+
+        // A category from before CAT-5 may already be called Uncategorized; it can keep its name, but none can take it.
+        if (changes.name !== undefined && Uncategorized.isName(changes.name) && !Uncategorized.isName(current.name)) {
+            return Result.userError(reservedNameRefusal);
         }
 
         // A new necessity for a category outside Expense is refused. The one it had is cleared when it moves out, even if

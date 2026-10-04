@@ -6,6 +6,7 @@ import { SortDirection } from '@shared/core/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
+import { Uncategorized } from '@shared/finance/util';
 import { AuthService } from './../../core/auth.service';
 import { DateProviderService } from './../../core/date-provider.service';
 import { LayoutService, SizeClass } from './../../core/layout/layout.service';
@@ -68,6 +69,20 @@ describe('FinanceTransactionsComponent', () => {
 
         const amounts = Array.from(element.querySelectorAll('a.app-list-row app-money')).map(cell => cell.textContent!.trim());
         expect(amounts).toEqual(['+$25.00', '$10.00']);
+    });
+
+    it('TXN-1.11 should show a transaction with no category as Uncategorized', async () => {
+        const { element } = await render({}, [transaction('a', '2026-05-01')]);
+
+        expect(element.querySelector('a.app-list-row [appListCell="category"]')!.textContent!.trim()).toBe('Uncategorized');
+    });
+
+    it('TXN-1.11 should search for Uncategorized from the link that opened it, and name it in the filter', async () => {
+        const { fixture, lastSearch } = await render({ categoryId: Uncategorized.filterValue });
+
+        expect(lastSearch().filters).toEqual([{ key: TransactionsFilterKey.Category, value: Uncategorized.filterValue }]);
+        expect(fixture.componentInstance.displayCategory(Uncategorized.filterValue)).toBe('Uncategorized');
+        expect(fixture.componentInstance.displayCategory('')).toBe('');
     });
 
     it('TXN-1.2 should list newest first, and sort by a column when its heading is chosen', async () => {

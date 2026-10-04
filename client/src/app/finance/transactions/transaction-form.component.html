@@ -30,7 +30,7 @@
 
             <div class="readonly-field">
                 <div class="label">Category</div>
-                <div class="value">{{getCategoryName(transactionForm.value.category) || '-'}}</div>
+                <div class="value">{{getCategoryName(transactionForm.value.category) || Uncategorized.name}}</div>
             </div>
 
             <div class="readonly-field">
@@ -73,10 +73,12 @@
                 <input type="text" matInput formControlName="originalStatement">
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
+            <!-- Left empty, the transaction is Uncategorized (CAT-5.2). -->
+            <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Category</mat-label>
-                <input type="text" matInput formControlName="category" [matAutocomplete]="autoCategory">
+                <input type="text" matInput formControlName="category" [matAutocomplete]="autoCategory" [placeholder]="Uncategorized.name">
                 <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
+                    <mat-option value="">{{ Uncategorized.name }}</mat-option>
                     @for (c of categoryOptions(); track c.id) {
                         <mat-option [value]="c.id">
                             {{c.icon}} {{c.name}}

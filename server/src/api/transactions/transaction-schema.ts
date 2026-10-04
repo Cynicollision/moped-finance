@@ -10,7 +10,7 @@ export const transactionSchema = financeSchema.table('transactions', {
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     accountId: varchar('account_id', { length: 50 }).notNull().references(() => accountSchema.id, { onDelete: 'cascade' }),
-    // Nullable in the database (deleting a category leaves its transactions uncategorized), but required by the API.
+    // Null when the transaction is Uncategorized (CAT-5). Deleting a category leaves its transactions uncategorized.
     categoryId: varchar('category_id', { length: 50 }).references(() => categorySchema.id, { onDelete: 'set null' }),
     date: date('date', { mode: 'string' }).notNull(),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
@@ -27,7 +27,8 @@ export const transactionSchema = financeSchema.table('transactions', {
 ]);
 
 export const createTransactionSchema = createInsertSchema(transactionSchema, {
-    categoryId: z.string().min(1),
+    // Blank or left out: Uncategorized (CAT-5.2).
+    categoryId: SchemaUtil.optionalText(50),
     date: SchemaUtil.date(),
     amount: SchemaUtil.money(),
     merchant: (schema) => schema.min(1).max(255),

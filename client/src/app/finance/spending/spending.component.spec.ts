@@ -356,6 +356,18 @@ describe('FinanceSpendingComponent', () => {
             expect(section(fixture.element, 'Income').querySelector('[appListSubheader]')).toBeNull();
         });
 
+        it('CASH-1.6 TXN-1.11 should open Transactions filtered to Uncategorized from an uncategorized row, by category or group', async () => {
+            const fixture = await render(split);
+            const uncategorizedLink = () => Array.from(section(fixture.element, 'Expenses').querySelectorAll<HTMLAnchorElement>('a.app-list-row'))
+                .find(row => row.textContent!.includes('Uncategorized'))!.getAttribute('href');
+
+            expect(uncategorizedLink()).toBe('/transactions?categoryId=uncategorized&startDate=2026-05-01&endDate=2026-05-31');
+
+            fixture.componentInstance.viewMode.set('group');
+            await fixture.whenStable();
+            expect(uncategorizedLink()).toBe('/transactions?categoryId=uncategorized&startDate=2026-05-01&endDate=2026-05-31');
+        });
+
         it('CASH-1.8 should list groups without necessity headings in the Group view', async () => {
             const fixture = await render(split);
 

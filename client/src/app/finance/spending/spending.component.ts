@@ -12,7 +12,7 @@ import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
 import { CategoryType, TransactionsSortKey } from '@shared/finance/enum';
-import { BudgetStreamUtil } from '@shared/finance/util';
+import { BudgetStreamUtil, Uncategorized } from '@shared/finance/util';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { LayoutService } from './../../core/layout/layout.service';
 import { ListColumn, ListModule } from './../../core/list/list.component';
@@ -404,11 +404,15 @@ export class FinanceSpendingComponent {
     rowQueryParams(row: SpendingRow): Record<string, string> {
         const queryParams: Record<string, string> = {};
 
-        if (this.viewMode() !== 'group' && row.id) {
-            queryParams['categoryId'] = row.id;
+        // An uncategorized row opens the Uncategorized filter, in either view (TXN-1.11).
+        if (!row.id) {
+            queryParams['categoryId'] = Uncategorized.filterValue;
         }
-        else if (this.viewMode() === 'group' && row.id) {
+        else if (this.viewMode() === 'group') {
             queryParams['group'] = row.id;
+        }
+        else {
+            queryParams['categoryId'] = row.id;
         }
 
         // The same period the server totalled (CASH-1.6).

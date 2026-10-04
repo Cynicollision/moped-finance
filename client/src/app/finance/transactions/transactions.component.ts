@@ -22,6 +22,7 @@ import { CalendarDateUtil } from '@shared/core/util';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
+import { Uncategorized } from '@shared/finance/util';
 import { LayoutService } from './../../core/layout/layout.service';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { ListColumn, ListModule, ListSort } from './../../core/list/list.component';
@@ -71,6 +72,7 @@ export class FinanceTransactionsComponent {
     private notificationService = inject(NotificationService);
     private bottomSheet = inject(MatBottomSheet);
     readonly isCompact = inject(LayoutService).isCompact;
+    readonly Uncategorized = Uncategorized;
 
     private readonly pageSize = 25;
 
@@ -138,6 +140,11 @@ export class FinanceTransactionsComponent {
     readonly filteredCategories = computed(() => {
         const text = (typeof this.categoryText() === 'string' ? this.categoryText()! : '').toLowerCase();
         return this.categories().filter(c => c.name.toLowerCase().includes(text));
+    });
+    /** Uncategorized can be filtered for like any category (TXN-1.11). */
+    readonly offersUncategorized = computed(() => {
+        const text = (typeof this.categoryText() === 'string' ? this.categoryText()! : '').toLowerCase();
+        return Uncategorized.name.toLowerCase().includes(text);
     });
     readonly filteredGroups = computed(() => {
         const text = (typeof this.groupText() === 'string' ? this.groupText()! : '').toLowerCase();
@@ -273,7 +280,11 @@ export class FinanceTransactionsComponent {
         }
     }
 
+    /** A transaction with no category, and the filter for those, read Uncategorized (CAT-5). */
     getCategoryName(id: string): string {
+        if (!id || id === Uncategorized.filterValue) {
+            return Uncategorized.name;
+        }
         const category = this.categoryMap().get(id);
         return category ? `${category.icon} ${category.name}` : id;
     }
@@ -283,7 +294,8 @@ export class FinanceTransactionsComponent {
         return account ? account.name : id;
     }
 
-    readonly displayCategory = (id: string): string => this.getCategoryName(id);
+    // An empty filter shows nothing, rather than Uncategorized.
+    readonly displayCategory = (id: string): string => id ? this.getCategoryName(id) : '';
 
     readonly displayGroup = (id: string): string => {
         const group = this.groupMap().get(id);

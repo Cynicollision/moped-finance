@@ -4,6 +4,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { SortDirection } from '@shared/core/enum';
 import { AccountCategory, AccountGroup, AccountType, CategoryType, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
+import { Uncategorized } from '@shared/finance/util';
 import { AppLogger } from '@server/logging';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
@@ -387,16 +388,31 @@ describe('Transaction Routes', () => {
             expect(txns.length).toBe(0);
         });
 
-        it('should fail validation when Category is missing or invalid', async () => {
-            const csvContent = 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,InvalidCategory,100,,,false';
+        it('TXN-3.4 should import a blank, Uncategorized or unknown category as Uncategorized, reporting the unknown names', async () => {
+            const rows = [
+                '2026-06-06,Checking,Blank,,1,,,false',
+                '2026-06-06,Checking,Named,uncategorized,2,,,false',
+                '2026-06-06,Checking,Typo,Groceriez,3,,,false',
+                '2026-06-06,Checking,Known,Groceries,4,,,false',
+                '2026-06-06,Checking,Typo again,groceriez,5,,,false',
+                '2026-06-06,Checking,Other,Mystery,6,,,false'
+            ].join('\n');
 
-            const response = await request(app)
-                .post('/transactions/import?dryRun=true')
-                .attach('file', Buffer.from(csvContent), 'import.csv');
+            const dryRun = await importCsv(rows, '?dryRun=true');
 
-            expect(response.status).toBe(200);
-            expect(response.body.failedRowMessages.length).toBe(1);
-            expect(response.body.createdCount).toBe(0);
+            expect(dryRun.status).toBe(200);
+            expect(dryRun.body).toEqual(expect.objectContaining({
+                isValidToImport: true,
+                createdCount: 6,
+                uncategorizedCount: 5,
+                unmatchedCategories: [{ name: 'Groceriez', rowNumbers: [4, 6] }, { name: 'Mystery', rowNumbers: [7] }]
+            }));
+
+            const response = await importCsv(rows);
+
+            expect(response.status).toBe(201);
+            const saved = await transactionsData.search({ limit: 10, includeHidden: true });
+            expect(saved.filter(t => !t.categoryId).map(t => t.merchant).sort()).toEqual(['Blank', 'Named', 'Other', 'Typo', 'Typo again']);
         });
 
         it('TXN-3.9 should save nothing and return 400 with the row errors when a confirmed import has a bad row', async () => {
@@ -438,7 +454,7 @@ describe('Transaction Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.isValidToImport).toBe(false);
             expect(response.body.failedRowMessages).toEqual([
-                "Row 2: Account name 'Nope' not found. Category is required. Date '2026-02-30' is not a valid date. Amount '1.234' has more than two decimal places. IsHidden must be true, false or blank."
+                "Row 2: Account name 'Nope' not found. Date '2026-02-30' is not a valid date. Amount '1.234' has more than two decimal places. IsHidden must be true, false or blank."
             ]);
         });
 
@@ -565,6 +581,27 @@ describe('Transaction Routes', () => {
         });
     });
 
+    describe('POST / (Uncategorized)', () => {
+        it('CAT-5.2 should save a transaction without a category as Uncategorized', async () => {
+            const payload = { accountId: testAccountId, date: '2026-06-06', amount: 10, merchant: 'Test' };
+
+            const response = await request(app).post('/transactions').send(payload);
+
+            expect(response.status).toBe(201);
+            expect(response.body.categoryId).toBe('');
+            expect((await transactionsData.retrieveSingle(response.body.id))?.categoryId).toBe('');
+        });
+
+        it('CAT-5.2 should make a transaction Uncategorized when its category is cleared', async () => {
+            const txn = await insertTransaction();
+
+            const response = await request(app).put(`/transactions/${txn.id}`).send({ categoryId: '' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.categoryId).toBe('');
+        });
+    });
+
     describe('POST / (invalid requests)', () => {
         it('APP-5.5 should reject a transaction whose category does not exist', async () => {
             const payload = { accountId: testAccountId, categoryId: 'no-such-category', date: '2026-06-06', amount: 10, merchant: 'Test', isHidden: false, isSplit: false, originalStatement: '', notes: '' };
@@ -595,6 +632,17 @@ describe('Transaction Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body).toEqual([expect.objectContaining({ id: txn.id, categoryId: '' })]);
+        });
+
+        it('TXN-1.11 should filter for Uncategorized like any other category', async () => {
+            const uncategorized = await insertTransaction({ categoryId: '', merchant: 'Unknown' });
+            await insertTransaction({ merchant: 'Known' });
+            const filters = JSON.stringify([{ key: TransactionsFilterKey.Category, value: Uncategorized.filterValue }]);
+
+            const response = await request(app).get('/transactions').query({ filters });
+
+            expect(response.status).toBe(200);
+            expect(response.body.map((t: Transaction) => t.id)).toEqual([uncategorized.id]);
         });
 
         it('TXN-1.2 should sort by account name and by category name, ignoring case', async () => {
