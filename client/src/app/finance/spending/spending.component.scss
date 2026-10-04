@@ -23,13 +23,10 @@ app-page-header {
     letter-spacing: 0.05em;
 }
 
-// The period stepper, then the Category / Group switch (CASH-1.1, CASH-1.5).
+// The period stepper (CASH-1.1).
 .controls {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
 }
 
 .stepper {
@@ -44,14 +41,25 @@ app-page-header {
     font: var(--mat-sys-title-medium);
 }
 
+// The Category / Group switch, between the summary and the sections (CASH-1.5).
 .view-toggle {
+    align-self: flex-start;
+
     @include mat.button-toggle-overrides((
         height: 36px
     ));
 }
 
-// Phones show "Sep 2026" and smaller arrows, so both controls fit one row at 360px.
+// Phones show "Sep 2026" and smaller arrows, and the switch spans the width.
 @include bp.content-below(bp.$medium) {
+    .view-toggle {
+        width: 100%;
+
+        mat-button-toggle {
+            flex: 1;
+        }
+    }
+
     .stepper {
         margin-left: -6px;
 
@@ -111,6 +119,7 @@ app-page-header {
     .value {
         font: var(--mat-sys-title-large);
     }
+
 }
 
 @include bp.content-below(bp.$medium) {
@@ -136,6 +145,10 @@ app-page-header {
     .section-total {
         font: var(--mat-sys-title-medium);
     }
+}
+
+.app-list-subheader .share {
+    color: var(--text-muted);
 }
 
 // A budgeted amount under an actual one (CASH-1.11).
