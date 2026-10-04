@@ -120,11 +120,6 @@ export class FinanceBudgetComponent {
         });
     });
 
-    /** The summary's split of expenses: Essential and Discretionary, and Unclassified when it has an amount (BUD-1.7). */
-    readonly expenseSplit = computed(() => this.sections()
-        .find(section => section.type === BudgetStreamType.Expense)?.necessityParts
-        ?.filter(part => part.key !== 'unclassified' || part.monthly !== 0));
-
     private splitByNecessity(streams: BudgetStream[]): NecessityPart[] | undefined {
         const necessityOf = (stream: BudgetStream) => expenseNecessityOf(this.categoryMap().get(stream.categoryId));
         if (streams.every(stream => necessityOf(stream) === 'unclassified')) {

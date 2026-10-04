@@ -114,35 +114,30 @@ describe('FinanceBudgetComponent', () => {
         const withNecessity = (necessities: Record<string, CategoryNecessity>) =>
             categories.map(c => ({ ...c, necessity: necessities[c.id] ?? null }));
 
-        function split(element: HTMLElement): string[] {
-            return Array.from(element.querySelectorAll('.summary-card .split-part')).map(part => part.textContent!.replace(/\s+/g, ' ').trim());
-        }
-
         function subheaders(element: HTMLElement): string[] {
             return Array.from(section(element, 'Expenses').querySelectorAll('[appListSubheader]'))
                 .map(header => Array.from(header.children).map(child => child.textContent!.trim()).join(' '));
         }
 
-        it('BUD-1.7 should split expenses into Essential and Discretionary, in the summary and the list', async () => {
+        it('BUD-1.7 should list expenses under Essential and Discretionary, for the chosen period', async () => {
             const { fixture, element } = await render(streams, withNecessity({
                 rent: CategoryNecessity.Essential, insurance: CategoryNecessity.Essential, groceries: CategoryNecessity.Discretionary
             }));
 
             // Essential: rent 1,500 and insurance 50 a month. Discretionary: groceries 100 and takeout 100 a month.
-            expect(split(element)).toEqual(['Essential $1,550', 'Discretionary $200']);
+            expect(element.querySelector('.summary-card .split-part')).toBeNull();
             expect(subheaders(element)).toEqual(['Essential $1,550', 'Discretionary $200']);
             expect(streamNames(element, 'Expenses')).toEqual(['Rent', 'Home insurance', 'Takeout', 'Groceries']);
 
             fixture.componentInstance.period.set(CalendarPeriod.Yearly);
             await fixture.whenStable();
 
-            expect(split(element)).toEqual(['Essential $18,600', 'Discretionary $2,400']);
+            expect(subheaders(element)).toEqual(['Essential $18,600', 'Discretionary $2,400']);
         });
 
-        it('BUD-1.7 should show Unclassified only when it has an amount', async () => {
+        it('BUD-1.7 should show a heading only for a part that has streams', async () => {
             const { element } = await render(streams, withNecessity({ rent: CategoryNecessity.Essential }));
 
-            expect(split(element)).toEqual(['Essential $1,500', 'Discretionary $0', 'Unclassified $250']);
             expect(subheaders(element)).toEqual(['Essential $1,500', 'Unclassified $250']);
             expect(streamNames(element, 'Expenses')).toEqual(['Rent', 'Takeout', 'Groceries', 'Home insurance']);
         });
@@ -150,7 +145,6 @@ describe('FinanceBudgetComponent', () => {
         it('BUD-1.7 should leave the split out while no expense category has a necessity', async () => {
             const { element } = await render();
 
-            expect(split(element)).toEqual([]);
             expect(subheaders(element)).toEqual([]);
         });
     });

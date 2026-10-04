@@ -23,15 +23,6 @@
                     <div class="figure">
                         <span class="label">{{ section.title }}</span>
                         <app-money class="value" [amount]="forPeriod(section.monthly)" [tone]="section.tone" digits="1.0-0"></app-money>
-                        @if (section.type === 'expense' && expenseSplit(); as split) {
-                            <div class="split">
-                                @for (part of split; track part.key) {
-                                    <span class="split-part">
-                                        {{ part.title }} <app-money [amount]="forPeriod(part.monthly)" digits="1.0-0"></app-money>
-                                    </span>
-                                }
-                            </div>
-                        }
                     </div>
                 }
             </div>
