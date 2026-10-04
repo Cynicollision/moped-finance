@@ -1,6 +1,6 @@
 # Moped Finance Requirements
 
-This folder is Moped Finance's requirements: what it does and what it's planned to do, as numbered requirements grouped by domain. It's also the feature backlog: every `Planned` or `Partial` sub-requirement is work to do. `TODO.md` holds the rest (technical work, tooling, security hardening, and decisions not yet written up as requirements).
+This folder is Moped Finance's requirements: what it does and what it's planned to do, as numbered requirements grouped by domain. It's also the feature backlog: every `Planned` or `Partial` sub-requirement is work to do. `TODO.md` orders that work into sessions (its Next and Later sections, by requirement ID) and holds the rest (technical work, tooling, security hardening, and decisions not yet written up as requirements).
 
 The first set was written by reading the running app and its code, so domains not yet revisited still mostly describe current behavior. Categories (`CAT`), Institutions (`INST`), Accounts (`ACCT`) and the Dashboard (`DASH`) have been reworked into the intended design. Every domain's open questions were decided on 2026-09-26 and written up as requirements, so what's left in each Known gaps is work, not decisions.
 
