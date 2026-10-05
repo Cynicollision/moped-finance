@@ -18,6 +18,7 @@ import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
+import { categoryLabel } from './../common/category-label';
 import { MoneyComponent } from './../common/money.component';
 import { FinanceValueHistoryComponent } from './../common/value-history.component';
 import { FinanceService } from './../finance.service';
@@ -130,7 +131,7 @@ export class FinanceAccountDetailsComponent {
 
     getCategoryName(id: string): string {
         const category = this.categoryMap().get(id);
-        return category ? `${category.icon} ${category.name}` : id;
+        return category ? categoryLabel(category) : id;
     }
 
     readonly accountTypeDisplay = computed(() => {

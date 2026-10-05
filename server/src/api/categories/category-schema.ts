@@ -15,7 +15,8 @@ export const categorySchema = financeSchema.table(
         groupId: varchar('group_id', { length: 50 })
             .notNull()
             .references(() => categoryGroupSchema.id, { onDelete: 'restrict' }),
-        icon: varchar('icon', { length: 50 }).notNull(),
+        // Optional: at most one emoji (CAT-1.2). NULL in the database, '' in the API.
+        icon: varchar('icon', { length: 50 }),
         name: varchar('name', { length: 100 }).notNull(),
         isActive: boolean('is_active').notNull().default(true),
         // Only Expense categories have one, and it's optional (CAT-3.1).
@@ -30,7 +31,7 @@ export const categorySchema = financeSchema.table(
 
 export const createCategorySchema = createInsertSchema(categorySchema, {
     groupId: schema => schema.min(1),
-    icon: schema => schema.min(1),
+    icon: SchemaUtil.optionalEmoji(),
     name: schema => schema.min(1).max(100),
     isActive: z.boolean().optional(),
     necessity: z.enum(CategoryNecessity).nullish()

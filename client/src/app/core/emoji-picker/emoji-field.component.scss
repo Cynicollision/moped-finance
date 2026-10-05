@@ -1,0 +1,39 @@
+mat-form-field {
+    width: 100%;
+}
+
+.emoji-value {
+    cursor: pointer;
+    font-size: 18px; // as on the Categories screen
+}
+
+.emoji-popover {
+    overflow: hidden;
+    border-radius: var(--mat-sys-corner-large);
+    background-color: var(--mat-sys-surface-container);
+    box-shadow: var(--mat-sys-level2);
+}
+
+.emoji-sheet {
+    padding: 8px 0;
+}
+
+// emoji-picker-element's theme (its CSS variables), from the app's tokens. The picker sets its own defaults on its
+// shadow root's :host, so these have to be set on the element itself rather than inherited.
+.emoji-picker {
+    --background: transparent;
+    --border-color: var(--mat-sys-outline-variant);
+    --button-active-background: var(--bg-highlight);
+    --button-hover-background: var(--bg-hover);
+    --category-font-color: var(--text-main);
+    --indicator-color: var(--mat-sys-primary);
+    --input-border-color: var(--mat-sys-outline);
+    --input-border-radius: var(--mat-sys-corner-extra-small);
+    --input-font-color: var(--text-main);
+    --input-placeholder-color: var(--text-muted);
+    --outline-color: var(--mat-sys-primary);
+}
+
+.emoji-sheet .emoji-picker {
+    width: 100%;
+}

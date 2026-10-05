@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
+import { EmojiFieldComponent } from './../../core/emoji-picker/emoji-field.component';
 import { ModalCancelDirective } from './../../core/modal/modal-cancel.directive';
 import { ModalLayoutComponent } from './../../core/modal/modal-layout.component';
 import { NotificationService } from './../../core/notification.service';
@@ -39,6 +40,7 @@ const typeOrder = Object.values(CategoryType);
         MatInputModule,
         MatSelectModule,
         MatCheckboxModule,
+        EmojiFieldComponent,
         ModalCancelDirective,
         ModalLayoutComponent
     ],
@@ -55,7 +57,7 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
     readonly form = this.fb.group({
         id: [null as string | null],
         name: ['', Validators.required],
-        icon: ['', Validators.required],
+        icon: [''],
         groupId: ['', Validators.required],
         isActive: [true],
         necessity: [null as CategoryNecessity | null]
@@ -102,7 +104,7 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
         // Moving a category out of Expense clears its necessity (CAT-1.17).
         const values = {
             name: name!,
-            icon: icon!,
+            icon: icon ?? '',
             groupId: groupId!,
             isActive: isActive ?? true,
             necessity: this.isExpenseGroup() ? necessity : null

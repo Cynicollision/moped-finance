@@ -29,6 +29,7 @@ import { DateProviderService } from './../../core/date-provider.service';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
+import { categoryLabel } from './../common/category-label';
 import { MoneyComponent } from './../common/money.component';
 import { FinanceService } from './../finance.service';
 
@@ -146,7 +147,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
             return '';
         }
         const category = this.categoryMap().get(id);
-        return category ? `${category.icon} ${category.name}` : id;
+        return category ? categoryLabel(category) : id;
     }
 
     getAccountName(id: string | null | undefined): string {

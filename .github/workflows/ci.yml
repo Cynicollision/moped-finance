@@ -83,6 +83,16 @@ jobs:
         run: npx ng lint
         working-directory: client
 
+      - name: Check emoji data matches emoji-picker-element-data
+        run: |
+          npm run emoji-data
+          if [ -n "$(git status --porcelain -- public/emoji)" ]; then
+            git status --porcelain -- public/emoji
+            echo "The emoji data is out of date. Run 'npm run emoji-data' in client/ and commit the result."
+            exit 1
+          fi
+        working-directory: client
+
       - name: Run client tests
         run: npx ng test --watch=false
         working-directory: client

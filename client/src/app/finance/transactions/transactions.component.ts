@@ -41,6 +41,7 @@ import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { SkeletonComponent } from './../../core/loading/skeleton.component';
 import { viewResource } from './../../core/loading/view-resource';
 import { NotificationService } from './../../core/notification.service';
+import { categoryLabel } from './../common/category-label';
 import { MoneyComponent } from './../common/money.component';
 import { FinanceService } from './../finance.service';
 
@@ -300,7 +301,7 @@ export class FinanceTransactionsComponent {
             return Uncategorized.name;
         }
         const category = this.categoryMap().get(id);
-        return category ? `${category.icon} ${category.name}` : id;
+        return category ? categoryLabel(category) : id;
     }
 
     getAccountName(id: string): string {

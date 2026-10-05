@@ -59,6 +59,16 @@ To change data rather than the schema, `npm run db:generate -- --custom --name <
 
 Don't edit a migration once it's merged: databases that already ran it won't run it again. Fix mistakes with a new migration. If `main` gained a migration while your branch had one, delete yours, merge `main`, and generate again, since migrations are numbered and applied in order.
 
+## Client scripts
+
+Run these in `client/`.
+
+| Script | Does |
+|---|---|
+| `emoji-data` | Writes the category emoji picker's data (CAT-1.20), `public/emoji/data.json`, from the `emoji-picker-element-data` package, leaving out flags |
+
+The emoji data is committed, so every build serves the same file. Run `npm run emoji-data` and commit the result whenever `emoji-picker-element-data` changes version (an `npm update`, or bumping it in `package.json`), or after changing what `scripts/emoji-data.mjs` leaves out. CI fails if the committed file doesn't match the installed package.
+
 ## Before opening a PR
 
 - `npm run format` in the repository root (or `npm run format:check` to only check)

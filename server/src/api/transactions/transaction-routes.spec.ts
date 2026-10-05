@@ -88,7 +88,7 @@ describe('Transaction Routes', () => {
             FinanceEntityFactory.createCategory({
                 groupId: group.id!,
                 name: 'Groceries',
-                icon: 'apple',
+                icon: '🍎',
                 isActive: true
             })
         );
@@ -912,7 +912,7 @@ describe('Transaction Routes', () => {
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Home' })
             );
             const rent = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id, name: 'rent', icon: 'home', isActive: true })
+                FinanceEntityFactory.createCategory({ groupId: group.id, name: 'rent', icon: '🏠', isActive: true })
             );
 
             const checkingGroceries = await insertTransaction({ merchant: 'A' });

@@ -3,6 +3,7 @@ import { CategoryNecessity } from './../enum/category-necessity';
 
 export type Category = Entity & {
     groupId: string;
+    /** One emoji, or '' for none (CAT-1.2). */
     icon: string;
     name: string;
     isActive: boolean;

@@ -51,7 +51,7 @@ describe('Budget Stream Routes', () => {
             FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'General' })
         );
         const category = await categoriesData.insert(
-            FinanceEntityFactory.createCategory({ groupId: group.id, name: 'Misc', icon: 'star', isActive: true })
+            FinanceEntityFactory.createCategory({ groupId: group.id, name: 'Misc', icon: '⭐', isActive: true })
         );
         testCategoryId = category.id!;
     });
@@ -122,7 +122,7 @@ describe('Budget Stream Routes', () => {
                 FinanceEntityFactory.createCategoryGroup({ type: categoryType, name: `${name} group` })
             );
             const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id, name, icon: 'star', isActive: true })
+                FinanceEntityFactory.createCategory({ groupId: group.id, name, icon: '⭐', isActive: true })
             );
             return category.id;
         }
