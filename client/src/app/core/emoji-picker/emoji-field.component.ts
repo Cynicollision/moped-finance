@@ -7,6 +7,7 @@ import {
     Injector,
     TemplateRef,
     afterNextRender,
+    effect,
     forwardRef,
     inject,
     input,
@@ -32,14 +33,23 @@ const popoverPositions: ConnectedPosition[] = [
     { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' }
 ];
 
+// emoji-picker-element always shows a tab for each emoji group. The app's emoji data leaves out flags
+// (scripts/emoji-data.mjs), so this hides the empty Flags tab (group 9) and lays the other eight out without it.
+// The picker's documented way to restyle its shadow DOM is a <style> added to it.
+const hideFlagsTab = `
+    .nav-button[data-group-id='9'] { display: none; }
+    .nav { grid-template-columns: repeat(8, 1fr) !important; }
+    .picker { --num-groups: 8 !important; }
+`;
+
 // Loads emoji-picker-element, which defines <emoji-picker>, the first time a picker opens.
 let pickerElementLoaded: Promise<unknown> | undefined;
 
 /**
  * A form field for an optional emoji (CAT-1.20), as a form control: its value is one emoji, or '' for none.
  * Opens emoji-picker-element (searchable, grouped, keyboard-accessible, native emoji) in a popover, or in a bottom
- * sheet on phones. The picker reads its emoji data from `emoji/data.json`, which the build copies from
- * emoji-picker-element-data, so the app makes no third-party requests.
+ * sheet on phones. The picker reads its emoji data from `public/emoji/data.json`, generated from
+ * emoji-picker-element-data without flags (`npm run emoji-data`), so the app makes no third-party requests.
  */
 @Component({
     selector: 'app-emoji-field',
@@ -70,6 +80,18 @@ export class EmojiFieldComponent implements ControlValueAccessor {
 
     private onChange?: (value: string) => void;
     private onTouched?: () => void;
+
+    constructor() {
+        effect(() => {
+            const shadowRoot = this.picker()?.nativeElement.shadowRoot;
+            if (shadowRoot && !shadowRoot.querySelector('style.app-hide-flags')) {
+                const style = document.createElement('style');
+                style.className = 'app-hide-flags';
+                style.textContent = hideFlagsTab;
+                shadowRoot.appendChild(style);
+            }
+        });
+    }
 
     writeValue(value: string | null): void {
         this.value.set(value ?? '');

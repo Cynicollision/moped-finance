@@ -17,7 +17,15 @@ class HostComponent {
 // A stand-in for <emoji-picker>, which needs IndexedDB (jsdom has none). emoji-picker-element leaves an element
 // that's already defined alone, so the field's tests check its own wiring: what it does with an emoji-click.
 if (!customElements.get('emoji-picker')) {
-    customElements.define('emoji-picker', class extends HTMLElement {});
+    customElements.define(
+        'emoji-picker',
+        class extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+            }
+        }
+    );
 }
 
 describe('EmojiFieldComponent', () => {
@@ -78,6 +86,15 @@ describe('EmojiFieldComponent', () => {
         expect(control.value).toBe('🧑‍🍳');
         expect(element.querySelector('input')!.value).toBe('🧑‍🍳');
         await waitForClose();
+    });
+
+    it('CAT-1.20 should hide the Flags tab, whose emoji the app leaves out', async () => {
+        const { element } = await render();
+
+        button(element, 'Choose an emoji')!.click();
+        const style = (await openPicker()).shadowRoot!.querySelector('style')!;
+
+        expect(style.textContent).toContain(".nav-button[data-group-id='9'] { display: none; }");
     });
 
     it('CAT-1.20 should open the picker in a bottom sheet on phones', async () => {

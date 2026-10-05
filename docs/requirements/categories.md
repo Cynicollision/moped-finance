@@ -27,7 +27,7 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 | CAT-1.17 | Moving a category into an Expense group from another type shall offer its necessity in the same dialog (CAT-3.2). Moving it out of Expense shall clear its necessity, in the dialog and on the server. | Implemented |
 | CAT-1.18 | Moving a category used by a budget stream to a group of another type shall move its streams with it: they take the new type (BUD-1.1) and show in that section of the Budget screen. | Implemented |
 | CAT-1.19 | The group picker in the category dialogs shall list groups by type (Income, Expense, Transfer), then by name, each shown as "*group name* (*Type*)", for example "Housing (Expense)". | Implemented |
-| CAT-1.20 | The category dialogs shall choose the icon with an emoji picker, opened from the **Icon** field (in a popover beside the field on wider screens, in a bottom sheet on phones): the standard emoji set, grouped as on a phone keyboard, with a search box that has focus when it opens, usable from the keyboard alone, and colored to match the app. The field can also remove the icon. | Implemented |
+| CAT-1.20 | The category dialogs shall choose the icon with an emoji picker, opened from the **Icon** field (in a popover beside the field on wider screens, in a bottom sheet on phones): the standard emoji set except flags (which Chrome and Edge on Windows can't display), grouped as on a phone keyboard, with a search box that has focus when it opens, usable from the keyboard alone, and colored to match the app. The field can also remove the icon. | Implemented |
 
 ## CAT-2 Categories drive how money is reported
 
@@ -131,6 +131,6 @@ Default categories (E = Essential, D = Discretionary):
 
 ## Notes
 
-- The emoji picker is emoji-picker-element, which shows the device's own emoji (no images) and hides emoji the device can't display. Its data (`emoji/data.json`, from emoji-picker-element-data) is served by the app, which makes no third-party requests. Chrome and Edge on Windows have no flag emoji and show a flag as its two letters.
+- The emoji picker is emoji-picker-element, which shows the device's own emoji (no images) and hides emoji the device can't display. Its data (`client/public/emoji/data.json`) is served by the app, which makes no third-party requests. It's generated from emoji-picker-element-data by `npm run emoji-data` in `client/`, which leaves out the Flags group: Chrome and Edge on Windows have no flag emoji and show each flag as two letters. The picker always shows a tab per group, so the field hides the empty Flags tab.
 - The defaults (CAT-6.2) would be simplest to ship as a CSV in the CAT-7.1 format, loaded through the category import, so the list and the format can't drift apart.
 - Type is looked up through the category's group whenever Budget or Spending runs, which is why moving a category (CAT-1.16) needs no change to its transactions.
