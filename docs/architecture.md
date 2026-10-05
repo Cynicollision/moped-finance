@@ -81,13 +81,14 @@ client/src/app/
   core/layout/  LayoutService, the page header, profile menu and tab-title strategy
   core/list/    the responsive list (columns when wide, two-line rows when narrow)
   core/chart/   the Chart.js wrapper, its theme colours and axis labels
+  core/emoji-picker/  the emoji form field (emoji-picker-element in a popover or bottom sheet)
   finance/    one folder per screen area: accounts, budget, categories, dashboard,
               institutions, spending, transactions, common (the value-history chart, the money display)
   settings/   the Settings list and API Tokens (Institutions and Categories live in finance/)
   login/, register/
 ```
 
-- Standalone components, routes in `app.routes.ts`. The shell (`app.html`) shows the navigation as a bottom bar, rail or side navigation by window size (APP-1.2). Every screen starts with `<app-page-header>` (title, breadcrumb trail, actions projected as content), and route `title`s become the tab title through `PageTitleStrategy`. Global styles and colour tokens are in `src/styles.scss`, shared SCSS partials (breakpoints) in `src/styles/`. Fonts (Roboto, Material Icons) are npm packages bundled into the build, so the app makes no third-party requests.
+- Standalone components, routes in `app.routes.ts`. The shell (`app.html`) shows the navigation as a bottom bar, rail or side navigation by window size (APP-1.2). Every screen starts with `<app-page-header>` (title, breadcrumb trail, actions projected as content), and route `title`s become the tab title through `PageTitleStrategy`. Global styles and colour tokens are in `src/styles.scss`, shared SCSS partials (breakpoints) in `src/styles/`. Fonts (Roboto, Material Icons) are npm packages bundled into the build, and the build copies the emoji picker's data from emoji-picker-element-data to `emoji/data.json`, so the app makes no third-party requests.
 - All HTTP goes through `core/api.service.ts`, which prefixes `Environment.apiUrl`. It's empty, so requests go to the origin that served the app: Express in production, and the dev server in development, which forwards `/api`, `/auth` and `/health` to the API on :3000 (`client/proxy.conf.json`). No CORS is needed. `ApiService.load` fetches what a screen shows and throws on failure, for `viewResource` to show in place (APP-2.9); `get`, `post`, `put` and `delete` are actions, whose failures show a snackbar (APP-2.2).
 - Build configurations (`client/angular.json`, `client/src/environments/`):
   - `development`: debug mode (fixed "today" of 2026-05-17 plus a badge), dev login prefilled.

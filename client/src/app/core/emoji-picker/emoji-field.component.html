@@ -1,0 +1,66 @@
+<mat-form-field appearance="outline" floatLabel="always" cdkOverlayOrigin #origin="cdkOverlayOrigin">
+    <mat-label>{{ label() }}</mat-label>
+    <input
+        #trigger
+        matInput
+        readonly
+        class="emoji-value"
+        placeholder="None"
+        [value]="value()"
+        [disabled]="isDisabled()"
+        (click)="open()"
+        (keydown)="onTriggerKeydown($event)"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="isPopoverOpen()"
+    />
+    @if (value() && !isDisabled()) {
+        <button mat-icon-button matIconSuffix type="button" (click)="clear()" [attr.aria-label]="'Remove ' + label()">
+            <mat-icon>close</mat-icon>
+        </button>
+    }
+    <button
+        mat-icon-button
+        matIconSuffix
+        type="button"
+        (click)="open()"
+        [disabled]="isDisabled()"
+        aria-label="Choose an emoji"
+        aria-haspopup="dialog"
+    >
+        <mat-icon>add_reaction</mat-icon>
+    </button>
+</mat-form-field>
+
+<!-- The picker opens below the field on wider screens... -->
+<ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="origin"
+    [cdkConnectedOverlayOpen]="isPopoverOpen()"
+    [cdkConnectedOverlayPositions]="popoverPositions"
+    cdkConnectedOverlayHasBackdrop
+    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+    cdkConnectedOverlayPush
+    (backdropClick)="close()"
+    (overlayKeydown)="$event.key === 'Escape' && close()"
+    (detach)="close()"
+>
+    <div class="emoji-popover" role="dialog" aria-label="Choose an emoji">
+        <ng-container [ngTemplateOutlet]="pickerContent"></ng-container>
+    </div>
+</ng-template>
+
+<!-- ...and in a bottom sheet on phones. -->
+<ng-template #pickerSheet>
+    <div class="emoji-sheet">
+        <ng-container [ngTemplateOutlet]="pickerContent"></ng-container>
+    </div>
+</ng-template>
+
+<ng-template #pickerContent>
+    <emoji-picker
+        #picker
+        class="emoji-picker"
+        data-source="emoji/data.json"
+        (emoji-click)="pick($event)"
+    ></emoji-picker>
+</ng-template>

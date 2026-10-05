@@ -1,6 +1,7 @@
 import { AnyColumn, SQL, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { CalendarDateUtil } from '@shared/core/util';
+import { EmojiUtil } from '@server/utility';
 
 export class SchemaUtil {
     /** Largest absolute value a `DECIMAL(12, 2)` money column holds. */
@@ -26,6 +27,11 @@ export class SchemaUtil {
     public static optionalText(maxLength?: number) {
         const text = maxLength === undefined ? z.string() : z.string().max(maxLength);
         return text.nullish().transform(v => v ?? '');
+    }
+
+    /** Request schema for an optional emoji: one emoji, or '' for none (as `optionalText`, which it builds on). */
+    public static optionalEmoji() {
+        return SchemaUtil.optionalText().refine(v => v === '' || EmojiUtil.isSingleEmoji(v), 'Expected a single emoji');
     }
 
     /**

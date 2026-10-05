@@ -20,7 +20,7 @@ function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         groupId: row.groupId,
-        icon: row.icon,
+        icon: row.icon ?? '',
         name: row.name,
         isActive: row.isActive,
         necessity: row.necessity as CategoryNecessity | null
@@ -73,7 +73,7 @@ export class FinanceCategoryData implements IFinanceCategoryData {
             .values({
                 id: category.id,
                 groupId: category.groupId,
-                icon: category.icon,
+                icon: category.icon || null,
                 name: category.name,
                 isActive: category.isActive,
                 necessity: category.necessity
@@ -88,7 +88,7 @@ export class FinanceCategoryData implements IFinanceCategoryData {
             .update(categorySchema)
             .set({
                 groupId: category.groupId,
-                icon: category.icon,
+                icon: category.icon || null,
                 name: category.name,
                 isActive: category.isActive,
                 necessity: category.necessity,

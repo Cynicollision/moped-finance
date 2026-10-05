@@ -57,6 +57,13 @@
       "when": 1791113039969,
       "tag": "0007_uncategorized_state",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791199009532,
+      "tag": "0008_category_icon_optional",
+      "breakpoints": true
     }
   ]
 }

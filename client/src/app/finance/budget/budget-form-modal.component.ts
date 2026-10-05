@@ -17,6 +17,7 @@ import { ModalLayoutComponent } from './../../core/modal/modal-layout.component'
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { HasUnsavedChanges } from './../../core/unsaved-changes';
+import { categoryLabel } from './../common/category-label';
 import { FinanceService } from './../finance.service';
 
 const typeLabels: Record<BudgetStreamType, string> = {
@@ -142,7 +143,7 @@ export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChange
 
     displayCategory = (id: string): string => {
         const category = this.categories().find(c => c.id === id);
-        return category ? `${category.icon} ${category.name}` : id;
+        return category ? categoryLabel(category) : id;
     };
 
     hasUnsavedChanges(): boolean {

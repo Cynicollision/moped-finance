@@ -30,6 +30,11 @@
                             {
                                 "glob": "**/*",
                                 "input": "public"
+                            },
+                            {
+                                "glob": "data.json",
+                                "input": "node_modules/emoji-picker-element-data/en/emojibase",
+                                "output": "emoji"
                             }
                         ],
                         "styles": [

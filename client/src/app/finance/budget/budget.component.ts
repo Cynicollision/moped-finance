@@ -16,6 +16,7 @@ import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
+import { categoryLabel } from './../common/category-label';
 import { MoneyComponent, MoneyTone } from './../common/money.component';
 import { ExpenseNecessity, expenseNecessities, expenseNecessityOf } from './../common/necessity';
 import { FinanceService } from './../finance.service';
@@ -161,7 +162,7 @@ export class FinanceBudgetComponent {
 
     getCategoryName(id: string) {
         const cat = this.categoryMap().get(id);
-        return cat ? `${cat.icon} ${cat.name}` : id;
+        return cat ? categoryLabel(cat) : id;
     }
 
     getCategoryGroup(id: string) {

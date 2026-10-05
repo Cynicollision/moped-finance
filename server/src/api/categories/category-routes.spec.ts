@@ -128,7 +128,7 @@ describe('Category Routes', () => {
                 FinanceEntityFactory.createCategory({
                     groupId: group.id!,
                     name: 'Paycheck',
-                    icon: 'cash',
+                    icon: '💵',
                     isActive: true
                 })
             );
@@ -178,7 +178,7 @@ describe('Category Routes', () => {
                 FinanceEntityFactory.createCategory({
                     groupId: group.id!,
                     name: 'Groceries',
-                    icon: 'apple',
+                    icon: '🍎',
                     isActive: true
                 })
             );
@@ -203,7 +203,7 @@ describe('Category Routes', () => {
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
             );
             const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true })
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
             );
 
             const response = await request(app).get('/categories');
@@ -227,7 +227,7 @@ describe('Category Routes', () => {
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
             );
             const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true })
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
             );
 
             const response = await request(app).get(`/categories/${category.id}`);
@@ -245,7 +245,7 @@ describe('Category Routes', () => {
 
             const payload = {
                 groupId: group.id,
-                icon: 'home',
+                icon: '🏠',
                 name: 'Rent',
                 isActive: true
             };
@@ -299,7 +299,7 @@ describe('Category Routes', () => {
         });
 
         it('APP-5.5 should reject a category whose group does not exist', async () => {
-            const payload = { groupId: 'no-such-group', icon: 'home', name: 'Rent', isActive: true };
+            const payload = { groupId: 'no-such-group', icon: '🏠', name: 'Rent', isActive: true };
 
             const response = await request(app).post('/categories').send(payload);
 
@@ -314,7 +314,7 @@ describe('Category Routes', () => {
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
             );
             const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true })
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
             );
 
             const payload = { ...category, name: 'New Rent' };
@@ -325,6 +325,51 @@ describe('Category Routes', () => {
 
             const updated = await categoriesData.retrieveSingle(category.id!);
             expect(updated?.name).toBe('New Rent');
+        });
+    });
+
+    describe('icon', () => {
+        async function housing() {
+            return groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
+            );
+        }
+
+        it('CAT-1.2 should save one emoji, or none, as the icon', async () => {
+            const group = await housing();
+
+            const chef = await request(app)
+                .post('/categories')
+                .send({ groupId: group.id, icon: '🧑‍🍳', name: 'Cooking' });
+            const missing = await request(app).post('/categories').send({ groupId: group.id, name: 'Rent' });
+            const empty = await request(app).post('/categories').send({ groupId: group.id, icon: '', name: 'Repairs' });
+            const cleared = await request(app).put(`/categories/${chef.body.id}`).send({ icon: '' });
+
+            expect([chef.status, chef.body.icon]).toEqual([201, '🧑‍🍳']);
+            expect([missing.status, missing.body.icon]).toEqual([201, '']);
+            expect([empty.status, empty.body.icon]).toEqual([201, '']);
+            expect([cleared.status, cleared.body.icon]).toEqual([200, '']);
+            expect((await categoriesData.retrieveSingle(chef.body.id))?.icon).toBe('');
+        });
+
+        it('CAT-1.2 should keep the icon when an update leaves it out', async () => {
+            const group = await housing();
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
+            );
+
+            const response = await request(app).put(`/categories/${category.id}`).send({ name: 'Mortgage' });
+
+            expect([response.status, response.body.icon]).toEqual([200, '🏠']);
+        });
+
+        it.each(['home', '🍕🍔', '🛒 food'])('CAT-1.2 should refuse an icon that is not one emoji (%s)', async icon => {
+            const group = await housing();
+
+            const response = await request(app).post('/categories').send({ groupId: group.id, icon, name: 'Rent' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('icon');
         });
     });
 
@@ -431,7 +476,7 @@ describe('Category Routes', () => {
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
             );
             const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true })
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
             );
 
             const response = await request(app).delete(`/categories/${category.id}`);
@@ -447,7 +492,7 @@ describe('Category Routes', () => {
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
             );
             const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: 'home', isActive: true })
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
             );
             await new FinanceBudgetStreamData(dbClient).insert(
                 FinanceEntityFactory.createBudgetStream({

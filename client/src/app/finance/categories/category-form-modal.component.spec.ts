@@ -53,6 +53,21 @@ describe('CategoryFormModalComponent', () => {
         ]);
     });
 
+    it('CAT-1.2 should save a category without an icon', async () => {
+        const { fixture, element, financeService } = await render({ groups, initialGroupId: 'work' });
+        const form = fixture.componentInstance.form;
+
+        expect(element.querySelector('app-emoji-field mat-label')!.textContent).toBe('Icon');
+
+        form.patchValue({ name: 'Paycheck' });
+        expect(form.valid).toBe(true);
+        await fixture.componentInstance.save();
+
+        expect(financeService.createCategory).toHaveBeenCalledWith(
+            expect.objectContaining({ name: 'Paycheck', icon: '' })
+        );
+    });
+
     function necessityField(element: HTMLElement): Element | undefined {
         return Array.from(element.querySelectorAll('mat-form-field')).find(
             f => f.querySelector('mat-label')!.textContent === 'Necessity'

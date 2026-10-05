@@ -29,6 +29,7 @@ import { DateProviderService } from './../../core/date-provider.service';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
+import { categoryLabel } from './../common/category-label';
 import { MoneyComponent, MoneyTone } from './../common/money.component';
 import { ExpenseNecessity, expenseNecessities, expenseNecessityOf } from './../common/necessity';
 import { FinanceService } from './../finance.service';
@@ -356,7 +357,7 @@ export class FinanceSpendingComponent {
             }
 
             const id = byGroup ? group?.id : cat?.id;
-            const name = byGroup ? group?.name || 'Uncategorized' : cat ? `${cat.icon} ${cat.name}` : 'Uncategorized';
+            const name = byGroup ? group?.name || 'Uncategorized' : cat ? categoryLabel(cat) : 'Uncategorized';
             const isIncome = group ? group.type === CategoryType.Income : isUncategorizedIncome;
             const rows = isIncome ? income : expense;
             const necessity = isIncome || byGroup ? undefined : expenseNecessityOf(cat);
