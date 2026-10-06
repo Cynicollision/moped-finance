@@ -30,7 +30,7 @@ describe('LayoutService', () => {
         return TestBed.inject(LayoutService);
     }
 
-    it('should classify widths by the Material 3 window size classes', () => {
+    it('APP-1.2 should classify widths by the Material 3 window size classes', () => {
         const cases: [number, string][] = [
             [375, 'compact'],
             [600, 'medium'],
@@ -54,7 +54,7 @@ describe('LayoutService', () => {
         expect(layout.isCompact()).toBe(false);
     });
 
-    it('should update when the viewport changes', () => {
+    it('APP-1.2 should update when the viewport changes', () => {
         const layout = createService(1300);
         const queries = Object.keys(state.value.breakpoints);
 

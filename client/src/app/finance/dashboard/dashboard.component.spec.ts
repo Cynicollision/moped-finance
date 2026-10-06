@@ -125,7 +125,7 @@ describe('DashboardComponent', () => {
         expect(groupRows(element)).toEqual(['Cash $1,200.00']);
     });
 
-    it('should leave out groups with no accounts', async () => {
+    it('DASH-2.1 should leave out groups with no accounts', async () => {
         const element = await render([account('Checking', AccountGroup.Cash, 10)]);
 
         expect(groupRows(element).map(row => row.split(' ')[0])).toEqual(['Cash']);

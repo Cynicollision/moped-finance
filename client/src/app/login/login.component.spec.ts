@@ -36,11 +36,19 @@ describe('LoginComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create the component', () => {
-        expect(component).toBeTruthy();
+    function loginButton(): HTMLButtonElement {
+        return fixture.nativeElement.querySelector('button[type="submit"]');
+    }
+
+    it('AUTH-1.1 should show Username, Password and a Login button', () => {
+        const element = fixture.nativeElement as HTMLElement;
+        const labels = Array.from(element.querySelectorAll('mat-label')).map(label => label.textContent?.trim());
+
+        expect(labels).toEqual(['Username', 'Password']);
+        expect(loginButton().textContent?.trim()).toBe('Login');
     });
 
-    it('should call AuthService.login with credentials and returnUrl on submit', async () => {
+    it('AUTH-1.3 should call AuthService.login with credentials and returnUrl on submit', async () => {
         component.username.set('stn');
         component.password.set('password');
 
@@ -49,7 +57,23 @@ describe('LoginComponent', () => {
         expect(mockAuthService.login).toHaveBeenCalledWith('stn', 'password', '/dashboard');
     });
 
-    it('should not call AuthService.login if username is empty', async () => {
+    it('AUTH-1.2 should keep Login disabled until both Username and Password are filled', async () => {
+        const states: boolean[] = [];
+        for (const [username, password] of [
+            ['', 'password'],
+            ['stn', ''],
+            ['stn', 'password']
+        ]) {
+            component.username.set(username);
+            component.password.set(password);
+            await fixture.whenStable();
+            states.push(loginButton().disabled);
+        }
+
+        expect(states).toEqual([true, true, false]);
+    });
+
+    it('AUTH-1.2 should not call AuthService.login if username is empty', async () => {
         component.username.set('');
         component.password.set('password');
 

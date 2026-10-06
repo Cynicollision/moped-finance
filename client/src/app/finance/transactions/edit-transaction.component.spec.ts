@@ -106,7 +106,7 @@ describe('EditTransactionComponent', () => {
         expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
     });
 
-    it("should go back to the transaction's details on Cancel", async () => {
+    it("TXN-2.3 should go back to the transaction's details on Cancel", async () => {
         const { element, navigate } = await render(transaction);
 
         Array.from(element.querySelectorAll<HTMLButtonElement>('form button'))

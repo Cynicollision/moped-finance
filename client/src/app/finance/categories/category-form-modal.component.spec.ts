@@ -156,7 +156,7 @@ describe('CategoryFormModalComponent', () => {
         } as Category;
         const mortgage = { ...rent, id: 'mortgage', name: 'Mortgage' } as Category;
 
-        it('should not offer Delete while creating', async () => {
+        it('CAT-4.4 should not offer Delete while creating', async () => {
             const { element, financeService } = await render({ groups });
 
             expect(button(element, 'Delete')).toBeUndefined();

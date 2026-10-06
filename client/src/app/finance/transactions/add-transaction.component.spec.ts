@@ -89,7 +89,7 @@ describe('AddTransactionComponent', () => {
         expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
     });
 
-    it('should not submit without an account', async () => {
+    it('TXN-2.1 should not submit without an account', async () => {
         const { form, submit, financeService } = await render({}, undefined);
         form.patchValue({ amount: -12.5, merchant: 'Bakery' });
 

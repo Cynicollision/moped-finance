@@ -2,7 +2,7 @@
 
 Work items and ideas, grouped by priority. Move items up or down as priorities change; delete them once done (git history is the changelog).
 
-- **Now**: technical baseline: deployment, tooling, test consistency.
+- **Now**: technical baseline: deployment and tooling.
 - **Next**: finishing the requirements (`docs/requirements/`): every `Partial` and `Planned` sub-requirement except bank sync and automatic categorization. Each item is about a day's work or one Claude Code session, possibly several PRs, listed in the order to work through them (later items build on earlier ones).
 - **Later**: bank sync, automatic categorization, and known gaps that aren't requirements yet.
 - **Ideas**: unsorted thoughts, not yet committed to.
@@ -14,9 +14,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 ### Data & deployment
 - [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
-
-### Tests
-- [ ] Name existing client tests after the requirement they cover (`it('AUTH-1.2 should ...')`), as the conventions ask for new ones. The server is done; the client stragglers are the `login`, `register`, `auth.service`, `finance.service`, `layout.service` and `chart.component` specs. Leave tests of plumbing that no requirement covers (utilities, `calendar-date-util.spec.ts`) as they are; don't invent requirements to name them after. A test that turns out to check behavior the requirements don't describe is worth a note in the domain's Known gaps.
 
 ---
 

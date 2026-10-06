@@ -37,7 +37,7 @@ describe('ConfirmModalComponent', () => {
         expect(confirmButton(element).classList).toContain('danger-button');
     });
 
-    it('should show an ordinary confirm button when the action is not destructive', () => {
+    it('APP-2.4 should show an ordinary confirm button when the action is not destructive', () => {
         const element = render({ message: 'Continue?' });
 
         expect(confirmButton(element).classList).not.toContain('danger-button');

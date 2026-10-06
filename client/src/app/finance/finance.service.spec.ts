@@ -26,7 +26,7 @@ describe('FinanceService', () => {
         };
     }
 
-    it('should send every transaction search option the screen sets, and leave out the rest', async () => {
+    it('TXN-1.5 should send every transaction search option the screen sets, and leave out the rest', async () => {
         const { finance, http } = setup();
 
         const all = finance.fetchTransactions({
@@ -63,7 +63,7 @@ describe('FinanceService', () => {
         await none;
     });
 
-    it("should load an account's ten most recent transactions", async () => {
+    it("ACCT-2.7 should load an account's ten most recent transactions", async () => {
         const { finance, http } = setup();
 
         const recent = finance.fetchAccountRecentTransactions('a1');
@@ -132,7 +132,7 @@ describe('FinanceService', () => {
         expect(finance.getExportBalanceHistoryUrl('a1')).toBe('/api/v1/accounts/a1/export-balances');
     });
 
-    it('should save a transaction to its own address and delete it by ID', async () => {
+    it('TXN-2.3 TXN-2.4 should save a transaction to its own address and delete it by ID', async () => {
         const { finance, http } = setup();
         const transaction = { id: 't1', merchant: 'Shop' } as Transaction;
 
