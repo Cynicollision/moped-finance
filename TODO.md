@@ -15,9 +15,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 - [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
-### Dependencies
-- [ ] `npm audit` reports known vulnerabilities in both packages' dependencies (2026-10-05: client 42, 3 critical, including `@angular/common` and `@angular/compiler` before 21.2.19; server 24, 1 critical). Update what can be updated without breaking changes, check the rest, and decide whether CI should run `npm audit`.
-
 ### Tests
 - [ ] Name existing tests after the requirement they cover (`it('ACCT-1.5 should ...')`), as the conventions ask for new ones. Server tests are about half done: `account-routes.spec.ts` (15 of 39), `category-routes.spec.ts` (12 of 24), `auth-routes.spec.ts` (9 of 18), `institution-routes.spec.ts` (1 of 11), `budget-stream-routes.spec.ts` (6 of 12), `transaction-routes.spec.ts` (38 of 53). The client is mostly done; the stragglers are `login`, `register`, `auth.service`, `finance.service`, `layout.service` and `chart.component` specs. Leave tests of plumbing that no requirement covers (utilities, `calendar-date-util.spec.ts`) as they are; don't invent requirements to name them after. A test that turns out to check behavior the requirements don't describe is worth a note in the domain's Known gaps. One PR per package.
 
@@ -97,6 +94,13 @@ Manual entry and import/export come first. Constraints for when this gets picked
 ### Known gaps
 - [ ] **Duplicate detection on transaction import** (Transactions Known gaps): importing the same file twice creates everything twice. Decide on a match (date, account, amount, statement) and how the dry run reports it; related to bank sync's de-duplication.
 - [ ] **Spending classifies in the browser** (Spending Known gaps): income versus expense (CASH-1.3) is worked out in `spending.component.ts` from loaded categories. Move it to the server, which item 10's averages endpoint may already need.
+
+### Major dependency upgrades
+- [ ] Majors held back on 2026-10-06, when everything was brought up to date within its range (see [development.md](docs/development.md#dependencies)). None has a known vulnerability; Angular 21 keeps getting security releases until its LTS ends. One PR each, checking the release notes' breaking changes:
+  - Client: Angular, CDK, Material and `angular-eslint` 21 → 22; `vitest` 4 → 5; `jsdom` 27 → 29. TypeScript 5.9 → 6 or 7 only once Angular supports it.
+  - Server: Express 4 → 5 with `@types/express` 5 (route path syntax and `req.query` handling changed); `dotenv` 16 → 18; TypeScript to match the client.
+  - `@types/node` is `^20` while Node is 22 everywhere (`Dockerfile`, CI, development.md); move it to `^22`.
+  - The server's dev-only audit findings (development.md) go away only with new releases of `nodemon`, `tsc-alias`, Jest's coverage packages and `drizzle-kit` (1.0 drops `@esbuild-kit`). Check again when doing these.
 
 ### Chart library
 - [ ] Re-evaluate Chart.js when Spending gets more report and chart types (trends over months, category breakdowns). Compare it with alternatives such as ECharts on the chart types needed, touch interaction and bundle size. Chart.js stays until then (decided 2026-09-27).
