@@ -12,21 +12,34 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
 import { EmojiFieldComponent } from './../../core/emoji-picker/emoji-field.component';
+import { viewResource } from './../../core/loading/view-resource';
 import { ModalCancelDirective } from './../../core/modal/modal-cancel.directive';
 import { ModalLayoutComponent } from './../../core/modal/modal-layout.component';
+import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { HasUnsavedChanges } from './../../core/unsaved-changes';
+import { categoryLabel } from './../common/category-label';
 import { FinanceService } from './../finance.service';
+import {
+    CategoryDeleteChoice,
+    CategoryDeleteModalComponent,
+    CategoryDeleteModalData
+} from './category-delete-modal.component';
 
 export interface CategoryFormModalData {
     category?: Category;
     groups: CategoryGroup[];
+    /** Every category, for the choice of where a deleted one's transactions go (CAT-4.4). */
+    categories?: Category[];
     initialGroupId?: string;
 }
 
 const typeOrder = Object.values(CategoryType);
 
-/** Creates or edits a category (CAT-1.8, CAT-1.9, CAT-3.2). Saves itself and closes with true once saved. */
+/**
+ * Creates, edits or deletes a category (CAT-1.8, CAT-1.9, CAT-3.2, CAT-4.4). Saves and deletes itself and closes with
+ * true once something changed.
+ */
 @Component({
     selector: 'app-category-form-modal',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +63,7 @@ const typeOrder = Object.values(CategoryType);
 export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
     private fb = inject(FormBuilder);
     private financeService = inject(FinanceService);
+    private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
     private dialogRef = inject<MatDialogRef<CategoryFormModalComponent, boolean>>(MatDialogRef);
     readonly data = inject<CategoryFormModalData>(MAT_DIALOG_DATA);
@@ -68,6 +82,17 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
         (a, b) => typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type) || a.name.localeCompare(b.name)
     );
     readonly isSaving = signal(false);
+    readonly isDeleting = signal(false);
+
+    /** What uses the category being edited: its transactions move when it's deleted, its budget streams prevent it. */
+    readonly usage = viewResource({
+        params: () => this.data.category?.id,
+        loader: id => this.financeService.fetchCategoryUsage(id)
+    });
+    readonly budgetStreamCount = computed(() => this.usage.value()?.budgetStreamCount ?? 0);
+    readonly canDelete = computed(
+        () => this.usage.value() !== undefined && this.budgetStreamCount() === 0 && !this.isDeleting()
+    );
 
     /** Necessity applies only to Expense categories, and is optional (CAT-3.2). */
     readonly necessityOptions = [
@@ -118,5 +143,49 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
             this.notificationService.success(this.isEditing ? 'Category saved' : 'Category created');
             this.dialogRef.close(true);
         }
+    }
+
+    async delete() {
+        const category = this.data.category;
+        const usage = this.usage.value();
+        if (!category || !usage || !this.canDelete()) {
+            return;
+        }
+
+        const choice = await this.confirmDelete(category, usage.transactionCount);
+        if (!choice) {
+            return;
+        }
+
+        this.isDeleting.set(true);
+        const deleted = await this.financeService.deleteCategory(category.id, choice.moveToId || undefined);
+        this.isDeleting.set(false);
+
+        if (deleted) {
+            this.notificationService.success('Category deleted');
+            this.dialogRef.close(true);
+        }
+    }
+
+    /** Asks where the transactions should go, or, when there are none, just whether to delete (CAT-4.4). */
+    private async confirmDelete(
+        category: Category,
+        transactionCount: number
+    ): Promise<CategoryDeleteChoice | undefined> {
+        if (transactionCount === 0) {
+            const confirmed = await this.modalService.confirm({
+                title: 'Delete Category',
+                message: `Delete ${categoryLabel(category)}? No transactions use it.`,
+                confirmLabel: 'Delete',
+                isWarn: true
+            });
+            return confirmed ? { moveToId: '' } : undefined;
+        }
+
+        return this.modalService.open<CategoryDeleteModalComponent, CategoryDeleteModalData, CategoryDeleteChoice>(
+            CategoryDeleteModalComponent,
+            { category, transactionCount, groups: this.data.groups, categories: this.data.categories ?? [] },
+            { size: 'small' }
+        );
     }
 }

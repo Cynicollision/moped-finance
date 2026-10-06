@@ -122,7 +122,7 @@ export class FinanceCategoriesComponent {
     }
 
     async editCategory(category: Category) {
-        await this.openCategory({ category, groups: this.groups() });
+        await this.openCategory({ category, groups: this.groups(), categories: this.categories() });
     }
 
     private async openCategory(data: CategoryFormModalData) {

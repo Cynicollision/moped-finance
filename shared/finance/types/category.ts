@@ -10,3 +10,9 @@ export type Category = Entity & {
     /** Only an Expense category can have one, and it's optional (CAT-3.1). */
     necessity: CategoryNecessity | null;
 };
+
+/** What still uses a category, which its delete has to deal with (CAT-4.4, CAT-4.5). */
+export interface CategoryUsage {
+    transactionCount: number;
+    budgetStreamCount: number;
+}

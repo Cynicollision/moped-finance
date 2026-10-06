@@ -2,11 +2,15 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { CalendarPeriod } from '@shared/core/enum';
-import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
+import { AccountCategory, AccountGroup, AccountType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
+import { Category, Transaction } from '@shared/finance/types';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
+import { FinanceAccountData } from './../accounts';
 import { FinanceBudgetStreamData } from './../budget/budget-stream-data';
+import { FinanceInstitutionData } from './../institutions';
+import { FinanceTransactionData } from './../transactions/transaction-data';
 import { FinanceCategoryData } from './category-data';
 import { FinanceCategoryGroupData } from './category-groups/category-group-data';
 import { createCategoryRouter } from './category-routes';
@@ -470,48 +474,173 @@ describe('Category Routes', () => {
         });
     });
 
-    describe('DELETE /categories/:id', () => {
-        it('should delete a category', async () => {
-            const group = await groupsData.insert(
-                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
-            );
-            const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
-            );
+    describe('deleting a category', () => {
+        let transactionsData: FinanceTransactionData;
+        let budgetStreamData: FinanceBudgetStreamData;
+        let accountId: string;
+        let rent: Category;
+        let mortgage: Category;
 
-            const response = await request(app).delete(`/categories/${category.id}`);
-
-            expect(response.status).toBe(204);
-
-            const dbCategory = await categoriesData.retrieveSingle(category.id!);
-            expect(dbCategory).toBeNull();
+        beforeAll(() => {
+            transactionsData = new FinanceTransactionData(dbClient);
+            budgetStreamData = new FinanceBudgetStreamData(dbClient);
         });
 
-        it('CAT-4.5 should refuse to delete a category used by a budget stream', async () => {
-            const group = await groupsData.insert(
+        beforeEach(async () => {
+            const institution = await new FinanceInstitutionData(dbClient).insert(
+                FinanceEntityFactory.createInstitution({ name: 'Bank' })
+            );
+            const account = await new FinanceAccountData(dbClient).insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: institution.id!,
+                    name: 'Checking',
+                    category: AccountCategory.Asset,
+                    group: AccountGroup.Cash,
+                    type: AccountType.Checking,
+                    isHidden: false,
+                    isManual: true,
+                    isRetirement: false,
+                    hideFromSpending: false,
+                    balance: 0
+                })
+            );
+            accountId = account.id!;
+
+            const housing = await groupsData.insert(
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
             );
-            const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
+            rent = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: housing.id!, name: 'Rent', icon: '🏠', isActive: true })
             );
-            await new FinanceBudgetStreamData(dbClient).insert(
+            mortgage = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({
+                    groupId: housing.id!,
+                    name: 'Mortgage',
+                    icon: '',
+                    isActive: true
+                })
+            );
+        });
+
+        function insertTransaction(categoryId: string, fields: Partial<Transaction> = {}) {
+            return transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId,
+                    categoryId,
+                    date: '2026-05-01',
+                    amount: -1500,
+                    merchant: 'Landlord',
+                    isHidden: false,
+                    isSplit: false,
+                    originalStatement: '',
+                    notes: '',
+                    splitParentId: '',
+                    ...fields
+                })
+            );
+        }
+
+        function insertBudgetStream(categoryId: string) {
+            return budgetStreamData.insert(
                 FinanceEntityFactory.createBudgetStream({
-                    categoryId: category.id!,
+                    categoryId,
                     name: 'Rent',
                     recurrence: CalendarPeriod.Monthly,
                     amount: 1500
                 })
             );
+        }
 
-            const response = await request(app).delete(`/categories/${category.id}`);
+        describe('GET /categories/:id/usage', () => {
+            it('CAT-4.4 should count the transactions and budget streams that use a category', async () => {
+                await insertTransaction(rent.id);
+                await insertTransaction(rent.id, { isHidden: true });
+                await insertTransaction(mortgage.id);
+                await insertBudgetStream(rent.id);
 
-            expect(response.status).toBe(400);
-            expect(response.body).toEqual({
-                code: 'IN_USE',
-                message:
-                    'This category is used in a budget stream, which must be deleted or assigned to a different category first.'
+                const response = await request(app).get(`/categories/${rent.id}/usage`);
+
+                expect(response.status).toBe(200);
+                expect(response.body).toEqual({ transactionCount: 2, budgetStreamCount: 1 });
             });
-            expect(await categoriesData.retrieveSingle(category.id!)).not.toBeNull();
+
+            it('should return 404 when the category does not exist', async () => {
+                const response = await request(app).get('/categories/missing/usage');
+
+                expect(response.status).toBe(404);
+            });
+        });
+
+        describe('DELETE /categories/:id', () => {
+            it('CAT-5.2 should leave the transactions of a deleted category Uncategorized', async () => {
+                const transaction = await insertTransaction(rent.id);
+
+                const response = await request(app).delete(`/categories/${rent.id}`);
+
+                expect(response.status).toBe(204);
+                expect(await categoriesData.retrieveSingle(rent.id)).toBeNull();
+                expect((await transactionsData.retrieveSingle(transaction.id))?.categoryId).toBe('');
+            });
+
+            it('CAT-4.4 should move the transactions to the chosen category and delete it', async () => {
+                const first = await insertTransaction(rent.id);
+                const hidden = await insertTransaction(rent.id, { isHidden: true });
+                const other = await insertTransaction('');
+
+                const response = await request(app).delete(`/categories/${rent.id}?moveTo=${mortgage.id}`);
+
+                expect(response.status).toBe(204);
+                expect(await categoriesData.retrieveSingle(rent.id)).toBeNull();
+                expect((await transactionsData.retrieveSingle(first.id))?.categoryId).toBe(mortgage.id);
+                expect((await transactionsData.retrieveSingle(hidden.id))?.categoryId).toBe(mortgage.id);
+                expect((await transactionsData.retrieveSingle(other.id))?.categoryId).toBe('');
+            });
+
+            it('CAT-4.4 should refuse a target that does not exist, and change nothing', async () => {
+                const transaction = await insertTransaction(rent.id);
+
+                const response = await request(app).delete(`/categories/${rent.id}?moveTo=missing`);
+
+                expect(response.status).toBe(400);
+                expect(response.body.message).toBe('Category not found.');
+                expect(await categoriesData.retrieveSingle(rent.id)).not.toBeNull();
+                expect((await transactionsData.retrieveSingle(transaction.id))?.categoryId).toBe(rent.id);
+            });
+
+            it('CAT-4.4 should refuse to move the transactions to the category being deleted', async () => {
+                const transaction = await insertTransaction(rent.id);
+
+                const response = await request(app).delete(`/categories/${rent.id}?moveTo=${rent.id}`);
+
+                expect(response.status).toBe(400);
+                expect(response.body.message).toBe(
+                    "A category's transactions can't be moved to the category being deleted."
+                );
+                expect(await categoriesData.retrieveSingle(rent.id)).not.toBeNull();
+                expect((await transactionsData.retrieveSingle(transaction.id))?.categoryId).toBe(rent.id);
+            });
+
+            it('should return 404 when the category does not exist', async () => {
+                const response = await request(app).delete(`/categories/missing?moveTo=${mortgage.id}`);
+
+                expect(response.status).toBe(404);
+            });
+
+            it('CAT-4.5 should refuse to delete a category used by a budget stream, and move nothing', async () => {
+                const transaction = await insertTransaction(rent.id);
+                await insertBudgetStream(rent.id);
+
+                const response = await request(app).delete(`/categories/${rent.id}?moveTo=${mortgage.id}`);
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual({
+                    code: 'IN_USE',
+                    message:
+                        'This category is used in a budget stream, which must be deleted or assigned to a different category first.'
+                });
+                expect(await categoriesData.retrieveSingle(rent.id)).not.toBeNull();
+                expect((await transactionsData.retrieveSingle(transaction.id))?.categoryId).toBe(rent.id);
+            });
         });
     });
 });

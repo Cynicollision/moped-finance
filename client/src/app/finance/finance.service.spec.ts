@@ -132,6 +132,18 @@ describe('FinanceService', () => {
         expect(await remove).toBe(true);
     });
 
+    it('CAT-4.4 should delete a category, naming the category its transactions move to when there is one', async () => {
+        const { finance, http } = setup();
+
+        const uncategorized = finance.deleteCategory('rent');
+        http.expectOne(r => r.method === 'DELETE' && r.url === '/api/v1/categories/rent').flush(null);
+        expect(await uncategorized).toBe(true);
+
+        const moved = finance.deleteCategory('rent', 'mortgage');
+        http.expectOne(r => r.method === 'DELETE' && r.url === '/api/v1/categories/rent?moveTo=mortgage').flush(null);
+        expect(await moved).toBe(true);
+    });
+
     it('APP-2.9 should throw from a load, while an action reports its failure and resolves to undefined', async () => {
         const { finance, http, notificationService } = setup();
 

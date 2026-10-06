@@ -1,5 +1,5 @@
 import { CategoryType } from '@shared/finance/enum';
-import { Category, CategoryGroup } from '@shared/finance/types';
+import { Category, CategoryGroup, CategoryUsage } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
@@ -87,6 +87,17 @@ export class CategoryController {
         return Result.success(category);
     }
 
+    public async getCategoryUsage(
+        context: OperationContext,
+        categoryId: string
+    ): Promise<OperationResult<CategoryUsage>> {
+        const category = await this.categoryData.retrieveSingle(categoryId);
+        if (!category) {
+            return Result.userErrorNotFound();
+        }
+        return Result.success(await this.categoryData.retrieveUsage(categoryId));
+    }
+
     public async getCategories(context: OperationContext, activeOnly = false): Promise<OperationResult<Category[]>> {
         const categories = await this.categoryData.retrieveAll(activeOnly);
         return Result.success(categories);
@@ -156,8 +167,21 @@ export class CategoryController {
         return !group || group.type === CategoryType.Expense;
     }
 
-    public async deleteCategory(context: OperationContext, categoryId: string): Promise<OperationResult<void>> {
-        const deleted = await this.categoryData.delete(categoryId);
+    /**
+     * Deletes a category, moving its transactions to `moveToId`, or leaving them Uncategorized without one (CAT-4.4). A
+     * target that doesn't exist fails the move's foreign key, and a budget stream fails the delete's (CAT-4.5); either
+     * is a 400 and changes nothing.
+     */
+    public async deleteCategory(
+        context: OperationContext,
+        categoryId: string,
+        moveToId?: string
+    ): Promise<OperationResult<void>> {
+        if (moveToId === categoryId) {
+            return Result.userError("A category's transactions can't be moved to the category being deleted.");
+        }
+
+        const deleted = await this.categoryData.delete(categoryId, moveToId);
         if (!deleted) {
             return Result.userErrorNotFound();
         }

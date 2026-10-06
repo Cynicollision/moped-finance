@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
-import { Category, CategoryGroup } from '@shared/finance/types';
+import { Category, CategoryGroup, CategoryUsage } from '@shared/finance/types';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
+import { CategoryDeleteModalComponent } from './category-delete-modal.component';
 import { CategoryFormModalComponent, CategoryFormModalData } from './category-form-modal.component';
 
 describe('CategoryFormModalComponent', () => {
@@ -16,25 +17,48 @@ describe('CategoryFormModalComponent', () => {
         { id: 'bonus', name: 'Bonuses', type: CategoryType.Income }
     ] as CategoryGroup[];
 
-    async function render(data: CategoryFormModalData) {
+    async function render(
+        data: CategoryFormModalData,
+        usage: CategoryUsage = { transactionCount: 0, budgetStreamCount: 0 }
+    ) {
         const financeService = {
             createCategory: vi.fn().mockResolvedValue({ id: 'new' }),
-            saveCategory: vi.fn().mockResolvedValue({ id: 'cat' })
+            saveCategory: vi.fn().mockResolvedValue({ id: 'cat' }),
+            fetchCategoryUsage: vi.fn().mockResolvedValue(usage),
+            deleteCategory: vi.fn().mockResolvedValue(true)
+        };
+        const dialogRef = { close: vi.fn() };
+        const notificationService = { success: vi.fn() };
+        const modalService = {
+            requestClose: vi.fn(),
+            confirm: vi.fn().mockResolvedValue(true),
+            open: vi.fn().mockResolvedValue(undefined)
         };
         TestBed.configureTestingModule({
             imports: [CategoryFormModalComponent],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: data },
-                { provide: MatDialogRef, useValue: { close: vi.fn() } },
+                { provide: MatDialogRef, useValue: dialogRef },
                 { provide: FinanceService, useValue: financeService },
-                { provide: NotificationService, useValue: { success: vi.fn() } },
-                { provide: ModalService, useValue: { requestClose: vi.fn() } }
+                { provide: NotificationService, useValue: notificationService },
+                { provide: ModalService, useValue: modalService }
             ]
         });
 
         const fixture = TestBed.createComponent(CategoryFormModalComponent);
         await fixture.whenStable();
-        return { fixture, element: fixture.nativeElement as HTMLElement, financeService };
+        return {
+            fixture,
+            element: fixture.nativeElement as HTMLElement,
+            financeService,
+            dialogRef,
+            notificationService,
+            modalService
+        };
+    }
+
+    function button(element: HTMLElement, label: string): HTMLButtonElement | undefined {
+        return Array.from(element.querySelectorAll('button')).find(b => b.textContent!.trim() === label);
     }
 
     it('CAT-1.19 should list groups by type, then name, labelled with their type', async () => {
@@ -119,5 +143,116 @@ describe('CategoryFormModalComponent', () => {
         expect(financeService.saveCategory).toHaveBeenCalledWith(
             expect.objectContaining({ groupId: 'transfers', necessity: null })
         );
+    });
+
+    describe('deleting', () => {
+        const rent = {
+            id: 'rent',
+            groupId: 'housing',
+            name: 'Rent',
+            icon: '🏠',
+            isActive: true,
+            necessity: null
+        } as Category;
+        const mortgage = { ...rent, id: 'mortgage', name: 'Mortgage' } as Category;
+
+        it('should not offer Delete while creating', async () => {
+            const { element, financeService } = await render({ groups });
+
+            expect(button(element, 'Delete')).toBeUndefined();
+            expect(financeService.fetchCategoryUsage).not.toHaveBeenCalled();
+        });
+
+        it('CAT-4.4 should delete a category no transactions use after a plain confirmation', async () => {
+            const { element, fixture, financeService, modalService, dialogRef, notificationService } = await render({
+                category: rent,
+                groups,
+                categories: [rent, mortgage]
+            });
+
+            expect(financeService.fetchCategoryUsage).toHaveBeenCalledWith('rent');
+            button(element, 'Delete')!.click();
+            await fixture.whenStable();
+
+            expect(modalService.confirm).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: 'Delete Category',
+                    message: 'Delete 🏠 Rent? No transactions use it.'
+                })
+            );
+            expect(modalService.open).not.toHaveBeenCalled();
+            expect(financeService.deleteCategory).toHaveBeenCalledWith('rent', undefined);
+            expect(notificationService.success).toHaveBeenCalledWith('Category deleted');
+            expect(dialogRef.close).toHaveBeenCalledWith(true);
+        });
+
+        it('CAT-4.4 should ask where the transactions go, and move them there', async () => {
+            const { element, fixture, financeService, modalService, dialogRef } = await render(
+                { category: rent, groups, categories: [rent, mortgage] },
+                { transactionCount: 12, budgetStreamCount: 0 }
+            );
+            modalService.open.mockResolvedValue({ moveToId: 'mortgage' });
+
+            button(element, 'Delete')!.click();
+            await fixture.whenStable();
+
+            expect(modalService.confirm).not.toHaveBeenCalled();
+            expect(modalService.open).toHaveBeenCalledWith(
+                CategoryDeleteModalComponent,
+                { category: rent, transactionCount: 12, groups, categories: [rent, mortgage] },
+                { size: 'small' }
+            );
+            expect(financeService.deleteCategory).toHaveBeenCalledWith('rent', 'mortgage');
+            expect(dialogRef.close).toHaveBeenCalledWith(true);
+        });
+
+        it('CAT-4.4 should leave the transactions Uncategorized when that is the choice', async () => {
+            const { element, fixture, financeService, modalService } = await render(
+                { category: rent, groups, categories: [rent, mortgage] },
+                { transactionCount: 1, budgetStreamCount: 0 }
+            );
+            modalService.open.mockResolvedValue({ moveToId: '' });
+
+            button(element, 'Delete')!.click();
+            await fixture.whenStable();
+
+            expect(financeService.deleteCategory).toHaveBeenCalledWith('rent', undefined);
+        });
+
+        it('CAT-4.4 should delete nothing when the confirmation is cancelled', async () => {
+            const { element, fixture, financeService, dialogRef } = await render(
+                { category: rent, groups, categories: [rent, mortgage] },
+                { transactionCount: 3, budgetStreamCount: 0 }
+            );
+
+            button(element, 'Delete')!.click();
+            await fixture.whenStable();
+
+            expect(financeService.deleteCategory).not.toHaveBeenCalled();
+            expect(dialogRef.close).not.toHaveBeenCalled();
+        });
+
+        it('CAT-4.4 should stay open when the server refuses the delete', async () => {
+            const { element, fixture, financeService, dialogRef, notificationService } = await render({
+                category: rent,
+                groups
+            });
+            financeService.deleteCategory.mockResolvedValue(false);
+
+            button(element, 'Delete')!.click();
+            await fixture.whenStable();
+
+            expect(notificationService.success).not.toHaveBeenCalled();
+            expect(dialogRef.close).not.toHaveBeenCalled();
+        });
+
+        it('CAT-4.5 should explain why a category used by a budget stream cannot be deleted', async () => {
+            const { element } = await render({ category: rent, groups }, { transactionCount: 4, budgetStreamCount: 2 });
+
+            expect(button(element, 'Delete')!.disabled).toBe(true);
+            expect(element.querySelector('.locked-note')!.textContent!.replace(/\s+/g, ' ').trim()).toBe(
+                'To delete this category, first delete its 2 budget streams or assign them to another category.'
+            );
+        });
     });
 });

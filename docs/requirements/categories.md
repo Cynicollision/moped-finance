@@ -17,7 +17,7 @@ Screens, both pages of Settings: **Categories** (`/settings/categories`, also in
 | CAT-1.7 | The user can rename a group from its card (**Edit**). | Implemented |
 | CAT-1.8 | The user can create a category from the screen's menu (**Create Category**), or from a group's **Create Category** button, which pre-selects that group. If no group exists, the app shall refuse with "Please create a group first." | Implemented |
 | CAT-1.9 | The user can edit a category's name, icon, group, Active flag and necessity from its row. | Implemented |
-| CAT-1.10 | The user can delete a category (CAT-4.4) or an empty category group (CAT-1.15). | Partial |
+| CAT-1.10 | The user can delete a category (CAT-4.4) or an empty category group (CAT-1.15). | Implemented |
 | CAT-1.11 | Groups of class **Transfer** shall be shown and manageable on the Categories screen. | Retired (merged into CAT-1.3) |
 | CAT-1.12 | Category group names shall be unique, ignoring case. Saving a duplicate shall be rejected with "A category group with that name already exists." | Implemented |
 | CAT-1.13 | Category names shall be unique across all groups, ignoring case, so CSV import (TXN-3.4) matches exactly one category. Saving a duplicate shall be rejected with "A category with that name already exists." No category can be named Uncategorized (CAT-5.3). | Implemented |
@@ -55,8 +55,8 @@ A category the user has stopped using can be made **inactive**, which keeps it o
 | CAT-4.1 | An inactive category shall not be offered when adding or editing a transaction or a budget stream. | Implemented |
 | CAT-4.2 | A transaction or budget stream that already has an inactive category shall keep it, and its edit form shall show it as the current value. | Implemented |
 | CAT-4.3 | An inactive category shall still appear on the Categories screen (CAT-1.4), in the Transactions filters, in Spending and in exports, and shall still be matched by transaction import (TXN-3.4). | Implemented |
-| CAT-4.4 | The user can delete a category from its edit dialog. The confirmation shall say how many transactions use it and ask which category they should move to: **Uncategorized** (the default) or any other active category. Confirming shall move the transactions and delete the category together, or do neither. | Planned |
-| CAT-4.5 | A category used by a budget stream shall not be deleted: "This category is used in a budget stream, which must be deleted or assigned to a different category first." | Implemented |
+| CAT-4.4 | The user can delete a category with the **Delete** button of its edit dialog (APP-2.4). When transactions use it (hidden ones included), the confirmation shall say how many ("12 transactions use 🏠 Rent. Choose a category to move them to.") and offer **Move transactions to**: **Uncategorized** (the default) or any other active category, under its group as in CAT-1.19. When none do, it shall just ask "Delete 🏠 Rent? No transactions use it." Confirming shall move the transactions and delete the category together, or do neither, and then says "Category deleted". | Implemented |
+| CAT-4.5 | A category used by a budget stream shall not be deleted. Its edit dialog's **Delete** shall be disabled, with the note "To delete this category, first delete its N budget streams or assign them to another category." ("its 1 budget stream or assign it" for one), and the server shall refuse: "This category is used in a budget stream, which must be deleted or assigned to a different category first." | Implemented |
 
 ## CAT-5 Transactions without a category are Uncategorized
 
@@ -126,7 +126,6 @@ Default categories (E = Essential, D = Discretionary):
 ## Known gaps
 
 - **No automatic categorization (CAT-8, CAT-9).** Every transaction's category is chosen by hand or given in the import file.
-- **No category delete in the UI (CAT-1.10, CAT-4.4).** Groups can be deleted (CAT-1.15), categories can't. The API can delete a category, which leaves its transactions Uncategorized (it refuses when a budget stream uses it, CAT-4.5). The API already refuses to delete a group that has categories.
 - **New users start empty (CAT-6).** The user builds every group and category by hand; until then, every transaction is Uncategorized.
 
 ## Notes

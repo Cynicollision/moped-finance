@@ -88,6 +88,14 @@ export function createCategoryRouter(
         });
     });
 
+    // GET /:id/usage - Get what uses a Category
+    router.get('/:id/usage', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'getCategoryUsage' };
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.getCategoryUsage(context, params.id);
+        });
+    });
+
     // POST / - Create Category
     router.post('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'createCategory' };
@@ -110,12 +118,22 @@ export function createCategoryRouter(
         );
     });
 
-    // DELETE /:id - Delete Category
+    // DELETE /:id - Delete Category, moving its transactions to moveTo (Uncategorized without it)
+    const deleteCategoryQuerySchema = z.object({
+        moveTo: z.string().min(1).max(50).optional()
+    });
+
     router.delete('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'deleteCategory' };
-        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
-            return controller.deleteCategory(context, params.id);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, query: deleteCategoryQuerySchema },
+            (context, { params, query }) => {
+                return controller.deleteCategory(context, params.id, query.moveTo);
+            }
+        );
     });
 
     return router;

@@ -16,14 +16,11 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
 ### Tests
-- [ ] Name existing tests after the requirement they cover (`it('ACCT-1.5 should ...')`), as the conventions ask for new ones. Server tests are about half done: `account-routes.spec.ts` (15 of 39), `category-routes.spec.ts` (12 of 24), `auth-routes.spec.ts` (9 of 18), `institution-routes.spec.ts` (1 of 11), `budget-stream-routes.spec.ts` (6 of 12), `transaction-routes.spec.ts` (38 of 53). The client is mostly done; the stragglers are `login`, `register`, `auth.service`, `finance.service`, `layout.service` and `chart.component` specs. Leave tests of plumbing that no requirement covers (utilities, `calendar-date-util.spec.ts`) as they are; don't invent requirements to name them after. A test that turns out to check behavior the requirements don't describe is worth a note in the domain's Known gaps. One PR per package.
+- [ ] Name existing tests after the requirement they cover (`it('ACCT-1.5 should ...')`), as the conventions ask for new ones. Server tests are about half done: `account-routes.spec.ts` (15 of 39), `category-routes.spec.ts` (20 of 33), `auth-routes.spec.ts` (9 of 18), `institution-routes.spec.ts` (1 of 11), `budget-stream-routes.spec.ts` (6 of 12), `transaction-routes.spec.ts` (38 of 53). The client is mostly done; the stragglers are `login`, `register`, `auth.service`, `finance.service`, `layout.service` and `chart.component` specs. Leave tests of plumbing that no requirement covers (utilities, `calendar-date-util.spec.ts`) as they are; don't invent requirements to name them after. A test that turns out to check behavior the requirements don't describe is worth a note in the domain's Known gaps. One PR per package.
 
 ---
 
 ## Next
-
-### 1. Category delete
-- [ ] CAT-1.10, CAT-4.4: Delete in the category edit dialog, with the transaction count and a choice of category to move them to, moved and deleted in one database transaction. Keep the budget-stream refusal (CAT-4.5).
 
 ### 2. Category import and export
 - [ ] CAT-7.1 to CAT-7.5: Download Categories and Import Categories (dry run, add-only, groups created by name), through `@server/csv`.
