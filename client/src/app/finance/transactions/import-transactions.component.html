@@ -3,45 +3,18 @@
 
     <mat-card appearance="outlined" class="import-card">
         <mat-card-content>
-            <p>
-                Select a CSV file containing your transactions. The file must have the following columns:
-                <strong>Date, AccountName, Merchant, CategoryName, Amount, OriginalStatement, Notes, IsHidden</strong>.
-            </p>
-
-            <div class="file-upload-section">
-                <input type="file" #fileInput (change)="onFileSelected($event)" accept=".csv" class="hidden-input" />
-                <button mat-stroked-button (click)="fileInput.click()" [disabled]="isProcessing()">
-                    <mat-icon>attach_file</mat-icon>
-                    Choose CSV File
-                </button>
-                @if (selectedFile(); as file) {
-                    <span class="file-name">{{ file.name }}</span>
-                }
-            </div>
-
-            @if (validationError(); as error) {
-                <div class="validation-error">
-                    <strong class="icon-heading"
-                        ><mat-icon class="error-icon">error_outline</mat-icon> Validation Error:</strong
-                    >
-                    <p>{{ error.message }}</p>
-                    @if (error.rows.length > 0) {
-                        <ul class="error-rows">
-                            @for (row of error.rows; track $index) {
-                                <li>{{ row }}</li>
-                            }
-                        </ul>
-                    }
-                </div>
-            }
-
-            @if (dryRunResults(); as results) {
-                <div class="dry-run-results">
-                    <h3>Confirm Import</h3>
+            <app-csv-import
+                #importer
+                subject="your transactions"
+                columns="Date, AccountName, Merchant, CategoryName, Amount, OriginalStatement, Notes, IsHidden"
+                [run]="runImport"
+                (imported)="onImported($event)"
+            >
+                @if (importer.dryRun(); as results) {
                     <p>Please review the validated results before finalizing the import.</p>
                     <ul>
-                        <li>Transactions to create: {{ results.createdCount || 0 }}</li>
-                        <li>Uncategorized: {{ results.uncategorizedCount || 0 }}</li>
+                        <li>Transactions to create: {{ results.createdCount }}</li>
+                        <li>Uncategorized: {{ results.uncategorizedCount }}</li>
                         <li>Rows with errors: {{ results.failedRowMessages.length }}</li>
                     </ul>
                     <!-- Unknown category names import as Uncategorized; listed so a typo can be fixed first (TXN-3.4). -->
@@ -61,34 +34,8 @@
                             </ul>
                         </div>
                     }
-                    <div class="actions mt-24">
-                        <button mat-flat-button (click)="confirmImport()" [disabled]="isProcessing()">
-                            @if (isProcessing()) {
-                                <mat-progress-spinner
-                                    class="button-spinner"
-                                    mode="indeterminate"
-                                    diameter="18"
-                                ></mat-progress-spinner>
-                            }
-                            Begin Import
-                        </button>
-                        <button mat-button (click)="cancelImport()" [disabled]="isProcessing()">Cancel</button>
-                    </div>
-                </div>
-            } @else {
-                <div class="actions mt-24">
-                    <button mat-flat-button (click)="validateImport()" [disabled]="!selectedFile() || isProcessing()">
-                        @if (isProcessing()) {
-                            <mat-progress-spinner
-                                class="button-spinner"
-                                mode="indeterminate"
-                                diameter="18"
-                            ></mat-progress-spinner>
-                        }
-                        Validate Import
-                    </button>
-                </div>
-            }
+                }
+            </app-csv-import>
         </mat-card-content>
     </mat-card>
 </div>

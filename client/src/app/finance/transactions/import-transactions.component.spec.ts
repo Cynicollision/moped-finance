@@ -1,52 +1,86 @@
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { TransactionImportResult } from '@shared/finance/contracts';
-import { AuthService } from './../../core/auth.service';
+import { Account } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
 import { ImportTransactionsComponent } from './import-transactions.component';
 
 describe('ImportTransactionsComponent', () => {
-    async function render(dryRun: Partial<TransactionImportResult>) {
-        const financeService = { importTransactions: vi.fn().mockResolvedValue(dryRun), fetchAccount: vi.fn() };
+    const clean: TransactionImportResult = {
+        isValidToImport: true,
+        resultMessage: '',
+        createdCount: 2,
+        failedRowMessages: [],
+        uncategorizedCount: 1,
+        unmatchedCategories: []
+    };
+
+    async function render(dryRun: TransactionImportResult, queryParams: Record<string, string> = {}) {
+        const financeService = {
+            importTransactions: vi.fn((_form: FormData, isDryRun: boolean) =>
+                Promise.resolve(isDryRun ? dryRun : clean)
+            ),
+            fetchAccount: vi.fn().mockResolvedValue({ id: 'a1', name: 'Checking' } as Account)
+        };
+        const notificationService = { success: vi.fn() };
         TestBed.configureTestingModule({
             imports: [ImportTransactionsComponent],
             providers: [
                 provideRouter([]),
-                { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } },
+                {
+                    provide: ActivatedRoute,
+                    useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } }
+                },
                 { provide: FinanceService, useValue: financeService },
-                { provide: NotificationService, useValue: { success: vi.fn() } },
-                { provide: AuthService, useValue: { currentUser: signal(null) } },
+                { provide: NotificationService, useValue: notificationService },
                 { provide: DateProviderService, useValue: { today: () => '2026-05-17' } }
             ]
         });
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
         const fixture = TestBed.createComponent(ImportTransactionsComponent);
         await fixture.whenStable();
-        return { fixture, element: fixture.nativeElement as HTMLElement };
+        const element = fixture.nativeElement as HTMLElement;
+        const click = async (label: string) => {
+            Array.from(element.querySelectorAll<HTMLButtonElement>('button'))
+                .find(b => b.textContent!.trim() === label)!
+                .click();
+            await fixture.whenStable();
+        };
+        const validate = async () => {
+            const input = element.querySelector<HTMLInputElement>('input[type="file"]')!;
+            Object.defineProperty(input, 'files', { value: [new File(['Date'], 'transactions.csv')] });
+            input.dispatchEvent(new Event('change'));
+            await fixture.whenStable();
+            await click('Validate Import');
+        };
+        return { element, click, validate, financeService, notificationService, navigate };
     }
 
-    async function validate(fixture: Awaited<ReturnType<typeof render>>['fixture']) {
-        fixture.componentInstance.selectedFile.set(new File(['Date'], 'transactions.csv'));
-        await fixture.componentInstance.validateImport();
-        await fixture.whenStable();
-    }
+    const crumbs = (element: HTMLElement) =>
+        Array.from(element.querySelectorAll('app-page-header .crumbs a')).map(a => a.textContent!.trim());
 
     it('TXN-3.8 should list the columns the file needs', async () => {
-        const { element } = await render({});
+        const { element } = await render(clean);
 
-        expect(element.querySelector('mat-card-content strong')!.textContent).toBe(
+        expect(element.querySelector('app-csv-import strong')!.textContent).toBe(
             'Date, AccountName, Merchant, CategoryName, Amount, OriginalStatement, Notes, IsHidden'
         );
     });
 
+    it('APP-1.8 should sit below Transactions, or below the account it was opened from', async () => {
+        expect(crumbs((await render(clean)).element)).toEqual(['Transactions']);
+
+        TestBed.resetTestingModule();
+        expect(crumbs((await render(clean, { accountId: 'a1' })).element)).toEqual(['Dashboard', 'Checking']);
+    });
+
     it('TXN-3.4 should count Uncategorized rows and list category names that match no category', async () => {
-        const { fixture, element } = await render({
-            isValidToImport: true,
+        const { element, validate } = await render({
+            ...clean,
             createdCount: 20,
-            failedRowMessages: [],
             uncategorizedCount: 15,
             unmatchedCategories: [
                 { name: 'Groceriez', rowNumbers: [4] },
@@ -54,7 +88,7 @@ describe('ImportTransactionsComponent', () => {
             ]
         });
 
-        await validate(fixture);
+        await validate();
 
         expect(Array.from(element.querySelectorAll('.dry-run-results > ul li')).map(li => li.textContent)).toEqual([
             'Transactions to create: 20',
@@ -69,33 +103,31 @@ describe('ImportTransactionsComponent', () => {
     });
 
     it('TXN-3.4 should leave out the category notice when every name matches', async () => {
-        const { fixture, element } = await render({
-            isValidToImport: true,
-            createdCount: 2,
-            failedRowMessages: [],
-            uncategorizedCount: 1,
-            unmatchedCategories: []
-        });
+        const { element, validate } = await render(clean);
 
-        await validate(fixture);
+        await validate();
 
         expect(element.querySelector('.unmatched-categories')).toBeNull();
     });
 
-    it('TXN-3.7 should list each failed row, and not offer to import', async () => {
-        const { fixture, element } = await render({
-            isValidToImport: false,
-            resultMessage: 'Found errors in 2 of 5 rows.',
-            failedRowMessages: ["Row 2: Amount 'abc' is not a number.", "Row 3: Account name 'Nope Account' not found."]
-        });
+    it('TXN-3.3 APP-2.3 should say how many were created and return to Transactions', async () => {
+        const { click, validate, financeService, notificationService, navigate } = await render(clean);
+        await validate();
 
-        await validate(fixture);
+        await click('Begin Import');
 
-        expect(element.querySelector('.validation-error p')!.textContent).toBe('Found errors in 2 of 5 rows.');
-        expect(Array.from(element.querySelectorAll('.error-rows li')).map(li => li.textContent)).toEqual([
-            "Row 2: Amount 'abc' is not a number.",
-            "Row 3: Account name 'Nope Account' not found."
-        ]);
-        expect(element.textContent).not.toContain('Begin Import');
+        expect(financeService.importTransactions).toHaveBeenLastCalledWith(expect.any(FormData), false, null);
+        expect(notificationService.success).toHaveBeenCalledWith('Successfully created 2 transactions.');
+        expect(navigate).toHaveBeenCalledWith(['/transactions']);
+    });
+
+    it('TXN-3.5 should import into the account it was opened from, and return to it', async () => {
+        const { click, validate, financeService, navigate } = await render(clean, { accountId: 'a1' });
+        await validate();
+
+        await click('Begin Import');
+
+        expect(financeService.importTransactions).toHaveBeenCalledWith(expect.any(FormData), true, 'a1');
+        expect(navigate).toHaveBeenCalledWith(['/accounts', 'a1']);
     });
 });

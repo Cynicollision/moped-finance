@@ -1,0 +1,63 @@
+<p>
+    Select a CSV file containing {{ subject() }}. The file must have the following columns:
+    <strong>{{ columns() }}</strong
+    >.
+</p>
+
+<div class="file-upload-section">
+    <input type="file" #fileInput (change)="onFileSelected($event)" accept=".csv" class="hidden-input" />
+    <button mat-stroked-button (click)="fileInput.click()" [disabled]="isProcessing()">
+        <mat-icon>attach_file</mat-icon>
+        Choose CSV File
+    </button>
+    @if (selectedFile(); as file) {
+        <span class="file-name">{{ file.name }}</span>
+    }
+</div>
+
+@if (validationError(); as error) {
+    <div class="validation-error">
+        <strong class="icon-heading"><mat-icon class="error-icon">error_outline</mat-icon> Validation Error:</strong>
+        <p>{{ error.message }}</p>
+        @if (error.rows.length > 0) {
+            <ul class="error-rows">
+                @for (row of error.rows; track $index) {
+                    <li>{{ row }}</li>
+                }
+            </ul>
+        }
+    </div>
+}
+
+@if (dryRun()) {
+    <div class="dry-run-results">
+        @if (replaces()) {
+            <h3 class="icon-heading"><mat-icon class="error-icon">warning</mat-icon> Confirm Import</h3>
+        } @else {
+            <h3>Confirm Import</h3>
+        }
+        <ng-content></ng-content>
+        <div class="actions">
+            <button mat-flat-button (click)="confirm()" [disabled]="isProcessing()">
+                @if (isProcessing()) {
+                    <mat-progress-spinner
+                        class="button-spinner"
+                        mode="indeterminate"
+                        diameter="18"
+                    ></mat-progress-spinner>
+                }
+                Begin Import
+            </button>
+            <button mat-button (click)="cancel()" [disabled]="isProcessing()">Cancel</button>
+        </div>
+    </div>
+} @else {
+    <div class="actions">
+        <button mat-flat-button (click)="validate()" [disabled]="!selectedFile() || isProcessing()">
+            @if (isProcessing()) {
+                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+            }
+            Validate Import
+        </button>
+    </div>
+}

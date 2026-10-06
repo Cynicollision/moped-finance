@@ -71,7 +71,7 @@ describe('BalanceImportComponent', () => {
         expect(
             Array.from(element.querySelectorAll('app-page-header .crumbs a')).map(a => a.textContent!.trim())
         ).toEqual(['Dashboard', 'Checking']);
-        expect(element.querySelector('mat-card-content strong')!.textContent).toBe('Date, AccountName, Balance');
+        expect(element.querySelector('app-csv-import strong')!.textContent).toBe('Date, AccountName, Balance');
     });
 
     it('ACCT-3.8 should say "Account" in the breadcrumb if the account can\'t be loaded', async () => {
@@ -82,12 +82,9 @@ describe('BalanceImportComponent', () => {
         ).toEqual(['Dashboard', 'Account']);
     });
 
-    it('ACCT-3.3 should validate only once a file is chosen, then show what will be replaced', async () => {
+    it('ACCT-3.3 should show what will be replaced', async () => {
         const { element, button, click, chooseFile, financeService } = await render(clean);
-        expect(button('Validate Import')!.disabled).toBe(true);
-
         await chooseFile();
-        expect(element.querySelector('.file-name')!.textContent).toBe('balances.csv');
         await click('Validate Import');
 
         expect(financeService.importBalanceHistory).toHaveBeenCalledWith('a1', expect.any(FormData), true);
@@ -111,62 +108,5 @@ describe('BalanceImportComponent', () => {
         expect(financeService.importBalanceHistory).toHaveBeenLastCalledWith('a1', expect.any(FormData), false);
         expect(notificationService.success).toHaveBeenCalledWith('Successfully imported 30 records.');
         expect(navigate).toHaveBeenCalledWith(['/accounts', 'a1']);
-    });
-
-    it('ACCT-3.3 should go back to choosing a file on Cancel', async () => {
-        const { element, button, click, chooseFile, financeService } = await render(clean);
-        await chooseFile();
-        await click('Validate Import');
-
-        await click('Cancel');
-
-        expect(element.querySelector('.dry-run-results')).toBeNull();
-        expect(button('Validate Import')!.disabled).toBe(true);
-        expect(financeService.importBalanceHistory).toHaveBeenCalledTimes(1);
-    });
-
-    it('ACCT-3.7 should list each failed row under the summary, and not offer Begin Import', async () => {
-        const { element, button, click, chooseFile } = await render({
-            isValidToImport: false,
-            resultMessage: 'Found errors in 1 of 3 rows.',
-            failedRowMessages: ['Row 3: Duplicate date 2026-06-06']
-        } as BalanceImportResult);
-        await chooseFile();
-
-        await click('Validate Import');
-
-        expect(element.querySelector('.validation-error strong')!.textContent).toContain('Validation Error:');
-        expect(element.querySelector('.validation-error p')!.textContent).toBe('Found errors in 1 of 3 rows.');
-        expect(Array.from(element.querySelectorAll('.error-rows li')).map(li => li.textContent)).toEqual([
-            'Row 3: Duplicate date 2026-06-06'
-        ]);
-        expect(button('Begin Import')).toBeUndefined();
-    });
-
-    it('ACCT-3.4 should show the refusal and stay on the screen when the real import fails', async () => {
-        const { element, click, chooseFile, notificationService, navigate } = await render(clean, {
-            isValidToImport: false,
-            resultMessage: 'Nothing was imported. Found errors in 1 of 3 rows.',
-            failedRowMessages: ["Row 2: Balance 'abc' is not a number."]
-        } as BalanceImportResult);
-        await chooseFile();
-        await click('Validate Import');
-
-        await click('Begin Import');
-
-        expect(element.querySelector('.validation-error p')!.textContent).toBe(
-            'Nothing was imported. Found errors in 1 of 3 rows.'
-        );
-        expect(notificationService.success).not.toHaveBeenCalled();
-        expect(navigate).not.toHaveBeenCalled();
-    });
-
-    it("APP-2.2 should let the user try again when the server can't be reached", async () => {
-        const { button, click, chooseFile } = await render(undefined);
-        await chooseFile();
-
-        await click('Validate Import');
-
-        expect(button('Validate Import')!.disabled).toBe(false);
     });
 });

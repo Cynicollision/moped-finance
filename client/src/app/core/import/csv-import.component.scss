@@ -1,0 +1,62 @@
+:host {
+    display: block;
+}
+
+.file-upload-section {
+    margin: 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.hidden-input {
+    display: none;
+}
+
+.file-name {
+    color: var(--text-muted);
+    font-family: monospace;
+}
+
+.dry-run-results {
+    margin-top: 24px;
+    padding: 16px;
+    background-color: var(--bg-highlight);
+    border-radius: 8px;
+
+    h3 {
+        margin-top: 0;
+    }
+}
+
+.actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.validation-error {
+    margin: 16px 0 24px;
+
+    p {
+        margin-top: 8px;
+    }
+}
+
+.icon-heading {
+    display: flex;
+    align-items: center;
+
+    mat-icon {
+        margin-right: 8px;
+    }
+}
+
+.error-icon {
+    color: var(--color-negative);
+}
+
+.error-rows {
+    margin: 8px 0 0;
+    padding-left: 20px;
+}
