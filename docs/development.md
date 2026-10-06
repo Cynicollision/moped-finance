@@ -21,7 +21,7 @@ Any OS works. Development has mostly happened on Windows with Docker Desktop's W
 | What | Command | Notes |
 |---|---|---|
 | Start API + DB | `docker compose up -d` | API on :3000, Postgres on :5432 |
-| Rebuild after dependency or Dockerfile changes | `docker compose up -d --build` | |
+| Rebuild after dependency or Dockerfile changes | `docker compose up -d --build --renew-anon-volumes` | Without `--renew-anon-volumes` the container keeps its old `node_modules` volume |
 | API logs | `docker compose logs -f api` | |
 | Stop | `docker compose down` | Data stays in the `moped-finance_db_data` volume |
 | Client | `npm start` in `client/` | http://localhost:4200, `development` configuration; proxies API calls to :3000 |
@@ -68,6 +68,14 @@ Run these in `client/`.
 | `emoji-data` | Writes the category emoji picker's data (CAT-1.20), `public/emoji/data.json`, from the `emoji-picker-element-data` package, leaving out flags |
 
 The emoji data is committed, so every build serves the same file. Run `npm run emoji-data` and commit the result whenever `emoji-picker-element-data` changes version (an `npm update`, or bumping it in `package.json`), or after changing what `scripts/emoji-data.mjs` leaves out. CI fails if the committed file doesn't match the installed package.
+
+## Dependencies
+
+`client/`, `server/` and the repository root each have their own `package.json` and lock file. CI doesn't run `npm audit` (decided 2026-10-06), so check now and then, and after adding a package:
+
+- `npm audit --omit=dev` in `client/` and `server/` covers what ships: the server's runtime packages and the Angular packages built into the client. Keep it at 0.
+- `npm update` fixes most findings within the version ranges. Commit the lock file, then rebuild the API container (above), since it installs its own copy.
+- Plain `npm audit` adds the build and test tooling. On 2026-10-06 the server's tooling had findings with no fixed release yet: `braces` through `nodemon` and `tsc-alias`, `sprintf-js` and `js-yaml` through Jest's coverage instrumentation, and an old `esbuild` through `drizzle-kit`. None of them run in production or take untrusted input. `npm audit fix --force` "fixes" them by downgrading to years-old majors; don't.
 
 ## Before opening a PR
 
