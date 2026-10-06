@@ -82,6 +82,7 @@ client/src/app/
   core/list/    the responsive list (columns when wide, two-line rows when narrow)
   core/chart/   the Chart.js wrapper, its theme colours and axis labels
   core/emoji-picker/  the emoji form field (emoji-picker-element in a popover or bottom sheet)
+  core/import/  the CSV import flow shared by the import screens (choose, validate, confirm)
   finance/    one folder per screen area: accounts, budget, categories, dashboard,
               institutions, spending, transactions, common (the value-history chart, the money display)
   settings/   the Settings list and API Tokens (Institutions and Categories live in finance/)
