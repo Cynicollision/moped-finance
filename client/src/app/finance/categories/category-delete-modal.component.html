@@ -1,0 +1,24 @@
+<app-modal-layout title="Delete Category">
+    <form id="category-delete-form" [formGroup]="form" (ngSubmit)="confirm()">
+        <p class="delete-message">{{ message }} This can't be undone.</p>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Move transactions to</mat-label>
+            <mat-select formControlName="moveTo">
+                <mat-option value="">{{ Uncategorized.name }}</mat-option>
+                @for (target of targets; track target.group.id) {
+                    <mat-optgroup [label]="target.group.name + ' (' + (target.group.type | titlecase) + ')'">
+                        @for (category of target.categories; track category.id) {
+                            <mat-option [value]="category.id">{{ categoryLabel(category) }}</mat-option>
+                        }
+                    </mat-optgroup>
+                }
+            </mat-select>
+        </mat-form-field>
+    </form>
+
+    <div modal-actions>
+        <button mat-button type="button" appModalCancel>Cancel</button>
+        <button mat-flat-button class="danger-button" type="submit" form="category-delete-form">Delete</button>
+    </div>
+</app-modal-layout>

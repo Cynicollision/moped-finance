@@ -33,7 +33,30 @@
             <mat-checkbox formControlName="isActive">Active</mat-checkbox>
         </div>
     </form>
+    @if (budgetStreamCount() > 0) {
+        <p class="locked-note">
+            To delete this category, first delete its {{ budgetStreamCount() }}
+            {{ budgetStreamCount() === 1 ? 'budget stream' : 'budget streams' }} or assign
+            {{ budgetStreamCount() === 1 ? 'it' : 'them' }} to another category.
+        </p>
+    } @else if (usage.error()) {
+        <p class="locked-note">Couldn't check what uses this category, so it can't be deleted right now.</p>
+    }
 
+    @if (isEditing) {
+        <div modal-actions-start>
+            <button mat-button class="danger-button" type="button" (click)="delete()" [disabled]="!canDelete()">
+                @if (isDeleting()) {
+                    <mat-progress-spinner
+                        class="button-spinner"
+                        mode="indeterminate"
+                        diameter="18"
+                    ></mat-progress-spinner>
+                }
+                Delete
+            </button>
+        </div>
+    }
     <div modal-actions>
         <button mat-button type="button" appModalCancel>Cancel</button>
         <button mat-flat-button type="submit" form="category-form" [disabled]="form.invalid || isSaving()">

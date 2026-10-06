@@ -1,17 +1,21 @@
-import { eq, and, SQL } from 'drizzle-orm';
+import { eq, and, count, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CategoryNecessity } from '@shared/finance/enum';
-import { Category } from '@shared/finance/types';
+import { Category, CategoryUsage } from '@shared/finance/types';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
+import { budgetStreamSchema } from './../budget/budget-stream-schema';
+import { transactionSchema } from './../transactions/transaction-schema';
 import { categorySchema } from './category-schema';
 
 export interface IFinanceCategoryData {
     retrieveAll(activeOnly?: boolean): Promise<Category[]>;
     retrieveSingle(id: string): Promise<Category | null>;
+    retrieveUsage(id: string): Promise<CategoryUsage>;
     insert(category: Category): Promise<Category>;
     update(category: Category): Promise<Category | null>;
-    delete(id: string): Promise<boolean>;
+    /** Moves the category's transactions to `moveToId` (Uncategorized when null) and deletes it, together or not at all. */
+    delete(id: string, moveToId?: string | null): Promise<boolean>;
 }
 
 function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
@@ -58,13 +62,37 @@ export class FinanceCategoryData implements IFinanceCategoryData {
         return mapRowToCategory(rows[0]);
     }
 
-    public async delete(id: string): Promise<boolean> {
-        const result = await this.db
-            .delete(categorySchema)
-            .where(eq(categorySchema.id, id))
-            .returning({ id: categorySchema.id });
+    public async retrieveUsage(id: string): Promise<CategoryUsage> {
+        const [transactions] = await this.db
+            .select({ count: count() })
+            .from(transactionSchema)
+            .where(eq(transactionSchema.categoryId, id));
+        const [streams] = await this.db
+            .select({ count: count() })
+            .from(budgetStreamSchema)
+            .where(eq(budgetStreamSchema.categoryId, id));
 
-        return result.length > 0;
+        return { transactionCount: transactions.count, budgetStreamCount: streams.count };
+    }
+
+    public async delete(id: string, moveToId: string | null = null): Promise<boolean> {
+        // Without a target, the transactions' foreign key (ON DELETE SET NULL) leaves them Uncategorized. A budget stream
+        // fails the delete's foreign key, which rolls the move back too (CAT-4.5).
+        return this.db.transaction(async tx => {
+            if (moveToId) {
+                await tx
+                    .update(transactionSchema)
+                    .set({ categoryId: moveToId, updatedAt: DateTimeUtil.now() })
+                    .where(eq(transactionSchema.categoryId, id));
+            }
+
+            const result = await tx
+                .delete(categorySchema)
+                .where(eq(categorySchema.id, id))
+                .returning({ id: categorySchema.id });
+
+            return result.length > 0;
+        });
     }
 
     public async insert(category: Category): Promise<Category> {

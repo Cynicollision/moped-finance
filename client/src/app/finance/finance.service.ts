@@ -15,6 +15,7 @@ import {
     Account,
     Category,
     CategoryGroup,
+    CategoryUsage,
     Transaction,
     BalanceHistory,
     BudgetStream,
@@ -89,8 +90,14 @@ export class FinanceService {
         return this.api.put<Category>(`${API_BASE_PATH}/categories/${category.id}`, category);
     }
 
-    deleteCategory(id: string): Promise<boolean> {
-        return this.api.delete(`${API_BASE_PATH}/categories/${id}`);
+    fetchCategoryUsage(id: string): Promise<CategoryUsage> {
+        return this.api.load<CategoryUsage>(`${API_BASE_PATH}/categories/${id}/usage`);
+    }
+
+    /** Deletes a category, moving its transactions to `moveToId`, or leaving them Uncategorized without one (CAT-4.4). */
+    deleteCategory(id: string, moveToId?: string): Promise<boolean> {
+        const query = moveToId ? `?moveTo=${encodeURIComponent(moveToId)}` : '';
+        return this.api.delete(`${API_BASE_PATH}/categories/${id}${query}`);
     }
 
     // Accounts
