@@ -77,6 +77,11 @@ describe('CsvValue', () => {
             expect(CsvValue.boolean('IsHidden', text)).toEqual({ success: true, value: expected });
         });
 
+        it('CAT-7.5 should read blank as the given default', () => {
+            expect(CsvValue.boolean('IsActive', '', true)).toEqual({ success: true, value: true });
+            expect(CsvValue.boolean('IsActive', 'false', true)).toEqual({ success: true, value: false });
+        });
+
         it.each(['yes', '1', 'x'])('TXN-3.10 should reject %p', text => {
             expect(CsvValue.boolean('IsHidden', text).success).toBe(false);
         });

@@ -104,6 +104,24 @@ describe('FinanceService', () => {
         expect(finance.getExportTransactionsUrl('a1')).toBe('api/v1/transactions/export?accountId=a1');
     });
 
+    it('CAT-7.1 CAT-7.2 should import categories as a dry run or for real, and export them', async () => {
+        const { finance, http } = setup();
+        const file = new FormData();
+
+        const dryRun = finance.importCategories(file, true);
+        const request = http.expectOne('/api/v1/categories/import?dryRun=true');
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toBe(file);
+        request.flush({ isValidToImport: true });
+        await dryRun;
+
+        const realRun = finance.importCategories(file, false);
+        http.expectOne('/api/v1/categories/import?dryRun=false').flush({ isValidToImport: true });
+        await realRun;
+
+        expect(finance.getExportCategoriesUrl()).toBe('api/v1/categories/export');
+    });
+
     it('ACCT-3.3 should dry-run a balance import before the real one', async () => {
         const { finance, http } = setup();
 

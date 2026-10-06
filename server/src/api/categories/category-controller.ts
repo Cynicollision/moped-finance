@@ -1,9 +1,12 @@
+import { CategoryImportResult } from '@shared/finance/contracts';
 import { CategoryType } from '@shared/finance/enum';
 import { Category, CategoryGroup, CategoryUsage } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
+import { DateTimeUtil } from '@server/utility';
+import { CategoryCsv, CategoryExport } from './category-csv';
 import { IFinanceCategoryData } from './category-data';
 import { CreateCategoryRequest, UpdateCategoryRequest } from './category-schema';
 import { CreateCategoryGroupRequest, IFinanceCategoryGroupData, UpdateCategoryGroupRequest } from './category-groups';
@@ -187,5 +190,70 @@ export class CategoryController {
         }
 
         return Result.successDeleted();
+    }
+
+    /** Writes every category with its group's name and type (CAT-7.1). Groups with no categories aren't included. */
+    public async exportCategories(_context: OperationContext): Promise<OperationResult<string>> {
+        const [groups, categories] = await Promise.all([this.groupData.retrieveAll(), this.categoryData.retrieveAll()]);
+        const groupsById = new Map(groups.map(g => [g.id, g]));
+
+        const rows = categories.map((category): CategoryExport => {
+            const group = groupsById.get(category.groupId)!;
+            return {
+                type: group.type,
+                groupName: group.name,
+                name: category.name,
+                icon: category.icon,
+                necessity: category.necessity,
+                isActive: category.isActive
+            };
+        });
+
+        const fileName = `Categories_${DateTimeUtil.nowToISOSafeFilename()}.csv`;
+        return Result.successFile('text/csv', fileName, CategoryCsv.write(rows));
+    }
+
+    /**
+     * Adds the file's new categories, and the groups they need, skipping names that already exist (CAT-7.2 to CAT-7.5).
+     * All or nothing: a file with any bad row saves nothing.
+     */
+    public async importCategories(
+        _context: OperationContext,
+        file: Buffer | undefined,
+        dryRun: boolean
+    ): Promise<OperationResult<CategoryImportResult>> {
+        const [groups, categories] = await Promise.all([this.groupData.retrieveAll(), this.categoryData.retrieveAll()]);
+
+        const csv = CategoryCsv.read(file, groups, categories);
+        if (!csv.success) {
+            return Result.userError(csv.message);
+        }
+
+        const isValidToImport = csv.failedRowMessages.length === 0;
+        const report = {
+            createdCount: csv.categories.length,
+            newGroups: csv.groups.map(g => ({ name: g.name, type: g.type })),
+            skippedNames: csv.skippedNames,
+            failedRowMessages: csv.failedRowMessages,
+            isValidToImport
+        };
+
+        // The dry run reports the rows so the user can fix the file; a real import of a bad file (which the client
+        // doesn't send) is a 400.
+        if (!isValidToImport) {
+            const rowCount = csv.categories.length + csv.skippedNames.length + csv.failedRowMessages.length;
+            const summary = `Found errors in ${csv.failedRowMessages.length} of ${rowCount} rows.`;
+            const result: CategoryImportResult = { ...report, createdCount: 0, newGroups: [], resultMessage: summary };
+            return dryRun
+                ? Result.success(result)
+                : Result.userError(`Nothing was imported. ${summary}`, 'INVALID_IMPORT', result);
+        }
+
+        if (dryRun) {
+            return Result.success({ ...report, resultMessage: `Ready to import ${csv.categories.length} categories.` });
+        }
+
+        await this.categoryData.insertBulk(csv.categories, csv.groups);
+        return Result.successCreated({ ...report, resultMessage: `Imported ${csv.categories.length} categories.` });
     }
 }

@@ -537,6 +537,12 @@ describe('Transaction Routes', () => {
             expect(response.text).toBe(csvHeader + '2026-06-06,Checking,Shop,Groceries,-12.50,,,false\n');
         });
 
+        it('TXN-3.1 should have only the header row when there are no transactions', async () => {
+            const response = await request(app).get('/transactions/export');
+
+            expect(response.text).toBe(csvHeader);
+        });
+
         it('TXN-3.1 should return 404 when exporting an account that does not exist', async () => {
             const response = await request(app).get('/transactions/export?accountId=missing');
 

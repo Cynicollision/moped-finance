@@ -16,6 +16,15 @@
                 <mat-icon>category</mat-icon>
                 <span>Create Category</span>
             </button>
+            <mat-divider></mat-divider>
+            <a mat-menu-item routerLink="/settings/categories/import">
+                <mat-icon>upload_file</mat-icon>
+                <span>Import Categories</span>
+            </a>
+            <button mat-menu-item (click)="downloadCategories()">
+                <mat-icon>file_download</mat-icon>
+                <span>Download Categories</span>
+            </button>
         </mat-menu>
     </app-page-header>
 

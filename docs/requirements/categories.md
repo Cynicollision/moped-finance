@@ -2,7 +2,7 @@
 
 Transactions and budget streams are classified with **categories**. Categories are organized into **category groups**, and each group has a **type** (Income, Expense or Transfer) that decides how its categories count in Budget and Spending. An Expense category can also have a **necessity**, Essential or Discretionary, so the user can see how much of their spending they could cut. It's optional: expense categories without one are **Unclassified**. A transaction with no category is **Uncategorized**: a state rather than a category, so it has no group, type or necessity.
 
-Screens, both pages of Settings: **Categories** (`/settings/categories`, also in the profile menu, APP-1.5), where creating and editing happen in dialogs, and **Rules** (`/settings/rules`, CAT-8, listed in Settings and linked from the Categories menu).
+Screens, all pages of Settings: **Categories** (`/settings/categories`, also in the profile menu, APP-1.5), where creating and editing happen in dialogs, **Import Categories** (`/settings/categories/import`, CAT-7.2), and **Rules** (`/settings/rules`, CAT-8, listed in Settings and linked from the Categories menu).
 
 ## CAT-1 The user can organize categories into groups
 
@@ -96,11 +96,11 @@ Default categories (E = Essential, D = Discretionary):
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-7.1 | **Download Categories** (Categories screen menu) shall produce a CSV named `Categories_<timestamp>.csv` with the header `Type,Group,Name,Icon,Necessity,IsActive`, one row per category, ordered by type, group and name, so the file re-imports unchanged. Type is `Income`, `Expense` or `Transfer`; Necessity is `Essential`, `Discretionary` or blank (always blank outside Expense). Groups with no categories are not included. | Planned |
-| CAT-7.2 | **Import Categories** (Categories screen menu) shall accept a CSV with the columns from CAT-7.1, validate it without saving first, and let the user confirm only when the dry run found no errors, as transaction import does (TXN-3.2, TXN-3.3, TXN-3.7). It shall be all-or-nothing (TXN-3.9). | Planned |
-| CAT-7.3 | Import shall only add. A row whose category name already exists (ignoring case) shall be skipped, not changed, and one named Uncategorized is an error (CAT-5.3). The dry run shall report "Categories to create: N" and "Already exist (skipped): M". | Planned |
-| CAT-7.4 | A row's group shall be found by name, ignoring case. A group that doesn't exist shall be created with the row's type. A row whose group exists with a different type is an error ("Row 5: Group 'Food' is an Expense group, not Income."). | Planned |
-| CAT-7.5 | Each row shall be checked, with every problem in a row reported in one message: **Type** is required and one of the three types (any case); **Group** and **Name** are required, at most 100 characters; **Icon** is blank or one emoji (CAT-1.2); **Necessity** is blank or one of the two values (any case) on Expense rows, and must be blank on others; **IsActive** is true, false (any case) or blank (true). A second row with the same name as an earlier row is an error. | Planned |
+| CAT-7.1 | **Download Categories** (Categories screen menu) shall produce a CSV named `Categories_<timestamp>.csv` with the header `Type,Group,Name,Icon,Necessity,IsActive`, one row per category, ordered by type (Income, Expense, Transfer), then group and name ignoring case, so the file re-imports unchanged. Type is `Income`, `Expense` or `Transfer`; Necessity is `Essential`, `Discretionary` or blank (always blank outside Expense). Groups with no categories are not included, and with no categories the file is the header only. | Implemented |
+| CAT-7.2 | **Import Categories** (Categories screen menu) shall open a screen below Settings and Categories that lists the columns from CAT-7.1, accepts a CSV with all of them, validates it without saving first, and lets the user confirm only when the dry run found no errors, as transaction import does (TXN-3.2, TXN-3.3, TXN-3.7). It shall be all-or-nothing: the new groups and categories are saved in one database transaction (TXN-3.9). Confirming says "Successfully created N categories and M groups." ("and M groups" left out when there are none) and returns to Categories. The screen notes that import only adds (CAT-7.3) and creates missing groups (CAT-7.4). | Implemented |
+| CAT-7.3 | Import shall only add. A row whose category name already exists (ignoring case) shall be skipped, not changed, and one named Uncategorized is an error (CAT-5.3). The dry run's confirm panel shall show "Groups to create: N", "Categories to create: N", "Already exist (skipped): M" and "Rows with errors: 0", then the new groups with their types ("New groups: Pets (Expense), Side Income (Income)") and the skipped names ("Skipped: Coffee, Groceries, Rent"), each list showing the first ten and "and N more". When every category already exists it shall say "Every category in the file already exists, so importing won't change anything." | Implemented |
+| CAT-7.4 | A row's group shall be found by name, ignoring case. A group that doesn't exist shall be created with the row's type, spelled as the first row that names it, and only when at least one of its rows creates a category, so an import never leaves an empty group. A row whose group exists with a different type is an error ("Row 5: Group 'Food' is an Expense group, not Income."), as is a row giving a new group a different type from an earlier row ("Row 6: Group 'Pets' is an Expense group in row 2, not Income."). | Implemented |
+| CAT-7.5 | Every row shall be checked, including rows that will be skipped, with every problem in a row reported in one message: **Type** is required and one of the three types (any case); **Group** and **Name** are required, at most 100 characters; **Icon** is blank or one emoji (CAT-1.2); **Necessity** is blank or one of the two values (any case) on Expense rows, and must be blank on others; **IsActive** is true, false (any case) or blank (true). A second row with the same name as an earlier row is an error ("Row 6: Name 'Coffee' is already in row 3."). | Implemented |
 
 ## CAT-8 Transactions can be categorized automatically
 
@@ -126,7 +126,7 @@ Default categories (E = Essential, D = Discretionary):
 ## Known gaps
 
 - **No automatic categorization (CAT-8, CAT-9).** Every transaction's category is chosen by hand or given in the import file.
-- **New users start empty (CAT-6).** The user builds every group and category by hand; until then, every transaction is Uncategorized.
+- **New users start empty (CAT-6).** The user builds every group and category by hand or imports them (CAT-7); until then, every transaction is Uncategorized.
 
 ## Notes
 

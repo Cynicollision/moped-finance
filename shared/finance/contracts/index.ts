@@ -1,4 +1,5 @@
 export type { BalanceImportResult } from './balance-import-result';
+export type { CategoryImportResult } from './category-import-result';
 export type { SpendingTotal } from './spending-total';
 export type { GetAccountBalanceHistoryOptions } from './get-balance-history';
 export type { TransactionSearchOptions, TransactionSearchFilterItem } from './transaction-search';

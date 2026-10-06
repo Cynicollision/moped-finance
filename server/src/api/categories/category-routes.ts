@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { IAppLogger } from '@server/logging';
-import { idParamsSchema, OperationDefinition, OperationHandler, QueryField } from '@server/routing';
+import { idParamsSchema, OperationDefinition, OperationHandler, QueryField, singleFileUpload } from '@server/routing';
 import { CategoryController } from './category-controller';
 import { IFinanceCategoryData } from './category-data';
 import { createCategorySchema, updateCategorySchema } from './category-schema';
@@ -77,6 +77,26 @@ export function createCategoryRouter(
         const op: OperationDefinition = { domain, operation: 'getCategories' };
         handler.execute(req, res, op, { query: categoriesQuerySchema }, (context, { query }) => {
             return controller.getCategories(context, query.activeOnly);
+        });
+    });
+
+    // GET /export - Export Categories
+    router.get('/export', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'exportCategories' };
+        handler.execute(req, res, op, context => {
+            return controller.exportCategories(context);
+        });
+    });
+
+    // POST /import - Import Categories
+    const importQuerySchema = z.object({
+        dryRun: QueryField.boolean().optional().default(false)
+    });
+
+    router.post('/import', singleFileUpload, (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'importCategories' };
+        handler.execute(req, res, op, { query: importQuerySchema }, (context, { query }) => {
+            return controller.importCategories(context, req.file?.buffer, query.dryRun);
         });
     });
 

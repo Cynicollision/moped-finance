@@ -3,6 +3,7 @@ import { CalendarPeriod, HistoryTimeframe, SortDirection } from '@shared/core/en
 import { NewEntity } from '@shared/core/types';
 import {
     BalanceImportResult,
+    CategoryImportResult,
     SpendingTotal,
     GetAccountBalanceHistoryOptions,
     TotalValueHistory,
@@ -98,6 +99,14 @@ export class FinanceService {
     deleteCategory(id: string, moveToId?: string): Promise<boolean> {
         const query = moveToId ? `?moveTo=${encodeURIComponent(moveToId)}` : '';
         return this.api.delete(`${API_BASE_PATH}/categories/${id}${query}`);
+    }
+
+    importCategories(formData: FormData, dryRun: boolean): Promise<CategoryImportResult | undefined> {
+        return this.api.post<CategoryImportResult>(`${API_BASE_PATH}/categories/import?dryRun=${dryRun}`, formData);
+    }
+
+    getExportCategoriesUrl(): string {
+        return `${API_BASE_PATH}/categories/export`;
     }
 
     // Accounts

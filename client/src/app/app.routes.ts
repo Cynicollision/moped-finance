@@ -11,6 +11,7 @@ import { FinanceSpendingComponent } from './finance/spending/spending.component'
 import { FinanceInstitutionsComponent } from './finance/institutions/institutions.component';
 import { DashboardComponent } from './finance/dashboard/dashboard.component';
 import { FinanceCategoriesComponent } from './finance/categories/categories.component';
+import { ImportCategoriesComponent } from './finance/categories/import-categories.component';
 import { AddTransactionComponent } from './finance/transactions/add-transaction.component';
 import { ImportTransactionsComponent } from './finance/transactions/import-transactions.component';
 import { ViewTransactionComponent } from './finance/transactions/view-transaction.component';
@@ -79,6 +80,11 @@ export const routes: Routes = [
             { path: 'settings', component: SettingsComponent, title: 'Settings' },
             { path: 'settings/institutions', component: FinanceInstitutionsComponent, title: 'Institutions' },
             { path: 'settings/categories', component: FinanceCategoriesComponent, title: 'Categories' },
+            {
+                path: 'settings/categories/import',
+                component: ImportCategoriesComponent,
+                title: 'Import Categories'
+            },
             { path: 'settings/api-tokens', component: ApiTokensComponent, title: 'API Tokens' }
         ]
     },

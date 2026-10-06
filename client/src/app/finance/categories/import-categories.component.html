@@ -1,0 +1,40 @@
+<div class="import-container details-container">
+    <app-page-header title="Import Categories" [crumbs]="crumbs"></app-page-header>
+
+    <mat-card appearance="outlined" class="import-card">
+        <mat-card-content>
+            <app-csv-import
+                #importer
+                subject="your categories"
+                columns="Type, Group, Name, Icon, Necessity, IsActive"
+                [run]="runImport"
+                (imported)="onImported($event)"
+            >
+                @if (importer.dryRun(); as results) {
+                    <p>Please review the validated results before finalizing the import.</p>
+                    <ul>
+                        <li>Groups to create: {{ results.newGroups.length }}</li>
+                        <li>Categories to create: {{ results.createdCount }}</li>
+                        <li>Already exist (skipped): {{ results.skippedNames.length }}</li>
+                        <li>Rows with errors: {{ results.failedRowMessages.length }}</li>
+                    </ul>
+                    @if (results.newGroups.length) {
+                        <p class="names new-groups"><strong>New groups:</strong> {{ groupsText(results.newGroups) }}</p>
+                    }
+                    @if (results.skippedNames.length) {
+                        <p class="names skipped"><strong>Skipped:</strong> {{ listText(results.skippedNames) }}</p>
+                    }
+                    @if (results.createdCount === 0) {
+                        <p class="nothing-new">
+                            Every category in the file already exists, so importing won't change anything.
+                        </p>
+                    }
+                }
+            </app-csv-import>
+            <p class="import-note">
+                Import only adds. A category whose name already exists is skipped and left as it is, and a group that
+                doesn't exist yet is created with the row's type.
+            </p>
+        </mat-card-content>
+    </mat-card>
+</div>
