@@ -43,7 +43,7 @@ describe('Institution Routes', () => {
     });
 
     describe('GET /institutions', () => {
-        it('should return a list of institutions when successful', async () => {
+        it('INST-1.1 should return every institution', async () => {
             const inst1 = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
             const inst2 = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Vanguard' }));
 
@@ -56,7 +56,7 @@ describe('Institution Routes', () => {
     });
 
     describe('GET /institutions/:id', () => {
-        it('should return a single institution when found', async () => {
+        it('INST-1.5 should return a single institution when found', async () => {
             const institution = await institutionsData.insert(
                 FinanceEntityFactory.createInstitution({ name: 'Chase' })
             );
@@ -68,7 +68,7 @@ describe('Institution Routes', () => {
             expect(response.body.name).toBe('Chase');
         });
 
-        it('should return 404 when institution is not found', async () => {
+        it('INST-1.5 should return 404 when institution is not found', async () => {
             const response = await request(app).get('/institutions/missing');
 
             expect(response.status).toBe(404);
@@ -77,7 +77,7 @@ describe('Institution Routes', () => {
     });
 
     describe('POST /institutions', () => {
-        it('should create a new institution', async () => {
+        it('INST-1.4 should create a new institution', async () => {
             const payload = {
                 name: 'Chase'
             };
@@ -92,7 +92,7 @@ describe('Institution Routes', () => {
             expect(inst?.name).toBe('Chase');
         });
 
-        it('should return 400 when the name is already taken, ignoring case', async () => {
+        it('INST-1.11 should return 400 when the name is already taken, ignoring case', async () => {
             await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Chase' }));
 
             const response = await request(app).post('/institutions').send({ name: 'CHASE' });
@@ -101,19 +101,24 @@ describe('Institution Routes', () => {
             expect(response.body.message).toBe('An institution with that name already exists.');
         });
 
-        it('should return 400 when schema validation fails (missing name)', async () => {
+        it('INST-1.4 should return 400 when the name is missing or longer than 100 characters', async () => {
             const payload = {};
 
             const response = await request(app).post('/institutions').send(payload);
+            const tooLong = await request(app)
+                .post('/institutions')
+                .send({ name: 'x'.repeat(101) });
 
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('name:');
             expect(response.body.message).toContain('expected string');
+            expect(tooLong.status).toBe(400);
+            expect(tooLong.body.message).toContain('name:');
         });
     });
 
     describe('PUT /institutions/:id', () => {
-        it('should update an institution when input is valid', async () => {
+        it('INST-1.6 should update an institution when input is valid', async () => {
             const institution = await institutionsData.insert(
                 FinanceEntityFactory.createInstitution({ name: 'Old Chase' })
             );
@@ -131,7 +136,7 @@ describe('Institution Routes', () => {
             expect(dbInst?.name).toBe('Updated Chase');
         });
 
-        it('should return 404 when update target does not exist', async () => {
+        it('INST-1.6 should return 404 when update target does not exist', async () => {
             const institutionId = 'missing-inst';
             const payload = {
                 name: 'Updated Chase'
@@ -145,7 +150,7 @@ describe('Institution Routes', () => {
     });
 
     describe('DELETE /institutions/:id', () => {
-        it('should delete an institution', async () => {
+        it('INST-1.8 should delete an institution', async () => {
             const institution = await institutionsData.insert(
                 FinanceEntityFactory.createInstitution({ name: 'Chase' })
             );
@@ -158,7 +163,7 @@ describe('Institution Routes', () => {
             expect(dbInst).toBeNull();
         });
 
-        it('should return 404 when delete target does not exist', async () => {
+        it('INST-1.8 should return 404 when delete target does not exist', async () => {
             const institutionId = 'missing-inst';
 
             const response = await request(app).delete(`/institutions/${institutionId}`);

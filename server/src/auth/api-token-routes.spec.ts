@@ -141,7 +141,7 @@ describe('API Tokens', () => {
             ).toBe(401);
         });
 
-        it('should return 404 when revoking a token that does not exist', async () => {
+        it('AUTH-11.5 should return 404 when revoking a token that does not exist', async () => {
             const response = await agent.delete('/auth/tokens/TOKmissing');
 
             expect(response.status).toBe(404);

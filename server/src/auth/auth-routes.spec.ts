@@ -79,7 +79,7 @@ describe('Auth Routes', () => {
     });
 
     describe('POST /auth/register', () => {
-        it('should register a new user successfully', async () => {
+        it('AUTH-2.5 AUTH-2.6 should register the user and sign them in, never returning the password', async () => {
             const response = await agent.post('/auth/register').send({
                 username: 'newuser',
                 name: 'New User',
@@ -93,6 +93,8 @@ describe('Auth Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.username).toBe('newuser');
+            expect(response.body).not.toHaveProperty('passwordHash');
+            expect((await agent.get('/auth/me')).body.username).toBe('newuser');
 
             // Verify using data layer natively
             const user = await userData.retrieveByUsername('newuser');
@@ -100,14 +102,14 @@ describe('Auth Routes', () => {
             expect(user!.username).toBe('newuser');
         });
 
-        it('should fail if missing required fields', async () => {
+        it('APP-5.7 should fail if missing required fields', async () => {
             const response = await agent.post('/auth/register').send({
                 username: 'missingname'
             });
 
             expect(response.status).toBe(400);
 
-            const user = await userData.retrieveByUsername('newuser');
+            const user = await userData.retrieveByUsername('missingname');
             expect(user).toBeNull();
         });
 
@@ -165,7 +167,7 @@ describe('Auth Routes', () => {
             agent = request.agent(app);
         });
 
-        it('should login successfully with valid credentials', async () => {
+        it('AUTH-1.3 should sign in with valid credentials', async () => {
             const response = await agent.post('/auth/login').send({
                 username: 'loginuser',
                 password: 'password123'
@@ -173,16 +175,33 @@ describe('Auth Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.username).toBe('loginuser');
+            expect((await agent.get('/auth/me')).body.username).toBe('loginuser');
         });
 
-        it('should fail login with invalid password', async () => {
-            const response = await agent.post('/auth/login').send({
+        it('AUTH-1.4 should refuse a wrong password and an unknown username with the same message', async () => {
+            const wrongPassword = await agent.post('/auth/login').send({
                 username: 'loginuser',
                 password: 'wrongpassword'
             });
+            const unknownUser = await agent.post('/auth/login').send({
+                username: 'nobody',
+                password: 'password123'
+            });
+
+            expect(wrongPassword.status).toBe(400);
+            expect(wrongPassword.body.message).toBe('Invalid username or password.');
+            expect(unknownUser.status).toBe(400);
+            expect(unknownUser.body.message).toBe('Invalid username or password.');
+            expect((await agent.get('/auth/me')).body).toEqual({});
+        });
+
+        it('AUTH-1.6 should treat usernames as case-sensitive', async () => {
+            const response = await agent.post('/auth/login').send({
+                username: 'LoginUser',
+                password: 'password123'
+            });
 
             expect(response.status).toBe(400);
-            expect(response.body.message).toContain('Invalid');
         });
     });
 
@@ -196,7 +215,7 @@ describe('Auth Routes', () => {
             // We are still logged in via agent from registration
         });
 
-        it('should successfully change password', async () => {
+        it('AUTH-5.1 should successfully change password', async () => {
             const response = await agent.put('/auth/password').send({
                 oldPassword: 'oldpassword',
                 newPassword: 'newpassword'
@@ -213,19 +232,19 @@ describe('Auth Routes', () => {
             expect(loginRes.status).toBe(200);
         });
 
-        it('should fail to change password if old password is wrong', async () => {
+        it('AUTH-5.1 should fail to change password if old password is wrong', async () => {
             const response = await agent.put('/auth/password').send({
                 oldPassword: 'wrongoldpassword',
                 newPassword: 'newpassword'
             });
 
             expect(response.status).toBe(400);
-            expect(response.body.message).toContain('Invalid');
+            expect(response.body.message).toBe('Invalid old password.');
         });
     });
 
     describe('GET /auth/me', () => {
-        it('should return user profile when logged in', async () => {
+        it('AUTH-3.1 should return user profile when logged in', async () => {
             await agent.post('/auth/register').send({
                 username: 'meuser',
                 name: 'Me User',
@@ -237,7 +256,7 @@ describe('Auth Routes', () => {
             expect(response.body.username).toBe('meuser');
         });
 
-        it('should return null or not authenticated when not logged in', async () => {
+        it('AUTH-3.1 should return an empty profile when not logged in', async () => {
             const response = await agent.get('/auth/me');
             expect(response.status).toBe(200);
             expect(response.body).toEqual({});
@@ -245,7 +264,7 @@ describe('Auth Routes', () => {
     });
 
     describe('POST /auth/logout', () => {
-        it('should clear session successfully', async () => {
+        it('AUTH-4.1 should end the session', async () => {
             // Register auto-logs in
             const loginResponse = await agent.post('/auth/register').send({
                 username: 'logoutuser',

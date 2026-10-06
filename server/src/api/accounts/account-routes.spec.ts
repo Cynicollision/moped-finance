@@ -94,7 +94,7 @@ describe('Account Routes', () => {
     }
 
     describe('GET /accounts', () => {
-        it('should return a list of accounts when successful', async () => {
+        it('INST-1.1 should return every account', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -133,7 +133,7 @@ describe('Account Routes', () => {
     });
 
     describe('GET /accounts/total-value-history', () => {
-        it('should return total value history with specific options', async () => {
+        it('DASH-2.6 should return net worth as total assets less the size of total liabilities', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -148,6 +148,15 @@ describe('Account Routes', () => {
                     hideFromSpending: false
                 })
             );
+            const loan = await accountData.insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: testInstitutionId,
+                    name: 'Mortgage',
+                    category: AccountCategory.Liability,
+                    group: AccountGroup.Loan,
+                    type: AccountType.Mortgage
+                })
+            );
 
             const balanceHistory: BalanceHistory[] = [
                 {
@@ -157,7 +166,12 @@ describe('Account Routes', () => {
                     date: DateTimeUtil.today(),
                     createdAt: DateTimeUtil.now(),
                     updatedAt: DateTimeUtil.now()
-                }
+                },
+                FinanceEntityFactory.createBalanceHistory({
+                    accountId: loan.id,
+                    balance: -1000,
+                    date: DateTimeUtil.today()
+                })
             ];
             await balanceHistoryData.insertBulk(balanceHistory);
 
@@ -167,10 +181,10 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.length).toBeGreaterThan(0);
-            expect(response.body[0].amount).toBe(2500.0);
+            expect(response.body[0].amount).toBe(1500.0);
         });
 
-        it('should default to the past thirty days up to today', async () => {
+        it('DASH-1.2 should default to the past thirty days up to today', async () => {
             DateTimeUtil.setClock(new Date('2026-06-01T16:00:00Z'));
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
@@ -193,13 +207,13 @@ describe('Account Routes', () => {
             expect(response.body.map((v: { date: string }) => v.date)).toEqual(['2026-06-01', '2026-05-02']);
         });
 
-        it('should return 400 when type is missing', async () => {
+        it('APP-5.7 should return 400 when type is missing', async () => {
             const response = await request(app).get('/accounts/total-value-history');
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('type:');
         });
 
-        it('should return 400 when timeframe is invalid', async () => {
+        it('APP-5.7 should return 400 when timeframe is invalid', async () => {
             const response = await request(app).get(
                 '/accounts/total-value-history?type=NetWorth&timeframe=InvalidValue'
             );
@@ -209,7 +223,7 @@ describe('Account Routes', () => {
     });
 
     describe('GET /accounts/:accountId', () => {
-        it('should return a single account when found', async () => {
+        it('ACCT-2.6 should return a single account when found', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -232,7 +246,7 @@ describe('Account Routes', () => {
             expect(response.body.name).toBe('Checking');
         });
 
-        it('should return 404 when account is not found', async () => {
+        it('ACCT-2.6 should return 404 when account is not found', async () => {
             const response = await request(app).get('/accounts/missing');
 
             expect(response.status).toBe(404);
@@ -241,7 +255,7 @@ describe('Account Routes', () => {
     });
 
     describe('POST /accounts', () => {
-        it('should create a new account', async () => {
+        it('ACCT-1.3 should create a new account', async () => {
             const payload = {
                 name: 'New Account',
                 institutionId: testInstitutionId,
@@ -265,7 +279,7 @@ describe('Account Routes', () => {
             expect(account?.name).toBe('New Account');
         });
 
-        it('should return 400 when schema validation fails (missing category)', async () => {
+        it('APP-5.7 should return 400 when schema validation fails (missing category)', async () => {
             const payload = {
                 name: 'New Account',
                 institutionId: testInstitutionId,
@@ -278,7 +292,7 @@ describe('Account Routes', () => {
             expect(response.body.message).toContain('category:');
         });
 
-        it('should return 400 when group is not a known account group', async () => {
+        it('APP-5.7 should return 400 when group is not a known account group', async () => {
             const payload = {
                 name: 'New Account',
                 institutionId: testInstitutionId,
@@ -294,7 +308,7 @@ describe('Account Routes', () => {
     });
 
     describe('PUT /accounts/:accountId', () => {
-        it('should update an account when input is valid', async () => {
+        it('ACCT-1.5 should update an account when input is valid', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -324,7 +338,7 @@ describe('Account Routes', () => {
             expect(updatedAccount?.name).toBe('Updated Checking');
         });
 
-        it('should return 404 when update fails because resource does not exist', async () => {
+        it('ACCT-1.5 should return 404 when update fails because resource does not exist', async () => {
             const payload = {
                 name: 'Updated Checking',
                 institutionId: testInstitutionId,
@@ -345,7 +359,7 @@ describe('Account Routes', () => {
     });
 
     describe('DELETE /accounts/:accountId', () => {
-        it('should delete an account', async () => {
+        it('ACCT-1.6 should delete an account with its balance history and transactions', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -360,6 +374,21 @@ describe('Account Routes', () => {
                     hideFromSpending: false
                 })
             );
+            await importBalances(acc1.id!, 'Date,Balance\n2026-06-01,1');
+            const transaction = await transactionsData.insert(
+                FinanceEntityFactory.createTransaction({
+                    accountId: acc1.id,
+                    categoryId: testCategoryId,
+                    date: '2026-06-01',
+                    amount: 1,
+                    merchant: 'Store',
+                    originalStatement: '',
+                    notes: '',
+                    isHidden: false,
+                    isSplit: false,
+                    splitParentId: ''
+                })
+            );
 
             const response = await request(app).delete(`/accounts/${acc1.id}`);
 
@@ -367,9 +396,11 @@ describe('Account Routes', () => {
 
             const deletedAccount = await accountData.retrieveSingle(acc1.id!);
             expect(deletedAccount).toBeNull();
+            expect(await balancesFor(acc1.id!)).toEqual([]);
+            expect(await transactionsData.retrieveSingle(transaction.id!)).toBeNull();
         });
 
-        it('should return 404 when delete fails because resource does not exist', async () => {
+        it('ACCT-1.6 should return 404 when delete fails because resource does not exist', async () => {
             const response = await request(app).delete('/accounts/missing-acc');
 
             expect(response.status).toBe(404);
@@ -378,7 +409,8 @@ describe('Account Routes', () => {
     });
 
     describe('GET /accounts/:accountId/balance-history', () => {
-        it('should return balance history for an account with default timeframe', async () => {
+        it('ACCT-2.4 should default to the past thirty days up to today', async () => {
+            DateTimeUtil.setClock(new Date('2026-06-01T16:00:00Z'));
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -393,20 +425,16 @@ describe('Account Routes', () => {
                     hideFromSpending: false
                 })
             );
-
-            const balanceHistory: BalanceHistory[] = [
-                FinanceEntityFactory.createBalanceHistory({
-                    accountId: acc1.id!,
-                    balance: 500.0,
-                    date: DateTimeUtil.today()
-                })
-            ];
-            await balanceHistoryData.insertBulk(balanceHistory);
+            await balanceHistoryData.insertBulk(
+                ['2026-05-01', '2026-05-02', '2026-06-01', '2026-06-02'].map(date =>
+                    FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 500, date })
+                )
+            );
 
             const response = await request(app).get(`/accounts/${acc1.id}/balance-history`);
 
             expect(response.status).toBe(200);
-            expect(response.body.length).toBe(1);
+            expect(response.body.map((b: BalanceHistory) => b.date).sort()).toEqual(['2026-05-02', '2026-06-01']);
             expect(response.body[0].balance).toBe(500.0);
         });
 
@@ -476,7 +504,7 @@ describe('Account Routes', () => {
             ]);
         });
 
-        it('should return 400 when timeframe is invalid', async () => {
+        it('APP-5.7 should return 400 when timeframe is invalid', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -502,29 +530,14 @@ describe('Account Routes', () => {
     });
 
     describe('GET /accounts/:accountId/transactions', () => {
-        it('should return transactions for an account with default options', async () => {
-            const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
-                    institutionId: testInstitutionId,
-                    name: 'Checking Account',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
-                    type: AccountType.Checking,
-                    balance: 1000.0,
-                    isHidden: false,
-                    isManual: false,
-                    isRetirement: false,
-                    hideFromSpending: false
-                })
-            );
-
-            await transactionsData.insert(
+        function insertTransaction(accountId: string, date: string, merchant = 'Store') {
+            return transactionsData.insert(
                 FinanceEntityFactory.createTransaction({
-                    accountId: acc1.id,
+                    accountId,
                     categoryId: testCategoryId,
-                    date: DateTimeUtil.today(),
+                    date,
                     amount: 50.0,
-                    merchant: 'Store',
+                    merchant,
                     originalStatement: '',
                     notes: '',
                     isHidden: false,
@@ -532,6 +545,13 @@ describe('Account Routes', () => {
                     splitParentId: ''
                 })
             );
+        }
+
+        it("ACCT-2.7 should return only the account's own transactions", async () => {
+            const acc1 = await insertAccount('Checking');
+            const acc2 = await insertAccount('Savings');
+            await insertTransaction(acc1.id, DateTimeUtil.today());
+            await insertTransaction(acc2.id, DateTimeUtil.today(), 'Elsewhere');
 
             const response = await request(app).get(`/accounts/${acc1.id}/transactions`);
 
@@ -541,37 +561,25 @@ describe('Account Routes', () => {
             expect(response.body[0].merchant).toBe('Store');
         });
 
-        it('should pass search options to transaction search properly', async () => {
-            const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
-                    institutionId: testInstitutionId,
-                    name: 'Checking Account',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
-                    type: AccountType.Checking,
-                    balance: 1000.0,
-                    isHidden: false,
-                    isManual: false,
-                    isRetirement: false,
-                    hideFromSpending: false
-                })
-            );
+        it('ACCT-2.7 should return the most recent transactions first, up to the limit', async () => {
+            const acc1 = await insertAccount();
+            for (const date of ['2026-06-01', '2026-06-03', '2026-06-02']) {
+                await insertTransaction(acc1.id, date);
+            }
 
             const response = await request(app).get(`/accounts/${acc1.id}/transactions`).query({
                 sortKey: TransactionsSortKey.Date,
-                sortDirection: SortDirection.Asc,
-                limit: '10',
-                offset: '20',
-                includeHidden: 'true',
-                minAmount: '100'
+                sortDirection: SortDirection.Desc,
+                limit: '2'
             });
 
             expect(response.status).toBe(200);
+            expect(response.body.map((t: { date: string }) => t.date)).toEqual(['2026-06-03', '2026-06-02']);
         });
     });
 
     describe('GET /:accountId/export-balances', () => {
-        it('should return a CSV file of exported balances', async () => {
+        it('ACCT-3.1 should return a CSV file named after the account', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -600,6 +608,9 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.header['content-type']).toContain('text/csv');
+            expect(response.header['content-disposition']).toMatch(
+                /filename="Balances_Checking_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.csv"/
+            );
             expect(response.text).toContain('Date,AccountName,Balance');
             expect(response.text).toContain('100');
         });
@@ -624,7 +635,7 @@ describe('Account Routes', () => {
     });
 
     describe('POST /:accountId/import-balances', () => {
-        it('should process a CSV file and return import statistics', async () => {
+        it('ACCT-3.5 should process a CSV file and return import statistics', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -653,7 +664,7 @@ describe('Account Routes', () => {
             expect(allHistory.rows.length).toBeGreaterThan(0);
         });
 
-        it('should perform a dry run without saving when dryRun=true', async () => {
+        it('ACCT-3.3 should perform a dry run without saving when dryRun=true', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -682,7 +693,7 @@ describe('Account Routes', () => {
             expect(allHistory.rows.length).toBe(0);
         });
 
-        it('should fail validation when Date or Balance are missing', async () => {
+        it('ACCT-3.4 should report a missing Date or Balance by row', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -705,11 +716,14 @@ describe('Account Routes', () => {
                 .attach('file', Buffer.from(csvContent), 'import.csv');
 
             expect(response.status).toBe(200);
-            expect(response.body.failedRowMessages.length).toBe(2);
+            expect(response.body.failedRowMessages).toEqual([
+                'Row 2: Date is required.',
+                'Row 3: Balance is required.'
+            ]);
             expect(response.body.createdCount).toBe(0);
         });
 
-        it('should reject a second balance for the same date', async () => {
+        it('ACCT-3.9 should reject a second balance for the same date', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
