@@ -127,7 +127,7 @@ describe('Transaction Routes', () => {
     }
 
     describe('GET /', () => {
-        it('should return a list of transactions when successful with default options', async () => {
+        it('TXN-1.2 TXN-1.8 should list transactions newest first, leaving out hidden ones, by default', async () => {
             const txn1 = await transactionsData.insert(
                 FinanceEntityFactory.createTransaction({
                     accountId: testAccountId,
@@ -157,14 +157,15 @@ describe('Transaction Routes', () => {
                 })
             );
 
+            await insertTransaction({ date: '2026-06-08', isHidden: true });
+
             const response = await request(app).get('/transactions');
 
             expect(response.status).toBe(200);
-            expect(response.body.length).toBe(2);
-            expect(response.body.map((t: any) => t.id)).toEqual(expect.arrayContaining([txn1.id, txn2.id]));
+            expect(response.body.map((t: any) => t.id)).toEqual([txn2.id, txn1.id]);
         });
 
-        it('should parse and pass all search options correctly', async () => {
+        it('TXN-1.5 should apply every filter together', async () => {
             const txn = await transactionsData.insert(
                 FinanceEntityFactory.createTransaction({
                     accountId: testAccountId,
@@ -179,6 +180,12 @@ describe('Transaction Routes', () => {
                     splitParentId: ''
                 })
             );
+
+            // Each of these fails just one of the filters below.
+            await insertTransaction({ merchant: 'Other Merchant' });
+            await insertTransaction({ amount: 1000 });
+            await insertTransaction({ date: '2025-12-31' });
+            await insertTransaction({ categoryId: '' });
 
             const filters = [
                 { key: TransactionsFilterKey.Category, value: testCategoryId },
@@ -207,7 +214,7 @@ describe('Transaction Routes', () => {
     });
 
     describe('POST /', () => {
-        it('should create a new transaction when input is valid', async () => {
+        it('TXN-2.1 should create a new transaction when input is valid', async () => {
             const payload = {
                 accountId: testAccountId,
                 categoryId: testCategoryId,
@@ -227,7 +234,7 @@ describe('Transaction Routes', () => {
             expect(dbTxn?.merchant).toBe('Groceries');
         });
 
-        it('should return 400 when schema validation fails (missing amount)', async () => {
+        it('APP-5.7 should return 400 when schema validation fails (missing amount)', async () => {
             const payload = {
                 accountId: testAccountId,
                 categoryId: testCategoryId,
@@ -243,7 +250,7 @@ describe('Transaction Routes', () => {
     });
 
     describe('GET /merchants', () => {
-        it('should return a list of merchants', async () => {
+        it('TXN-1.6 should return the merchants used before', async () => {
             await transactionsData.insert(
                 FinanceEntityFactory.createTransaction({
                     accountId: testAccountId,
@@ -281,7 +288,7 @@ describe('Transaction Routes', () => {
     });
 
     describe('GET /spending', () => {
-        it('should return spending by category', async () => {
+        it('CASH-1.2 should return spending by category', async () => {
             await transactionsData.insert(
                 FinanceEntityFactory.createTransaction({
                     accountId: testAccountId,
@@ -394,7 +401,7 @@ describe('Transaction Routes', () => {
     });
 
     describe('GET /:id', () => {
-        it('should return a single transaction when found', async () => {
+        it('TXN-2.2 should return a single transaction when found', async () => {
             const txn = await transactionsData.insert(
                 FinanceEntityFactory.createTransaction({
                     accountId: testAccountId,
@@ -416,7 +423,7 @@ describe('Transaction Routes', () => {
             expect(response.body.id).toBe(txn.id);
         });
 
-        it('should return 404 when transaction is not found', async () => {
+        it('TXN-2.2 should return 404 when transaction is not found', async () => {
             const response = await request(app).get('/transactions/missing-id');
 
             expect(response.status).toBe(404);
@@ -424,7 +431,7 @@ describe('Transaction Routes', () => {
     });
 
     describe('PUT /:id', () => {
-        it('should update a transaction when valid', async () => {
+        it('TXN-2.3 should update a transaction when valid', async () => {
             const txn = await transactionsData.insert(
                 FinanceEntityFactory.createTransaction({
                     accountId: testAccountId,
@@ -453,7 +460,7 @@ describe('Transaction Routes', () => {
             expect(response.body.merchant).toBe('Updated Merchant');
         });
 
-        it('should return 404 when update target does not exist', async () => {
+        it('TXN-2.3 should return 404 when update target does not exist', async () => {
             const response = await request(app).put('/transactions/txn-1').send({
                 amount: 100,
                 merchant: 'Updated',
@@ -470,7 +477,7 @@ describe('Transaction Routes', () => {
     });
 
     describe('DELETE /:id', () => {
-        it('should delete a transaction', async () => {
+        it('TXN-2.4 should delete a transaction', async () => {
             const txn = await transactionsData.insert(
                 FinanceEntityFactory.createTransaction({
                     accountId: testAccountId,
@@ -494,7 +501,7 @@ describe('Transaction Routes', () => {
             expect(dbTxn).toBeNull();
         });
 
-        it('should return 404 when delete target does not exist', async () => {
+        it('TXN-2.4 should return 404 when delete target does not exist', async () => {
             const response = await request(app).delete('/transactions/missing');
 
             expect(response.status).toBe(404);
@@ -503,7 +510,7 @@ describe('Transaction Routes', () => {
     });
 
     describe('GET /export', () => {
-        it('should return a CSV file of exported transactions', async () => {
+        it('TXN-3.1 should return a CSV file of exported transactions', async () => {
             await transactionsData.insert(
                 FinanceEntityFactory.createTransaction({
                     accountId: testAccountId,
@@ -523,6 +530,9 @@ describe('Transaction Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.header['content-type']).toContain('text/csv');
+            expect(response.header['content-disposition']).toMatch(
+                /filename="Transactions_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.csv"/
+            );
             expect(response.text).toContain(
                 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden'
             );
@@ -551,7 +561,7 @@ describe('Transaction Routes', () => {
     });
 
     describe('POST /import', () => {
-        it('should process a CSV file and return import statistics', async () => {
+        it('TXN-3.3 should process a CSV file and return import statistics', async () => {
             const csvContent =
                 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,Groceries,100,,,false';
 
@@ -564,7 +574,7 @@ describe('Transaction Routes', () => {
             expect(response.body.failedRowMessages.length).toBe(0);
         });
 
-        it('should perform a dry run without saving when dryRun=true', async () => {
+        it('TXN-3.3 should perform a dry run without saving when dryRun=true', async () => {
             const csvContent =
                 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden\n2026-06-06,Checking,Test,Groceries,100,,,false';
 

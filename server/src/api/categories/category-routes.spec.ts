@@ -52,7 +52,7 @@ describe('Category Routes', () => {
     // CATEGORY GROUPS
     // ---------------------------------------------------------
     describe('GET /categories/groups', () => {
-        it('should return a list of category groups', async () => {
+        it('CAT-1.3 should return every category group', async () => {
             const g1 = await groupsData.insert(
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' })
             );
@@ -69,7 +69,7 @@ describe('Category Routes', () => {
     });
 
     describe('GET /categories/groups/:id', () => {
-        it('should return a single category group', async () => {
+        it('CAT-1.7 should return a single category group', async () => {
             const group = await groupsData.insert(
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' })
             );
@@ -81,7 +81,7 @@ describe('Category Routes', () => {
             expect(response.body.name).toBe('Job');
         });
 
-        it('should return 404 when group not found', async () => {
+        it('CAT-1.7 should return 404 when group not found', async () => {
             const response = await request(app).get('/categories/groups/missing');
 
             expect(response.status).toBe(404);
@@ -90,7 +90,7 @@ describe('Category Routes', () => {
     });
 
     describe('POST /categories/groups', () => {
-        it('should create a new category group', async () => {
+        it('CAT-1.6 should create a new category group', async () => {
             const payload = {
                 type: CategoryType.Expense,
                 name: 'Housing'
@@ -106,10 +106,23 @@ describe('Category Routes', () => {
             expect(group).not.toBeNull();
             expect(group?.name).toBe('Housing');
         });
+
+        it('CAT-1.12 should refuse a group name that is already taken, ignoring case', async () => {
+            await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
+            );
+
+            const response = await request(app)
+                .post('/categories/groups')
+                .send({ type: CategoryType.Income, name: 'HOUSING' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe('A category group with that name already exists.');
+        });
     });
 
     describe('PUT /categories/groups/:id', () => {
-        it('should update a category group', async () => {
+        it('CAT-1.7 should update a category group', async () => {
             const group = await groupsData.insert(
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Old Name' })
             );
@@ -161,7 +174,7 @@ describe('Category Routes', () => {
     });
 
     describe('DELETE /categories/groups/:id', () => {
-        it('should delete a category group', async () => {
+        it('CAT-1.15 should delete an empty category group', async () => {
             const group = await groupsData.insert(
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Job' })
             );
@@ -202,23 +215,29 @@ describe('Category Routes', () => {
     // CATEGORIES
     // ---------------------------------------------------------
     describe('GET /categories', () => {
-        it('should return a list of categories', async () => {
+        it('CAT-4.1 CAT-4.3 should return every category, or only the active ones with activeOnly', async () => {
             const group = await groupsData.insert(
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
             );
             const category = await categoriesData.insert(
                 FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
             );
+            const inactive = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Old', icon: '📦', isActive: false })
+            );
 
             const response = await request(app).get('/categories');
+            const activeOnly = await request(app).get('/categories?activeOnly=true');
 
             expect(response.status).toBe(200);
-            expect(response.body.length).toBe(1);
-            expect(response.body[0].id).toBe(category.id);
-            expect(response.body[0].name).toBe('Rent');
+            expect(response.body.map((c: { id: string }) => c.id)).toEqual(
+                expect.arrayContaining([category.id, inactive.id])
+            );
+            expect(activeOnly.body.map((c: { id: string }) => c.id)).toEqual([category.id]);
+            expect(activeOnly.body[0].name).toBe('Rent');
         });
 
-        it('should return 400 when activeOnly is invalid', async () => {
+        it('APP-5.7 should return 400 when activeOnly is invalid', async () => {
             const response = await request(app).get('/categories?activeOnly=invalid');
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('activeOnly:');
@@ -226,7 +245,7 @@ describe('Category Routes', () => {
     });
 
     describe('GET /categories/:id', () => {
-        it('should return a single category', async () => {
+        it('CAT-1.9 should return a single category', async () => {
             const group = await groupsData.insert(
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
             );
@@ -242,7 +261,7 @@ describe('Category Routes', () => {
     });
 
     describe('POST /categories', () => {
-        it('should create a new category', async () => {
+        it('CAT-1.8 should create a new category', async () => {
             const group = await groupsData.insert(
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
             );
@@ -262,6 +281,23 @@ describe('Category Routes', () => {
             const category = await categoriesData.retrieveSingle(response.body.id);
             expect(category).not.toBeNull();
             expect(category?.name).toBe('Rent');
+        });
+
+        it('CAT-1.13 should refuse a category name taken in any group, ignoring case', async () => {
+            const housing = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
+            );
+            const other = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Other' })
+            );
+            await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: housing.id!, name: 'Rent', icon: '🏠', isActive: true })
+            );
+
+            const response = await request(app).post('/categories').send({ groupId: other.id, name: 'RENT' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe('A category with that name already exists.');
         });
 
         it('CAT-5.3 should refuse to name a category Uncategorized', async () => {
@@ -313,7 +349,7 @@ describe('Category Routes', () => {
     });
 
     describe('PUT /categories/:id', () => {
-        it('should update a category', async () => {
+        it('CAT-1.9 should update a category', async () => {
             const group = await groupsData.insert(
                 FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Housing' })
             );
@@ -564,7 +600,7 @@ describe('Category Routes', () => {
                 expect(response.body).toEqual({ transactionCount: 2, budgetStreamCount: 1 });
             });
 
-            it('should return 404 when the category does not exist', async () => {
+            it('CAT-4.4 should return 404 when the category does not exist', async () => {
                 const response = await request(app).get('/categories/missing/usage');
 
                 expect(response.status).toBe(404);
@@ -620,7 +656,7 @@ describe('Category Routes', () => {
                 expect((await transactionsData.retrieveSingle(transaction.id))?.categoryId).toBe(rent.id);
             });
 
-            it('should return 404 when the category does not exist', async () => {
+            it('CAT-4.4 should return 404 when the category does not exist', async () => {
                 const response = await request(app).delete(`/categories/missing?moveTo=${mortgage.id}`);
 
                 expect(response.status).toBe(404);

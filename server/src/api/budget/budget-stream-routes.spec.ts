@@ -57,7 +57,7 @@ describe('Budget Stream Routes', () => {
     });
 
     describe('GET /', () => {
-        it('should return a list of budget streams when successful', async () => {
+        it('BUD-1.2 should return every budget stream', async () => {
             const stream1 = await budgetStreamData.insert(
                 FinanceEntityFactory.createBudgetStream({
                     categoryId: testCategoryId,
@@ -84,7 +84,7 @@ describe('Budget Stream Routes', () => {
     });
 
     describe('POST /', () => {
-        it('should create a new budget stream when input is valid', async () => {
+        it('BUD-1.3 should create a new budget stream when input is valid', async () => {
             const payload = {
                 name: 'Groceries',
                 categoryId: testCategoryId,
@@ -102,7 +102,7 @@ describe('Budget Stream Routes', () => {
             expect(dbStream?.name).toBe('Groceries');
         });
 
-        it('should return 400 when schema validation fails (missing name)', async () => {
+        it('BUD-1.1 should return 400 when the name is missing or longer than 100 characters', async () => {
             const payload = {
                 categoryId: testCategoryId,
                 recurrence: CalendarPeriod.Monthly,
@@ -110,9 +110,14 @@ describe('Budget Stream Routes', () => {
             };
 
             const response = await request(app).post('/budget-streams').send(payload);
+            const tooLong = await request(app)
+                .post('/budget-streams')
+                .send({ ...payload, name: 'x'.repeat(101) });
 
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('name:');
+            expect(tooLong.status).toBe(400);
+            expect(tooLong.body.message).toContain('name:');
         });
     });
 
@@ -198,7 +203,7 @@ describe('Budget Stream Routes', () => {
     });
 
     describe('PUT /:id', () => {
-        it('should update a budget stream when valid', async () => {
+        it('BUD-1.4 should update a budget stream when valid', async () => {
             const stream = await budgetStreamData.insert(
                 FinanceEntityFactory.createBudgetStream({
                     categoryId: testCategoryId,
@@ -272,7 +277,7 @@ describe('Budget Stream Routes', () => {
     });
 
     describe('DELETE /:id', () => {
-        it('should delete a budget stream', async () => {
+        it('BUD-1.4 should delete a budget stream', async () => {
             const stream = await budgetStreamData.insert(
                 FinanceEntityFactory.createBudgetStream({
                     categoryId: testCategoryId,
@@ -290,7 +295,7 @@ describe('Budget Stream Routes', () => {
             expect(dbStream).toBeNull();
         });
 
-        it('should return 404 when delete target does not exist', async () => {
+        it('BUD-1.4 should return 404 when delete target does not exist', async () => {
             const response = await request(app).delete('/budget-streams/missing-stream');
 
             expect(response.status).toBe(404);

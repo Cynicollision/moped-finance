@@ -16,7 +16,7 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 - [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images).
 
 ### Tests
-- [ ] Name existing tests after the requirement they cover (`it('ACCT-1.5 should ...')`), as the conventions ask for new ones. Server tests are about half done: `account-routes.spec.ts` (15 of 39), `category-routes.spec.ts` (20 of 33), `auth-routes.spec.ts` (9 of 18), `institution-routes.spec.ts` (1 of 11), `budget-stream-routes.spec.ts` (6 of 12), `transaction-routes.spec.ts` (38 of 53). The client is mostly done; the stragglers are `login`, `register`, `auth.service`, `finance.service`, `layout.service` and `chart.component` specs. Leave tests of plumbing that no requirement covers (utilities, `calendar-date-util.spec.ts`) as they are; don't invent requirements to name them after. A test that turns out to check behavior the requirements don't describe is worth a note in the domain's Known gaps. One PR per package.
+- [ ] Name existing client tests after the requirement they cover (`it('AUTH-1.2 should ...')`), as the conventions ask for new ones. The server is done; the client stragglers are the `login`, `register`, `auth.service`, `finance.service`, `layout.service` and `chart.component` specs. Leave tests of plumbing that no requirement covers (utilities, `calendar-date-util.spec.ts`) as they are; don't invent requirements to name them after. A test that turns out to check behavior the requirements don't describe is worth a note in the domain's Known gaps.
 
 ---
 
