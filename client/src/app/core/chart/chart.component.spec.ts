@@ -63,7 +63,7 @@ describe('ChartComponent', () => {
         return { fixture, canvas };
     }
 
-    it('should draw the chart once the view has rendered, following its container', async () => {
+    it('APP-2.5 should draw the chart once the view has rendered, following its container', async () => {
         const { canvas } = await render(line([1, 2, 3]));
 
         const chart = Chart.getChart(canvas)!;

@@ -28,7 +28,7 @@ describe('AuthService', () => {
         };
     }
 
-    it('should take the signed-in user from the session', async () => {
+    it('AUTH-3.1 should take the signed-in user from the session', async () => {
         const { auth, http } = setup();
 
         const check = auth.checkSession();
@@ -38,7 +38,7 @@ describe('AuthService', () => {
         expect(auth.currentUser()).toEqual(user);
     });
 
-    it('should have no user when the session has none, without reporting an error', async () => {
+    it('AUTH-3.1 should have no user when the session has none, without reporting an error', async () => {
         const { auth, http, notificationService } = setup();
 
         const check = auth.checkSession();

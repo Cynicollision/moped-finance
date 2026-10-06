@@ -35,11 +35,36 @@ describe('RegisterComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create the component', () => {
-        expect(component).toBeTruthy();
+    function registerButton(): HTMLButtonElement {
+        return fixture.nativeElement.querySelector('button[type="submit"]');
+    }
+
+    it('AUTH-2.1 should show the four fields, a Register button and a link to Login', () => {
+        const element = fixture.nativeElement as HTMLElement;
+        const labels = Array.from(element.querySelectorAll('mat-label')).map(label => label.textContent?.trim());
+        const link = element.querySelector<HTMLAnchorElement>('.login-prompt a')!;
+
+        expect(labels).toEqual(['Username', 'Display Name', 'Password', 'Confirm Password']);
+        expect(registerButton().textContent?.trim()).toBe('Register');
+        expect(link.textContent).toBe('Login here');
+        expect(link.getAttribute('href')).toBe('/login');
     });
 
-    it('should show error if passwords do not match', async () => {
+    it('AUTH-2.2 should keep Register disabled until all four fields are filled', async () => {
+        component.username.set('testuser');
+        component.displayName.set('Test User');
+        component.password.set('password123');
+        await fixture.whenStable();
+        const withThree = registerButton().disabled;
+
+        component.confirmPassword.set('password123');
+        await fixture.whenStable();
+
+        expect(withThree).toBe(true);
+        expect(registerButton().disabled).toBe(false);
+    });
+
+    it('AUTH-2.3 should show error if passwords do not match', async () => {
         component.username.set('testuser');
         component.displayName.set('Test User');
         component.password.set('password123');
@@ -51,7 +76,7 @@ describe('RegisterComponent', () => {
         expect(mockAuthService.register).not.toHaveBeenCalled();
     });
 
-    it('should render the error message', async () => {
+    it('AUTH-2.3 should render the error message', async () => {
         component.username.set('testuser');
         component.displayName.set('Test User');
         component.password.set('password123');
@@ -63,7 +88,7 @@ describe('RegisterComponent', () => {
         expect(fixture.nativeElement.querySelector('.error-message')?.textContent).toContain('Passwords do not match.');
     });
 
-    it('should show error if fields are missing', async () => {
+    it('AUTH-2.2 should show error if fields are missing', async () => {
         component.username.set('');
         component.displayName.set('Test User');
         component.password.set('password123');
@@ -75,7 +100,7 @@ describe('RegisterComponent', () => {
         expect(mockAuthService.register).not.toHaveBeenCalled();
     });
 
-    it('should call AuthService.register if validations pass', async () => {
+    it('AUTH-2.5 should call AuthService.register if validations pass', async () => {
         component.username.set('testuser');
         component.displayName.set('Test User');
         component.password.set('password123');
