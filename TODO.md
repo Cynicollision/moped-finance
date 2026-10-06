@@ -22,9 +22,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 2. Category import and export
-- [ ] CAT-7.1 to CAT-7.5: Download Categories and Import Categories (dry run, add-only, groups created by name), through `@server/csv`.
-
 ### 3. Account types
 - [ ] ACCT-1.1, 1.2, 1.8, 1.10, 1.11; DASH-2.1, 2.5: single **Type** field, with group and Asset/Liability derived from it; migration renaming stored values, typing existing credit cards, making type required; server refuses mismatched types; Retirement defaults by type; Dashboard gets Other Assets, the right group order and name sorting. Fix the `account-routes.spec.ts` ACCT-1.5 test that clears type with null. Also INST-1.1's ordering (institutions and their accounts by name).
 
@@ -62,7 +59,7 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 - [ ] AUTH-5.2, 5.3: Change Password in Settings. AUTH-9.1 to 9.4, AUTH-2.11: password rules (length, character classes) stored with the instance, editable in Settings, shown live under every password field and enforced by the server.
 
 ### 15. Register screen
-- [ ] AUTH-2.8, 2.9, 2.10; CAT-6.1, 6.2: explain single-owner registration, field limits for username and display name, and **Start with default categories** (the CAT-6 list, with necessities) or **Start empty**. Known gap: close the AUTH-2.7 registration race (two simultaneous registrations on a fresh instance) at the database.
+- [ ] AUTH-2.8, 2.9, 2.10; CAT-6.1, 6.2: explain single-owner registration, field limits for username and display name, and **Start with default categories** (the CAT-6 list, with necessities) or **Start empty**. Ship the defaults as a CSV in the CAT-7.1 format and load them with `CategoryCsv.read` and `FinanceCategoryData.insertBulk` (`category-csv.ts`, `category-data.ts`), as categories.md's Notes suggest. Known gap: close the AUTH-2.7 registration race (two simultaneous registrations on a fresh instance) at the database.
 
 ### 16. Sign-in protection
 - [ ] AUTH-10.1 to 10.6: per-address lockout after failed sign-ins, settings for the limits, logged lockouts, and `TRUST_FIRST_PROXY` for the client address behind a proxy.

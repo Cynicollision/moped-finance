@@ -63,13 +63,16 @@ export class CsvValue {
         return { success: true, value };
     }
 
-    /** Accepts true or false in any case; blank is false. */
-    public static boolean(field: string, text: string): CsvValueResult<boolean> {
+    /** Accepts true or false in any case; blank is `blank` (false unless given). */
+    public static boolean(field: string, text: string, blank = false): CsvValueResult<boolean> {
         const lower = text.toLowerCase();
+        if (lower === '') {
+            return { success: true, value: blank };
+        }
         if (lower === 'true') {
             return { success: true, value: true };
         }
-        if (lower === 'false' || lower === '') {
+        if (lower === 'false') {
             return { success: true, value: false };
         }
         return { success: false, message: `${field} must be true, false or blank.` };

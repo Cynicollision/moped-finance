@@ -1,18 +1,23 @@
 import { eq, and, count, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CategoryNecessity } from '@shared/finance/enum';
-import { Category, CategoryUsage } from '@shared/finance/types';
+import { Category, CategoryGroup, CategoryUsage } from '@shared/finance/types';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { budgetStreamSchema } from './../budget/budget-stream-schema';
 import { transactionSchema } from './../transactions/transaction-schema';
+import { categoryGroupSchema } from './category-groups/category-group-schema';
 import { categorySchema } from './category-schema';
+
+const bulkInsertChunkSize = 1000;
 
 export interface IFinanceCategoryData {
     retrieveAll(activeOnly?: boolean): Promise<Category[]>;
     retrieveSingle(id: string): Promise<Category | null>;
     retrieveUsage(id: string): Promise<CategoryUsage>;
     insert(category: Category): Promise<Category>;
+    /** Inserts new groups and the categories in them, all together or none (CAT-7.2). */
+    insertBulk(categories: Category[], groups: CategoryGroup[]): Promise<void>;
     update(category: Category): Promise<Category | null>;
     /** Moves the category's transactions to `moveToId` (Uncategorized when null) and deletes it, together or not at all. */
     delete(id: string, moveToId?: string | null): Promise<boolean>;
@@ -109,6 +114,29 @@ export class FinanceCategoryData implements IFinanceCategoryData {
             .returning();
 
         return mapRowToCategory(rows[0]);
+    }
+
+    public async insertBulk(categories: Category[], groups: CategoryGroup[]): Promise<void> {
+        // One transaction, so a failure in any chunk rolls back the rest. Groups go first, for the categories' foreign key.
+        await this.db.transaction(async tx => {
+            for (let i = 0; i < groups.length; i += bulkInsertChunkSize) {
+                const chunk = groups.slice(i, i + bulkInsertChunkSize);
+                await tx.insert(categoryGroupSchema).values(chunk.map(g => ({ id: g.id, type: g.type, name: g.name })));
+            }
+            for (let i = 0; i < categories.length; i += bulkInsertChunkSize) {
+                const chunk = categories.slice(i, i + bulkInsertChunkSize);
+                await tx.insert(categorySchema).values(
+                    chunk.map(c => ({
+                        id: c.id,
+                        groupId: c.groupId,
+                        icon: c.icon || null,
+                        name: c.name,
+                        isActive: c.isActive,
+                        necessity: c.necessity
+                    }))
+                );
+            }
+        });
     }
 
     public async update(category: Category): Promise<Category | null> {

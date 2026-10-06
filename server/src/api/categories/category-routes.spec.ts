@@ -643,4 +643,307 @@ describe('Category Routes', () => {
             });
         });
     });
+
+    // ---------------------------------------------------------
+    // CSV EXPORT AND IMPORT
+    // ---------------------------------------------------------
+    describe('CSV', () => {
+        const header = 'Type,Group,Name,Icon,Necessity,IsActive\n';
+
+        async function addGroup(type: CategoryType, name: string) {
+            return groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type, name }));
+        }
+
+        async function addCategory(groupId: string, name: string, fields: Partial<Category> = {}) {
+            return categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId, name, icon: '', isActive: true, ...fields })
+            );
+        }
+
+        function importCsv(rows: string, query = '') {
+            return request(app)
+                .post(`/categories/import${query}`)
+                .attach('file', Buffer.from(header + rows), 'categories.csv');
+        }
+
+        async function savedCategories() {
+            const groups = new Map((await groupsData.retrieveAll()).map(g => [g.id, g]));
+            return (await categoriesData.retrieveAll())
+                .map(c => ({
+                    type: groups.get(c.groupId)!.type,
+                    group: groups.get(c.groupId)!.name,
+                    name: c.name,
+                    icon: c.icon,
+                    necessity: c.necessity,
+                    isActive: c.isActive
+                }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        describe('GET /categories/export', () => {
+            it('CAT-7.1 should write one row per category, ordered by type, group and name', async () => {
+                const food = await addGroup(CategoryType.Expense, 'food');
+                const bills = await addGroup(CategoryType.Expense, 'Bills');
+                const income = await addGroup(CategoryType.Income, 'Income');
+                const transfers = await addGroup(CategoryType.Transfer, 'Transfers');
+                await addGroup(CategoryType.Expense, 'Empty');
+                await addCategory(transfers.id, 'Card Payment', { icon: '💳' });
+                await addCategory(food.id, 'groceries', { necessity: CategoryNecessity.Essential });
+                await addCategory(food.id, 'Coffee', { icon: '☕', necessity: CategoryNecessity.Discretionary });
+                await addCategory(bills.id, 'Internet', { isActive: false });
+                await addCategory(income.id, 'Paycheck', { icon: '💼' });
+
+                const response = await request(app).get('/categories/export');
+
+                expect(response.status).toBe(200);
+                expect(response.header['content-type']).toContain('text/csv');
+                expect(response.header['content-disposition']).toMatch(
+                    /attachment; filename="Categories_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.csv"/
+                );
+                expect(response.text).toBe(
+                    header +
+                        'Income,Income,Paycheck,💼,,true\n' +
+                        'Expense,Bills,Internet,,,false\n' +
+                        'Expense,food,Coffee,☕,Discretionary,true\n' +
+                        'Expense,food,groceries,,Essential,true\n' +
+                        'Transfer,Transfers,Card Payment,💳,,true\n'
+                );
+            });
+
+            it('CAT-7.1 should write only the header when there are no categories', async () => {
+                await addGroup(CategoryType.Expense, 'Empty');
+
+                const response = await request(app).get('/categories/export');
+
+                expect(response.text).toBe(header);
+            });
+
+            it('CAT-7.1 should re-import its own export unchanged', async () => {
+                const food = await addGroup(CategoryType.Expense, 'Food, "Drink"');
+                await addCategory(food.id, 'Cooking', { icon: '🧑‍🍳', necessity: CategoryNecessity.Essential });
+                await addCategory(food.id, 'Old', { isActive: false });
+                const before = await savedCategories();
+                const exported = await request(app).get('/categories/export');
+                await TestDatabaseUtil.clearFinanceData(pglite);
+
+                const response = await request(app)
+                    .post('/categories/import')
+                    .attach('file', Buffer.from(exported.text), 'export.csv');
+
+                expect(response.status).toBe(201);
+                expect(await savedCategories()).toEqual(before);
+            });
+        });
+
+        describe('POST /categories/import', () => {
+            it('CAT-7.2 CAT-7.4 should create the categories and the groups they need, matching groups ignoring case', async () => {
+                await addGroup(CategoryType.Expense, 'Food');
+
+                const response = await importCsv(
+                    'expense,food,Groceries,🛒,essential,\n' +
+                        'Expense,Pets,Vet,,Essential,TRUE\n' +
+                        'EXPENSE,pets,Toys,,,false\n' +
+                        'Income,Side Income,Freelance,,,\n'
+                );
+
+                expect(response.status).toBe(201);
+                expect(response.body).toEqual({
+                    createdCount: 4,
+                    newGroups: [
+                        { name: 'Pets', type: CategoryType.Expense },
+                        { name: 'Side Income', type: CategoryType.Income }
+                    ],
+                    skippedNames: [],
+                    failedRowMessages: [],
+                    isValidToImport: true,
+                    resultMessage: 'Imported 4 categories.'
+                });
+                expect(await savedCategories()).toEqual([
+                    {
+                        type: CategoryType.Income,
+                        group: 'Side Income',
+                        name: 'Freelance',
+                        icon: '',
+                        necessity: null,
+                        isActive: true
+                    },
+                    {
+                        type: CategoryType.Expense,
+                        group: 'Food',
+                        name: 'Groceries',
+                        icon: '🛒',
+                        necessity: CategoryNecessity.Essential,
+                        isActive: true
+                    },
+                    {
+                        type: CategoryType.Expense,
+                        group: 'Pets',
+                        name: 'Toys',
+                        icon: '',
+                        necessity: null,
+                        isActive: false
+                    },
+                    {
+                        type: CategoryType.Expense,
+                        group: 'Pets',
+                        name: 'Vet',
+                        icon: '',
+                        necessity: CategoryNecessity.Essential,
+                        isActive: true
+                    }
+                ]);
+            });
+
+            it('CAT-7.2 should report what a dry run would do, and save nothing', async () => {
+                const response = await importCsv('Expense,Pets,Vet,,,\n', '?dryRun=true');
+
+                expect(response.status).toBe(200);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        createdCount: 1,
+                        newGroups: [{ name: 'Pets', type: CategoryType.Expense }],
+                        isValidToImport: true
+                    })
+                );
+                expect(await groupsData.retrieveAll()).toEqual([]);
+                expect(await categoriesData.retrieveAll()).toEqual([]);
+            });
+
+            it('CAT-7.3 should skip a category that already exists, ignoring case, and leave it unchanged', async () => {
+                const food = await addGroup(CategoryType.Expense, 'Food');
+                await addCategory(food.id, 'Coffee', { necessity: CategoryNecessity.Discretionary });
+
+                const response = await importCsv('Expense,Drinks,coffee,☕,Essential,false\nExpense,Food,Tea,,,\n');
+
+                expect(response.status).toBe(201);
+                expect(response.body).toEqual(
+                    expect.objectContaining({ createdCount: 1, newGroups: [], skippedNames: ['coffee'] })
+                );
+                expect(await savedCategories()).toEqual([
+                    {
+                        type: CategoryType.Expense,
+                        group: 'Food',
+                        name: 'Coffee',
+                        icon: '',
+                        necessity: CategoryNecessity.Discretionary,
+                        isActive: true
+                    },
+                    expect.objectContaining({ group: 'Food', name: 'Tea' })
+                ]);
+            });
+
+            it('CAT-7.4 should not create a group whose rows are all skipped', async () => {
+                const food = await addGroup(CategoryType.Expense, 'Food');
+                await addCategory(food.id, 'Coffee');
+
+                const response = await importCsv('Expense,Drinks,Coffee,,,\n');
+
+                expect(response.status).toBe(201);
+                expect(response.body.newGroups).toEqual([]);
+                expect((await groupsData.retrieveAll()).map(g => g.name)).toEqual(['Food']);
+            });
+
+            it('CAT-7.4 should refuse a row whose group exists with another type', async () => {
+                await addGroup(CategoryType.Expense, 'Food');
+
+                const response = await importCsv('Expense,Pets,Vet,,,\nIncome,food,Refunds,,,\n', '?dryRun=true');
+
+                expect(response.body.isValidToImport).toBe(false);
+                expect(response.body.failedRowMessages).toEqual([
+                    "Row 3: Group 'Food' is an Expense group, not Income."
+                ]);
+            });
+
+            it('CAT-7.4 should refuse a row that gives a new group a different type from an earlier row', async () => {
+                const response = await importCsv(
+                    'Expense,Pets,Vet,,,\nTransfer,Savings,Move,,,\nIncome,pets,Pet Sitting,,,\nExpense,Savings,Fees,,,\n',
+                    '?dryRun=true'
+                );
+
+                expect(response.body.failedRowMessages).toEqual([
+                    "Row 4: Group 'Pets' is an Expense group in row 2, not Income.",
+                    "Row 5: Group 'Savings' is a Transfer group in row 3, not Expense."
+                ]);
+            });
+
+            it('CAT-7.5 should report every problem in a row as one message', async () => {
+                const response = await importCsv(
+                    'Spending,,,home,Vital,maybe\n' +
+                        `Income,${'G'.repeat(101)},Salary,🏠🏠,Essential,\n` +
+                        'Transfer,Moves,Uncategorized,,,\n' +
+                        'Expense,Food,Coffee,,,\n' +
+                        'Expense,Drinks,COFFEE,,,\n' +
+                        'Expense,Food\n',
+                    '?dryRun=true'
+                );
+
+                expect(response.status).toBe(200);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        isValidToImport: false,
+                        createdCount: 0,
+                        newGroups: [],
+                        resultMessage: 'Found errors in 5 of 6 rows.',
+                        failedRowMessages: [
+                            "Row 2: Type 'Spending' must be Income, Expense or Transfer. Group is required. Name is required. Icon 'home' is not a single emoji. Necessity 'Vital' must be Essential, Discretionary or blank. IsActive must be true, false or blank.",
+                            "Row 3: Group is longer than 100 characters. Icon '🏠🏠' is not a single emoji. Necessity must be blank for an Income category.",
+                            'Row 4: Uncategorized is reserved for transactions without a category.',
+                            "Row 6: Name 'COFFEE' is already in row 5.",
+                            'Row 7: Expected 6 columns. Name is required.'
+                        ]
+                    })
+                );
+            });
+
+            it('CAT-7.5 should require a type', async () => {
+                const response = await importCsv(',Food,Coffee,,,\n', '?dryRun=true');
+
+                expect(response.body.failedRowMessages).toEqual(['Row 2: Type is required.']);
+            });
+
+            it('CAT-7.2 should save nothing and return 400 when a confirmed import has a bad row', async () => {
+                const response = await importCsv('Expense,Pets,Vet,,,\nExpense,Pets,,,,\n');
+
+                expect(response.status).toBe(400);
+                expect(response.body.code).toBe('INVALID_IMPORT');
+                expect(response.body.message).toBe('Nothing was imported. Found errors in 1 of 2 rows.');
+                expect(response.body.details.failedRowMessages).toEqual(['Row 3: Name is required.']);
+                expect(await groupsData.retrieveAll()).toEqual([]);
+                expect(await categoriesData.retrieveAll()).toEqual([]);
+            });
+
+            it('CAT-7.2 should save none of the groups or categories when the database rejects one', async () => {
+                // A trigger stands in for any database failure partway through the insert.
+                await pglite.exec(`
+                    CREATE FUNCTION finance.reject_boom() RETURNS trigger AS $$
+                    BEGIN
+                        IF NEW.name = 'Boom' THEN RAISE EXCEPTION 'boom'; END IF;
+                        RETURN NEW;
+                    END $$ LANGUAGE plpgsql;
+                    CREATE TRIGGER reject_boom BEFORE INSERT ON finance.categories FOR EACH ROW EXECUTE FUNCTION finance.reject_boom();
+                `);
+
+                try {
+                    const response = await importCsv('Expense,Pets,Vet,,,\nExpense,Pets,Boom,,,\n');
+
+                    expect(response.status).toBe(500);
+                    expect(await groupsData.retrieveAll()).toEqual([]);
+                    expect(await categoriesData.retrieveAll()).toEqual([]);
+                } finally {
+                    await pglite.exec(
+                        'DROP TRIGGER reject_boom ON finance.categories; DROP FUNCTION finance.reject_boom();'
+                    );
+                }
+            });
+
+            it('CAT-7.2 should refuse a file missing a column', async () => {
+                const response = await request(app)
+                    .post('/categories/import?dryRun=true')
+                    .attach('file', Buffer.from('Type,Group,Name\nExpense,Food,Coffee\n'), 'categories.csv');
+
+                expect(response.status).toBe(400);
+                expect(response.body.message).toBe('Missing required CSV headers: Icon, Necessity, IsActive');
+            });
+        });
+    });
 });

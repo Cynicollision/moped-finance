@@ -67,6 +67,8 @@ export class CsvFile {
     /** Writes a CSV with a header row and a final newline, so an empty list is just the header. */
     public static write<T>(columns: CsvColumn<T>[], rows: T[]): string {
         const data = rows.map(row => columns.map(column => column.value(row)));
-        return Papa.unparse({ fields: columns.map(c => c.header), data }, { newline: '\n' }) + '\n';
+        // Papa ends a header-only file with a newline but not one with rows, so add it only when it's missing.
+        const text = Papa.unparse({ fields: columns.map(c => c.header), data }, { newline: '\n' });
+        return text.endsWith('\n') ? text : text + '\n';
     }
 }

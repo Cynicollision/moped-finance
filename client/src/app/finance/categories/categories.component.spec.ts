@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
@@ -17,7 +18,8 @@ describe('FinanceCategoriesComponent', () => {
                     provide: FinanceService,
                     useValue: {
                         fetchCategoryGroups: vi.fn().mockResolvedValue(groups),
-                        fetchCategories: vi.fn().mockResolvedValue(categories)
+                        fetchCategories: vi.fn().mockResolvedValue(categories),
+                        getExportCategoriesUrl: () => 'api/v1/categories/export'
                     }
                 },
                 { provide: ModalService, useValue: { open: vi.fn() } },
@@ -28,6 +30,12 @@ describe('FinanceCategoriesComponent', () => {
         const fixture = TestBed.createComponent(FinanceCategoriesComponent);
         await fixture.whenStable();
         return fixture.nativeElement as HTMLElement;
+    }
+
+    async function openMenu(element: HTMLElement) {
+        element.querySelector<HTMLButtonElement>('button[aria-label="More options"]')!.click();
+        await TestBed.inject(ApplicationRef).whenStable();
+        return Array.from(document.querySelectorAll<HTMLElement>('.cdk-overlay-container [mat-menu-item]'));
     }
 
     function sections(element: HTMLElement) {
@@ -104,5 +112,23 @@ describe('FinanceCategoriesComponent', () => {
             ['Groceries', 'Essential'],
             ['Snacks', undefined]
         ]);
+    });
+
+    it('CAT-7.1 CAT-7.2 should offer Import Categories and Download Categories in the menu', async () => {
+        const open = vi.spyOn(window, 'open').mockReturnValue(null);
+        const element = await render([], []);
+
+        const items = await openMenu(element);
+
+        expect(items.map(item => item.querySelector('span')!.textContent)).toEqual([
+            'Create Group',
+            'Create Category',
+            'Import Categories',
+            'Download Categories'
+        ]);
+        expect(items[2].getAttribute('href')).toBe('/settings/categories/import');
+        items[3].click();
+        expect(open).toHaveBeenCalledWith('api/v1/categories/export', '_blank');
+        open.mockRestore();
     });
 });
