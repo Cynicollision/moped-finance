@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { CalendarPeriod } from '@shared/core/enum';
-import { AccountCategory, AccountGroup, AccountType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
+import { AccountType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { FinanceAccountData } from '@server/api/accounts/account-data';
 import { FinanceBalanceHistoryData } from '@server/api/accounts/balance-history-data';
 import { FinanceBudgetStreamData } from '@server/api/budget/budget-stream-data';
@@ -67,15 +67,11 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         const institutionIds = new Map<string, string>();
         const accountIds = new Map<string, string>();
         const accountsFile = 'accounts.csv';
-        for (const row of readRows(accountsFile, [
-            'InstitutionName',
-            'Name',
-            'Category',
-            'Group',
-            'Type',
-            'IsHidden',
-            'IsRetirement'
-        ])) {
+        const accountTypes: string[] = Object.values(AccountType);
+        for (const row of readRows(accountsFile, ['InstitutionName', 'Name', 'Type', 'IsHidden'])) {
+            if (!accountTypes.includes(row.values['Type'])) {
+                throw new Error(`${accountsFile} row ${row.rowNumber}: unknown type '${row.values['Type']}'.`);
+            }
             let institutionId = institutionIds.get(row.values['InstitutionName'].toLowerCase());
             if (!institutionId) {
                 const institution = await institutionData.insert(
@@ -88,16 +84,9 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
                 FinanceEntityFactory.createAccount({
                     institutionId,
                     name: row.values['Name'],
-                    category: row.values['Category'] as AccountCategory,
-                    group: row.values['Group'] as AccountGroup,
-                    type: (row.values['Type'] || null) as AccountType | null,
+                    type: row.values['Type'] as AccountType,
                     isHidden: valueOf(accountsFile, row, CsvValue.boolean('IsHidden', row.values['IsHidden'])),
                     isManual: false,
-                    isRetirement: valueOf(
-                        accountsFile,
-                        row,
-                        CsvValue.boolean('IsRetirement', row.values['IsRetirement'])
-                    ),
                     hideFromSpending: false
                 })
             );

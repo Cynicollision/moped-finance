@@ -1,9 +1,10 @@
-import { eq, and, desc, sum, gte, lte } from 'drizzle-orm';
+import { eq, and, desc, sum, gte, inArray, lte } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CalendarDate } from '@shared/core/types';
 import { TotalValueHistory } from '@shared/finance/contracts';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
+import { AccountTypeUtil } from '@shared/finance/util';
 import { IDatabaseClient } from '@server/data';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
@@ -93,9 +94,9 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         const conditions = [gte(balanceHistorySchema.date, startDate), lte(balanceHistorySchema.date, endDate)];
 
         if (type === ValueHistoryType.Assets) {
-            conditions.push(eq(accountSchema.category, AccountCategory.Asset));
+            conditions.push(inArray(accountSchema.type, AccountTypeUtil.typesIn(AccountCategory.Asset)));
         } else if (type === ValueHistoryType.Liabilities) {
-            conditions.push(eq(accountSchema.category, AccountCategory.Liability));
+            conditions.push(inArray(accountSchema.type, AccountTypeUtil.typesIn(AccountCategory.Liability)));
         }
 
         const rows = await this.db

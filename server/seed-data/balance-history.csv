@@ -8,6 +8,7 @@ Date,AccountName,Balance
 2024-02-29,Brokerage,9500.00
 2024-02-29,Home,398000.00
 2024-02-29,Mortgage,-321500.00
+2024-02-29,Family Car,26500.00
 2024-03-03,Everyday Checking,2850.00
 2024-03-03,High-Yield Savings,9000.00
 2024-03-03,Rewards Visa,-1725.16
@@ -17,6 +18,7 @@ Date,AccountName,Balance
 2024-03-03,Brokerage,9931.57
 2024-03-03,Home,397800.00
 2024-03-03,Mortgage,-321190.52
+2024-03-03,Family Car,26467.19
 2024-03-06,Everyday Checking,2850.00
 2024-03-06,High-Yield Savings,9000.00
 2024-03-06,Rewards Visa,-1780.62
@@ -26,6 +28,7 @@ Date,AccountName,Balance
 2024-03-06,Brokerage,9947.30
 2024-03-06,Home,397800.00
 2024-03-06,Mortgage,-321190.52
+2024-03-06,Family Car,26434.43
 2024-03-09,Everyday Checking,2757.89
 2024-03-09,High-Yield Savings,9000.00
 2024-03-09,Rewards Visa,-2089.81
@@ -35,6 +38,7 @@ Date,AccountName,Balance
 2024-03-09,Brokerage,9861.97
 2024-03-09,Home,397900.00
 2024-03-09,Mortgage,-321190.52
+2024-03-09,Family Car,26401.70
 2024-03-12,Everyday Checking,2687.90
 2024-03-12,High-Yield Savings,9000.00
 2024-03-12,Rewards Visa,-2140.12
@@ -44,6 +48,7 @@ Date,AccountName,Balance
 2024-03-12,Brokerage,10016.72
 2024-03-12,Home,397600.00
 2024-03-12,Mortgage,-321190.52
+2024-03-12,Family Car,26369.01
 2024-03-15,Everyday Checking,6287.90
 2024-03-15,High-Yield Savings,9000.00
 2024-03-15,Rewards Visa,-2196.13
@@ -53,6 +58,7 @@ Date,AccountName,Balance
 2024-03-15,Brokerage,9905.60
 2024-03-15,Home,398000.00
 2024-03-15,Mortgage,-321190.52
+2024-03-15,Family Car,26336.37
 2024-03-18,Everyday Checking,4741.00
 2024-03-18,High-Yield Savings,10500.00
 2024-03-18,Rewards Visa,-2368.01
@@ -62,6 +68,7 @@ Date,AccountName,Balance
 2024-03-18,Brokerage,9945.39
 2024-03-18,Home,398400.00
 2024-03-18,Mortgage,-321190.52
+2024-03-18,Family Car,26303.76
 2024-03-21,Everyday Checking,4676.00
 2024-03-21,High-Yield Savings,10500.00
 2024-03-21,Rewards Visa,-2373.04
@@ -71,6 +78,7 @@ Date,AccountName,Balance
 2024-03-21,Brokerage,10056.68
 2024-03-21,Home,398900.00
 2024-03-21,Mortgage,-321190.52
+2024-03-21,Family Car,26271.20
 2024-03-24,Everyday Checking,4676.00
 2024-03-24,High-Yield Savings,10500.00
 2024-03-24,Rewards Visa,-2450.00
@@ -80,6 +88,7 @@ Date,AccountName,Balance
 2024-03-24,Brokerage,10037.90
 2024-03-24,Home,399200.00
 2024-03-24,Mortgage,-321190.52
+2024-03-24,Family Car,26238.67
 2024-03-27,Everyday Checking,2226.00
 2024-03-27,High-Yield Savings,10500.00
 2024-03-27,Rewards Visa,-95.83
@@ -89,6 +98,7 @@ Date,AccountName,Balance
 2024-03-27,Brokerage,10073.35
 2024-03-27,Home,399700.00
 2024-03-27,Mortgage,-321190.52
+2024-03-27,Family Car,26206.19
 2024-03-30,Everyday Checking,5826.00
 2024-03-30,High-Yield Savings,10500.00
 2024-03-30,Rewards Visa,-102.94
@@ -98,6 +108,7 @@ Date,AccountName,Balance
 2024-03-30,Brokerage,10100.71
 2024-03-30,Home,399900.00
 2024-03-30,Mortgage,-321190.52
+2024-03-30,Family Car,26173.75
 2024-04-02,Everyday Checking,3476.00
 2024-04-02,High-Yield Savings,10546.33
 2024-04-02,Rewards Visa,-160.05
@@ -107,6 +118,7 @@ Date,AccountName,Balance
 2024-04-02,Brokerage,10686.00
 2024-04-02,Home,400300.00
 2024-04-02,Mortgage,-320879.56
+2024-04-02,Family Car,26141.34
 2024-04-05,Everyday Checking,2937.50
 2024-04-05,High-Yield Savings,10546.33
 2024-04-05,Rewards Visa,-319.23
@@ -116,6 +128,7 @@ Date,AccountName,Balance
 2024-04-05,Brokerage,10798.50
 2024-04-05,Home,400800.00
 2024-04-05,Mortgage,-320879.56
+2024-04-05,Family Car,26108.98
 2024-04-08,Everyday Checking,2830.01
 2024-04-08,High-Yield Savings,10546.33
 2024-04-08,Rewards Visa,-327.65
@@ -125,6 +138,7 @@ Date,AccountName,Balance
 2024-04-08,Brokerage,10756.45
 2024-04-08,Home,400800.00
 2024-04-08,Mortgage,-320879.56
+2024-04-08,Family Car,26076.65
 2024-04-11,Everyday Checking,2830.01
 2024-04-11,High-Yield Savings,10546.33
 2024-04-11,Rewards Visa,-601.33
@@ -134,6 +148,7 @@ Date,AccountName,Balance
 2024-04-11,Brokerage,10597.90
 2024-04-11,Home,400600.00
 2024-04-11,Mortgage,-320879.56
+2024-04-11,Family Car,26044.37
 2024-04-14,Everyday Checking,2760.02
 2024-04-14,High-Yield Savings,10546.33
 2024-04-14,Rewards Visa,-684.87
@@ -143,6 +158,7 @@ Date,AccountName,Balance
 2024-04-14,Brokerage,10492.35
 2024-04-14,Home,400500.00
 2024-04-14,Mortgage,-320879.56
+2024-04-14,Family Car,26012.13
 2024-04-17,Everyday Checking,4860.02
 2024-04-17,High-Yield Savings,12046.33
 2024-04-17,Rewards Visa,-765.64
@@ -152,6 +168,7 @@ Date,AccountName,Balance
 2024-04-17,Brokerage,10450.38
 2024-04-17,Home,400200.00
 2024-04-17,Mortgage,-320879.56
+2024-04-17,Family Car,25979.92
 2024-04-20,Everyday Checking,4748.63
 2024-04-20,High-Yield Savings,12046.33
 2024-04-20,Rewards Visa,-772.16
@@ -161,6 +178,7 @@ Date,AccountName,Balance
 2024-04-20,Brokerage,10602.70
 2024-04-20,Home,400500.00
 2024-04-20,Mortgage,-320879.56
+2024-04-20,Family Car,25947.76
 2024-04-23,Everyday Checking,4748.63
 2024-04-23,High-Yield Savings,12046.33
 2024-04-23,Rewards Visa,-824.65
@@ -170,6 +188,7 @@ Date,AccountName,Balance
 2024-04-23,Brokerage,10558.01
 2024-04-23,Home,400800.00
 2024-04-23,Mortgage,-320879.56
+2024-04-23,Family Car,25915.64
 2024-04-26,Everyday Checking,3793.82
 2024-04-26,High-Yield Savings,12046.33
 2024-04-26,Rewards Visa,-110.87
@@ -179,6 +198,7 @@ Date,AccountName,Balance
 2024-04-26,Brokerage,10774.96
 2024-04-26,Home,400700.00
 2024-04-26,Mortgage,-320879.56
+2024-04-26,Family Car,25883.55
 2024-04-29,Everyday Checking,3793.82
 2024-04-29,High-Yield Savings,12046.33
 2024-04-29,Rewards Visa,-172.96
@@ -188,6 +208,7 @@ Date,AccountName,Balance
 2024-04-29,Brokerage,10662.19
 2024-04-29,Home,401100.00
 2024-04-29,Mortgage,-320879.56
+2024-04-29,Family Car,25851.51
 2024-05-02,Everyday Checking,5043.82
 2024-05-02,High-Yield Savings,12082.26
 2024-05-02,Rewards Visa,-309.31
@@ -197,6 +218,7 @@ Date,AccountName,Balance
 2024-05-02,Brokerage,11179.30
 2024-05-02,Home,400900.00
 2024-05-02,Mortgage,-320567.11
+2024-05-02,Family Car,25819.50
 2024-05-05,Everyday Checking,5043.82
 2024-05-05,High-Yield Savings,12082.26
 2024-05-05,Rewards Visa,-528.24
@@ -206,6 +228,7 @@ Date,AccountName,Balance
 2024-05-05,Brokerage,11133.03
 2024-05-05,Home,401000.00
 2024-05-05,Mortgage,-320567.11
+2024-05-05,Family Car,25787.54
 2024-05-08,Everyday Checking,3678.92
 2024-05-08,High-Yield Savings,12082.26
 2024-05-08,Rewards Visa,-654.84
@@ -215,6 +238,7 @@ Date,AccountName,Balance
 2024-05-08,Brokerage,11158.40
 2024-05-08,Home,401400.00
 2024-05-08,Mortgage,-320567.11
+2024-05-08,Family Car,25755.61
 2024-05-11,Everyday Checking,3678.92
 2024-05-11,High-Yield Savings,12082.26
 2024-05-11,Rewards Visa,-790.49
@@ -224,6 +248,7 @@ Date,AccountName,Balance
 2024-05-11,Brokerage,11128.97
 2024-05-11,Home,401400.00
 2024-05-11,Mortgage,-320567.11
+2024-05-11,Family Car,25723.73
 2024-05-14,Everyday Checking,3558.93
 2024-05-14,High-Yield Savings,12082.26
 2024-05-14,Rewards Visa,-861.33
@@ -233,6 +258,7 @@ Date,AccountName,Balance
 2024-05-14,Brokerage,11068.95
 2024-05-14,Home,401400.00
 2024-05-14,Mortgage,-320567.11
+2024-05-14,Family Car,25691.88
 2024-05-17,Everyday Checking,5658.93
 2024-05-17,High-Yield Savings,13582.26
 2024-05-17,Rewards Visa,-907.26
@@ -242,6 +268,7 @@ Date,AccountName,Balance
 2024-05-17,Brokerage,11263.88
 2024-05-17,Home,401200.00
 2024-05-17,Mortgage,-320567.11
+2024-05-17,Family Car,25660.07
 2024-05-20,Everyday Checking,5553.80
 2024-05-20,High-Yield Savings,13582.26
 2024-05-20,Rewards Visa,-1293.72
@@ -251,6 +278,7 @@ Date,AccountName,Balance
 2024-05-20,Brokerage,11351.46
 2024-05-20,Home,401300.00
 2024-05-20,Mortgage,-320567.11
+2024-05-20,Family Car,25628.30
 2024-05-23,Everyday Checking,5553.80
 2024-05-23,High-Yield Savings,13582.26
 2024-05-23,Rewards Visa,-1296.71
@@ -260,6 +288,7 @@ Date,AccountName,Balance
 2024-05-23,Brokerage,11571.44
 2024-05-23,Home,401300.00
 2024-05-23,Mortgage,-320567.11
+2024-05-23,Family Car,25596.58
 2024-05-26,Everyday Checking,4251.99
 2024-05-26,High-Yield Savings,13582.26
 2024-05-26,Rewards Visa,-200.76
@@ -269,6 +298,7 @@ Date,AccountName,Balance
 2024-05-26,Brokerage,11642.32
 2024-05-26,Home,401700.00
 2024-05-26,Mortgage,-320567.11
+2024-05-26,Family Car,25564.89
 2024-05-29,Everyday Checking,4251.99
 2024-05-29,High-Yield Savings,13582.26
 2024-05-29,Rewards Visa,-200.76
@@ -278,6 +308,7 @@ Date,AccountName,Balance
 2024-05-29,Brokerage,11863.04
 2024-05-29,Home,402100.00
 2024-05-29,Mortgage,-320567.11
+2024-05-29,Family Car,25533.24
 2024-06-01,Everyday Checking,6001.99
 2024-06-01,High-Yield Savings,13630.17
 2024-06-01,Rewards Visa,-321.25
@@ -287,6 +318,7 @@ Date,AccountName,Balance
 2024-06-01,Brokerage,11961.87
 2024-06-01,Home,402000.00
 2024-06-01,Mortgage,-320253.16
+2024-06-01,Family Car,25501.63
 2024-06-04,Everyday Checking,5501.99
 2024-06-04,High-Yield Savings,13630.17
 2024-06-04,Rewards Visa,-624.05
@@ -296,6 +328,7 @@ Date,AccountName,Balance
 2024-06-04,Brokerage,12370.51
 2024-06-04,Home,402300.00
 2024-06-04,Mortgage,-320253.16
+2024-06-04,Family Car,25470.05
 2024-06-07,Everyday Checking,5501.99
 2024-06-07,High-Yield Savings,13630.17
 2024-06-07,Rewards Visa,-636.47
@@ -305,6 +338,7 @@ Date,AccountName,Balance
 2024-06-07,Brokerage,12557.57
 2024-06-07,Home,402400.00
 2024-06-07,Mortgage,-320253.16
+2024-06-07,Family Car,25438.52
 2024-06-10,Everyday Checking,5344.91
 2024-06-10,High-Yield Savings,13630.17
 2024-06-10,Rewards Visa,-714.41
@@ -314,6 +348,7 @@ Date,AccountName,Balance
 2024-06-10,Brokerage,12671.24
 2024-06-10,Home,402700.00
 2024-06-10,Mortgage,-320253.16
+2024-06-10,Family Car,25407.03
 2024-06-13,Everyday Checking,5274.92
 2024-06-13,High-Yield Savings,13630.17
 2024-06-13,Rewards Visa,-963.90
@@ -323,6 +358,7 @@ Date,AccountName,Balance
 2024-06-13,Brokerage,12837.27
 2024-06-13,Home,402400.00
 2024-06-13,Mortgage,-320253.16
+2024-06-13,Family Car,25375.57
 2024-06-16,Everyday Checking,7374.92
 2024-06-16,High-Yield Savings,15130.17
 2024-06-16,Rewards Visa,-974.89
@@ -332,6 +368,7 @@ Date,AccountName,Balance
 2024-06-16,Brokerage,12669.32
 2024-06-16,Home,402600.00
 2024-06-16,Mortgage,-320253.16
+2024-06-16,Family Car,25344.16
 2024-06-19,Everyday Checking,7332.84
 2024-06-19,High-Yield Savings,15130.17
 2024-06-19,Rewards Visa,-1220.07
@@ -341,6 +378,7 @@ Date,AccountName,Balance
 2024-06-19,Brokerage,12535.46
 2024-06-19,Home,402900.00
 2024-06-19,Mortgage,-320253.16
+2024-06-19,Family Car,25312.78
 2024-06-22,Everyday Checking,7267.84
 2024-06-22,High-Yield Savings,15130.17
 2024-06-22,Rewards Visa,-1263.06
@@ -350,6 +388,7 @@ Date,AccountName,Balance
 2024-06-22,Brokerage,12693.26
 2024-06-22,Home,403100.00
 2024-06-22,Mortgage,-320253.16
+2024-06-22,Family Car,25281.44
 2024-06-25,Everyday Checking,5747.79
 2024-06-25,High-Yield Savings,15130.17
 2024-06-25,Rewards Visa,0.00
@@ -359,6 +398,7 @@ Date,AccountName,Balance
 2024-06-25,Brokerage,12688.35
 2024-06-25,Home,403600.00
 2024-06-25,Mortgage,-320253.16
+2024-06-25,Family Car,25250.14
 2024-06-28,Everyday Checking,9347.79
 2024-06-28,High-Yield Savings,15130.17
 2024-06-28,Rewards Visa,-185.27
@@ -368,6 +408,7 @@ Date,AccountName,Balance
 2024-06-28,Brokerage,12839.33
 2024-06-28,Home,403500.00
 2024-06-28,Mortgage,-320253.16
+2024-06-28,Family Car,25218.88
 2024-07-01,Everyday Checking,7497.79
 2024-07-01,High-Yield Savings,15162.13
 2024-07-01,Rewards Visa,-237.45
@@ -377,6 +418,7 @@ Date,AccountName,Balance
 2024-07-01,Brokerage,13065.04
 2024-07-01,Home,403700.00
 2024-07-01,Mortgage,-319937.70
+2024-07-01,Family Car,25187.66
 2024-07-04,Everyday Checking,6997.79
 2024-07-04,High-Yield Savings,15162.13
 2024-07-04,Rewards Visa,-542.12
@@ -386,6 +428,7 @@ Date,AccountName,Balance
 2024-07-04,Brokerage,13512.76
 2024-07-04,Home,404200.00
 2024-07-04,Mortgage,-319937.70
+2024-07-04,Family Car,25156.48
 2024-07-07,Everyday Checking,6459.29
 2024-07-07,High-Yield Savings,15162.13
 2024-07-07,Rewards Visa,-542.12
@@ -395,6 +438,7 @@ Date,AccountName,Balance
 2024-07-07,Brokerage,13386.79
 2024-07-07,Home,404500.00
 2024-07-07,Mortgage,-319937.70
+2024-07-07,Family Car,25125.33
 2024-07-10,Everyday Checking,6324.22
 2024-07-10,High-Yield Savings,15162.13
 2024-07-10,Rewards Visa,-840.09
@@ -404,6 +448,7 @@ Date,AccountName,Balance
 2024-07-10,Brokerage,13189.79
 2024-07-10,Home,404300.00
 2024-07-10,Mortgage,-319937.70
+2024-07-10,Family Car,25094.23
 2024-07-13,Everyday Checking,6254.23
 2024-07-13,High-Yield Savings,15162.13
 2024-07-13,Rewards Visa,-1508.41
@@ -413,6 +458,7 @@ Date,AccountName,Balance
 2024-07-13,Brokerage,13013.66
 2024-07-13,Home,404500.00
 2024-07-13,Mortgage,-319937.70
+2024-07-13,Family Car,25063.16
 2024-07-16,Everyday Checking,8354.23
 2024-07-16,High-Yield Savings,16662.13
 2024-07-16,Rewards Visa,-1547.80
@@ -422,6 +468,7 @@ Date,AccountName,Balance
 2024-07-16,Brokerage,13263.62
 2024-07-16,Home,404500.00
 2024-07-16,Mortgage,-319937.70
+2024-07-16,Family Car,25032.13
 2024-07-19,Everyday Checking,8315.73
 2024-07-19,High-Yield Savings,16662.13
 2024-07-19,Rewards Visa,-1884.05
@@ -431,6 +478,7 @@ Date,AccountName,Balance
 2024-07-19,Brokerage,13379.95
 2024-07-19,Home,405000.00
 2024-07-19,Mortgage,-319937.70
+2024-07-19,Family Car,25001.14
 2024-07-22,Everyday Checking,8250.73
 2024-07-22,High-Yield Savings,16662.13
 2024-07-22,Rewards Visa,-2001.08
@@ -440,6 +488,7 @@ Date,AccountName,Balance
 2024-07-22,Brokerage,13346.93
 2024-07-22,Home,405500.00
 2024-07-22,Mortgage,-319937.70
+2024-07-22,Family Car,24970.19
 2024-07-25,Everyday Checking,6084.59
 2024-07-25,High-Yield Savings,16662.13
 2024-07-25,Rewards Visa,0.00
@@ -449,6 +498,7 @@ Date,AccountName,Balance
 2024-07-25,Brokerage,13576.90
 2024-07-25,Home,405900.00
 2024-07-25,Mortgage,-319937.70
+2024-07-25,Family Car,24939.28
 2024-07-28,Everyday Checking,6084.59
 2024-07-28,High-Yield Savings,16662.13
 2024-07-28,Rewards Visa,-1364.00
@@ -458,6 +508,7 @@ Date,AccountName,Balance
 2024-07-28,Brokerage,13743.59
 2024-07-28,Home,405800.00
 2024-07-28,Mortgage,-319937.70
+2024-07-28,Family Car,24908.40
 2024-07-31,Everyday Checking,9684.59
 2024-07-31,High-Yield Savings,16705.09
 2024-07-31,Rewards Visa,-1532.96
@@ -467,6 +518,7 @@ Date,AccountName,Balance
 2024-07-31,Brokerage,13714.00
 2024-07-31,Home,406200.00
 2024-07-31,Mortgage,-319937.70
+2024-07-31,Family Car,24877.56
 2024-08-03,Everyday Checking,7334.59
 2024-08-03,High-Yield Savings,16705.09
 2024-08-03,Rewards Visa,-1732.30
@@ -476,6 +528,7 @@ Date,AccountName,Balance
 2024-08-03,Brokerage,14132.07
 2024-08-03,Home,406300.00
 2024-08-03,Mortgage,-319620.74
+2024-08-03,Family Car,24846.77
 2024-08-06,Everyday Checking,7284.59
 2024-08-06,High-Yield Savings,16705.09
 2024-08-06,Rewards Visa,-1732.30
@@ -485,6 +538,7 @@ Date,AccountName,Balance
 2024-08-06,Brokerage,14090.06
 2024-08-06,Home,406800.00
 2024-08-06,Mortgage,-319620.74
+2024-08-06,Family Car,24816.00
 2024-08-09,Everyday Checking,7140.14
 2024-08-09,High-Yield Savings,16705.09
 2024-08-09,Rewards Visa,-1865.07
@@ -494,6 +548,7 @@ Date,AccountName,Balance
 2024-08-09,Brokerage,13918.05
 2024-08-09,Home,407200.00
 2024-08-09,Mortgage,-319620.74
+2024-08-09,Family Car,24785.28
 2024-08-12,Everyday Checking,7070.15
 2024-08-12,High-Yield Savings,16705.09
 2024-08-12,Rewards Visa,-2089.61
@@ -503,6 +558,7 @@ Date,AccountName,Balance
 2024-08-12,Brokerage,13824.17
 2024-08-12,Home,407400.00
 2024-08-12,Mortgage,-319620.74
+2024-08-12,Family Car,24754.60
 2024-08-15,Everyday Checking,10670.15
 2024-08-15,High-Yield Savings,16705.09
 2024-08-15,Rewards Visa,-2196.91
@@ -512,6 +568,7 @@ Date,AccountName,Balance
 2024-08-15,Brokerage,13761.28
 2024-08-15,Home,407900.00
 2024-08-15,Mortgage,-319620.74
+2024-08-15,Family Car,24723.95
 2024-08-18,Everyday Checking,9112.03
 2024-08-18,High-Yield Savings,18205.09
 2024-08-18,Rewards Visa,-2593.33
@@ -521,6 +578,7 @@ Date,AccountName,Balance
 2024-08-18,Brokerage,13821.62
 2024-08-18,Home,407700.00
 2024-08-18,Mortgage,-319620.74
+2024-08-18,Family Car,24693.34
 2024-08-21,Everyday Checking,9047.03
 2024-08-21,High-Yield Savings,18205.09
 2024-08-21,Rewards Visa,-2653.93
@@ -530,6 +588,7 @@ Date,AccountName,Balance
 2024-08-21,Brokerage,13734.11
 2024-08-21,Home,408000.00
 2024-08-21,Mortgage,-319620.74
+2024-08-21,Family Car,24662.77
 2024-08-24,Everyday Checking,9047.03
 2024-08-24,High-Yield Savings,18205.09
 2024-08-24,Rewards Visa,-2663.37
@@ -539,6 +598,7 @@ Date,AccountName,Balance
 2024-08-24,Brokerage,13596.88
 2024-08-24,Home,407800.00
 2024-08-24,Mortgage,-319620.74
+2024-08-24,Family Car,24632.24
 2024-08-27,Everyday Checking,6383.66
 2024-08-27,High-Yield Savings,18205.09
 2024-08-27,Rewards Visa,-158.48
@@ -548,6 +608,7 @@ Date,AccountName,Balance
 2024-08-27,Brokerage,13570.16
 2024-08-27,Home,407700.00
 2024-08-27,Mortgage,-319620.74
+2024-08-27,Family Car,24601.74
 2024-08-30,Everyday Checking,9983.66
 2024-08-30,High-Yield Savings,18205.09
 2024-08-30,Rewards Visa,-182.61
@@ -557,6 +618,7 @@ Date,AccountName,Balance
 2024-08-30,Brokerage,13561.92
 2024-08-30,Home,408200.00
 2024-08-30,Mortgage,-319620.74
+2024-08-30,Family Car,24571.28
 2024-09-02,Everyday Checking,7633.66
 2024-09-02,High-Yield Savings,18252.03
 2024-09-02,Rewards Visa,-358.01
@@ -566,6 +628,7 @@ Date,AccountName,Balance
 2024-09-02,Brokerage,14158.79
 2024-09-02,Home,408000.00
 2024-09-02,Mortgage,-319302.25
+2024-09-02,Family Car,24540.86
 2024-09-05,Everyday Checking,7633.66
 2024-09-05,High-Yield Savings,18252.03
 2024-09-05,Rewards Visa,-541.63
@@ -575,6 +638,7 @@ Date,AccountName,Balance
 2024-09-05,Brokerage,13983.78
 2024-09-05,Home,408500.00
 2024-09-05,Mortgage,-319302.25
+2024-09-05,Family Car,24510.48
 2024-09-08,Everyday Checking,7538.49
 2024-09-08,High-Yield Savings,18252.03
 2024-09-08,Rewards Visa,-574.43
@@ -584,6 +648,7 @@ Date,AccountName,Balance
 2024-09-08,Brokerage,14078.61
 2024-09-08,Home,408500.00
 2024-09-08,Mortgage,-319302.25
+2024-09-08,Family Car,24480.14
 2024-09-11,Everyday Checking,7538.49
 2024-09-11,High-Yield Savings,18252.03
 2024-09-11,Rewards Visa,-749.68
@@ -593,6 +658,7 @@ Date,AccountName,Balance
 2024-09-11,Brokerage,13847.46
 2024-09-11,Home,409000.00
 2024-09-11,Mortgage,-319302.25
+2024-09-11,Family Car,24449.83
 2024-09-14,Everyday Checking,7418.50
 2024-09-14,High-Yield Savings,18252.03
 2024-09-14,Rewards Visa,-760.67
@@ -602,6 +668,7 @@ Date,AccountName,Balance
 2024-09-14,Brokerage,13687.20
 2024-09-14,Home,408700.00
 2024-09-14,Mortgage,-319302.25
+2024-09-14,Family Car,24419.56
 2024-09-17,Everyday Checking,9518.50
 2024-09-17,High-Yield Savings,19752.03
 2024-09-17,Rewards Visa,-760.67
@@ -611,6 +678,7 @@ Date,AccountName,Balance
 2024-09-17,Brokerage,13503.65
 2024-09-17,Home,409100.00
 2024-09-17,Mortgage,-319302.25
+2024-09-17,Family Car,24389.33
 2024-09-20,Everyday Checking,9412.63
 2024-09-20,High-Yield Savings,19752.03
 2024-09-20,Rewards Visa,-967.60
@@ -620,6 +688,7 @@ Date,AccountName,Balance
 2024-09-20,Brokerage,13324.84
 2024-09-20,Home,409400.00
 2024-09-20,Mortgage,-319302.25
+2024-09-20,Family Car,24359.13
 2024-09-23,Everyday Checking,9412.63
 2024-09-23,High-Yield Savings,19752.03
 2024-09-23,Rewards Visa,-1148.95
@@ -629,6 +698,7 @@ Date,AccountName,Balance
 2024-09-23,Brokerage,13169.16
 2024-09-23,Home,409100.00
 2024-09-23,Mortgage,-319302.25
+2024-09-23,Family Car,24328.98
 2024-09-26,Everyday Checking,8263.68
 2024-09-26,High-Yield Savings,19752.03
 2024-09-26,Rewards Visa,-232.85
@@ -638,6 +708,7 @@ Date,AccountName,Balance
 2024-09-26,Brokerage,13160.70
 2024-09-26,Home,409600.00
 2024-09-26,Mortgage,-319302.25
+2024-09-26,Family Car,24298.86
 2024-09-29,Everyday Checking,8263.68
 2024-09-29,High-Yield Savings,19752.03
 2024-09-29,Rewards Visa,-240.33
@@ -647,6 +718,7 @@ Date,AccountName,Balance
 2024-09-29,Brokerage,13390.06
 2024-09-29,Home,409400.00
 2024-09-29,Mortgage,-319302.25
+2024-09-29,Family Car,24268.77
 2024-10-02,Everyday Checking,9513.68
 2024-10-02,High-Yield Savings,19795.89
 2024-10-02,Rewards Visa,-386.53
@@ -656,6 +728,7 @@ Date,AccountName,Balance
 2024-10-02,Brokerage,14041.45
 2024-10-02,Home,409500.00
 2024-10-02,Mortgage,-318982.24
+2024-10-02,Family Car,24238.73
 2024-10-05,Everyday Checking,8975.18
 2024-10-05,High-Yield Savings,19795.89
 2024-10-05,Rewards Visa,-559.47
@@ -665,6 +738,7 @@ Date,AccountName,Balance
 2024-10-05,Brokerage,14051.67
 2024-10-05,Home,409400.00
 2024-10-05,Mortgage,-318982.24
+2024-10-05,Family Car,24208.72
 2024-10-08,Everyday Checking,8886.04
 2024-10-08,High-Yield Savings,19795.89
 2024-10-08,Rewards Visa,-620.83
@@ -674,6 +748,7 @@ Date,AccountName,Balance
 2024-10-08,Brokerage,14177.06
 2024-10-08,Home,409200.00
 2024-10-08,Mortgage,-318982.24
+2024-10-08,Family Car,24178.75
 2024-10-11,Everyday Checking,8886.04
 2024-10-11,High-Yield Savings,19795.89
 2024-10-11,Rewards Visa,-798.00
@@ -683,6 +758,7 @@ Date,AccountName,Balance
 2024-10-11,Brokerage,14382.48
 2024-10-11,Home,409100.00
 2024-10-11,Mortgage,-318982.24
+2024-10-11,Family Car,24148.82
 2024-10-14,Everyday Checking,8816.05
 2024-10-14,High-Yield Savings,19795.89
 2024-10-14,Rewards Visa,-855.16
@@ -692,6 +768,7 @@ Date,AccountName,Balance
 2024-10-14,Brokerage,14641.44
 2024-10-14,Home,408900.00
 2024-10-14,Mortgage,-318982.24
+2024-10-14,Family Car,24118.92
 2024-10-17,Everyday Checking,10916.05
 2024-10-17,High-Yield Savings,21295.89
 2024-10-17,Rewards Visa,-1055.12
@@ -701,6 +778,7 @@ Date,AccountName,Balance
 2024-10-17,Brokerage,14552.30
 2024-10-17,Home,409000.00
 2024-10-17,Mortgage,-318982.24
+2024-10-17,Family Car,24089.06
 2024-10-20,Everyday Checking,10804.49
 2024-10-20,High-Yield Savings,21295.89
 2024-10-20,Rewards Visa,-1236.81
@@ -710,6 +788,7 @@ Date,AccountName,Balance
 2024-10-20,Brokerage,14286.77
 2024-10-20,Home,409500.00
 2024-10-20,Mortgage,-318982.24
+2024-10-20,Family Car,24059.24
 2024-10-23,Everyday Checking,10804.49
 2024-10-23,High-Yield Savings,21295.89
 2024-10-23,Rewards Visa,-1239.80
@@ -719,6 +798,7 @@ Date,AccountName,Balance
 2024-10-23,Brokerage,14357.41
 2024-10-23,Home,409800.00
 2024-10-23,Mortgage,-318982.24
+2024-10-23,Family Car,24029.45
 2024-10-26,Everyday Checking,9482.68
 2024-10-26,High-Yield Savings,21295.89
 2024-10-26,Rewards Visa,0.00
@@ -728,6 +808,7 @@ Date,AccountName,Balance
 2024-10-26,Brokerage,14416.03
 2024-10-26,Home,410300.00
 2024-10-26,Mortgage,-318982.24
+2024-10-26,Family Car,23999.70
 2024-10-29,Everyday Checking,9482.68
 2024-10-29,High-Yield Savings,21295.89
 2024-10-29,Rewards Visa,-122.46
@@ -737,6 +818,7 @@ Date,AccountName,Balance
 2024-10-29,Brokerage,14211.98
 2024-10-29,Home,410500.00
 2024-10-29,Mortgage,-318982.24
+2024-10-29,Family Car,23969.99
 2024-11-01,Everyday Checking,11232.68
 2024-11-01,High-Yield Savings,21333.58
 2024-11-01,Rewards Visa,-167.46
@@ -746,6 +828,7 @@ Date,AccountName,Balance
 2024-11-01,Brokerage,14248.65
 2024-11-01,Home,410400.00
 2024-11-01,Mortgage,-318660.70
+2024-11-01,Family Car,23940.31
 2024-11-04,Everyday Checking,10732.68
 2024-11-04,High-Yield Savings,21333.58
 2024-11-04,Rewards Visa,-279.44
@@ -755,6 +838,7 @@ Date,AccountName,Balance
 2024-11-04,Brokerage,14562.80
 2024-11-04,Home,410400.00
 2024-11-04,Mortgage,-318660.70
+2024-11-04,Family Car,23910.68
 2024-11-07,Everyday Checking,10732.68
 2024-11-07,High-Yield Savings,21333.58
 2024-11-07,Rewards Visa,-322.05
@@ -764,6 +848,7 @@ Date,AccountName,Balance
 2024-11-07,Brokerage,14364.91
 2024-11-07,Home,410700.00
 2024-11-07,Mortgage,-318660.70
+2024-11-07,Family Car,23881.07
 2024-11-10,Everyday Checking,10568.26
 2024-11-10,High-Yield Savings,21333.58
 2024-11-10,Rewards Visa,-430.14
@@ -773,6 +858,7 @@ Date,AccountName,Balance
 2024-11-10,Brokerage,14352.14
 2024-11-10,Home,410600.00
 2024-11-10,Mortgage,-318660.70
+2024-11-10,Family Car,23851.51
 2024-11-13,Everyday Checking,10498.27
 2024-11-13,High-Yield Savings,21333.58
 2024-11-13,Rewards Visa,-551.95
@@ -782,6 +868,7 @@ Date,AccountName,Balance
 2024-11-13,Brokerage,14271.68
 2024-11-13,Home,410300.00
 2024-11-13,Mortgage,-318660.70
+2024-11-13,Family Car,23821.98
 2024-11-16,Everyday Checking,12598.27
 2024-11-16,High-Yield Savings,22833.58
 2024-11-16,Rewards Visa,-569.51
@@ -791,6 +878,7 @@ Date,AccountName,Balance
 2024-11-16,Brokerage,14293.31
 2024-11-16,Home,410800.00
 2024-11-16,Mortgage,-318660.70
+2024-11-16,Family Car,23792.49
 2024-11-19,Everyday Checking,12552.30
 2024-11-19,High-Yield Savings,22833.58
 2024-11-19,Rewards Visa,-680.17
@@ -800,6 +888,7 @@ Date,AccountName,Balance
 2024-11-19,Brokerage,14061.58
 2024-11-19,Home,410900.00
 2024-11-19,Mortgage,-318660.70
+2024-11-19,Family Car,23763.03
 2024-11-22,Everyday Checking,12487.30
 2024-11-22,High-Yield Savings,22833.58
 2024-11-22,Rewards Visa,-759.07
@@ -809,6 +898,7 @@ Date,AccountName,Balance
 2024-11-22,Brokerage,14304.68
 2024-11-22,Home,411100.00
 2024-11-22,Mortgage,-318660.70
+2024-11-22,Family Car,23733.61
 2024-11-25,Everyday Checking,11721.51
 2024-11-25,High-Yield Savings,22833.58
 2024-11-25,Rewards Visa,-91.15
@@ -818,6 +908,7 @@ Date,AccountName,Balance
 2024-11-25,Brokerage,14278.99
 2024-11-25,Home,411300.00
 2024-11-25,Mortgage,-318660.70
+2024-11-25,Family Car,23704.23
 2024-11-28,Everyday Checking,11721.51
 2024-11-28,High-Yield Savings,22833.58
 2024-11-28,Rewards Visa,-265.85
@@ -827,6 +918,7 @@ Date,AccountName,Balance
 2024-11-28,Brokerage,14334.82
 2024-11-28,Home,411600.00
 2024-11-28,Mortgage,-318660.70
+2024-11-28,Family Car,23674.88
 2024-12-01,Everyday Checking,13471.51
 2024-12-01,High-Yield Savings,22866.99
 2024-12-01,Rewards Visa,-525.91
@@ -836,6 +928,7 @@ Date,AccountName,Balance
 2024-12-01,Brokerage,14606.54
 2024-12-01,Home,411900.00
 2024-12-01,Mortgage,-318337.62
+2024-12-01,Family Car,23645.57
 2024-12-04,Everyday Checking,12971.51
 2024-12-04,High-Yield Savings,22866.99
 2024-12-04,Rewards Visa,-680.53
@@ -845,6 +938,7 @@ Date,AccountName,Balance
 2024-12-04,Brokerage,14962.01
 2024-12-04,Home,411700.00
 2024-12-04,Mortgage,-318337.62
+2024-12-04,Family Car,23616.30
 2024-12-07,Everyday Checking,12971.51
 2024-12-07,High-Yield Savings,22866.99
 2024-12-07,Rewards Visa,-721.38
@@ -854,6 +948,7 @@ Date,AccountName,Balance
 2024-12-07,Brokerage,14866.88
 2024-12-07,Home,412000.00
 2024-12-07,Mortgage,-318337.62
+2024-12-07,Family Car,23587.06
 2024-12-10,Everyday Checking,12801.57
 2024-12-10,High-Yield Savings,22866.99
 2024-12-10,Rewards Visa,-1216.55
@@ -863,6 +958,7 @@ Date,AccountName,Balance
 2024-12-10,Brokerage,14671.91
 2024-12-10,Home,411900.00
 2024-12-10,Mortgage,-318337.62
+2024-12-10,Family Car,23557.86
 2024-12-13,Everyday Checking,12731.58
 2024-12-13,High-Yield Savings,22866.99
 2024-12-13,Rewards Visa,-1428.26
@@ -872,6 +968,7 @@ Date,AccountName,Balance
 2024-12-13,Brokerage,14764.58
 2024-12-13,Home,411900.00
 2024-12-13,Mortgage,-318337.62
+2024-12-13,Family Car,23528.69
 2024-12-16,Everyday Checking,14831.58
 2024-12-16,High-Yield Savings,24366.99
 2024-12-16,Rewards Visa,-1450.26
@@ -881,6 +978,7 @@ Date,AccountName,Balance
 2024-12-16,Brokerage,15068.22
 2024-12-16,Home,411600.00
 2024-12-16,Mortgage,-318337.62
+2024-12-16,Family Car,23499.57
 2024-12-19,Everyday Checking,14773.46
 2024-12-19,High-Yield Savings,24366.99
 2024-12-19,Rewards Visa,-1708.14
@@ -890,6 +988,7 @@ Date,AccountName,Balance
 2024-12-19,Brokerage,14969.17
 2024-12-19,Home,411800.00
 2024-12-19,Mortgage,-318337.62
+2024-12-19,Family Car,23470.47
 2024-12-22,Everyday Checking,15908.46
 2024-12-22,High-Yield Savings,24366.99
 2024-12-22,Rewards Visa,-1824.65
@@ -899,6 +998,7 @@ Date,AccountName,Balance
 2024-12-22,Brokerage,15038.66
 2024-12-22,Home,411800.00
 2024-12-22,Mortgage,-318337.62
+2024-12-22,Family Car,23441.42
 2024-12-25,Everyday Checking,14029.65
 2024-12-25,High-Yield Savings,24366.99
 2024-12-25,Rewards Visa,0.00
@@ -908,6 +1008,7 @@ Date,AccountName,Balance
 2024-12-25,Brokerage,14900.44
 2024-12-25,Home,412000.00
 2024-12-25,Mortgage,-318337.62
+2024-12-25,Family Car,23412.39
 2024-12-28,Everyday Checking,14029.65
 2024-12-28,High-Yield Savings,24366.99
 2024-12-28,Rewards Visa,-210.89
@@ -917,6 +1018,7 @@ Date,AccountName,Balance
 2024-12-28,Brokerage,14899.80
 2024-12-28,Home,411900.00
 2024-12-28,Mortgage,-318337.62
+2024-12-28,Family Car,23383.41
 2024-12-31,Everyday Checking,17429.65
 2024-12-31,High-Yield Savings,24402.78
 2024-12-31,Rewards Visa,-210.89
@@ -926,6 +1028,7 @@ Date,AccountName,Balance
 2024-12-31,Brokerage,14637.34
 2024-12-31,Home,412300.00
 2024-12-31,Mortgage,-318337.62
+2024-12-31,Family Car,23354.46
 2025-01-03,Everyday Checking,15079.65
 2025-01-03,High-Yield Savings,24402.78
 2025-01-03,Rewards Visa,-468.40
@@ -935,6 +1038,7 @@ Date,AccountName,Balance
 2025-01-03,Brokerage,15488.61
 2025-01-03,Home,412800.00
 2025-01-03,Mortgage,-318012.98
+2025-01-03,Family Car,23325.55
 2025-01-06,Everyday Checking,14541.15
 2025-01-06,High-Yield Savings,24402.78
 2025-01-06,Rewards Visa,-573.63
@@ -944,6 +1048,7 @@ Date,AccountName,Balance
 2025-01-06,Brokerage,15605.90
 2025-01-06,Home,413200.00
 2025-01-06,Mortgage,-318012.98
+2025-01-06,Family Car,23296.67
 2025-01-09,Everyday Checking,14363.38
 2025-01-09,High-Yield Savings,24402.78
 2025-01-09,Rewards Visa,-766.05
@@ -953,6 +1058,7 @@ Date,AccountName,Balance
 2025-01-09,Brokerage,15867.30
 2025-01-09,Home,413700.00
 2025-01-09,Mortgage,-318012.98
+2025-01-09,Family Car,23267.83
 2025-01-12,Everyday Checking,14293.39
 2025-01-12,High-Yield Savings,24402.78
 2025-01-12,Rewards Visa,-938.10
@@ -962,6 +1068,7 @@ Date,AccountName,Balance
 2025-01-12,Brokerage,15940.87
 2025-01-12,Home,413700.00
 2025-01-12,Mortgage,-318012.98
+2025-01-12,Family Car,23239.02
 2025-01-15,Everyday Checking,17893.39
 2025-01-15,High-Yield Savings,24402.78
 2025-01-15,Rewards Visa,-963.77
@@ -971,6 +1078,7 @@ Date,AccountName,Balance
 2025-01-15,Brokerage,16172.67
 2025-01-15,Home,413500.00
 2025-01-15,Mortgage,-318012.98
+2025-01-15,Family Car,23210.25
 2025-01-18,Everyday Checking,16347.30
 2025-01-18,High-Yield Savings,25902.78
 2025-01-18,Rewards Visa,-1196.20
@@ -980,6 +1088,7 @@ Date,AccountName,Balance
 2025-01-18,Brokerage,16017.96
 2025-01-18,Home,413400.00
 2025-01-18,Mortgage,-318012.98
+2025-01-18,Family Car,23181.52
 2025-01-21,Everyday Checking,16282.30
 2025-01-21,High-Yield Savings,25902.78
 2025-01-21,Rewards Visa,-1261.30
@@ -989,6 +1098,7 @@ Date,AccountName,Balance
 2025-01-21,Brokerage,15890.22
 2025-01-21,Home,413600.00
 2025-01-21,Mortgage,-318012.98
+2025-01-21,Family Car,23152.82
 2025-01-24,Everyday Checking,16282.30
 2025-01-24,High-Yield Savings,25902.78
 2025-01-24,Rewards Visa,-1446.31
@@ -998,6 +1108,7 @@ Date,AccountName,Balance
 2025-01-24,Brokerage,16114.81
 2025-01-24,Home,413600.00
 2025-01-24,Mortgage,-318012.98
+2025-01-24,Family Car,23124.15
 2025-01-27,Everyday Checking,14835.99
 2025-01-27,High-Yield Savings,25902.78
 2025-01-27,Rewards Visa,-150.16
@@ -1007,6 +1118,7 @@ Date,AccountName,Balance
 2025-01-27,Brokerage,16164.18
 2025-01-27,Home,413800.00
 2025-01-27,Mortgage,-318012.98
+2025-01-27,Family Car,23095.52
 2025-01-30,Everyday Checking,14835.99
 2025-01-30,High-Yield Savings,25902.78
 2025-01-30,Rewards Visa,-156.97
@@ -1016,6 +1128,7 @@ Date,AccountName,Balance
 2025-01-30,Brokerage,15897.52
 2025-01-30,Home,414100.00
 2025-01-30,Mortgage,-318012.98
+2025-01-30,Family Car,23066.93
 2025-02-02,Everyday Checking,16085.99
 2025-02-02,High-Yield Savings,25943.01
 2025-02-02,Rewards Visa,-201.97
@@ -1025,6 +1138,7 @@ Date,AccountName,Balance
 2025-02-02,Brokerage,16201.78
 2025-02-02,Home,414200.00
 2025-02-02,Mortgage,-317686.80
+2025-02-02,Family Car,23038.37
 2025-02-05,Everyday Checking,16085.99
 2025-02-05,High-Yield Savings,25943.01
 2025-02-05,Rewards Visa,-475.44
@@ -1034,6 +1148,7 @@ Date,AccountName,Balance
 2025-02-05,Brokerage,15968.72
 2025-02-05,Home,414600.00
 2025-02-05,Mortgage,-317686.80
+2025-02-05,Family Car,23009.85
 2025-02-08,Everyday Checking,15921.94
 2025-02-08,High-Yield Savings,25943.01
 2025-02-08,Rewards Visa,-642.31
@@ -1043,6 +1158,7 @@ Date,AccountName,Balance
 2025-02-08,Brokerage,15857.78
 2025-02-08,Home,414600.00
 2025-02-08,Mortgage,-317686.80
+2025-02-08,Family Car,22981.37
 2025-02-11,Everyday Checking,16309.94
 2025-02-11,High-Yield Savings,25943.01
 2025-02-11,Rewards Visa,-774.33
@@ -1052,6 +1168,7 @@ Date,AccountName,Balance
 2025-02-11,Brokerage,15979.74
 2025-02-11,Home,415000.00
 2025-02-11,Mortgage,-317686.80
+2025-02-11,Family Car,22952.91
 2025-02-14,Everyday Checking,16239.95
 2025-02-14,High-Yield Savings,25943.01
 2025-02-14,Rewards Visa,-1153.57
@@ -1061,6 +1178,7 @@ Date,AccountName,Balance
 2025-02-14,Brokerage,15976.84
 2025-02-14,Home,414800.00
 2025-02-14,Mortgage,-317686.80
+2025-02-14,Family Car,22924.50
 2025-02-17,Everyday Checking,18339.95
 2025-02-17,High-Yield Savings,27443.01
 2025-02-17,Rewards Visa,-1153.57
@@ -1070,6 +1188,7 @@ Date,AccountName,Balance
 2025-02-17,Brokerage,15805.55
 2025-02-17,Home,415100.00
 2025-02-17,Mortgage,-317686.80
+2025-02-17,Family Car,22896.12
 2025-02-20,Everyday Checking,18226.79
 2025-02-20,High-Yield Savings,27443.01
 2025-02-20,Rewards Visa,-1431.64
@@ -1079,6 +1198,7 @@ Date,AccountName,Balance
 2025-02-20,Brokerage,15565.26
 2025-02-20,Home,414800.00
 2025-02-20,Mortgage,-317686.80
+2025-02-20,Family Car,22867.77
 2025-02-23,Everyday Checking,18226.79
 2025-02-23,High-Yield Savings,27443.01
 2025-02-23,Rewards Visa,-1434.63
@@ -1088,6 +1208,7 @@ Date,AccountName,Balance
 2025-02-23,Brokerage,15765.40
 2025-02-23,Home,414800.00
 2025-02-23,Mortgage,-317686.80
+2025-02-23,Family Car,22839.46
 2025-02-26,Everyday Checking,16704.30
 2025-02-26,High-Yield Savings,27443.01
 2025-02-26,Rewards Visa,-136.47
@@ -1097,6 +1218,7 @@ Date,AccountName,Balance
 2025-02-26,Brokerage,15915.61
 2025-02-26,Home,415300.00
 2025-02-26,Mortgage,-317686.80
+2025-02-26,Family Car,22811.18
 2025-03-01,Everyday Checking,18454.30
 2025-03-01,High-Yield Savings,27484.43
 2025-03-01,Rewards Visa,-294.84
@@ -1106,6 +1228,7 @@ Date,AccountName,Balance
 2025-03-01,Brokerage,16062.26
 2025-03-01,Home,415000.00
 2025-03-01,Mortgage,-317359.05
+2025-03-01,Family Car,22782.94
 2025-03-04,Everyday Checking,17954.30
 2025-03-04,High-Yield Savings,27484.43
 2025-03-04,Rewards Visa,-443.72
@@ -1115,6 +1238,7 @@ Date,AccountName,Balance
 2025-03-04,Brokerage,16728.37
 2025-03-04,Home,415500.00
 2025-03-04,Mortgage,-317359.05
+2025-03-04,Family Car,22754.74
 2025-03-07,Everyday Checking,17954.30
 2025-03-07,High-Yield Savings,27484.43
 2025-03-07,Rewards Visa,-451.95
@@ -1124,6 +1248,7 @@ Date,AccountName,Balance
 2025-03-07,Brokerage,16468.51
 2025-03-07,Home,416000.00
 2025-03-07,Mortgage,-317359.05
+2025-03-07,Family Car,22726.57
 2025-03-10,Everyday Checking,17860.86
 2025-03-10,High-Yield Savings,27484.43
 2025-03-10,Rewards Visa,-1020.79
@@ -1133,6 +1258,7 @@ Date,AccountName,Balance
 2025-03-10,Brokerage,16780.80
 2025-03-10,Home,416400.00
 2025-03-10,Mortgage,-317359.05
+2025-03-10,Family Car,22698.43
 2025-03-13,Everyday Checking,17790.87
 2025-03-13,High-Yield Savings,27484.43
 2025-03-13,Rewards Visa,-1074.14
@@ -1142,6 +1268,7 @@ Date,AccountName,Balance
 2025-03-13,Brokerage,16959.51
 2025-03-13,Home,416900.00
 2025-03-13,Mortgage,-317359.05
+2025-03-13,Family Car,22670.33
 2025-03-16,Everyday Checking,19890.87
 2025-03-16,High-Yield Savings,28984.43
 2025-03-16,Rewards Visa,-1282.71
@@ -1151,6 +1278,7 @@ Date,AccountName,Balance
 2025-03-16,Brokerage,16799.16
 2025-03-16,Home,417400.00
 2025-03-16,Mortgage,-317359.05
+2025-03-16,Family Car,22642.26
 2025-03-19,Everyday Checking,19840.64
 2025-03-19,High-Yield Savings,28984.43
 2025-03-19,Rewards Visa,-1339.96
@@ -1160,6 +1288,7 @@ Date,AccountName,Balance
 2025-03-19,Brokerage,16867.59
 2025-03-19,Home,417900.00
 2025-03-19,Mortgage,-317359.05
+2025-03-19,Family Car,22614.23
 2025-03-22,Everyday Checking,19775.64
 2025-03-22,High-Yield Savings,28984.43
 2025-03-22,Rewards Visa,-1415.91
@@ -1169,6 +1298,7 @@ Date,AccountName,Balance
 2025-03-22,Brokerage,16967.20
 2025-03-22,Home,418000.00
 2025-03-22,Mortgage,-317359.05
+2025-03-22,Family Car,22586.23
 2025-03-25,Everyday Checking,18161.28
 2025-03-25,High-Yield Savings,28984.43
 2025-03-25,Rewards Visa,-113.69
@@ -1178,6 +1308,7 @@ Date,AccountName,Balance
 2025-03-25,Brokerage,16621.93
 2025-03-25,Home,417700.00
 2025-03-25,Mortgage,-317359.05
+2025-03-25,Family Car,22558.27
 2025-03-28,Everyday Checking,18161.28
 2025-03-28,High-Yield Savings,28984.43
 2025-03-28,Rewards Visa,-128.06
@@ -1187,6 +1318,7 @@ Date,AccountName,Balance
 2025-03-28,Brokerage,16274.27
 2025-03-28,Home,417800.00
 2025-03-28,Mortgage,-317359.05
+2025-03-28,Family Car,22530.34
 2025-03-31,Everyday Checking,21761.28
 2025-03-31,High-Yield Savings,29023.95
 2025-03-31,Rewards Visa,-407.67
@@ -1196,6 +1328,7 @@ Date,AccountName,Balance
 2025-03-31,Brokerage,16048.08
 2025-03-31,Home,417500.00
 2025-03-31,Mortgage,-317359.05
+2025-03-31,Family Car,22502.45
 2025-04-03,Everyday Checking,19411.28
 2025-04-03,High-Yield Savings,29023.95
 2025-04-03,Rewards Visa,-539.99
@@ -1205,6 +1338,7 @@ Date,AccountName,Balance
 2025-04-03,Brokerage,16251.98
 2025-04-03,Home,417200.00
 2025-04-03,Mortgage,-317029.72
+2025-04-03,Family Car,22474.59
 2025-04-06,Everyday Checking,18872.78
 2025-04-06,High-Yield Savings,29023.95
 2025-04-06,Rewards Visa,-670.34
@@ -1214,6 +1348,7 @@ Date,AccountName,Balance
 2025-04-06,Brokerage,15861.77
 2025-04-06,Home,417100.00
 2025-04-06,Mortgage,-317029.72
+2025-04-06,Family Car,22446.77
 2025-04-09,Everyday Checking,18761.62
 2025-04-09,High-Yield Savings,29023.95
 2025-04-09,Rewards Visa,-692.48
@@ -1223,6 +1358,7 @@ Date,AccountName,Balance
 2025-04-09,Brokerage,15220.93
 2025-04-09,Home,417600.00
 2025-04-09,Mortgage,-317029.72
+2025-04-09,Family Car,22418.98
 2025-04-12,Everyday Checking,18691.63
 2025-04-12,High-Yield Savings,29023.95
 2025-04-12,Rewards Visa,-924.16
@@ -1232,6 +1368,7 @@ Date,AccountName,Balance
 2025-04-12,Brokerage,14822.84
 2025-04-12,Home,417500.00
 2025-04-12,Mortgage,-317029.72
+2025-04-12,Family Car,22391.22
 2025-04-15,Everyday Checking,22291.63
 2025-04-15,High-Yield Savings,29023.95
 2025-04-15,Rewards Visa,-1040.02
@@ -1241,6 +1378,7 @@ Date,AccountName,Balance
 2025-04-15,Brokerage,14749.38
 2025-04-15,Home,418000.00
 2025-04-15,Mortgage,-317029.72
+2025-04-15,Family Car,22363.50
 2025-04-18,Everyday Checking,20733.38
 2025-04-18,High-Yield Savings,30523.95
 2025-04-18,Rewards Visa,-1288.01
@@ -1250,6 +1388,7 @@ Date,AccountName,Balance
 2025-04-18,Brokerage,14581.60
 2025-04-18,Home,418300.00
 2025-04-18,Mortgage,-317029.72
+2025-04-18,Family Car,22335.82
 2025-04-21,Everyday Checking,20668.38
 2025-04-21,High-Yield Savings,30523.95
 2025-04-21,Rewards Visa,-1472.83
@@ -1259,6 +1398,7 @@ Date,AccountName,Balance
 2025-04-21,Brokerage,14538.51
 2025-04-21,Home,418200.00
 2025-04-21,Mortgage,-317029.72
+2025-04-21,Family Car,22308.16
 2025-04-24,Everyday Checking,20668.38
 2025-04-24,High-Yield Savings,30523.95
 2025-04-24,Rewards Visa,-1488.18
@@ -1268,6 +1408,7 @@ Date,AccountName,Balance
 2025-04-24,Brokerage,14234.91
 2025-04-24,Home,418100.00
 2025-04-24,Mortgage,-317029.72
+2025-04-24,Family Car,22280.55
 2025-04-27,Everyday Checking,19180.20
 2025-04-27,High-Yield Savings,30523.95
 2025-04-27,Rewards Visa,-338.79
@@ -1277,6 +1418,7 @@ Date,AccountName,Balance
 2025-04-27,Brokerage,13985.13
 2025-04-27,Home,417900.00
 2025-04-27,Mortgage,-317029.72
+2025-04-27,Family Car,22252.96
 2025-04-30,Everyday Checking,22780.20
 2025-04-30,High-Yield Savings,30561.39
 2025-04-30,Rewards Visa,-338.79
@@ -1286,6 +1428,7 @@ Date,AccountName,Balance
 2025-04-30,Brokerage,13857.62
 2025-04-30,Home,418400.00
 2025-04-30,Mortgage,-317029.72
+2025-04-30,Family Car,22225.41
 2025-05-03,Everyday Checking,20430.20
 2025-05-03,High-Yield Savings,30561.39
 2025-05-03,Rewards Visa,-566.73
@@ -1295,6 +1438,7 @@ Date,AccountName,Balance
 2025-05-03,Brokerage,14146.56
 2025-05-03,Home,418400.00
 2025-05-03,Mortgage,-316698.83
+2025-05-03,Family Car,22197.90
 2025-05-06,Everyday Checking,20430.20
 2025-05-06,High-Yield Savings,30561.39
 2025-05-06,Rewards Visa,-816.05
@@ -1304,6 +1448,7 @@ Date,AccountName,Balance
 2025-05-06,Brokerage,14052.39
 2025-05-06,Home,418100.00
 2025-05-06,Mortgage,-316698.83
+2025-05-06,Family Car,22170.41
 2025-05-09,Everyday Checking,20340.32
 2025-05-09,High-Yield Savings,30561.39
 2025-05-09,Rewards Visa,-1019.28
@@ -1313,6 +1458,7 @@ Date,AccountName,Balance
 2025-05-09,Brokerage,14288.84
 2025-05-09,Home,418200.00
 2025-05-09,Mortgage,-316698.83
+2025-05-09,Family Car,22142.97
 2025-05-12,Everyday Checking,20270.33
 2025-05-12,High-Yield Savings,30561.39
 2025-05-12,Rewards Visa,-1111.52
@@ -1322,6 +1468,7 @@ Date,AccountName,Balance
 2025-05-12,Brokerage,13982.42
 2025-05-12,Home,418500.00
 2025-05-12,Mortgage,-316698.83
+2025-05-12,Family Car,22115.55
 2025-05-15,Everyday Checking,23870.33
 2025-05-15,High-Yield Savings,30561.39
 2025-05-15,Rewards Visa,-1304.26
@@ -1331,6 +1478,7 @@ Date,AccountName,Balance
 2025-05-15,Brokerage,13702.39
 2025-05-15,Home,418300.00
 2025-05-15,Mortgage,-316698.83
+2025-05-15,Family Car,22088.17
 2025-05-18,Everyday Checking,22326.77
 2025-05-18,High-Yield Savings,32061.39
 2025-05-18,Rewards Visa,-1347.28
@@ -1340,6 +1488,7 @@ Date,AccountName,Balance
 2025-05-18,Brokerage,13821.36
 2025-05-18,Home,418500.00
 2025-05-18,Mortgage,-316698.83
+2025-05-18,Family Car,22060.83
 2025-05-21,Everyday Checking,22261.77
 2025-05-21,High-Yield Savings,32061.39
 2025-05-21,Rewards Visa,-1347.28
@@ -1349,6 +1498,7 @@ Date,AccountName,Balance
 2025-05-21,Brokerage,14095.43
 2025-05-21,Home,418500.00
 2025-05-21,Mortgage,-316698.83
+2025-05-21,Family Car,22033.52
 2025-05-24,Everyday Checking,22261.77
 2025-05-24,High-Yield Savings,32061.39
 2025-05-24,Rewards Visa,-1486.75
@@ -1358,6 +1508,7 @@ Date,AccountName,Balance
 2025-05-24,Brokerage,14165.65
 2025-05-24,Home,418600.00
 2025-05-24,Mortgage,-316698.83
+2025-05-24,Family Car,22006.24
 2025-05-27,Everyday Checking,20775.02
 2025-05-27,High-Yield Savings,32061.39
 2025-05-27,Rewards Visa,-92.96
@@ -1367,6 +1518,7 @@ Date,AccountName,Balance
 2025-05-27,Brokerage,14117.19
 2025-05-27,Home,418700.00
 2025-05-27,Mortgage,-316698.83
+2025-05-27,Family Car,21978.99
 2025-05-30,Everyday Checking,24375.02
 2025-05-30,High-Yield Savings,32061.39
 2025-05-30,Rewards Visa,-421.79
@@ -1376,6 +1528,7 @@ Date,AccountName,Balance
 2025-05-30,Brokerage,13957.76
 2025-05-30,Home,418600.00
 2025-05-30,Mortgage,-316698.83
+2025-05-30,Family Car,21951.78
 2025-06-02,Everyday Checking,22025.02
 2025-06-02,High-Yield Savings,32092.56
 2025-06-02,Rewards Visa,-466.79
@@ -1385,6 +1538,7 @@ Date,AccountName,Balance
 2025-06-02,Brokerage,14534.18
 2025-06-02,Home,418400.00
 2025-06-02,Mortgage,-316366.34
+2025-06-02,Family Car,21924.61
 2025-06-05,Everyday Checking,22025.02
 2025-06-05,High-Yield Savings,32092.56
 2025-06-05,Rewards Visa,-608.45
@@ -1394,6 +1548,7 @@ Date,AccountName,Balance
 2025-06-05,Brokerage,14462.41
 2025-06-05,Home,418800.00
 2025-06-05,Mortgage,-316366.34
+2025-06-05,Family Car,21897.46
 2025-06-08,Everyday Checking,21872.65
 2025-06-08,High-Yield Savings,32092.56
 2025-06-08,Rewards Visa,-788.67
@@ -1403,6 +1558,7 @@ Date,AccountName,Balance
 2025-06-08,Brokerage,14703.77
 2025-06-08,Home,419300.00
 2025-06-08,Mortgage,-316366.34
+2025-06-08,Family Car,21870.35
 2025-06-11,Everyday Checking,21872.65
 2025-06-11,High-Yield Savings,32092.56
 2025-06-11,Rewards Visa,-1030.93
@@ -1412,6 +1568,7 @@ Date,AccountName,Balance
 2025-06-11,Brokerage,14517.30
 2025-06-11,Home,419300.00
 2025-06-11,Mortgage,-316366.34
+2025-06-11,Family Car,21843.28
 2025-06-14,Everyday Checking,21802.66
 2025-06-14,High-Yield Savings,32092.56
 2025-06-14,Rewards Visa,-1136.96
@@ -1421,6 +1578,7 @@ Date,AccountName,Balance
 2025-06-14,Brokerage,14332.64
 2025-06-14,Home,419300.00
 2025-06-14,Mortgage,-316366.34
+2025-06-14,Family Car,21816.24
 2025-06-17,Everyday Checking,23902.66
 2025-06-17,High-Yield Savings,33592.56
 2025-06-17,Rewards Visa,-1329.67
@@ -1430,6 +1588,7 @@ Date,AccountName,Balance
 2025-06-17,Brokerage,14546.18
 2025-06-17,Home,419200.00
 2025-06-17,Mortgage,-316366.34
+2025-06-17,Family Car,21789.23
 2025-06-20,Everyday Checking,23798.88
 2025-06-20,High-Yield Savings,33592.56
 2025-06-20,Rewards Visa,-1390.10
@@ -1439,6 +1598,7 @@ Date,AccountName,Balance
 2025-06-20,Brokerage,14888.01
 2025-06-20,Home,419400.00
 2025-06-20,Mortgage,-316366.34
+2025-06-20,Family Car,21762.25
 2025-06-23,Everyday Checking,23798.88
 2025-06-23,High-Yield Savings,33592.56
 2025-06-23,Rewards Visa,-1623.01
@@ -1448,6 +1608,7 @@ Date,AccountName,Balance
 2025-06-23,Brokerage,14770.59
 2025-06-23,Home,419600.00
 2025-06-23,Mortgage,-316366.34
+2025-06-23,Family Car,21735.31
 2025-06-26,Everyday Checking,22108.50
 2025-06-26,High-Yield Savings,33592.56
 2025-06-26,Rewards Visa,-55.22
@@ -1457,6 +1618,7 @@ Date,AccountName,Balance
 2025-06-26,Brokerage,14538.28
 2025-06-26,Home,419600.00
 2025-06-26,Mortgage,-316366.34
+2025-06-26,Family Car,21708.40
 2025-06-29,Everyday Checking,22108.50
 2025-06-29,High-Yield Savings,33592.56
 2025-06-29,Rewards Visa,-171.06
@@ -1466,6 +1628,7 @@ Date,AccountName,Balance
 2025-06-29,Brokerage,14931.50
 2025-06-29,Home,419900.00
 2025-06-29,Mortgage,-316366.34
+2025-06-29,Family Car,21681.52
 2025-07-02,Everyday Checking,23358.50
 2025-07-02,High-Yield Savings,33622.78
 2025-07-02,Rewards Visa,-262.36
@@ -1475,6 +1638,7 @@ Date,AccountName,Balance
 2025-07-02,Brokerage,15665.47
 2025-07-02,Home,420300.00
 2025-07-02,Mortgage,-316032.26
+2025-07-02,Family Car,21654.68
 2025-07-05,Everyday Checking,22820.00
 2025-07-05,High-Yield Savings,33622.78
 2025-07-05,Rewards Visa,-408.75
@@ -1484,6 +1648,7 @@ Date,AccountName,Balance
 2025-07-05,Brokerage,15901.31
 2025-07-05,Home,420800.00
 2025-07-05,Mortgage,-316032.26
+2025-07-05,Family Car,21627.87
 2025-07-08,Everyday Checking,22681.98
 2025-07-08,High-Yield Savings,33622.78
 2025-07-08,Rewards Visa,-415.27
@@ -1493,6 +1658,7 @@ Date,AccountName,Balance
 2025-07-08,Brokerage,16196.25
 2025-07-08,Home,421200.00
 2025-07-08,Mortgage,-316032.26
+2025-07-08,Family Car,21601.10
 2025-07-11,Everyday Checking,22681.98
 2025-07-11,High-Yield Savings,33622.78
 2025-07-11,Rewards Visa,-600.95
@@ -1502,6 +1668,7 @@ Date,AccountName,Balance
 2025-07-11,Brokerage,16098.08
 2025-07-11,Home,421500.00
 2025-07-11,Mortgage,-316032.26
+2025-07-11,Family Car,21574.35
 2025-07-14,Everyday Checking,22611.99
 2025-07-14,High-Yield Savings,33622.78
 2025-07-14,Rewards Visa,-691.89
@@ -1511,6 +1678,7 @@ Date,AccountName,Balance
 2025-07-14,Brokerage,16439.24
 2025-07-14,Home,421300.00
 2025-07-14,Mortgage,-316032.26
+2025-07-14,Family Car,21547.64
 2025-07-17,Everyday Checking,24711.99
 2025-07-17,High-Yield Savings,35122.78
 2025-07-17,Rewards Visa,-803.32
@@ -1520,6 +1688,7 @@ Date,AccountName,Balance
 2025-07-17,Brokerage,16565.09
 2025-07-17,Home,421300.00
 2025-07-17,Mortgage,-316032.26
+2025-07-17,Family Car,21520.97
 2025-07-20,Everyday Checking,24599.24
 2025-07-20,High-Yield Savings,35122.78
 2025-07-20,Rewards Visa,-920.90
@@ -1529,6 +1698,7 @@ Date,AccountName,Balance
 2025-07-20,Brokerage,16508.73
 2025-07-20,Home,421100.00
 2025-07-20,Mortgage,-316032.26
+2025-07-20,Family Car,21494.32
 2025-07-23,Everyday Checking,24549.24
 2025-07-23,High-Yield Savings,35122.78
 2025-07-23,Rewards Visa,-1227.90
@@ -1538,6 +1708,7 @@ Date,AccountName,Balance
 2025-07-23,Brokerage,16652.47
 2025-07-23,Home,420900.00
 2025-07-23,Mortgage,-316032.26
+2025-07-23,Family Car,21467.71
 2025-07-26,Everyday Checking,23321.34
 2025-07-26,High-Yield Savings,35122.78
 2025-07-26,Rewards Visa,0.00
@@ -1547,6 +1718,7 @@ Date,AccountName,Balance
 2025-07-26,Brokerage,16587.90
 2025-07-26,Home,421400.00
 2025-07-26,Mortgage,-316032.26
+2025-07-26,Family Car,21441.14
 2025-07-29,Everyday Checking,23321.34
 2025-07-29,High-Yield Savings,35122.78
 2025-07-29,Rewards Visa,0.00
@@ -1556,6 +1728,7 @@ Date,AccountName,Balance
 2025-07-29,Brokerage,16360.79
 2025-07-29,Home,421600.00
 2025-07-29,Mortgage,-316032.26
+2025-07-29,Family Car,21414.59
 2025-08-01,Everyday Checking,25071.34
 2025-08-01,High-Yield Savings,35166.21
 2025-08-01,Rewards Visa,-290.67
@@ -1565,6 +1738,7 @@ Date,AccountName,Balance
 2025-08-01,Brokerage,16276.50
 2025-08-01,Home,421700.00
 2025-08-01,Mortgage,-315696.58
+2025-08-01,Family Car,21388.08
 2025-08-04,Everyday Checking,24521.34
 2025-08-04,High-Yield Savings,35166.21
 2025-08-04,Rewards Visa,-425.57
@@ -1574,6 +1748,7 @@ Date,AccountName,Balance
 2025-08-04,Brokerage,16641.07
 2025-08-04,Home,421900.00
 2025-08-04,Mortgage,-315696.58
+2025-08-04,Family Car,21361.60
 2025-08-07,Everyday Checking,24521.34
 2025-08-07,High-Yield Savings,35166.21
 2025-08-07,Rewards Visa,-472.01
@@ -1583,6 +1758,7 @@ Date,AccountName,Balance
 2025-08-07,Brokerage,16763.74
 2025-08-07,Home,421800.00
 2025-08-07,Mortgage,-315696.58
+2025-08-07,Family Car,21335.16
 2025-08-10,Everyday Checking,24385.43
 2025-08-10,High-Yield Savings,35166.21
 2025-08-10,Rewards Visa,-1415.25
@@ -1592,6 +1768,7 @@ Date,AccountName,Balance
 2025-08-10,Brokerage,16873.43
 2025-08-10,Home,421900.00
 2025-08-10,Mortgage,-315696.58
+2025-08-10,Family Car,21308.74
 2025-08-13,Everyday Checking,24315.44
 2025-08-13,High-Yield Savings,35166.21
 2025-08-13,Rewards Visa,-1415.25
@@ -1601,6 +1778,7 @@ Date,AccountName,Balance
 2025-08-13,Brokerage,16542.46
 2025-08-13,Home,422300.00
 2025-08-13,Mortgage,-315696.58
+2025-08-13,Family Car,21282.36
 2025-08-16,Everyday Checking,26415.44
 2025-08-16,High-Yield Savings,36666.21
 2025-08-16,Rewards Visa,-1619.65
@@ -1610,6 +1788,7 @@ Date,AccountName,Balance
 2025-08-16,Brokerage,16360.65
 2025-08-16,Home,422700.00
 2025-08-16,Mortgage,-315696.58
+2025-08-16,Family Car,21256.01
 2025-08-19,Everyday Checking,26369.28
 2025-08-19,High-Yield Savings,36666.21
 2025-08-19,Rewards Visa,-1619.65
@@ -1619,6 +1798,7 @@ Date,AccountName,Balance
 2025-08-19,Brokerage,16253.52
 2025-08-19,Home,422800.00
 2025-08-19,Mortgage,-315696.58
+2025-08-19,Family Car,21229.70
 2025-08-22,Everyday Checking,26304.28
 2025-08-22,High-Yield Savings,36666.21
 2025-08-22,Rewards Visa,-3595.09
@@ -1628,6 +1808,7 @@ Date,AccountName,Balance
 2025-08-22,Brokerage,16032.63
 2025-08-22,Home,423000.00
 2025-08-22,Mortgage,-315696.58
+2025-08-22,Family Car,21203.41
 2025-08-25,Everyday Checking,23571.70
 2025-08-25,High-Yield Savings,36666.21
 2025-08-25,Rewards Visa,-77.19
@@ -1637,6 +1818,7 @@ Date,AccountName,Balance
 2025-08-25,Brokerage,15982.66
 2025-08-25,Home,422700.00
 2025-08-25,Mortgage,-315696.58
+2025-08-25,Family Car,21177.16
 2025-08-28,Everyday Checking,23571.70
 2025-08-28,High-Yield Savings,36666.21
 2025-08-28,Rewards Visa,-81.87
@@ -1646,6 +1828,7 @@ Date,AccountName,Balance
 2025-08-28,Brokerage,15861.37
 2025-08-28,Home,422800.00
 2025-08-28,Mortgage,-315696.58
+2025-08-28,Family Car,21150.95
 2025-08-31,Everyday Checking,27171.70
 2025-08-31,High-Yield Savings,36712.37
 2025-08-31,Rewards Visa,-208.96
@@ -1655,6 +1838,7 @@ Date,AccountName,Balance
 2025-08-31,Brokerage,16037.32
 2025-08-31,Home,423100.00
 2025-08-31,Mortgage,-315696.58
+2025-08-31,Family Car,21124.76
 2025-09-03,Everyday Checking,24821.70
 2025-09-03,High-Yield Savings,36712.37
 2025-09-03,Rewards Visa,-619.51
@@ -1664,6 +1848,7 @@ Date,AccountName,Balance
 2025-09-03,Brokerage,16710.52
 2025-09-03,Home,423100.00
 2025-09-03,Mortgage,-315359.30
+2025-09-03,Family Car,21098.61
 2025-09-06,Everyday Checking,24821.70
 2025-09-06,High-Yield Savings,36712.37
 2025-09-06,Rewards Visa,-648.33
@@ -1673,6 +1858,7 @@ Date,AccountName,Balance
 2025-09-06,Brokerage,16696.70
 2025-09-06,Home,423200.00
 2025-09-06,Mortgage,-315359.30
+2025-09-06,Family Car,21072.49
 2025-09-09,Everyday Checking,24714.70
 2025-09-09,High-Yield Savings,36712.37
 2025-09-09,Rewards Visa,-715.72
@@ -1682,6 +1868,7 @@ Date,AccountName,Balance
 2025-09-09,Brokerage,16426.21
 2025-09-09,Home,423100.00
 2025-09-09,Mortgage,-315359.30
+2025-09-09,Family Car,21046.40
 2025-09-12,Everyday Checking,24644.71
 2025-09-12,High-Yield Savings,36712.37
 2025-09-12,Rewards Visa,-911.03
@@ -1691,6 +1878,7 @@ Date,AccountName,Balance
 2025-09-12,Brokerage,16800.77
 2025-09-12,Home,423500.00
 2025-09-12,Mortgage,-315359.30
+2025-09-12,Family Car,21020.34
 2025-09-15,Everyday Checking,28244.71
 2025-09-15,High-Yield Savings,36712.37
 2025-09-15,Rewards Visa,-1041.94
@@ -1700,6 +1888,7 @@ Date,AccountName,Balance
 2025-09-15,Brokerage,16753.88
 2025-09-15,Home,423300.00
 2025-09-15,Mortgage,-315359.30
+2025-09-15,Family Car,20994.32
 2025-09-18,Everyday Checking,26302.74
 2025-09-18,High-Yield Savings,38212.37
 2025-09-18,Rewards Visa,-1240.79
@@ -1709,6 +1898,7 @@ Date,AccountName,Balance
 2025-09-18,Brokerage,16899.71
 2025-09-18,Home,423600.00
 2025-09-18,Mortgage,-315359.30
+2025-09-18,Family Car,20968.33
 2025-09-21,Everyday Checking,26237.74
 2025-09-21,High-Yield Savings,38212.37
 2025-09-21,Rewards Visa,-1267.87
@@ -1718,6 +1908,7 @@ Date,AccountName,Balance
 2025-09-21,Brokerage,16859.75
 2025-09-21,Home,424000.00
 2025-09-21,Mortgage,-315359.30
+2025-09-21,Family Car,20942.37
 2025-09-24,Everyday Checking,26237.74
 2025-09-24,High-Yield Savings,38212.37
 2025-09-24,Rewards Visa,-1378.00
@@ -1727,6 +1918,7 @@ Date,AccountName,Balance
 2025-09-24,Brokerage,16996.82
 2025-09-24,Home,424600.00
 2025-09-24,Mortgage,-315359.30
+2025-09-24,Family Car,20916.44
 2025-09-27,Everyday Checking,24859.74
 2025-09-27,High-Yield Savings,38212.37
 2025-09-27,Rewards Visa,-141.75
@@ -1736,6 +1928,7 @@ Date,AccountName,Balance
 2025-09-27,Brokerage,16718.24
 2025-09-27,Home,425200.00
 2025-09-27,Mortgage,-315359.30
+2025-09-27,Family Car,20890.55
 2025-09-30,Everyday Checking,28459.74
 2025-09-30,High-Yield Savings,38247.43
 2025-09-30,Rewards Visa,-336.77
@@ -1745,6 +1938,7 @@ Date,AccountName,Balance
 2025-09-30,Brokerage,17089.06
 2025-09-30,Home,425400.00
 2025-09-30,Mortgage,-315359.30
+2025-09-30,Family Car,20864.68
 2025-10-03,Everyday Checking,26109.74
 2025-10-03,High-Yield Savings,38247.43
 2025-10-03,Rewards Visa,-486.84
@@ -1754,6 +1948,7 @@ Date,AccountName,Balance
 2025-10-03,Brokerage,17697.50
 2025-10-03,Home,425800.00
 2025-10-03,Mortgage,-315020.39
+2025-10-03,Family Car,20838.85
 2025-10-06,Everyday Checking,25571.24
 2025-10-06,High-Yield Savings,38247.43
 2025-10-06,Rewards Visa,-549.31
@@ -1763,6 +1958,7 @@ Date,AccountName,Balance
 2025-10-06,Brokerage,17540.83
 2025-10-06,Home,425600.00
 2025-10-06,Mortgage,-315020.39
+2025-10-06,Family Car,20813.05
 2025-10-09,Everyday Checking,25456.77
 2025-10-09,High-Yield Savings,38247.43
 2025-10-09,Rewards Visa,-564.80
@@ -1772,6 +1968,7 @@ Date,AccountName,Balance
 2025-10-09,Brokerage,17313.56
 2025-10-09,Home,426100.00
 2025-10-09,Mortgage,-315020.39
+2025-10-09,Family Car,20787.29
 2025-10-12,Everyday Checking,25386.78
 2025-10-12,High-Yield Savings,38247.43
 2025-10-12,Rewards Visa,-661.72
@@ -1781,6 +1978,7 @@ Date,AccountName,Balance
 2025-10-12,Brokerage,17013.63
 2025-10-12,Home,426200.00
 2025-10-12,Mortgage,-315020.39
+2025-10-12,Family Car,20761.55
 2025-10-15,Everyday Checking,28986.78
 2025-10-15,High-Yield Savings,38247.43
 2025-10-15,Rewards Visa,-711.32
@@ -1790,6 +1988,7 @@ Date,AccountName,Balance
 2025-10-15,Brokerage,17053.89
 2025-10-15,Home,426100.00
 2025-10-15,Mortgage,-315020.39
+2025-10-15,Family Car,20735.85
 2025-10-18,Everyday Checking,27438.16
 2025-10-18,High-Yield Savings,39747.43
 2025-10-18,Rewards Visa,-873.68
@@ -1799,6 +1998,7 @@ Date,AccountName,Balance
 2025-10-18,Brokerage,17382.91
 2025-10-18,Home,426700.00
 2025-10-18,Mortgage,-315020.39
+2025-10-18,Family Car,20710.18
 2025-10-21,Everyday Checking,27373.16
 2025-10-21,High-Yield Savings,39747.43
 2025-10-21,Rewards Visa,-1015.06
@@ -1808,6 +2008,7 @@ Date,AccountName,Balance
 2025-10-21,Brokerage,17260.76
 2025-10-21,Home,427000.00
 2025-10-21,Mortgage,-315020.39
+2025-10-21,Family Car,20684.54
 2025-10-24,Everyday Checking,27323.16
 2025-10-24,High-Yield Savings,39747.43
 2025-10-24,Rewards Visa,-1216.19
@@ -1817,6 +2018,7 @@ Date,AccountName,Balance
 2025-10-24,Brokerage,17346.33
 2025-10-24,Home,426900.00
 2025-10-24,Mortgage,-315020.39
+2025-10-24,Family Car,20658.93
 2025-10-27,Everyday Checking,26106.97
 2025-10-27,High-Yield Savings,39747.43
 2025-10-27,Rewards Visa,-7.67
@@ -1826,6 +2028,7 @@ Date,AccountName,Balance
 2025-10-27,Brokerage,17627.55
 2025-10-27,Home,427200.00
 2025-10-27,Mortgage,-315020.39
+2025-10-27,Family Car,20633.35
 2025-10-30,Everyday Checking,26106.97
 2025-10-30,High-Yield Savings,39747.43
 2025-10-30,Rewards Visa,-117.89
@@ -1835,6 +2038,7 @@ Date,AccountName,Balance
 2025-10-30,Brokerage,17643.00
 2025-10-30,Home,427700.00
 2025-10-30,Mortgage,-315020.39
+2025-10-30,Family Car,20607.81
 2025-11-02,Everyday Checking,27356.97
 2025-11-02,High-Yield Savings,39781.09
 2025-11-02,Rewards Visa,-356.27
@@ -1844,6 +2048,7 @@ Date,AccountName,Balance
 2025-11-02,Brokerage,17949.99
 2025-11-02,Home,428200.00
 2025-11-02,Mortgage,-314679.87
+2025-11-02,Family Car,20582.29
 2025-11-05,Everyday Checking,27356.97
 2025-11-05,High-Yield Savings,39781.09
 2025-11-05,Rewards Visa,-493.49
@@ -1853,6 +2058,7 @@ Date,AccountName,Balance
 2025-11-05,Brokerage,18301.44
 2025-11-05,Home,428500.00
 2025-11-05,Mortgage,-314679.87
+2025-11-05,Family Car,20556.81
 2025-11-08,Everyday Checking,27187.15
 2025-11-08,High-Yield Savings,39781.09
 2025-11-08,Rewards Visa,-498.07
@@ -1862,6 +2068,7 @@ Date,AccountName,Balance
 2025-11-08,Brokerage,17965.23
 2025-11-08,Home,428500.00
 2025-11-08,Mortgage,-314679.87
+2025-11-08,Family Car,20531.36
 2025-11-11,Everyday Checking,27187.15
 2025-11-11,High-Yield Savings,39781.09
 2025-11-11,Rewards Visa,-798.42
@@ -1871,6 +2078,7 @@ Date,AccountName,Balance
 2025-11-11,Brokerage,18010.74
 2025-11-11,Home,428200.00
 2025-11-11,Mortgage,-314679.87
+2025-11-11,Family Car,20505.95
 2025-11-14,Everyday Checking,27117.16
 2025-11-14,High-Yield Savings,39781.09
 2025-11-14,Rewards Visa,-854.48
@@ -1880,6 +2088,7 @@ Date,AccountName,Balance
 2025-11-14,Brokerage,18072.95
 2025-11-14,Home,428400.00
 2025-11-14,Mortgage,-314679.87
+2025-11-14,Family Car,20480.56
 2025-11-17,Everyday Checking,29217.16
 2025-11-17,High-Yield Savings,41281.09
 2025-11-17,Rewards Visa,-1071.59
@@ -1889,6 +2098,7 @@ Date,AccountName,Balance
 2025-11-17,Brokerage,17963.35
 2025-11-17,Home,428100.00
 2025-11-17,Mortgage,-314679.87
+2025-11-17,Family Car,20455.20
 2025-11-20,Everyday Checking,29100.00
 2025-11-20,High-Yield Savings,41281.09
 2025-11-20,Rewards Visa,-1239.70
@@ -1898,6 +2108,7 @@ Date,AccountName,Balance
 2025-11-20,Brokerage,17948.56
 2025-11-20,Home,428000.00
 2025-11-20,Mortgage,-314679.87
+2025-11-20,Family Car,20429.88
 2025-11-23,Everyday Checking,29100.00
 2025-11-23,High-Yield Savings,41281.09
 2025-11-23,Rewards Visa,-1283.84
@@ -1907,6 +2118,7 @@ Date,AccountName,Balance
 2025-11-23,Brokerage,18282.04
 2025-11-23,Home,427900.00
 2025-11-23,Mortgage,-314679.87
+2025-11-23,Family Car,20404.59
 2025-11-26,Everyday Checking,27575.13
 2025-11-26,High-Yield Savings,41281.09
 2025-11-26,Rewards Visa,-5.51
@@ -1916,6 +2128,7 @@ Date,AccountName,Balance
 2025-11-26,Brokerage,18254.96
 2025-11-26,Home,428400.00
 2025-11-26,Mortgage,-314679.87
+2025-11-26,Family Car,20379.32
 2025-11-29,Everyday Checking,31175.13
 2025-11-29,High-Yield Savings,41281.09
 2025-11-29,Rewards Visa,-259.63
@@ -1925,6 +2138,7 @@ Date,AccountName,Balance
 2025-11-29,Brokerage,18396.38
 2025-11-29,Home,428200.00
 2025-11-29,Mortgage,-314679.87
+2025-11-29,Family Car,20354.09
 2025-12-02,Everyday Checking,28825.13
 2025-12-02,High-Yield Savings,41319.84
 2025-12-02,Rewards Visa,-339.09
@@ -1934,6 +2148,7 @@ Date,AccountName,Balance
 2025-12-02,Brokerage,18611.86
 2025-12-02,Home,428200.00
 2025-12-02,Mortgage,-314337.71
+2025-12-02,Family Car,20328.90
 2025-12-05,Everyday Checking,28825.13
 2025-12-05,High-Yield Savings,41319.84
 2025-12-05,Rewards Visa,-607.28
@@ -1943,6 +2158,7 @@ Date,AccountName,Balance
 2025-12-05,Brokerage,18681.87
 2025-12-05,Home,428800.00
 2025-12-05,Mortgage,-314337.71
+2025-12-05,Family Car,20303.73
 2025-12-08,Everyday Checking,28671.69
 2025-12-08,High-Yield Savings,41319.84
 2025-12-08,Rewards Visa,-695.48
@@ -1952,6 +2168,7 @@ Date,AccountName,Balance
 2025-12-08,Brokerage,18556.26
 2025-12-08,Home,429100.00
 2025-12-08,Mortgage,-314337.71
+2025-12-08,Family Car,20278.59
 2025-12-11,Everyday Checking,28671.69
 2025-12-11,High-Yield Savings,41319.84
 2025-12-11,Rewards Visa,-875.57
@@ -1961,6 +2178,7 @@ Date,AccountName,Balance
 2025-12-11,Brokerage,18366.94
 2025-12-11,Home,429200.00
 2025-12-11,Mortgage,-314337.71
+2025-12-11,Family Car,20253.49
 2025-12-14,Everyday Checking,28601.70
 2025-12-14,High-Yield Savings,41319.84
 2025-12-14,Rewards Visa,-1199.16
@@ -1970,6 +2188,7 @@ Date,AccountName,Balance
 2025-12-14,Brokerage,18102.83
 2025-12-14,Home,429800.00
 2025-12-14,Mortgage,-314337.71
+2025-12-14,Family Car,20228.41
 2025-12-17,Everyday Checking,30651.70
 2025-12-17,High-Yield Savings,42819.84
 2025-12-17,Rewards Visa,-1323.47
@@ -1979,6 +2198,7 @@ Date,AccountName,Balance
 2025-12-17,Brokerage,18374.78
 2025-12-17,Home,429800.00
 2025-12-17,Mortgage,-314337.71
+2025-12-17,Family Car,20203.37
 2025-12-20,Everyday Checking,32039.44
 2025-12-20,High-Yield Savings,42819.84
 2025-12-20,Rewards Visa,-1599.49
@@ -1988,6 +2208,7 @@ Date,AccountName,Balance
 2025-12-20,Brokerage,18488.91
 2025-12-20,Home,430200.00
 2025-12-20,Mortgage,-314337.71
+2025-12-20,Family Car,20178.36
 2025-12-23,Everyday Checking,32039.44
 2025-12-23,High-Yield Savings,42819.84
 2025-12-23,Rewards Visa,-1713.43
@@ -1997,6 +2218,7 @@ Date,AccountName,Balance
 2025-12-23,Brokerage,18812.04
 2025-12-23,Home,430000.00
 2025-12-23,Mortgage,-314337.71
+2025-12-23,Family Car,20153.37
 2025-12-26,Everyday Checking,30326.01
 2025-12-26,High-Yield Savings,42819.84
 2025-12-26,Rewards Visa,-50.02
@@ -2006,6 +2228,7 @@ Date,AccountName,Balance
 2025-12-26,Brokerage,19118.86
 2025-12-26,Home,429900.00
 2025-12-26,Mortgage,-314337.71
+2025-12-26,Family Car,20128.42
 2025-12-29,Everyday Checking,30326.01
 2025-12-29,High-Yield Savings,42819.84
 2025-12-29,Rewards Visa,-138.80
@@ -2015,6 +2238,7 @@ Date,AccountName,Balance
 2025-12-29,Brokerage,18874.53
 2025-12-29,Home,429700.00
 2025-12-29,Mortgage,-314337.71
+2025-12-29,Family Car,20103.51
 2026-01-01,Everyday Checking,31826.01
 2026-01-01,High-Yield Savings,42855.85
 2026-01-01,Rewards Visa,-192.33
@@ -2024,6 +2248,7 @@ Date,AccountName,Balance
 2026-01-01,Brokerage,18837.76
 2026-01-01,Home,429900.00
 2026-01-01,Mortgage,-313993.91
+2026-01-01,Family Car,20078.62
 2026-01-04,Everyday Checking,31326.01
 2026-01-04,High-Yield Savings,42855.85
 2026-01-04,Rewards Visa,-539.34
@@ -2033,6 +2258,7 @@ Date,AccountName,Balance
 2026-01-04,Brokerage,19395.83
 2026-01-04,Home,430500.00
 2026-01-04,Mortgage,-313993.91
+2026-01-04,Family Car,20053.76
 2026-01-07,Everyday Checking,30787.51
 2026-01-07,High-Yield Savings,42855.85
 2026-01-07,Rewards Visa,-631.76
@@ -2042,6 +2268,7 @@ Date,AccountName,Balance
 2026-01-07,Brokerage,19493.73
 2026-01-07,Home,430200.00
 2026-01-07,Mortgage,-313993.91
+2026-01-07,Family Car,20028.93
 2026-01-10,Everyday Checking,30627.98
 2026-01-10,High-Yield Savings,42855.85
 2026-01-10,Rewards Visa,-707.77
@@ -2051,6 +2278,7 @@ Date,AccountName,Balance
 2026-01-10,Brokerage,19924.11
 2026-01-10,Home,430800.00
 2026-01-10,Mortgage,-313993.91
+2026-01-10,Family Car,20004.14
 2026-01-13,Everyday Checking,30557.99
 2026-01-13,High-Yield Savings,42855.85
 2026-01-13,Rewards Visa,-807.62
@@ -2060,6 +2288,7 @@ Date,AccountName,Balance
 2026-01-13,Brokerage,19866.82
 2026-01-13,Home,430600.00
 2026-01-13,Mortgage,-313993.91
+2026-01-13,Family Car,19979.37
 2026-01-16,Everyday Checking,32657.99
 2026-01-16,High-Yield Savings,44355.85
 2026-01-16,Rewards Visa,-829.10
@@ -2069,6 +2298,7 @@ Date,AccountName,Balance
 2026-01-16,Brokerage,19606.35
 2026-01-16,Home,430600.00
 2026-01-16,Mortgage,-313993.91
+2026-01-16,Family Car,19954.63
 2026-01-19,Everyday Checking,32600.88
 2026-01-19,High-Yield Savings,44355.85
 2026-01-19,Rewards Visa,-989.87
@@ -2078,6 +2308,7 @@ Date,AccountName,Balance
 2026-01-19,Brokerage,19539.24
 2026-01-19,Home,431100.00
 2026-01-19,Mortgage,-313993.91
+2026-01-19,Family Car,19929.93
 2026-01-22,Everyday Checking,32535.88
 2026-01-22,High-Yield Savings,44355.85
 2026-01-22,Rewards Visa,-1062.24
@@ -2087,6 +2318,7 @@ Date,AccountName,Balance
 2026-01-22,Brokerage,19958.04
 2026-01-22,Home,431000.00
 2026-01-22,Mortgage,-313993.91
+2026-01-22,Family Car,19905.26
 2026-01-25,Everyday Checking,31293.48
 2026-01-25,High-Yield Savings,44355.85
 2026-01-25,Rewards Visa,0.00
@@ -2096,6 +2328,7 @@ Date,AccountName,Balance
 2026-01-25,Brokerage,20372.80
 2026-01-25,Home,431500.00
 2026-01-25,Mortgage,-313993.91
+2026-01-25,Family Car,19880.61
 2026-01-28,Everyday Checking,31293.48
 2026-01-28,High-Yield Savings,44355.85
 2026-01-28,Rewards Visa,-153.58
@@ -2105,6 +2338,7 @@ Date,AccountName,Balance
 2026-01-28,Brokerage,20401.23
 2026-01-28,Home,432000.00
 2026-01-28,Mortgage,-313993.91
+2026-01-28,Family Car,19856.00
 2026-01-31,Everyday Checking,34893.48
 2026-01-31,High-Yield Savings,44402.53
 2026-01-31,Rewards Visa,-269.04
@@ -2114,6 +2348,7 @@ Date,AccountName,Balance
 2026-01-31,Brokerage,20721.53
 2026-01-31,Home,431700.00
 2026-01-31,Mortgage,-313993.91
+2026-01-31,Family Car,19831.42
 2026-02-03,Everyday Checking,32955.48
 2026-02-03,High-Yield Savings,44402.53
 2026-02-03,Rewards Visa,-512.32
@@ -2123,6 +2358,7 @@ Date,AccountName,Balance
 2026-02-03,Brokerage,20950.43
 2026-02-03,Home,431600.00
 2026-02-03,Mortgage,-313648.46
+2026-02-03,Family Car,19806.87
 2026-02-06,Everyday Checking,32955.48
 2026-02-06,High-Yield Savings,44402.53
 2026-02-06,Rewards Visa,-625.94
@@ -2132,6 +2368,7 @@ Date,AccountName,Balance
 2026-02-06,Brokerage,20784.62
 2026-02-06,Home,431600.00
 2026-02-06,Mortgage,-313648.46
+2026-02-06,Family Car,19782.35
 2026-02-09,Everyday Checking,32781.09
 2026-02-09,High-Yield Savings,44402.53
 2026-02-09,Rewards Visa,-755.91
@@ -2141,6 +2378,7 @@ Date,AccountName,Balance
 2026-02-09,Brokerage,20682.73
 2026-02-09,Home,431700.00
 2026-02-09,Mortgage,-313648.46
+2026-02-09,Family Car,19757.85
 2026-02-12,Everyday Checking,32711.10
 2026-02-12,High-Yield Savings,44402.53
 2026-02-12,Rewards Visa,-902.42
@@ -2150,6 +2388,7 @@ Date,AccountName,Balance
 2026-02-12,Brokerage,20537.47
 2026-02-12,Home,431600.00
 2026-02-12,Mortgage,-313648.46
+2026-02-12,Family Car,19733.39
 2026-02-15,Everyday Checking,36311.10
 2026-02-15,High-Yield Savings,44402.53
 2026-02-15,Rewards Visa,-1008.40
@@ -2159,6 +2398,7 @@ Date,AccountName,Balance
 2026-02-15,Brokerage,20916.01
 2026-02-15,Home,432200.00
 2026-02-15,Mortgage,-313648.46
+2026-02-15,Family Car,19708.96
 2026-02-18,Everyday Checking,34773.01
 2026-02-18,High-Yield Savings,45902.53
 2026-02-18,Rewards Visa,-1152.95
@@ -2168,6 +2408,7 @@ Date,AccountName,Balance
 2026-02-18,Brokerage,20735.83
 2026-02-18,Home,432700.00
 2026-02-18,Mortgage,-313648.46
+2026-02-18,Family Car,19684.56
 2026-02-21,Everyday Checking,34708.01
 2026-02-21,High-Yield Savings,45902.53
 2026-02-21,Rewards Visa,-1212.23
@@ -2177,6 +2418,7 @@ Date,AccountName,Balance
 2026-02-21,Brokerage,20604.74
 2026-02-21,Home,432900.00
 2026-02-21,Mortgage,-313648.46
+2026-02-21,Family Car,19660.19
 2026-02-24,Everyday Checking,34708.01
 2026-02-24,High-Yield Savings,45902.53
 2026-02-24,Rewards Visa,-1361.87
@@ -2186,6 +2428,7 @@ Date,AccountName,Balance
 2026-02-24,Brokerage,20989.82
 2026-02-24,Home,433300.00
 2026-02-24,Mortgage,-313648.46
+2026-02-24,Family Car,19635.85
 2026-02-27,Everyday Checking,36946.14
 2026-02-27,High-Yield Savings,45902.53
 2026-02-27,Rewards Visa,0.00
@@ -2195,6 +2438,7 @@ Date,AccountName,Balance
 2026-02-27,Brokerage,20759.92
 2026-02-27,Home,433500.00
 2026-02-27,Mortgage,-313648.46
+2026-02-27,Family Car,19611.54
 2026-03-02,Everyday Checking,34596.14
 2026-03-02,High-Yield Savings,45946.47
 2026-03-02,Rewards Visa,-138.51
@@ -2204,6 +2448,7 @@ Date,AccountName,Balance
 2026-03-02,Brokerage,20987.18
 2026-03-02,Home,433700.00
 2026-03-02,Mortgage,-313301.36
+2026-03-02,Family Car,19587.26
 2026-03-05,Everyday Checking,34596.14
 2026-03-05,High-Yield Savings,45946.47
 2026-03-05,Rewards Visa,-359.92
@@ -2213,6 +2458,7 @@ Date,AccountName,Balance
 2026-03-05,Brokerage,20661.44
 2026-03-05,Home,433600.00
 2026-03-05,Mortgage,-313301.36
+2026-03-05,Family Car,19563.01
 2026-03-08,Everyday Checking,34483.13
 2026-03-08,High-Yield Savings,45946.47
 2026-03-08,Rewards Visa,-376.83
@@ -2222,6 +2468,7 @@ Date,AccountName,Balance
 2026-03-08,Brokerage,20699.45
 2026-03-08,Home,433800.00
 2026-03-08,Mortgage,-313301.36
+2026-03-08,Family Car,19538.79
 2026-03-11,Everyday Checking,34483.13
 2026-03-11,High-Yield Savings,45946.47
 2026-03-11,Rewards Visa,-703.33
@@ -2231,6 +2478,7 @@ Date,AccountName,Balance
 2026-03-11,Brokerage,20954.83
 2026-03-11,Home,433500.00
 2026-03-11,Mortgage,-313301.36
+2026-03-11,Family Car,19514.61
 2026-03-14,Everyday Checking,34413.14
 2026-03-14,High-Yield Savings,45946.47
 2026-03-14,Rewards Visa,-1174.77
@@ -2240,6 +2488,7 @@ Date,AccountName,Balance
 2026-03-14,Brokerage,21264.20
 2026-03-14,Home,433500.00
 2026-03-14,Mortgage,-313301.36
+2026-03-14,Family Car,19490.45
 2026-03-17,Everyday Checking,36513.14
 2026-03-17,High-Yield Savings,47446.47
 2026-03-17,Rewards Visa,-1354.21
@@ -2249,6 +2498,7 @@ Date,AccountName,Balance
 2026-03-17,Brokerage,21423.43
 2026-03-17,Home,433700.00
 2026-03-17,Mortgage,-313301.36
+2026-03-17,Family Car,19466.32
 2026-03-20,Everyday Checking,36408.59
 2026-03-20,High-Yield Savings,47446.47
 2026-03-20,Rewards Visa,-1974.21
@@ -2258,6 +2508,7 @@ Date,AccountName,Balance
 2026-03-20,Brokerage,21219.89
 2026-03-20,Home,434100.00
 2026-03-20,Mortgage,-313301.36
+2026-03-20,Family Car,19442.22
 2026-03-23,Everyday Checking,36408.59
 2026-03-23,High-Yield Savings,47446.47
 2026-03-23,Rewards Visa,-2088.27
@@ -2267,6 +2518,7 @@ Date,AccountName,Balance
 2026-03-23,Brokerage,21582.73
 2026-03-23,Home,434100.00
 2026-03-23,Mortgage,-313301.36
+2026-03-23,Family Car,19418.15
 2026-03-26,Everyday Checking,34320.32
 2026-03-26,High-Yield Savings,47446.47
 2026-03-26,Rewards Visa,-56.39
@@ -2276,6 +2528,7 @@ Date,AccountName,Balance
 2026-03-26,Brokerage,21227.62
 2026-03-26,Home,434500.00
 2026-03-26,Mortgage,-313301.36
+2026-03-26,Family Car,19394.11
 2026-03-29,Everyday Checking,34320.32
 2026-03-29,High-Yield Savings,47446.47
 2026-03-29,Rewards Visa,-119.12
@@ -2285,6 +2538,7 @@ Date,AccountName,Balance
 2026-03-29,Brokerage,21641.88
 2026-03-29,Home,434500.00
 2026-03-29,Mortgage,-313301.36
+2026-03-29,Family Car,19370.10
 2026-04-01,Everyday Checking,36070.32
 2026-04-01,High-Yield Savings,47484.71
 2026-04-01,Rewards Visa,-421.16
@@ -2294,6 +2548,7 @@ Date,AccountName,Balance
 2026-04-01,Brokerage,21973.46
 2026-04-01,Home,434200.00
 2026-04-01,Mortgage,-312952.60
+2026-04-01,Family Car,19346.12
 2026-04-04,Everyday Checking,35570.32
 2026-04-04,High-Yield Savings,47484.71
 2026-04-04,Rewards Visa,-560.97
@@ -2303,6 +2558,7 @@ Date,AccountName,Balance
 2026-04-04,Brokerage,22182.18
 2026-04-04,Home,433900.00
 2026-04-04,Mortgage,-312952.60
+2026-04-04,Family Car,19322.16
 2026-04-07,Everyday Checking,35031.82
 2026-04-07,High-Yield Savings,47484.71
 2026-04-07,Rewards Visa,-560.97
@@ -2312,6 +2568,7 @@ Date,AccountName,Balance
 2026-04-07,Brokerage,22465.93
 2026-04-07,Home,434400.00
 2026-04-07,Mortgage,-312952.60
+2026-04-07,Family Car,19298.24
 2026-04-10,Everyday Checking,34920.08
 2026-04-10,High-Yield Savings,47484.71
 2026-04-10,Rewards Visa,-812.61
@@ -2321,6 +2578,7 @@ Date,AccountName,Balance
 2026-04-10,Brokerage,22150.34
 2026-04-10,Home,434300.00
 2026-04-10,Mortgage,-312952.60
+2026-04-10,Family Car,19274.35
 2026-04-13,Everyday Checking,34850.09
 2026-04-13,High-Yield Savings,47484.71
 2026-04-13,Rewards Visa,-818.95
@@ -2330,6 +2588,7 @@ Date,AccountName,Balance
 2026-04-13,Brokerage,22011.56
 2026-04-13,Home,434800.00
 2026-04-13,Mortgage,-312952.60
+2026-04-13,Family Car,19250.49
 2026-04-16,Everyday Checking,36950.09
 2026-04-16,High-Yield Savings,48984.71
 2026-04-16,Rewards Visa,-1054.55
@@ -2339,6 +2598,7 @@ Date,AccountName,Balance
 2026-04-16,Brokerage,22357.31
 2026-04-16,Home,435200.00
 2026-04-16,Mortgage,-312952.60
+2026-04-16,Family Car,19226.66
 2026-04-19,Everyday Checking,36907.18
 2026-04-19,High-Yield Savings,48984.71
 2026-04-19,Rewards Visa,-1068.61
@@ -2348,6 +2608,7 @@ Date,AccountName,Balance
 2026-04-19,Brokerage,22249.33
 2026-04-19,Home,435800.00
 2026-04-19,Mortgage,-312952.60
+2026-04-19,Family Car,19202.85
 2026-04-22,Everyday Checking,36842.18
 2026-04-22,High-Yield Savings,48984.71
 2026-04-22,Rewards Visa,-1118.19
@@ -2357,6 +2618,7 @@ Date,AccountName,Balance
 2026-04-22,Brokerage,22248.83
 2026-04-22,Home,436400.00
 2026-04-22,Mortgage,-312952.60
+2026-04-22,Family Car,19179.08
 2026-04-25,Everyday Checking,35579.68
 2026-04-25,High-Yield Savings,48984.71
 2026-04-25,Rewards Visa,0.00
@@ -2366,6 +2628,7 @@ Date,AccountName,Balance
 2026-04-25,Brokerage,22580.11
 2026-04-25,Home,436000.00
 2026-04-25,Mortgage,-312952.60
+2026-04-25,Family Car,19155.34
 2026-04-28,Everyday Checking,35579.68
 2026-04-28,High-Yield Savings,48984.71
 2026-04-28,Rewards Visa,-113.48
@@ -2375,6 +2638,7 @@ Date,AccountName,Balance
 2026-04-28,Brokerage,23001.64
 2026-04-28,Home,435900.00
 2026-04-28,Mortgage,-312952.60
+2026-04-28,Family Car,19131.62
 2026-05-01,Everyday Checking,37329.68
 2026-05-01,High-Yield Savings,49026.20
 2026-05-01,Rewards Visa,-361.93
@@ -2384,6 +2648,7 @@ Date,AccountName,Balance
 2026-05-01,Brokerage,23341.71
 2026-05-01,Home,435700.00
 2026-05-01,Mortgage,-312602.16
+2026-05-01,Family Car,19107.94
 2026-05-04,Everyday Checking,36829.68
 2026-05-04,High-Yield Savings,49026.20
 2026-05-04,Rewards Visa,-475.37
@@ -2393,6 +2658,7 @@ Date,AccountName,Balance
 2026-05-04,Brokerage,23372.45
 2026-05-04,Home,436200.00
 2026-05-04,Mortgage,-312602.16
+2026-05-04,Family Car,19084.28
 2026-05-07,Everyday Checking,36829.68
 2026-05-07,High-Yield Savings,49026.20
 2026-05-07,Rewards Visa,-532.47
@@ -2402,6 +2668,7 @@ Date,AccountName,Balance
 2026-05-07,Brokerage,22998.58
 2026-05-07,Home,435900.00
 2026-05-07,Mortgage,-312602.16
+2026-05-07,Family Car,19060.65
 2026-05-10,Everyday Checking,36740.39
 2026-05-10,High-Yield Savings,49026.20
 2026-05-10,Rewards Visa,-646.10
@@ -2411,6 +2678,7 @@ Date,AccountName,Balance
 2026-05-10,Brokerage,23359.20
 2026-05-10,Home,436200.00
 2026-05-10,Mortgage,-312602.16
+2026-05-10,Family Car,19037.06
 2026-05-13,Everyday Checking,36670.40
 2026-05-13,High-Yield Savings,49026.20
 2026-05-13,Rewards Visa,-795.59
@@ -2420,6 +2688,7 @@ Date,AccountName,Balance
 2026-05-13,Brokerage,23496.54
 2026-05-13,Home,436600.00
 2026-05-13,Mortgage,-312602.16
+2026-05-13,Family Car,19013.49
 2026-05-15,Everyday Checking,40270.40
 2026-05-15,High-Yield Savings,49026.20
 2026-05-15,Rewards Visa,-806.58
@@ -2429,3 +2698,4 @@ Date,AccountName,Balance
 2026-05-15,Brokerage,23926.33
 2026-05-15,Home,436500.00
 2026-05-15,Mortgage,-312602.16
+2026-05-15,Family Car,18997.79

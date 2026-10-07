@@ -8,6 +8,7 @@ import {
     Institution,
     Transaction
 } from '@shared/finance/types';
+import { AccountTypeUtil } from '@shared/finance/util';
 import { DateTimeUtil } from '@server/utility';
 import { EntityId } from './entity-id';
 
@@ -40,8 +41,13 @@ export class FinanceEntityFactory {
         } as unknown as T;
     }
 
-    public static createAccount(account: NewEntity<Account>): Account {
-        return FinanceEntityFactory.createEntity<Account>(FinanceEntityIdPrefix.Account, account);
+    /** Adds the group and Asset/Liability that the type decides (ACCT-1.2). */
+    public static createAccount(account: Omit<NewEntity<Account>, 'group' | 'category'>): Account {
+        return FinanceEntityFactory.createEntity<Account>(FinanceEntityIdPrefix.Account, {
+            ...account,
+            group: AccountTypeUtil.groupOf(account.type),
+            category: AccountTypeUtil.categoryOf(account.type)
+        });
     }
 
     public static createBalanceHistory(history: NewEntity<BalanceHistory>): BalanceHistory {

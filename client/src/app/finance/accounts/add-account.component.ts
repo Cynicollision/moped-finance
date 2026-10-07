@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { NewEntity } from '@shared/core/types';
-import { Account } from '@shared/finance/types';
+import { AccountFields } from '@shared/finance/types';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
@@ -55,21 +54,9 @@ export class FinanceAddAccountComponent implements HasUnsavedChanges {
         }
     }
 
-    async onSave(accountData: Partial<Account>) {
-        const newAccount: NewEntity<Account> = {
-            institutionId: accountData.institutionId!,
-            name: accountData.name!,
-            category: accountData.category!,
-            group: accountData.group!,
-            type: accountData.type!,
-            isHidden: accountData.isHidden ?? false,
-            isManual: true,
-            isRetirement: accountData.isRetirement ?? false,
-            hideFromSpending: accountData.hideFromSpending ?? false
-        };
-
+    async onSave(fields: AccountFields) {
         this.saving.set(true);
-        const created = await this.financeService.createAccount(newAccount);
+        const created = await this.financeService.createAccount({ ...fields, isManual: true });
         this.saving.set(false);
         if (created) {
             this.saved = true;

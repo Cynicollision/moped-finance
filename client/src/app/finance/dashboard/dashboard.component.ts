@@ -5,8 +5,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterLink } from '@angular/router';
 import { HistoryTimeframe } from '@shared/core/enum';
-import { AccountGroup, ValueHistoryType } from '@shared/finance/enum';
+import { AccountCategory, AccountGroup, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
+import { AccountTypeUtil } from '@shared/finance/util';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
@@ -18,19 +19,11 @@ import { FinanceService } from './../finance.service';
 /** One account group in the list, in display order. Liability groups show magnitudes, without the minus sign. */
 interface AccountGroupSummary {
     group: AccountGroup;
-    label: string;
     total: number;
+    /** By name, as the server sends them (DASH-2.1). */
     accounts: Account[];
     isLiability: boolean;
 }
-
-const groupOrder: { group: AccountGroup; label: string; isLiability: boolean }[] = [
-    { group: AccountGroup.Cash, label: 'Cash', isLiability: false },
-    { group: AccountGroup.Investment, label: 'Investments', isLiability: false },
-    { group: AccountGroup.CreditCard, label: 'Credit Cards', isLiability: true },
-    { group: AccountGroup.Loan, label: 'Loans', isLiability: true },
-    { group: AccountGroup.RealEstate, label: 'Real Estate', isLiability: false }
-];
 
 @Component({
     selector: 'app-dashboard',
@@ -139,7 +132,7 @@ export class DashboardComponent {
                     let isPositive = changeAmount >= 0;
                     let isGood = isPositive;
 
-                    if (group === AccountGroup.CreditCard || group === AccountGroup.Loan) {
+                    if (groupAccounts[0].category === AccountCategory.Liability) {
                         isPositive = changeAmount < 0;
                         isGood = !isPositive;
                     }
@@ -182,32 +175,36 @@ export class DashboardComponent {
         }
     });
 
+    // The groups in ACCT-1.2's order, leaving out those with no accounts (DASH-2.1), and the cards' totals (DASH-2.5).
     readonly summary = computed(() => {
-        const groups: AccountGroupSummary[] = groupOrder.map(g => ({ ...g, total: 0, accounts: [] }));
+        const groups: AccountGroupSummary[] = AccountTypeUtil.groups.map(info => ({
+            group: info.group,
+            total: 0,
+            accounts: [],
+            isLiability: info.category === AccountCategory.Liability
+        }));
         const byGroup = new Map(groups.map(g => [g.group, g]));
 
         for (const account of this.accounts.value() ?? []) {
-            const group = byGroup.get(account.group);
-            if (group) {
-                group.total += Number(account.balance) || 0;
-                group.accounts.push(account);
-            }
+            const group = byGroup.get(account.group)!;
+            group.total += Number(account.balance) || 0;
+            group.accounts.push(account);
         }
 
-        const total = (group: AccountGroup) => byGroup.get(group)!.total;
-        const totalAssets = total(AccountGroup.Cash) + total(AccountGroup.Investment) + total(AccountGroup.RealEstate);
-        const totalLiabilities = total(AccountGroup.CreditCard) + total(AccountGroup.Loan);
+        const shown = groups.filter(g => g.accounts.length > 0);
+        const assetGroups = shown.filter(g => !g.isLiability);
+        const liabilityGroups = shown.filter(g => g.isLiability);
+        const sum = (list: AccountGroupSummary[]) => list.reduce((total, g) => total + g.total, 0);
+        const totalAssets = sum(assetGroups);
+        const totalLiabilities = sum(liabilityGroups);
 
         return {
             netWorth: totalAssets - Math.abs(totalLiabilities),
             totalAssets,
             totalLiabilities,
-            cash: total(AccountGroup.Cash),
-            investments: total(AccountGroup.Investment),
-            realEstate: total(AccountGroup.RealEstate),
-            creditCards: total(AccountGroup.CreditCard),
-            loans: total(AccountGroup.Loan),
-            groups: groups.filter(g => g.accounts.length > 0)
+            groups: shown,
+            assetGroups,
+            liabilityGroups
         };
     });
 }

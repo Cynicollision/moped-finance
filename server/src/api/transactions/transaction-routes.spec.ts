@@ -2,14 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { SortDirection } from '@shared/core/enum';
-import {
-    AccountCategory,
-    AccountGroup,
-    AccountType,
-    CategoryType,
-    TransactionsFilterKey,
-    TransactionsSortKey
-} from '@shared/finance/enum';
+import { AccountType, CategoryType, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { IAppLogger } from '@server/logging';
@@ -69,12 +62,9 @@ describe('Transaction Routes', () => {
             FinanceEntityFactory.createAccount({
                 institutionId: inst.id!,
                 name: 'Checking',
-                category: AccountCategory.Asset,
-                group: AccountGroup.Cash,
                 type: AccountType.Checking,
                 isHidden: false,
                 isManual: false,
-                isRetirement: false,
                 hideFromSpending: false,
                 balance: 0
             })
@@ -330,12 +320,9 @@ describe('Transaction Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Savings',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Savings,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false,
                     balance: 0,
                     ...flags
@@ -919,8 +906,6 @@ describe('Transaction Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: inst.id,
                     name: 'savings',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Savings
                 })
             );
@@ -1054,8 +1039,6 @@ describe('Transaction Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: inst.id,
                     name: 'Other',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking
                 })
             );

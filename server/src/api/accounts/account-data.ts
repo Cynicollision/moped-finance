@@ -1,7 +1,8 @@
-import { eq, desc, sql } from 'drizzle-orm';
+import { asc, eq, desc, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Account } from '@shared/finance/types';
-import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
+import { AccountType } from '@shared/finance/enum';
+import { AccountTypeUtil } from '@shared/finance/util';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
@@ -17,18 +18,18 @@ export interface IFinanceAccountData {
 }
 
 function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number | string): Account {
+    const type = row.type as AccountType;
     return {
         id: row.id,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         institutionId: row.institutionId,
         name: row.name,
-        category: row.category as AccountCategory,
-        group: row.group as AccountGroup,
-        type: row.type as AccountType | null,
+        type,
+        group: AccountTypeUtil.groupOf(type),
+        category: AccountTypeUtil.categoryOf(type),
         isHidden: row.isHidden,
         isManual: row.isManual,
-        isRetirement: row.isRetirement,
         hideFromSpending: row.hideFromSpending,
         balance: Number(balance)
     };
@@ -50,13 +51,19 @@ export class FinanceAccountData implements IFinanceAccountData {
             .limit(1);
     }
 
+    // By name, ignoring case (INST-1.1, DASH-2.1).
+    private byName() {
+        return asc(sql`lower(${accountSchema.name})`);
+    }
+
     public async retrieveAll(): Promise<Account[]> {
         const rows = await this.db
             .select({
                 account: accountSchema,
                 balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
             })
-            .from(accountSchema);
+            .from(accountSchema)
+            .orderBy(this.byName());
 
         return rows.map(row => mapRowToAccount(row.account, row.balance));
     }
@@ -68,7 +75,8 @@ export class FinanceAccountData implements IFinanceAccountData {
                 balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery()}), 0)`
             })
             .from(accountSchema)
-            .where(eq(accountSchema.institutionId, institutionId));
+            .where(eq(accountSchema.institutionId, institutionId))
+            .orderBy(this.byName());
 
         return rows.map(row => mapRowToAccount(row.account, row.balance));
     }
@@ -96,12 +104,9 @@ export class FinanceAccountData implements IFinanceAccountData {
                 id: account.id,
                 institutionId: account.institutionId,
                 name: account.name,
-                category: account.category,
-                group: account.group,
                 type: account.type,
                 isHidden: account.isHidden,
                 isManual: account.isManual,
-                isRetirement: account.isRetirement,
                 hideFromSpending: account.hideFromSpending
             })
             .returning();
@@ -115,12 +120,9 @@ export class FinanceAccountData implements IFinanceAccountData {
             .set({
                 institutionId: account.institutionId,
                 name: account.name,
-                category: account.category,
-                group: account.group,
                 type: account.type,
                 isHidden: account.isHidden,
                 isManual: account.isManual,
-                isRetirement: account.isRetirement,
                 hideFromSpending: account.hideFromSpending,
                 updatedAt: DateTimeUtil.now()
             })

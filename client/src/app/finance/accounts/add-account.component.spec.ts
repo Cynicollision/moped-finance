@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
+import { AccountType } from '@shared/finance/enum';
 import { Institution } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { AuthService } from './../../core/auth.service';
@@ -63,16 +63,7 @@ describe('FinanceAddAccountComponent', () => {
 
         expect(element.querySelector('app-account-form')).not.toBeNull();
         expect(element.textContent).not.toMatch(/connect|coming soon/i);
-        expect(labels(element)).toEqual([
-            'Account Name',
-            'Institution',
-            'Category',
-            'Group',
-            'Type',
-            'Hide Account',
-            'Retirement Account',
-            'Hide from Spending'
-        ]);
+        expect(labels(element)).toEqual(['Account Name', 'Institution', 'Type', 'Hide Account', 'Hide from Spending']);
     });
 
     it('ACCT-1.3 should list institutions by name and start at the one it was opened from', async () => {
@@ -104,12 +95,9 @@ describe('FinanceAddAccountComponent', () => {
         expect(financeService.createAccount).toHaveBeenCalledWith({
             institutionId: 'inst-1',
             name: 'Joint Checking',
-            category: AccountCategory.Asset,
-            group: AccountGroup.Cash,
             type: AccountType.Checking,
             isHidden: false,
             isManual: true,
-            isRetirement: false,
             hideFromSpending: false
         });
         expect(notificationService.success).toHaveBeenCalledWith('Account added');
@@ -139,5 +127,30 @@ describe('FinanceAddAccountComponent', () => {
 
         expect(modalService.open).toHaveBeenCalledWith(InstitutionDialogComponent, {});
         expect(element.querySelector('app-account-form')).not.toBeNull();
+    });
+
+    it('ACCT-1.2 should offer every type under its group and show the group and Asset or Liability it decides', async () => {
+        const { fixture, element } = await render([institution('inst-1', 'First Bank')], 'inst-1');
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+
+        expect(form.typeGroups.map(g => g.group)).toEqual([
+            'Cash',
+            'Investments',
+            'Retirement',
+            'Real Estate',
+            'Other Assets',
+            'Credit Cards',
+            'Loans'
+        ]);
+        expect(element.querySelector('mat-hint')!.textContent!.trim()).toBe('Cash · Asset');
+
+        form.accountForm.controls.type.setValue(AccountType.CreditCard);
+        await fixture.whenStable();
+
+        expect(element.querySelector('mat-hint')!.textContent!.trim()).toBe('Credit Cards · Liability');
+        expect(form.accountForm.valid).toBe(false); // no name yet
+        form.accountForm.controls.name.setValue('Visa');
+        expect(form.accountForm.valid).toBe(true);
     });
 });

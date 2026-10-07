@@ -43,7 +43,6 @@ INST-2.1 comes from the "Automated bank sync" item in `TODO.md`; the constraints
 
 ## Known gaps
 
-- **Order (INST-1.1).** Institutions, and the accounts inside each card, appear in creation order.
 - **Hidden and closed accounts aren't marked (INST-1.1).**
 
 ## Housekeeping

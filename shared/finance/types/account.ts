@@ -1,21 +1,21 @@
 import { Entity } from './../../core/types';
 import { AccountCategory, AccountGroup, AccountType } from './../enum';
-import { BalanceHistory } from './balance-history';
-import { Transaction } from './transaction';
 
-export type Account = Entity & {
+/** What's stored for an account, and what creating or editing one sends. */
+export interface AccountFields {
     institutionId: string;
     name: string;
-    category: AccountCategory;
-    group: AccountGroup;
-    // Null for groups that have no account types (e.g. Credit Card).
-    type: AccountType | null;
-    balance?: number;
+    type: AccountType;
     isHidden?: boolean;
     isManual?: boolean;
-    isRetirement?: boolean;
     hideFromSpending?: boolean;
+}
 
-    balanceHistory?: BalanceHistory[];
-    transactions?: Transaction[];
-};
+export type Account = Entity &
+    AccountFields & {
+        /** Derived from the type (ACCT-1.2); not stored, and ignored in requests. */
+        group: AccountGroup;
+        /** Derived from the type (ACCT-1.2); not stored, and ignored in requests. */
+        category: AccountCategory;
+        balance?: number;
+    };

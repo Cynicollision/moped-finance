@@ -14,6 +14,7 @@ import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import {
     Institution,
     Account,
+    AccountFields,
     Category,
     CategoryGroup,
     CategoryUsage,
@@ -118,7 +119,7 @@ export class FinanceService {
         return this.api.load<Account[]>(`${API_BASE_PATH}/accounts`);
     }
 
-    createAccount(account: NewEntity<Account>): Promise<Account | undefined> {
+    createAccount(account: AccountFields): Promise<Account | undefined> {
         return this.api.post<Account>(`${API_BASE_PATH}/accounts`, account);
     }
 

@@ -3,7 +3,7 @@ import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { AccountCategory, AccountGroup, AccountType, TransactionsSortKey } from '@shared/finance/enum';
 import { SortDirection } from '@shared/core/enum';
-import { BalanceHistory } from '@shared/finance/types';
+import { Account, BalanceHistory } from '@shared/finance/types';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { DateTimeUtil } from '@server/utility';
@@ -72,8 +72,6 @@ describe('Account Routes', () => {
             FinanceEntityFactory.createAccount({
                 institutionId: testInstitutionId,
                 name,
-                category: AccountCategory.Asset,
-                group: AccountGroup.Cash,
                 type: AccountType.Checking
             })
         );
@@ -99,13 +97,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -113,13 +108,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Savings',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Savings,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -130,6 +122,16 @@ describe('Account Routes', () => {
             expect(response.body.length).toBe(2);
             expect(response.body.map((a: any) => a.id)).toEqual(expect.arrayContaining([acc1.id, acc2.id]));
         });
+
+        it('DASH-2.1 should sort accounts by name, ignoring case', async () => {
+            for (const name of ['savings', 'Checking', 'brokerage']) {
+                await insertAccount(name);
+            }
+
+            const response = await request(app).get('/accounts');
+
+            expect(response.body.map((a: Account) => a.name)).toEqual(['brokerage', 'Checking', 'savings']);
+        });
     });
 
     describe('GET /accounts/total-value-history', () => {
@@ -138,13 +140,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -152,8 +151,6 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Mortgage',
-                    category: AccountCategory.Liability,
-                    group: AccountGroup.Loan,
                     type: AccountType.Mortgage
                 })
             );
@@ -190,8 +187,6 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking
                 })
             );
@@ -228,13 +223,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -259,12 +251,9 @@ describe('Account Routes', () => {
             const payload = {
                 name: 'New Account',
                 institutionId: testInstitutionId,
-                category: AccountCategory.Asset,
-                group: AccountGroup.Cash,
                 type: AccountType.Checking,
                 isHidden: false,
                 isManual: true,
-                isRetirement: false,
                 hideFromSpending: false
             };
 
@@ -272,6 +261,7 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(201);
             expect(response.body.name).toBe('New Account');
+            expect(response.body.group).toBe(AccountGroup.Cash);
             expect(response.body.category).toBe(AccountCategory.Asset);
 
             const account = await accountData.retrieveSingle(response.body.id);
@@ -279,31 +269,38 @@ describe('Account Routes', () => {
             expect(account?.name).toBe('New Account');
         });
 
-        it('APP-5.7 should return 400 when schema validation fails (missing category)', async () => {
-            const payload = {
-                name: 'New Account',
-                institutionId: testInstitutionId,
-                group: AccountGroup.Cash
-            };
+        it('ACCT-1.11 should refuse an account with no type', async () => {
+            const payload = { name: 'New Account', institutionId: testInstitutionId };
 
             const response = await request(app).post('/accounts').send(payload);
 
             expect(response.status).toBe(400);
-            expect(response.body.message).toContain('category:');
+            expect(response.body.message).toContain('type:');
         });
 
-        it('APP-5.7 should return 400 when group is not a known account group', async () => {
-            const payload = {
-                name: 'New Account',
-                institutionId: testInstitutionId,
-                category: AccountCategory.Asset,
-                group: 'Crypto'
-            };
+        it("ACCT-1.11 should refuse a type that isn't one of the account types", async () => {
+            const payload = { name: 'New Account', institutionId: testInstitutionId, type: 'Crypto' };
 
             const response = await request(app).post('/accounts').send(payload);
 
             expect(response.status).toBe(400);
-            expect(response.body.message).toContain('group:');
+            expect(response.body.message).toContain('type:');
+        });
+
+        it('ACCT-1.11 should take the group and Asset or Liability from the type, ignoring any sent', async () => {
+            const payload = {
+                name: 'Card',
+                institutionId: testInstitutionId,
+                type: AccountType.CreditCard,
+                group: AccountGroup.Cash,
+                category: AccountCategory.Asset
+            };
+
+            const response = await request(app).post('/accounts').send(payload);
+
+            expect(response.status).toBe(201);
+            expect(response.body.group).toBe(AccountGroup.CreditCards);
+            expect(response.body.category).toBe(AccountCategory.Liability);
         });
     });
 
@@ -313,13 +310,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Old Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -342,12 +336,9 @@ describe('Account Routes', () => {
             const payload = {
                 name: 'Updated Checking',
                 institutionId: testInstitutionId,
-                category: AccountCategory.Asset,
-                group: AccountGroup.Cash,
                 type: AccountType.Checking,
                 isHidden: false,
                 isManual: true,
-                isRetirement: false,
                 hideFromSpending: false
             };
 
@@ -364,13 +355,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -415,13 +403,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking Account',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -443,13 +428,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking Account',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -473,8 +455,6 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking
                 })
             );
@@ -482,8 +462,6 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Savings',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Savings
                 })
             );
@@ -504,18 +482,38 @@ describe('Account Routes', () => {
             ]);
         });
 
+        it('DASH-1.1 should total assets or liabilities by their type', async () => {
+            const types = [AccountType.Vehicle, AccountType.RothIRA, AccountType.CreditCard, AccountType.AutoLoan];
+            for (const [i, type] of types.entries()) {
+                const account = await accountData.insert(
+                    FinanceEntityFactory.createAccount({ institutionId: testInstitutionId, name: type, type })
+                );
+                await balanceHistoryData.insertBulk([
+                    FinanceEntityFactory.createBalanceHistory({
+                        accountId: account.id,
+                        balance: account.category === AccountCategory.Asset ? 10 ** i : -(10 ** i),
+                        date: '2026-06-01'
+                    })
+                ]);
+            }
+            const total = async (type: string) =>
+                (await request(app).get(`/accounts/total-value-history?type=${type}&asOfDate=2026-06-01`)).body[0]
+                    .amount;
+
+            expect(await total('Assets')).toBe(11);
+            expect(await total('Liabilities')).toBe(-1100);
+            expect(await total('NetWorth')).toBe(-1089);
+        });
+
         it('APP-5.7 should return 400 when timeframe is invalid', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking Account',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -584,13 +582,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -640,13 +635,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -669,13 +661,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -698,13 +687,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -728,13 +714,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -870,13 +853,10 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking Account',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
                     isManual: false,
-                    isRetirement: false,
                     hideFromSpending: false
                 })
             );
@@ -894,8 +874,6 @@ describe('Account Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     isHidden: true
                 })
@@ -909,21 +887,30 @@ describe('Account Routes', () => {
             );
         });
 
-        it('ACCT-1.5 should clear the type when it is sent as null', async () => {
+        it('ACCT-1.11 should refuse to clear the type', async () => {
             const account = await insertAccount();
 
             const response = await request(app).put(`/accounts/${account.id}`).send({ type: null });
 
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('type:');
+        });
+
+        it("ACCT-1.5 should move an account to its new type's group", async () => {
+            const account = await insertAccount();
+
+            const response = await request(app).put(`/accounts/${account.id}`).send({ type: AccountType.Vehicle });
+
             expect(response.status).toBe(200);
-            expect(response.body.type).toBeNull();
+            expect(response.body.type).toBe(AccountType.Vehicle);
+            expect(response.body.group).toBe(AccountGroup.OtherAssets);
         });
 
         it('APP-5.5 should reject an account whose institution does not exist', async () => {
             const payload = {
                 institutionId: 'missing',
                 name: 'X',
-                category: AccountCategory.Asset,
-                group: AccountGroup.Cash
+                type: AccountType.Checking
             };
 
             const response = await request(app).post('/accounts').send(payload);

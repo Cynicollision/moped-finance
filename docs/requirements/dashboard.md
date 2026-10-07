@@ -21,11 +21,11 @@ The same value-history chart component is reused on Account Details (see ACCT-2.
 
 | ID | Requirement | Status |
 |---|---|---|
-| DASH-2.1 | Below an **Accounts** heading, the Dashboard shall list accounts in groups (ACCT-1.2), in this order: **Cash**, **Investments**, **Real Estate**, **Other Assets**, **Credit Cards**, **Loans**. A group with no accounts shall not be shown. Within a group, accounts are sorted by name, ignoring case. | Partial |
+| DASH-2.1 | Below an **Accounts** heading, the Dashboard shall list accounts in groups (ACCT-1.2), in this order: **Cash**, **Investments**, **Retirement**, **Real Estate**, **Other Assets**, **Credit Cards**, **Loans**. A group with no accounts shall not be shown. Within a group, accounts are sorted by name, ignoring case. | Implemented |
 | DASH-2.2 | Each group shall show its total and its change over the selected timeframe, as an amount and a percentage of the group's starting value, followed by the timeframe's name. The change is the group's balances at the end of the timeframe minus at the start, using each account's earliest and latest entry in it; accounts with no entries in the timeframe are left out. The change is colored favourable (green) or unfavourable (red) as in DASH-1.3: for example, Cash falling is red with a down arrow, while Credit Cards and Loans falling are green with a down arrow. | Implemented |
 | DASH-2.3 | Each account in a group shall show its name, as a link to Account Details, and its current balance. | Implemented |
 | DASH-2.4 | Liability balances (credit cards, loans) shall be displayed as positive amounts. | Implemented |
-| DASH-2.5 | A **Total Assets** card shall show the sum of Cash, Investments, Real Estate and Other Assets. A **Total Liabilities** card shall show the sum of Credit Cards and Loans. Each shows its breakdown by group. | Partial |
+| DASH-2.5 | A **Total Assets** card shall show the sum of the asset groups (Cash, Investments, Retirement, Real Estate, Other Assets). A **Total Liabilities** card shall show the sum of the liability groups (Credit Cards, Loans). Each shows its breakdown by group, listing the groups that DASH-2.1 shows, in the same order. | Implemented |
 | DASH-2.6 | Net worth shall be total assets minus the size of total liabilities. | Implemented |
 | DASH-2.7 | Accounts whose group is not one of the five above shall be omitted from the lists and totals. | Retired (every account has a group from ACCT-1.2, ACCT-1.11) |
 | DASH-2.8 | The **Total Assets** and **Total Liabilities** cards shall show only totals and their group breakdown, with no change over time, and account rows shall show only name and balance. | Implemented |
@@ -37,7 +37,6 @@ The same value-history chart component is reused on Account Details (see ACCT-2.
 - **The chart adds up whatever exists on each date (DASH-1.4).** If account A has entries on the 1st and 15th and account B only on the 10th, the series has three points and the 1st and 10th omit the other account, so accounts updated on different days make the total jump.
 - **Chart total and card totals can disagree (DASH-1.7).** The big number uses the accounts' current balances; the chart's last point is the sum for its last *date*. Carrying balances forward (DASH-1.4) fixes this.
 - **Hidden accounts** are included everywhere (DASH-2.9).
-- **Groups are the old five (DASH-2.1, DASH-2.5).** Other Assets doesn't exist yet, Real Estate is listed after Loans, and accounts within a group appear in creation order.
 - **Empty state (DASH-1.8).** A new user with no accounts sees an empty chart and no groups.
 
 ## Notes

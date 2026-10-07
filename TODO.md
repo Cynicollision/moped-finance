@@ -19,9 +19,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 3. Account types
-- [ ] ACCT-1.1, 1.2, 1.8, 1.10, 1.11; DASH-2.1, 2.5: single **Type** field, with group and Asset/Liability derived from it; migration renaming stored values, typing existing credit cards, making type required; server refuses mismatched types; Retirement defaults by type; Dashboard gets Other Assets, the right group order and name sorting. Fix the `account-routes.spec.ts` ACCT-1.5 test that clears type with null. Also INST-1.1's ordering (institutions and their accounts by name).
-
 ### 4. Balances carried forward
 - [ ] ACCT-2.1, 2.11; DASH-1.4, 1.7; ACCT-2.6 ("Balance as of" replaces "Last updated"): current balance ignores future entries; account and Dashboard series have a value for every day, carrying entries forward; headline, chart and card totals agree. DASH-1.8: Dashboard empty state.
 
@@ -104,3 +101,4 @@ Manual entry and import/export come first. Constraints for when this gets picked
 - Project Claude Code skills (e.g. `new-finance-resource`, `verify`, `schema-change` once migrations exist). Skipped for now; revisit if the same multi-step instructions keep getting repeated.
 - Spending compares an unfinished period with its whole budget (CASH-1.10), so mid-month nearly everything reads as under. A pace marker (how far through the period today is), or a pro-rated budget for the current period, would make it fairer. `spending.component.ts`, `difference`.
 - Warn before reloading or closing the tab with unsaved changes (`beforeunload`). APP-2.7 covers only leaving within the app.
+- A retirement tracker built on the Retirement account group (ACCT-1.2): for example progress toward a target balance, or contributions against the yearly limits. The group already gives retirement savings their own Dashboard total; decide what else is worth tracking before writing requirements. (Replaces the old Retirement flag and the goals feature of the app this one replaces.)
