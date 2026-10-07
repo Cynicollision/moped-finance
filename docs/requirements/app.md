@@ -67,7 +67,7 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 |---|---|---|
 | APP-6.1 | Red shall mean unfavourable: a value that's bad for the user, such as debt growing (DASH-1.3), negative savings (CASH-1.4) or spending over budget (CASH-1.10). A negative amount that's expected, such as a purchase, shall not be red. | Implemented |
 | APP-6.2 | Transaction amounts (the Transactions list, View Transaction, Account Details' recent transactions) shall show money in with a "+" before the "$", in green, and money out with no sign, in the ordinary text color. | Implemented |
-| APP-6.3 | Amounts shall be stored signed: money out and liability balances are negative. Forms shall not ask the user for a sign: transaction amounts use a Money out / Money in switch (TXN-2.13), and a liability's balance fields (starting balance, Update Balance, ACCT-2.2) ask for **Amount owed** as a positive number and store it negative. Budget amounts are positive, with direction from the category (BUD notes). CSV files keep signed amounts (TXN-3.10, ACCT-3.10). | Planned |
+| APP-6.3 | Amounts shall be stored signed: money out and liability balances are negative. Forms shall not ask the user for a sign: transaction amounts use a Money out / Money in switch (TXN-2.13), and a liability's balance on Add and Edit Account (ACCT-2.2) is asked for as **Amount owed**, a positive number, and stored negative. Budget amounts are positive, with direction from the category (BUD notes). CSV files keep signed amounts (TXN-3.10, ACCT-3.10). | Partial |
 
 ## APP-7 Lists work at any width
 
@@ -82,12 +82,20 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 |---|---|---|
 | APP-8.1 | A balance entry or transaction shall not be dated after today. The forms' date pickers stop at today (TXN-2.1, ACCT-2.2), and the server refuses a later date from a form ("date: Can't be after today") or an import row ("Row 3: Date 2026-05-19 is after today.", TXN-3.10, ACCT-3.10). The server allows one day past its own today (APP-5.6), so a user in a time zone ahead of the server's can still record their today. | Implemented |
 
+## APP-9 The user can install the app
+
+| ID | Requirement | Status |
+|---|---|---|
+| APP-9.1 | The app shall be installable as a progressive web app from a browser that offers it (for example Chrome's **Install** in the address bar or menu), named "Moped Finance" with its own icon and theme colours, and open in its own window at the Dashboard (APP-1.6). | Planned |
+| APP-9.2 | An installed app shall pick up a new version after the server is updated, at the latest the next time it's opened, without the user clearing anything. | Planned |
+
 ## Known gaps
 
-- **Forms take signed amounts (APP-6.3).** Money out and liability balances must be typed as negative numbers.
+- **Transaction forms take signed amounts (APP-6.3).** Money out must be typed as a negative number (TXN-2.13). Balances already ask for the amount owed.
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.
 
 ## Notes
 
 - **Debug date and the server.** In development builds the client uses 2026-05-17 as today, while the server uses the real date for anything it computes on its own (for example a spending request with no as-of date). That's fine while the client always sends an as-of date, as it does for accounts' balances, value history and spending. The server's date limit (APP-8.1) uses its real date, so in development a date between 2026-05-17 and the real today can still be imported or sent to the API, though the date pickers stop at 2026-05-17.
+- **Installing needs HTTPS (APP-9).** Browsers offer installation only to a site served over HTTPS, or from localhost. Over plain HTTP on a LAN, the default ([deployment.md](../deployment.md)), the app works in a tab but may not be installable; check the browsers' current rules when building it. Offline use isn't planned: the app needs its server.
 - **No future dates (APP-8.1).** Decided 2026-10-07. The app records what has happened, and planning ahead is what Budget is for (BUD). Bank exports and sync never carry future dates, and allowing them would mean a future-dated balance entry could become the current balance, and the Transactions list would need a default End Date to hide them.

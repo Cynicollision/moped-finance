@@ -8,7 +8,7 @@ The first set was written by reading the running app and its code, so domains no
 
 | Prefix | Domain | File |
 |---|---|---|
-| `APP` | Application shell, navigation, feedback, demo mode | [app.md](app.md) |
+| `APP` | Application shell, navigation, feedback, demo mode, installing as an app | [app.md](app.md) |
 | `AUTH` | Registration, login, sessions, single owner, API tokens | [auth.md](auth.md) |
 | `SET` | Settings, profile, appearance, bank sync | [settings.md](settings.md) |
 | `INST` | Institutions, manual and connected, and the Settings page that lists them with their accounts | [institutions.md](institutions.md) |

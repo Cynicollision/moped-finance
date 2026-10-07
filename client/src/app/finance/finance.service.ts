@@ -16,7 +16,7 @@ import { TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
 import {
     Institution,
     Account,
-    AccountFields,
+    AccountRequest,
     Category,
     CategoryGroup,
     CategoryUsage,
@@ -122,12 +122,14 @@ export class FinanceService {
         return this.api.load<Account[]>(`${API_BASE_PATH}/accounts?asOfDate=${this.dateProvider.today()}`);
     }
 
-    createAccount(account: AccountFields): Promise<Account | undefined> {
+    /** Adds an account and, with `balanceEntry`, its starting balance (ACCT-1.4). */
+    createAccount(account: AccountRequest): Promise<Account | undefined> {
         return this.api.post<Account>(`${API_BASE_PATH}/accounts`, account);
     }
 
-    saveAccount(account: Account): Promise<Account | undefined> {
-        return this.api.put<Account>(`${API_BASE_PATH}/accounts/${account.id}`, account);
+    /** Saves an account's changes and, with `balanceEntry`, its balance on that date (ACCT-2.2). */
+    saveAccount(accountId: string, changes: AccountRequest): Promise<Account | undefined> {
+        return this.api.put<Account>(`${API_BASE_PATH}/accounts/${accountId}`, changes);
     }
 
     deleteAccount(id: string): Promise<boolean> {

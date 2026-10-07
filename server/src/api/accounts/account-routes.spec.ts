@@ -1,7 +1,13 @@
 import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
-import { AccountCategory, AccountGroup, AccountType, TransactionsSortKey } from '@shared/finance/enum';
+import {
+    AccountCategory,
+    AccountGroup,
+    AccountType,
+    BalanceEntrySource,
+    TransactionsSortKey
+} from '@shared/finance/enum';
 import { SortDirection } from '@shared/core/enum';
 import { DailyBalance, TotalValueHistory } from '@shared/finance/contracts';
 import { Account, BalanceHistory } from '@shared/finance/types';
@@ -90,6 +96,34 @@ describe('Account Routes', () => {
             [accountId]
         );
         return result.rows.map(r => [r.date, Number(r.balance)]);
+    }
+
+    async function sourcesFor(accountId: string): Promise<[string, BalanceEntrySource][]> {
+        const result = await pglite.query<{ date: string; source: BalanceEntrySource }>(
+            `SELECT to_char(date, 'YYYY-MM-DD') AS date, source FROM finance.balance_history WHERE account_id = $1 ORDER BY date`,
+            [accountId]
+        );
+        return result.rows.map(r => [r.date, r.source]);
+    }
+
+    // A trigger stands in for any database failure part way through a write.
+    async function withBalanceWritesFailingOn<T>(balance: number, run: () => Promise<T>): Promise<T> {
+        await pglite.exec(`
+            CREATE FUNCTION finance.reject_balance() RETURNS trigger AS $$
+            BEGIN
+                IF NEW.balance = ${balance} THEN RAISE EXCEPTION 'boom'; END IF;
+                RETURN NEW;
+            END $$ LANGUAGE plpgsql;
+            CREATE TRIGGER reject_balance BEFORE INSERT OR UPDATE ON finance.balance_history
+                FOR EACH ROW EXECUTE FUNCTION finance.reject_balance();
+        `);
+        try {
+            return await run();
+        } finally {
+            await pglite.exec(
+                'DROP TRIGGER reject_balance ON finance.balance_history; DROP FUNCTION finance.reject_balance();'
+            );
+        }
     }
 
     describe('GET /accounts', () => {
@@ -192,6 +226,7 @@ describe('Account Routes', () => {
                     accountId: acc1.id!,
                     balance: 2500.0,
                     date: DateTimeUtil.today(),
+                    source: BalanceEntrySource.Set,
                     createdAt: DateTimeUtil.now(),
                     updatedAt: DateTimeUtil.now()
                 },
@@ -429,6 +464,73 @@ describe('Account Routes', () => {
             expect(response.body.group).toBe(AccountGroup.CreditCards);
             expect(response.body.category).toBe(AccountCategory.Liability);
         });
+
+        it('ACCT-4.3 should create a manual account, ignoring isManual', async () => {
+            const payload = { name: 'Checking', institutionId: testInstitutionId, type: AccountType.Checking };
+
+            const response = await request(app)
+                .post('/accounts')
+                .send({ ...payload, isManual: false });
+
+            expect(response.status).toBe(201);
+            expect(response.body.isManual).toBe(true);
+        });
+
+        it('ACCT-2.2 should record a starting balance as a set entry on its date', async () => {
+            DateTimeUtil.setClock(new Date('2026-05-17T12:00:00Z'));
+            const payload = {
+                name: 'Visa',
+                institutionId: testInstitutionId,
+                type: AccountType.CreditCard,
+                balanceEntry: { date: '2026-05-10', balance: -250.5 }
+            };
+
+            const response = await request(app).post('/accounts').send(payload);
+
+            expect(response.status).toBe(201);
+            expect(response.body).toEqual(expect.objectContaining({ balance: -250.5, balanceDate: '2026-05-10' }));
+            expect(await balancesFor(response.body.id)).toEqual([['2026-05-10', -250.5]]);
+            expect(await sourcesFor(response.body.id)).toEqual([['2026-05-10', BalanceEntrySource.Set]]);
+        });
+
+        it('ACCT-1.4 should record no balance when no starting balance is sent', async () => {
+            const payload = { name: 'Checking', institutionId: testInstitutionId, type: AccountType.Checking };
+
+            const response = await request(app).post('/accounts').send(payload);
+
+            expect(response.body).toEqual(expect.objectContaining({ balance: 0, balanceDate: null }));
+            expect(await balancesFor(response.body.id)).toEqual([]);
+        });
+
+        it('APP-8.1 should refuse a starting balance dated after today', async () => {
+            DateTimeUtil.setClock(new Date('2026-05-17T12:00:00Z'));
+            const payload = {
+                name: 'Checking',
+                institutionId: testInstitutionId,
+                type: AccountType.Checking,
+                balanceEntry: { date: '2026-05-19', balance: 1 }
+            };
+
+            const response = await request(app).post('/accounts').send(payload);
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('balanceEntry.date:');
+            expect(await accountData.retrieveAll()).toEqual([]);
+        });
+
+        it('ACCT-2.2 should save neither the account nor its starting balance when the balance fails', async () => {
+            const payload = {
+                name: 'Checking',
+                institutionId: testInstitutionId,
+                type: AccountType.Checking,
+                balanceEntry: { date: '2026-05-01', balance: 666 }
+            };
+
+            const response = await withBalanceWritesFailingOn(666, () => request(app).post('/accounts').send(payload));
+
+            expect(response.status).toBe(500);
+            expect(await accountData.retrieveAll()).toEqual([]);
+        });
     });
 
     describe('PUT /accounts/:accountId', () => {
@@ -473,6 +575,97 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(404);
             expect(response.body.message).toContain('not found');
+        });
+
+        it('ACCT-2.2 should record the balance as a set entry, replacing one on that date and keeping the rest', async () => {
+            const account = await insertAccount();
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
+                FinanceEntityFactory.createBalanceHistory({
+                    accountId: account.id,
+                    date: '2026-05-05',
+                    balance: 90,
+                    source: BalanceEntrySource.Adjusted
+                }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-09', balance: 80 })
+            ]);
+
+            const response = await request(app)
+                .put(`/accounts/${account.id}`)
+                .send({ name: 'Renamed', balanceEntry: { date: '2026-05-05', balance: 95 } });
+
+            expect(response.status).toBe(200);
+            expect(response.body.name).toBe('Renamed');
+            expect(await balancesFor(account.id)).toEqual([
+                ['2026-05-01', 100],
+                ['2026-05-05', 95],
+                ['2026-05-09', 80]
+            ]);
+            expect(await sourcesFor(account.id)).toEqual([
+                ['2026-05-01', BalanceEntrySource.Set],
+                ['2026-05-05', BalanceEntrySource.Set],
+                ['2026-05-09', BalanceEntrySource.Set]
+            ]);
+        });
+
+        it('ACCT-2.2 should return the new current balance', async () => {
+            DateTimeUtil.setClock(new Date('2026-05-17T12:00:00Z'));
+            const account = await insertAccount();
+
+            const response = await request(app)
+                .put(`/accounts/${account.id}`)
+                .send({ balanceEntry: { date: '2026-05-17', balance: 42 } });
+
+            expect(response.body).toEqual(expect.objectContaining({ balance: 42, balanceDate: '2026-05-17' }));
+        });
+
+        it('ACCT-1.5 should record no balance when none is sent', async () => {
+            const account = await insertAccount();
+
+            await request(app).put(`/accounts/${account.id}`).send({ name: 'Renamed' });
+
+            expect(await balancesFor(account.id)).toEqual([]);
+        });
+
+        it("ACCT-2.2 should keep the account's changes out too when its balance fails", async () => {
+            const account = await insertAccount('Checking');
+
+            const response = await withBalanceWritesFailingOn(666, () =>
+                request(app)
+                    .put(`/accounts/${account.id}`)
+                    .send({ name: 'Renamed', balanceEntry: { date: '2026-05-01', balance: 666 } })
+            );
+
+            expect(response.status).toBe(500);
+            expect((await accountData.retrieveSingle(account.id))?.name).toBe('Checking');
+        });
+
+        it("ACCT-4.4 should refuse a connected account's balance", async () => {
+            const account = await accountData.insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: testInstitutionId,
+                    name: 'Synced',
+                    type: AccountType.Checking,
+                    isManual: false
+                })
+            );
+
+            const response = await request(app)
+                .put(`/accounts/${account.id}`)
+                .send({ balanceEntry: { date: '2026-05-01', balance: 1 } });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe("A connected account's balance comes from its bank.");
+            expect(await balancesFor(account.id)).toEqual([]);
+        });
+
+        it('ACCT-4.3 should ignore isManual', async () => {
+            const account = await insertAccount();
+
+            const response = await request(app).put(`/accounts/${account.id}`).send({ isManual: false });
+
+            expect(response.status).toBe(200);
+            expect(response.body.isManual).toBe(true);
         });
     });
 
@@ -883,6 +1076,37 @@ describe('Account Routes', () => {
 
             const allHistory = await pglite.query('SELECT * FROM finance.balance_history');
             expect(allHistory.rows.length).toBe(0);
+        });
+
+        it('ACCT-3.3 should give the date range of every dated row, bad rows included', async () => {
+            const account = await insertAccount();
+
+            const response = await importBalances(
+                account.id,
+                'Date,Balance\n2026-06-01,lots\n2026-06-03,3\n2026-06-05,\n,4',
+                '?dryRun=true'
+            );
+
+            expect(response.body).toEqual(expect.objectContaining({ startDate: '2026-06-01', endDate: '2026-06-05' }));
+        });
+
+        it('ACCT-3.5 should import set entries, replacing adjusted ones in the range', async () => {
+            const account = await insertAccount();
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({
+                    accountId: account.id,
+                    date: '2026-06-02',
+                    balance: 5,
+                    source: BalanceEntrySource.Adjusted
+                })
+            ]);
+
+            await importBalances(account.id, 'Date,Balance\n2026-06-01,1\n2026-06-03,3');
+
+            expect(await sourcesFor(account.id)).toEqual([
+                ['2026-06-01', BalanceEntrySource.Set],
+                ['2026-06-03', BalanceEntrySource.Set]
+            ]);
         });
 
         it('ACCT-3.4 should report a missing Date or Balance by row', async () => {

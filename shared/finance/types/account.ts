@@ -7,9 +7,21 @@ export interface AccountFields {
     name: string;
     type: AccountType;
     isHidden?: boolean;
+    /** Set by the server: accounts are manual until they're linked to a bank (ACCT-4.3). Ignored in requests. */
     isManual?: boolean;
     hideFromSpending?: boolean;
 }
+
+/** A balance to record for a manual account, as a set entry replacing any on that date (ACCT-2.2). Signed as stored. */
+export interface AccountBalanceEntry {
+    date: CalendarDate;
+    balance: number;
+}
+
+/** Creating or editing an account: its fields, and optionally a balance to record with them in one save. */
+export type AccountRequest = AccountFields & {
+    balanceEntry?: AccountBalanceEntry;
+};
 
 export type Account = Entity &
     AccountFields & {
