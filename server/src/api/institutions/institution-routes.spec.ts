@@ -7,7 +7,7 @@ import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
 import { FinanceAccountData } from './../accounts';
 import { FinanceInstitutionData } from './institution-data';
 import { createInstitutionRouter } from './institution-routes';
-import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
+import { AccountType } from '@shared/finance/enum';
 
 describe('Institution Routes', () => {
     let app: express.Express;
@@ -181,8 +181,6 @@ describe('Institution Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: institution.id,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking
                 })
             );

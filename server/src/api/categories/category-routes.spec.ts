@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { CalendarPeriod } from '@shared/core/enum';
-import { AccountCategory, AccountGroup, AccountType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
+import { AccountType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { Category, Transaction } from '@shared/finance/types';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
@@ -530,12 +530,9 @@ describe('Category Routes', () => {
                 FinanceEntityFactory.createAccount({
                     institutionId: institution.id!,
                     name: 'Checking',
-                    category: AccountCategory.Asset,
-                    group: AccountGroup.Cash,
                     type: AccountType.Checking,
                     isHidden: false,
                     isManual: true,
-                    isRetirement: false,
                     hideFromSpending: false,
                     balance: 0
                 })

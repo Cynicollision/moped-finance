@@ -17,35 +17,21 @@
             <mat-error> Institution is required </mat-error>
         }
     </mat-form-field>
-    <div class="row">
-        <mat-form-field appearance="outline">
-            <mat-label>Category</mat-label>
-            <mat-select formControlName="category">
-                @for (cat of categories; track cat) {
-                    <mat-option [value]="cat">{{ cat }}</mat-option>
-                }
-            </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-            <mat-label>Group</mat-label>
-            <mat-select formControlName="group">
-                @for (grp of groups(); track grp) {
-                    <mat-option [value]="grp">{{ grp }}</mat-option>
-                }
-            </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-            <mat-label>Type</mat-label>
-            <mat-select formControlName="type">
-                @for (typ of types(); track typ) {
-                    <mat-option [value]="typ">{{ typ }}</mat-option>
-                }
-            </mat-select>
-        </mat-form-field>
-    </div>
+    <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Type</mat-label>
+        <mat-select formControlName="type">
+            @for (typeGroup of typeGroups; track typeGroup.group) {
+                <mat-optgroup [label]="typeGroup.group">
+                    @for (type of typeGroup.types; track type) {
+                        <mat-option [value]="type">{{ type }}</mat-option>
+                    }
+                </mat-optgroup>
+            }
+        </mat-select>
+        <mat-hint>{{ typeHint() }}</mat-hint>
+    </mat-form-field>
     <div class="toggles-grid">
         <mat-checkbox formControlName="isHidden">Hide Account</mat-checkbox>
-        <mat-checkbox formControlName="isRetirement">Retirement Account</mat-checkbox>
         <mat-checkbox formControlName="hideFromSpending">Hide from Spending</mat-checkbox>
     </div>
     <div class="actions-row">

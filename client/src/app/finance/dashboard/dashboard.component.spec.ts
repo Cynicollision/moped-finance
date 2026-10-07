@@ -1,20 +1,20 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
+import { AccountType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
+import { AccountTypeUtil } from '@shared/finance/util';
 import { FinanceService } from './../finance.service';
 import { DashboardComponent } from './dashboard.component';
 
 describe('DashboardComponent', () => {
-    function account(name: string, group: AccountGroup, balance: number): Account {
-        const isLiability = group === AccountGroup.CreditCard || group === AccountGroup.Loan;
+    function account(name: string, type: AccountType, balance: number): Account {
         return {
             id: name,
             institutionId: 'inst',
             name,
-            category: isLiability ? AccountCategory.Liability : AccountCategory.Asset,
-            group,
-            type: group === AccountGroup.Cash ? AccountType.Checking : null,
+            type,
+            group: AccountTypeUtil.groupOf(type),
+            category: AccountTypeUtil.categoryOf(type),
             balance,
             createdAt: new Date(2026, 0, 1),
             updatedAt: new Date(2026, 0, 1)
@@ -47,7 +47,7 @@ describe('DashboardComponent', () => {
     }
 
     it('DASH-2.3 should list each account with a link to its details once the accounts load', async () => {
-        const element = await render([account('Checking', AccountGroup.Cash, 1200)]);
+        const element = await render([account('Checking', AccountType.Checking, 1200)]);
 
         const link = element.querySelector<HTMLAnchorElement>('.account-group a')!;
         expect(link.textContent).toBe('Checking');
@@ -57,8 +57,8 @@ describe('DashboardComponent', () => {
 
     it('DASH-2.4 should show liability balances as positive amounts', async () => {
         const element = await render([
-            account('Visa', AccountGroup.CreditCard, -250.5),
-            account('Mortgage', AccountGroup.Loan, -100000)
+            account('Visa', AccountType.CreditCard, -250.5),
+            account('Mortgage', AccountType.Mortgage, -100000)
         ]);
 
         expect(groupRows(element)).toEqual(['Credit Cards $250.50', 'Loans $100,000.00']);
@@ -70,9 +70,9 @@ describe('DashboardComponent', () => {
 
     it('DASH-2.6 should show net worth as total assets minus the size of total liabilities', async () => {
         const element = await render([
-            account('Checking', AccountGroup.Cash, 5000),
-            account('Brokerage', AccountGroup.Investment, 2000),
-            account('Visa', AccountGroup.CreditCard, -1500)
+            account('Checking', AccountType.Checking, 5000),
+            account('Brokerage', AccountType.Brokerage, 2000),
+            account('Visa', AccountType.CreditCard, -1500)
         ]);
 
         expect(element.querySelector('.large-value')!.textContent!.trim()).toBe('$5,500.00');
@@ -103,7 +103,7 @@ describe('DashboardComponent', () => {
             fetchAllAccounts: vi
                 .fn()
                 .mockRejectedValueOnce(new Error('offline'))
-                .mockResolvedValue([account('Checking', AccountGroup.Cash, 1200)]),
+                .mockResolvedValue([account('Checking', AccountType.Checking, 1200)]),
             fetchTotalValueHistory: vi.fn().mockResolvedValue([]),
             fetchAccountBalanceHistory: vi.fn().mockResolvedValue([])
         };
@@ -126,8 +126,60 @@ describe('DashboardComponent', () => {
     });
 
     it('DASH-2.1 should leave out groups with no accounts', async () => {
-        const element = await render([account('Checking', AccountGroup.Cash, 10)]);
+        const element = await render([account('Checking', AccountType.Checking, 10)]);
 
         expect(groupRows(element).map(row => row.split(' ')[0])).toEqual(['Cash']);
+    });
+
+    it('DASH-2.1 should list the groups in order, whatever order the accounts come in', async () => {
+        const element = await render([
+            account('Mortgage', AccountType.Mortgage, -1),
+            account('Car', AccountType.Vehicle, 1),
+            account('Visa', AccountType.CreditCard, -1),
+            account('House', AccountType.PrimaryResidence, 1),
+            account('401(k)', AccountType.Retirement401k, 1),
+            account('Brokerage', AccountType.Brokerage, 1),
+            account('Checking', AccountType.Checking, 1)
+        ]);
+
+        expect(groupRows(element).map(row => row.replace(' $1.00', ''))).toEqual([
+            'Cash',
+            'Investments',
+            'Retirement',
+            'Real Estate',
+            'Other Assets',
+            'Credit Cards',
+            'Loans'
+        ]);
+    });
+
+    it('DASH-2.1 DASH-2.5 should split the groups into Assets and Liabilities, each ending with its total', async () => {
+        const element = await render([
+            account('Checking', AccountType.Checking, 1000),
+            account('Roth IRA', AccountType.RothIRA, 5000),
+            account('Car', AccountType.Vehicle, 8000),
+            account('Visa', AccountType.CreditCard, -300)
+        ]);
+
+        const sections = Array.from(element.querySelectorAll('.accounts-card')).map(card => ({
+            groups: Array.from(card.querySelectorAll('.header-label')).map(e => e.textContent!.trim()),
+            total: Array.from(card.querySelectorAll('.section-total span')).map(e => e.textContent!.trim())
+        }));
+        expect(Array.from(element.querySelectorAll('.section-title')).map(e => e.textContent!.trim())).toEqual([
+            'Assets',
+            'Liabilities'
+        ]);
+        expect(sections).toEqual([
+            { groups: ['Cash', 'Retirement', 'Other Assets'], total: ['Total Assets', '$14,000.00'] },
+            { groups: ['Credit Cards'], total: ['Total Liabilities', '$300.00'] }
+        ]);
+    });
+
+    it('DASH-2.1 should leave out a section with no accounts', async () => {
+        const element = await render([account('Checking', AccountType.Checking, 10)]);
+
+        expect(Array.from(element.querySelectorAll('.section-title')).map(e => e.textContent!.trim())).toEqual([
+            'Assets'
+        ]);
     });
 });

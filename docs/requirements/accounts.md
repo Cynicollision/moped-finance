@@ -10,29 +10,32 @@ Screens: **Account Details** (`/accounts/:id`), **Add Account** (`/accounts/new`
 
 | ID | Requirement | Status |
 |---|---|---|
-| ACCT-1.1 | An account shall have a name (required, 1 to 100 characters), an institution, a type (required, ACCT-1.2), and the flags **Hide Account** (ACCT-1.9), **Retirement Account** (ACCT-1.8) and **Hide from Spending** (ACCT-1.7). It is manual or connected (ACCT-4.3), and open or closed (ACCT-6). | Partial |
-| ACCT-1.2 | The user shall choose an account's kind with a single **Type** field, listed by group in this order. The type decides the group, and the group decides whether the account is an Asset or a Liability; the form shows both read-only. | Partial |
+| ACCT-1.1 | An account shall have a name (required, 1 to 100 characters), an institution, a type (required, ACCT-1.2), and the flags **Hide Account** (ACCT-1.9) and **Hide from Spending** (ACCT-1.7). It is manual or connected (ACCT-4.3), and open or closed (ACCT-6). | Partial |
+| ACCT-1.2 | The user shall choose an account's kind with a single **Type** field, listed under its groups in this order. The type decides the group, and the group decides whether the account is an Asset or a Liability; the form shows both read-only under the field ("Cash · Asset"). Types behave alike apart from their group and Asset/Liability. | Implemented |
 | ACCT-1.3 | The user can add an account from the Institutions screen's **Add account** (INST-1.10), or from an institution card's **Add account** (INST-1.7), which selects that institution. The form asks for the **Institution** from a select of all institutions, sorted by name ignoring case. Its **Save Account** button stays disabled until the form is valid, and a missing name is flagged "Name is required". After saving, the app says "Account added" and opens the new account's Account Details; **Cancel** returns to the Institutions screen (asking first if the form was changed, APP-2.7). When there are no institutions, the screen says so and offers **Add institution**, which opens the Add Institution dialog (INST-1.4), instead of the form; the form appears once one is added. The added account is manual; accounts are connected from the institution (INST-2.3), so the form offers no "Connect" option. | Implemented |
-| ACCT-1.4 | A new account shall default to type Checking, all flags off, **Starting Balance** 0 and **As of** today (ACCT-2.2). | Partial |
+| ACCT-1.4 | A new account shall default to type Checking, both flags off, **Starting Balance** 0 and **As of** today (ACCT-2.2). | Partial |
 | ACCT-1.5 | The user can edit an account's name, type and flags from Account Details, then **Edit Account**. Saving returns to Account Details. For a manual account the form also offers **Institution**, a select of all institutions, so the account can move with its history and transactions. For a connected account the institution is shown read-only with "Disconnect this account to move it." (ACCT-4.5). Edit Account has no balance field; the balance changes through Update Balance (ACCT-2.2). | Partial |
 | ACCT-1.6 | The user can delete an account with **Delete Account** at the end of the Account Details menu (APP-2.4), after confirming. Deleting an account shall also delete its balance history and its transactions, and then says "Account deleted" and opens the Dashboard. | Implemented |
 | ACCT-1.7 | An account flagged **Hide from Spending** shall have its transactions left out of Spending totals (CASH-1.2). It still appears everywhere else. | Implemented |
-| ACCT-1.8 | An account flagged **Retirement** shall show "(Retirement)" after its type on Account Details. The flag shall default on when the type is 401(k), IRA or Roth IRA, and off otherwise; the user can change it. | Partial |
+| ACCT-1.8 | An account flagged **Retirement** shall show "(Retirement)" after its type on Account Details. | Retired (2026-10-07: Retirement is a group of types, ACCT-1.2, so retirement savings get their own total on the Dashboard without a flag) |
 | ACCT-1.9 | An account flagged **Hide Account** shall be left out of everything except the Institutions screen and its own Account Details: the Dashboard's lists, totals and chart for every date (DASH-2.9), the Transactions list, search and filters (TXN-1.12), Spending (CASH-1.2), and the account choices in the transaction form (TXN-2.1). Hiding doesn't change the account's data or whether it's connected. | Partial |
-| ACCT-1.10 | Every type in ACCT-1.2, credit cards included, shall be creatable and editable in the form. | Partial |
-| ACCT-1.11 | The server shall refuse an account whose type isn't one of ACCT-1.2's, or is missing. The group and Asset/Liability shall always agree with the type. | Planned |
+| ACCT-1.10 | Every type in ACCT-1.2, credit cards included, shall be creatable and editable in the form. | Implemented |
+| ACCT-1.11 | The server shall refuse an account whose type isn't one of ACCT-1.2's, or is missing. The group and Asset/Liability shall always agree with the type: they're worked out from it, and any sent with a request are ignored. | Implemented |
 | ACCT-1.12 | The Institutions screen shall show a hidden account dimmed with a crossed-out eye icon, like an inactive category (CAT-1.4), and a closed account dimmed with a "Closed" label. Both open Account Details, where every action still works (for example **Download Balance History**). | Planned |
 
 Account types for ACCT-1.2:
 
 | Group | Asset or Liability | Types |
 |---|---|---|
-| Cash | Asset | Checking, Savings, Money Market, CD |
-| Investments | Asset | Brokerage, 401(k), IRA, Roth IRA, HSA, 529, Other Investment |
+| Cash | Asset | Checking, Savings, Money Market, CD, Other Cash |
+| Investments | Asset | Brokerage, HSA, 529, Other Investment |
+| Retirement | Asset | 401(k), IRA, Roth IRA, Other Retirement |
 | Real Estate | Asset | Primary Residence, Rental Property, Other Property |
 | Other Assets | Asset | Vehicle, Other Asset |
 | Credit Cards | Liability | Credit Card |
 | Loans | Liability | Mortgage, HELOC, Auto Loan, Student Loan, Personal Loan, Other Loan |
+
+Every group has an "Other" type, so anything that doesn't fit a named type still has a home (a 403(b) or pension is Other Retirement, crypto is Other Investment, PayPal or a prepaid card is Other Cash) and the list doesn't need to grow.
 
 ## ACCT-2 The user can see an account's balance and how it has changed
 
@@ -101,23 +104,23 @@ A closed account is one the user no longer has, such as a savings account they e
 
 ## Known gaps
 
-- **Types are the old, sparse list (ACCT-1.2, ACCT-1.10, ACCT-1.11).** Today the form has separate Category, Group and Type selects, Credit Card has no types so a credit card can't be saved, the type column is nullable, and the server accepts any category, group and type together (an Asset in the Loan group). Building ACCT-1.2 needs a migration: rename stored values that change (`Home Mortgage` to `Mortgage`, `401k` to `401(k)`, `Investment` to `Investments`, and so on), give existing credit cards the Credit Card type, and make type required. `account-routes.spec.ts` has an ACCT-1.5 test that clears the type with null, which becomes invalid.
 - **No starting balance (ACCT-1.4, ACCT-2.2).** Add Account doesn't ask for one and there's no Update Balance, so a new account shows $0.00 until history is imported.
 - **Balance entries have no source (ACCT-5.1).** Every entry is effectively set; transactions don't touch balances yet.
 - **Current balance can be a future entry (ACCT-2.1).** The latest entry is used even when it's dated after today.
 - **Hide Account only affects Spending so far (ACCT-1.9).** Spending leaves hidden accounts out (CASH-1.2), but no other screen or total does, and the Institutions screen doesn't mark them.
+- **No open or closed state (ACCT-1.1, ACCT-6).** Accounts can't be closed yet.
 - **Manual vs. connected is a stored flag (ACCT-4.3).** The form no longer shows it and new accounts are saved manual, but it's still the `is_manual` column. Once connections exist, derive it from the link.
 - **"Last updated" is the record's edit date (ACCT-2.6),** not the date of the latest balance, so it can be later than the newest balance.
 - **Dry-run date range (ACCT-3.3).** A dry run with bad rows reports the date range of the valid rows only.
 
 ## Housekeeping
 
-- The shared `Account` type (`shared/finance/types/account.ts`) has `balanceHistory` and `transactions` fields that nothing sets or reads. Remove them.
-- The same type makes `isHidden`, `isRetirement`, `hideFromSpending` and `balance` optional, though the columns are `NOT NULL` and the server always returns them. Make them required so the client doesn't need `?? false`.
-- `AccountFormComponent` sets controls to `null as any` when a category or group has no options. The single Type field (ACCT-1.2) removes the dependent selects; delete this with them.
+- The shared `AccountFields` type (`shared/finance/types/account.ts`) makes `isHidden`, `isManual` and `hideFromSpending` optional, and `Account` makes `balance` optional, though the columns are `NOT NULL` and the server always returns them. Make them required in responses so the client doesn't need `?? false`.
 
 ## Notes
 
+- **Only the type is stored.** The group and Asset/Liability come from ACCT-1.2's table, kept once in shared code, so they can't disagree with the type. The API still returns them with each account, read-only. Adding or renaming a type is a schema change, since the stored values back a `CHECK` constraint.
+- **Retirement is a group, not a flag (ACCT-1.8 retired).** The aim was to see retirement savings apart from other investments, which a group does on the Dashboard with no extra setting. The 2026-10-07 migration gave every flagged investment that wasn't a 401(k) or IRA the Other Retirement type, so it kept counting as retirement.
 - **Why set entries are checkpoints (ACCT-5.2).** A set balance is one the user read off a statement or the bank reported, so it already includes the transactions before it. Shifting it for a backdated transaction would count that transaction twice. Stopping at the next set entry keeps each checkpoint true.
 - **Hidden versus closed.** Hide an account to make it disappear, including its past (for example after moving its history to a new account, ACCT-3.11). Close an account that really ended, so past net worth stays right.
 - **Moving accounts.** A manual account moves by changing its institution (ACCT-1.5). A connected one is disconnected first (ACCT-4.5), then moved, then linked at the new institution (INST-2.3); its history stays with it throughout. Export and re-import (ACCT-3.11) also works.

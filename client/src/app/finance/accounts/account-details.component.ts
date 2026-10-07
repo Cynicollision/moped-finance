@@ -134,19 +134,6 @@ export class FinanceAccountDetailsComponent {
         return category ? categoryLabel(category) : id;
     }
 
-    readonly accountTypeDisplay = computed(() => {
-        const acc = this.account();
-        if (!acc) {
-            return '';
-        }
-
-        let display: string = acc.type || acc.group;
-        if (acc.isRetirement) {
-            display += ' (Retirement)';
-        }
-        return display;
-    });
-
     readonly institutionNameDisplay = computed(() => {
         const institutionId = this.account()?.institutionId;
         if (!institutionId) {

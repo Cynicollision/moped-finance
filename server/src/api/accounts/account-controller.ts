@@ -43,10 +43,7 @@ export class AccountController {
         input: CreateAccountRequest
     ): Promise<OperationResult<Account>> {
         // A missing institution fails the insert's foreign key, which OperationHandler reports as a 400.
-        const account = FinanceEntityFactory.createAccount({
-            ...input,
-            type: input.type ?? null
-        });
+        const account = FinanceEntityFactory.createAccount(input);
 
         const created = await this.accountData.insert(account);
         return Result.successCreated(created);

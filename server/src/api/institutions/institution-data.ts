@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Institution } from '@shared/finance/types';
 import { IDatabaseClient } from '@server/data';
@@ -30,7 +30,11 @@ export class FinanceInstitutionData implements IFinanceInstitutionData {
     }
 
     public async retrieveAll(): Promise<Institution[]> {
-        const rows = await this.db.select().from(institutionSchema);
+        // By name, ignoring case (INST-1.1).
+        const rows = await this.db
+            .select()
+            .from(institutionSchema)
+            .orderBy(asc(sql`lower(${institutionSchema.name})`));
 
         return rows.map(mapRowToInstitution);
     }

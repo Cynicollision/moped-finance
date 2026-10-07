@@ -4,10 +4,11 @@ import {
     OnInit,
     OnChanges,
     SimpleChanges,
+    computed,
     input,
-    output,
-    signal
+    output
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,8 +16,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Account, Institution } from '@shared/finance/types';
-import { AccountCategory, AccountGroup, AccountType } from '@shared/finance/enum';
+import { AccountType } from '@shared/finance/enum';
+import { Account, AccountFields, Institution } from '@shared/finance/types';
+import { AccountTypeUtil } from '@shared/finance/util';
 
 @Component({
     selector: 'app-account-form',
@@ -42,31 +44,32 @@ export class AccountFormComponent implements OnInit, OnChanges {
     readonly defaultInstitutionId = input<string | null>(null);
     /** While the parent saves: Save is disabled and shows a spinner. */
     readonly saving = input(false);
-    readonly save = output<Partial<Account>>();
+    readonly save = output<AccountFields>();
     readonly cancelled = output<void>();
 
-    readonly categories = Object.values(AccountCategory);
-    readonly groups = signal<AccountGroup[]>([]);
-    readonly types = signal<AccountType[]>([]);
+    /** The Type select's options, under their groups (ACCT-1.2). */
+    readonly typeGroups = AccountTypeUtil.groups;
 
     readonly accountForm = new FormGroup({
         name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
         institutionId: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-        category: new FormControl<AccountCategory>(AccountCategory.Asset, {
+        type: new FormControl<AccountType>(AccountType.Checking, {
             nonNullable: true,
             validators: [Validators.required]
         }),
-        group: new FormControl<AccountGroup | null>(AccountGroup.Cash, { validators: [Validators.required] }),
-        // Null for groups that have no account types (credit cards).
-        type: new FormControl<AccountType | null>(AccountType.Checking),
         isHidden: new FormControl<boolean>(false, { nonNullable: true }),
-        isRetirement: new FormControl<boolean>(false, { nonNullable: true }),
         hideFromSpending: new FormControl<boolean>(false, { nonNullable: true })
     });
 
-    constructor() {
-        this.setupSubscriptions();
-    }
+    private readonly type = toSignal(this.accountForm.controls.type.valueChanges, {
+        initialValue: this.accountForm.controls.type.value
+    });
+
+    /** The group and Asset/Liability that the chosen type decides, shown read-only under it (ACCT-1.2). */
+    readonly typeHint = computed(() => {
+        const type = this.type();
+        return `${AccountTypeUtil.groupOf(type)} · ${AccountTypeUtil.categoryOf(type)}`;
+    });
 
     ngOnInit() {
         this.updateFormState();
@@ -81,86 +84,15 @@ export class AccountFormComponent implements OnInit, OnChanges {
     private updateFormState() {
         const account = this.account();
         if (account) {
-            this.updateAvailableGroups(account.category);
-            this.updateAvailableTypes(account.group);
-
-            this.accountForm.patchValue(
-                {
-                    name: account.name,
-                    institutionId: account.institutionId,
-                    category: account.category,
-                    group: account.group,
-                    type: account.type,
-                    isHidden: account.isHidden,
-                    isRetirement: account.isRetirement,
-                    hideFromSpending: account.hideFromSpending
-                },
-                { emitEvent: false }
-            );
+            this.accountForm.patchValue({
+                name: account.name,
+                institutionId: account.institutionId,
+                type: account.type,
+                isHidden: account.isHidden,
+                hideFromSpending: account.hideFromSpending
+            });
         } else {
-            this.updateAvailableGroups(AccountCategory.Asset);
-            this.updateAvailableTypes(AccountGroup.Cash);
-            this.accountForm.controls.institutionId.setValue(this.defaultInstitutionId() ?? '', { emitEvent: false });
-        }
-    }
-
-    private setupSubscriptions() {
-        this.accountForm.controls.category.valueChanges.subscribe(category => {
-            this.updateAvailableGroups(category);
-            const groups = this.groups();
-            const group = this.accountForm.controls.group.value;
-            if (groups.length === 0) {
-                this.accountForm.controls.group.setValue(null);
-            } else if (!group || !groups.includes(group)) {
-                this.accountForm.controls.group.setValue(groups[0]);
-            }
-        });
-
-        this.accountForm.controls.group.valueChanges.subscribe(group => {
-            this.updateAvailableTypes(group);
-            const types = this.types();
-            const type = this.accountForm.controls.type.value;
-            if (types.length === 0) {
-                this.accountForm.controls.type.setValue(null);
-            } else if (!type || !types.includes(type)) {
-                this.accountForm.controls.type.setValue(types[0]);
-            }
-        });
-    }
-
-    private updateAvailableGroups(category: AccountCategory) {
-        if (category === AccountCategory.Asset) {
-            this.groups.set([AccountGroup.Cash, AccountGroup.Investment, AccountGroup.RealEstate]);
-        } else if (category === AccountCategory.Liability) {
-            this.groups.set([AccountGroup.CreditCard, AccountGroup.Loan]);
-        } else {
-            this.groups.set([]);
-        }
-    }
-
-    private updateAvailableTypes(group: AccountGroup | null) {
-        this.types.set(this.typesForGroup(group));
-    }
-
-    private typesForGroup(group: AccountGroup | null): AccountType[] {
-        switch (group) {
-            case AccountGroup.Cash:
-                return [AccountType.Checking, AccountType.Savings];
-            case AccountGroup.Investment:
-                return [
-                    AccountType.Retirement_401k,
-                    AccountType.Retirement_IRA,
-                    AccountType.Brokerage,
-                    AccountType.HSA
-                ];
-            case AccountGroup.RealEstate:
-                return [AccountType.PrimaryResidence];
-            case AccountGroup.Loan:
-                return [AccountType.Mortgage];
-            case AccountGroup.CreditCard:
-                return [];
-            default:
-                return [];
+            this.accountForm.controls.institutionId.setValue(this.defaultInstitutionId() ?? '');
         }
     }
 
@@ -169,10 +101,8 @@ export class AccountFormComponent implements OnInit, OnChanges {
     }
 
     onSubmit() {
-        const rawValue = this.accountForm.getRawValue();
-        // The group's required validator means it's set whenever the form is valid.
-        if (this.accountForm.valid && rawValue.group) {
-            this.save.emit({ ...rawValue, group: rawValue.group });
+        if (this.accountForm.valid) {
+            this.save.emit(this.accountForm.getRawValue());
         }
     }
 

@@ -64,6 +64,13 @@
       "when": 1791199009532,
       "tag": "0008_category_icon_optional",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791366220949,
+      "tag": "0009_account_type_only",
+      "breakpoints": true
     }
   ]
 }

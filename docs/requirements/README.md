@@ -75,7 +75,7 @@ Each domain file has an introduction, then one table per requirement, then up to
 | Institution | A bank, brokerage, lender, or other place that holds accounts. |
 | Account | A single balance the user tracks: a checking account, credit card, mortgage, property, and so on. |
 | Type (account) | What kind of account it is: Checking, Credit Card, Mortgage, and so on (ACCT-1.2). Decides the group. |
-| Group (account) | `Cash`, `Investments`, `Real Estate`, `Other Assets`, `Credit Cards`, `Loans`. Decides the account category. |
+| Group (account) | `Cash`, `Investments`, `Retirement`, `Real Estate`, `Other Assets`, `Credit Cards`, `Loans`. Decided by the type; decides the account category. |
 | Category (account) | `Asset` or `Liability`. Determines which totals an account contributes to. |
 | Manual / connected | A connected institution has a bank connection; a connected account is linked to an account at it and gets its balances and transactions from sync. Everything else is manual (INST-2, ACCT-4). |
 | Balance history | Dated balance entries for an account, at most one per date. An account's current balance is its latest entry on or before today. |

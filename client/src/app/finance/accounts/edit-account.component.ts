@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Account } from '@shared/finance/types';
+import { Account, AccountFields } from '@shared/finance/types';
 import { Crumb, PageHeaderComponent } from './../../core/layout/page-header.component';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
@@ -60,7 +60,7 @@ export class FinanceEditAccountComponent implements HasUnsavedChanges {
         return !this.saved && (this.form()?.hasUnsavedChanges() ?? false);
     }
 
-    async onSave(updatedData: Partial<Account>) {
+    async onSave(updatedData: AccountFields) {
         const currentData = this.accountData();
         if (currentData) {
             const updatedAccount: Account = { ...currentData, ...updatedData };
