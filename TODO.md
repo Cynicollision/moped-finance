@@ -19,11 +19,8 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 4. Balances carried forward
-- [ ] ACCT-2.11; DASH-1.4, 1.7; ACCT-2.6 ("Balance as of" replaces "Last updated"): account and Dashboard series have a value for every day, carrying entries forward; headline, chart and section totals agree. DASH-2.2: reword group changes to use carried-forward values (the group on the timeframe's first day versus today), as decided 2026-10-07. DASH-1.8: Dashboard empty state, in the same PR.
-
 ### 5. Manual balances
-- [ ] ACCT-5.1: set/adjusted source on balance entries (migration; existing entries are set). ACCT-1.4, 2.2: Starting Balance on Add Account and **Update Balance** on Account Details (ACCT-2.8). ACCT-2.13: Balance History section with edit and delete. ACCT-3.5: imports write set entries. APP-6.3 for balances: liabilities take **Amount owed** as a positive number. ACCT-2.10's empty Recent Transactions table. Known gap: ACCT-3.3's dry-run date range covers only valid rows.
+- [ ] ACCT-5.1: set/adjusted source on balance entries (migration; existing entries are set). ACCT-1.4, 2.2: Starting Balance on Add Account and **Update Balance** on Account Details (ACCT-2.8). ACCT-2.13: Balance History section with edit and delete (it needs an endpoint listing the entries themselves: `GET /accounts/:id/balance-history` returns daily carried-forward balances). ACCT-3.5: imports write set entries. APP-6.3 for balances: liabilities take **Amount owed** as a positive number. ACCT-2.10's empty Recent Transactions table. Known gap: ACCT-3.3's dry-run date range covers only valid rows.
 
 ### 6. Transaction form and filters
 - [ ] TXN-2.13, APP-6.3: positive Amount with a Money out / Money in switch. TXN-2.6: required fields, Merchant included, flagged on the form. TXN-1.14: amount filters compare size, plus a Direction filter.
@@ -100,5 +97,7 @@ Manual entry and import/export come first. Constraints for when this gets picked
 - Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Spending does, and round at the edges. Revisit integer cents only if totals ever drift.
 - Project Claude Code skills (e.g. `new-finance-resource`, `verify`, `schema-change` once migrations exist). Skipped for now; revisit if the same multi-step instructions keep getting repeated.
 - Spending compares an unfinished period with its whole budget (CASH-1.10), so mid-month nearly everything reads as under. A pace marker (how far through the period today is), or a pro-rated budget for the current period, would make it fairer. `spending.component.ts`, `difference`.
+- The Dashboard works out each group's change (DASH-2.2) from every account's daily balances, one request per account (`dashboard.component.ts`, `loadGroupChanges`). An endpoint returning each group's first and last daily totals would make it one request and keep the sums on the server.
+- Value charts draw a smoothed line (`value-history.component.ts`), so a carried-forward balance (ACCT-2.11) curves into its next entry, and can dip past it, where the balance really steps. A stepped or monotone line would show only values that existed.
 - Warn before reloading or closing the tab with unsaved changes (`beforeunload`). APP-2.7 covers only leaving within the app.
 - A retirement tracker built on the Retirement account group (ACCT-1.2): for example progress toward a target balance, or contributions against the yearly limits. The group already gives retirement savings their own Dashboard total; decide what else is worth tracking before writing requirements. (Replaces the old Retirement flag and the goals feature of the app this one replaces.)

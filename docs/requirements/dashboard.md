@@ -14,15 +14,15 @@ The same value-history chart component is reused on Account Details (see ACCT-2.
 | DASH-1.4 | The chart shall have a point for every day in the timeframe: the sum, over the accounts included (assets only, liabilities only, or all for net worth), of each account's latest balance entry on or before that day. Accounts with no entry yet on a day add nothing. Hidden accounts are left out on every day (ACCT-1.9); closed accounts are included (ACCT-6.2). | Partial |
 | DASH-1.5 | When there is no data for the selection the chart area shall say "No data available for the selected timeframe." with the hint "Try adjusting the timeframe or historical view type." | Implemented |
 | DASH-1.6 | In the **Total Liabilities** view the headline value shall be negative (for example "-$132,920.89") while the **Total Liabilities** line below shows the same amount unsigned (DASH-2.4, DASH-2.5). Debt shrinking is shown green with a down arrow. | Implemented |
-| DASH-1.7 | The headline value shall equal the chart's point for today and the matching section total (DASH-2.5). | Partial |
-| DASH-1.8 | When the user has no accounts, the Dashboard shall say "Add an institution and its accounts to see your net worth here." with an **Add your first account** button that opens Add Account (ACCT-1.3), instead of an empty chart. | Planned |
+| DASH-1.7 | The headline value shall equal the chart's point for today and the matching section total (DASH-2.5). | Implemented |
+| DASH-1.8 | When the user has no accounts, the Dashboard shall say "Add an institution and its accounts to see your net worth here." with an **Add your first account** button that opens Add Account (ACCT-1.3), instead of an empty chart. | Implemented |
 
 ## DASH-2 The user can see every account and its share of the total
 
 | ID | Requirement | Status |
 |---|---|---|
 | DASH-2.1 | Below the chart, the Dashboard shall list accounts in two sections, **Assets** and **Liabilities**, each in groups (ACCT-1.2) in this order: Assets has **Cash**, **Investments**, **Retirement**, **Real Estate** and **Other Assets**; Liabilities has **Credit Cards** and **Loans**. The sections are stacked on narrow screens and side by side from the expanded width (840px of page area) up. A group with no accounts shall not be shown, nor a section with no groups. Within a group, accounts are sorted by name, ignoring case. | Implemented |
-| DASH-2.2 | Each group shall show its total and its change over the selected timeframe, as an amount and a percentage of the group's starting value, followed by the timeframe's name. The change is the group's balances at the end of the timeframe minus at the start, using each account's earliest and latest entry in it; accounts with no entries in the timeframe are left out. The change is colored favourable (green) or unfavourable (red) as in DASH-1.3: for example, Cash falling is red with a down arrow, while Credit Cards and Loans falling are green with a down arrow. | Implemented |
+| DASH-2.2 | Each group shall show its total and its change over the selected timeframe, as an amount and a percentage of the group's starting value, followed by the timeframe's name. The change is measured as the chart's is (DASH-1.3), on the group's daily total (DASH-1.4): today's total minus the total on the group's first day in the timeframe, which is the timeframe's first day, or the first day one of its accounts has an entry if that's later. An account with no entry yet on that first day adds nothing to it. The change is colored favourable (green) or unfavourable (red) as in DASH-1.3: for example, Cash falling is red with a down arrow, while Credit Cards and Loans falling are green with a down arrow. | Implemented |
 | DASH-2.3 | Each account in a group shall show its name, as a link to Account Details, and its current balance. | Implemented |
 | DASH-2.4 | Liability balances (credit cards, loans) shall be displayed as positive amounts. | Implemented |
 | DASH-2.5 | Each section shall end with its total: **Total Assets**, the sum of the asset groups, and **Total Liabilities**, the sum of the liability groups. There are no separate total cards; the group totals above already break each section down. | Implemented |
@@ -34,10 +34,7 @@ The same value-history chart component is reused on Account Details (see ACCT-2.
 
 ## Known gaps
 
-- **The chart adds up whatever exists on each date (DASH-1.4).** If account A has entries on the 1st and 15th and account B only on the 10th, the series has three points and the 1st and 10th omit the other account, so accounts updated on different days make the total jump.
-- **Chart total and section totals can disagree (DASH-1.7).** The big number uses the accounts' current balances; the chart's last point is the sum for its last *date*. Carrying balances forward (DASH-1.4) fixes this.
-- **Hidden accounts** are included everywhere (DASH-2.9).
-- **Empty state (DASH-1.8).** A new user with no accounts sees an empty chart and no groups.
+- **Hidden accounts** are included everywhere (DASH-1.4, DASH-2.9).
 
 ## Notes
 

@@ -2,12 +2,13 @@ import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
 import {
     BalanceImportResult,
+    DailyBalance,
     GetAccountBalanceHistoryOptions,
     TotalValueHistory,
     TotalValueHistoryOptions,
     TransactionSearchOptions
 } from '@shared/finance/contracts';
-import { Account, BalanceHistory, Transaction } from '@shared/finance/types';
+import { Account, Transaction } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
@@ -99,14 +100,14 @@ export class AccountController {
         context: OperationContext,
         accountId: string,
         options: GetAccountBalanceHistoryOptions
-    ): Promise<OperationResult<BalanceHistory[]>> {
+    ): Promise<OperationResult<DailyBalance[]>> {
         const account = await this.accountData.retrieveSingle(accountId);
         if (!account) {
             return Result.userErrorNotFound();
         }
 
         const startDate = CalendarDateUtil.getTimeframeStart(options.timeframe, options.asOfDate);
-        const history = await this.balanceHistoryData.retrieveForAccount(accountId, startDate, options.asOfDate);
+        const history = await this.balanceHistoryData.retrieveDailyForAccount(accountId, startDate, options.asOfDate);
         return Result.success(history);
     }
 

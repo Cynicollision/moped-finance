@@ -1,5 +1,6 @@
 import { and, asc, eq, desc, lte, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { PgColumn } from 'drizzle-orm/pg-core';
 import { CalendarDate } from '@shared/core/types';
 import { Account } from '@shared/finance/types';
 import { AccountType } from '@shared/finance/enum';
@@ -19,7 +20,11 @@ export interface IFinanceAccountData {
     delete(id: string): Promise<boolean>;
 }
 
-function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number | string): Account {
+function mapRowToAccount(
+    row: typeof accountSchema.$inferSelect,
+    balance: number | string,
+    balanceDate: CalendarDate | null
+): Account {
     const type = row.type as AccountType;
     return {
         id: row.id,
@@ -33,7 +38,8 @@ function mapRowToAccount(row: typeof accountSchema.$inferSelect, balance: number
         isHidden: row.isHidden,
         isManual: row.isManual,
         hideFromSpending: row.hideFromSpending,
-        balance: Number(balance)
+        balance: Number(balance),
+        balanceDate
     };
 }
 
@@ -44,14 +50,23 @@ export class FinanceAccountData implements IFinanceAccountData {
         this.db = dbClient.drizzle;
     }
 
-    // Entries after the as-of date are left out, so a future-dated entry never becomes the current balance.
-    private getLatestBalanceSubquery(asOfDate: CalendarDate) {
-        return this.db
-            .select({ balance: balanceHistorySchema.balance })
-            .from(balanceHistorySchema)
-            .where(and(eq(balanceHistorySchema.accountId, accountSchema.id), lte(balanceHistorySchema.date, asOfDate)))
-            .orderBy(desc(balanceHistorySchema.date))
-            .limit(1);
+    // The latest entry's balance and date. Entries after the as-of date are left out, so a future-dated entry
+    // never becomes the current balance.
+    private latestBalanceFields(asOfDate: CalendarDate) {
+        const latest = (column: PgColumn) =>
+            this.db
+                .select({ value: column })
+                .from(balanceHistorySchema)
+                .where(
+                    and(eq(balanceHistorySchema.accountId, accountSchema.id), lte(balanceHistorySchema.date, asOfDate))
+                )
+                .orderBy(desc(balanceHistorySchema.date))
+                .limit(1);
+
+        return {
+            balance: sql<string | number>`COALESCE((${latest(balanceHistorySchema.balance)}), 0)`,
+            balanceDate: sql<string | null>`to_char((${latest(balanceHistorySchema.date)}), 'YYYY-MM-DD')`
+        };
     }
 
     // By name, ignoring case (INST-1.1, DASH-2.1).
@@ -63,32 +78,32 @@ export class FinanceAccountData implements IFinanceAccountData {
         const rows = await this.db
             .select({
                 account: accountSchema,
-                balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery(asOfDate)}), 0)`
+                ...this.latestBalanceFields(asOfDate)
             })
             .from(accountSchema)
             .orderBy(this.byName());
 
-        return rows.map(row => mapRowToAccount(row.account, row.balance));
+        return rows.map(row => mapRowToAccount(row.account, row.balance, row.balanceDate));
     }
 
     public async retrieveByInstitutionId(institutionId: string, asOfDate = DateTimeUtil.today()): Promise<Account[]> {
         const rows = await this.db
             .select({
                 account: accountSchema,
-                balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery(asOfDate)}), 0)`
+                ...this.latestBalanceFields(asOfDate)
             })
             .from(accountSchema)
             .where(eq(accountSchema.institutionId, institutionId))
             .orderBy(this.byName());
 
-        return rows.map(row => mapRowToAccount(row.account, row.balance));
+        return rows.map(row => mapRowToAccount(row.account, row.balance, row.balanceDate));
     }
 
     public async retrieveSingle(accountId: string, asOfDate = DateTimeUtil.today()): Promise<Account | null> {
         const rows = await this.db
             .select({
                 account: accountSchema,
-                balance: sql<string | number>`COALESCE((${this.getLatestBalanceSubquery(asOfDate)}), 0)`
+                ...this.latestBalanceFields(asOfDate)
             })
             .from(accountSchema)
             .where(eq(accountSchema.id, accountId));
@@ -97,7 +112,7 @@ export class FinanceAccountData implements IFinanceAccountData {
             return null;
         }
 
-        return mapRowToAccount(rows[0].account, rows[0].balance);
+        return mapRowToAccount(rows[0].account, rows[0].balance, rows[0].balanceDate);
     }
 
     public async insert(account: Account): Promise<Account> {
@@ -114,7 +129,7 @@ export class FinanceAccountData implements IFinanceAccountData {
             })
             .returning();
 
-        return mapRowToAccount(rows[0], 0);
+        return mapRowToAccount(rows[0], 0, null);
     }
 
     public async update(account: Account): Promise<Account | null> {
@@ -139,8 +154,9 @@ export class FinanceAccountData implements IFinanceAccountData {
         const balanceResult = await this.retrieveSingle(account.id);
 
         return {
-            ...mapRowToAccount(rows[0], 0),
-            balance: balanceResult ? balanceResult.balance : 0
+            ...mapRowToAccount(rows[0], 0, null),
+            balance: balanceResult ? balanceResult.balance : 0,
+            balanceDate: balanceResult ? balanceResult.balanceDate : null
         };
     }
 

@@ -5,6 +5,7 @@ import {
     BalanceImportResult,
     CategoryImportResult,
     SpendingTotal,
+    DailyBalance,
     GetAccountBalanceHistoryOptions,
     TotalValueHistory,
     TransactionImportResult,
@@ -19,7 +20,6 @@ import {
     CategoryGroup,
     CategoryUsage,
     Transaction,
-    BalanceHistory,
     BudgetStream,
     BudgetStreamFields
 } from '@shared/finance/types';
@@ -133,9 +133,9 @@ export class FinanceService {
         return this.api.delete(`${API_BASE_PATH}/accounts/${id}`);
     }
 
-    fetchAccountBalanceHistory(accountId: string, options: GetAccountBalanceHistoryOptions): Promise<BalanceHistory[]> {
+    fetchAccountBalanceHistory(accountId: string, options: GetAccountBalanceHistoryOptions): Promise<DailyBalance[]> {
         const url = `${API_BASE_PATH}/accounts/${accountId}/balance-history?asOfDate=${options.asOfDate}&timeframe=${options.timeframe}`;
-        return this.api.load<BalanceHistory[]>(url);
+        return this.api.load<DailyBalance[]>(url);
     }
 
     importBalanceHistory(

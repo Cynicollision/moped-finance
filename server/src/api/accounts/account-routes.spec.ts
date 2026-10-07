@@ -3,6 +3,7 @@ import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { AccountCategory, AccountGroup, AccountType, TransactionsSortKey } from '@shared/finance/enum';
 import { SortDirection } from '@shared/core/enum';
+import { DailyBalance, TotalValueHistory } from '@shared/finance/contracts';
 import { Account, BalanceHistory } from '@shared/finance/types';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
@@ -229,7 +230,8 @@ describe('Account Routes', () => {
             const response = await request(app).get('/accounts/total-value-history?type=NetWorth');
 
             expect(response.status).toBe(200);
-            expect(response.body.map((v: { date: string }) => v.date)).toEqual(['2026-06-01', '2026-05-02']);
+            const dates = response.body.map((v: TotalValueHistory) => v.date);
+            expect([dates[0], dates[dates.length - 1], dates.length]).toEqual(['2026-05-02', '2026-06-01', 31]);
         });
 
         it('APP-5.7 should return 400 when type is missing', async () => {
@@ -273,6 +275,20 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(404);
             expect(response.body.message).toContain('not found');
+        });
+
+        it('ACCT-2.6 should give the date of the current balance, or null when there is none', async () => {
+            const account = await insertAccount();
+            const before = await request(app).get(`/accounts/${account.id}?asOfDate=2026-05-17`);
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
+            ]);
+
+            const after = await request(app).get(`/accounts/${account.id}?asOfDate=2026-05-17`);
+
+            expect(before.body.balanceDate).toBeNull();
+            expect(after.body.balanceDate).toBe('2026-05-01');
         });
 
         it('ACCT-2.1 should give the balance as of asOfDate', async () => {
@@ -461,11 +477,12 @@ describe('Account Routes', () => {
             const response = await request(app).get(`/accounts/${acc1.id}/balance-history`);
 
             expect(response.status).toBe(200);
-            expect(response.body.map((b: BalanceHistory) => b.date).sort()).toEqual(['2026-05-02', '2026-06-01']);
-            expect(response.body[0].balance).toBe(500.0);
+            expect(response.body.length).toBe(31);
+            expect(response.body[0]).toEqual({ date: '2026-05-02', balance: 500 });
+            expect(response.body[30]).toEqual({ date: '2026-06-01', balance: 500 });
         });
 
-        it('ACCT-2.4 should return the entries from 30 days before asOfDate through asOfDate, dated YYYY-MM-DD', async () => {
+        it('ACCT-2.4 should return every day from 30 days before asOfDate through asOfDate, dated YYYY-MM-DD', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -489,10 +506,58 @@ describe('Account Routes', () => {
             });
 
             expect(response.status).toBe(200);
-            expect(response.body.map((b: BalanceHistory) => b.date).sort()).toEqual(['2026-05-02', '2026-06-01']);
+            const dates = response.body.map((b: DailyBalance) => b.date);
+            expect(dates[0]).toBe('2026-05-02');
+            expect(dates[dates.length - 1]).toBe('2026-06-01');
+            expect(dates.length).toBe(31);
         });
 
-        it('DASH-1.2 should total balances by date over the timeframe, dated YYYY-MM-DD', async () => {
+        it('ACCT-2.11 should carry each entry forward to the next, starting at the first entry', async () => {
+            const account = await insertAccount();
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: 100, date: '2026-05-10' }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: 200, date: '2026-05-13' })
+            ]);
+
+            const response = await request(app)
+                .get(`/accounts/${account.id}/balance-history`)
+                .query({ timeframe: 'PastThirtyDays', asOfDate: '2026-05-15' });
+
+            expect(response.body).toEqual([
+                { date: '2026-05-10', balance: 100 },
+                { date: '2026-05-11', balance: 100 },
+                { date: '2026-05-12', balance: 100 },
+                { date: '2026-05-13', balance: 200 },
+                { date: '2026-05-14', balance: 200 },
+                { date: '2026-05-15', balance: 200 }
+            ]);
+        });
+
+        it('ACCT-2.11 should carry an entry from before the timeframe into its first day', async () => {
+            const account = await insertAccount();
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: 100, date: '2026-01-01' })
+            ]);
+
+            const response = await request(app)
+                .get(`/accounts/${account.id}/balance-history`)
+                .query({ timeframe: 'PastThirtyDays', asOfDate: '2026-05-15' });
+
+            expect(response.body.length).toBe(31);
+            expect(response.body[0]).toEqual({ date: '2026-04-15', balance: 100 });
+        });
+
+        it('ACCT-2.5 should return no days for an account with no entries', async () => {
+            const account = await insertAccount();
+
+            const response = await request(app)
+                .get(`/accounts/${account.id}/balance-history`)
+                .query({ timeframe: 'All', asOfDate: '2026-05-15' });
+
+            expect(response.body).toEqual([]);
+        });
+
+        it('DASH-1.2 should total balances for each day of the timeframe, oldest first, dated YYYY-MM-DD', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({
                     institutionId: testInstitutionId,
@@ -519,9 +584,36 @@ describe('Account Routes', () => {
             );
 
             expect(response.body).toEqual([
-                { date: '2026-06-01', amount: 150, type: 'Assets' },
-                { date: '2026-05-31', amount: 100, type: 'Assets' }
+                { date: '2026-05-31', amount: 100, type: 'Assets' },
+                { date: '2026-06-01', amount: 150, type: 'Assets' }
             ]);
+        });
+
+        it('DASH-1.4 DASH-1.7 should carry each account forward, so accounts updated on different days add up', async () => {
+            const a = await insertAccount('A');
+            const b = await insertAccount('B');
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: a.id, balance: 100, date: '2026-06-01' }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: b.id, balance: 50, date: '2026-06-03' }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: a.id, balance: 300, date: '2026-06-05' })
+            ]);
+
+            const history = await request(app).get(
+                '/accounts/total-value-history?type=NetWorth&timeframe=PastThirtyDays&asOfDate=2026-06-06'
+            );
+            const accounts = await request(app).get('/accounts?asOfDate=2026-06-06');
+
+            expect(history.body.map((d: TotalValueHistory) => [d.date, d.amount])).toEqual([
+                ['2026-06-01', 100],
+                ['2026-06-02', 100],
+                ['2026-06-03', 150],
+                ['2026-06-04', 150],
+                ['2026-06-05', 350],
+                ['2026-06-06', 350]
+            ]);
+            // The chart's point for today is the sum of the accounts' current balances.
+            const total = accounts.body.reduce((sum: number, account: Account) => sum + account.balance!, 0);
+            expect(history.body[history.body.length - 1].amount).toBe(total);
         });
 
         it('DASH-1.1 should total assets or liabilities by their type', async () => {

@@ -1,7 +1,7 @@
-import { eq, and, desc, sum, gte, inArray, lte } from 'drizzle-orm';
+import { eq, and, desc, gte, inArray, lte, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CalendarDate } from '@shared/core/types';
-import { TotalValueHistory } from '@shared/finance/contracts';
+import { DailyBalance, TotalValueHistory } from '@shared/finance/contracts';
 import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
@@ -32,7 +32,12 @@ function mapBalanceHistoryToRow(record: BalanceHistory): typeof balanceHistorySc
 }
 
 export interface IFinanceBalanceHistoryData {
-    retrieveForAccount(accountId: string, startDate: CalendarDate, endDate: CalendarDate): Promise<BalanceHistory[]>;
+    /** The account's balance on every day from startDate to endDate (ACCT-2.11), as `retrieveSumByDate`. */
+    retrieveDailyForAccount(accountId: string, startDate: CalendarDate, endDate: CalendarDate): Promise<DailyBalance[]>;
+    /**
+     * The total of the type's accounts on every day from startDate to endDate, oldest first, carrying each account's
+     * entries forward (DASH-1.4). Days before the first entry are left out.
+     */
     retrieveSumByDate(
         type: ValueHistoryType,
         startDate: CalendarDate,
@@ -57,33 +62,13 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         this.db = dbClient.drizzle;
     }
 
-    public async retrieveForAccount(
+    public async retrieveDailyForAccount(
         accountId: string,
         startDate: CalendarDate,
         endDate: CalendarDate
-    ): Promise<BalanceHistory[]> {
-        const rows = await this.db
-            .select({
-                id: balanceHistorySchema.id,
-                createdAt: balanceHistorySchema.createdAt,
-                updatedAt: balanceHistorySchema.updatedAt,
-                accountId: balanceHistorySchema.accountId,
-                date: balanceHistorySchema.date,
-                balance: balanceHistorySchema.balance
-            })
-            .from(balanceHistorySchema)
-            .where(
-                and(
-                    eq(balanceHistorySchema.accountId, accountId),
-                    gte(balanceHistorySchema.date, startDate),
-                    lte(balanceHistorySchema.date, endDate)
-                )
-            );
-
-        return rows.map(row => ({
-            ...row,
-            balance: Number(row.balance)
-        }));
+    ): Promise<DailyBalance[]> {
+        const days = await this.retrieveDailyTotals(eq(balanceHistorySchema.accountId, accountId), startDate, endDate);
+        return days.map(day => ({ date: day.date, balance: day.amount }));
     }
 
     public async retrieveSumByDate(
@@ -91,30 +76,56 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         startDate: CalendarDate,
         endDate: CalendarDate
     ): Promise<TotalValueHistory[]> {
-        const conditions = [gte(balanceHistorySchema.date, startDate), lte(balanceHistorySchema.date, endDate)];
-
+        let accounts = sql`true`;
         if (type === ValueHistoryType.Assets) {
-            conditions.push(inArray(accountSchema.type, AccountTypeUtil.typesIn(AccountCategory.Asset)));
+            accounts = inArray(accountSchema.type, AccountTypeUtil.typesIn(AccountCategory.Asset));
         } else if (type === ValueHistoryType.Liabilities) {
-            conditions.push(inArray(accountSchema.type, AccountTypeUtil.typesIn(AccountCategory.Liability)));
+            accounts = inArray(accountSchema.type, AccountTypeUtil.typesIn(AccountCategory.Liability));
         }
 
-        const rows = await this.db
-            .select({
-                date: balanceHistorySchema.date,
-                amount: sum(balanceHistorySchema.balance).mapWith(Number)
-            })
-            .from(balanceHistorySchema)
-            .innerJoin(accountSchema, eq(accountSchema.id, balanceHistorySchema.accountId))
-            .where(and(...conditions))
-            .groupBy(balanceHistorySchema.date)
-            .orderBy(desc(balanceHistorySchema.date));
+        const days = await this.retrieveDailyTotals(accounts, startDate, endDate);
+        return days.map(day => ({ ...day, type }));
+    }
 
-        return rows.map(row => ({
-            date: row.date,
-            type,
-            amount: Number(row.amount)
-        }));
+    /**
+     * Totals the balances of the accounts matching `accounts` for every day from startDate to endDate, oldest first.
+     * Each account counts its latest entry on or before the day; one with no entry yet adds nothing. The days start
+     * at the first entry when that's later than startDate, so there are none before any account has a balance.
+     */
+    private async retrieveDailyTotals(
+        accounts: SQL,
+        startDate: CalendarDate,
+        endDate: CalendarDate
+    ): Promise<{ date: CalendarDate; amount: number }[]> {
+        // Each entry holds from its date until the account's next entry (next_date, exclusive).
+        const result = await this.db.execute<{ date: string; amount: string }>(sql`
+            WITH entries AS (
+                SELECT
+                    ${balanceHistorySchema.date} AS date,
+                    ${balanceHistorySchema.balance} AS balance,
+                    LEAD(${balanceHistorySchema.date}) OVER (
+                        PARTITION BY ${balanceHistorySchema.accountId} ORDER BY ${balanceHistorySchema.date}
+                    ) AS next_date
+                FROM ${balanceHistorySchema}
+                INNER JOIN ${accountSchema} ON ${accountSchema.id} = ${balanceHistorySchema.accountId}
+                WHERE ${accounts} AND ${balanceHistorySchema.date} <= ${endDate}
+            ),
+            days AS (
+                SELECT generate_series(
+                    GREATEST(${startDate}::date, (SELECT min(date) FROM entries)),
+                    ${endDate}::date,
+                    interval '1 day'
+                )::date AS day
+            )
+            SELECT to_char(days.day, 'YYYY-MM-DD') AS date, sum(entries.balance) AS amount
+            FROM days
+            INNER JOIN entries
+                ON entries.date <= days.day AND (entries.next_date IS NULL OR entries.next_date > days.day)
+            GROUP BY days.day
+            ORDER BY days.day
+        `);
+
+        return result.rows.map(row => ({ date: row.date, amount: Number(row.amount) }));
     }
 
     public async insertBulk(records: BalanceHistory[]): Promise<void> {

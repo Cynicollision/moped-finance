@@ -2,6 +2,11 @@
 
 @if (accounts.error(); as error) {
     <app-load-error [message]="error" (retry)="accounts.reload()"></app-load-error>
+} @else if (hasNoAccounts()) {
+    <div class="empty-state">
+        <p>Add an institution and its accounts to see your net worth here.</p>
+        <a mat-flat-button routerLink="/accounts/new">Add your first account</a>
+    </div>
 } @else {
     <div class="summary-container">
         @if (history.error(); as error) {
