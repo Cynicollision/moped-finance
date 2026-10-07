@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, computed, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { DateProviderService } from './../../core/date-provider.service';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterLink } from '@angular/router';
@@ -38,6 +39,7 @@ interface AccountSection {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CurrencyPipe,
+        MatButtonModule,
         MatCardModule,
         MatDividerModule,
         RouterLink,
@@ -70,6 +72,8 @@ export class DashboardComponent {
     });
 
     readonly accounts = viewResource({ loader: () => this.financeService.fetchAllAccounts() });
+    /** No accounts yet: the screen shows how to add one instead of an empty chart (DASH-1.8). */
+    readonly hasNoAccounts = computed(() => this.accounts.value()?.length === 0);
 
     // The chart (DASH-1.1, DASH-1.2): reloads when the view type or timeframe changes, keeping the old chart
     // on screen meanwhile.
@@ -95,65 +99,52 @@ export class DashboardComponent {
         () => this.accounts.isRefreshing() || this.history.isRefreshing() || this.groupChanges.isRefreshing()
     );
 
+    // A group's change is the first and last days of its daily total, as the chart's is (DASH-2.2). Each account's
+    // days run oldest first from the timeframe's start, or its first entry if later, to today, so the group's first
+    // day is its accounts' earliest, and an account whose days start later adds nothing to it.
     private async loadGroupChanges(
         accounts: Account[],
         timeframe: HistoryTimeframe
     ): Promise<Map<AccountGroup, ValuePeriodChange>> {
         const asOfDate = this.dateProvider.today();
-        const changes = new Map<AccountGroup, ValuePeriodChange>();
-        const groupedAccounts = new Map<AccountGroup, Account[]>();
-
-        for (const account of accounts) {
-            const group = account.group;
-            if (!groupedAccounts.has(group)) {
-                groupedAccounts.set(group, []);
-            }
-            groupedAccounts.get(group)!.push(account);
-        }
-
-        // Groups load in parallel, like the accounts within each.
-        await Promise.all(
-            [...groupedAccounts.entries()].map(async ([group, groupAccounts]) => {
-                let startTotal = 0;
-                let endTotal = 0;
-                let hasData = false;
-
-                await Promise.all(
-                    groupAccounts.map(async account => {
-                        const history = await this.financeService.fetchAccountBalanceHistory(account.id, {
-                            asOfDate,
-                            timeframe
-                        });
-                        if (history && history.length > 0) {
-                            const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date));
-                            startTotal += Number(sorted[0].balance);
-                            endTotal += Number(sorted[sorted.length - 1].balance);
-                            hasData = true;
-                        }
-                    })
-                );
-
-                if (hasData) {
-                    const changeAmount = endTotal - startTotal;
-                    const changePercentage = startTotal !== 0 ? (changeAmount / Math.abs(startTotal)) * 100 : 0;
-
-                    let isPositive = changeAmount >= 0;
-                    let isGood = isPositive;
-
-                    if (groupAccounts[0].category === AccountCategory.Liability) {
-                        isPositive = changeAmount < 0;
-                        isGood = !isPositive;
-                    }
-
-                    changes.set(group, {
-                        amount: Math.abs(changeAmount),
-                        percentage: Math.abs(changePercentage),
-                        isPositive,
-                        isGood
-                    });
-                }
-            })
+        const histories = await Promise.all(
+            accounts.map(async account => ({
+                group: account.group,
+                days: await this.financeService.fetchAccountBalanceHistory(account.id, { asOfDate, timeframe })
+            }))
         );
+
+        const changes = new Map<AccountGroup, ValuePeriodChange>();
+        for (const info of AccountTypeUtil.groups) {
+            const series = histories.filter(h => h.group === info.group && h.days.length > 0).map(h => h.days);
+            if (series.length === 0) {
+                continue;
+            }
+
+            const firstDay = series.map(days => days[0].date).reduce((a, b) => (a < b ? a : b));
+            const startTotal = series
+                .filter(days => days[0].date === firstDay)
+                .reduce((total, days) => total + days[0].balance, 0);
+            const endTotal = series.reduce((total, days) => total + days[days.length - 1].balance, 0);
+
+            const changeAmount = endTotal - startTotal;
+            const changePercentage = startTotal !== 0 ? (changeAmount / Math.abs(startTotal)) * 100 : 0;
+
+            let isPositive = changeAmount >= 0;
+            let isGood = isPositive;
+
+            if (info.category === AccountCategory.Liability) {
+                isPositive = changeAmount < 0;
+                isGood = !isPositive;
+            }
+
+            changes.set(info.group, {
+                amount: Math.abs(changeAmount),
+                percentage: Math.abs(changePercentage),
+                isPositive,
+                isGood
+            });
+        }
 
         return changes;
     }

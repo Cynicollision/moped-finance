@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { DailyBalance } from '@shared/finance/contracts';
 import { AccountType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
@@ -22,11 +23,12 @@ describe('DashboardComponent', () => {
     }
 
     // Renders the summary once its accounts have loaded, the way the screen first appears.
-    async function render(accounts: Account[]): Promise<HTMLElement> {
+    // `days` holds each account's daily balances by account ID, oldest first, as the server sends them.
+    async function render(accounts: Account[], days: Record<string, DailyBalance[]> = {}): Promise<HTMLElement> {
         const financeService = {
             fetchAllAccounts: vi.fn().mockResolvedValue(accounts),
             fetchTotalValueHistory: vi.fn().mockResolvedValue([]),
-            fetchAccountBalanceHistory: vi.fn().mockResolvedValue([])
+            fetchAccountBalanceHistory: vi.fn((id: string) => Promise.resolve(days[id] ?? []))
         };
         TestBed.configureTestingModule({
             imports: [DashboardComponent],
@@ -173,6 +175,37 @@ describe('DashboardComponent', () => {
             { groups: ['Cash', 'Retirement', 'Other Assets'], total: ['Total Assets', '$14,000.00'] },
             { groups: ['Credit Cards'], total: ['Total Liabilities', '$300.00'] }
         ]);
+    });
+
+    it('DASH-1.8 should offer to add the first account when there are none', async () => {
+        const element = await render([]);
+
+        expect(element.querySelector('.empty-state p')!.textContent).toBe(
+            'Add an institution and its accounts to see your net worth here.'
+        );
+        const add = element.querySelector<HTMLAnchorElement>('.empty-state a')!;
+        expect(add.textContent!.trim()).toBe('Add your first account');
+        expect(add.getAttribute('href')).toBe('/accounts/new');
+        expect(element.querySelector('app-value-history')).toBeNull();
+    });
+
+    it("DASH-2.2 should measure a group's change from its first day to its last, as the chart does", async () => {
+        // Savings starts after Checking, so it adds nothing to the group's first day.
+        const element = await render(
+            [account('Checking', AccountType.Checking, 150), account('Savings', AccountType.Savings, 50)],
+            {
+                Checking: [
+                    { date: '2026-05-01', balance: 100 },
+                    { date: '2026-05-17', balance: 150 }
+                ],
+                Savings: [
+                    { date: '2026-05-10', balance: 40 },
+                    { date: '2026-05-17', balance: 50 }
+                ]
+            }
+        );
+
+        expect(element.querySelector('.account-group .change-amount')!.textContent!.trim()).toBe('$100.00 (100.0%)');
     });
 
     it('DASH-2.1 should leave out a section with no accounts', async () => {
