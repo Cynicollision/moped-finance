@@ -20,13 +20,13 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 ## Next
 
 ### 4. Balances carried forward
-- [ ] ACCT-2.1, 2.11; DASH-1.4, 1.7; ACCT-2.6 ("Balance as of" replaces "Last updated"): current balance ignores future entries; account and Dashboard series have a value for every day, carrying entries forward; headline, chart and section totals agree. DASH-1.8: Dashboard empty state.
+- [ ] ACCT-2.11; DASH-1.4, 1.7; ACCT-2.6 ("Balance as of" replaces "Last updated"): account and Dashboard series have a value for every day, carrying entries forward; headline, chart and section totals agree. DASH-2.2: reword group changes to use carried-forward values (the group on the timeframe's first day versus today), as decided 2026-10-07. DASH-1.8: Dashboard empty state, in the same PR.
 
 ### 5. Manual balances
 - [ ] ACCT-5.1: set/adjusted source on balance entries (migration; existing entries are set). ACCT-1.4, 2.2: Starting Balance on Add Account and **Update Balance** on Account Details (ACCT-2.8). ACCT-2.13: Balance History section with edit and delete. ACCT-3.5: imports write set entries. APP-6.3 for balances: liabilities take **Amount owed** as a positive number. ACCT-2.10's empty Recent Transactions table. Known gap: ACCT-3.3's dry-run date range covers only valid rows.
 
 ### 6. Transaction form and filters
-- [ ] TXN-2.13, APP-6.3: positive Amount with a Money out / Money in switch. TXN-2.6: required fields, Merchant included, flagged on the form. TXN-1.14: amount filters compare size, plus a Direction filter. Known gap (TXN-1.10): the default End Date silently hides future-dated transactions; give it a visible hint.
+- [ ] TXN-2.13, APP-6.3: positive Amount with a Money out / Money in switch. TXN-2.6: required fields, Merchant included, flagged on the form. TXN-1.14: amount filters compare size, plus a Direction filter.
 
 ### 7. Hidden transactions
 - [ ] TXN-1.8, 1.13, 2.11: **Show hidden transactions** filter (dimmed, crossed-out eye), so hidden transactions can be found and un-hidden; check Account Details' recent transactions leaves them out.

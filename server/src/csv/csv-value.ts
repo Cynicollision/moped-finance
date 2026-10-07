@@ -1,4 +1,5 @@
 import { SchemaUtil } from '@server/data';
+import { DateTimeUtil } from '@server/utility';
 
 export type CsvValueResult<T> = { success: true; value: T } | { success: false; message: string };
 
@@ -34,6 +35,15 @@ export class CsvValue {
         }
 
         return { success: true, value: date.toISOString().substring(0, 10) };
+    }
+
+    /** The date of a balance entry or transaction: as `date`, and not after today (APP-8.1). */
+    public static recordDate(field: string, text: string): CsvValueResult<string> {
+        const date = CsvValue.date(field, text);
+        if (date.success && date.value > DateTimeUtil.latestRecordDate()) {
+            return { success: false, message: `${field} ${date.value} is after today.` };
+        }
+        return date;
     }
 
     /**

@@ -41,7 +41,7 @@ Every group has an "Other" type, so anything that doesn't fit a named type still
 
 | ID | Requirement | Status |
 |---|---|---|
-| ACCT-2.1 | An account's current balance shall be its latest balance entry dated on or before today, or 0 if it has none. | Partial |
+| ACCT-2.1 | An account's current balance shall be its latest balance entry dated on or before today, or 0 if it has none. Entries can't be dated after today (APP-8.1), but any that predate that rule, or that the server's one day of slack lets in, are left out. | Implemented |
 | ACCT-2.2 | The user can set a manual account's balance: a **Starting Balance** and **As of** date when adding it (ACCT-1.4), and **Update Balance** on Account Details' actions menu afterwards, which asks for a **Balance** and a **Date** (default today, not after today). Either one creates the entry for that date, or replaces the entry already there, as a *set* entry (ACCT-5.1). Entries on other dates don't change. | Partial |
 | ACCT-2.3 | Account Details shall show the current balance, a chart of the balance over the selected timeframe, and the change over that timeframe as an amount and a percentage. For a liability, debt shrinking toward zero shall be shown as favourable (green, down arrow) and debt growing as unfavourable (red, up arrow). | Implemented |
 | ACCT-2.4 | The timeframe shall be chosen as on the Dashboard (DASH-1.2), from the same row of buttons under the chart, counted back from today. The chart's title is "Current Balance" with no View Type menu. | Implemented |
@@ -68,7 +68,7 @@ Every group has an "Other" type, so anything that doesn't fit a named type still
 | ACCT-3.7 | When validation finds errors, the screen shall show the server's summary ("Found errors in 1 of 3 rows.") under a "Validation Error:" heading, list each row-level message below it so the user can fix the file, and not offer **Begin Import**. | Implemented |
 | ACCT-3.8 | The Import Balance History screen shall sit below the Dashboard and the account ("Dashboard / *account name*", APP-1.8) and state the expected columns ("Date, AccountName, Balance"). | Implemented |
 | ACCT-3.9 | An account shall have at most one balance per date. The import shall refuse a file with two rows for the same date, reporting the later one (for example "Row 3: Duplicate date 2026-06-06"). | Implemented |
-| ACCT-3.10 | Each row's **Date** and **Balance** shall be checked as in TXN-3.10 (Date as YYYY-MM-DD, M/D/YYYY or an ISO timestamp; Balance a number with at most two decimals and at most 9,999,999,999.99 either way), with every problem in a row reported in one message. The replacement in ACCT-3.5 happens in one database transaction, so a failure leaves the existing balances in place. | Implemented |
+| ACCT-3.10 | Each row's **Date** and **Balance** shall be checked as in TXN-3.10 (Date as YYYY-MM-DD, M/D/YYYY or an ISO timestamp, and not after today, APP-8.1; Balance a number with at most two decimals and at most 9,999,999,999.99 either way), with every problem in a row reported in one message. The replacement in ACCT-3.5 happens in one database transaction, so a failure leaves the existing balances in place. | Implemented |
 | ACCT-3.11 | Exporting an account's balance history and transactions (TXN-3.1), then importing both into another account, shall recreate its history there. This is how the user moves a connected account to another institution, or starts over at a new one: hide the old account (ACCT-1.9) so nothing is counted twice. | Partial |
 
 ## ACCT-4 The user can have balances kept up to date automatically
@@ -106,7 +106,6 @@ A closed account is one the user no longer has, such as a savings account they e
 
 - **No starting balance (ACCT-1.4, ACCT-2.2).** Add Account doesn't ask for one and there's no Update Balance, so a new account shows $0.00 until history is imported.
 - **Balance entries have no source (ACCT-5.1).** Every entry is effectively set; transactions don't touch balances yet.
-- **Current balance can be a future entry (ACCT-2.1).** The latest entry is used even when it's dated after today.
 - **Hide Account only affects Spending so far (ACCT-1.9).** Spending leaves hidden accounts out (CASH-1.2), but no other screen or total does, and the Institutions screen doesn't mark them.
 - **No open or closed state (ACCT-1.1, ACCT-6).** Accounts can't be closed yet.
 - **Manual vs. connected is a stored flag (ACCT-4.3).** The form no longer shows it and new accounts are saved manual, but it's still the `is_manual` column. Once connections exist, derive it from the link.

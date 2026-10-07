@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { IAppLogger } from '@server/logging';
-import { idParamsSchema, OperationDefinition, OperationHandler } from '@server/routing';
+import { asOfDateQuerySchema, idParamsSchema, OperationDefinition, OperationHandler } from '@server/routing';
 import { IFinanceAccountData } from './../accounts';
 import { InstitutionController } from './institution-controller';
 import { IFinanceInstitutionData } from './institution-data';
@@ -36,9 +36,15 @@ export function createInstitutionRouter(
     // GET /:id/accounts - Get Institution Accounts
     router.get('/:id/accounts', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getInstitutionAccounts' };
-        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
-            return controller.getInstitutionAccounts(context, params.id);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, query: asOfDateQuerySchema },
+            (context, { params, query }) => {
+                return controller.getInstitutionAccounts(context, params.id, query.asOfDate);
+            }
+        );
     });
 
     // POST / - Create Institution

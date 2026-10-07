@@ -72,6 +72,18 @@ describe('FinanceService', () => {
         expect(await recent).toEqual([]);
     });
 
+    it("ACCT-2.1 APP-4.1 should ask for accounts' balances as of the app's today", async () => {
+        const { finance, http } = setup();
+
+        const all = finance.fetchAllAccounts();
+        http.expectOne('/api/v1/accounts?asOfDate=2026-05-17').flush([]);
+        await all;
+
+        const single = finance.fetchAccount('a1');
+        http.expectOne('/api/v1/accounts/a1?asOfDate=2026-05-17').flush({});
+        await single;
+    });
+
     it("APP-4.1 should ask for value history as of the app's today", async () => {
         const { finance, http } = setup();
 

@@ -191,11 +191,11 @@ describe('FinanceTransactionsComponent', () => {
         expect(element.querySelector('.footer')).toBeNull();
     });
 
-    it('TXN-1.10 should search up to today by default, sending it as YYYY-MM-DD', async () => {
+    it('TXN-1.10 should start with no date filters', async () => {
         const { lastSearch } = await render();
 
         expect(lastSearch().startDate).toBeUndefined();
-        expect(lastSearch().endDate).toBe('2026-05-17');
+        expect(lastSearch().endDate).toBeUndefined();
     });
 
     it('TXN-1.7 should show and search the start and end dates from the link that opened it', async () => {

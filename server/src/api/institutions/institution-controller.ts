@@ -1,3 +1,4 @@
+import { CalendarDate } from '@shared/core/types';
 import { Account, Institution } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
@@ -31,14 +32,15 @@ export class InstitutionController {
 
     public async getInstitutionAccounts(
         context: OperationContext,
-        institutionId: string
+        institutionId: string,
+        asOfDate?: CalendarDate
     ): Promise<OperationResult<Account[]>> {
         const current = await this.institutionData.retrieveSingle(institutionId);
         if (!current) {
             return Result.userErrorNotFound();
         }
 
-        const accounts = await this.accountData.retrieveByInstitutionId(institutionId);
+        const accounts = await this.accountData.retrieveByInstitutionId(institutionId, asOfDate);
         return Result.success(accounts);
     }
 

@@ -27,6 +27,14 @@ export class DateTimeUtil {
         return CalendarDateUtil.fromDate(this.now());
     }
 
+    /**
+     * The latest date a balance entry or transaction can have (APP-8.1): today, plus one day for a client whose time
+     * zone is ahead of the server's.
+     */
+    public static latestRecordDate(): CalendarDate {
+        return CalendarDateUtil.addDays(this.today(), 1);
+    }
+
     public static getCurrentTimestamp(): string {
         return this.now().toISOString();
     }

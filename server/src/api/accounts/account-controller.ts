@@ -1,3 +1,4 @@
+import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
 import {
     BalanceImportResult,
@@ -25,16 +26,20 @@ export class AccountController {
         private transactionData: IFinanceTransactionData
     ) {}
 
-    public async getAccount(context: OperationContext, accountId: string): Promise<OperationResult<Account>> {
-        const account = await this.accountData.retrieveSingle(accountId);
+    public async getAccount(
+        context: OperationContext,
+        accountId: string,
+        asOfDate?: CalendarDate
+    ): Promise<OperationResult<Account>> {
+        const account = await this.accountData.retrieveSingle(accountId, asOfDate);
         if (!account) {
             return Result.userErrorNotFound();
         }
         return Result.success(account);
     }
 
-    public async getAccounts(_context: OperationContext): Promise<OperationResult<Account[]>> {
-        const accounts = await this.accountData.retrieveAll();
+    public async getAccounts(_context: OperationContext, asOfDate?: CalendarDate): Promise<OperationResult<Account[]>> {
+        const accounts = await this.accountData.retrieveAll(asOfDate);
         return Result.success(accounts);
     }
 

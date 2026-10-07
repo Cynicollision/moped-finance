@@ -3,7 +3,14 @@ import { z } from 'zod';
 import { HistoryTimeframe } from '@shared/core/enum';
 import { ValueHistoryType } from '@shared/finance/enum';
 import { IAppLogger } from '@server/logging';
-import { idParamsSchema, OperationDefinition, OperationHandler, QueryField, singleFileUpload } from '@server/routing';
+import {
+    asOfDateQuerySchema,
+    idParamsSchema,
+    OperationDefinition,
+    OperationHandler,
+    QueryField,
+    singleFileUpload
+} from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IFinanceTransactionData, transactionSearchQuerySchema } from './../transactions';
 import { AccountController } from './account-controller';
@@ -26,8 +33,8 @@ export function createAccountRouter(
     // GET / - Get all accounts
     router.get('/', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getAccounts' };
-        handler.execute(req, res, op, context => {
-            return controller.getAccounts(context);
+        handler.execute(req, res, op, { query: asOfDateQuerySchema }, (context, { query }) => {
+            return controller.getAccounts(context, query.asOfDate);
         });
     });
 
@@ -52,9 +59,15 @@ export function createAccountRouter(
     // GET /:id - Get Account
     router.get('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getAccount' };
-        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
-            return controller.getAccount(context, params.id);
-        });
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, query: asOfDateQuerySchema },
+            (context, { params, query }) => {
+                return controller.getAccount(context, params.id, query.asOfDate);
+            }
+        );
     });
 
     // POST / - Create Account

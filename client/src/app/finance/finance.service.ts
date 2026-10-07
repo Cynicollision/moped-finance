@@ -61,7 +61,9 @@ export class FinanceService {
     }
 
     fetchInstitutionAccounts(institutionId: string): Promise<Account[]> {
-        return this.api.load<Account[]>(`${API_BASE_PATH}/institutions/${institutionId}/accounts`);
+        return this.api.load<Account[]>(
+            `${API_BASE_PATH}/institutions/${institutionId}/accounts?asOfDate=${this.dateProvider.today()}`
+        );
     }
 
     fetchCategories(activeOnly: boolean): Promise<Category[]> {
@@ -110,13 +112,13 @@ export class FinanceService {
         return `${API_BASE_PATH}/categories/export`;
     }
 
-    // Accounts
+    // Accounts, with their balance as of the app's today (ACCT-2.1).
     fetchAccount(accountId: string): Promise<Account> {
-        return this.api.load<Account>(`${API_BASE_PATH}/accounts/${accountId}`);
+        return this.api.load<Account>(`${API_BASE_PATH}/accounts/${accountId}?asOfDate=${this.dateProvider.today()}`);
     }
 
     fetchAllAccounts(): Promise<Account[]> {
-        return this.api.load<Account[]>(`${API_BASE_PATH}/accounts`);
+        return this.api.load<Account[]>(`${API_BASE_PATH}/accounts?asOfDate=${this.dateProvider.today()}`);
     }
 
     createAccount(account: AccountFields): Promise<Account | undefined> {

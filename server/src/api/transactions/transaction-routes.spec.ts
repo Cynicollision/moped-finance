@@ -7,6 +7,7 @@ import { Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { IAppLogger } from '@server/logging';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
+import { DateTimeUtil } from '@server/utility';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
 import { FinanceAccountData } from './../accounts';
 import { FinanceCategoryData, FinanceCategoryGroupData } from './../categories';
@@ -222,6 +223,22 @@ describe('Transaction Routes', () => {
             const dbTxn = await transactionsData.retrieveSingle(response.body.id);
             expect(dbTxn).not.toBeNull();
             expect(dbTxn?.merchant).toBe('Groceries');
+        });
+
+        it('APP-8.1 should refuse a date after today, allowing a day for time zones', async () => {
+            DateTimeUtil.setClock(new Date('2026-05-17T12:00:00Z'));
+            const payload = { accountId: testAccountId, amount: -5, merchant: 'Coffee' };
+
+            const tomorrow = await request(app)
+                .post('/transactions')
+                .send({ ...payload, date: '2026-05-18' });
+            const later = await request(app)
+                .post('/transactions')
+                .send({ ...payload, date: '2026-05-19' });
+
+            expect(tomorrow.status).toBe(201);
+            expect(later.status).toBe(400);
+            expect(later.body.message).toContain("date: Can't be after today");
         });
 
         it('APP-5.7 should return 400 when schema validation fails (missing amount)', async () => {
@@ -676,6 +693,17 @@ describe('Transaction Routes', () => {
             const response = await importCsv(`${date},Checking,Test,Groceries,1,,,false`, '?dryRun=true');
 
             expect(response.body.failedRowMessages).toEqual([`Row 2: ${message}`]);
+        });
+
+        it('APP-8.1 should reject a date after today, allowing a day for time zones', async () => {
+            DateTimeUtil.setClock(new Date('2026-05-17T12:00:00Z'));
+
+            const response = await importCsv(
+                '2026-05-18,Checking,Test,Groceries,1,,,false\n2026-05-19,Checking,Test,Groceries,1,,,false',
+                '?dryRun=true'
+            );
+
+            expect(response.body.failedRowMessages).toEqual(['Row 3: Date 2026-05-19 is after today.']);
         });
 
         it.each([

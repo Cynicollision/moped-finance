@@ -39,7 +39,7 @@ export const transactionSchema = financeSchema.table(
 export const createTransactionSchema = createInsertSchema(transactionSchema, {
     // Blank or left out: Uncategorized (CAT-5.2).
     categoryId: SchemaUtil.optionalText(50),
-    date: SchemaUtil.date(),
+    date: SchemaUtil.recordDate(),
     amount: SchemaUtil.money(),
     merchant: schema => schema.min(1).max(255),
     originalStatement: SchemaUtil.optionalText(),

@@ -1,7 +1,7 @@
 import { AnyColumn, SQL, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { CalendarDateUtil } from '@shared/core/util';
-import { EmojiUtil } from '@server/utility';
+import { DateTimeUtil, EmojiUtil } from '@server/utility';
 
 export class SchemaUtil {
     /** Largest absolute value a `DECIMAL(12, 2)` money column holds. */
@@ -40,5 +40,10 @@ export class SchemaUtil {
      */
     public static date() {
         return z.string().refine(v => CalendarDateUtil.isValid(v), 'Expected a date as YYYY-MM-DD');
+    }
+
+    /** Request schema for the date of a balance entry or transaction: as `date()`, and not after today (APP-8.1). */
+    public static recordDate() {
+        return SchemaUtil.date().refine(v => v <= DateTimeUtil.latestRecordDate(), "Can't be after today");
     }
 }
