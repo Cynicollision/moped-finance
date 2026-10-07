@@ -92,7 +92,12 @@ export class FinanceValueHistoryComponent {
         }
 
         // Sort ascending by date for the chart (left to right)
-        const ascendingData = [...data].sort((a, b) => a.date.localeCompare(b.date));
+        const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
+        // Plot the first day, each day the value changes, and the last (ACCT-2.11). Every day's value is right, but a
+        // carried-forward balance plotted daily draws a staircase; joining the changes draws a line between them.
+        const ascendingData = sorted.filter(
+            (d, i) => i === 0 || i === sorted.length - 1 || d.amount !== sorted[i - 1].amount
+        );
 
         const type = this.selectedChartType();
         const label = this.selectedChartLabel();
@@ -124,9 +129,9 @@ export class FinanceValueHistoryComponent {
                         borderColor: colors.positive,
                         backgroundColor: ChartThemeService.withAlpha(colors.positive, 0.15),
                         fill: true,
-                        // A balance holds until its next entry, then steps (ACCT-2.11): draw the steps rather than a
-                        // smoothed curve, which would show values that never existed.
-                        stepped: true
+                        // Smooth, but never past the points on either side (ACCT-2.11): the default curve overshoots
+                        // where a carried-forward balance meets its next entry, showing values that never existed.
+                        cubicInterpolationMode: 'monotone'
                     }
                 ]
             },

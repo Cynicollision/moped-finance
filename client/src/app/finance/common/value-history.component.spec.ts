@@ -5,11 +5,12 @@ import { FinanceValueHistoryComponent } from './value-history.component';
 
 // Tests run with TZ=America/New_York (vitest-base.config.mjs), where a date read as UTC midnight is the day before.
 describe('FinanceValueHistoryComponent', () => {
-    function create(dates: string[]) {
+    // Each day's amount defaults to its position, so every day is a change.
+    function create(dates: string[], amounts: number[] = dates.map((_, i) => i)) {
         const fixture = TestBed.createComponent(FinanceValueHistoryComponent);
         fixture.componentRef.setInput(
             'historyData',
-            dates.map(date => ({ date, amount: 1, type: ValueHistoryType.NetWorth }))
+            dates.map((date, i) => ({ date, amount: amounts[i], type: ValueHistoryType.NetWorth }))
         );
         fixture.componentRef.setInput('chartTypeOptions', []);
         fixture.componentRef.setInput('selectedChartType', ValueHistoryType.NetWorth);
@@ -21,6 +22,16 @@ describe('FinanceValueHistoryComponent', () => {
         const history = create(['2026-05-02', '2026-04-30', '2026-05-01']);
 
         expect(history.chartConfig()!.data.labels).toEqual(['Apr 30', 'May 1', 'May 2']);
+    });
+
+    it('ACCT-2.11 DASH-1.4 should plot the first day, each day the value changes, and the last', () => {
+        const history = create(
+            ['2026-05-01', '2026-05-02', '2026-05-03', '2026-05-04', '2026-05-05', '2026-05-06'],
+            [100, 100, 100, 200, 200, 200]
+        );
+
+        expect(history.chartConfig()!.data.labels).toEqual(['May 1', 'May 4', 'May 6']);
+        expect(history.chartConfig()!.data.datasets[0].data).toEqual([100, 200, 200]);
     });
 
     it('DASH-1.1 should label by month over more than six months', () => {
