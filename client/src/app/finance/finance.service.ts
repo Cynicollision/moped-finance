@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { CalendarPeriod, HistoryTimeframe, SortDirection } from '@shared/core/enum';
 import { NewEntity } from '@shared/core/types';
 import {
+    AccountGroupChange,
     BalanceImportResult,
     CategoryImportResult,
     SpendingTotal,
@@ -157,6 +158,14 @@ export class FinanceService {
         const asOfDate = this.dateProvider.today();
         const url = `${API_BASE_PATH}/accounts/total-value-history?asOfDate=${asOfDate}&type=${type}&timeframe=${timeframe}`;
         return this.api.load<TotalValueHistory[]>(url);
+    }
+
+    /** Each account group's first and last daily totals over the timeframe, up to the app's today (DASH-2.2). */
+    fetchAccountGroupChanges(timeframe: HistoryTimeframe): Promise<AccountGroupChange[]> {
+        const asOfDate = this.dateProvider.today();
+        return this.api.load<AccountGroupChange[]>(
+            `${API_BASE_PATH}/accounts/group-changes?asOfDate=${asOfDate}&timeframe=${timeframe}`
+        );
     }
 
     // Transactions

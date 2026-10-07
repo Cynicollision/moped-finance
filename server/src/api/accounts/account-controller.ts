@@ -1,6 +1,7 @@
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
 import {
+    AccountGroupChange,
     BalanceImportResult,
     DailyBalance,
     GetAccountBalanceHistoryOptions,
@@ -122,6 +123,15 @@ export class AccountController {
             options.asOfDate
         );
         return Result.success(totalValueHistory);
+    }
+
+    public async getGroupChanges(
+        context: OperationContext,
+        options: GetAccountBalanceHistoryOptions
+    ): Promise<OperationResult<AccountGroupChange[]>> {
+        const startDate = CalendarDateUtil.getTimeframeStart(options.timeframe, options.asOfDate);
+        const changes = await this.balanceHistoryData.retrieveGroupChanges(startDate, options.asOfDate);
+        return Result.success(changes);
     }
 
     public async syncAccount(

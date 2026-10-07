@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, computed, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
-import { DateProviderService } from './../../core/date-provider.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
@@ -54,7 +53,6 @@ interface AccountSection {
 })
 export class DashboardComponent {
     private financeService = inject(FinanceService);
-    private dateProvider = inject(DateProviderService);
     readonly Math = Math;
 
     // View State for Chart Options
@@ -82,72 +80,40 @@ export class DashboardComponent {
         loader: ({ type, timeframe }) => this.financeService.fetchTotalValueHistory(type, timeframe)
     });
 
-    // Each group's change over the timeframe (DASH-2.2), once the accounts are known.
+    // Each group's change over the timeframe (DASH-2.2), worked out by the server from the group's daily totals.
     readonly groupChanges = viewResource({
-        params: () => {
-            const accounts = this.accounts.value();
-            return accounts ? { accounts, timeframe: this.selectedTimeframe() } : undefined;
-        },
-        loader: ({ accounts, timeframe }) => this.loadGroupChanges(accounts, timeframe)
+        params: () => this.selectedTimeframe(),
+        loader: timeframe => this.financeService.fetchAccountGroupChanges(timeframe)
     });
 
-    readonly groupPeriodChanges = computed(
-        () => this.groupChanges.value() ?? new Map<AccountGroup, ValuePeriodChange>()
-    );
-
-    readonly isRefreshing = computed(
-        () => this.accounts.isRefreshing() || this.history.isRefreshing() || this.groupChanges.isRefreshing()
-    );
-
-    // A group's change is the first and last days of its daily total, as the chart's is (DASH-2.2). Each account's
-    // days run oldest first from the timeframe's start, or its first entry if later, to today, so the group's first
-    // day is its accounts' earliest, and an account whose days start later adds nothing to it.
-    private async loadGroupChanges(
-        accounts: Account[],
-        timeframe: HistoryTimeframe
-    ): Promise<Map<AccountGroup, ValuePeriodChange>> {
-        const asOfDate = this.dateProvider.today();
-        const histories = await Promise.all(
-            accounts.map(async account => ({
-                group: account.group,
-                days: await this.financeService.fetchAccountBalanceHistory(account.id, { asOfDate, timeframe })
-            }))
-        );
-
+    readonly groupPeriodChanges = computed(() => {
         const changes = new Map<AccountGroup, ValuePeriodChange>();
-        for (const info of AccountTypeUtil.groups) {
-            const series = histories.filter(h => h.group === info.group && h.days.length > 0).map(h => h.days);
-            if (series.length === 0) {
-                continue;
-            }
-
-            const firstDay = series.map(days => days[0].date).reduce((a, b) => (a < b ? a : b));
-            const startTotal = series
-                .filter(days => days[0].date === firstDay)
-                .reduce((total, days) => total + days[0].balance, 0);
-            const endTotal = series.reduce((total, days) => total + days[days.length - 1].balance, 0);
-
-            const changeAmount = endTotal - startTotal;
-            const changePercentage = startTotal !== 0 ? (changeAmount / Math.abs(startTotal)) * 100 : 0;
+        for (const { group, startAmount, endAmount } of this.groupChanges.value() ?? []) {
+            const changeAmount = endAmount - startAmount;
+            const changePercentage = startAmount !== 0 ? (changeAmount / Math.abs(startAmount)) * 100 : 0;
 
             let isPositive = changeAmount >= 0;
             let isGood = isPositive;
 
-            if (info.category === AccountCategory.Liability) {
+            // Debt shrinking toward zero is a down arrow, and good (DASH-1.3).
+            if (AccountTypeUtil.groups.find(info => info.group === group)?.category === AccountCategory.Liability) {
                 isPositive = changeAmount < 0;
                 isGood = !isPositive;
             }
 
-            changes.set(info.group, {
+            changes.set(group, {
                 amount: Math.abs(changeAmount),
                 percentage: Math.abs(changePercentage),
                 isPositive,
                 isGood
             });
         }
-
         return changes;
-    }
+    });
+
+    readonly isRefreshing = computed(
+        () => this.accounts.isRefreshing() || this.history.isRefreshing() || this.groupChanges.isRefreshing()
+    );
 
     onChartTypeChange(type: ValueHistoryType) {
         this.selectedChartType.set(type);

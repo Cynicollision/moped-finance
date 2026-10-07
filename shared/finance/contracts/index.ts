@@ -5,3 +5,4 @@ export type { DailyBalance, GetAccountBalanceHistoryOptions } from './get-balanc
 export type { TransactionSearchOptions, TransactionSearchFilterItem } from './transaction-search';
 export type { TransactionImportResult } from './transaction-import-result';
 export type { TotalValueHistory, TotalValueHistoryOptions } from './total-value-history';
+export type { AccountGroupChange } from './account-group-change';

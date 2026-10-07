@@ -249,6 +249,75 @@ describe('Account Routes', () => {
         });
     });
 
+    describe('GET /accounts/group-changes', () => {
+        async function insertTyped(name: string, type: AccountType, entries: [string, number][]) {
+            const account = await accountData.insert(
+                FinanceEntityFactory.createAccount({ institutionId: testInstitutionId, name, type })
+            );
+            await balanceHistoryData.insertBulk(
+                entries.map(([date, balance]) =>
+                    FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date, balance })
+                )
+            );
+        }
+
+        it("DASH-2.2 should give each group's total on its first day in the timeframe and today, in group order", async () => {
+            await insertTyped('Visa', AccountType.CreditCard, [
+                ['2026-04-01', -200],
+                ['2026-05-12', -100]
+            ]);
+            // Checking starts within the timeframe, Savings later still, so Savings adds nothing to the first day.
+            await insertTyped('Checking', AccountType.Checking, [
+                ['2026-05-01', 100],
+                ['2026-05-17', 150],
+                ['2026-05-20', 999]
+            ]);
+            await insertTyped('Savings', AccountType.Savings, [
+                ['2026-05-10', 40],
+                ['2026-05-17', 50]
+            ]);
+            await insertTyped('Brokerage', AccountType.Brokerage, []);
+
+            const response = await request(app).get(
+                '/accounts/group-changes?timeframe=PastThirtyDays&asOfDate=2026-05-17'
+            );
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual([
+                { group: AccountGroup.Cash, startDate: '2026-05-01', startAmount: 100, endAmount: 200 },
+                { group: AccountGroup.CreditCards, startDate: '2026-04-17', startAmount: -200, endAmount: -100 }
+            ]);
+        });
+
+        it("DASH-2.2 should match the first and last days of the group's daily total", async () => {
+            await insertTyped('Checking', AccountType.Checking, [
+                ['2026-03-01', 10],
+                ['2026-04-20', 30]
+            ]);
+            await insertTyped('Savings', AccountType.Savings, [['2026-05-05', 5]]);
+
+            const changes = await request(app).get(
+                '/accounts/group-changes?timeframe=PastThirtyDays&asOfDate=2026-05-17'
+            );
+            const days = await request(app).get(
+                '/accounts/total-value-history?type=Assets&timeframe=PastThirtyDays&asOfDate=2026-05-17'
+            );
+
+            const first = days.body[0];
+            const last = days.body[days.body.length - 1];
+            expect(changes.body).toEqual([
+                { group: AccountGroup.Cash, startDate: first.date, startAmount: first.amount, endAmount: last.amount }
+            ]);
+        });
+
+        it('APP-5.7 should return 400 when timeframe is invalid', async () => {
+            const response = await request(app).get('/accounts/group-changes?timeframe=InvalidValue');
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('timeframe:');
+        });
+    });
+
     describe('GET /accounts/:accountId', () => {
         it('ACCT-2.6 should return a single account when found', async () => {
             const acc1 = await accountData.insert(

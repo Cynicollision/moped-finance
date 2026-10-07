@@ -1,8 +1,8 @@
 import { eq, and, desc, gte, inArray, lte, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CalendarDate } from '@shared/core/types';
-import { DailyBalance, TotalValueHistory } from '@shared/finance/contracts';
-import { ValueHistoryType, AccountCategory } from '@shared/finance/enum';
+import { AccountGroupChange, DailyBalance, TotalValueHistory } from '@shared/finance/contracts';
+import { AccountType, ValueHistoryType, AccountCategory } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
 import { IDatabaseClient } from '@server/data';
@@ -43,6 +43,11 @@ export interface IFinanceBalanceHistoryData {
         startDate: CalendarDate,
         endDate: CalendarDate
     ): Promise<TotalValueHistory[]>;
+    /**
+     * Each account group's daily total on its first day from startDate to endDate and on endDate (DASH-2.2), in the
+     * groups' display order (ACCT-1.2). Groups with no entry by endDate are left out.
+     */
+    retrieveGroupChanges(startDate: CalendarDate, endDate: CalendarDate): Promise<AccountGroupChange[]>;
     /** Inserts all of the records or, if any insert fails, none of them. */
     insertBulk(records: BalanceHistory[]): Promise<void>;
     /** Replaces the account's balances from startDate to endDate (inclusive) with the records, atomically. */
@@ -85,6 +90,63 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
 
         const days = await this.retrieveDailyTotals(accounts, startDate, endDate);
         return days.map(day => ({ ...day, type }));
+    }
+
+    public async retrieveGroupChanges(startDate: CalendarDate, endDate: CalendarDate): Promise<AccountGroupChange[]> {
+        // Each account's first day (startDate, or its first entry if later) with its balance then and on endDate.
+        const result = await this.db.execute<{
+            type: AccountType;
+            first_day: string;
+            start_balance: string;
+            end_balance: string;
+        }>(sql`
+            WITH entries AS (
+                SELECT
+                    ${balanceHistorySchema.accountId} AS account_id,
+                    ${balanceHistorySchema.date} AS date,
+                    ${balanceHistorySchema.balance} AS balance
+                FROM ${balanceHistorySchema}
+                WHERE ${balanceHistorySchema.date} <= ${endDate}
+            ),
+            first_days AS (
+                SELECT account_id, GREATEST(${startDate}::date, min(date)) AS first_day
+                FROM entries
+                GROUP BY account_id
+            )
+            SELECT
+                ${accountSchema.type} AS type,
+                to_char(first_days.first_day, 'YYYY-MM-DD') AS first_day,
+                (
+                    SELECT balance FROM entries
+                    WHERE entries.account_id = first_days.account_id AND entries.date <= first_days.first_day
+                    ORDER BY entries.date DESC LIMIT 1
+                ) AS start_balance,
+                (
+                    SELECT balance FROM entries
+                    WHERE entries.account_id = first_days.account_id
+                    ORDER BY entries.date DESC LIMIT 1
+                ) AS end_balance
+            FROM first_days
+            INNER JOIN ${accountSchema} ON ${accountSchema.id} = first_days.account_id
+        `);
+
+        // A group starts on its accounts' earliest first day; an account whose first day is later adds nothing then.
+        return AccountTypeUtil.groups.flatMap(info => {
+            const rows = result.rows.filter(row => AccountTypeUtil.groupOf(row.type) === info.group);
+            if (rows.length === 0) {
+                return [];
+            }
+            const startDate = rows.map(row => row.first_day).reduce((a, b) => (a < b ? a : b));
+            const sum = (values: string[]) => values.reduce((total, value) => total + Number(value), 0);
+            return [
+                {
+                    group: info.group,
+                    startDate,
+                    startAmount: sum(rows.filter(row => row.first_day === startDate).map(row => row.start_balance)),
+                    endAmount: sum(rows.map(row => row.end_balance))
+                }
+            ];
+        });
     }
 
     /**
