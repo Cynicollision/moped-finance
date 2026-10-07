@@ -16,10 +16,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { CalendarDateUtil } from '@shared/core/util';
 import { AccountCategory, AccountType } from '@shared/finance/enum';
 import { Account, AccountRequest, Institution } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
@@ -47,8 +44,6 @@ function flipForLiability(type: AccountType, amount: number): number {
         MatInputModule,
         MatSelectModule,
         MatCheckboxModule,
-        MatDatepickerModule,
-        MatNativeDateModule,
         MatProgressSpinnerModule
     ],
     templateUrl: './account-form.component.html',
@@ -70,8 +65,6 @@ export class AccountFormComponent implements OnInit, OnChanges {
 
     /** The Type select's options, under their groups (ACCT-1.2). */
     readonly typeGroups = AccountTypeUtil.groups;
-    /** Balances record what has happened, so the date stops at today (APP-8.1). */
-    readonly latestDate = this.dateProvider.now();
 
     readonly accountForm = new FormGroup({
         name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
@@ -82,12 +75,8 @@ export class AccountFormComponent implements OnInit, OnChanges {
         }),
         isHidden: new FormControl<boolean>(false, { nonNullable: true }),
         hideFromSpending: new FormControl<boolean>(false, { nonNullable: true }),
-        // As the user reads it: a liability's balance is the amount owed, positive (APP-6.3).
-        balance: new FormControl<number | null>(null),
-        balanceDate: new FormControl<Date>(this.dateProvider.now(), {
-            nonNullable: true,
-            validators: [Validators.required]
-        })
+        // As of today, as the user reads it: a liability's balance is the amount owed, positive (APP-6.3).
+        balance: new FormControl<number | null>(null)
     });
 
     private readonly type = toSignal(this.accountForm.controls.type.valueChanges, {
@@ -146,14 +135,14 @@ export class AccountFormComponent implements OnInit, OnChanges {
             return;
         }
 
-        const { balance, balanceDate, ...fields } = this.accountForm.getRawValue();
+        const { balance, ...fields } = this.accountForm.getRawValue();
         const request: AccountRequest = fields;
-        // A blank starting balance records nothing (ACCT-1.4); on Edit Account, only a changed balance or date does.
-        const { controls } = this.accountForm;
-        const balanceChanged = this.mode() === 'create' || controls.balance.dirty || controls.balanceDate.dirty;
+        // Recorded as of today (ACCT-2.2). A blank starting balance records nothing (ACCT-1.4); on Edit Account, only
+        // a changed balance does.
+        const balanceChanged = this.mode() === 'create' || this.accountForm.controls.balance.dirty;
         if (this.showBalance() && balance !== null && balanceChanged) {
             request.balanceEntry = {
-                date: CalendarDateUtil.fromDate(balanceDate),
+                date: this.dateProvider.today(),
                 balance: flipForLiability(fields.type, balance)
             };
         }

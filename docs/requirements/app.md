@@ -80,7 +80,7 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 
 | ID | Requirement | Status |
 |---|---|---|
-| APP-8.1 | A balance entry or transaction shall not be dated after today. The forms' date pickers stop at today (TXN-2.1, ACCT-2.2), and the server refuses a later date from a form ("date: Can't be after today") or an import row ("Row 3: Date 2026-05-19 is after today.", TXN-3.10, ACCT-3.10). The server allows one day past its own today (APP-5.6), so a user in a time zone ahead of the server's can still record their today. | Implemented |
+| APP-8.1 | A balance entry or transaction shall not be dated after today. The transaction form's date picker stops at today (TXN-2.1), balances entered on the account form are dated today (ACCT-2.2), and the server refuses a later date from a request ("date: Can't be after today") or an import row ("Row 3: Date 2026-05-19 is after today.", TXN-3.10, ACCT-3.10). The server allows one day past its own today (APP-5.6), so a user in a time zone ahead of the server's can still record their today. | Implemented |
 
 ## APP-9 The user can install the app
 

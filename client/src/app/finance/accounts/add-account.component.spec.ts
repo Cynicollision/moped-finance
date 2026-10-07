@@ -71,19 +71,17 @@ describe('FinanceAddAccountComponent', () => {
             'Institution',
             'Type',
             'Starting Balance',
-            'As of',
             'Hide Account',
             'Hide from Spending'
         ]);
     });
 
-    it('ACCT-1.4 should start with a blank Starting Balance as of today', async () => {
+    it('ACCT-1.4 should start with a blank Starting Balance', async () => {
         const { fixture } = await render([institution('inst-1', 'First Bank')]);
         const form = fixture.debugElement.query(By.directive(AccountFormComponent))
             .componentInstance as AccountFormComponent;
 
         expect(form.accountForm.controls.balance.value).toBeNull();
-        expect(form.accountForm.controls.balanceDate.value).toEqual(new Date(2026, 4, 17));
     });
 
     it('ACCT-1.3 should list institutions by name and start at the one it was opened from', async () => {
@@ -124,18 +122,18 @@ describe('FinanceAddAccountComponent', () => {
         expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
     });
 
-    it('ACCT-2.2 should save a starting balance as of its date', async () => {
+    it('ACCT-2.2 should save a starting balance as of today', async () => {
         const { fixture, element, financeService } = await render([institution('inst-1', 'First Bank')], 'inst-1');
         vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
         const form = fixture.debugElement.query(By.directive(AccountFormComponent))
             .componentInstance as AccountFormComponent;
 
-        form.accountForm.patchValue({ name: 'Checking', balance: 1250.5, balanceDate: new Date(2026, 4, 1) });
+        form.accountForm.patchValue({ name: 'Checking', balance: 1250.5 });
         await fixture.whenStable();
         element.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
 
         expect(financeService.createAccount).toHaveBeenCalledWith(
-            expect.objectContaining({ balanceEntry: { date: '2026-05-01', balance: 1250.5 } })
+            expect.objectContaining({ balanceEntry: { date: '2026-05-17', balance: 1250.5 } })
         );
     });
 
