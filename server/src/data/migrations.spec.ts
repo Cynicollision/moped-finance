@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { PGlite } from '@electric-sql/pglite';
 import { CalendarPeriod } from '@shared/core/enum';
-import { AccountType, CategoryType } from '@shared/finance/enum';
+import { AccountType, BalanceEntrySource, CategoryType } from '@shared/finance/enum';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { TestDatabaseUtil } from '@server/utility/testing';
 import { FinanceAccountData } from './../api/accounts';
@@ -213,6 +213,30 @@ describe('Data migrations', () => {
             await expect(
                 before.query(`INSERT INTO finance.accounts (id, institution_id, name) VALUES ('x', 'IN1', 'x')`)
             ).rejects.toThrow();
+        });
+    });
+
+    describe('0010_balance_entry_source', () => {
+        it('ACCT-5.1 ACCT-4.3 should make existing entries set entries and every account manual', async () => {
+            const before = await databaseBefore('0010_balance_entry_source');
+            try {
+                await before.exec(`
+                    INSERT INTO finance.institutions (id, name) VALUES ('IN1', 'Bank');
+                    INSERT INTO finance.accounts (id, institution_id, name, account_type, is_manual)
+                        VALUES ('seeded', 'IN1', 'Seeded', 'Checking', false), ('added', 'IN1', 'Added', 'Checking', true);
+                    INSERT INTO finance.balance_history (id, account_id, date, balance)
+                        VALUES ('BAL1', 'seeded', '2026-05-01', 100);
+                `);
+
+                await runMigration('0010_balance_entry_source', before);
+
+                const accounts = await before.query<{ is_manual: boolean }>('SELECT is_manual FROM finance.accounts');
+                const entries = await before.query<{ source: string }>('SELECT source FROM finance.balance_history');
+                expect(accounts.rows.map(row => row.is_manual)).toEqual([true, true]);
+                expect(entries.rows.map(row => row.source)).toEqual([BalanceEntrySource.Set]);
+            } finally {
+                await TestDatabaseUtil.destroyMockDatabase(before);
+            }
         });
     });
 });

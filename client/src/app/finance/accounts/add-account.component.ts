@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { AccountFields } from '@shared/finance/types';
+import { AccountRequest } from '@shared/finance/types';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
@@ -54,9 +54,9 @@ export class FinanceAddAccountComponent implements HasUnsavedChanges {
         }
     }
 
-    async onSave(fields: AccountFields) {
+    async onSave(request: AccountRequest) {
         this.saving.set(true);
-        const created = await this.financeService.createAccount({ ...fields, isManual: true });
+        const created = await this.financeService.createAccount(request);
         this.saving.set(false);
         if (created) {
             this.saved = true;

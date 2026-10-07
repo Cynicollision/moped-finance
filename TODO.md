@@ -19,9 +19,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 5. Manual balances
-- [ ] ACCT-5.1: set/adjusted source on balance entries (migration; existing entries are set). ACCT-1.4, 2.2: Starting Balance on Add Account and **Update Balance** on Account Details (ACCT-2.8). ACCT-2.13: Balance History section with edit and delete (it needs an endpoint listing the entries themselves: `GET /accounts/:id/balance-history` returns daily carried-forward balances). ACCT-3.5: imports write set entries. APP-6.3 for balances: liabilities take **Amount owed** as a positive number. ACCT-2.10's empty Recent Transactions table. Known gap: ACCT-3.3's dry-run date range covers only valid rows.
-
 ### 6. Transaction form and filters
 - [ ] TXN-2.13, APP-6.3: positive Amount with a Money out / Money in switch. TXN-2.6: required fields, Merchant included, flagged on the form. TXN-1.14: amount filters compare size, plus a Direction filter.
 
@@ -30,9 +27,10 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ### 8. Hidden and closed accounts
 - [ ] ACCT-1.9, DASH-2.9, TXN-1.12, TXN-2.1: hidden accounts left out of the Dashboard, Transactions list and filters, and the transaction form's account select (open, unhidden, sorted by name). ACCT-6.1 to 6.3, ACCT-2.8, DASH-2.10: Close Account (set entry of 0) and Reopen Account. ACCT-1.12, INST-1.1: Institutions marks hidden and closed accounts. Probably one PR for hiding, one for closing.
+- [ ] Review **Hide from Spending** (ACCT-1.7, CASH-1.2) before building the above: decide what it's for next to Hide Account and Close Account, then keep, reword or retire it (and its checkbox on the account form).
 
 ### 9. Transactions adjust balances
-- [ ] ACCT-5.2 to 5.6; TXN-2.8, 2.9, 2.10, 3.11: **Adjust balance** on Add/Edit Transaction and on import, updating adjusted entries up to the next set entry, undone and reapplied on edit, delete and hide, all in one database transaction. Then confirm ACCT-3.11 (export and re-import into another account) works end to end.
+- [ ] ACCT-5.2 to 5.7; TXN-2.8, 2.9, 2.10, 3.11: **Adjust balance** on Add/Edit Transaction and on import, updating adjusted entries up to the next set entry, undone and reapplied on edit, delete and hide, all in one database transaction. ACCT-5.7: recording a set entry (Edit Account, import; later sync and close) shifts the adjusted entries after it, in `writeSetEntry` and `replaceRange` (`balance-history-data.ts`). Then confirm ACCT-3.11 (export and re-import into another account) works end to end.
 
 ### 10. Budget 12-month averages
 - [ ] BUD-1.8, 1.9: server endpoint for each category's monthly average over the past 12 full months (counting what Spending counts), shown in the stream panel and beside each category in Budget's lists.
@@ -58,6 +56,9 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 ### 17. Demo mode
 - [ ] APP-4.2, 4.3: populate demo mode from `server/seed-data/`: `demo.interceptor.ts` answers everything but auth with an empty list. Needs the CSVs turned into client-side data (a build step or JSON) and in-browser create/edit/delete. Last, so it covers the finished screens.
 
+### 18. Install as an app
+- [ ] APP-9.1, 9.2: web app manifest (name, icons, theme colours, start URL), and a service worker if browsers still need one to offer installation. Choose caching so a new version shows up after an update (APP-9.2), for example Angular's `@angular/service-worker` with its update checks, or no caching at all. Installing needs HTTPS (app.md Notes), so test with `USE_HTTPS` or on localhost.
+
 ---
 
 ## Later
@@ -78,6 +79,7 @@ Manual entry and import/export come first. Constraints for when this gets picked
 
 ### Known gaps
 - [ ] **Duplicate detection on transaction import** (Transactions Known gaps): importing the same file twice creates everything twice. Decide on a match (date, account, amount, statement) and how the dry run reports it; related to bank sync's de-duplication.
+- [ ] **Changing an account between asset and liability types** (Accounts Known gaps): the stored balances keep their sign, so a $500 checking account changed to a credit card reads as $500 in credit. Decide whether Edit Account flips the history's sign or warns first (`account-controller.ts`, `updateAccount`).
 - [ ] **Spending classifies in the browser** (Spending Known gaps): income versus expense (CASH-1.3) is worked out in `spending.component.ts` from loaded categories. Move it to the server, which item 10's averages endpoint may already need.
 
 ### Major dependency upgrades

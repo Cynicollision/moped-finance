@@ -49,10 +49,12 @@ export class AccountController {
         context: OperationContext,
         input: CreateAccountRequest
     ): Promise<OperationResult<Account>> {
+        const { balanceEntry, ...fields } = input;
+        // Accounts are manual until they're linked to a bank connection (ACCT-1.3, ACCT-4.3).
         // A missing institution fails the insert's foreign key, which OperationHandler reports as a 400.
-        const account = FinanceEntityFactory.createAccount(input);
+        const account = FinanceEntityFactory.createAccount({ ...fields, isManual: true });
 
-        const created = await this.accountData.insert(account);
+        const created = await this.accountData.insert(account, balanceEntry);
         return Result.successCreated(created);
     }
 
@@ -66,7 +68,13 @@ export class AccountController {
             return Result.userErrorNotFound();
         }
 
-        const updated = await this.accountData.update({ ...current, ...changes });
+        const { balanceEntry, ...fields } = changes;
+        // A connected account's balance comes from its bank (ACCT-4.4).
+        if (balanceEntry && !current.isManual) {
+            return Result.userError("A connected account's balance comes from its bank.");
+        }
+
+        const updated = await this.accountData.update({ ...current, ...fields }, balanceEntry);
         if (!updated) {
             return Result.userErrorNotFound();
         }

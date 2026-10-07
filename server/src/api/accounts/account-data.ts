@@ -2,12 +2,13 @@ import { and, asc, eq, desc, lte, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { PgColumn } from 'drizzle-orm/pg-core';
 import { CalendarDate } from '@shared/core/types';
-import { Account } from '@shared/finance/types';
+import { Account, AccountBalanceEntry } from '@shared/finance/types';
 import { AccountType } from '@shared/finance/enum';
 import { AccountTypeUtil } from '@shared/finance/util';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
+import { writeSetEntry } from './balance-history-data';
 import { balanceHistorySchema } from './balance-history-schema';
 
 /** Accounts come with their balance as of a date: their latest entry on or before it (ACCT-2.1). Default: today. */
@@ -15,8 +16,10 @@ export interface IFinanceAccountData {
     retrieveAll(asOfDate?: CalendarDate): Promise<Account[]>;
     retrieveByInstitutionId(institutionId: string, asOfDate?: CalendarDate): Promise<Account[]>;
     retrieveSingle(id: string, asOfDate?: CalendarDate): Promise<Account | null>;
-    insert(account: Account): Promise<Account>;
-    update(account: Account): Promise<Account | null>;
+    /** Inserts the account and, if given, its balance as a set entry (ACCT-2.2), together or not at all. */
+    insert(account: Account, balanceEntry?: AccountBalanceEntry): Promise<Account>;
+    /** Updates the account and, if given, records its balance as a set entry (ACCT-2.2), together or not at all. */
+    update(account: Account, balanceEntry?: AccountBalanceEntry): Promise<Account | null>;
     delete(id: string): Promise<boolean>;
 }
 
@@ -115,10 +118,9 @@ export class FinanceAccountData implements IFinanceAccountData {
         return mapRowToAccount(rows[0].account, rows[0].balance, rows[0].balanceDate);
     }
 
-    public async insert(account: Account): Promise<Account> {
-        const rows = await this.db
-            .insert(accountSchema)
-            .values({
+    public async insert(account: Account, balanceEntry?: AccountBalanceEntry): Promise<Account> {
+        await this.db.transaction(async tx => {
+            await tx.insert(accountSchema).values({
                 id: account.id,
                 institutionId: account.institutionId,
                 name: account.name,
@@ -126,38 +128,37 @@ export class FinanceAccountData implements IFinanceAccountData {
                 isHidden: account.isHidden,
                 isManual: account.isManual,
                 hideFromSpending: account.hideFromSpending
-            })
-            .returning();
+            });
+            if (balanceEntry) {
+                await writeSetEntry(tx, account.id, balanceEntry);
+            }
+        });
 
-        return mapRowToAccount(rows[0], 0, null);
+        return (await this.retrieveSingle(account.id))!;
     }
 
-    public async update(account: Account): Promise<Account | null> {
-        const rows = await this.db
-            .update(accountSchema)
-            .set({
-                institutionId: account.institutionId,
-                name: account.name,
-                type: account.type,
-                isHidden: account.isHidden,
-                isManual: account.isManual,
-                hideFromSpending: account.hideFromSpending,
-                updatedAt: DateTimeUtil.now()
-            })
-            .where(eq(accountSchema.id, account.id))
-            .returning();
+    public async update(account: Account, balanceEntry?: AccountBalanceEntry): Promise<Account | null> {
+        const updated = await this.db.transaction(async tx => {
+            const rows = await tx
+                .update(accountSchema)
+                .set({
+                    institutionId: account.institutionId,
+                    name: account.name,
+                    type: account.type,
+                    isHidden: account.isHidden,
+                    isManual: account.isManual,
+                    hideFromSpending: account.hideFromSpending,
+                    updatedAt: DateTimeUtil.now()
+                })
+                .where(eq(accountSchema.id, account.id))
+                .returning({ id: accountSchema.id });
+            if (rows.length > 0 && balanceEntry) {
+                await writeSetEntry(tx, account.id, balanceEntry);
+            }
+            return rows.length > 0;
+        });
 
-        if (rows.length === 0) {
-            return null;
-        }
-
-        const balanceResult = await this.retrieveSingle(account.id);
-
-        return {
-            ...mapRowToAccount(rows[0], 0, null),
-            balance: balanceResult ? balanceResult.balance : 0,
-            balanceDate: balanceResult ? balanceResult.balanceDate : null
-        };
+        return updated ? this.retrieveSingle(account.id) : null;
     }
 
     public async delete(id: string): Promise<boolean> {

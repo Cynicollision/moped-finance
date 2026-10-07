@@ -1,6 +1,7 @@
 export { AccountCategory } from './account-category';
 export { AccountGroup } from './account-group';
 export { AccountType } from './account-type';
+export { BalanceEntrySource } from './balance-entry-source';
 export { BudgetStreamType } from './budget-stream-type';
 export { CategoryNecessity } from './category-necessity';
 export { CategoryType } from './category-type';

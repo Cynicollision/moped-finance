@@ -71,6 +71,13 @@
       "when": 1791366220949,
       "tag": "0009_account_type_only",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791374030986,
+      "tag": "0010_balance_entry_source",
+      "breakpoints": true
     }
   ]
 }

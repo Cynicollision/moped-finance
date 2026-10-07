@@ -30,6 +30,16 @@
         </mat-select>
         <mat-hint>{{ typeHint() }}</mat-hint>
     </mat-form-field>
+    @if (showBalance()) {
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ balanceLabel() }}</mat-label>
+            <span matTextPrefix>$&nbsp;</span>
+            <input type="number" matInput formControlName="balance" />
+            <mat-hint>{{
+                mode() === 'create' ? 'As of today. Leave blank to import balance history instead.' : 'As of today'
+            }}</mat-hint>
+        </mat-form-field>
+    }
     <div class="toggles-grid">
         <mat-checkbox formControlName="isHidden">Hide Account</mat-checkbox>
         <mat-checkbox formControlName="hideFromSpending">Hide from Spending</mat-checkbox>

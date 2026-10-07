@@ -2,10 +2,10 @@ import { eq, and, desc, gte, inArray, lte, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CalendarDate } from '@shared/core/types';
 import { AccountGroupChange, DailyBalance, TotalValueHistory } from '@shared/finance/contracts';
-import { AccountType, ValueHistoryType, AccountCategory } from '@shared/finance/enum';
-import { BalanceHistory } from '@shared/finance/types';
+import { AccountType, ValueHistoryType, AccountCategory, BalanceEntrySource } from '@shared/finance/enum';
+import { AccountBalanceEntry, BalanceHistory } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
-import { IDatabaseClient } from '@server/data';
+import { FinanceEntityFactory, IDatabaseClient } from '@server/data';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
 
@@ -16,7 +16,7 @@ export interface BalanceHistoryExport {
     balance: string;
 }
 
-type Transaction = Parameters<Parameters<NodePgDatabase['transaction']>[0]>[0];
+export type DbTransaction = Parameters<Parameters<NodePgDatabase['transaction']>[0]>[0];
 
 const bulkInsertChunkSize = 1000;
 
@@ -26,9 +26,25 @@ function mapBalanceHistoryToRow(record: BalanceHistory): typeof balanceHistorySc
         accountId: record.accountId,
         date: record.date,
         balance: record.balance.toString(),
+        source: record.source,
         createdAt: record.createdAt,
         updatedAt: record.updatedAt
     };
+}
+
+/**
+ * Records a balance the user entered as a set entry (ACCT-2.2, ACCT-5.1), replacing any entry on that date. Part of
+ * a larger write, so it takes the caller's database transaction.
+ */
+export async function writeSetEntry(tx: DbTransaction, accountId: string, entry: AccountBalanceEntry): Promise<void> {
+    const record = FinanceEntityFactory.createBalanceHistory({ accountId, ...entry, source: BalanceEntrySource.Set });
+    await tx
+        .insert(balanceHistorySchema)
+        .values(mapBalanceHistoryToRow(record))
+        .onConflictDoUpdate({
+            target: [balanceHistorySchema.accountId, balanceHistorySchema.date],
+            set: { balance: record.balance.toString(), source: record.source, updatedAt: record.updatedAt }
+        });
 }
 
 export interface IFinanceBalanceHistoryData {
@@ -219,7 +235,7 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
     }
 
     // Chunks keep each statement well under Postgres's 65,535 bind-parameter limit.
-    private async insertChunks(tx: Transaction, records: BalanceHistory[]): Promise<void> {
+    private async insertChunks(tx: DbTransaction, records: BalanceHistory[]): Promise<void> {
         for (let i = 0; i < records.length; i += bulkInsertChunkSize) {
             const chunk = records.slice(i, i + bulkInsertChunkSize);
             await tx.insert(balanceHistorySchema).values(chunk.map(mapBalanceHistoryToRow));

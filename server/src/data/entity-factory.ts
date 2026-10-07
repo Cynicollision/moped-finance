@@ -8,6 +8,7 @@ import {
     Institution,
     Transaction
 } from '@shared/finance/types';
+import { BalanceEntrySource } from '@shared/finance/enum';
 import { AccountTypeUtil } from '@shared/finance/util';
 import { DateTimeUtil } from '@server/utility';
 import { EntityId } from './entity-id';
@@ -50,8 +51,14 @@ export class FinanceEntityFactory {
         });
     }
 
-    public static createBalanceHistory(history: NewEntity<BalanceHistory>): BalanceHistory {
-        return FinanceEntityFactory.createEntity<BalanceHistory>(FinanceEntityIdPrefix.BalanceHistory, history);
+    /** A set entry unless told otherwise (ACCT-5.1). */
+    public static createBalanceHistory(
+        history: Omit<NewEntity<BalanceHistory>, 'source'> & Partial<Pick<BalanceHistory, 'source'>>
+    ): BalanceHistory {
+        return FinanceEntityFactory.createEntity<BalanceHistory>(FinanceEntityIdPrefix.BalanceHistory, {
+            source: BalanceEntrySource.Set,
+            ...history
+        });
     }
 
     public static createTransaction(transaction: NewEntity<Transaction>): Transaction {

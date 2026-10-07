@@ -37,7 +37,10 @@ describe('FinanceAddAccountComponent', () => {
                 { provide: ModalService, useValue: modalService },
                 { provide: NotificationService, useValue: notificationService },
                 { provide: AuthService, useValue: { currentUser: signal(null) } },
-                { provide: DateProviderService, useValue: { today: () => '2026-05-17' } }
+                {
+                    provide: DateProviderService,
+                    useValue: { today: () => '2026-05-17', now: () => new Date(2026, 4, 17) }
+                }
             ]
         });
 
@@ -58,12 +61,27 @@ describe('FinanceAddAccountComponent', () => {
         );
     }
 
-    it('ACCT-1.3 should go straight to the form, with no Connect option, Manual Account checkbox or Balance field', async () => {
+    it('ACCT-1.3 should go straight to the form, with no Connect option or Manual Account checkbox', async () => {
         const { element } = await render([institution('inst-1', 'First Bank')]);
 
         expect(element.querySelector('app-account-form')).not.toBeNull();
         expect(element.textContent).not.toMatch(/connect|coming soon/i);
-        expect(labels(element)).toEqual(['Account Name', 'Institution', 'Type', 'Hide Account', 'Hide from Spending']);
+        expect(labels(element)).toEqual([
+            'Account Name',
+            'Institution',
+            'Type',
+            'Starting Balance',
+            'Hide Account',
+            'Hide from Spending'
+        ]);
+    });
+
+    it('ACCT-1.4 should start with a blank Starting Balance', async () => {
+        const { fixture } = await render([institution('inst-1', 'First Bank')]);
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+
+        expect(form.accountForm.controls.balance.value).toBeNull();
     });
 
     it('ACCT-1.3 should list institutions by name and start at the one it was opened from', async () => {
@@ -78,7 +96,7 @@ describe('FinanceAddAccountComponent', () => {
         expect(form.accountForm.controls.institutionId.value).toBe('inst-2');
     });
 
-    it('ACCT-1.3 should save a manual account, say so, and open its details', async () => {
+    it('ACCT-1.3 ACCT-1.4 should save the account with no balance when Starting Balance is blank, say so, and open its details', async () => {
         const { fixture, element, financeService, notificationService } = await render(
             [institution('inst-1', 'First Bank')],
             'inst-1'
@@ -97,12 +115,43 @@ describe('FinanceAddAccountComponent', () => {
             name: 'Joint Checking',
             type: AccountType.Checking,
             isHidden: false,
-            isManual: true,
             hideFromSpending: false
         });
         expect(notificationService.success).toHaveBeenCalledWith('Account added');
         expect(navigate).toHaveBeenCalledWith(['/accounts', 'new-account']);
         expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('ACCT-2.2 should save a starting balance as of today', async () => {
+        const { fixture, element, financeService } = await render([institution('inst-1', 'First Bank')], 'inst-1');
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+
+        form.accountForm.patchValue({ name: 'Checking', balance: 1250.5 });
+        await fixture.whenStable();
+        element.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+
+        expect(financeService.createAccount).toHaveBeenCalledWith(
+            expect.objectContaining({ balanceEntry: { date: '2026-05-17', balance: 1250.5 } })
+        );
+    });
+
+    it("APP-6.3 should ask for a liability's Amount owed and save it negative", async () => {
+        const { fixture, element, financeService } = await render([institution('inst-1', 'First Bank')], 'inst-1');
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+
+        form.accountForm.patchValue({ name: 'Visa', type: AccountType.CreditCard, balance: 300 });
+        await fixture.whenStable();
+
+        expect(labels(element)).toContain('Amount owed');
+        expect(labels(element)).not.toContain('Starting Balance');
+        element.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+        expect(financeService.createAccount).toHaveBeenCalledWith(
+            expect.objectContaining({ balanceEntry: { date: '2026-05-17', balance: -300 } })
+        );
     });
 
     it('APP-2.7 should have unsaved changes once the form is edited', async () => {

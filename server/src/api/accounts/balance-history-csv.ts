@@ -1,3 +1,4 @@
+import { BalanceEntrySource } from '@shared/finance/enum';
 import { BalanceHistory } from '@shared/finance/types';
 import { CsvColumn, CsvFile, CsvValue } from '@server/csv';
 import { FinanceEntityFactory } from '@server/data';
@@ -24,8 +25,8 @@ export class BalanceHistoryCsv {
 
     /**
      * Reads an import file for one account. A file-level problem fails the read; otherwise each valid
-     * row becomes a record, each invalid row gets one message listing its problems, and startDate and
-     * endDate span the valid rows (YYYY-MM-DD).
+     * row becomes a set entry (ACCT-3.5), each invalid row gets one message listing its problems, and startDate and
+     * endDate span every row with a valid date, bad rows included (ACCT-3.3).
      */
     public static read(file: Buffer | undefined, accountId: string): BalanceHistoryCsvReadResult {
         const csv = CsvFile.read(file, requiredHeaders);
@@ -50,9 +51,14 @@ export class BalanceHistoryCsv {
                 }
             }
 
-            // One balance per account per date (ACCT-3.9); the database enforces it too.
-            if (date.success && seenDates.has(date.value)) {
-                errors.push(`Duplicate date ${date.value}`);
+            if (date.success) {
+                // One balance per account per date (ACCT-3.9); the database enforces it too.
+                if (seenDates.has(date.value)) {
+                    errors.push(`Duplicate date ${date.value}`);
+                }
+                seenDates.add(date.value);
+                startDate = !startDate || date.value < startDate ? date.value : startDate;
+                endDate = !endDate || date.value > endDate ? date.value : endDate;
             }
 
             if (errors.length > 0 || !date.success || !balance.success) {
@@ -60,15 +66,12 @@ export class BalanceHistoryCsv {
                 continue;
             }
 
-            seenDates.add(date.value);
-            startDate = !startDate || date.value < startDate ? date.value : startDate;
-            endDate = !endDate || date.value > endDate ? date.value : endDate;
-
             records.push(
                 FinanceEntityFactory.createBalanceHistory({
                     accountId,
                     date: date.value,
-                    balance: balance.value
+                    balance: balance.value,
+                    source: BalanceEntrySource.Set
                 })
             );
         }
