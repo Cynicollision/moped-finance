@@ -22,47 +22,58 @@
         }
     </div>
 
-    @if (accounts.value()) {
-        @for (section of summary().sections; track section.title) {
-            <h2 class="section-title">{{ section.title }}</h2>
-            <mat-card appearance="outlined" class="accounts-card">
-                <mat-card-content class="accounts-list-content">
-                    @for (group of section.groups; track group.group) {
-                        <div class="account-group">
-                            <div class="group-header stacked">
-                                <div class="group-header-row">
-                                    <span class="header-label">{{ group.group }}</span>
-                                    <span class="header-total">{{
-                                        (group.isLiability ? Math.abs(group.total) : group.total) | currency
-                                    }}</span>
+    <div class="account-sections">
+        @if (accounts.value()) {
+            @for (section of summary().sections; track section.title) {
+                <section class="account-section">
+                    <h2 class="section-title">{{ section.title }}</h2>
+                    <mat-card appearance="outlined" class="accounts-card">
+                        <mat-card-content class="accounts-list-content">
+                            @for (group of section.groups; track group.group) {
+                                <div class="account-group">
+                                    <div class="group-header stacked">
+                                        <div class="group-header-row">
+                                            <span class="header-label">{{ group.group }}</span>
+                                            <span class="header-total">{{
+                                                (group.isLiability ? Math.abs(group.total) : group.total) | currency
+                                            }}</span>
+                                        </div>
+                                        @if (groupPeriodChanges().get(group.group); as change) {
+                                            <app-value-period-change
+                                                [change]="change"
+                                                [label]="selectedTimeframeLabel()"
+                                            >
+                                            </app-value-period-change>
+                                        }
+                                    </div>
+                                    @for (account of group.accounts; track account.id) {
+                                        <div class="row-item indented">
+                                            <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
+                                            <span>{{
+                                                (group.isLiability ? Math.abs(account.balance ?? 0) : account.balance)
+                                                    | currency
+                                            }}</span>
+                                        </div>
+                                        @if (!$last) {
+                                            <mat-divider></mat-divider>
+                                        }
+                                    }
                                 </div>
-                                @if (groupPeriodChanges().get(group.group); as change) {
-                                    <app-value-period-change [change]="change" [label]="selectedTimeframeLabel()">
-                                    </app-value-period-change>
-                                }
-                            </div>
-                            @for (account of group.accounts; track account.id) {
-                                <div class="row-item indented">
-                                    <a [routerLink]="['/accounts', account.id]">{{ account.name }}</a>
-                                    <span>{{
-                                        (group.isLiability ? Math.abs(account.balance ?? 0) : account.balance)
-                                            | currency
-                                    }}</span>
-                                </div>
-                                @if (!$last) {
-                                    <mat-divider></mat-divider>
-                                }
                             }
-                        </div>
-                    }
-                    <div class="section-total">
-                        <span>Total {{ section.title }}</span>
-                        <span>{{ (section.isLiability ? Math.abs(section.total) : section.total) | currency }}</span>
-                    </div>
-                </mat-card-content>
-            </mat-card>
+                            <div class="section-total">
+                                <span>Total {{ section.title }}</span>
+                                <span>{{
+                                    (section.isLiability ? Math.abs(section.total) : section.total) | currency
+                                }}</span>
+                            </div>
+                        </mat-card-content>
+                    </mat-card>
+                </section>
+            }
+        } @else {
+            <section class="account-section">
+                <app-card-skeleton class="accounts-card" [rows]="5"></app-card-skeleton>
+            </section>
         }
-    } @else {
-        <app-card-skeleton class="accounts-card" [rows]="5"></app-card-skeleton>
-    }
+    </div>
 }

@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 .summary-container {
     display: flex;
     flex-wrap: wrap;
@@ -6,6 +8,23 @@
 
 .full-width-card {
     flex: 1 1 100%;
+    min-width: 0;
+}
+
+// Assets and Liabilities (DASH-2.1): stacked, or side by side once there's room. A lone section takes the full width.
+.account-sections {
+    display: flex;
+    flex-direction: column;
+
+    @include bp.content-from(bp.$expanded) {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+
+.account-section {
+    flex: 1 1 0;
     min-width: 0;
 }
 
