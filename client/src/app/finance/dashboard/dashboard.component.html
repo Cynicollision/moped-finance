@@ -22,13 +22,12 @@
         }
     </div>
 
-    <h2 class="section-title">Accounts</h2>
-
-    <div class="summary-container">
-        @if (accounts.value()) {
-            <mat-card appearance="outlined" class="full-width-card">
+    @if (accounts.value()) {
+        @for (section of summary().sections; track section.title) {
+            <h2 class="section-title">{{ section.title }}</h2>
+            <mat-card appearance="outlined" class="accounts-card">
                 <mat-card-content class="accounts-list-content">
-                    @for (group of summary().groups; track group.group) {
+                    @for (group of section.groups; track group.group) {
                         <div class="account-group">
                             <div class="group-header stacked">
                                 <div class="group-header-row">
@@ -56,50 +55,14 @@
                             }
                         </div>
                     }
+                    <div class="section-total">
+                        <span>Total {{ section.title }}</span>
+                        <span>{{ (section.isLiability ? Math.abs(section.total) : section.total) | currency }}</span>
+                    </div>
                 </mat-card-content>
             </mat-card>
-
-            <!-- Assets Card -->
-            <mat-card appearance="outlined" class="summary-card">
-                <div class="group-header">
-                    <span class="header-label">TOTAL ASSETS</span>
-                    <span class="header-total">{{ summary().totalAssets | currency }}</span>
-                </div>
-                <mat-card-content>
-                    @for (group of summary().assetGroups; track group.group) {
-                        <div class="row-item">
-                            <span>{{ group.group }}</span>
-                            <span>{{ group.total | currency }}</span>
-                        </div>
-                        @if (!$last) {
-                            <mat-divider></mat-divider>
-                        }
-                    }
-                </mat-card-content>
-            </mat-card>
-
-            <!-- Liabilities Card -->
-            <mat-card appearance="outlined" class="summary-card">
-                <div class="group-header">
-                    <span class="header-label">TOTAL LIABILITIES</span>
-                    <span class="header-total">{{ Math.abs(summary().totalLiabilities) | currency }}</span>
-                </div>
-                <mat-card-content>
-                    @for (group of summary().liabilityGroups; track group.group) {
-                        <div class="row-item">
-                            <span>{{ group.group }}</span>
-                            <span>{{ Math.abs(group.total) | currency }}</span>
-                        </div>
-                        @if (!$last) {
-                            <mat-divider></mat-divider>
-                        }
-                    }
-                </mat-card-content>
-            </mat-card>
-        } @else {
-            <app-card-skeleton class="full-width-card" [rows]="5"></app-card-skeleton>
-            <app-card-skeleton class="summary-card" [rows]="3"></app-card-skeleton>
-            <app-card-skeleton class="summary-card" [rows]="2"></app-card-skeleton>
         }
-    </div>
+    } @else {
+        <app-card-skeleton class="accounts-card" [rows]="5"></app-card-skeleton>
+    }
 }

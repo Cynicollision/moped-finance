@@ -153,7 +153,7 @@ describe('DashboardComponent', () => {
         ]);
     });
 
-    it('DASH-2.5 should total assets and liabilities, broken down by the groups that have accounts', async () => {
+    it('DASH-2.1 DASH-2.5 should split the groups into Assets and Liabilities, each ending with its total', async () => {
         const element = await render([
             account('Checking', AccountType.Checking, 1000),
             account('Roth IRA', AccountType.RothIRA, 5000),
@@ -161,12 +161,25 @@ describe('DashboardComponent', () => {
             account('Visa', AccountType.CreditCard, -300)
         ]);
 
-        const cards = Array.from(element.querySelectorAll('.summary-card')).map(card =>
-            Array.from(card.querySelectorAll('.group-header span, .row-item span')).map(e => e.textContent!.trim())
-        );
-        expect(cards).toEqual([
-            ['TOTAL ASSETS', '$14,000.00', 'Cash', '$1,000.00', 'Retirement', '$5,000.00', 'Other Assets', '$8,000.00'],
-            ['TOTAL LIABILITIES', '$300.00', 'Credit Cards', '$300.00']
+        const sections = Array.from(element.querySelectorAll('.accounts-card')).map(card => ({
+            groups: Array.from(card.querySelectorAll('.header-label')).map(e => e.textContent!.trim()),
+            total: Array.from(card.querySelectorAll('.section-total span')).map(e => e.textContent!.trim())
+        }));
+        expect(Array.from(element.querySelectorAll('.section-title')).map(e => e.textContent!.trim())).toEqual([
+            'Assets',
+            'Liabilities'
+        ]);
+        expect(sections).toEqual([
+            { groups: ['Cash', 'Retirement', 'Other Assets'], total: ['Total Assets', '$14,000.00'] },
+            { groups: ['Credit Cards'], total: ['Total Liabilities', '$300.00'] }
+        ]);
+    });
+
+    it('DASH-2.1 should leave out a section with no accounts', async () => {
+        const element = await render([account('Checking', AccountType.Checking, 10)]);
+
+        expect(Array.from(element.querySelectorAll('.section-title')).map(e => e.textContent!.trim())).toEqual([
+            'Assets'
         ]);
     });
 });

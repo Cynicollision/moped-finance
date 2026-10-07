@@ -25,6 +25,14 @@ interface AccountGroupSummary {
     isLiability: boolean;
 }
 
+/** The Assets or Liabilities list: its groups, and its total at the bottom (DASH-2.1, DASH-2.5). */
+interface AccountSection {
+    title: string;
+    groups: AccountGroupSummary[];
+    total: number;
+    isLiability: boolean;
+}
+
 @Component({
     selector: 'app-dashboard',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -175,7 +183,8 @@ export class DashboardComponent {
         }
     });
 
-    // The groups in ACCT-1.2's order, leaving out those with no accounts (DASH-2.1), and the cards' totals (DASH-2.5).
+    // The groups in ACCT-1.2's order, leaving out those with no accounts (DASH-2.1), split into the Assets and
+    // Liabilities sections with their totals (DASH-2.5). A section with no groups isn't shown.
     readonly summary = computed(() => {
         const groups: AccountGroupSummary[] = AccountTypeUtil.groups.map(info => ({
             group: info.group,
@@ -192,19 +201,23 @@ export class DashboardComponent {
         }
 
         const shown = groups.filter(g => g.accounts.length > 0);
-        const assetGroups = shown.filter(g => !g.isLiability);
-        const liabilityGroups = shown.filter(g => g.isLiability);
-        const sum = (list: AccountGroupSummary[]) => list.reduce((total, g) => total + g.total, 0);
-        const totalAssets = sum(assetGroups);
-        const totalLiabilities = sum(liabilityGroups);
+        const section = (title: string, isLiability: boolean): AccountSection => {
+            const sectionGroups = shown.filter(g => g.isLiability === isLiability);
+            return {
+                title,
+                groups: sectionGroups,
+                total: sectionGroups.reduce((total, g) => total + g.total, 0),
+                isLiability
+            };
+        };
+        const assets = section('Assets', false);
+        const liabilities = section('Liabilities', true);
 
         return {
-            netWorth: totalAssets - Math.abs(totalLiabilities),
-            totalAssets,
-            totalLiabilities,
-            groups: shown,
-            assetGroups,
-            liabilityGroups
+            netWorth: assets.total - Math.abs(liabilities.total),
+            totalAssets: assets.total,
+            totalLiabilities: liabilities.total,
+            sections: [assets, liabilities].filter(s => s.groups.length > 0)
         };
     });
 }

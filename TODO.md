@@ -20,7 +20,7 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 ## Next
 
 ### 4. Balances carried forward
-- [ ] ACCT-2.1, 2.11; DASH-1.4, 1.7; ACCT-2.6 ("Balance as of" replaces "Last updated"): current balance ignores future entries; account and Dashboard series have a value for every day, carrying entries forward; headline, chart and card totals agree. DASH-1.8: Dashboard empty state.
+- [ ] ACCT-2.1, 2.11; DASH-1.4, 1.7; ACCT-2.6 ("Balance as of" replaces "Last updated"): current balance ignores future entries; account and Dashboard series have a value for every day, carrying entries forward; headline, chart and section totals agree. DASH-1.8: Dashboard empty state.
 
 ### 5. Manual balances
 - [ ] ACCT-5.1: set/adjusted source on balance entries (migration; existing entries are set). ACCT-1.4, 2.2: Starting Balance on Add Account and **Update Balance** on Account Details (ACCT-2.8). ACCT-2.13: Balance History section with edit and delete. ACCT-3.5: imports write set entries. APP-6.3 for balances: liabilities take **Amount owed** as a positive number. ACCT-2.10's empty Recent Transactions table. Known gap: ACCT-3.3's dry-run date range covers only valid rows.
