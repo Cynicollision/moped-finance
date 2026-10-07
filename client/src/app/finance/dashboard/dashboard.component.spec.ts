@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { DailyBalance } from '@shared/finance/contracts';
-import { AccountType } from '@shared/finance/enum';
+import { AccountGroupChange } from '@shared/finance/contracts';
+import { AccountGroup, AccountType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
 import { FinanceService } from './../finance.service';
@@ -23,12 +23,11 @@ describe('DashboardComponent', () => {
     }
 
     // Renders the summary once its accounts have loaded, the way the screen first appears.
-    // `days` holds each account's daily balances by account ID, oldest first, as the server sends them.
-    async function render(accounts: Account[], days: Record<string, DailyBalance[]> = {}): Promise<HTMLElement> {
+    async function render(accounts: Account[], groupChanges: AccountGroupChange[] = []): Promise<HTMLElement> {
         const financeService = {
             fetchAllAccounts: vi.fn().mockResolvedValue(accounts),
             fetchTotalValueHistory: vi.fn().mockResolvedValue([]),
-            fetchAccountBalanceHistory: vi.fn((id: string) => Promise.resolve(days[id] ?? []))
+            fetchAccountGroupChanges: vi.fn().mockResolvedValue(groupChanges)
         };
         TestBed.configureTestingModule({
             imports: [DashboardComponent],
@@ -84,7 +83,7 @@ describe('DashboardComponent', () => {
         const financeService = {
             fetchAllAccounts: vi.fn().mockReturnValue(new Promise(() => undefined)),
             fetchTotalValueHistory: vi.fn().mockReturnValue(new Promise(() => undefined)),
-            fetchAccountBalanceHistory: vi.fn().mockResolvedValue([])
+            fetchAccountGroupChanges: vi.fn().mockResolvedValue([])
         };
         TestBed.configureTestingModule({
             imports: [DashboardComponent],
@@ -107,7 +106,7 @@ describe('DashboardComponent', () => {
                 .mockRejectedValueOnce(new Error('offline'))
                 .mockResolvedValue([account('Checking', AccountType.Checking, 1200)]),
             fetchTotalValueHistory: vi.fn().mockResolvedValue([]),
-            fetchAccountBalanceHistory: vi.fn().mockResolvedValue([])
+            fetchAccountGroupChanges: vi.fn().mockResolvedValue([])
         };
         TestBed.configureTestingModule({
             imports: [DashboardComponent],
@@ -189,23 +188,25 @@ describe('DashboardComponent', () => {
         expect(element.querySelector('app-value-history')).toBeNull();
     });
 
-    it("DASH-2.2 should measure a group's change from its first day to its last, as the chart does", async () => {
-        // Savings starts after Checking, so it adds nothing to the group's first day.
+    it("DASH-2.2 should show each group's change from the server's first and last totals", async () => {
         const element = await render(
-            [account('Checking', AccountType.Checking, 150), account('Savings', AccountType.Savings, 50)],
-            {
-                Checking: [
-                    { date: '2026-05-01', balance: 100 },
-                    { date: '2026-05-17', balance: 150 }
-                ],
-                Savings: [
-                    { date: '2026-05-10', balance: 40 },
-                    { date: '2026-05-17', balance: 50 }
-                ]
-            }
+            [account('Checking', AccountType.Checking, 200), account('Visa', AccountType.CreditCard, -100)],
+            [
+                { group: AccountGroup.Cash, startDate: '2026-05-01', startAmount: 100, endAmount: 200 },
+                { group: AccountGroup.CreditCards, startDate: '2026-04-17', startAmount: -200, endAmount: -100 }
+            ]
         );
 
-        expect(element.querySelector('.account-group .change-amount')!.textContent!.trim()).toBe('$100.00 (100.0%)');
+        const changes = Array.from(element.querySelectorAll<HTMLElement>('.account-group .change-indicator'));
+        expect(changes.map(c => c.querySelector('.change-amount')!.textContent!.trim())).toEqual([
+            '$100.00 (100.0%)',
+            '$100.00 (50.0%)'
+        ]);
+        // Cash rising is good; the card's debt shrinking is a down arrow, and good too.
+        expect(changes.map(c => [c.querySelector('mat-icon')!.textContent, c.classList.contains('good')])).toEqual([
+            ['arrow_upward', true],
+            ['arrow_downward', true]
+        ]);
     });
 
     it('DASH-2.1 should leave out a section with no accounts', async () => {

@@ -56,6 +56,22 @@ export function createAccountRouter(
         });
     });
 
+    // GET /group-changes - Each account group's change over the timeframe (DASH-2.2)
+    const groupChangesQuerySchema = z.object({
+        timeframe: z.enum(HistoryTimeframe).optional().default(HistoryTimeframe.PastThirtyDays),
+        asOfDate: QueryField.date().optional()
+    });
+
+    router.get('/group-changes', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'getGroupChanges' };
+        handler.execute(req, res, op, { query: groupChangesQuerySchema }, (context, { query }) => {
+            return controller.getGroupChanges(context, {
+                timeframe: query.timeframe,
+                asOfDate: query.asOfDate ?? DateTimeUtil.today()
+            });
+        });
+    });
+
     // GET /:id - Get Account
     router.get('/:id', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getAccount' };

@@ -84,6 +84,15 @@ describe('FinanceService', () => {
         await single;
     });
 
+    it("DASH-2.2 APP-4.1 should ask for group changes over the timeframe up to the app's today", async () => {
+        const { finance, http } = setup();
+
+        const changes = finance.fetchAccountGroupChanges(HistoryTimeframe.YearToDate);
+        http.expectOne('/api/v1/accounts/group-changes?asOfDate=2026-05-17&timeframe=YearToDate').flush([]);
+
+        expect(await changes).toEqual([]);
+    });
+
     it("APP-4.1 should ask for value history as of the app's today", async () => {
         const { finance, http } = setup();
 

@@ -123,7 +123,10 @@ export class FinanceValueHistoryComponent {
                         data: ascendingData.map(d => d.amount),
                         borderColor: colors.positive,
                         backgroundColor: ChartThemeService.withAlpha(colors.positive, 0.15),
-                        fill: true
+                        fill: true,
+                        // A balance holds until its next entry, then steps (ACCT-2.11): draw the steps rather than a
+                        // smoothed curve, which would show values that never existed.
+                        stepped: true
                     }
                 ]
             },
