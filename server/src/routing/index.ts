@@ -7,7 +7,7 @@ export {
     RequestInput,
     RequestSchemas
 } from './operation';
-export { idParamsSchema, QueryField } from './request-schemas';
+export { asOfDateQuerySchema, idParamsSchema, QueryField } from './request-schemas';
 export { Result } from './result-factory';
 export { buildSecurityHeaders } from './security-headers';
 export { singleFileUpload } from './upload';

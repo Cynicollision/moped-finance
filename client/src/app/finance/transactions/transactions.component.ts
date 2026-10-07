@@ -36,7 +36,6 @@ import { LayoutService } from './../../core/layout/layout.service';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { ListColumn, ListModule, ListSort } from './../../core/list/list.component';
 import { describeRequestError } from './../../core/api.service';
-import { DateProviderService } from './../../core/date-provider.service';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { SkeletonComponent } from './../../core/loading/skeleton.component';
 import { viewResource } from './../../core/loading/view-resource';
@@ -78,7 +77,6 @@ import { FinanceService } from './../finance.service';
 export class FinanceTransactionsComponent {
     private financeService = inject(FinanceService);
     private route = inject(ActivatedRoute);
-    private dateProvider = inject(DateProviderService);
     private notificationService = inject(NotificationService);
     private bottomSheet = inject(MatBottomSheet);
     readonly isCompact = inject(LayoutService).isCompact;
@@ -111,7 +109,7 @@ export class FinanceTransactionsComponent {
         minAmount: new FormControl<number | null>(null),
         maxAmount: new FormControl<number | null>(null),
         startDate: new FormControl<Date | null>(null),
-        endDate: new FormControl<Date | null>(this.dateProvider.now()),
+        endDate: new FormControl<Date | null>(null),
         merchant: new FormControl<string>(''),
         category: new FormControl<string>(''),
         account: new FormControl<string>(''),
@@ -215,15 +213,16 @@ export class FinanceTransactionsComponent {
         this.applySearch();
     }
 
-    /** How many filters the list is narrowed by, beyond the default End Date of today (TXN-1.5). */
+    /** How many filters the list is narrowed by (TXN-1.5). */
     readonly activeFilterCount = computed(() => {
         const search = this.search();
         if (!search) {
             return 0;
         }
-        const set = [search.minAmount, search.maxAmount, search.startDate].filter(v => v !== undefined).length;
-        const endDateChanged = search.endDate !== this.dateProvider.today() ? 1 : 0;
-        return set + endDateChanged + (search.filters?.length ?? 0);
+        const set = [search.minAmount, search.maxAmount, search.startDate, search.endDate].filter(
+            v => v !== undefined
+        ).length;
+        return set + (search.filters?.length ?? 0);
     });
 
     onSortChange(sort: ListSort) {
@@ -322,7 +321,7 @@ export class FinanceTransactionsComponent {
             minAmount: null,
             maxAmount: null,
             startDate: null,
-            endDate: this.dateProvider.now(),
+            endDate: null,
             merchant: '',
             category: '',
             account: '',

@@ -123,6 +123,36 @@ describe('Account Routes', () => {
             expect(response.body.map((a: any) => a.id)).toEqual(expect.arrayContaining([acc1.id, acc2.id]));
         });
 
+        it('ACCT-2.1 should give each account its latest balance on or before asOfDate, or 0 if it has none', async () => {
+            const account = await insertAccount();
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
+            ]);
+
+            const balanceOn = async (asOfDate: string) =>
+                (await request(app).get(`/accounts?asOfDate=${asOfDate}`)).body[0].balance;
+
+            expect(await balanceOn('2026-04-30')).toBe(0);
+            expect(await balanceOn('2026-05-19')).toBe(100);
+            expect(await balanceOn('2026-05-20')).toBe(200);
+        });
+
+        it('ACCT-2.1 should leave out entries after today when no asOfDate is sent', async () => {
+            DateTimeUtil.setClock(new Date('2026-05-17T12:00:00Z'));
+            const account = await insertAccount();
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
+            ]);
+
+            const list = await request(app).get('/accounts');
+            const single = await request(app).get(`/accounts/${account.id}`);
+
+            expect(list.body[0].balance).toBe(100);
+            expect(single.body.balance).toBe(100);
+        });
+
         it('DASH-2.1 should sort accounts by name, ignoring case', async () => {
             for (const name of ['savings', 'Checking', 'brokerage']) {
                 await insertAccount(name);
@@ -243,6 +273,18 @@ describe('Account Routes', () => {
 
             expect(response.status).toBe(404);
             expect(response.body.message).toContain('not found');
+        });
+
+        it('ACCT-2.1 should give the balance as of asOfDate', async () => {
+            const account = await insertAccount();
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
+            ]);
+
+            const response = await request(app).get(`/accounts/${account.id}?asOfDate=2026-05-17`);
+
+            expect(response.body.balance).toBe(100);
         });
     });
 
@@ -775,6 +817,19 @@ describe('Account Routes', () => {
                 "Row 3: Balance '10000000000' is too large."
             ]);
             expect(response.body.isValidToImport).toBe(false);
+        });
+
+        it('APP-8.1 should reject a date after today, allowing a day for time zones', async () => {
+            DateTimeUtil.setClock(new Date('2026-05-17T12:00:00Z'));
+            const account = await insertAccount();
+
+            const response = await importBalances(
+                account.id,
+                'Date,Balance\n2026-05-18,1\n2026-05-19,2',
+                '?dryRun=true'
+            );
+
+            expect(response.body.failedRowMessages).toEqual(['Row 3: Date 2026-05-19 is after today.']);
         });
 
         it("ACCT-3.5 should replace existing balances in the file's date range and keep the rest", async () => {

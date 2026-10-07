@@ -80,6 +80,19 @@ describe('TransactionFormComponent', () => {
         expect(saved.map(t => t.date)).toEqual(['2026-05-17', '2026-04-30']);
     });
 
+    it('APP-8.1 should flag a date after today and keep the form from saving', async () => {
+        const { fixture, element } = await render('create', null);
+        const form = fixture.componentInstance.transactionForm;
+        form.patchValue({ accountId: 'acct', amount: -5 });
+
+        form.controls.date.setValue(new Date(2026, 4, 18));
+        form.controls.date.markAsTouched();
+        fixture.detectChanges();
+
+        expect(form.invalid).toBe(true);
+        expect(element.querySelector('mat-error')!.textContent).toContain("Date can't be after today");
+    });
+
     describe('category choices', () => {
         const categories = [
             { id: 'food', groupId: 'g', name: 'Groceries', icon: '🛒', isActive: true },

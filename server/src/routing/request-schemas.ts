@@ -18,3 +18,8 @@ export class QueryField {
         return SchemaUtil.date();
     }
 }
+
+/** Query string for reads that work something out as of a date (an account's balance, ACCT-2.1); default today. */
+export const asOfDateQuerySchema = z.object({
+    asOfDate: QueryField.date().optional()
+});

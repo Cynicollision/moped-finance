@@ -76,6 +76,12 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 | APP-7.1 | Lists of records (Transactions, Account Details' recent transactions, Budget, Spending) shall show columns under headings when the page area is at least 840px wide. Narrower, each row shall show its main text and its amount on the first line, with details in smaller text on a second line, and leave out the rest. A list shall never scroll sideways. | Implemented |
 | APP-7.2 | A sortable list shall sort by its column headings when wide, with an arrow on the current one, and by a sort menu above the list when narrow. Choosing a new column sorts it in its natural direction; choosing the current one reverses it. | Implemented |
 
+## APP-8 Balances and transactions record what has happened
+
+| ID | Requirement | Status |
+|---|---|---|
+| APP-8.1 | A balance entry or transaction shall not be dated after today. The forms' date pickers stop at today (TXN-2.1, ACCT-2.2), and the server refuses a later date from a form ("date: Can't be after today") or an import row ("Row 3: Date 2026-05-19 is after today.", TXN-3.10, ACCT-3.10). The server allows one day past its own today (APP-5.6), so a user in a time zone ahead of the server's can still record their today. | Implemented |
+
 ## Known gaps
 
 - **Forms take signed amounts (APP-6.3).** Money out and liability balances must be typed as negative numbers.
@@ -83,4 +89,5 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 
 ## Notes
 
-- **Debug date and the server.** In development builds the client uses 2026-05-17 as today, while the server uses the real date for anything it computes on its own (for example a spending request with no as-of date). That's fine while the client always sends an as-of date.
+- **Debug date and the server.** In development builds the client uses 2026-05-17 as today, while the server uses the real date for anything it computes on its own (for example a spending request with no as-of date). That's fine while the client always sends an as-of date, as it does for accounts' balances, value history and spending. The server's date limit (APP-8.1) uses its real date, so in development a date between 2026-05-17 and the real today can still be imported or sent to the API, though the date pickers stop at 2026-05-17.
+- **No future dates (APP-8.1).** Decided 2026-10-07. The app records what has happened, and planning ahead is what Budget is for (BUD). Bank exports and sync never carry future dates, and allowing them would mean a future-dated balance entry could become the current balance, and the Transactions list would need a default End Date to hide them.

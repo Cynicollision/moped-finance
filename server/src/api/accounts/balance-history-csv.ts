@@ -42,7 +42,7 @@ export class BalanceHistoryCsv {
         for (const row of csv.rows) {
             const errors: string[] = row.error ? [row.error] : [];
 
-            const date = CsvValue.date('Date', row.values['Date']);
+            const date = CsvValue.recordDate('Date', row.values['Date']);
             const balance = CsvValue.amount('Balance', row.values['Balance']);
             for (const value of [date, balance]) {
                 if (!value.success) {

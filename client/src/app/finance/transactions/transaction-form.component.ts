@@ -71,6 +71,8 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     private financeService = inject(FinanceService);
     private dateProvider = inject(DateProviderService);
     readonly Uncategorized = Uncategorized;
+    /** Transactions record what has happened, so the date stops at today (APP-8.1). */
+    readonly latestDate = this.dateProvider.now();
 
     readonly transactionForm = new FormGroup({
         accountId: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),

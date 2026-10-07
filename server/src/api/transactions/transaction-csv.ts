@@ -83,7 +83,7 @@ export class TransactionCsv {
                 errors.push(`Merchant is longer than ${maxMerchantLength} characters.`);
             }
 
-            const date = CsvValue.date('Date', values['Date']);
+            const date = CsvValue.recordDate('Date', values['Date']);
             const amount = CsvValue.amount('Amount', values['Amount']);
             const isHidden = CsvValue.boolean('IsHidden', values['IsHidden']);
             for (const value of [date, amount, isHidden]) {
