@@ -19,9 +19,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 7. Hidden transactions
-- [ ] TXN-1.8, 1.13, 2.11: **Show hidden transactions** filter (dimmed, crossed-out eye), so hidden transactions can be found and un-hidden; check Account Details' recent transactions leaves them out.
-
 ### 8. Hidden and closed accounts
 - [ ] ACCT-1.9, DASH-2.9, TXN-1.12, TXN-2.1: hidden accounts left out of the Dashboard, Transactions list and filters, and the transaction form's account select (open, unhidden, sorted by name). ACCT-6.1 to 6.3, ACCT-2.8, DASH-2.10: Close Account (set entry of 0) and Reopen Account. ACCT-1.12, INST-1.1: Institutions marks hidden and closed accounts. Probably one PR for hiding, one for closing.
 - [ ] Review **Hide from Spending** (ACCT-1.7, CASH-1.2) before building the above: decide what it's for next to Hide Account and Close Account, then keep, reword or retire it (and its checkbox on the account form).

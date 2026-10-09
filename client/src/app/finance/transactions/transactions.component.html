@@ -60,10 +60,18 @@
     } @else {
         <app-list [columns]="columns" [sort]="sort()" (sortChange)="onSortChange($event)">
             @for (t of transactions(); track t.id) {
-                <a appListRow [routerLink]="['/transactions', t.id]">
+                <!-- Hidden transactions, listed only when asked for, are dimmed and marked (TXN-1.13). -->
+                <a appListRow [routerLink]="['/transactions', t.id]" [class.hidden-transaction]="t.isHidden">
                     <span appListCell="date">{{ t.date | date: 'mediumDate' }}</span>
                     <span appListCell="account">{{ getAccountName(t.accountId) }}</span>
-                    <span appListCell="merchant">{{ t.merchant }}</span>
+                    <span appListCell="merchant">
+                        @if (t.isHidden) {
+                            <mat-icon class="hidden-icon" inline aria-hidden="false" aria-label="Hidden"
+                                >visibility_off</mat-icon
+                            >
+                        }
+                        {{ t.merchant }}
+                    </span>
                     <span appListCell="category">{{ getCategoryName(t.categoryId) }}</span>
                     <app-money appListCell="amount" [amount]="t.amount" tone="transaction"></app-money>
                 </a>
@@ -166,6 +174,7 @@
                 </mat-autocomplete>
             </mat-form-field>
         </div>
+        <mat-checkbox formControlName="showHidden" class="show-hidden">Show hidden transactions</mat-checkbox>
         <div class="filter-actions">
             <button mat-button type="button" (click)="clearFilters()">Clear Filters</button>
             <button mat-flat-button type="submit">Apply Filters</button>

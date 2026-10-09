@@ -159,6 +159,17 @@ describe('TransactionFormComponent', () => {
         expect(saved).toEqual([]);
     });
 
+    it('TXN-2.11 should un-hide a hidden transaction by clearing Hide Transaction', async () => {
+        const { fixture, element, saved } = await render('edit', { ...transaction, isHidden: true });
+        const checkbox = element.querySelector<HTMLInputElement>('mat-checkbox input')!;
+
+        expect(checkbox.checked).toBe(true);
+        checkbox.click();
+        fixture.componentInstance.onSave();
+
+        expect(saved[0].isHidden).toBe(false);
+    });
+
     describe('category choices', () => {
         const categories = [
             { id: 'food', groupId: 'g', name: 'Groceries', icon: '🛒', isActive: true },

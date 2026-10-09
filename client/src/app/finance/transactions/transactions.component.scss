@@ -47,6 +47,20 @@ app-page-header {
     justify-content: flex-end;
 }
 
+.show-hidden {
+    margin-left: -8px; // Lines the box up with the fields above, past the checkbox's touch target.
+}
+
+.hidden-transaction {
+    opacity: 0.55;
+}
+
+.hidden-icon {
+    margin-right: 4px;
+    vertical-align: -2px;
+    color: var(--text-muted);
+}
+
 mat-expansion-panel {
     background-color: var(--bg-card) !important;
     border: 1px solid var(--border-color);

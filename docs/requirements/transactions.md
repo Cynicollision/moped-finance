@@ -16,11 +16,11 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-1.10 | The **Start Date** and **End Date** filters shall start out empty, and **Clear Filters** empties them. Transactions can't be dated after today (APP-8.1), so there's nothing for a default End Date to hide. | Implemented |
 | TXN-1.6 | The merchant filter shall match any merchant *containing* the text, ignoring case, and suggest merchants the user has used before. The category and group filters shall suggest matching names as the user types. | Implemented |
 | TXN-1.7 | The screen shall accept pre-set filters from the link that opened it: account, category, group, start date and end date. Account Details' **Go To Transactions** and every row of Spending (CASH-1.6) use this. | Implemented |
-| TXN-1.8 | Transactions marked **hidden** shall be left out of everything by default: the list and search (unless shown with TXN-1.13), Account Details' recent transactions, Spending (CASH-1.2), and balance adjustments (TXN-2.10). Exports still include them, with `IsHidden` (TXN-3.1). | Partial |
+| TXN-1.8 | Transactions marked **hidden** shall be left out of everything by default: the list and search (unless shown with TXN-1.13), Account Details' recent transactions, Spending (CASH-1.2), and balance adjustments (TXN-2.10). Exports still include them, with `IsHidden` (TXN-3.1). | Implemented |
 | TXN-1.9 | On narrow screens (APP-7.1) the date and category shall appear under the merchant, and the account shall be left out. | Implemented |
 | TXN-1.11 | Every transaction shall appear in the list and search, including Uncategorized ones (CAT-5), which show "Uncategorized". The **Category** filter shall offer Uncategorized like any other category, and Spending's uncategorized rows open the list filtered to it (CASH-1.6). | Implemented |
 | TXN-1.12 | Transactions in hidden accounts (ACCT-1.9) shall be left out of the list and search, and hidden accounts left out of the **Account** filter, unless the screen was opened filtered to that account (from its Account Details' **Go To Transactions**). Transactions in closed accounts (ACCT-6) are listed as usual. | Planned |
-| TXN-1.13 | The **Filters** panel shall have a **Show hidden transactions** checkbox, unchecked by default and reset by **Clear Filters**. When checked, hidden transactions are listed with the rest, dimmed, with a crossed-out eye icon. It's the only way to reach them in the app. | Planned |
+| TXN-1.13 | The **Filters** panel shall have a **Show hidden transactions** checkbox, unchecked by default and reset by **Clear Filters**, and counted among the applied filters (TXN-1.5) when checked. When checked, hidden transactions are listed with the rest, dimmed, with a crossed-out eye icon. It's the only way to reach them in the app. | Implemented |
 | TXN-1.14 | **Min Amount** and **Max Amount** shall compare the amount's size, ignoring its sign, and a **Direction** filter (**Any**, the default, **Money out**, **Money in**) shall narrow by sign, so "Min Amount 100, Money out" finds purchases of $100 or more. The server refuses a negative Min or Max Amount (APP-5.7). | Implemented |
 
 ## TXN-2 The user can record and correct transactions by hand
@@ -37,7 +37,7 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-2.8 | For a manual account (ACCT-4.3), Add and Edit Transaction shall show an **Adjust balance** checkbox, checked by default on Add. Saving with it checked changes the account's balance history as in ACCT-5.2 and ACCT-5.3. The checkbox isn't shown for a connected account. | Planned |
 | TXN-2.9 | View Transaction shall show **Adjusts balance** ("Yes" or "No") for a transaction in a manual account. | Planned |
 | TXN-2.10 | A hidden transaction shall not adjust its account's balance. Hiding a transaction that adjusts the balance undoes its effect, and un-hiding it applies it again (ACCT-5.3). | Planned |
-| TXN-2.11 | The user can un-hide a transaction by opening it (from the list with TXN-1.13) and clearing **Hide Transaction** in Edit Transaction. | Planned |
+| TXN-2.11 | The user can un-hide a transaction by opening it (from the list with TXN-1.13) and clearing **Hide Transaction** in Edit Transaction. | Implemented |
 | TXN-2.12 | For a transaction added by bank sync, **Date**, **Amount**, **Account** and **Original Statement** shall be read-only, in the form and the API; **Merchant**, **Category**, **Notes** and **Hide Transaction** stay editable, and it can be split (TXN-4.8). It can't be deleted, only hidden, since sync won't add it again (INST-2.12). | Planned |
 | TXN-2.13 | The form's **Amount** shall be entered as a positive number (required, more than 0; blank on Add) below a **Money out** / **Money in** switch, which defaults to Money out and sets the stored sign (APP-6.3). Edit Transaction shows the stored amount's size, with the switch set by its sign. The switch only sets the sign: how Spending counts the transaction comes from its category (CASH-1.3), so a refund is Money in under an Expense category. | Implemented |
 
@@ -76,6 +76,5 @@ A split divides one transaction into **parts**, each with its own amount and cat
 ## Known gaps
 
 - **Every account is offered in the form (TXN-2.1),** in creation order, hidden ones included.
-- **Hidden transactions can't be seen again (TXN-1.13).** The API supports including them, but the UI has no toggle, so a transaction marked hidden is invisible in the app, though still exported (TXN-1.8).
 - **Splits don't exist (TXN-4).** The `is_split` and `split_parent_id` columns are there, and import writes `false` and blank to them, but nothing reads them.
 - **No duplicate detection on import.** Importing the same file twice creates every transaction twice.

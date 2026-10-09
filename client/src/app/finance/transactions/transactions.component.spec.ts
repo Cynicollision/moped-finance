@@ -192,6 +192,38 @@ describe('FinanceTransactionsComponent', () => {
         expect(component.activeFilterCount()).toBe(0);
     });
 
+    it('TXN-1.8 TXN-1.13 should leave out hidden transactions until Show hidden transactions is checked', async () => {
+        const { fixture, element, lastSearch } = await render({}, [transaction('a', '2026-05-01')]);
+        const component = fixture.componentInstance;
+        const checkbox = element.querySelector<HTMLInputElement>('.show-hidden input')!;
+
+        expect(checkbox.checked).toBe(false);
+        expect(lastSearch().includeHidden).toBeUndefined();
+
+        checkbox.click();
+        component.applyFilters();
+        await fixture.whenStable();
+
+        expect(lastSearch().includeHidden).toBe(true);
+        expect(component.activeFilterCount()).toBe(1);
+
+        component.clearFilters();
+        await fixture.whenStable();
+
+        expect(checkbox.checked).toBe(false);
+        expect(lastSearch().includeHidden).toBeUndefined();
+    });
+
+    it('TXN-1.13 should dim hidden transactions and mark them with a crossed-out eye', async () => {
+        const hidden = { ...transaction('h', '2026-05-02'), isHidden: true };
+        const { element } = await render({}, [hidden, transaction('a', '2026-05-01')]);
+        const rows = Array.from(element.querySelectorAll('a.app-list-row'));
+
+        expect(rows.map(r => r.classList.contains('hidden-transaction'))).toEqual([true, false]);
+        expect(rows[0].querySelector('mat-icon[aria-label="Hidden"]')!.textContent!.trim()).toBe('visibility_off');
+        expect(rows[1].querySelector('mat-icon')).toBeNull();
+    });
+
     it('TXN-1.3 should load 25 at a time and append the next 25 with Load More', async () => {
         const page = Array.from({ length: 25 }, (_, i) => transaction('t' + i, '2026-05-01'));
         const { fixture, element, lastSearch } = await render({}, page, [transaction('t25', '2026-04-01')]);
