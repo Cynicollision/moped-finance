@@ -955,6 +955,18 @@ describe('Account Routes', () => {
             expect(response.body[0].merchant).toBe('Store');
         });
 
+        it('ACCT-2.7 TXN-1.8 should leave out hidden transactions', async () => {
+            const acc1 = await insertAccount();
+            await insertTransaction(acc1.id, DateTimeUtil.today(), 'Shown');
+            const hidden = await insertTransaction(acc1.id, DateTimeUtil.today(), 'Hidden');
+            await transactionsData.update({ ...hidden, isHidden: true });
+
+            const response = await request(app).get(`/accounts/${acc1.id}/transactions`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.map((t: { merchant: string }) => t.merchant)).toEqual(['Shown']);
+        });
+
         it('ACCT-2.7 should return the most recent transactions first, up to the limit', async () => {
             const acc1 = await insertAccount();
             for (const date of ['2026-06-01', '2026-06-03', '2026-06-02']) {

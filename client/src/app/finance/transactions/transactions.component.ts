@@ -15,6 +15,7 @@ import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -53,6 +54,7 @@ import { FinanceService } from './../finance.service';
         ReactiveFormsModule,
         MatBadgeModule,
         MatButtonModule,
+        MatCheckboxModule,
         MatIconModule,
         MatExpansionModule,
         MatFormFieldModule,
@@ -116,7 +118,9 @@ export class FinanceTransactionsComponent {
         merchant: new FormControl<string>(''),
         category: new FormControl<string>(''),
         account: new FormControl<string>(''),
-        group: new FormControl<string>('')
+        group: new FormControl<string>(''),
+        // Hidden transactions are left out unless asked for (TXN-1.8, TXN-1.13).
+        showHidden: new FormControl<boolean>(false, { nonNullable: true })
     });
 
     // The filters' choices, and the names shown in the list.
@@ -225,7 +229,7 @@ export class FinanceTransactionsComponent {
         const set = [search.minAmount, search.maxAmount, search.direction, search.startDate, search.endDate].filter(
             v => v !== undefined
         ).length;
-        return set + (search.filters?.length ?? 0);
+        return set + (search.filters?.length ?? 0) + (search.includeHidden ? 1 : 0);
     });
 
     onSortChange(sort: ListSort) {
@@ -271,6 +275,7 @@ export class FinanceTransactionsComponent {
             startDate: formValues.startDate ? CalendarDateUtil.fromDate(formValues.startDate) : undefined,
             endDate: formValues.endDate ? CalendarDateUtil.fromDate(formValues.endDate) : undefined,
             filters: filters.length > 0 ? filters : undefined,
+            includeHidden: formValues.showHidden || undefined,
             sortKey: this.sortKeys[sort.key],
             sortDirection: sort.direction === 'asc' ? SortDirection.Asc : SortDirection.Desc
         });
@@ -330,7 +335,8 @@ export class FinanceTransactionsComponent {
             merchant: '',
             category: '',
             account: '',
-            group: ''
+            group: '',
+            showHidden: false
         });
         this.applyFilters();
     }
