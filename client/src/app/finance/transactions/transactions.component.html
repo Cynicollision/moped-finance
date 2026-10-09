@@ -92,11 +92,19 @@
         <div class="filter-row">
             <mat-form-field appearance="outline">
                 <mat-label>Min Amount</mat-label>
-                <input matInput type="number" formControlName="minAmount" />
+                <input matInput type="number" min="0" formControlName="minAmount" />
             </mat-form-field>
             <mat-form-field appearance="outline">
                 <mat-label>Max Amount</mat-label>
-                <input matInput type="number" formControlName="maxAmount" />
+                <input matInput type="number" min="0" formControlName="maxAmount" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+                <mat-label>Direction</mat-label>
+                <mat-select formControlName="direction">
+                    <mat-option value="">Any</mat-option>
+                    <mat-option [value]="Direction.Out">Money out</mat-option>
+                    <mat-option [value]="Direction.In">Money in</mat-option>
+                </mat-select>
             </mat-form-field>
         </div>
         <div class="filter-row">

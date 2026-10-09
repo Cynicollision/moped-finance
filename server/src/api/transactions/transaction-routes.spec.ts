@@ -202,6 +202,45 @@ describe('Transaction Routes', () => {
             expect(response.body.length).toBe(1);
             expect(response.body[0].id).toBe(txn.id);
         });
+
+        it('TXN-1.14 should compare the amount filters with the size of the amount, ignoring its sign', async () => {
+            const purchase = await insertTransaction({ amount: -150 });
+            const deposit = await insertTransaction({ amount: 120 });
+            await insertTransaction({ amount: -20 });
+            await insertTransaction({ amount: 900 });
+
+            const response = await request(app).get('/transactions').query({
+                minAmount: '100',
+                maxAmount: '200',
+                sortKey: TransactionsSortKey.Amount,
+                sortDirection: SortDirection.Asc
+            });
+
+            expect(response.status).toBe(200);
+            expect(response.body.map((t: Transaction) => t.id)).toEqual([purchase.id, deposit.id]);
+        });
+
+        it('TXN-1.14 should narrow by direction, so "Min Amount 100, Money out" finds purchases of $100 or more', async () => {
+            const purchase = await insertTransaction({ amount: -150 });
+            const deposit = await insertTransaction({ amount: 150 });
+            await insertTransaction({ amount: -50 });
+
+            const out = await request(app).get('/transactions').query({ minAmount: '100', direction: 'out' });
+            const moneyIn = await request(app).get('/transactions').query({ direction: 'in' });
+
+            expect(out.body.map((t: Transaction) => t.id)).toEqual([purchase.id]);
+            expect(moneyIn.body.map((t: Transaction) => t.id)).toEqual([deposit.id]);
+        });
+
+        it('APP-5.7 TXN-1.14 should refuse a negative amount filter or an unknown direction', async () => {
+            const negative = await request(app).get('/transactions').query({ minAmount: '-100' });
+            const direction = await request(app).get('/transactions').query({ direction: 'sideways' });
+
+            expect(negative.status).toBe(400);
+            expect(negative.body.message).toContain('minAmount');
+            expect(direction.status).toBe(400);
+            expect(direction.body.message).toContain('direction');
+        });
     });
 
     describe('POST /', () => {

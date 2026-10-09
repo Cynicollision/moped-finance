@@ -5,7 +5,7 @@
         @if (mode() === 'readonly') {
             <div class="readonly-field amount">
                 <div class="label">Amount</div>
-                <app-money class="value" [amount]="transactionForm.value.amount ?? 0" tone="transaction"></app-money>
+                <app-money class="value" [amount]="transaction()?.amount ?? 0" tone="transaction"></app-money>
             </div>
 
             <div class="readonly-field">
@@ -49,9 +49,26 @@
                 <div class="value">{{ transactionForm.value.isHidden ? 'Yes' : 'No' }}</div>
             </div>
         } @else {
+            <!-- A positive amount, with its sign from the switch (TXN-2.13). -->
+            <mat-button-toggle-group
+                class="direction-toggle"
+                formControlName="direction"
+                aria-label="Money out or money in"
+                hideSingleSelectionIndicator
+            >
+                <mat-button-toggle [value]="Direction.Out">Money out</mat-button-toggle>
+                <mat-button-toggle [value]="Direction.In">Money in</mat-button-toggle>
+            </mat-button-toggle-group>
+
             <mat-form-field appearance="outline" class="amount-field">
                 <mat-label>Amount</mat-label>
-                <input type="number" matInput formControlName="amount" />
+                <span matTextPrefix>$&nbsp;</span>
+                <input type="number" matInput formControlName="amount" min="0" step="0.01" />
+                @if (transactionForm.controls.amount.hasError('required')) {
+                    <mat-error>Amount is required</mat-error>
+                } @else if (transactionForm.controls.amount.hasError('min')) {
+                    <mat-error>Amount must be more than 0</mat-error>
+                }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -61,11 +78,17 @@
                         <mat-option [value]="acc.id">{{ acc.name }}</mat-option>
                     }
                 </mat-select>
+                @if (transactionForm.controls.accountId.hasError('required')) {
+                    <mat-error>Account is required</mat-error>
+                }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
                 <mat-label>Merchant</mat-label>
-                <input type="text" matInput formControlName="merchant" />
+                <input type="text" matInput formControlName="merchant" maxlength="255" />
+                @if (transactionForm.controls.merchant.hasError('required')) {
+                    <mat-error>Merchant is required</mat-error>
+                }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -96,7 +119,11 @@
                 <input matInput [matDatepicker]="datePicker" [max]="latestDate" formControlName="date" />
                 <mat-datepicker-toggle matIconSuffix [for]="datePicker"></mat-datepicker-toggle>
                 <mat-datepicker #datePicker></mat-datepicker>
-                @if (transactionForm.controls.date.hasError('matDatepickerMax')) {
+                @if (transactionForm.controls.date.hasError('matDatepickerParse')) {
+                    <mat-error>Enter a valid date</mat-error>
+                } @else if (transactionForm.controls.date.hasError('required')) {
+                    <mat-error>Date is required</mat-error>
+                } @else if (transactionForm.controls.date.hasError('matDatepickerMax')) {
                     <mat-error>Date can't be after today</mat-error>
                 }
             </mat-form-field>

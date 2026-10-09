@@ -29,7 +29,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { SortDirection } from '@shared/core/enum';
 import { CalendarDateUtil } from '@shared/core/util';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
-import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { LayoutService } from './../../core/layout/layout.service';
@@ -81,6 +81,7 @@ export class FinanceTransactionsComponent {
     private bottomSheet = inject(MatBottomSheet);
     readonly isCompact = inject(LayoutService).isCompact;
     readonly Uncategorized = Uncategorized;
+    readonly Direction = TransactionDirection;
 
     private readonly pageSize = 25;
 
@@ -106,8 +107,10 @@ export class FinanceTransactionsComponent {
     private filtersSheetRef?: MatBottomSheetRef;
 
     readonly filterForm = new FormGroup({
+        // Sizes, ignoring the sign; direction narrows by sign (TXN-1.14). '' is Any.
         minAmount: new FormControl<number | null>(null),
         maxAmount: new FormControl<number | null>(null),
+        direction: new FormControl<TransactionDirection | ''>(''),
         startDate: new FormControl<Date | null>(null),
         endDate: new FormControl<Date | null>(null),
         merchant: new FormControl<string>(''),
@@ -219,7 +222,7 @@ export class FinanceTransactionsComponent {
         if (!search) {
             return 0;
         }
-        const set = [search.minAmount, search.maxAmount, search.startDate, search.endDate].filter(
+        const set = [search.minAmount, search.maxAmount, search.direction, search.startDate, search.endDate].filter(
             v => v !== undefined
         ).length;
         return set + (search.filters?.length ?? 0);
@@ -264,6 +267,7 @@ export class FinanceTransactionsComponent {
         this.search.set({
             minAmount: formValues.minAmount ?? undefined,
             maxAmount: formValues.maxAmount ?? undefined,
+            direction: formValues.direction || undefined,
             startDate: formValues.startDate ? CalendarDateUtil.fromDate(formValues.startDate) : undefined,
             endDate: formValues.endDate ? CalendarDateUtil.fromDate(formValues.endDate) : undefined,
             filters: filters.length > 0 ? filters : undefined,
@@ -320,6 +324,7 @@ export class FinanceTransactionsComponent {
         this.filterForm.reset({
             minAmount: null,
             maxAmount: null,
+            direction: '',
             startDate: null,
             endDate: null,
             merchant: '',
