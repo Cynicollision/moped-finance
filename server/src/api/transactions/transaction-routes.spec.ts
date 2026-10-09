@@ -209,14 +209,12 @@ describe('Transaction Routes', () => {
             await insertTransaction({ amount: -20 });
             await insertTransaction({ amount: 900 });
 
-            const response = await request(app)
-                .get('/transactions')
-                .query({
-                    minAmount: '100',
-                    maxAmount: '200',
-                    sortKey: TransactionsSortKey.Amount,
-                    sortDirection: SortDirection.Asc
-                });
+            const response = await request(app).get('/transactions').query({
+                minAmount: '100',
+                maxAmount: '200',
+                sortKey: TransactionsSortKey.Amount,
+                sortDirection: SortDirection.Asc
+            });
 
             expect(response.status).toBe(200);
             expect(response.body.map((t: Transaction) => t.id)).toEqual([purchase.id, deposit.id]);
