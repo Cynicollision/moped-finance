@@ -19,10 +19,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { CalendarDateUtil } from '@shared/core/util';
+import { TransactionDirection } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { DateProviderService } from './../../core/date-provider.service';
@@ -48,6 +50,7 @@ export type TransactionFormMode = 'create' | 'edit' | 'readonly';
         MatDatepickerModule,
         MatNativeDateModule,
         MatAutocompleteModule,
+        MatButtonToggleModule,
         MatCheckboxModule,
         MatProgressSpinnerModule,
         MatSelectModule,
@@ -71,13 +74,19 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     private financeService = inject(FinanceService);
     private dateProvider = inject(DateProviderService);
     readonly Uncategorized = Uncategorized;
+    readonly Direction = TransactionDirection;
     /** Transactions record what has happened, so the date stops at today (APP-8.1). */
     readonly latestDate = this.dateProvider.now();
 
     readonly transactionForm = new FormGroup({
         accountId: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-        amount: new FormControl<number>(0, { nonNullable: true, validators: [Validators.required] }),
-        merchant: new FormControl<string>('', { nonNullable: true }),
+        // The amount's size, with its sign from the direction (TXN-2.13, APP-6.3).
+        direction: new FormControl<TransactionDirection>(TransactionDirection.Out, { nonNullable: true }),
+        amount: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0.01)] }),
+        merchant: new FormControl<string>('', {
+            nonNullable: true,
+            validators: [Validators.required, Validators.maxLength(255)]
+        }),
         originalStatement: new FormControl<string>('', { nonNullable: true }),
         category: new FormControl<string>('', { nonNullable: true }),
         date: new FormControl<Date>(this.dateProvider.now(), { nonNullable: true, validators: [Validators.required] }),
@@ -119,7 +128,8 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         if (transaction) {
             this.transactionForm.patchValue({
                 accountId: transaction.accountId,
-                amount: transaction.amount,
+                direction: transaction.amount > 0 ? TransactionDirection.In : TransactionDirection.Out,
+                amount: Math.abs(transaction.amount),
                 merchant: transaction.merchant || '',
                 originalStatement: transaction.originalStatement || '',
                 category: transaction.categoryId || '',
@@ -131,7 +141,8 @@ export class TransactionFormComponent implements OnInit, OnChanges {
             this.transactionForm.reset({
                 accountId: this.defaultAccountId() || '',
                 date: this.dateProvider.now(),
-                amount: 0,
+                direction: TransactionDirection.Out,
+                amount: null,
                 isHidden: false
             });
         }
@@ -168,11 +179,12 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         }
 
         const formValue = this.transactionForm.getRawValue();
+        const size = formValue.amount ?? 0;
 
         const updatedTransaction: Partial<Transaction> = {
             ...this.transaction(),
             accountId: formValue.accountId,
-            amount: formValue.amount,
+            amount: formValue.direction === TransactionDirection.Out ? -size : size,
             merchant: formValue.merchant,
             originalStatement: formValue.originalStatement,
             categoryId: formValue.category,

@@ -19,9 +19,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 6. Transaction form and filters
-- [ ] TXN-2.13, APP-6.3: positive Amount with a Money out / Money in switch. TXN-2.6: required fields, Merchant included, flagged on the form. TXN-1.14: amount filters compare size, plus a Direction filter.
-
 ### 7. Hidden transactions
 - [ ] TXN-1.8, 1.13, 2.11: **Show hidden transactions** filter (dimmed, crossed-out eye), so hidden transactions can be found and un-hidden; check Account Details' recent transactions leaves them out.
 

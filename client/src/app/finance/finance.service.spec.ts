@@ -2,7 +2,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { CalendarPeriod, HistoryTimeframe, SortDirection } from '@shared/core/enum';
-import { TransactionsFilterKey, TransactionsSortKey, ValueHistoryType } from '@shared/finance/enum';
+import {
+    TransactionDirection,
+    TransactionsFilterKey,
+    TransactionsSortKey,
+    ValueHistoryType
+} from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { DateProviderService } from './../core/date-provider.service';
 import { NotificationService } from './../core/notification.service';
@@ -34,8 +39,9 @@ describe('FinanceService', () => {
             sortDirection: SortDirection.Desc,
             offset: 0,
             limit: 50,
-            minAmount: -100,
-            maxAmount: 0,
+            minAmount: 0,
+            maxAmount: 100,
+            direction: TransactionDirection.Out,
             startDate: '2026-05-01',
             endDate: '2026-05-31',
             filters: [{ key: TransactionsFilterKey.AccountId, value: 'a1' }],
@@ -48,8 +54,9 @@ describe('FinanceService', () => {
             sortDirection: 'DESC',
             offset: '0',
             limit: '50',
-            minAmount: '-100',
-            maxAmount: '0',
+            minAmount: '0',
+            maxAmount: '100',
+            direction: 'out',
             startDate: '2026-05-01',
             endDate: '2026-05-31',
             filters: '[{"key":"account_id","value":"a1"}]',

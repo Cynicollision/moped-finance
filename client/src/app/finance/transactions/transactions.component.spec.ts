@@ -4,7 +4,7 @@ import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { SortDirection } from '@shared/core/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
-import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { AuthService } from './../../core/auth.service';
@@ -170,6 +170,26 @@ describe('FinanceTransactionsComponent', () => {
         );
         expect(filtersButton.querySelector('.mat-badge-content')!.textContent).toBe('2');
         await vi.waitFor(() => expect(document.querySelector('mat-bottom-sheet-container')).toBeNull());
+    });
+
+    it('TXN-1.14 should search by amount size and direction, count the direction, and clear it', async () => {
+        const { fixture, element, lastSearch } = await render();
+        const component = fixture.componentInstance;
+
+        component.filterForm.patchValue({ minAmount: 100, direction: TransactionDirection.Out });
+        component.applyFilters();
+        await fixture.whenStable();
+
+        expect(lastSearch()).toEqual(expect.objectContaining({ minAmount: 100, direction: TransactionDirection.Out }));
+        expect(component.activeFilterCount()).toBe(2);
+        expect(element.querySelector('mat-panel-description')!.textContent).toContain('2 active');
+
+        component.clearFilters();
+        await fixture.whenStable();
+
+        expect(component.filterForm.value.direction).toBe('');
+        expect(lastSearch().direction).toBeUndefined();
+        expect(component.activeFilterCount()).toBe(0);
     });
 
     it('TXN-1.3 should load 25 at a time and append the next 25 with Load More', async () => {

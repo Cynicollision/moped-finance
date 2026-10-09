@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
-import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { SchemaUtil } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { idParamsSchema, OperationDefinition, OperationHandler, QueryField, singleFileUpload } from '@server/routing';
 import { IFinanceAccountData } from './../accounts/account-data';
@@ -26,8 +27,10 @@ export const transactionSearchQuerySchema = z.object({
         .optional(),
     offset: z.coerce.number().int().min(0).optional().default(0),
     limit: z.coerce.number().int().min(1).max(500).optional().default(50),
-    minAmount: z.coerce.number().optional(),
-    maxAmount: z.coerce.number().optional(),
+    // Sizes, ignoring the sign; direction narrows by sign (TXN-1.14).
+    minAmount: z.coerce.number().min(0).max(SchemaUtil.maxMoneyAmount).optional(),
+    maxAmount: z.coerce.number().min(0).max(SchemaUtil.maxMoneyAmount).optional(),
+    direction: z.enum(TransactionDirection).optional(),
     startDate: QueryField.date().optional(),
     endDate: QueryField.date().optional(),
     // A JSON array of { key, value }.

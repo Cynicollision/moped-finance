@@ -270,6 +270,9 @@ export class FinanceService {
         if (options.maxAmount !== undefined) {
             params.append('maxAmount', options.maxAmount.toString());
         }
+        if (options.direction) {
+            params.append('direction', options.direction);
+        }
         if (options.startDate) {
             params.append('startDate', options.startDate);
         }

@@ -5,6 +5,7 @@ export { BalanceEntrySource } from './balance-entry-source';
 export { BudgetStreamType } from './budget-stream-type';
 export { CategoryNecessity } from './category-necessity';
 export { CategoryType } from './category-type';
+export { TransactionDirection } from './transaction-direction';
 export { TransactionsSortKey } from './transactions-sort-key';
 export { TransactionsFilterKey } from './transactions-filter-key';
 export { ValueHistoryType } from './value-history-type';

@@ -54,7 +54,7 @@ describe('AddTransactionComponent', () => {
         const { fixture, form, submit, financeService, notificationService, navigate } = await render({}, {
             id: 't1'
         } as Transaction);
-        form.patchValue({ accountId: 'acct', amount: -12.5, merchant: 'Bakery' });
+        form.patchValue({ accountId: 'acct', amount: 12.5, merchant: 'Bakery' });
         form.markAsDirty();
         expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
 
@@ -79,7 +79,7 @@ describe('AddTransactionComponent', () => {
 
     it('APP-2.2 APP-2.7 should stay on the form when the server refuses', async () => {
         const { fixture, form, submit, notificationService, navigate } = await render({}, undefined);
-        form.patchValue({ accountId: 'acct', amount: -12.5, merchant: 'Bakery' });
+        form.patchValue({ accountId: 'acct', amount: 12.5, merchant: 'Bakery' });
         form.markAsDirty();
 
         await submit();
@@ -91,7 +91,7 @@ describe('AddTransactionComponent', () => {
 
     it('TXN-2.1 should not submit without an account', async () => {
         const { form, submit, financeService } = await render({}, undefined);
-        form.patchValue({ amount: -12.5, merchant: 'Bakery' });
+        form.patchValue({ amount: 12.5, merchant: 'Bakery' });
 
         await submit();
 

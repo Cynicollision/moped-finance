@@ -67,7 +67,7 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 |---|---|---|
 | APP-6.1 | Red shall mean unfavourable: a value that's bad for the user, such as debt growing (DASH-1.3), negative savings (CASH-1.4) or spending over budget (CASH-1.10). A negative amount that's expected, such as a purchase, shall not be red. | Implemented |
 | APP-6.2 | Transaction amounts (the Transactions list, View Transaction, Account Details' recent transactions) shall show money in with a "+" before the "$", in green, and money out with no sign, in the ordinary text color. | Implemented |
-| APP-6.3 | Amounts shall be stored signed: money out and liability balances are negative. Forms shall not ask the user for a sign: transaction amounts use a Money out / Money in switch (TXN-2.13), and a liability's balance on Add and Edit Account (ACCT-2.2) is asked for as **Amount owed**, a positive number, and stored negative. Budget amounts are positive, with direction from the category (BUD notes). CSV files keep signed amounts (TXN-3.10, ACCT-3.10). | Partial |
+| APP-6.3 | Amounts shall be stored signed: money out and liability balances are negative. Forms shall not ask the user for a sign: transaction amounts use a Money out / Money in switch (TXN-2.13), and a liability's balance on Add and Edit Account (ACCT-2.2) is asked for as **Amount owed**, a positive number, and stored negative. Budget amounts are positive, with direction from the category (BUD notes). CSV files keep signed amounts (TXN-3.10, ACCT-3.10). | Implemented |
 
 ## APP-7 Lists work at any width
 
@@ -91,7 +91,6 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 
 ## Known gaps
 
-- **Transaction forms take signed amounts (APP-6.3).** Money out must be typed as a negative number (TXN-2.13). Balances already ask for the amount owed.
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.
 
 ## Notes

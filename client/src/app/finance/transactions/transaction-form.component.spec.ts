@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { TransactionDirection } from '@shared/finance/enum';
 import { Category, Transaction } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
@@ -71,7 +72,7 @@ describe('TransactionFormComponent', () => {
     it('TXN-2.1 should default a new transaction to today and save the picked date as YYYY-MM-DD', async () => {
         const { fixture, saved } = await render('create', null);
         const form = fixture.componentInstance.transactionForm;
-        form.patchValue({ accountId: 'acct', amount: -5 });
+        form.patchValue({ accountId: 'acct', amount: 5, merchant: 'Shop' });
 
         fixture.componentInstance.onSave();
         form.controls.date.setValue(new Date(2026, 3, 30));
@@ -83,7 +84,7 @@ describe('TransactionFormComponent', () => {
     it('APP-8.1 should flag a date after today and keep the form from saving', async () => {
         const { fixture, element } = await render('create', null);
         const form = fixture.componentInstance.transactionForm;
-        form.patchValue({ accountId: 'acct', amount: -5 });
+        form.patchValue({ accountId: 'acct', amount: 5, merchant: 'Shop' });
 
         form.controls.date.setValue(new Date(2026, 4, 18));
         form.controls.date.markAsTouched();
@@ -91,6 +92,71 @@ describe('TransactionFormComponent', () => {
 
         expect(form.invalid).toBe(true);
         expect(element.querySelector('mat-error')!.textContent).toContain("Date can't be after today");
+    });
+
+    it('TXN-2.13 should start a new transaction as Money out with a blank amount, and save it negative', async () => {
+        const { fixture, element, saved } = await render('create', null);
+        const form = fixture.componentInstance.transactionForm;
+
+        expect(form.controls.direction.value).toBe(TransactionDirection.Out);
+        expect(element.querySelector<HTMLInputElement>('input[formControlName="amount"]')!.value).toBe('');
+
+        form.patchValue({ accountId: 'acct', amount: 25, merchant: 'Shop' });
+        fixture.componentInstance.onSave();
+        form.controls.direction.setValue(TransactionDirection.In);
+        fixture.componentInstance.onSave();
+
+        expect(saved.map(t => t.amount)).toEqual([-25, 25]);
+    });
+
+    it("TXN-2.13 should edit a transaction's amount as its size and direction", async () => {
+        const { fixture, element, saved } = await render('edit', { ...transaction, amount: 1250 });
+        const form = fixture.componentInstance.transactionForm;
+        const toggles = Array.from(element.querySelectorAll('mat-button-toggle')).map(t => t.textContent!.trim());
+
+        expect(toggles).toEqual(['Money out', 'Money in']);
+        expect(form.controls.direction.value).toBe(TransactionDirection.In);
+        expect(form.controls.amount.value).toBe(1250);
+
+        form.controls.direction.setValue(TransactionDirection.Out);
+        fixture.componentInstance.onSave();
+
+        expect(saved[0].amount).toBe(-1250);
+    });
+
+    it('TXN-2.2 should show the signed amount when viewing a transaction', async () => {
+        const { element } = await render('readonly', transaction);
+
+        expect(readonlyValue(element, 'Amount')).toBe('$10.00');
+    });
+
+    it('TXN-2.13 should refuse an amount of 0 or less', async () => {
+        const { fixture, element } = await render('create', null);
+        const form = fixture.componentInstance.transactionForm;
+        form.patchValue({ accountId: 'acct', amount: 0, merchant: 'Shop' });
+        form.controls.amount.markAsTouched();
+        fixture.detectChanges();
+
+        expect(form.invalid).toBe(true);
+        expect(element.querySelector('mat-error')!.textContent).toContain('Amount must be more than 0');
+    });
+
+    it('TXN-2.6 should mark the required fields and say which are missing, merchant included', async () => {
+        const { fixture, element, saved } = await render('create', null);
+        const form = fixture.componentInstance.transactionForm;
+        form.markAllAsTouched();
+        fixture.detectChanges();
+
+        const required = Array.from(element.querySelectorAll('mat-label'))
+            .filter(label => label.closest('mat-form-field')!.querySelector('.mat-mdc-form-field-required-marker'))
+            .map(label => label.textContent!.trim());
+        const errors = Array.from(element.querySelectorAll('mat-error')).map(e => e.textContent!.trim());
+        fixture.componentInstance.onSave();
+
+        expect(required).toEqual(['Amount', 'Account', 'Merchant', 'Date']);
+        expect(errors).toEqual(['Amount is required', 'Account is required', 'Merchant is required']);
+        expect(element.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true);
+        expect(saved).toEqual([]);
     });
 
     describe('category choices', () => {
@@ -108,7 +174,7 @@ describe('TransactionFormComponent', () => {
 
         it('CAT-5.2 should show an empty category as Uncategorized, and save it that way', async () => {
             const { fixture, saved, element } = await render('create', null, categories);
-            fixture.componentInstance.transactionForm.patchValue({ accountId: 'acct', amount: -5 });
+            fixture.componentInstance.transactionForm.patchValue({ accountId: 'acct', amount: 5, merchant: 'Shop' });
 
             fixture.componentInstance.onSave();
 

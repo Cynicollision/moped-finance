@@ -1,10 +1,10 @@
-import { AnyColumn, eq, and, desc, asc, ilike, isNull, sum, gte, lte, sql, SQL } from 'drizzle-orm';
+import { AnyColumn, eq, and, desc, asc, ilike, isNull, sum, gt, gte, lt, lte, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { Transaction } from '@shared/finance/types';
 import { SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
-import { TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Uncategorized } from '@shared/finance/util';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
@@ -143,12 +143,20 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             conditions.push(eq(accountSchema.id, accountId));
         }
 
+        // The amount filters compare its size, and the direction its sign (TXN-1.14).
+        const amountSize = sql`abs(${transactionSchema.amount})`;
         if (options.minAmount !== undefined) {
-            conditions.push(gte(transactionSchema.amount, String(options.minAmount)));
+            conditions.push(gte(amountSize, String(options.minAmount)));
         }
 
         if (options.maxAmount !== undefined) {
-            conditions.push(lte(transactionSchema.amount, String(options.maxAmount)));
+            conditions.push(lte(amountSize, String(options.maxAmount)));
+        }
+
+        if (options.direction === TransactionDirection.Out) {
+            conditions.push(lt(transactionSchema.amount, '0'));
+        } else if (options.direction === TransactionDirection.In) {
+            conditions.push(gt(transactionSchema.amount, '0'));
         }
 
         if (options.startDate) {
