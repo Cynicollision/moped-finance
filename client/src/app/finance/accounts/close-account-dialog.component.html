@@ -1,0 +1,41 @@
+<app-modal-layout title="Close Account">
+    <form id="close-account-form" [formGroup]="form" (ngSubmit)="close()">
+        <p class="explanation">
+            {{ account.name }}'s balance becomes $0 on the day it closed, and it leaves the Dashboard's lists and the
+            accounts offered for new transactions.
+            @if (!account.isHidden) {
+                Its past still counts in your net worth, and its transactions stay in Transactions and Spending.
+            }
+            You can reopen it later.
+        </p>
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Closed on</mat-label>
+            <input matInput [matDatepicker]="picker" [max]="latestDate" formControlName="closedOn" />
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            @if (form.controls.closedOn.hasError('matDatepickerParse')) {
+                <mat-error>Enter a valid date</mat-error>
+            } @else if (form.controls.closedOn.hasError('required')) {
+                <mat-error>Closed on is required</mat-error>
+            } @else if (form.controls.closedOn.hasError('matDatepickerMax')) {
+                <mat-error>Closed on can't be after today</mat-error>
+            }
+        </mat-form-field>
+        @if (removesLaterEntries()) {
+            <p class="removal-note">
+                Its balance entries after that date, through
+                {{ account.balanceDate | date: 'mediumDate' }}, will be removed.
+            </p>
+        }
+    </form>
+
+    <div modal-actions>
+        <button mat-button type="button" appModalCancel>Cancel</button>
+        <button mat-flat-button type="submit" form="close-account-form" [disabled]="form.invalid || isSaving()">
+            @if (isSaving()) {
+                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+            }
+            Close Account
+        </button>
+    </div>
+</app-modal-layout>

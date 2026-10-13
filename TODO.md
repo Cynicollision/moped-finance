@@ -19,11 +19,8 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 8. Hidden and closed accounts
-- [ ] ACCT-6.1 to 6.3, ACCT-2.8, DASH-2.10: Close Account (set entry of 0, removing later entries) and Reopen Account; no Balance field on Edit Account while closed; Delete Account's confirmation points to closing instead. ACCT-6.2, TXN-2.1: closed accounts left out of the Dashboard lists and the transaction form's accounts. ACCT-1.12, INST-1.1: Institutions marks closed accounts.
-
 ### 9. Transactions adjust balances
-- [ ] ACCT-5.2 to 5.7; TXN-2.8, 2.9, 2.10, 3.11: **Adjust balance** on Add/Edit Transaction and on import, updating adjusted entries up to the next set entry, undone and reapplied on edit, delete and hide, all in one database transaction. ACCT-5.7: recording a set entry (Edit Account, import; later sync and close) shifts the adjusted entries after it, in `writeSetEntry` and `replaceRange` (`balance-history-data.ts`). Then confirm ACCT-3.11 (export and re-import into another account) works end to end.
+- [ ] ACCT-5.2 to 5.7; TXN-2.8, 2.9, 2.10, 3.11: **Adjust balance** on Add/Edit Transaction and on import, updating adjusted entries up to the next set entry, undone and reapplied on edit, delete and hide, all in one database transaction. ACCT-5.7: recording a set entry (Edit Account, import; later sync) shifts the adjusted entries after it, in `writeSetEntry` and `replaceRange` (`balance-history-data.ts`). Then confirm ACCT-3.11 (export and re-import into another account) works end to end.
 
 ### 10. Budget 12-month averages
 - [ ] BUD-1.8, 1.9: server endpoint for each category's monthly average over the past 12 full months (counting what Spending counts), shown in the stream panel and beside each category in Budget's lists.
@@ -92,5 +89,6 @@ Manual entry and import/export come first. Constraints for when this gets picked
 - Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Spending does, and round at the edges. Revisit integer cents only if totals ever drift.
 - Project Claude Code skills (e.g. `new-finance-resource`, `verify`, `schema-change` once migrations exist). Skipped for now; revisit if the same multi-step instructions keep getting repeated.
 - Spending compares an unfinished period with its whole budget (CASH-1.10), so mid-month nearly everything reads as under. A pace marker (how far through the period today is), or a pro-rated budget for the current period, would make it fairer. `spending.component.ts`, `difference`.
+- A balance that drops on one day after weeks unchanged (closing an account, ACCT-6.1, or paying off a card) is drawn as a slide from the previous change, because ACCT-2.11's curve joins only the days the balance changes. Consider holding the line level until the day before each change (`value-history.component.ts`).
 - Warn before reloading or closing the tab with unsaved changes (`beforeunload`). APP-2.7 covers only leaving within the app.
 - A retirement tracker built on the Retirement account group (ACCT-1.2): for example progress toward a target balance, or contributions against the yearly limits. The group already gives retirement savings their own Dashboard total; decide what else is worth tracking before writing requirements. (Replaces the old Retirement flag and the goals feature of the app this one replaces.)

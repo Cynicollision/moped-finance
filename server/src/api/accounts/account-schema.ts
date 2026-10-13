@@ -1,4 +1,4 @@
-import { varchar, timestamp, boolean, check, index } from 'drizzle-orm/pg-core';
+import { varchar, timestamp, boolean, check, date, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { AccountType } from '@shared/finance/enum';
@@ -19,7 +19,9 @@ export const accountSchema = financeSchema.table(
         type: varchar('account_type', { length: 50 }).notNull(),
         isHidden: boolean('is_hidden').notNull().default(false),
         // Manual until linked to a bank connection (ACCT-4.3), which doesn't exist yet, so every account is manual.
-        isManual: boolean('is_manual').notNull().default(true)
+        isManual: boolean('is_manual').notNull().default(true),
+        // The day it was closed (ACCT-6.1), or null while it's open. Set and cleared only by closing and reopening.
+        closedOn: date('closed_on', { mode: 'string' })
     },
     table => [
         check('accounts_account_type_check', SchemaUtil.isOneOf(table.type, Object.values(AccountType))),
@@ -51,5 +53,10 @@ export const createAccountSchema = createInsertSchema(accountSchema, {
 
 export const updateAccountSchema = createAccountSchema.partial();
 
+export const closeAccountSchema = z.object({
+    closedOn: SchemaUtil.recordDate()
+});
+
 export type CreateAccountRequest = z.output<typeof createAccountSchema>;
 export type UpdateAccountRequest = z.output<typeof updateAccountSchema>;
+export type CloseAccountRequest = z.output<typeof closeAccountSchema>;

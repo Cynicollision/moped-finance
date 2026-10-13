@@ -22,6 +22,7 @@ import { categoryLabel } from './../common/category-label';
 import { MoneyComponent } from './../common/money.component';
 import { FinanceValueHistoryComponent } from './../common/value-history.component';
 import { FinanceService } from './../finance.service';
+import { CloseAccountDialogComponent, CloseAccountDialogData } from './close-account-dialog.component';
 
 @Component({
     selector: 'app-finance-accounts',
@@ -159,15 +160,44 @@ export class FinanceAccountDetailsComponent {
         }
     }
 
+    async closeAccount() {
+        const account = this.account();
+        if (!account) {
+            return;
+        }
+
+        const closed = await this.modalService.open<CloseAccountDialogComponent, CloseAccountDialogData, boolean>(
+            CloseAccountDialogComponent,
+            { account }
+        );
+        if (closed) {
+            this.details.reload();
+            this.balances.reload();
+        }
+    }
+
+    async reopenAccount() {
+        const account = this.account();
+        if (account && (await this.financeService.reopenAccount(account.id))) {
+            this.notificationService.success('Account reopened');
+            this.details.reload();
+        }
+    }
+
     async deleteAccount() {
         const account = this.account();
         if (!account) {
             return;
         }
 
+        // Closing keeps the account's past in the totals, so an open, unhidden one is pointed there first.
+        const keepPast =
+            account.closedOn || account.isHidden
+                ? ''
+                : ' To keep its past in your net worth and Spending, close it instead.';
         const confirmed = await this.modalService.confirm({
             title: 'Delete Account',
-            message: `Delete ${account.name}, with its balance history and transactions? This can't be undone.`,
+            message: `Delete ${account.name}, with its balance history and transactions? This can't be undone.${keepPast}`,
             confirmLabel: 'Delete',
             isWarn: true
         });

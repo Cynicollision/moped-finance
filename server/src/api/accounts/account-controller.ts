@@ -16,7 +16,7 @@ import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IFinanceTransactionData } from './../transactions';
 import { IFinanceAccountData } from './account-data';
-import { CreateAccountRequest, UpdateAccountRequest } from './account-schema';
+import { CloseAccountRequest, CreateAccountRequest, UpdateAccountRequest } from './account-schema';
 import { BalanceHistoryCsv } from './balance-history-csv';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 
@@ -73,6 +73,10 @@ export class AccountController {
         if (balanceEntry && !current.isManual) {
             return Result.userError("A connected account's balance comes from its bank.");
         }
+        // A closed account's balance stays 0 until it's reopened (ACCT-6.3).
+        if (balanceEntry && current.closedOn) {
+            return Result.userError('Reopen this account to set its balance.');
+        }
 
         const updated = await this.accountData.update({ ...current, ...fields }, balanceEntry);
         if (!updated) {
@@ -89,6 +93,32 @@ export class AccountController {
         }
 
         return Result.successDeleted();
+    }
+
+    public async closeAccount(
+        context: OperationContext,
+        accountId: string,
+        input: CloseAccountRequest
+    ): Promise<OperationResult<Account>> {
+        const current = await this.accountData.retrieveSingle(accountId);
+        if (!current) {
+            return Result.userErrorNotFound();
+        }
+        if (current.closedOn) {
+            return Result.userError('This account is already closed.');
+        }
+
+        if (!(await this.accountData.close(accountId, input.closedOn))) {
+            return Result.userErrorNotFound();
+        }
+        return Result.successUpdated((await this.accountData.retrieveSingle(accountId))!);
+    }
+
+    public async reopenAccount(context: OperationContext, accountId: string): Promise<OperationResult<Account>> {
+        if (!(await this.accountData.reopen(accountId))) {
+            return Result.userErrorNotFound();
+        }
+        return Result.successUpdated((await this.accountData.retrieveSingle(accountId))!);
     }
 
     public async getAccountTransactions(

@@ -85,6 +85,13 @@
       "when": 1791890555606,
       "tag": "0011_drop_hide_from_spending",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791891668063,
+      "tag": "0012_account_closed_on",
+      "breakpoints": true
     }
   ]
 }

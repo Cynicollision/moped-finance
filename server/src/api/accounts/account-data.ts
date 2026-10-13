@@ -1,4 +1,4 @@
-import { and, asc, eq, desc, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, desc, gt, lte, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { PgColumn } from 'drizzle-orm/pg-core';
 import { CalendarDate } from '@shared/core/types';
@@ -21,6 +21,13 @@ export interface IFinanceAccountData {
     /** Updates the account and, if given, records its balance as a set entry (ACCT-2.2), together or not at all. */
     update(account: Account, balanceEntry?: AccountBalanceEntry): Promise<Account | null>;
     delete(id: string): Promise<boolean>;
+    /**
+     * Closes the account on the date (ACCT-6.1): removes its balance entries after it and, unless the balance then is
+     * already 0, records a set entry of 0 on it, together or not at all. Returns false if there's no such account.
+     */
+    close(id: string, closedOn: CalendarDate): Promise<boolean>;
+    /** Makes the account open again, leaving its balance history as it is (ACCT-6.3). */
+    reopen(id: string): Promise<boolean>;
 }
 
 function mapRowToAccount(
@@ -41,7 +48,8 @@ function mapRowToAccount(
         isHidden: row.isHidden,
         isManual: row.isManual,
         balance: Number(balance),
-        balanceDate
+        balanceDate,
+        closedOn: row.closedOn
     };
 }
 
@@ -165,5 +173,44 @@ export class FinanceAccountData implements IFinanceAccountData {
             .returning({ id: accountSchema.id });
 
         return result.length > 0;
+    }
+
+    public async close(id: string, closedOn: CalendarDate): Promise<boolean> {
+        return this.db.transaction(async tx => {
+            const rows = await tx
+                .update(accountSchema)
+                .set({ closedOn, updatedAt: DateTimeUtil.now() })
+                .where(eq(accountSchema.id, id))
+                .returning({ id: accountSchema.id });
+            if (rows.length === 0) {
+                return false;
+            }
+
+            // The account held nothing after it closed.
+            await tx
+                .delete(balanceHistorySchema)
+                .where(and(eq(balanceHistorySchema.accountId, id), gt(balanceHistorySchema.date, closedOn)));
+
+            const [latest] = await tx
+                .select({ balance: balanceHistorySchema.balance })
+                .from(balanceHistorySchema)
+                .where(and(eq(balanceHistorySchema.accountId, id), lte(balanceHistorySchema.date, closedOn)))
+                .orderBy(desc(balanceHistorySchema.date))
+                .limit(1);
+            if (latest && Number(latest.balance) !== 0) {
+                await writeSetEntry(tx, id, { date: closedOn, balance: 0 });
+            }
+            return true;
+        });
+    }
+
+    public async reopen(id: string): Promise<boolean> {
+        const rows = await this.db
+            .update(accountSchema)
+            .set({ closedOn: null, updatedAt: DateTimeUtil.now() })
+            .where(eq(accountSchema.id, id))
+            .returning({ id: accountSchema.id });
+
+        return rows.length > 0;
     }
 }

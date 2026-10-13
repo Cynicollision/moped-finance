@@ -30,11 +30,7 @@ The same value-history chart component is reused on Account Details (see ACCT-2.
 | DASH-2.7 | Accounts whose group is not one of the five above shall be omitted from the lists and totals. | Retired (every account has a group from ACCT-1.2, ACCT-1.11) |
 | DASH-2.8 | The section totals (DASH-2.5) shall show no change over time, and account rows shall show only name and balance; only groups show a change (DASH-2.2). | Implemented |
 | DASH-2.9 | Hidden accounts (ACCT-1.9) shall be left out of the group lists, the group totals and changes, the section totals, and the chart. | Implemented |
-| DASH-2.10 | Closed accounts (ACCT-6) shall be left out of the group lists. Their balances still count in the group changes, the section totals and the chart for the dates they were open. | Planned |
-
-## Known gaps
-
-- **Closed accounts** don't exist yet (DASH-2.10, ACCT-6).
+| DASH-2.10 | Closed accounts (ACCT-6) shall be left out of the group lists, and a group whose accounts are all closed isn't shown. Their balances still count in the group totals and changes, the section totals and the chart for the dates they were open. | Implemented |
 
 ## Notes
 

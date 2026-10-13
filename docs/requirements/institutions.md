@@ -10,7 +10,7 @@ Screens, all pages of Settings: **Institutions** (`/settings/institutions`, list
 
 | ID | Requirement | Status |
 |---|---|---|
-| INST-1.1 | The Institutions screen shall list every institution as a card, sorted by name ignoring case, showing its name, its account count ("1 account", "3 accounts"), and each of its accounts, sorted by name, with the account's type and a **View** button linking to the account. Hidden and closed accounts are listed and counted, and marked as in ACCT-1.12. | Partial |
+| INST-1.1 | The Institutions screen shall list every institution as a card, sorted by name ignoring case, showing its name, its account count ("1 account", "3 accounts"), and each of its accounts, sorted by name, with the account's type and a **View** button linking to the account. Hidden and closed accounts are listed and counted, and marked as in ACCT-1.12. | Implemented |
 | INST-1.2 | An institution with no accounts shall show "No accounts found for this institution." | Implemented |
 | INST-1.3 | When the user has no institutions, the screen shall show "You haven't added any institutions yet." with an **Add your first institution** button. | Implemented |
 | INST-1.4 | The user can add an institution in the **Add Institution** dialog (INST-1.3, INST-1.10) by giving it a name. The name is required and at most 100 characters, and **Save** stays disabled until one is entered. Saving closes the dialog, says "Institution added" and refreshes the Institutions screen. | Implemented |
@@ -40,10 +40,6 @@ Screens, all pages of Settings: **Institutions** (`/settings/institutions`, list
 | INST-2.12 | After linking, each sync shall add only transactions it hasn't added before, so repeated syncs never duplicate them. | Planned |
 
 INST-2.1 comes from the "Automated bank sync" item in `TODO.md`; the constraints are the ones written there. Everything the user sees or decides about sync is a requirement here (INST-2) or in ACCT-4. How it's built (provider choice, link flow, token storage, how "added before" is recognized for INST-2.12) goes in `docs/integrations/bank-sync.md`, written when the provider is chosen.
-
-## Known gaps
-
-- **Closed accounts aren't marked (INST-1.1),** since accounts can't be closed yet (ACCT-6).
 
 ## Housekeeping
 
