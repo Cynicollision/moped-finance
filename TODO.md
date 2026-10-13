@@ -19,9 +19,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 9. Transactions adjust balances
-- [ ] TXN-3.11: **Adjust balances** on Import Transactions into a manual account, applied in the import's database transaction (`insertBulk` in `transaction-data.ts`; apply each date's total once rather than row by row). ACCT-5.7: a balance-history import shifts the adjusted entries after its last date, in `replaceRange` (`balance-history-data.ts`). Then confirm ACCT-3.11 (export and re-import into another account) works end to end.
-
 ### 10. Budget 12-month averages
 - [ ] BUD-1.8, 1.9: server endpoint for each category's monthly average over the past 12 full months (counting what Spending counts), shown in the stream panel and beside each category in Budget's lists.
 
@@ -69,6 +66,7 @@ Manual entry and import/export come first. Constraints for when this gets picked
 
 ### Known gaps
 - [ ] **Duplicate detection on transaction import** (Transactions Known gaps): importing the same file twice creates everything twice. Decide on a match (date, account, amount, statement) and how the dry run reports it; related to bank sync's de-duplication.
+- [ ] **CSV import trims every value** (`CsvFile` in `csv-file.ts` trims each cell), so an exported value with leading or trailing spaces, such as an Original Statement of "BIG STORE U*** ", comes back without them, though TXN-3.1 says exports re-import unchanged. Either trim text fields when saving them (form and API), so exports never carry the spaces, or keep text cells as written on import. Balances and amounts aren't affected (found checking ACCT-3.11).
 - [ ] **Changing an account between asset and liability types** (Accounts Known gaps): the stored balances keep their sign, so a $500 checking account changed to a credit card reads as $500 in credit. Decide whether Edit Account flips the history's sign or warns first (`account-controller.ts`, `updateAccount`).
 - [ ] **Spending classifies in the browser** (Spending Known gaps): income versus expense (CASH-1.3) is worked out in `spending.component.ts` from loaded categories. Move it to the server, which item 10's averages endpoint may already need.
 

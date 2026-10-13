@@ -1268,6 +1268,40 @@ describe('Account Routes', () => {
     });
 
     describe('POST /:accountId/import-balances', () => {
+        it('ACCT-5.7 should move the adjusted entries after the last imported date by as much as it changed the balance there', async () => {
+            const account = await insertAccount();
+            const adjusted = BalanceEntrySource.Adjusted;
+            await balanceHistoryData.insertBulk(
+                (
+                    [
+                        ['2026-05-01', 100, BalanceEntrySource.Set],
+                        ['2026-05-05', 90, adjusted],
+                        ['2026-05-07', 85, adjusted],
+                        ['2026-05-09', 80, BalanceEntrySource.Set],
+                        ['2026-05-12', 75, adjusted]
+                    ] as const
+                ).map(([date, balance, source]) =>
+                    FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date, balance, source })
+                )
+            );
+
+            // The balance carried to 2026-05-06 was 90; the file says 120, so 2026-05-07 moves up by 30.
+            const response = await importBalances(
+                account.id,
+                'Date,AccountName,Balance\n2026-05-02,Checking,110\n2026-05-06,Checking,120'
+            );
+
+            expect(response.status).toBe(201);
+            expect(await balancesFor(account.id)).toEqual([
+                ['2026-05-01', 100],
+                ['2026-05-02', 110],
+                ['2026-05-06', 120],
+                ['2026-05-07', 115],
+                ['2026-05-09', 80],
+                ['2026-05-12', 75]
+            ]);
+        });
+
         it('ACCT-3.5 should process a CSV file and return import statistics', async () => {
             const acc1 = await accountData.insert(
                 FinanceEntityFactory.createAccount({

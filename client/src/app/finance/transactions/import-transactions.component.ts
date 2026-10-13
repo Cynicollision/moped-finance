@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TransactionImportResult } from '@shared/finance/contracts';
@@ -12,7 +13,7 @@ import { FinanceService } from './../finance.service';
 @Component({
     selector: 'app-import-transactions',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MatCardModule, MatIconModule, CsvImportComponent, PageHeaderComponent],
+    imports: [MatCardModule, MatCheckboxModule, MatIconModule, CsvImportComponent, PageHeaderComponent],
     templateUrl: './import-transactions.component.html',
     styleUrl: './import-transactions.component.scss'
 })
@@ -29,6 +30,12 @@ export class ImportTransactionsComponent {
         loader: id => this.financeService.fetchAccount(id)
     });
     readonly account = computed(() => this.accountData.value() ?? null);
+    /** Offered for an import into an open manual account, and off by default (TXN-3.11). */
+    readonly canAdjustBalances = computed(() => {
+        const account = this.account();
+        return !!account?.isManual && !account.closedOn;
+    });
+    readonly adjustBalances = signal(false);
 
     // Opened from an account's menu, the screen sits below that account; otherwise below Transactions.
     readonly crumbs = computed<Crumb[]>(() => {
@@ -43,7 +50,12 @@ export class ImportTransactionsComponent {
     });
 
     readonly runImport = (form: FormData, dryRun: boolean) =>
-        this.financeService.importTransactions(form, dryRun, this.accountId());
+        this.financeService.importTransactions(
+            form,
+            dryRun,
+            this.accountId(),
+            this.canAdjustBalances() && this.adjustBalances()
+        );
 
     onImported(result: TransactionImportResult) {
         this.notificationService.success(`Successfully created ${result.createdCount} transactions.`);

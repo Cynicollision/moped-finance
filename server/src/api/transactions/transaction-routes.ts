@@ -122,13 +122,20 @@ export function createTransactionRouter(
     // POST /import - Import Transactions
     const importQuerySchema = z.object({
         dryRun: QueryField.boolean().optional().default(false),
-        accountId: z.string().min(1).optional()
+        accountId: z.string().min(1).optional(),
+        adjustBalances: QueryField.boolean().optional().default(false)
     });
 
     router.post('/import', singleFileUpload, (req, res) => {
         const op: OperationDefinition = { domain, operation: 'importTransactions' };
         handler.execute(req, res, op, { query: importQuerySchema }, (context, { query }) => {
-            return controller.importTransactions(context, req.file?.buffer, query.dryRun, query.accountId);
+            return controller.importTransactions(
+                context,
+                req.file?.buffer,
+                query.dryRun,
+                query.accountId,
+                query.adjustBalances
+            );
         });
     });
 

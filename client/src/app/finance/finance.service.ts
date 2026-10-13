@@ -216,11 +216,15 @@ export class FinanceService {
     importTransactions(
         formData: FormData,
         dryRun: boolean,
-        accountId?: string | null
+        accountId?: string | null,
+        adjustBalances = false
     ): Promise<TransactionImportResult | undefined> {
         let url = `${API_BASE_PATH}/transactions/import?dryRun=${dryRun}`;
         if (accountId) {
             url += `&accountId=${accountId}`;
+        }
+        if (adjustBalances) {
+            url += '&adjustBalances=true';
         }
         return this.api.post<TransactionImportResult>(url, formData);
     }

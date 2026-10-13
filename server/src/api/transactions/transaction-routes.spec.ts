@@ -1404,5 +1404,95 @@ describe('Transaction Routes', () => {
                 );
             }
         });
+
+        describe('POST /import with Adjust balances (TXN-3.11)', () => {
+            const rows = [
+                '2026-05-05,Anything,Shop,,-50,,,false',
+                '2026-05-05,Anything,Cafe,,-4.10,,,false',
+                '2026-05-12,Anything,Refund,,30,,,false',
+                '2026-05-12,Anything,Hidden,,-1000,,,true'
+            ].join('\n');
+
+            async function adjustsBalanceFlags(): Promise<boolean[]> {
+                const result = await pglite.query<{ adjusts_balance: boolean }>(
+                    'SELECT adjusts_balance FROM finance.transactions ORDER BY merchant'
+                );
+                return result.rows.map(r => r.adjusts_balance);
+            }
+
+            it('TXN-3.11 ACCT-5.2 should adjust the account it imports into, leaving hidden rows out', async () => {
+                await seedBalances(history);
+
+                const response = await importCsv(rows, `?accountId=${manualAccountId}&adjustBalances=true`);
+
+                expect(response.status).toBe(201);
+                expect(await balances()).toEqual([
+                    ['2026-05-01', 1000, Set],
+                    ['2026-05-05', 945.9, Adjusted],
+                    ['2026-05-10', 845.9, Adjusted],
+                    ['2026-05-12', 875.9, Adjusted],
+                    ['2026-05-20', 500, Set],
+                    ['2026-05-25', 450, Adjusted]
+                ]);
+                expect(await adjustsBalanceFlags()).toEqual([true, true, true, true]);
+            });
+
+            it('TXN-3.11 should leave balances alone by default', async () => {
+                await seedBalances(history);
+
+                const response = await importCsv(rows, `?accountId=${manualAccountId}`);
+
+                expect(response.status).toBe(201);
+                expect(await balances()).toEqual(history);
+                expect(await adjustsBalanceFlags()).toEqual([false, false, false, false]);
+            });
+
+            it('TXN-3.11 should refuse Adjust balances without an account, or for a connected or closed one', async () => {
+                await accountsData.close(manualAccountId, '2026-05-15');
+
+                const cases: [string, string][] = [
+                    ['?adjustBalances=true', 'Import into an account to adjust its balances.'],
+                    [
+                        `?accountId=${testAccountId}&adjustBalances=true`,
+                        "A connected account's balance comes from its bank."
+                    ],
+                    [
+                        `?accountId=${manualAccountId}&adjustBalances=true&dryRun=true`,
+                        'Reopen this account to change its balance.'
+                    ]
+                ];
+                for (const [query, message] of cases) {
+                    const response = await importCsv(rows, query);
+                    expect(response.status).toBe(400);
+                    expect(response.body.message).toBe(message);
+                }
+                expect(await countTransactions()).toBe(0);
+            });
+
+            it('TXN-3.9 ACCT-5.6 should import nothing when the balances fail to save', async () => {
+                await seedBalances(history);
+                await pglite.exec(`
+                    CREATE FUNCTION finance.reject_balance() RETURNS trigger AS $$
+                    BEGIN
+                        IF NEW.balance = 875.9 THEN RAISE EXCEPTION 'boom'; END IF;
+                        RETURN NEW;
+                    END $$ LANGUAGE plpgsql;
+                    CREATE TRIGGER reject_balance BEFORE UPDATE ON finance.balance_history
+                        FOR EACH ROW EXECUTE FUNCTION finance.reject_balance();
+                `);
+
+                try {
+                    const response = await importCsv(rows, `?accountId=${manualAccountId}&adjustBalances=true`);
+
+                    expect(response.status).toBe(500);
+                    expect(await countTransactions()).toBe(0);
+                    expect(await balances()).toEqual(history);
+                } finally {
+                    await pglite.exec(
+                        'DROP TRIGGER reject_balance ON finance.balance_history; DROP FUNCTION finance.reject_balance();'
+                    );
+                }
+            });
+        });
     });
 });

@@ -17,6 +17,21 @@
                         <li>Uncategorized: {{ results.uncategorizedCount }}</li>
                         <li>Rows with errors: {{ results.failedRowMessages.length }}</li>
                     </ul>
+                    @if (canAdjustBalances()) {
+                        <div class="adjust-option">
+                            <mat-checkbox
+                                [checked]="adjustBalances()"
+                                (change)="adjustBalances.set($event.checked)"
+                                aria-describedby="adjust-balances-hint"
+                                >Adjust balances</mat-checkbox
+                            >
+                            <p id="adjust-balances-hint" class="hint">
+                                Each transaction changes the account's balance from its date until the next balance you
+                                entered or imported. Leave this off if you're also importing the account's balance
+                                history.
+                            </p>
+                        </div>
+                    }
                     <!-- Unknown category names import as Uncategorized; listed so a typo can be fixed first (TXN-3.4). -->
                     @if (results.unmatchedCategories.length) {
                         <div class="unmatched-categories">

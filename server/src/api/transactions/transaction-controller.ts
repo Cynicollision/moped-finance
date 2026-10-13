@@ -168,11 +168,25 @@ export class TransactionController {
         context: OperationContext,
         file: Buffer | undefined,
         dryRun: boolean,
-        targetAccountId?: string
+        targetAccountId?: string,
+        adjustBalances = false
     ): Promise<OperationResult<TransactionImportResult>> {
         // Checked up front: a dry run inserts nothing, so the foreign key can't catch a bad account.
-        if (targetAccountId && !(await this.accountData.retrieveSingle(targetAccountId))) {
+        const targetAccount = targetAccountId ? await this.accountData.retrieveSingle(targetAccountId) : null;
+        if (targetAccountId && !targetAccount) {
             return Result.userError('Account not found.');
+        }
+        // Only an import into one manual, open account adjusts balances (TXN-3.11, ACCT-5.5, ACCT-6.3).
+        if (adjustBalances) {
+            if (!targetAccount) {
+                return Result.userError('Import into an account to adjust its balances.');
+            }
+            if (!targetAccount.isManual) {
+                return Result.userError("A connected account's balance comes from its bank.");
+            }
+            if (targetAccount.closedOn) {
+                return Result.userError('Reopen this account to change its balance.');
+            }
         }
 
         const [accounts, categories] = await Promise.all([
@@ -213,7 +227,7 @@ export class TransactionController {
             });
         }
 
-        await this.transactionData.insertBulk(transactions);
+        await this.transactionData.insertBulk(transactions.map(t => ({ ...t, adjustsBalance: adjustBalances })));
         return Result.successCreated({
             ...report,
             createdCount: transactions.length,

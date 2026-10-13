@@ -17,12 +17,16 @@ describe('ImportTransactionsComponent', () => {
         unmatchedCategories: []
     };
 
-    async function render(dryRun: TransactionImportResult, queryParams: Record<string, string> = {}) {
+    async function render(
+        dryRun: TransactionImportResult,
+        queryParams: Record<string, string> = {},
+        account: Partial<Account> = { id: 'a1', name: 'Checking' }
+    ) {
         const financeService = {
             importTransactions: vi.fn((_form: FormData, isDryRun: boolean) =>
                 Promise.resolve(isDryRun ? dryRun : clean)
             ),
-            fetchAccount: vi.fn().mockResolvedValue({ id: 'a1', name: 'Checking' } as Account)
+            fetchAccount: vi.fn().mockResolvedValue(account as Account)
         };
         const notificationService = { success: vi.fn() };
         TestBed.configureTestingModule({
@@ -56,7 +60,7 @@ describe('ImportTransactionsComponent', () => {
             await fixture.whenStable();
             await click('Validate Import');
         };
-        return { element, click, validate, financeService, notificationService, navigate };
+        return { fixture, element, click, validate, financeService, notificationService, navigate };
     }
 
     const crumbs = (element: HTMLElement) =>
@@ -116,7 +120,7 @@ describe('ImportTransactionsComponent', () => {
 
         await click('Begin Import');
 
-        expect(financeService.importTransactions).toHaveBeenLastCalledWith(expect.any(FormData), false, null);
+        expect(financeService.importTransactions).toHaveBeenLastCalledWith(expect.any(FormData), false, null, false);
         expect(notificationService.success).toHaveBeenCalledWith('Successfully created 2 transactions.');
         expect(navigate).toHaveBeenCalledWith(['/transactions']);
     });
@@ -127,7 +131,47 @@ describe('ImportTransactionsComponent', () => {
 
         await click('Begin Import');
 
-        expect(financeService.importTransactions).toHaveBeenCalledWith(expect.any(FormData), true, 'a1');
+        expect(financeService.importTransactions).toHaveBeenCalledWith(expect.any(FormData), true, 'a1', false);
         expect(navigate).toHaveBeenCalledWith(['/accounts', 'a1']);
+    });
+
+    describe('Adjust balances', () => {
+        const checkbox = (element: HTMLElement) => element.querySelector<HTMLInputElement>('.adjust-option input');
+
+        it('TXN-3.11 should offer Adjust balances, unchecked, for an import into a manual account, and send it', async () => {
+            const manual = { id: 'a1', name: 'Cash', isManual: true };
+            const { fixture, element, validate, click, financeService } = await render(
+                clean,
+                { accountId: 'a1' },
+                manual
+            );
+            await validate();
+
+            expect(checkbox(element)!.checked).toBe(false);
+            checkbox(element)!.click();
+            await fixture.whenStable();
+            await click('Begin Import');
+
+            expect(financeService.importTransactions.mock.calls.map(call => call.slice(1))).toEqual([
+                [true, 'a1', false],
+                [false, 'a1', true]
+            ]);
+        });
+
+        it('TXN-3.11 should not offer it without an account, or for a connected or closed one', async () => {
+            const cases: [Record<string, string>, Partial<Account>][] = [
+                [{}, { id: 'a1', name: 'Cash', isManual: true }],
+                [{ accountId: 'a1' }, { id: 'a1', name: 'Synced', isManual: false }],
+                [{ accountId: 'a1' }, { id: 'a1', name: 'Old', isManual: true, closedOn: '2026-05-01' }]
+            ];
+            for (const [queryParams, account] of cases) {
+                TestBed.resetTestingModule();
+                const { element, validate } = await render(clean, queryParams, account);
+                await validate();
+
+                expect(element.querySelector('.dry-run-results')).not.toBeNull();
+                expect(checkbox(element)).toBeNull();
+            }
+        });
     });
 });
