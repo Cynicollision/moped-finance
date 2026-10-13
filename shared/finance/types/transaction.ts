@@ -9,6 +9,8 @@ export type Transaction = Entity & {
     originalStatement: string;
     notes: string;
     isHidden: boolean;
+    /** Whether it changes its account's balance history (ACCT-5.2). A hidden one doesn't, until it's shown (TXN-2.10). */
+    adjustsBalance: boolean;
     isSplit: boolean;
     splitParentId: string;
 };

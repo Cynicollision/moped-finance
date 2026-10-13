@@ -9,6 +9,7 @@ import { Uncategorized } from '@shared/finance/util';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
+import { applyAdjustment, DbTransaction, undoAdjustment } from './../accounts/balance-history-data';
 import { categorySchema } from './../categories/category-schema';
 import { transactionSchema } from './transaction-schema';
 
@@ -50,6 +51,7 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
         originalStatement: row.originalStatement ?? '',
         notes: row.notes ?? '',
         isHidden: row.isHidden,
+        adjustsBalance: row.adjustsBalance,
         isSplit: row.isSplit,
         splitParentId: row.splitParentId ?? ''
     };
@@ -88,9 +90,47 @@ function mapTransactionToRow(transaction: Transaction): typeof transactionSchema
         originalStatement: transaction.originalStatement || null,
         notes: transaction.notes || null,
         isHidden: transaction.isHidden,
+        adjustsBalance: transaction.adjustsBalance,
         isSplit: transaction.isSplit,
         splitParentId: transaction.splitParentId || null
     };
+}
+
+type BalanceAdjustment = Pick<Transaction, 'accountId' | 'date' | 'amount'>;
+type AdjustableFields = Pick<Transaction, 'accountId' | 'date' | 'amount' | 'adjustsBalance' | 'isHidden'>;
+
+/** The balance change a transaction makes: none unless it adjusts the balance and isn't hidden (ACCT-5.2, TXN-2.10). */
+function balanceAdjustment(transaction: AdjustableFields | null): BalanceAdjustment | null {
+    if (!transaction?.adjustsBalance || transaction.isHidden) {
+        return null;
+    }
+    return { accountId: transaction.accountId, date: transaction.date, amount: transaction.amount };
+}
+
+/**
+ * What saving a transaction does to balances (ACCT-5.3): undo the change it made as it was (`before`, null for a new
+ * transaction) and apply the one it makes as it will be (`after`, null once deleted). Neither when they're the same
+ * change, so editing only its merchant, category or notes leaves the balances alone.
+ */
+export function adjustmentChange(
+    before: AdjustableFields | null,
+    after: AdjustableFields | null
+): { undo: BalanceAdjustment | null; apply: BalanceAdjustment | null } {
+    const undo = balanceAdjustment(before);
+    const apply = balanceAdjustment(after);
+    const unchanged =
+        undo && apply && undo.accountId === apply.accountId && undo.date === apply.date && undo.amount === apply.amount;
+    return unchanged ? { undo: null, apply: null } : { undo, apply };
+}
+
+async function moveAdjustment(tx: DbTransaction, before: Transaction | null, after: Transaction | null): Promise<void> {
+    const { undo, apply } = adjustmentChange(before, after);
+    if (undo) {
+        await undoAdjustment(tx, undo.accountId, undo.date, undo.amount);
+    }
+    if (apply) {
+        await applyAdjustment(tx, apply.accountId, apply.date, apply.amount);
+    }
 }
 
 export class FinanceTransactionData implements IFinanceTransactionData {
@@ -271,9 +311,13 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     }
 
     public async insert(transaction: Transaction): Promise<Transaction> {
-        const rows = await this.db.insert(transactionSchema).values(mapTransactionToRow(transaction)).returning();
-
-        return mapRowToTransaction(rows[0]);
+        // The transaction and its balance change are saved together or not at all (ACCT-5.6).
+        return this.db.transaction(async tx => {
+            const rows = await tx.insert(transactionSchema).values(mapTransactionToRow(transaction)).returning();
+            const inserted = mapRowToTransaction(rows[0]);
+            await moveAdjustment(tx, null, inserted);
+            return inserted;
+        });
     }
 
     public async insertBulk(transactions: Transaction[]): Promise<void> {
@@ -288,35 +332,48 @@ export class FinanceTransactionData implements IFinanceTransactionData {
     }
 
     public async update(transaction: Transaction): Promise<Transaction | null> {
-        const rows = await this.db
-            .update(transactionSchema)
-            .set({
-                accountId: transaction.accountId,
-                merchant: transaction.merchant,
-                categoryId: transaction.categoryId || null,
-                amount: transaction.amount.toString(),
-                date: transaction.date,
-                originalStatement: transaction.originalStatement || null,
-                notes: transaction.notes || null,
-                isHidden: transaction.isHidden,
-                updatedAt: DateTimeUtil.now()
-            })
-            .where(eq(transactionSchema.id, transaction.id!))
-            .returning();
+        return this.db.transaction(async tx => {
+            const [current] = await tx
+                .select()
+                .from(transactionSchema)
+                .where(eq(transactionSchema.id, transaction.id!))
+                .for('update');
+            if (!current) {
+                return null;
+            }
 
-        if (rows.length === 0) {
-            return null;
-        }
+            const rows = await tx
+                .update(transactionSchema)
+                .set({
+                    accountId: transaction.accountId,
+                    merchant: transaction.merchant,
+                    categoryId: transaction.categoryId || null,
+                    amount: transaction.amount.toString(),
+                    date: transaction.date,
+                    originalStatement: transaction.originalStatement || null,
+                    notes: transaction.notes || null,
+                    isHidden: transaction.isHidden,
+                    adjustsBalance: transaction.adjustsBalance,
+                    updatedAt: DateTimeUtil.now()
+                })
+                .where(eq(transactionSchema.id, transaction.id!))
+                .returning();
 
-        return mapRowToTransaction(rows[0]);
+            const updated = mapRowToTransaction(rows[0]);
+            await moveAdjustment(tx, mapRowToTransaction(current), updated);
+            return updated;
+        });
     }
 
     public async delete(id: string): Promise<boolean> {
-        const result = await this.db
-            .delete(transactionSchema)
-            .where(eq(transactionSchema.id, id))
-            .returning({ id: transactionSchema.id });
+        return this.db.transaction(async tx => {
+            const rows = await tx.delete(transactionSchema).where(eq(transactionSchema.id, id)).returning();
+            if (rows.length === 0) {
+                return false;
+            }
 
-        return result.length > 0;
+            await moveAdjustment(tx, mapRowToTransaction(rows[0]), null);
+            return true;
+        });
     }
 }

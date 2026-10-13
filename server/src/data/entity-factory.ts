@@ -61,8 +61,13 @@ export class FinanceEntityFactory {
         });
     }
 
-    public static createTransaction(transaction: NewEntity<Transaction>): Transaction {
-        return FinanceEntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, transaction);
+    public static createTransaction(
+        transaction: Omit<NewEntity<Transaction>, 'adjustsBalance'> & Partial<Pick<Transaction, 'adjustsBalance'>>
+    ): Transaction {
+        return FinanceEntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, {
+            adjustsBalance: false,
+            ...transaction
+        });
     }
 
     public static createInstitution(institution: NewEntity<Institution>): Institution {

@@ -10,7 +10,7 @@ import { DateTimeUtil } from '@server/utility';
 import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
 import { TransactionCsv } from './transaction-csv';
-import { IFinanceTransactionData } from './transaction-data';
+import { adjustmentChange, IFinanceTransactionData } from './transaction-data';
 import { CreateTransactionRequest, UpdateTransactionRequest } from './transaction-schema';
 
 export class TransactionController {
@@ -40,8 +40,14 @@ export class TransactionController {
         const transaction = FinanceEntityFactory.createTransaction({
             ...input,
             isHidden: input.isHidden ?? false,
+            adjustsBalance: input.adjustsBalance ?? false,
             isSplit: input.isSplit ?? false
         });
+
+        const refusal = await this.checkAdjustment(null, transaction);
+        if (refusal) {
+            return Result.userError(refusal);
+        }
 
         const created = await this.transactionData.insert(transaction);
         return Result.successCreated(created);
@@ -71,7 +77,13 @@ export class TransactionController {
             return Result.userErrorNotFound();
         }
 
-        const updated = await this.transactionData.update({ ...current, ...changes });
+        const transaction = { ...current, ...changes };
+        const refusal = await this.checkAdjustment(current, transaction);
+        if (refusal) {
+            return Result.userError(refusal);
+        }
+
+        const updated = await this.transactionData.update(transaction);
         if (!updated) {
             return Result.userErrorNotFound();
         }
@@ -80,12 +92,50 @@ export class TransactionController {
     }
 
     public async deleteTransaction(context: OperationContext, transactionId: string): Promise<OperationResult<void>> {
+        const current = await this.transactionData.retrieveSingle(transactionId);
+        if (!current) {
+            return Result.userErrorNotFound();
+        }
+        const refusal = await this.checkAdjustment(current, null);
+        if (refusal) {
+            return Result.userError(refusal);
+        }
+
         const deleted = await this.transactionData.delete(transactionId);
         if (!deleted) {
             return Result.userErrorNotFound();
         }
 
         return Result.successDeleted();
+    }
+
+    /**
+     * Why a transaction can't be saved as `after` (or deleted, when it's null) because of its balance change, if it
+     * can't. Only a manual account's transactions adjust the balance (ACCT-5.5), and a closed account's balances don't
+     * change until it's reopened (ACCT-6.3).
+     */
+    private async checkAdjustment(before: Transaction | null, after: Transaction | null): Promise<string | null> {
+        const { undo, apply } = adjustmentChange(before, after);
+        const accountIds = new Set([undo?.accountId, apply?.accountId]);
+        if (after?.adjustsBalance) {
+            accountIds.add(after.accountId);
+        }
+        accountIds.delete(undefined);
+
+        for (const accountId of accountIds) {
+            const account = await this.accountData.retrieveSingle(accountId!);
+            // A missing account is left to the foreign key (TXN-2.5).
+            if (!account) {
+                continue;
+            }
+            if (after?.adjustsBalance && after.accountId === accountId && !account.isManual) {
+                return "A connected account's balance comes from its bank.";
+            }
+            if (account.closedOn && (undo?.accountId === accountId || apply?.accountId === accountId)) {
+                return 'Reopen this account to change its balance.';
+            }
+        }
+        return null;
     }
 
     public async getSpendingByCategory(

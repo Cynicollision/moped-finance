@@ -20,7 +20,7 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 ## Next
 
 ### 9. Transactions adjust balances
-- [ ] ACCT-5.2 to 5.7; TXN-2.8, 2.9, 2.10, 3.11: **Adjust balance** on Add/Edit Transaction and on import, updating adjusted entries up to the next set entry, undone and reapplied on edit, delete and hide, all in one database transaction. ACCT-5.7: recording a set entry (Edit Account, import; later sync) shifts the adjusted entries after it, in `writeSetEntry` and `replaceRange` (`balance-history-data.ts`). Then confirm ACCT-3.11 (export and re-import into another account) works end to end.
+- [ ] TXN-3.11: **Adjust balances** on Import Transactions into a manual account, applied in the import's database transaction (`insertBulk` in `transaction-data.ts`; apply each date's total once rather than row by row). ACCT-5.7: a balance-history import shifts the adjusted entries after its last date, in `replaceRange` (`balance-history-data.ts`). Then confirm ACCT-3.11 (export and re-import into another account) works end to end.
 
 ### 10. Budget 12-month averages
 - [ ] BUD-1.8, 1.9: server endpoint for each category's monthly average over the past 12 full months (counting what Spending counts), shown in the stream panel and beside each category in Budget's lists.
@@ -58,7 +58,7 @@ Manual entry and import/export come first. Constraints for when this gets picked
 - **No paid subscription.** It must fit a single user on a free tier (or use a free alternative). Check the current terms before building anything.
 - **Polling only.** The host isn't reachable from the internet, so no webhooks. Sync on a schedule and/or on demand. Scheduling: a built-in timer (no setup for self-hosters) as the main schedule, with the sync endpoints also callable by an external scheduler using a Read & write API token (AUTH-11).
 - [ ] **Design.** Write `docs/integrations/bank-sync.md` before coding: provider choice and cost, link flow, encrypted storage of access tokens, cursor-based incremental sync, mapping provider items/accounts to institutions/accounts, de-duplicating against CSV imports, and sandbox → production.
-- [ ] **Connect and link.** INST-2.1 to 2.4, 2.6; ACCT-4.3 (connected derived from the link, replacing `is_manual`); ACCT-2.6's Manual/Connected.
+- [ ] **Connect and link.** INST-2.1 to 2.4, 2.6; ACCT-4.3 (connected derived from the link, replacing `is_manual`); ACCT-2.6's Manual/Connected; ACCT-5.5 (linking turns off `adjusts_balance` on the account's transactions).
 - [ ] **Combining histories.** INST-2.8 to 2.11: Combine / Use the bank's history / Keep my history only, with the preview counts and one database transaction.
 - [ ] **Sync.** INST-2.12, ACCT-4.1, 4.2; TXN-2.12, TXN-4.8 (synced transactions' read-only fields and splits); SET-4.1 (Bank Sync settings, schedule).
 - [ ] **Disconnect.** INST-2.5, 2.7; ACCT-4.4, 4.5; ACCT-1.5's read-only institution for connected accounts; ACCT-6.1's disconnect on close.

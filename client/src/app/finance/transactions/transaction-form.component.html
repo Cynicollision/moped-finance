@@ -48,6 +48,13 @@
                 <div class="label">Hidden</div>
                 <div class="value">{{ transactionForm.value.isHidden ? 'Yes' : 'No' }}</div>
             </div>
+
+            @if (canAdjustBalance()) {
+                <div class="readonly-field">
+                    <div class="label">Adjusts balance</div>
+                    <div class="value">{{ transaction()?.adjustsBalance ? 'Yes' : 'No' }}</div>
+                </div>
+            }
         } @else {
             <!-- A positive amount, with its sign from the switch (TXN-2.13). -->
             <mat-button-toggle-group
@@ -136,6 +143,18 @@
             <div class="checkbox-container">
                 <mat-checkbox formControlName="isHidden">Hide Transaction</mat-checkbox>
             </div>
+
+            <!-- Manual accounts only (TXN-2.8). -->
+            @if (canAdjustBalance()) {
+                <div class="checkbox-container">
+                    <mat-checkbox formControlName="adjustsBalance" aria-describedby="adjust-balance-hint">
+                        Adjust balance
+                    </mat-checkbox>
+                    <p id="adjust-balance-hint" class="hint">
+                        Changes the account's balance from this date until the next balance you entered or imported.
+                    </p>
+                </div>
+            }
 
             <div class="actions">
                 <div class="right-actions">

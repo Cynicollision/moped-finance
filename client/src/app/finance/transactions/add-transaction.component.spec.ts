@@ -69,6 +69,7 @@ describe('AddTransactionComponent', () => {
             originalStatement: '',
             notes: '',
             isHidden: false,
+            adjustsBalance: false,
             isSplit: false,
             splitParentId: ''
         });

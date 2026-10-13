@@ -18,6 +18,7 @@ describe('TransactionFormComponent', () => {
         originalStatement: '',
         notes: '',
         isHidden: false,
+        adjustsBalance: false,
         isSplit: false,
         splitParentId: '',
         createdAt: new Date(2026, 0, 1),
@@ -241,6 +242,62 @@ describe('TransactionFormComponent', () => {
             expect(names(editing.fixture.componentInstance)).toEqual(['Checking', 'Old Savings', 'Visa']);
             expect(names(adding.fixture.componentInstance)).toEqual(['Checking', 'Shut Card', 'Visa']);
             expect(adding.fixture.componentInstance.transactionForm.controls.accountId.value).toBe('shut');
+        });
+    });
+
+    describe('Adjust balance', () => {
+        const accounts = [
+            { id: 'cash', name: 'Cash', isHidden: false, isManual: true },
+            { id: 'synced', name: 'Synced', isHidden: false, isManual: false }
+        ] as Account[];
+
+        const checkbox = (element: HTMLElement) =>
+            element.querySelector('mat-checkbox[formControlName="adjustsBalance"]');
+
+        it('TXN-2.8 should offer Adjust balance, checked, only once a manual account is chosen', async () => {
+            const { fixture, element, saved } = await render('create', null, [], accounts);
+            const form = fixture.componentInstance.transactionForm;
+            expect(checkbox(element)).toBeNull();
+
+            form.patchValue({ accountId: 'cash', amount: 5, merchant: 'Shop' });
+            fixture.detectChanges();
+            expect(checkbox(element)).not.toBeNull();
+            expect(form.controls.adjustsBalance.value).toBe(true);
+            fixture.componentInstance.onSave();
+
+            form.patchValue({ accountId: 'synced' });
+            fixture.detectChanges();
+            expect(checkbox(element)).toBeNull();
+            fixture.componentInstance.onSave();
+
+            expect(saved.map(t => t.adjustsBalance)).toEqual([true, false]);
+        });
+
+        it("TXN-2.8 should edit a transaction's Adjust balance as saved", async () => {
+            const { fixture, saved } = await render('edit', { ...transaction, accountId: 'cash' }, [], accounts);
+            expect(fixture.componentInstance.transactionForm.controls.adjustsBalance.value).toBe(false);
+
+            fixture.componentInstance.transactionForm.controls.adjustsBalance.setValue(true);
+            fixture.componentInstance.onSave();
+
+            expect(saved[0].adjustsBalance).toBe(true);
+        });
+
+        it("TXN-2.9 should show Adjusts balance when viewing a manual account's transaction", async () => {
+            const manual = await render(
+                'readonly',
+                { ...transaction, accountId: 'cash', adjustsBalance: true },
+                [],
+                accounts
+            );
+            expect(readonlyValue(manual.element, 'Adjusts balance')).toBe('Yes');
+            TestBed.resetTestingModule();
+
+            const synced = await render('readonly', { ...transaction, accountId: 'synced' }, [], accounts);
+            const labels = Array.from(synced.element.querySelectorAll('.readonly-field .label')).map(
+                l => l.textContent
+            );
+            expect(labels).not.toContain('Adjusts balance');
         });
     });
 });

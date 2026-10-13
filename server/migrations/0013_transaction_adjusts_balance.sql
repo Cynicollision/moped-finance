@@ -1,0 +1,1 @@
+ALTER TABLE "finance"."transactions" ADD COLUMN "adjusts_balance" boolean DEFAULT false NOT NULL;

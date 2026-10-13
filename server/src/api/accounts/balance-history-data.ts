@@ -1,4 +1,4 @@
-import { eq, and, desc, gte, inArray, lte, sql, SQL } from 'drizzle-orm';
+import { eq, and, asc, desc, gt, gte, inArray, lt, lte, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CalendarDate } from '@shared/core/types';
 import { AccountGroupChange, DailyBalance, TotalValueHistory } from '@shared/finance/contracts';
@@ -6,6 +6,7 @@ import { AccountType, ValueHistoryType, AccountCategory, BalanceEntrySource } fr
 import { AccountBalanceEntry, BalanceHistory } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
 import { FinanceEntityFactory, IDatabaseClient } from '@server/data';
+import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
 
@@ -32,11 +33,67 @@ function mapBalanceHistoryToRow(record: BalanceHistory): typeof balanceHistorySc
     };
 }
 
+/** The account's latest entry on or before the date: the balance carried to it. None if it has no entry by then. */
+async function retrieveCarried(
+    tx: DbTransaction,
+    accountId: string,
+    date: CalendarDate
+): Promise<{ date: CalendarDate; balance: number } | undefined> {
+    const [latest] = await tx
+        .select({ date: balanceHistorySchema.date, balance: balanceHistorySchema.balance })
+        .from(balanceHistorySchema)
+        .where(and(eq(balanceHistorySchema.accountId, accountId), lte(balanceHistorySchema.date, date)))
+        .orderBy(desc(balanceHistorySchema.date))
+        .limit(1);
+    return latest && { date: latest.date, balance: Number(latest.balance) };
+}
+
 /**
- * Records a balance the user entered as a set entry (ACCT-2.2, ACCT-5.1), replacing any entry on that date. Part of
- * a larger write, so it takes the caller's database transaction.
+ * Adds the amount to the account's entries after the date (and on it, with `includeDate`), up to but not including the
+ * first set entry after it, which is a checkpoint that already counts everything before it (ACCT-5.2, ACCT-5.7).
+ */
+async function shiftUntilNextSetEntry(
+    tx: DbTransaction,
+    accountId: string,
+    date: CalendarDate,
+    amount: number,
+    includeDate: boolean
+): Promise<void> {
+    const [nextSet] = await tx
+        .select({ date: balanceHistorySchema.date })
+        .from(balanceHistorySchema)
+        .where(
+            and(
+                eq(balanceHistorySchema.accountId, accountId),
+                gt(balanceHistorySchema.date, date),
+                eq(balanceHistorySchema.source, BalanceEntrySource.Set)
+            )
+        )
+        .orderBy(asc(balanceHistorySchema.date))
+        .limit(1);
+
+    await tx
+        .update(balanceHistorySchema)
+        .set({
+            balance: sql`${balanceHistorySchema.balance} + ${amount.toFixed(2)}::numeric`,
+            updatedAt: DateTimeUtil.now()
+        })
+        .where(
+            and(
+                eq(balanceHistorySchema.accountId, accountId),
+                includeDate ? gte(balanceHistorySchema.date, date) : gt(balanceHistorySchema.date, date),
+                nextSet ? lt(balanceHistorySchema.date, nextSet.date) : undefined
+            )
+        );
+}
+
+/**
+ * Records a balance the user entered as a set entry (ACCT-2.2, ACCT-5.1), replacing any entry on that date, and moves
+ * the adjusted entries after it by as much as it changed the balance there (ACCT-5.7). Part of a larger write, so it
+ * takes the caller's database transaction.
  */
 export async function writeSetEntry(tx: DbTransaction, accountId: string, entry: AccountBalanceEntry): Promise<void> {
+    const carried = await retrieveCarried(tx, accountId, entry.date);
     const record = FinanceEntityFactory.createBalanceHistory({ accountId, ...entry, source: BalanceEntrySource.Set });
     await tx
         .insert(balanceHistorySchema)
@@ -45,6 +102,50 @@ export async function writeSetEntry(tx: DbTransaction, accountId: string, entry:
             target: [balanceHistorySchema.accountId, balanceHistorySchema.date],
             set: { balance: record.balance.toString(), source: record.source, updatedAt: record.updatedAt }
         });
+
+    // In cents, so float error can't make an unchanged balance look changed.
+    const change = Math.round((entry.balance - (carried?.balance ?? 0)) * 100) / 100;
+    if (change !== 0) {
+        await shiftUntilNextSetEntry(tx, accountId, entry.date, change, false);
+    }
+}
+
+/**
+ * Applies a transaction that adjusts the balance (ACCT-5.2): adds its amount to the account's entries from its date up
+ * to the first set entry after it, first creating an adjusted entry on its date, at the balance carried to it, if
+ * there's none. An entry on its own date shifts even if it's a set entry.
+ */
+export async function applyAdjustment(
+    tx: DbTransaction,
+    accountId: string,
+    date: CalendarDate,
+    amount: number
+): Promise<void> {
+    const carried = await retrieveCarried(tx, accountId, date);
+    if (carried?.date !== date) {
+        const record = FinanceEntityFactory.createBalanceHistory({
+            accountId,
+            date,
+            balance: carried?.balance ?? 0,
+            source: BalanceEntrySource.Adjusted
+        });
+        await tx.insert(balanceHistorySchema).values(mapBalanceHistoryToRow(record));
+    }
+    await shiftUntilNextSetEntry(tx, accountId, date, amount, true);
+}
+
+/**
+ * Undoes a transaction's adjustment (ACCT-5.3) over the same range as the entries stand now. Unlike applying, it
+ * creates no entry: a date without one has had its balances replaced since (by an import or by closing), which
+ * already left the transaction out.
+ */
+export async function undoAdjustment(
+    tx: DbTransaction,
+    accountId: string,
+    date: CalendarDate,
+    amount: number
+): Promise<void> {
+    await shiftUntilNextSetEntry(tx, accountId, date, -amount, true);
 }
 
 export interface IFinanceBalanceHistoryData {

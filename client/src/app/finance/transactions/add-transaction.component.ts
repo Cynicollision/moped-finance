@@ -41,6 +41,7 @@ export class AddTransactionComponent implements HasUnsavedChanges {
             originalStatement: transaction.originalStatement || '',
             notes: transaction.notes || '',
             isHidden: transaction.isHidden || false,
+            adjustsBalance: transaction.adjustsBalance || false,
             isSplit: false,
             splitParentId: ''
         };

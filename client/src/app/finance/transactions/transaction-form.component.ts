@@ -9,6 +9,7 @@ import {
     input,
     output
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
@@ -91,7 +92,9 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         category: new FormControl<string>('', { nonNullable: true }),
         date: new FormControl<Date>(this.dateProvider.now(), { nonNullable: true, validators: [Validators.required] }),
         notes: new FormControl<string>('', { nonNullable: true }),
-        isHidden: new FormControl<boolean>(false, { nonNullable: true })
+        isHidden: new FormControl<boolean>(false, { nonNullable: true }),
+        // Checked by default on Add (TXN-2.8).
+        adjustsBalance: new FormControl<boolean>(true, { nonNullable: true })
     });
 
     readonly lookups = viewResource({
@@ -113,6 +116,11 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         const keep = [this.transaction()?.accountId, this.defaultAccountId()];
         return this.accounts().filter(a => (!a.isHidden && !a.closedOn) || keep.includes(a.id));
     });
+    private readonly accountId = toSignal(this.transactionForm.controls.accountId.valueChanges, {
+        initialValue: this.transactionForm.controls.accountId.value
+    });
+    /** Only a manual account's transactions can adjust its balance (TXN-2.8, TXN-2.9, ACCT-5.5). */
+    readonly canAdjustBalance = computed(() => this.accounts().find(a => a.id === this.accountId())?.isManual ?? false);
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
     /** The categories to choose from: active ones, plus the one the transaction already has (CAT-4.1, CAT-4.2). */
     readonly categoryOptions = computed(() => {
@@ -143,7 +151,8 @@ export class TransactionFormComponent implements OnInit, OnChanges {
                 category: transaction.categoryId || '',
                 date: CalendarDateUtil.toDate(transaction.date),
                 notes: transaction.notes || '',
-                isHidden: transaction.isHidden || false
+                isHidden: transaction.isHidden || false,
+                adjustsBalance: transaction.adjustsBalance
             });
         } else if (mode === 'create') {
             this.transactionForm.reset({
@@ -151,7 +160,8 @@ export class TransactionFormComponent implements OnInit, OnChanges {
                 date: this.dateProvider.now(),
                 direction: TransactionDirection.Out,
                 amount: null,
-                isHidden: false
+                isHidden: false,
+                adjustsBalance: true
             });
         }
 
@@ -198,7 +208,8 @@ export class TransactionFormComponent implements OnInit, OnChanges {
             categoryId: formValue.category,
             date: CalendarDateUtil.fromDate(formValue.date),
             notes: formValue.notes,
-            isHidden: formValue.isHidden
+            isHidden: formValue.isHidden,
+            adjustsBalance: this.canAdjustBalance() && formValue.adjustsBalance
         };
 
         this.save.emit(updatedTransaction);
