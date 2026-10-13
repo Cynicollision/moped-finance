@@ -35,6 +35,17 @@
             font-weight: 500;
             color: var(--text-main);
         }
+
+        .status {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem 1rem;
+        }
+
+        .hidden-status mat-icon {
+            vertical-align: -2px;
+            color: var(--text-muted);
+        }
     }
 }
 

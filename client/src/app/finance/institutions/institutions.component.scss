@@ -86,8 +86,18 @@
     }
 }
 
-.hidden-account {
+.dimmed {
     opacity: 0.55;
+}
+
+.closed-label {
+    margin-left: 0.5rem;
+    padding: 0 0.4rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .hidden-icon {

@@ -221,25 +221,26 @@ describe('TransactionFormComponent', () => {
         const accounts = [
             { id: 'acct', name: 'Checking', isHidden: false },
             { id: 'old', name: 'Old Savings', isHidden: true },
+            { id: 'shut', name: 'Shut Card', isHidden: false, closedOn: '2026-05-01' },
             { id: 'visa', name: 'Visa', isHidden: false }
         ] as Account[];
 
         const names = (component: TransactionFormComponent) => component.accountOptions().map(a => a.name);
 
-        it('TXN-2.1 should offer only unhidden accounts for a new transaction', async () => {
+        it('TXN-2.1 should offer only open, unhidden accounts for a new transaction', async () => {
             const { fixture } = await render('create', null, [], accounts);
 
             expect(names(fixture.componentInstance)).toEqual(['Checking', 'Visa']);
         });
 
-        it('TXN-2.1 should keep offering a hidden account the transaction is in, or the form was opened from', async () => {
+        it('TXN-2.1 should keep offering a hidden or closed account the transaction is in, or the form was opened from', async () => {
             const editing = await render('edit', { ...transaction, accountId: 'old' }, [], accounts);
             TestBed.resetTestingModule();
-            const adding = await render('create', null, [], accounts, 'old');
+            const adding = await render('create', null, [], accounts, 'shut');
 
             expect(names(editing.fixture.componentInstance)).toEqual(['Checking', 'Old Savings', 'Visa']);
-            expect(names(adding.fixture.componentInstance)).toEqual(['Checking', 'Old Savings', 'Visa']);
-            expect(adding.fixture.componentInstance.transactionForm.controls.accountId.value).toBe('old');
+            expect(names(adding.fixture.componentInstance)).toEqual(['Checking', 'Shut Card', 'Visa']);
+            expect(adding.fixture.componentInstance.transactionForm.controls.accountId.value).toBe('shut');
         });
     });
 });

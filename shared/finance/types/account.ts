@@ -32,4 +32,11 @@ export type Account = Entity &
         balance?: number;
         /** The date of that entry ("Balance as of", ACCT-2.6), or null if there's none. */
         balanceDate?: CalendarDate | null;
+        /** The day it was closed (ACCT-6), or null while it's open. Set only by closing and reopening. */
+        closedOn?: CalendarDate | null;
     };
+
+/** Closing an account (ACCT-6.1): the day it closed, not after today. */
+export interface CloseAccountRequest {
+    closedOn: CalendarDate;
+}

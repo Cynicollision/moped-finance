@@ -20,7 +20,7 @@ import { FinanceService } from './../finance.service';
 interface AccountGroupSummary {
     group: AccountGroup;
     total: number;
-    /** By name, as the server sends them (DASH-2.1). */
+    /** The open ones, by name as the server sends them (DASH-2.1, DASH-2.10). */
     accounts: Account[];
     isLiability: boolean;
 }
@@ -151,19 +151,21 @@ export class DashboardComponent {
         }));
         const byGroup = new Map(groups.map(g => [g.group, g]));
 
-        // Hidden accounts are left out of the lists and totals (DASH-2.9).
+        // Hidden accounts are left out of the lists and totals (DASH-2.9). Closed ones are left out of the lists, but
+        // still count, so the totals match the chart (DASH-2.10, DASH-1.7).
         for (const account of (this.accounts.value() ?? []).filter(a => !a.isHidden)) {
             const group = byGroup.get(account.group)!;
             group.total += Number(account.balance) || 0;
-            group.accounts.push(account);
+            if (!account.closedOn) {
+                group.accounts.push(account);
+            }
         }
 
-        const shown = groups.filter(g => g.accounts.length > 0);
         const section = (title: string, isLiability: boolean): AccountSection => {
-            const sectionGroups = shown.filter(g => g.isLiability === isLiability);
+            const sectionGroups = groups.filter(g => g.isLiability === isLiability);
             return {
                 title,
-                groups: sectionGroups,
+                groups: sectionGroups.filter(g => g.accounts.length > 0),
                 total: sectionGroups.reduce((total, g) => total + g.total, 0),
                 isLiability
             };

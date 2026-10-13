@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { CalendarPeriod, HistoryTimeframe, SortDirection } from '@shared/core/enum';
-import { NewEntity } from '@shared/core/types';
+import { CalendarDate, NewEntity } from '@shared/core/types';
 import {
     AccountGroupChange,
     BalanceImportResult,
@@ -18,6 +18,7 @@ import {
     Account,
     AccountRequest,
     Category,
+    CloseAccountRequest,
     CategoryGroup,
     CategoryUsage,
     Transaction,
@@ -130,6 +131,17 @@ export class FinanceService {
     /** Saves an account's changes and, with `balanceEntry`, its balance on that date (ACCT-2.2). */
     saveAccount(accountId: string, changes: AccountRequest): Promise<Account | undefined> {
         return this.api.put<Account>(`${API_BASE_PATH}/accounts/${accountId}`, changes);
+    }
+
+    /** Closes the account on the date: its balance becomes 0 then, and later entries are removed (ACCT-6.1). */
+    closeAccount(accountId: string, closedOn: CalendarDate): Promise<Account | undefined> {
+        const request: CloseAccountRequest = { closedOn };
+        return this.api.post<Account>(`${API_BASE_PATH}/accounts/${accountId}/close`, request);
+    }
+
+    /** Makes a closed account open again, without changing its balance history (ACCT-6.3). */
+    reopenAccount(accountId: string): Promise<Account | undefined> {
+        return this.api.post<Account>(`${API_BASE_PATH}/accounts/${accountId}/reopen`, {});
     }
 
     deleteAccount(id: string): Promise<boolean> {

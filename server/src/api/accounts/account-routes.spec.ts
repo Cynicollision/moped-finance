@@ -701,6 +701,131 @@ describe('Account Routes', () => {
         });
     });
 
+    describe('POST /accounts/:accountId/close and /reopen', () => {
+        beforeEach(() => {
+            DateTimeUtil.setClock(new Date('2026-06-10T16:00:00Z'));
+        });
+
+        async function insertWithBalances(entries: [string, number][]) {
+            const account = await insertAccount();
+            await balanceHistoryData.insertBulk(
+                entries.map(([date, balance]) =>
+                    FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date, balance })
+                )
+            );
+            return account;
+        }
+
+        it('ACCT-6.1 should record a set entry of 0 on the date, remove later entries, and mark it closed', async () => {
+            const account = await insertWithBalances([
+                ['2026-05-01', 500],
+                ['2026-06-01', 400],
+                ['2026-06-08', 300]
+            ]);
+
+            const response = await request(app).post(`/accounts/${account.id}/close`).send({ closedOn: '2026-06-05' });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual(
+                expect.objectContaining({ closedOn: '2026-06-05', balance: 0, balanceDate: '2026-06-05' })
+            );
+            expect(await balancesFor(account.id)).toEqual([
+                ['2026-05-01', 500],
+                ['2026-06-01', 400],
+                ['2026-06-05', 0]
+            ]);
+            expect(await sourcesFor(account.id)).toContainEqual(['2026-06-05', BalanceEntrySource.Set]);
+        });
+
+        it('ACCT-6.1 should record nothing when the balance on the date is already 0', async () => {
+            const emptied = await insertWithBalances([
+                ['2026-05-01', 500],
+                ['2026-05-20', 0]
+            ]);
+            const noHistory = await insertAccount('Never Used');
+
+            await request(app).post(`/accounts/${emptied.id}/close`).send({ closedOn: '2026-06-10' });
+            await request(app).post(`/accounts/${noHistory.id}/close`).send({ closedOn: '2026-06-10' });
+
+            expect(await balancesFor(emptied.id)).toEqual([
+                ['2026-05-01', 500],
+                ['2026-05-20', 0]
+            ]);
+            expect(await balancesFor(noHistory.id)).toEqual([]);
+        });
+
+        it('ACCT-6.1 APP-8.1 should refuse a missing date or one after today', async () => {
+            const account = await insertAccount();
+
+            const missing = await request(app).post(`/accounts/${account.id}/close`).send({});
+            const future = await request(app).post(`/accounts/${account.id}/close`).send({ closedOn: '2026-06-20' });
+
+            expect(missing.status).toBe(400);
+            expect(future.status).toBe(400);
+            expect(future.body.message).toContain("Can't be after today");
+            expect((await accountData.retrieveSingle(account.id))!.closedOn).toBeNull();
+        });
+
+        it('ACCT-6.1 should refuse to close an account that is already closed', async () => {
+            const account = await insertAccount();
+            await request(app).post(`/accounts/${account.id}/close`).send({ closedOn: '2026-06-01' });
+
+            const response = await request(app).post(`/accounts/${account.id}/close`).send({ closedOn: '2026-06-05' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe('This account is already closed.');
+            expect((await accountData.retrieveSingle(account.id))!.closedOn).toBe('2026-06-01');
+        });
+
+        it('should return 404 for an account that does not exist', async () => {
+            const close = await request(app).post('/accounts/nope/close').send({ closedOn: '2026-06-01' });
+            const reopen = await request(app).post('/accounts/nope/reopen');
+
+            expect(close.status).toBe(404);
+            expect(reopen.status).toBe(404);
+        });
+
+        it('ACCT-6.3 should reopen an account without changing its balance history', async () => {
+            const account = await insertWithBalances([['2026-05-01', 500]]);
+            await request(app).post(`/accounts/${account.id}/close`).send({ closedOn: '2026-06-01' });
+
+            const response = await request(app).post(`/accounts/${account.id}/reopen`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.closedOn).toBeNull();
+            expect(await balancesFor(account.id)).toEqual([
+                ['2026-05-01', 500],
+                ['2026-06-01', 0]
+            ]);
+        });
+
+        it("ACCT-6.3 should refuse a closed account's balance on Edit Account, but save its other changes", async () => {
+            const account = await insertAccount();
+            await request(app).post(`/accounts/${account.id}/close`).send({ closedOn: '2026-06-01' });
+
+            const balance = await request(app)
+                .put(`/accounts/${account.id}`)
+                .send({ balanceEntry: { date: '2026-06-10', balance: 5 } });
+            const rename = await request(app).put(`/accounts/${account.id}`).send({ name: 'Old Checking' });
+
+            expect(balance.status).toBe(400);
+            expect(balance.body.message).toBe('Reopen this account to set its balance.');
+            expect(rename.status).toBe(200);
+            expect(rename.body).toEqual(expect.objectContaining({ name: 'Old Checking', closedOn: '2026-06-01' }));
+        });
+
+        it('ACCT-6.2 DASH-1.4 should keep counting a closed account in the totals for the days it was open', async () => {
+            const account = await insertWithBalances([['2026-06-01', 500]]);
+            await request(app).post(`/accounts/${account.id}/close`).send({ closedOn: '2026-06-05' });
+
+            const response = await request(app).get(
+                '/accounts/total-value-history?type=NetWorth&timeframe=PastThirtyDays&asOfDate=2026-06-06'
+            );
+
+            expect(response.body.map((v: TotalValueHistory) => v.amount)).toEqual([500, 500, 500, 500, 0, 0]);
+        });
+    });
+
     describe('DELETE /accounts/:accountId', () => {
         it('ACCT-1.6 should delete an account with its balance history and transactions', async () => {
             const acc1 = await accountData.insert(

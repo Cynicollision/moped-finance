@@ -15,7 +15,7 @@ import { DateTimeUtil } from '@server/utility';
 import { IFinanceTransactionData, transactionSearchQuerySchema } from './../transactions';
 import { AccountController } from './account-controller';
 import { IFinanceAccountData } from './account-data';
-import { createAccountSchema, updateAccountSchema } from './account-schema';
+import { closeAccountSchema, createAccountSchema, updateAccountSchema } from './account-schema';
 import { IFinanceBalanceHistoryData } from './balance-history-data';
 
 const domain = 'Account';
@@ -113,6 +113,28 @@ export function createAccountRouter(
         const op: OperationDefinition = { domain, operation: 'deleteAccount' };
         handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
             return controller.deleteAccount(context, params.id);
+        });
+    });
+
+    // POST /:id/close - Close Account (ACCT-6.1)
+    router.post('/:id/close', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'closeAccount' };
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, body: closeAccountSchema },
+            (context, { params, body }) => {
+                return controller.closeAccount(context, params.id, body);
+            }
+        );
+    });
+
+    // POST /:id/reopen - Reopen Account (ACCT-6.3)
+    router.post('/:id/reopen', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'reopenAccount' };
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.reopenAccount(context, params.id);
         });
     });
 

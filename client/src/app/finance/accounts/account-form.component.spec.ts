@@ -98,4 +98,13 @@ describe('AccountFormComponent', () => {
 
         expect(labels(element)).not.toContain('Balance');
     });
+
+    it("ACCT-6.3 should not offer a closed account's balance", async () => {
+        const { element, form, saved } = await renderEdit(account({ balance: 0, closedOn: '2026-05-01' }));
+
+        form.onSubmit();
+
+        expect(labels(element)).not.toContain('Balance');
+        expect(saved).toEqual([expect.not.objectContaining({ balanceEntry: expect.anything() })]);
+    });
 });

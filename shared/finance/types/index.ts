@@ -1,4 +1,4 @@
-export type { Account, AccountBalanceEntry, AccountFields, AccountRequest } from './account';
+export type { Account, AccountBalanceEntry, AccountFields, AccountRequest, CloseAccountRequest } from './account';
 export type { BalanceHistory } from './balance-history';
 export type { BudgetStream, BudgetStreamFields } from './budget-stream';
 export type { Category, CategoryUsage } from './category';

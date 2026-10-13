@@ -36,6 +36,17 @@
                     <span>Download Balance History</span>
                 </button>
                 <mat-divider></mat-divider>
+                @if (account.closedOn) {
+                    <button mat-menu-item (click)="reopenAccount()">
+                        <mat-icon>unarchive</mat-icon>
+                        <span>Reopen Account</span>
+                    </button>
+                } @else {
+                    <button mat-menu-item (click)="closeAccount()">
+                        <mat-icon>archive</mat-icon>
+                        <span>Close Account</span>
+                    </button>
+                }
                 <button mat-menu-item class="danger-item" (click)="deleteAccount()">
                     <mat-icon>delete</mat-icon>
                     <span>Delete Account</span>
@@ -79,6 +90,22 @@
                         account.balanceDate ? (account.balanceDate | date: 'mediumDate') : 'No balance yet'
                     }}</span>
                 </div>
+                @if (account.closedOn || account.isHidden) {
+                    <div class="summary-item">
+                        <span class="label">Status</span>
+                        <span class="value status">
+                            @if (account.closedOn) {
+                                <span>Closed on {{ account.closedOn | date: 'mediumDate' }}</span>
+                            }
+                            @if (account.isHidden) {
+                                <span class="hidden-status">
+                                    <mat-icon inline aria-hidden="true">visibility_off</mat-icon>
+                                    Hidden
+                                </span>
+                            }
+                        </span>
+                    </div>
+                }
             </mat-card-content>
         </mat-card>
 

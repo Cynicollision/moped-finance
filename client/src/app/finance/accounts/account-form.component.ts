@@ -88,8 +88,14 @@ export class AccountFormComponent implements OnInit, OnChanges {
         return `${AccountTypeUtil.groupOf(type)} · ${AccountTypeUtil.categoryOf(type)}`;
     });
 
-    /** A manual account's balance is set here (ACCT-2.2); a connected one's comes from its bank (ACCT-4.4). */
-    readonly showBalance = computed(() => this.mode() === 'create' || (this.account()?.isManual ?? false));
+    /**
+     * A manual account's balance is set here (ACCT-2.2); a connected one's comes from its bank (ACCT-4.4), and a
+     * closed one's stays 0 until it's reopened (ACCT-6.3).
+     */
+    readonly showBalance = computed(() => {
+        const account = this.account();
+        return this.mode() === 'create' || (!!account?.isManual && !account.closedOn);
+    });
 
     readonly balanceLabel = computed(() => {
         if (isLiability(this.type())) {
