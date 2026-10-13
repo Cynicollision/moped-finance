@@ -66,7 +66,6 @@ describe('Transaction Routes', () => {
                 type: AccountType.Checking,
                 isHidden: false,
                 isManual: false,
-                hideFromSpending: false,
                 balance: 0
             })
         );
@@ -104,6 +103,22 @@ describe('Transaction Routes', () => {
                 ...fields
             })
         );
+    }
+
+    // A second account alongside Checking, with the given flags.
+    async function insertAccount(flags: { isHidden?: boolean }): Promise<string> {
+        const account = await accountsData.insert(
+            FinanceEntityFactory.createAccount({
+                institutionId: testInstitutionId,
+                name: 'Savings',
+                type: AccountType.Savings,
+                isHidden: false,
+                isManual: false,
+                balance: 0,
+                ...flags
+            })
+        );
+        return account.id!;
     }
 
     function importCsv(rows: string, query = ''): request.Test {
@@ -241,6 +256,20 @@ describe('Transaction Routes', () => {
             expect(direction.status).toBe(400);
             expect(direction.body.message).toContain('direction');
         });
+
+        it('TXN-1.12 should leave out transactions in hidden accounts unless filtered to that account', async () => {
+            const hiddenAccountId = await insertAccount({ isHidden: true });
+            const shown = await insertTransaction();
+            const inHidden = await insertTransaction({ accountId: hiddenAccountId });
+
+            const all = await request(app).get('/transactions');
+            const filtered = await request(app)
+                .get('/transactions')
+                .query({ filters: JSON.stringify([{ key: TransactionsFilterKey.AccountId, value: hiddenAccountId }]) });
+
+            expect(all.body.map((t: Transaction) => t.id)).toEqual([shown.id]);
+            expect(filtered.body.map((t: Transaction) => t.id)).toEqual([inHidden.id]);
+        });
     });
 
     describe('POST /', () => {
@@ -370,23 +399,6 @@ describe('Transaction Routes', () => {
             expect(response.body).toEqual([{ categoryId: testCategoryId, amount: -110 }]);
         });
 
-        // A second account alongside Checking, with the given flags.
-        async function insertAccount(flags: { isHidden?: boolean; hideFromSpending?: boolean }): Promise<string> {
-            const account = await accountsData.insert(
-                FinanceEntityFactory.createAccount({
-                    institutionId: testInstitutionId,
-                    name: 'Savings',
-                    type: AccountType.Savings,
-                    isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false,
-                    balance: 0,
-                    ...flags
-                })
-            );
-            return account.id!;
-        }
-
         function getJune(): request.Test {
             return request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-06-15');
         }
@@ -402,14 +414,6 @@ describe('Transaction Routes', () => {
             const hiddenAccountId = await insertAccount({ isHidden: true });
             await insertTransaction({ amount: -10 });
             await insertTransaction({ accountId: hiddenAccountId, amount: -100 });
-
-            expect((await getJune()).body).toEqual([{ categoryId: testCategoryId, amount: -10 }]);
-        });
-
-        it('ACCT-1.7 CASH-1.2 should leave out accounts flagged Hide from Spending', async () => {
-            const excludedAccountId = await insertAccount({ hideFromSpending: true });
-            await insertTransaction({ amount: -10 });
-            await insertTransaction({ accountId: excludedAccountId, amount: -100 });
 
             expect((await getJune()).body).toEqual([{ categoryId: testCategoryId, amount: -10 }]);
         });

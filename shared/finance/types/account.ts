@@ -9,7 +9,6 @@ export interface AccountFields {
     isHidden?: boolean;
     /** Set by the server: accounts are manual until they're linked to a bank (ACCT-4.3). Ignored in requests. */
     isManual?: boolean;
-    hideFromSpending?: boolean;
 }
 
 /** A balance to record for a manual account, as a set entry replacing any on that date (ACCT-2.2). Signed as stored. */

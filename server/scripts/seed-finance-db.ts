@@ -86,8 +86,7 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
                     name: row.values['Name'],
                     type: row.values['Type'] as AccountType,
                     isHidden: valueOf(accountsFile, row, CsvValue.boolean('IsHidden', row.values['IsHidden'])),
-                    isManual: true,
-                    hideFromSpending: false
+                    isManual: true
                 })
             );
             accountIds.set(account.name.toLowerCase(), account.id);

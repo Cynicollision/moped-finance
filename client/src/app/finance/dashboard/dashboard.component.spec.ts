@@ -69,6 +69,18 @@ describe('DashboardComponent', () => {
         expect(balances).toEqual(['$250.50', '$100,000.00']);
     });
 
+    it('DASH-2.9 should leave hidden accounts out of the lists and totals', async () => {
+        const element = await render([
+            account('Checking', AccountType.Checking, 1000),
+            { ...account('Old Savings', AccountType.Savings, 500), isHidden: true },
+            { ...account('Old Visa', AccountType.CreditCard, -200), isHidden: true }
+        ]);
+
+        expect(groupRows(element)).toEqual(['Cash $1,000.00']);
+        expect(element.querySelector('.large-value')!.textContent!.trim()).toBe('$1,000.00');
+        expect(element.textContent).not.toContain('Old Savings');
+    });
+
     it('DASH-2.6 should show net worth as total assets minus the size of total liabilities', async () => {
         const element = await render([
             account('Checking', AccountType.Checking, 5000),

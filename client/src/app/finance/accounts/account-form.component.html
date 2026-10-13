@@ -40,9 +40,11 @@
             }}</mat-hint>
         </mat-form-field>
     }
-    <div class="toggles-grid">
-        <mat-checkbox formControlName="isHidden">Hide Account</mat-checkbox>
-        <mat-checkbox formControlName="hideFromSpending">Hide from Spending</mat-checkbox>
+    <div class="hide-option">
+        <mat-checkbox formControlName="isHidden" aria-describedby="hide-account-hint">Hide Account</mat-checkbox>
+        <p id="hide-account-hint" class="hint">
+            Leaves the account out of the Dashboard, net worth, Transactions and Spending, past included.
+        </p>
     </div>
     <div class="actions-row">
         <button mat-button type="button" (click)="onCancelClick()">Cancel</button>

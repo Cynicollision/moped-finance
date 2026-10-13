@@ -1,0 +1,1 @@
+ALTER TABLE "finance"."accounts" DROP COLUMN "hide_from_spending";

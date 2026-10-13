@@ -51,8 +51,8 @@ export interface IFinanceBalanceHistoryData {
     /** The account's balance on every day from startDate to endDate (ACCT-2.11), as `retrieveSumByDate`. */
     retrieveDailyForAccount(accountId: string, startDate: CalendarDate, endDate: CalendarDate): Promise<DailyBalance[]>;
     /**
-     * The total of the type's accounts on every day from startDate to endDate, oldest first, carrying each account's
-     * entries forward (DASH-1.4). Days before the first entry are left out.
+     * The total of the type's accounts, hidden ones left out, on every day from startDate to endDate, oldest first,
+     * carrying each account's entries forward (DASH-1.4). Days before the first entry are left out.
      */
     retrieveSumByDate(
         type: ValueHistoryType,
@@ -61,7 +61,7 @@ export interface IFinanceBalanceHistoryData {
     ): Promise<TotalValueHistory[]>;
     /**
      * Each account group's daily total on its first day from startDate to endDate and on endDate (DASH-2.2), in the
-     * groups' display order (ACCT-1.2). Groups with no entry by endDate are left out.
+     * groups' display order (ACCT-1.2). Hidden accounts and groups with no entry by endDate are left out.
      */
     retrieveGroupChanges(startDate: CalendarDate, endDate: CalendarDate): Promise<AccountGroupChange[]>;
     /** Inserts all of the records or, if any insert fails, none of them. */
@@ -97,19 +97,21 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
         startDate: CalendarDate,
         endDate: CalendarDate
     ): Promise<TotalValueHistory[]> {
-        let accounts = sql`true`;
+        // Hidden accounts are left out on every day (DASH-1.4, ACCT-1.9).
+        const accounts = [eq(accountSchema.isHidden, false)];
         if (type === ValueHistoryType.Assets) {
-            accounts = inArray(accountSchema.type, AccountTypeUtil.typesIn(AccountCategory.Asset));
+            accounts.push(inArray(accountSchema.type, AccountTypeUtil.typesIn(AccountCategory.Asset)));
         } else if (type === ValueHistoryType.Liabilities) {
-            accounts = inArray(accountSchema.type, AccountTypeUtil.typesIn(AccountCategory.Liability));
+            accounts.push(inArray(accountSchema.type, AccountTypeUtil.typesIn(AccountCategory.Liability)));
         }
 
-        const days = await this.retrieveDailyTotals(accounts, startDate, endDate);
+        const days = await this.retrieveDailyTotals(and(...accounts)!, startDate, endDate);
         return days.map(day => ({ ...day, type }));
     }
 
     public async retrieveGroupChanges(startDate: CalendarDate, endDate: CalendarDate): Promise<AccountGroupChange[]> {
-        // Each account's first day (startDate, or its first entry if later) with its balance then and on endDate.
+        // Each unhidden account's first day (startDate, or its first entry if later) with its balance then and on
+        // endDate (DASH-2.9).
         const result = await this.db.execute<{
             type: AccountType;
             first_day: string;
@@ -144,6 +146,7 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
                 ) AS end_balance
             FROM first_days
             INNER JOIN ${accountSchema} ON ${accountSchema.id} = first_days.account_id
+            WHERE NOT ${accountSchema.isHidden}
         `);
 
         // A group starts on its accounts' earliest first day; an account whose first day is later adds nothing then.

@@ -135,8 +135,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
             const acc2 = await accountData.insert(
@@ -146,8 +145,7 @@ describe('Account Routes', () => {
                     type: AccountType.Savings,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
 
@@ -208,8 +206,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
             const loan = await accountData.insert(
@@ -269,6 +266,31 @@ describe('Account Routes', () => {
             expect([dates[0], dates[dates.length - 1], dates.length]).toEqual(['2026-05-02', '2026-06-01', 31]);
         });
 
+        it('DASH-1.4 ACCT-1.9 should leave out hidden accounts on every day', async () => {
+            const checking = await insertAccount('Checking');
+            const hidden = await accountData.insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: testInstitutionId,
+                    name: 'Old Savings',
+                    type: AccountType.Savings,
+                    isHidden: true
+                })
+            );
+            await balanceHistoryData.insertBulk([
+                FinanceEntityFactory.createBalanceHistory({ accountId: hidden.id, date: '2026-05-01', balance: 500 }),
+                FinanceEntityFactory.createBalanceHistory({ accountId: checking.id, date: '2026-05-10', balance: 100 })
+            ]);
+
+            const response = await request(app).get(
+                '/accounts/total-value-history?type=NetWorth&timeframe=PastThirtyDays&asOfDate=2026-05-11'
+            );
+
+            expect(response.body.map((v: TotalValueHistory) => [v.date, v.amount])).toEqual([
+                ['2026-05-10', 100],
+                ['2026-05-11', 100]
+            ]);
+        });
+
         it('APP-5.7 should return 400 when type is missing', async () => {
             const response = await request(app).get('/accounts/total-value-history');
             expect(response.status).toBe(400);
@@ -285,9 +307,9 @@ describe('Account Routes', () => {
     });
 
     describe('GET /accounts/group-changes', () => {
-        async function insertTyped(name: string, type: AccountType, entries: [string, number][]) {
+        async function insertTyped(name: string, type: AccountType, entries: [string, number][], isHidden = false) {
             const account = await accountData.insert(
-                FinanceEntityFactory.createAccount({ institutionId: testInstitutionId, name, type })
+                FinanceEntityFactory.createAccount({ institutionId: testInstitutionId, name, type, isHidden })
             );
             await balanceHistoryData.insertBulk(
                 entries.map(([date, balance]) =>
@@ -345,6 +367,20 @@ describe('Account Routes', () => {
             ]);
         });
 
+        it('DASH-2.9 should leave out hidden accounts', async () => {
+            await insertTyped('Checking', AccountType.Checking, [['2026-05-01', 100]]);
+            await insertTyped('Old Savings', AccountType.Savings, [['2026-04-01', 500]], true);
+            await insertTyped('Old Visa', AccountType.CreditCard, [['2026-04-01', -50]], true);
+
+            const response = await request(app).get(
+                '/accounts/group-changes?timeframe=PastThirtyDays&asOfDate=2026-05-17'
+            );
+
+            expect(response.body).toEqual([
+                { group: AccountGroup.Cash, startDate: '2026-05-01', startAmount: 100, endAmount: 100 }
+            ]);
+        });
+
         it('APP-5.7 should return 400 when timeframe is invalid', async () => {
             const response = await request(app).get('/accounts/group-changes?timeframe=InvalidValue');
 
@@ -362,8 +398,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
 
@@ -415,8 +450,7 @@ describe('Account Routes', () => {
                 institutionId: testInstitutionId,
                 type: AccountType.Checking,
                 isHidden: false,
-                isManual: true,
-                hideFromSpending: false
+                isManual: true
             };
 
             const response = await request(app).post('/accounts').send(payload);
@@ -542,8 +576,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
 
@@ -567,8 +600,7 @@ describe('Account Routes', () => {
                 institutionId: testInstitutionId,
                 type: AccountType.Checking,
                 isHidden: false,
-                isManual: true,
-                hideFromSpending: false
+                isManual: true
             };
 
             const response = await request(app).put('/accounts/missing-acc').send(payload);
@@ -678,8 +710,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
             await importBalances(acc1.id!, 'Date,Balance\n2026-06-01,1');
@@ -726,8 +757,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
             await balanceHistoryData.insertBulk(
@@ -752,8 +782,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
             await balanceHistoryData.insertBulk(
@@ -909,8 +938,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
 
@@ -967,6 +995,22 @@ describe('Account Routes', () => {
             expect(response.body.map((t: { merchant: string }) => t.merchant)).toEqual(['Shown']);
         });
 
+        it("ACCT-1.9 should list a hidden account's own transactions", async () => {
+            const account = await accountData.insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: testInstitutionId,
+                    name: 'Old Savings',
+                    type: AccountType.Savings,
+                    isHidden: true
+                })
+            );
+            await insertTransaction(account.id, DateTimeUtil.today());
+
+            const response = await request(app).get(`/accounts/${account.id}/transactions`);
+
+            expect(response.body.length).toBe(1);
+        });
+
         it('ACCT-2.7 should return the most recent transactions first, up to the limit', async () => {
             const acc1 = await insertAccount();
             for (const date of ['2026-06-01', '2026-06-03', '2026-06-02']) {
@@ -993,8 +1037,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
 
@@ -1046,8 +1089,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
 
@@ -1072,8 +1114,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
 
@@ -1129,8 +1170,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
 
@@ -1156,8 +1196,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
 
@@ -1308,8 +1347,7 @@ describe('Account Routes', () => {
                     type: AccountType.Checking,
                     balance: 1000.0,
                     isHidden: false,
-                    isManual: false,
-                    hideFromSpending: false
+                    isManual: false
                 })
             );
 

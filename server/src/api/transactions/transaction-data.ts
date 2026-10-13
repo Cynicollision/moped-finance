@@ -171,6 +171,12 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             conditions.push(eq(transactionSchema.isHidden, false));
         }
 
+        // A hidden account's transactions show only when the search is for that account (TXN-1.12).
+        const forAccount = accountId || options.filters?.some(f => f.key === TransactionsFilterKey.AccountId);
+        if (!forAccount) {
+            conditions.push(eq(accountSchema.isHidden, false));
+        }
+
         if (options.filters) {
             for (const filter of options.filters) {
                 if (filter.key === TransactionsFilterKey.Merchant) {
@@ -253,8 +259,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
                     gte(transactionSchema.date, startDate),
                     lte(transactionSchema.date, endDate),
                     eq(transactionSchema.isHidden, false),
-                    eq(accountSchema.isHidden, false),
-                    eq(accountSchema.hideFromSpending, false)
+                    eq(accountSchema.isHidden, false)
                 )
             )
             .groupBy(transactionSchema.categoryId, uncategorizedIn);

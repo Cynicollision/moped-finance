@@ -78,6 +78,13 @@
       "when": 1791374030986,
       "tag": "0010_balance_entry_source",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791890555606,
+      "tag": "0011_drop_hide_from_spending",
+      "breakpoints": true
     }
   ]
 }

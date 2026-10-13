@@ -105,6 +105,14 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     });
     readonly categories = computed(() => this.lookups.value()?.categories ?? []);
     readonly accounts = computed(() => this.lookups.value()?.accounts ?? []);
+    /**
+     * The accounts to choose from, by name: unhidden ones, plus the one the transaction is in or the form was opened
+     * from (TXN-2.1).
+     */
+    readonly accountOptions = computed(() => {
+        const keep = [this.transaction()?.accountId, this.defaultAccountId()];
+        return this.accounts().filter(a => !a.isHidden || keep.includes(a.id));
+    });
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
     /** The categories to choose from: active ones, plus the one the transaction already has (CAT-4.1, CAT-4.2). */
     readonly categoryOptions = computed(() => {
