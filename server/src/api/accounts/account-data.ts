@@ -40,7 +40,6 @@ function mapRowToAccount(
         category: AccountTypeUtil.categoryOf(type),
         isHidden: row.isHidden,
         isManual: row.isManual,
-        hideFromSpending: row.hideFromSpending,
         balance: Number(balance),
         balanceDate
     };
@@ -126,8 +125,7 @@ export class FinanceAccountData implements IFinanceAccountData {
                 name: account.name,
                 type: account.type,
                 isHidden: account.isHidden,
-                isManual: account.isManual,
-                hideFromSpending: account.hideFromSpending
+                isManual: account.isManual
             });
             if (balanceEntry) {
                 await writeSetEntry(tx, account.id, balanceEntry);
@@ -147,7 +145,6 @@ export class FinanceAccountData implements IFinanceAccountData {
                     type: account.type,
                     isHidden: account.isHidden,
                     isManual: account.isManual,
-                    hideFromSpending: account.hideFromSpending,
                     updatedAt: DateTimeUtil.now()
                 })
                 .where(eq(accountSchema.id, account.id))

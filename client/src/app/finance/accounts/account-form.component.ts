@@ -74,7 +74,6 @@ export class AccountFormComponent implements OnInit, OnChanges {
             validators: [Validators.required]
         }),
         isHidden: new FormControl<boolean>(false, { nonNullable: true }),
-        hideFromSpending: new FormControl<boolean>(false, { nonNullable: true }),
         // As of today, as the user reads it: a liability's balance is the amount owed, positive (APP-6.3).
         balance: new FormControl<number | null>(null)
     });
@@ -117,7 +116,6 @@ export class AccountFormComponent implements OnInit, OnChanges {
                 institutionId: account.institutionId,
                 type: account.type,
                 isHidden: account.isHidden,
-                hideFromSpending: account.hideFromSpending,
                 // Blank when there's no balance yet, as on Add Account.
                 balance: account.balanceDate ? flipForLiability(account.type, account.balance ?? 0) : null
             });

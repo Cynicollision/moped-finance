@@ -64,10 +64,20 @@
                             <div class="accounts-list">
                                 @for (account of group.accounts; track account.id) {
                                     <div class="account-row">
-                                        <div class="account-info">
-                                            <a [routerLink]="['/accounts', account.id]" class="account-name-link">{{
-                                                account.name
-                                            }}</a>
+                                        <div class="account-info" [class.hidden-account]="account.isHidden">
+                                            <a [routerLink]="['/accounts', account.id]" class="account-name-link"
+                                                >{{ account.name }}
+                                                @if (account.isHidden) {
+                                                    <mat-icon
+                                                        class="hidden-icon"
+                                                        inline
+                                                        aria-hidden="false"
+                                                        aria-label="Hidden"
+                                                        matTooltip="Hidden account"
+                                                        >visibility_off</mat-icon
+                                                    >
+                                                }
+                                            </a>
                                             <span class="account-type">{{ account.type }}</span>
                                         </div>
                                         <div class="account-actions">

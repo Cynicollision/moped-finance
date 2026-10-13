@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Account, Institution } from '@shared/finance/types';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
@@ -27,6 +28,7 @@ interface InstitutionGroup {
         MatCardModule,
         MatIconModule,
         MatMenuModule,
+        MatTooltipModule,
         PageHeaderComponent,
         CardSkeletonComponent,
         LoadErrorComponent

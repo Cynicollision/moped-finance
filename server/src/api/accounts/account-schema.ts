@@ -19,8 +19,7 @@ export const accountSchema = financeSchema.table(
         type: varchar('account_type', { length: 50 }).notNull(),
         isHidden: boolean('is_hidden').notNull().default(false),
         // Manual until linked to a bank connection (ACCT-4.3), which doesn't exist yet, so every account is manual.
-        isManual: boolean('is_manual').notNull().default(true),
-        hideFromSpending: boolean('hide_from_spending').notNull().default(false)
+        isManual: boolean('is_manual').notNull().default(true)
     },
     table => [
         check('accounts_account_type_check', SchemaUtil.isOneOf(table.type, Object.values(AccountType))),
@@ -32,15 +31,13 @@ export const createAccountSchema = createInsertSchema(accountSchema, {
     name: schema => schema.min(1).max(100),
     type: z.enum(AccountType),
     institutionId: schema => schema.min(1),
-    isHidden: z.boolean().optional(),
-    hideFromSpending: z.boolean().optional()
+    isHidden: z.boolean().optional()
 })
     .pick({
         name: true,
         institutionId: true,
         type: true,
-        isHidden: true,
-        hideFromSpending: true
+        isHidden: true
     })
     .extend({
         // A balance to record with the account, as a set entry on its date (ACCT-2.2).

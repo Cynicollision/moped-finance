@@ -66,14 +66,7 @@ describe('FinanceAddAccountComponent', () => {
 
         expect(element.querySelector('app-account-form')).not.toBeNull();
         expect(element.textContent).not.toMatch(/connect|coming soon/i);
-        expect(labels(element)).toEqual([
-            'Account Name',
-            'Institution',
-            'Type',
-            'Starting Balance',
-            'Hide Account',
-            'Hide from Spending'
-        ]);
+        expect(labels(element)).toEqual(['Account Name', 'Institution', 'Type', 'Starting Balance', 'Hide Account']);
     });
 
     it('ACCT-1.4 should start with a blank Starting Balance', async () => {
@@ -114,8 +107,7 @@ describe('FinanceAddAccountComponent', () => {
             institutionId: 'inst-1',
             name: 'Joint Checking',
             type: AccountType.Checking,
-            isHidden: false,
-            hideFromSpending: false
+            isHidden: false
         });
         expect(notificationService.success).toHaveBeenCalledWith('Account added');
         expect(navigate).toHaveBeenCalledWith(['/accounts', 'new-account']);

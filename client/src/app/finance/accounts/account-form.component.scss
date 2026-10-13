@@ -11,11 +11,14 @@
     width: 100%;
 }
 
-.toggles-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
+.hide-option {
     margin-bottom: 16px;
+
+    .hint {
+        margin: 0 0 0 40px;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
 }
 
 .actions-row {

@@ -157,7 +157,7 @@
                 <mat-label>Account</mat-label>
                 <mat-select formControlName="account">
                     <mat-option>-- None --</mat-option>
-                    @for (account of accounts(); track account.id) {
+                    @for (account of accountOptions(); track account.id) {
                         <mat-option [value]="account.id">
                             {{ account.name }}
                         </mat-option>

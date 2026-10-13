@@ -17,7 +17,6 @@ describe('AccountFormComponent', () => {
             category: AccountCategory.Asset,
             isHidden: false,
             isManual: true,
-            hideFromSpending: false,
             balance: 1200,
             balanceDate: '2026-05-01',
             ...changes

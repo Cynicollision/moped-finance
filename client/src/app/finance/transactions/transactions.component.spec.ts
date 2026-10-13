@@ -5,7 +5,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { SortDirection } from '@shared/core/enum';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
-import { Transaction } from '@shared/finance/types';
+import { Account, Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { AuthService } from './../../core/auth.service';
 import { DateProviderService } from './../../core/date-provider.service';
@@ -38,13 +38,14 @@ describe('FinanceTransactionsComponent', () => {
         queryParams: Record<string, string> = {},
         transactions: Transaction[] = [],
         nextPage: Transaction[] = [],
-        sizeClass: SizeClass = 'expanded'
+        sizeClass: SizeClass = 'expanded',
+        accounts: Account[] = []
     ) {
         const size = signal(sizeClass);
         const financeService = {
             fetchTransactionMerchants: vi.fn().mockResolvedValue([]),
             fetchCategories: vi.fn().mockResolvedValue([]),
-            fetchAllAccounts: vi.fn().mockResolvedValue([]),
+            fetchAllAccounts: vi.fn().mockResolvedValue(accounts),
             fetchCategoryGroups: vi.fn().mockResolvedValue([]),
             fetchTransactions: vi.fn().mockResolvedValueOnce(transactions).mockResolvedValue(nextPage)
         };
@@ -222,6 +223,23 @@ describe('FinanceTransactionsComponent', () => {
         expect(rows.map(r => r.classList.contains('hidden-transaction'))).toEqual([true, false]);
         expect(rows[0].querySelector('mat-icon[aria-label="Hidden"]')!.textContent!.trim()).toBe('visibility_off');
         expect(rows[1].querySelector('mat-icon')).toBeNull();
+    });
+
+    it('TXN-1.12 should leave hidden accounts out of the Account filter, unless opened filtered to one', async () => {
+        const accounts = [
+            { id: 'acct', name: 'Checking', isHidden: false },
+            { id: 'old', name: 'Old Savings', isHidden: true },
+            { id: 'older', name: 'Older Savings', isHidden: true }
+        ] as Account[];
+
+        const plain = await render({}, [], [], 'expanded', accounts);
+        const plainOptions = plain.fixture.componentInstance.accountOptions().map(a => a.id);
+        TestBed.resetTestingModule();
+        const filtered = await render({ accountId: 'old' }, [], [], 'expanded', accounts);
+
+        expect(plainOptions).toEqual(['acct']);
+        expect(filtered.fixture.componentInstance.accountOptions().map(a => a.id)).toEqual(['acct', 'old']);
+        expect(filtered.lastSearch().filters).toEqual([{ key: TransactionsFilterKey.AccountId, value: 'old' }]);
     });
 
     it('TXN-1.3 should load 25 at a time and append the next 25 with Load More', async () => {

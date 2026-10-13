@@ -139,6 +139,11 @@ export class FinanceTransactionsComponent {
     readonly categories = computed(() => this.lookups.value()?.categories ?? []);
     readonly groups = computed(() => this.lookups.value()?.groups ?? []);
     readonly accounts = computed(() => this.lookups.value()?.accounts ?? []);
+    /** The Account filter's choices: hidden accounts only when the screen was opened filtered to one (TXN-1.12). */
+    readonly accountOptions = computed(() => {
+        const openedFor = this.route.snapshot.queryParamMap.get('accountId');
+        return this.accounts().filter(a => !a.isHidden || a.id === openedFor);
+    });
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
     private readonly groupMap = computed(() => new Map(this.groups().map(g => [g.id, g])));
     private readonly accountMap = computed(() => new Map(this.accounts().map(a => [a.id, a])));

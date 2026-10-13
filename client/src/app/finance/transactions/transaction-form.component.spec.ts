@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TransactionDirection } from '@shared/finance/enum';
-import { Category, Transaction } from '@shared/finance/types';
+import { Account, Category, Transaction } from '@shared/finance/types';
 import { DateProviderService } from './../../core/date-provider.service';
 import { FinanceService } from './../finance.service';
 import { TransactionFormComponent, TransactionFormMode } from './transaction-form.component';
@@ -24,10 +24,16 @@ describe('TransactionFormComponent', () => {
         updatedAt: new Date(2026, 0, 1)
     };
 
-    async function render(mode: TransactionFormMode, value: Transaction | null, categories: Category[] = []) {
+    async function render(
+        mode: TransactionFormMode,
+        value: Transaction | null,
+        categories: Category[] = [],
+        accounts: Account[] = [],
+        defaultAccountId?: string
+    ) {
         const financeService = {
             fetchCategories: vi.fn().mockResolvedValue(categories),
-            fetchAllAccounts: vi.fn().mockResolvedValue([])
+            fetchAllAccounts: vi.fn().mockResolvedValue(accounts)
         };
         TestBed.configureTestingModule({
             imports: [TransactionFormComponent],
@@ -41,6 +47,7 @@ describe('TransactionFormComponent', () => {
         const fixture = TestBed.createComponent(TransactionFormComponent);
         fixture.componentRef.setInput('mode', mode);
         fixture.componentRef.setInput('transaction', value);
+        fixture.componentRef.setInput('defaultAccountId', defaultAccountId);
         await fixture.whenStable();
 
         const saved: Partial<Transaction>[] = [];
@@ -206,6 +213,33 @@ describe('TransactionFormComponent', () => {
 
             expect(fixture.componentInstance.categoryOptions().map(c => c.name)).toEqual(['Groceries', 'Old Gym']);
             expect(fixture.componentInstance.displayCategory('old')).toBe('🏋️ Old Gym');
+        });
+    });
+
+    describe('account choices', () => {
+        // By name, as the server sends them.
+        const accounts = [
+            { id: 'acct', name: 'Checking', isHidden: false },
+            { id: 'old', name: 'Old Savings', isHidden: true },
+            { id: 'visa', name: 'Visa', isHidden: false }
+        ] as Account[];
+
+        const names = (component: TransactionFormComponent) => component.accountOptions().map(a => a.name);
+
+        it('TXN-2.1 should offer only unhidden accounts for a new transaction', async () => {
+            const { fixture } = await render('create', null, [], accounts);
+
+            expect(names(fixture.componentInstance)).toEqual(['Checking', 'Visa']);
+        });
+
+        it('TXN-2.1 should keep offering a hidden account the transaction is in, or the form was opened from', async () => {
+            const editing = await render('edit', { ...transaction, accountId: 'old' }, [], accounts);
+            TestBed.resetTestingModule();
+            const adding = await render('create', null, [], accounts, 'old');
+
+            expect(names(editing.fixture.componentInstance)).toEqual(['Checking', 'Old Savings', 'Visa']);
+            expect(names(adding.fixture.componentInstance)).toEqual(['Checking', 'Old Savings', 'Visa']);
+            expect(adding.fixture.componentInstance.transactionForm.controls.accountId.value).toBe('old');
         });
     });
 });

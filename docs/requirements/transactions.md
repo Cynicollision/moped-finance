@@ -19,7 +19,7 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 | TXN-1.8 | Transactions marked **hidden** shall be left out of everything by default: the list and search (unless shown with TXN-1.13), Account Details' recent transactions, Spending (CASH-1.2), and balance adjustments (TXN-2.10). Exports still include them, with `IsHidden` (TXN-3.1). | Implemented |
 | TXN-1.9 | On narrow screens (APP-7.1) the date and category shall appear under the merchant, and the account shall be left out. | Implemented |
 | TXN-1.11 | Every transaction shall appear in the list and search, including Uncategorized ones (CAT-5), which show "Uncategorized". The **Category** filter shall offer Uncategorized like any other category, and Spending's uncategorized rows open the list filtered to it (CASH-1.6). | Implemented |
-| TXN-1.12 | Transactions in hidden accounts (ACCT-1.9) shall be left out of the list and search, and hidden accounts left out of the **Account** filter, unless the screen was opened filtered to that account (from its Account Details' **Go To Transactions**). Transactions in closed accounts (ACCT-6) are listed as usual. | Planned |
+| TXN-1.12 | Transactions in hidden accounts (ACCT-1.9) shall be left out of the list and search, and hidden accounts left out of the **Account** filter, unless the screen was opened filtered to that account (from its Account Details' **Go To Transactions**). Transactions in closed accounts (ACCT-6) are listed as usual. | Implemented |
 | TXN-1.13 | The **Filters** panel shall have a **Show hidden transactions** checkbox, unchecked by default and reset by **Clear Filters**, and counted among the applied filters (TXN-1.5) when checked. When checked, hidden transactions are listed with the rest, dimmed, with a crossed-out eye icon. It's the only way to reach them in the app. | Implemented |
 | TXN-1.14 | **Min Amount** and **Max Amount** shall compare the amount's size, ignoring its sign, and a **Direction** filter (**Any**, the default, **Money out**, **Money in**) shall narrow by sign, so "Min Amount 100, Money out" finds purchases of $100 or more. The server refuses a negative Min or Max Amount (APP-5.7). | Implemented |
 
@@ -27,7 +27,7 @@ Screens: **Transactions** (`/transactions`), **Add Transaction**, **View Transac
 
 | ID | Requirement | Status |
 |---|---|---|
-| TXN-2.1 | **Add Transaction** (from the Transactions menu or an account's menu) shall show a form with: **Amount** (TXN-2.13), **Account** (required; a select of the user's open, unhidden accounts, sorted by name, plus the transaction's current account when editing; pre-selected when opened from an account), **Merchant** (text, at most 255 characters), **Original Statement** (text), **Category** (searchable by name), **Date** (date picker, required, defaults to today, not after today, APP-8.1), **Notes**, and a **Hide Transaction** checkbox. | Partial |
+| TXN-2.1 | **Add Transaction** (from the Transactions menu or an account's menu) shall show a form with: **Amount** (TXN-2.13), **Account** (required; a select of the user's open, unhidden accounts, sorted by name, plus the transaction's current account when editing, or the account the form was opened from; pre-selected when opened from an account), **Merchant** (text, at most 255 characters), **Original Statement** (text), **Category** (searchable by name), **Date** (date picker, required, defaults to today, not after today, APP-8.1), **Notes**, and a **Hide Transaction** checkbox. | Partial |
 | TXN-2.2 | **View Transaction** (titled "Transaction Details", below Transactions, APP-1.8) shall show, read-only and in this order: **Amount** (large, signed and colored as in TXN-1.1), **Account** (a link to Account Details), **Merchant**, **Original Statement**, **Category** (icon and name), **Date**, **Notes** ("-" when empty) and **Hidden** ("Yes" or "No"). A menu offers **Edit** and **Delete**. | Implemented |
 | TXN-2.3 | **Edit Transaction** shall allow changing every field, including the account and amount, except as limited for synced transactions (TXN-2.12) and split ones (TXN-4.7). | Implemented |
 | TXN-2.4 | The user can delete a transaction with **Delete** in the Transaction Details menu, after confirming in a "Delete Transaction" dialog ("Delete this transaction? This can't be undone.", **Cancel** / **Delete**). Deleting says "Transaction deleted" and returns to Transactions. | Implemented |
@@ -75,6 +75,6 @@ A split divides one transaction into **parts**, each with its own amount and cat
 
 ## Known gaps
 
-- **Every account is offered in the form (TXN-2.1),** in creation order, hidden ones included.
+- **Closed accounts are still offered in the form (TXN-2.1),** since accounts can't be closed yet (ACCT-6).
 - **Splits don't exist (TXN-4).** The `is_split` and `split_parent_id` columns are there, and import writes `false` and blank to them, but nothing reads them.
 - **No duplicate detection on import.** Importing the same file twice creates every transaction twice.

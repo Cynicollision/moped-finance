@@ -151,7 +151,8 @@ export class DashboardComponent {
         }));
         const byGroup = new Map(groups.map(g => [g.group, g]));
 
-        for (const account of this.accounts.value() ?? []) {
+        // Hidden accounts are left out of the lists and totals (DASH-2.9).
+        for (const account of (this.accounts.value() ?? []).filter(a => !a.isHidden)) {
             const group = byGroup.get(account.group)!;
             group.total += Number(account.balance) || 0;
             group.accounts.push(account);

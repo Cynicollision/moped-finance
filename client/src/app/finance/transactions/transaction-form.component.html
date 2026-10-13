@@ -74,7 +74,7 @@
             <mat-form-field appearance="outline">
                 <mat-label>Account</mat-label>
                 <mat-select formControlName="accountId">
-                    @for (acc of accounts(); track acc.id) {
+                    @for (acc of accountOptions(); track acc.id) {
                         <mat-option [value]="acc.id">{{ acc.name }}</mat-option>
                     }
                 </mat-select>
