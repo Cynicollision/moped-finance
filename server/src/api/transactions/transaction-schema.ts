@@ -24,6 +24,8 @@ export const transactionSchema = financeSchema.table(
         originalStatement: text('original_statement'),
         notes: text('notes'),
         isHidden: boolean('is_hidden').notNull().default(false),
+        // Changes the account's balance history while it isn't hidden (ACCT-5.2, TXN-2.10).
+        adjustsBalance: boolean('adjusts_balance').notNull().default(false),
         isSplit: boolean('is_split').notNull().default(false),
         splitParentId: varchar('split_parent_id', { length: 50 }).references((): AnyPgColumn => transactionSchema.id, {
             onDelete: 'restrict'
@@ -45,6 +47,7 @@ export const createTransactionSchema = createInsertSchema(transactionSchema, {
     originalStatement: SchemaUtil.optionalText(),
     notes: SchemaUtil.optionalText(),
     isHidden: z.boolean().optional(),
+    adjustsBalance: z.boolean().optional(),
     isSplit: z.boolean().optional(),
     splitParentId: SchemaUtil.optionalText(50)
 }).pick({
@@ -56,6 +59,7 @@ export const createTransactionSchema = createInsertSchema(transactionSchema, {
     originalStatement: true,
     notes: true,
     isHidden: true,
+    adjustsBalance: true,
     isSplit: true,
     splitParentId: true
 });

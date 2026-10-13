@@ -20,6 +20,7 @@ describe('ViewTransactionComponent', () => {
         originalStatement: '',
         notes: '',
         isHidden: false,
+        adjustsBalance: false,
         isSplit: false,
         splitParentId: '',
         createdAt: new Date(2026, 0, 1),

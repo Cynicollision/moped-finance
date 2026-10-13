@@ -10,6 +10,7 @@ import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
 import { writeSetEntry } from './balance-history-data';
 import { balanceHistorySchema } from './balance-history-schema';
+import { transactionSchema } from './../transactions/transaction-schema';
 
 /** Accounts come with their balance as of a date: their latest entry on or before it (ACCT-2.1). Default: today. */
 export interface IFinanceAccountData {
@@ -186,10 +187,21 @@ export class FinanceAccountData implements IFinanceAccountData {
                 return false;
             }
 
-            // The account held nothing after it closed.
+            // The account held nothing after it closed. Transactions after that no longer adjust the balance, since
+            // their entries are gone (ACCT-6.1).
             await tx
                 .delete(balanceHistorySchema)
                 .where(and(eq(balanceHistorySchema.accountId, id), gt(balanceHistorySchema.date, closedOn)));
+            await tx
+                .update(transactionSchema)
+                .set({ adjustsBalance: false, updatedAt: DateTimeUtil.now() })
+                .where(
+                    and(
+                        eq(transactionSchema.accountId, id),
+                        gt(transactionSchema.date, closedOn),
+                        eq(transactionSchema.adjustsBalance, true)
+                    )
+                );
 
             const [latest] = await tx
                 .select({ balance: balanceHistorySchema.balance })

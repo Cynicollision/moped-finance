@@ -92,6 +92,13 @@
       "when": 1791891668063,
       "tag": "0012_account_closed_on",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791928760197,
+      "tag": "0013_transaction_adjusts_balance",
+      "breakpoints": true
     }
   ]
 }

@@ -2,14 +2,20 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { SortDirection } from '@shared/core/enum';
-import { AccountType, CategoryType, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import {
+    AccountType,
+    BalanceEntrySource,
+    CategoryType,
+    TransactionsFilterKey,
+    TransactionsSortKey
+} from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { IAppLogger } from '@server/logging';
 import { DatabaseClient, FinanceEntityFactory } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
-import { FinanceAccountData } from './../accounts';
+import { FinanceAccountData, FinanceBalanceHistoryData } from './../accounts';
 import { FinanceCategoryData, FinanceCategoryGroupData } from './../categories';
 import { FinanceInstitutionData } from './../institutions';
 import { createTransactionRouter } from './transaction-routes';
@@ -1129,6 +1135,274 @@ describe('Transaction Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body).toEqual(expect.objectContaining({ notes: 'Edited', categoryId: '' }));
+        });
+    });
+
+    describe('balance adjustments (ACCT-5)', () => {
+        const Set = BalanceEntrySource.Set;
+        const Adjusted = BalanceEntrySource.Adjusted;
+        let manualAccountId: string;
+
+        beforeEach(async () => {
+            const account = await accountsData.insert(
+                FinanceEntityFactory.createAccount({
+                    institutionId: testInstitutionId,
+                    name: 'Wallet',
+                    type: AccountType.Checking,
+                    isHidden: false,
+                    isManual: true,
+                    balance: 0
+                })
+            );
+            manualAccountId = account.id!;
+        });
+
+        async function seedBalances(entries: [string, number, BalanceEntrySource][], accountId = manualAccountId) {
+            await new FinanceBalanceHistoryData(dbClient).insertBulk(
+                entries.map(([date, balance, source]) =>
+                    FinanceEntityFactory.createBalanceHistory({ accountId, date, balance, source })
+                )
+            );
+        }
+
+        async function balances(accountId = manualAccountId): Promise<[string, number, string][]> {
+            const result = await pglite.query<{ date: string; balance: string; source: string }>(
+                `SELECT to_char(date, 'YYYY-MM-DD') AS date, balance, source FROM finance.balance_history
+                 WHERE account_id = $1 ORDER BY date`,
+                [accountId]
+            );
+            return result.rows.map(r => [r.date, Number(r.balance), r.source]);
+        }
+
+        async function amounts(accountId = manualAccountId): Promise<number[]> {
+            return (await balances(accountId)).map(([, balance]) => balance);
+        }
+
+        function post(fields: object) {
+            return request(app)
+                .post('/transactions')
+                .send({ accountId: manualAccountId, date: '2026-05-05', amount: -50, merchant: 'Shop', ...fields });
+        }
+
+        async function postAdjusting(fields: object = {}): Promise<Transaction> {
+            const response = await post({ adjustsBalance: true, ...fields });
+            expect(response.status).toBe(201);
+            return response.body;
+        }
+
+        const history: [string, number, BalanceEntrySource][] = [
+            ['2026-05-01', 1000, Set],
+            ['2026-05-10', 900, Adjusted],
+            ['2026-05-20', 500, Set],
+            ['2026-05-25', 450, Adjusted]
+        ];
+
+        it('ACCT-5.2 TXN-2.8 should add the amount from its date up to the next set entry, creating an entry on its date', async () => {
+            await seedBalances(history);
+
+            const created = await postAdjusting();
+
+            expect(created.adjustsBalance).toBe(true);
+            expect(await balances()).toEqual([
+                ['2026-05-01', 1000, Set],
+                ['2026-05-05', 950, Adjusted],
+                ['2026-05-10', 850, Adjusted],
+                ['2026-05-20', 500, Set],
+                ['2026-05-25', 450, Adjusted]
+            ]);
+        });
+
+        it('ACCT-5.2 should shift an entry on its own date even if it is a set entry, and run on when no set entry follows', async () => {
+            await seedBalances(history);
+
+            await postAdjusting({ date: '2026-05-20', amount: 25.5 });
+
+            expect(await balances()).toEqual([
+                ['2026-05-01', 1000, Set],
+                ['2026-05-10', 900, Adjusted],
+                ['2026-05-20', 525.5, Set],
+                ['2026-05-25', 475.5, Adjusted]
+            ]);
+        });
+
+        it('ACCT-5.2 should start from 0 when there is no earlier entry', async () => {
+            await seedBalances([['2026-05-10', 900, Set]]);
+
+            await postAdjusting({ date: '2026-05-01', amount: -20 });
+
+            expect(await balances()).toEqual([
+                ['2026-05-01', -20, Adjusted],
+                ['2026-05-10', 900, Set]
+            ]);
+        });
+
+        it('ACCT-5.4 should make a liability more negative for a purchase and less for a payment', async () => {
+            await seedBalances([['2026-05-01', -300, Set]]);
+
+            await postAdjusting({ date: '2026-05-02', amount: -50 });
+            await postAdjusting({ date: '2026-05-03', amount: 200 });
+
+            expect(await amounts()).toEqual([-300, -350, -150]);
+        });
+
+        it('TXN-2.8 TXN-2.10 should leave balances alone without Adjust balance, or when hidden', async () => {
+            await seedBalances(history);
+
+            const plain = await post({});
+            await postAdjusting({ isHidden: true });
+
+            expect(plain.status).toBe(201);
+            expect(plain.body.adjustsBalance).toBe(false);
+            expect(await balances()).toEqual(history);
+        });
+
+        it('ACCT-5.3 should undo and reapply a change of amount, date or account', async () => {
+            await seedBalances(history);
+            const otherId = await insertAccount({});
+            await accountsData.update({ ...(await accountsData.retrieveSingle(otherId))!, isManual: true });
+            const created = await postAdjusting();
+
+            await request(app).put(`/transactions/${created.id}`).send({ amount: -70, date: '2026-05-12' });
+            expect(await balances()).toEqual([
+                ['2026-05-01', 1000, Set],
+                ['2026-05-05', 1000, Adjusted],
+                ['2026-05-10', 900, Adjusted],
+                ['2026-05-12', 830, Adjusted],
+                ['2026-05-20', 500, Set],
+                ['2026-05-25', 450, Adjusted]
+            ]);
+
+            await request(app).put(`/transactions/${created.id}`).send({ accountId: otherId });
+            expect(await amounts()).toEqual([1000, 1000, 900, 900, 500, 450]);
+            expect(await balances(otherId)).toEqual([['2026-05-12', -70, Adjusted]]);
+        });
+
+        it('ACCT-5.3 TXN-2.8 should undo when Adjust balance is cleared and apply when it is checked', async () => {
+            await seedBalances(history);
+            const created = await postAdjusting();
+
+            await request(app).put(`/transactions/${created.id}`).send({ adjustsBalance: false });
+            expect(await amounts()).toEqual([1000, 1000, 900, 500, 450]);
+
+            await request(app).put(`/transactions/${created.id}`).send({ adjustsBalance: true });
+            expect(await amounts()).toEqual([1000, 950, 850, 500, 450]);
+        });
+
+        it('ACCT-5.3 should leave balances alone when only the merchant, category or notes change', async () => {
+            await seedBalances(history);
+            const created = await postAdjusting();
+            // A balance set on its date afterwards already counts it; editing the details mustn't move it again.
+            await pglite.query(
+                `UPDATE finance.balance_history SET balance = 700, source = 'set' WHERE account_id = $1 AND date = '2026-05-05'`,
+                [manualAccountId]
+            );
+            const before = await balances();
+
+            const response = await request(app)
+                .put(`/transactions/${created.id}`)
+                .send({ merchant: 'Market', notes: 'Weekly', categoryId: testCategoryId });
+
+            expect(response.status).toBe(200);
+            expect(await balances()).toEqual(before);
+        });
+
+        it('ACCT-5.3 should undo when deleted', async () => {
+            await seedBalances(history);
+            const created = await postAdjusting();
+
+            const response = await request(app).delete(`/transactions/${created.id}`);
+
+            expect(response.status).toBe(204);
+            expect(await amounts()).toEqual([1000, 1000, 900, 500, 450]);
+        });
+
+        it('ACCT-5.3 should create no entry when undoing on a date whose entries were replaced since', async () => {
+            await seedBalances([['2026-05-01', 1000, Set]]);
+            const created = await postAdjusting();
+            // An import over the date replaces its entries with ones that already count the transaction.
+            await new FinanceBalanceHistoryData(dbClient).replaceRange(manualAccountId, '2026-05-01', '2026-05-10', [
+                FinanceEntityFactory.createBalanceHistory({
+                    accountId: manualAccountId,
+                    date: '2026-05-10',
+                    balance: 940
+                })
+            ]);
+
+            await request(app).delete(`/transactions/${created.id}`);
+
+            expect(await balances()).toEqual([['2026-05-10', 940, Set]]);
+        });
+
+        it('TXN-2.10 should undo when hidden and apply again when shown', async () => {
+            await seedBalances(history);
+            const created = await postAdjusting();
+
+            await request(app).put(`/transactions/${created.id}`).send({ isHidden: true });
+            expect(await amounts()).toEqual([1000, 1000, 900, 500, 450]);
+
+            await request(app).put(`/transactions/${created.id}`).send({ isHidden: false });
+            expect(await amounts()).toEqual([1000, 950, 850, 500, 450]);
+        });
+
+        it('ACCT-4.4 ACCT-5.5 should refuse Adjust balance for a connected account', async () => {
+            const create = await post({ accountId: testAccountId, adjustsBalance: true });
+            const plain = await insertTransaction();
+            const update = await request(app).put(`/transactions/${plain.id}`).send({ adjustsBalance: true });
+
+            for (const response of [create, update]) {
+                expect(response.status).toBe(400);
+                expect(response.body.message).toBe("A connected account's balance comes from its bank.");
+            }
+            expect(await balances(testAccountId)).toEqual([]);
+        });
+
+        it("ACCT-6.3 should refuse to change a closed account's balance through its transactions", async () => {
+            await seedBalances([['2026-05-01', 1000, Set]]);
+            const created = await postAdjusting();
+            await accountsData.close(manualAccountId, '2026-05-15');
+            const before = await balances();
+
+            const refused = [
+                await post({ adjustsBalance: true }),
+                await request(app).put(`/transactions/${created.id}`).send({ amount: -10 }),
+                await request(app).put(`/transactions/${created.id}`).send({ isHidden: true }),
+                await request(app).delete(`/transactions/${created.id}`)
+            ];
+            for (const response of refused) {
+                expect(response.status).toBe(400);
+                expect(response.body.message).toBe('Reopen this account to change its balance.');
+            }
+
+            const rename = await request(app).put(`/transactions/${created.id}`).send({ merchant: 'Market' });
+            const plain = await post({});
+            expect(rename.status).toBe(200);
+            expect(plain.status).toBe(201);
+            expect(await balances()).toEqual(before);
+        });
+
+        it('ACCT-5.6 should save neither the transaction nor its balance change when the balances fail to save', async () => {
+            await seedBalances(history);
+            await pglite.exec(`
+                CREATE FUNCTION finance.reject_balance() RETURNS trigger AS $$
+                BEGIN
+                    IF NEW.balance = 850 THEN RAISE EXCEPTION 'boom'; END IF;
+                    RETURN NEW;
+                END $$ LANGUAGE plpgsql;
+                CREATE TRIGGER reject_balance BEFORE UPDATE ON finance.balance_history
+                    FOR EACH ROW EXECUTE FUNCTION finance.reject_balance();
+            `);
+
+            try {
+                const response = await post({ adjustsBalance: true });
+
+                expect(response.status).toBe(500);
+                expect(await countTransactions()).toBe(0);
+                expect(await balances()).toEqual(history);
+            } finally {
+                await pglite.exec(
+                    'DROP TRIGGER reject_balance ON finance.balance_history; DROP FUNCTION finance.reject_balance();'
+                );
+            }
         });
     });
 });

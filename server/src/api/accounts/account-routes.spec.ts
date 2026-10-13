@@ -651,6 +651,41 @@ describe('Account Routes', () => {
             expect(response.body).toEqual(expect.objectContaining({ balance: 42, balanceDate: '2026-05-17' }));
         });
 
+        it('ACCT-5.7 should move the adjusted entries after a set balance by as much as it changed, up to the next set entry', async () => {
+            const account = await insertAccount();
+            const adjusted = BalanceEntrySource.Adjusted;
+            await balanceHistoryData.insertBulk(
+                (
+                    [
+                        ['2026-05-01', 100, BalanceEntrySource.Set],
+                        ['2026-05-05', 90, adjusted],
+                        ['2026-05-07', 85, adjusted],
+                        ['2026-05-09', 80, BalanceEntrySource.Set],
+                        ['2026-05-12', 75, adjusted]
+                    ] as const
+                ).map(([date, balance, source]) =>
+                    FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date, balance, source })
+                )
+            );
+
+            // A new entry changes the balance carried to its date (100 to 150); one replacing an entry changes it.
+            await request(app)
+                .put(`/accounts/${account.id}`)
+                .send({ balanceEntry: { date: '2026-05-03', balance: 150 } });
+            await request(app)
+                .put(`/accounts/${account.id}`)
+                .send({ balanceEntry: { date: '2026-05-05', balance: 145 } });
+
+            expect(await balancesFor(account.id)).toEqual([
+                ['2026-05-01', 100],
+                ['2026-05-03', 150],
+                ['2026-05-05', 145],
+                ['2026-05-07', 140],
+                ['2026-05-09', 80],
+                ['2026-05-12', 75]
+            ]);
+        });
+
         it('ACCT-1.5 should record no balance when none is sent', async () => {
             const account = await insertAccount();
 
@@ -735,6 +770,33 @@ describe('Account Routes', () => {
                 ['2026-06-05', 0]
             ]);
             expect(await sourcesFor(account.id)).toContainEqual(['2026-06-05', BalanceEntrySource.Set]);
+        });
+
+        it('ACCT-6.1 should stop transactions after the date from adjusting the balance', async () => {
+            const account = await insertWithBalances([['2026-05-01', 500]]);
+            const insert = (date: string) =>
+                transactionsData.insert(
+                    FinanceEntityFactory.createTransaction({
+                        accountId: account.id,
+                        categoryId: testCategoryId,
+                        date,
+                        amount: -10,
+                        merchant: 'Shop',
+                        originalStatement: '',
+                        notes: '',
+                        isHidden: false,
+                        adjustsBalance: true,
+                        isSplit: false,
+                        splitParentId: ''
+                    })
+                );
+            const before = await insert('2026-06-05');
+            const after = await insert('2026-06-08');
+
+            await request(app).post(`/accounts/${account.id}/close`).send({ closedOn: '2026-06-05' });
+
+            expect((await transactionsData.retrieveSingle(before.id))!.adjustsBalance).toBe(true);
+            expect((await transactionsData.retrieveSingle(after.id))!.adjustsBalance).toBe(false);
         });
 
         it('ACCT-6.1 should record nothing when the balance on the date is already 0', async () => {
