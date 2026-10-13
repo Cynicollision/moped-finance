@@ -104,9 +104,18 @@ export async function writeSetEntry(tx: DbTransaction, accountId: string, entry:
         });
 
     // In cents, so float error can't make an unchanged balance look changed.
-    const change = Math.round((entry.balance - (carried?.balance ?? 0)) * 100) / 100;
-    if (change !== 0) {
-        await shiftUntilNextSetEntry(tx, accountId, entry.date, change, false);
+    await shiftAfterSetEntry(tx, accountId, entry.date, entry.balance - (carried?.balance ?? 0));
+}
+
+/**
+ * Moves the adjusted entries after a new set entry by as much as it changed the balance on its date, up to the next
+ * set entry, so each stays its checkpoint plus the transactions since (ACCT-5.7).
+ */
+async function shiftAfterSetEntry(tx: DbTransaction, accountId: string, date: CalendarDate, change: number) {
+    // In cents, so float error can't make an unchanged balance look changed.
+    const cents = Math.round(change * 100);
+    if (cents !== 0) {
+        await shiftUntilNextSetEntry(tx, accountId, date, cents / 100, false);
     }
 }
 
@@ -167,7 +176,10 @@ export interface IFinanceBalanceHistoryData {
     retrieveGroupChanges(startDate: CalendarDate, endDate: CalendarDate): Promise<AccountGroupChange[]>;
     /** Inserts all of the records or, if any insert fails, none of them. */
     insertBulk(records: BalanceHistory[]): Promise<void>;
-    /** Replaces the account's balances from startDate to endDate (inclusive) with the records, atomically. */
+    /**
+     * Replaces the account's balances from startDate to endDate (inclusive) with the records, atomically, and moves
+     * the adjusted entries after endDate by as much as the record on endDate changed the balance there (ACCT-5.7).
+     */
     replaceRange(
         accountId: string,
         startDate: CalendarDate,
@@ -324,6 +336,7 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
     ): Promise<void> {
         // One transaction, so a failed insert leaves the old balances in place.
         await this.db.transaction(async tx => {
+            const carried = await retrieveCarried(tx, accountId, endDate);
             await tx
                 .delete(balanceHistorySchema)
                 .where(
@@ -335,6 +348,11 @@ export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
                 );
 
             await this.insertChunks(tx, records);
+
+            const last = records.find(record => record.date === endDate);
+            if (last) {
+                await shiftAfterSetEntry(tx, accountId, endDate, last.balance - (carried?.balance ?? 0));
+            }
         });
     }
 

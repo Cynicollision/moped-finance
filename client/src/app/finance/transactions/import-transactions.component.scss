@@ -20,6 +20,16 @@
     margin: 8px 0 0;
 }
 
+.adjust-option {
+    margin: 16px 0;
+
+    .hint {
+        margin: 0 0 0 40px;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+}
+
 .notice-icon {
     color: var(--mat-sys-primary);
 }

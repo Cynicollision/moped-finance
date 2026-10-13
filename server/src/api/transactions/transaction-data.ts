@@ -32,7 +32,10 @@ export interface IFinanceTransactionData {
     retrieveSpendingByCategory(startDate: CalendarDate, endDate: CalendarDate): Promise<SpendingTotal[]>;
     retrieveSingle(id: string): Promise<Transaction | null>;
     insert(transaction: Transaction): Promise<Transaction>;
-    /** Inserts all of the transactions or, if any insert fails, none of them. */
+    /**
+     * Inserts all of the transactions or, if any insert fails, none of them, applying the balance changes of those
+     * that adjust the balance in the same database transaction (ACCT-5.6, TXN-3.11).
+     */
     insertBulk(transactions: Transaction[]): Promise<void>;
     update(transaction: Transaction): Promise<Transaction | null>;
     delete(id: string): Promise<boolean>;
@@ -327,6 +330,20 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             for (let i = 0; i < transactions.length; i += bulkInsertChunkSize) {
                 const chunk = transactions.slice(i, i + bulkInsertChunkSize);
                 await tx.insert(transactionSchema).values(chunk.map(mapTransactionToRow));
+            }
+
+            // One change per account and date, the day's total in cents: the same balances as one per transaction.
+            const totals = new Map<string, BalanceAdjustment & { cents: number }>();
+            for (const adjustment of transactions.map(balanceAdjustment)) {
+                if (adjustment) {
+                    const key = `${adjustment.accountId} ${adjustment.date}`;
+                    const total = totals.get(key) ?? { ...adjustment, cents: 0 };
+                    total.cents += Math.round(adjustment.amount * 100);
+                    totals.set(key, total);
+                }
+            }
+            for (const { accountId, date, cents } of totals.values()) {
+                await applyAdjustment(tx, accountId, date, cents / 100);
             }
         });
     }

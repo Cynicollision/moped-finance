@@ -128,6 +128,12 @@ describe('FinanceService', () => {
         http.expectOne('/api/v1/transactions/import?dryRun=false&accountId=a1').flush({ isValidToImport: true });
         await oneAccount;
 
+        const adjusting = finance.importTransactions(file, false, 'a1', true);
+        http.expectOne('/api/v1/transactions/import?dryRun=false&accountId=a1&adjustBalances=true').flush({
+            isValidToImport: true
+        });
+        await adjusting;
+
         expect(finance.getExportTransactionsUrl()).toBe('api/v1/transactions/export');
         expect(finance.getExportTransactionsUrl('a1')).toBe('api/v1/transactions/export?accountId=a1');
     });
