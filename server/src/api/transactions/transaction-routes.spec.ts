@@ -473,6 +473,90 @@ describe('Transaction Routes', () => {
         });
     });
 
+    describe('GET /spending/average', () => {
+        function getAverage(asOfDate = '2026-06-15'): request.Test {
+            return request(app).get(`/transactions/spending/average?asOfDate=${asOfDate}`);
+        }
+
+        it('BUD-1.8 CASH-1.12 should average the 12 full months before the current one', async () => {
+            await insertTransaction({ date: '2025-05-31', amount: -1 });
+            await insertTransaction({ date: '2025-06-01', amount: -120 });
+            await insertTransaction({ date: '2026-05-31', amount: -240 });
+            await insertTransaction({ date: '2026-06-01', amount: -1000 });
+
+            const response = await getAverage();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({
+                startDate: '2025-06-01',
+                endDate: '2026-05-31',
+                months: 12,
+                totals: [{ categoryId: testCategoryId, type: CategoryType.Expense, amount: 30 }],
+                transfers: []
+            });
+        });
+
+        it('BUD-1.8 CASH-1.12 should average over fewer months when the oldest transaction is more recent', async () => {
+            await insertTransaction({ date: '2026-03-20', amount: -100 });
+
+            const response = await getAverage();
+
+            expect(response.body).toEqual({
+                startDate: '2026-03-01',
+                endDate: '2026-05-31',
+                months: 3,
+                totals: [{ categoryId: testCategoryId, type: CategoryType.Expense, amount: 33.33 }],
+                transfers: []
+            });
+        });
+
+        it('BUD-1.8 CASH-1.12 should have no months when nothing is older than the current month', async () => {
+            await insertTransaction({ date: '2026-06-01', amount: -100 });
+
+            const response = await getAverage();
+
+            expect(response.body).toEqual({
+                startDate: '2026-06-01',
+                endDate: '2026-05-31',
+                months: 0,
+                totals: [],
+                transfers: []
+            });
+        });
+
+        it('CASH-1.12 should leave hidden transactions out of the window and the averages', async () => {
+            await insertTransaction({ date: '2026-01-10', amount: -1000, isHidden: true });
+            await insertTransaction({ date: '2026-05-10', amount: -40 });
+
+            const response = await getAverage();
+
+            expect(response.body.months).toBe(1);
+            expect(response.body.totals).toEqual([
+                { categoryId: testCategoryId, type: CategoryType.Expense, amount: 40 }
+            ]);
+        });
+
+        it('BUD-1.8 should average a transfer category by its money out only', async () => {
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Transfer, name: 'Transfers' })
+            );
+            const savings = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Savings', icon: '', isActive: true })
+            );
+            const savingsAccountId = await insertAccount({});
+            for (const date of ['2026-04-01', '2026-05-01']) {
+                await insertTransaction({ date, categoryId: savings.id!, amount: -500 });
+                await insertTransaction({ date, categoryId: savings.id!, accountId: savingsAccountId, amount: 500 });
+            }
+
+            const response = await getAverage();
+
+            expect(response.body.months).toBe(2);
+            expect(response.body.totals).toEqual([]);
+            expect(response.body.transfers).toEqual([{ categoryId: savings.id, amount: 500 }]);
+        });
+    });
+
     describe('GET /:id', () => {
         it('TXN-2.2 should return a single transaction when found', async () => {
             const txn = await transactionsData.insert(
