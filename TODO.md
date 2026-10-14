@@ -19,9 +19,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 10. Budget 12-month averages
-- [ ] CASH-1.12: Spending's **Average** view, the same average month for every category beside its monthly budget, from `GET /transactions/spending/average` (`SpendingAverage`, already used by Budget's stream panel).
-
 ### 11. Split transactions: core
 - [ ] TXN-4.1 to 4.3, 4.5, 4.7: split, edit split and unsplit, using the existing `is_split` / `split_parent_id` columns (or replacing them if a parts table fits better). The split dialog with the remainder filling the last part. Splits adjust the balance once, by the total.
 
@@ -67,7 +64,6 @@ Manual entry and import/export come first. Constraints for when this gets picked
 ### Known gaps
 - [ ] **Duplicate detection on transaction import** (Transactions Known gaps): importing the same file twice creates everything twice. Decide on a match (date, account, amount, statement) and how the dry run reports it; related to bank sync's de-duplication.
 - [ ] **CSV import trims every value** (`CsvFile` in `csv-file.ts` trims each cell), so an exported value with leading or trailing spaces, such as an Original Statement of "BIG STORE U*** ", comes back without them, though TXN-3.1 says exports re-import unchanged. Either trim text fields when saving them (form and API), so exports never carry the spaces, or keep text cells as written on import. Balances and amounts aren't affected (found checking ACCT-3.11).
-- [ ] **Budget's Add buttons are labelled "Add Expenses"** for screen readers (Budget Known gaps): BUD-1.3 says "Add Expense" (and "Add Income", "Add Savings"). `budget.component.html` builds the `aria-label` from the section title; use `streamTypeLabel` instead and update `budget.component.spec.ts`, which queries the label.
 - [ ] **Changing an account between asset and liability types** (Accounts Known gaps): the stored balances keep their sign, so a $500 checking account changed to a credit card reads as $500 in credit. Decide whether Edit Account flips the history's sign or warns first (`account-controller.ts`, `updateAccount`).
 
 ### Major dependency upgrades
