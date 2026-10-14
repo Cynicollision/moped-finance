@@ -19,8 +19,7 @@ describe('TransactionFormComponent', () => {
         notes: '',
         isHidden: false,
         adjustsBalance: false,
-        isSplit: false,
-        splitParentId: '',
+        parts: [],
         createdAt: new Date(2026, 0, 1),
         updatedAt: new Date(2026, 0, 1)
     };
@@ -298,6 +297,45 @@ describe('TransactionFormComponent', () => {
                 l => l.textContent
             );
             expect(labels).not.toContain('Adjusts balance');
+        });
+    });
+
+    describe('split transactions (TXN-4)', () => {
+        const categories = [{ id: 'food', name: 'Food', icon: '🍎', isActive: true }] as Category[];
+        const split: Transaction = {
+            ...transaction,
+            amount: -100,
+            parts: [
+                { id: 'p1', amount: -70, categoryId: 'food', merchant: 'Shop', notes: 'lunch' },
+                { id: 'p2', amount: -30, categoryId: '', merchant: 'Shop Cafe', notes: '' }
+            ].map(p => ({ ...p, createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1) }))
+        };
+
+        it('TXN-4.5 should list the parts in place of the category when viewing a split transaction', async () => {
+            const { element } = await render('readonly', split, categories);
+
+            const parts = Array.from(element.querySelectorAll('li.part')).map(p =>
+                p.textContent!.replace(/\s+/g, ' ').trim()
+            );
+            expect(parts).toEqual(['🍎 Food Shop · lunch $70.00', 'Uncategorized Shop Cafe $30.00']);
+            expect(element.textContent).toContain('Split into 2 parts');
+            expect(element.textContent).not.toContain('Category');
+        });
+
+        it("TXN-4.7 should lock a split transaction's amount, date and account, and hide its category, on Edit", async () => {
+            const { fixture, element, saved } = await render('edit', split, categories);
+            const controls = fixture.componentInstance.transactionForm.controls;
+
+            expect(
+                [controls.amount, controls.direction, controls.date, controls.accountId].map(c => c.disabled)
+            ).toEqual([true, true, true, true]);
+            expect(controls.merchant.enabled).toBe(true);
+            expect(element.querySelector('.split-note')!.textContent).toContain('Unsplit it to change');
+            expect(element.querySelector('input[formControlName="category"]')).toBeNull();
+
+            controls.merchant.setValue('Renamed');
+            fixture.componentInstance.onSave();
+            expect(saved[0]).toMatchObject({ amount: -100, date: '2026-05-01', categoryId: '', merchant: 'Renamed' });
         });
     });
 });

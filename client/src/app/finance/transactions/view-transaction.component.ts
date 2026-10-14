@@ -7,6 +7,7 @@ import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
+import { SplitTransactionModalComponent, SplitTransactionModalData } from './split-transaction-modal.component';
 import { TransactionFormComponent } from './transaction-form.component';
 import { FinanceService } from './../finance.service';
 import { ModalService } from './../../core/modal/modal.service';
@@ -41,10 +42,46 @@ export class ViewTransactionComponent {
         loader: id => this.financeService.fetchTransaction(id)
     });
     readonly transaction = computed(() => this.data.value() ?? null);
+    readonly isSplit = computed(() => (this.transaction()?.parts.length ?? 0) > 0);
 
     onEdit() {
         if (this.transactionId) {
             this.router.navigate(['/transactions', this.transactionId, 'edit']);
+        }
+    }
+
+    /** Splits the transaction, or changes its parts when it's split (TXN-4.1, TXN-4.5). */
+    async split() {
+        const transaction = this.transaction();
+        if (!transaction) {
+            return;
+        }
+
+        const changed = await this.modalService.open<
+            SplitTransactionModalComponent,
+            SplitTransactionModalData,
+            boolean
+        >(SplitTransactionModalComponent, { transaction });
+        if (changed) {
+            this.data.reload();
+        }
+    }
+
+    /** Turns it back into one transaction, after asking (TXN-4.5). */
+    async unsplit() {
+        if (!this.transactionId) {
+            return;
+        }
+
+        const confirmed = await this.modalService.confirm({
+            title: 'Unsplit Transaction',
+            message:
+                "Combine the parts back into one transaction? It takes the first part's category, merchant and notes.",
+            confirmLabel: 'Unsplit'
+        });
+        if (confirmed && (await this.financeService.unsplitTransaction(this.transactionId))) {
+            this.notificationService.success('Transaction unsplit');
+            this.data.reload();
         }
     }
 

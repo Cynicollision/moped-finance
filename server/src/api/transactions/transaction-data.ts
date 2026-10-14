@@ -1,18 +1,18 @@
-import { AnyColumn, eq, and, desc, asc, ilike, isNull, gt, gte, lt, lte, min, sql, SQL } from 'drizzle-orm';
+import { AnyColumn, eq, and, desc, asc, ilike, inArray, isNull, gt, gte, lt, lte, min, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
-import { Transaction } from '@shared/finance/types';
+import { Transaction, TransactionPart, TransactionPartFields } from '@shared/finance/types';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { CategoryType, TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Uncategorized } from '@shared/finance/util';
-import { IDatabaseClient } from '@server/data';
+import { FinanceEntityFactory, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
 import { applyAdjustment, DbTransaction, undoAdjustment } from './../accounts/balance-history-data';
 import { categoryGroupSchema } from './../categories/category-groups/category-group-schema';
 import { categorySchema } from './../categories/category-schema';
-import { transactionSchema } from './transaction-schema';
+import { transactionPartSchema, transactionSchema } from './transaction-schema';
 
 /** A transaction as written to CSV: the date as YYYY-MM-DD and the amount exactly as stored. */
 export interface TransactionExport {
@@ -52,10 +52,17 @@ export interface IFinanceTransactionData {
      */
     insertBulk(transactions: Transaction[]): Promise<void>;
     update(transaction: Transaction): Promise<Transaction | null>;
+    /**
+     * Splits the transaction into the parts, in order, replacing any it had, and clears its own category (TXN-4.1,
+     * TXN-4.5). Null when it doesn't exist.
+     */
+    split(id: string, parts: TransactionPartFields[]): Promise<Transaction | null>;
+    /** Removes its parts, giving it the first part's category, merchant and notes (TXN-4.5). Null when it doesn't exist. */
+    unsplit(id: string): Promise<Transaction | null>;
     delete(id: string): Promise<boolean>;
 }
 
-function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transaction {
+function mapRowToTransaction(row: typeof transactionSchema.$inferSelect, parts: TransactionPart[] = []): Transaction {
     return {
         id: row.id,
         createdAt: row.createdAt,
@@ -69,10 +76,31 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
         notes: row.notes ?? '',
         isHidden: row.isHidden,
         adjustsBalance: row.adjustsBalance,
-        isSplit: row.isSplit,
-        splitParentId: row.splitParentId ?? ''
+        parts
     };
 }
+
+function mapRowToPart(row: typeof transactionPartSchema.$inferSelect): TransactionPart {
+    return {
+        id: row.id,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        amount: Number(row.amount),
+        categoryId: row.categoryId ?? '',
+        merchant: row.merchant,
+        notes: row.notes ?? ''
+    };
+}
+
+/**
+ * What Spending counts a transaction as: itself, or each of its parts once it's split (TXN-4.6). Needs the parts
+ * left-joined, which gives a split transaction one row per part.
+ */
+const line = {
+    categoryId: sql<string | null>`case when ${transactionPartSchema.id} is null
+        then ${transactionSchema.categoryId} else ${transactionPartSchema.categoryId} end`,
+    amount: sql`coalesce(${transactionPartSchema.amount}, ${transactionSchema.amount})`
+};
 
 // Spending leaves out hidden transactions and those in hidden accounts (CASH-1.2). Needs the account joined.
 const countedBySpending = and(eq(transactionSchema.isHidden, false), eq(accountSchema.isHidden, false));
@@ -110,9 +138,7 @@ function mapTransactionToRow(transaction: Transaction): typeof transactionSchema
         originalStatement: transaction.originalStatement || null,
         notes: transaction.notes || null,
         isHidden: transaction.isHidden,
-        adjustsBalance: transaction.adjustsBalance,
-        isSplit: transaction.isSplit,
-        splitParentId: transaction.splitParentId || null
+        adjustsBalance: transaction.adjustsBalance
     };
 }
 
@@ -281,7 +307,29 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         }
 
         const rows = await query;
-        return rows.map(row => mapRowToTransaction(row.transaction));
+        const parts = await this.retrieveParts(rows.map(row => row.transaction.id));
+        return rows.map(row => mapRowToTransaction(row.transaction, parts.get(row.transaction.id)));
+    }
+
+    /** The parts of those of the transactions that are split, in order, by transaction ID. */
+    private async retrieveParts(
+        transactionIds: string[],
+        db: NodePgDatabase | DbTransaction = this.db
+    ): Promise<Map<string, TransactionPart[]>> {
+        const parts = new Map<string, TransactionPart[]>();
+        if (transactionIds.length === 0) {
+            return parts;
+        }
+
+        const rows = await db
+            .select()
+            .from(transactionPartSchema)
+            .where(inArray(transactionPartSchema.transactionId, transactionIds))
+            .orderBy(asc(transactionPartSchema.position));
+        for (const row of rows) {
+            parts.set(row.transactionId, [...(parts.get(row.transactionId) ?? []), mapRowToPart(row)]);
+        }
+        return parts;
     }
 
     public async retrieveMerchants(): Promise<string[]> {
@@ -301,24 +349,26 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             return null;
         }
 
-        return mapRowToTransaction(rows[0]);
+        const parts = await this.retrieveParts([id]);
+        return mapRowToTransaction(rows[0], parts.get(id));
     }
 
     public async retrieveCategoryFlows(startDate: CalendarDate, endDate: CalendarDate): Promise<CategoryFlow[]> {
-        const amount = transactionSchema.amount;
+        const amount = line.amount;
         const rows = await this.db
             .select({
-                categoryId: transactionSchema.categoryId,
+                categoryId: line.categoryId,
                 categoryType: categoryGroupSchema.type,
                 moneyIn: sql`coalesce(sum(${amount}) filter (where ${amount} > 0), 0)`.mapWith(Number),
                 moneyOut: sql`coalesce(-sum(${amount}) filter (where ${amount} < 0), 0)`.mapWith(Number)
             })
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
-            .leftJoin(categorySchema, eq(categorySchema.id, transactionSchema.categoryId))
+            .leftJoin(transactionPartSchema, eq(transactionPartSchema.transactionId, transactionSchema.id))
+            .leftJoin(categorySchema, eq(categorySchema.id, line.categoryId))
             .leftJoin(categoryGroupSchema, eq(categoryGroupSchema.id, categorySchema.groupId))
             .where(and(gte(transactionSchema.date, startDate), lte(transactionSchema.date, endDate), countedBySpending))
-            .groupBy(transactionSchema.categoryId, categoryGroupSchema.type);
+            .groupBy(line.categoryId, categoryGroupSchema.type);
 
         return rows.map(row => ({
             categoryId: row.categoryId ?? '',
@@ -400,9 +450,68 @@ export class FinanceTransactionData implements IFinanceTransactionData {
                 .where(eq(transactionSchema.id, transaction.id!))
                 .returning();
 
-            const updated = mapRowToTransaction(rows[0]);
+            const parts = await this.retrieveParts([transaction.id], tx);
+            const updated = mapRowToTransaction(rows[0], parts.get(transaction.id));
             await moveAdjustment(tx, mapRowToTransaction(current), updated);
             return updated;
+        });
+    }
+
+    public async split(id: string, parts: TransactionPartFields[]): Promise<Transaction | null> {
+        // The amount, date and account stay as they are, and so do the balances (TXN-4.7).
+        return this.db.transaction(async tx => {
+            const rows = await tx
+                .update(transactionSchema)
+                .set({ categoryId: null, updatedAt: DateTimeUtil.now() })
+                .where(eq(transactionSchema.id, id))
+                .returning();
+            if (rows.length === 0) {
+                return null;
+            }
+
+            await tx.delete(transactionPartSchema).where(eq(transactionPartSchema.transactionId, id));
+            const inserted = await tx
+                .insert(transactionPartSchema)
+                .values(
+                    parts.map((part, position) => ({
+                        id: FinanceEntityFactory.createTransactionPart(part).id,
+                        transactionId: id,
+                        position,
+                        amount: part.amount.toString(),
+                        categoryId: part.categoryId || null,
+                        merchant: part.merchant,
+                        notes: part.notes || null
+                    }))
+                )
+                .returning();
+            inserted.sort((a, b) => a.position - b.position);
+            return mapRowToTransaction(rows[0], inserted.map(mapRowToPart));
+        });
+    }
+
+    public async unsplit(id: string): Promise<Transaction | null> {
+        return this.db.transaction(async tx => {
+            const [first] = await tx
+                .select()
+                .from(transactionPartSchema)
+                .where(eq(transactionPartSchema.transactionId, id))
+                .orderBy(asc(transactionPartSchema.position))
+                .limit(1);
+            const fromFirstPart = first
+                ? { categoryId: first.categoryId, merchant: first.merchant, notes: first.notes }
+                : {};
+
+            const rows = await tx
+                .update(transactionSchema)
+                .set({ ...fromFirstPart, updatedAt: DateTimeUtil.now() })
+                .where(eq(transactionSchema.id, id))
+                .returning();
+            if (rows.length === 0) {
+                return null;
+            }
+
+            await tx.delete(transactionPartSchema).where(eq(transactionPartSchema.transactionId, id));
+            return mapRowToTransaction(rows[0]);
         });
     }
 

@@ -122,6 +122,8 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     /** Only a manual account's transactions can adjust its balance (TXN-2.8, TXN-2.9, ACCT-5.5). */
     readonly canAdjustBalance = computed(() => this.accounts().find(a => a.id === this.accountId())?.isManual ?? false);
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
+    /** Its parts' categories decide how it's counted, and its amount, date and account stay put (TXN-4.7). */
+    readonly isSplit = computed(() => (this.transaction()?.parts.length ?? 0) > 0);
     /** The categories to choose from: active ones, plus the one the transaction already has (CAT-4.1, CAT-4.2). */
     readonly categoryOptions = computed(() => {
         const currentId = this.transaction()?.categoryId;
@@ -168,8 +170,13 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         if (mode === 'readonly') {
             this.transactionForm.disable();
         } else {
-            // All fields stay editable in edit mode, including bank-provided ones (amount, merchant, account).
+            // All fields stay editable in edit mode, including bank-provided ones (amount, merchant, account), except
+            // what a split fixes until it's unsplit (TXN-4.7).
             this.transactionForm.enable();
+            if (this.isSplit()) {
+                const { direction, amount, accountId, date } = this.transactionForm.controls;
+                [direction, amount, accountId, date].forEach(control => control.disable());
+            }
         }
     }
 
@@ -205,7 +212,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
             amount: formValue.direction === TransactionDirection.Out ? -size : size,
             merchant: formValue.merchant,
             originalStatement: formValue.originalStatement,
-            categoryId: formValue.category,
+            categoryId: this.isSplit() ? '' : formValue.category,
             date: CalendarDateUtil.fromDate(formValue.date),
             notes: formValue.notes,
             isHidden: formValue.isHidden,

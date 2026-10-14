@@ -94,9 +94,7 @@ describe('Data migrations', () => {
                         merchant: 'Shop',
                         originalStatement: '',
                         notes: '',
-                        isHidden: false,
-                        isSplit: false,
-                        splitParentId: ''
+                        isHidden: false
                     })
                 );
             const t1 = await transaction(uncategorized.id!);

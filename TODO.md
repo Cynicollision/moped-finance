@@ -19,11 +19,14 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 11. Split transactions: core
-- [ ] TXN-4.1 to 4.3, 4.5, 4.7: split, edit split and unsplit, using the existing `is_split` / `split_parent_id` columns (or replacing them if a parts table fits better). The split dialog with the remainder filling the last part. Splits adjust the balance once, by the total.
-
 ### 12. Split transactions: everywhere else
-- [ ] TXN-4.4, 4.6, 4.9, TXN-3.1: parts as rows in the Transactions list, filters and Spending drill-down; Spending and budget averages count parts; CSV export and import with `SplitId`.
+Splits are stored as `finance.transaction_parts` (`transaction-schema.ts`), and Spending already counts the parts (TXN-4.6). Two PRs, in this order:
+- [ ] **Parts as rows** (TXN-4.4): the Transactions list, its filters and sorting, Spending's drill-down and Account Details' recent transactions show each part as its own row (date and account from the transaction; merchant, category and amount from the part; a split icon; opening the transaction). `FinanceTransactionData.search` doesn't join the parts yet: build it on the `line` expressions that `retrieveCategoryFlows` uses, page by line, and return part rows as a shared type. Also: the transaction form's **Category** field (`transaction-form.component.ts`, `categoryOptions`) doesn't narrow as you type, though TXN-2.1 says it's searchable, and saving typed text that isn't a category gets "Category not found." from the server; reuse the split dialog's `categoryOptions` and `validateCategory` (`split-transaction-modal.component.ts`).
+- [ ] **CSV** (TXN-4.9, TXN-3.1 to 3.4), decided 2026-10-14:
+  - Export writes each part as its own row (the transaction's date, account, statement and hidden flag; the part's merchant, category, amount and notes). No `SplitId`: import doesn't rebuild splits, so a re-imported split becomes separate transactions that keep their categories. Reword TXN-4.9.
+  - Export adds an `Id` column: the transaction's ID, or the part's for a part row, so every row's Id is unique. Import accepts it as optional.
+  - Duplicate detection: a row whose Id is a transaction or part already in the account it's going to is skipped. A row with no Id (a bank's file) is matched on date, account, amount and original statement, counting copies (two identical rows in the file against one in the app skip only one). Rows whose Id is in another account aren't duplicates, so moving an account (ACCT-3.11) still works. The dry run reports "Already imported: N" and only new rows are created. Write it up as TXN-3 requirements.
+  - Keep text as written: `CsvFile` (`csv-file.ts`) stops trimming cells; values that get parsed or looked up (dates, amounts, booleans, account and category names) are trimmed where they're parsed, and free text (Merchant, Original Statement, Notes) is kept exactly, so exports re-import unchanged (TXN-3.1). Check the category and balance-history CSVs still trim their names.
 
 ### 13. Settings: Profile and Appearance
 - [ ] SET-1.1, 2.1, 3.1: instance-level settings storage (also used by items 14 and 16), Profile (edit display name), Appearance (Dark, Light, Match system, applied before first paint). Light theme means a second set of the `styles.scss` tokens; likely a PR of its own.
@@ -62,8 +65,6 @@ Manual entry and import/export come first. Constraints for when this gets picked
 - [ ] **Learning.** CAT-9.1 to 9.4, CAT-8.6: Learn from my transactions, and View Transaction saying how a category was set.
 
 ### Known gaps
-- [ ] **Duplicate detection on transaction import** (Transactions Known gaps): importing the same file twice creates everything twice. Decide on a match (date, account, amount, statement) and how the dry run reports it; related to bank sync's de-duplication.
-- [ ] **CSV import trims every value** (`CsvFile` in `csv-file.ts` trims each cell), so an exported value with leading or trailing spaces, such as an Original Statement of "BIG STORE U*** ", comes back without them, though TXN-3.1 says exports re-import unchanged. Either trim text fields when saving them (form and API), so exports never carry the spaces, or keep text cells as written on import. Balances and amounts aren't affected (found checking ACCT-3.11).
 - [ ] **Changing an account between asset and liability types** (Accounts Known gaps): the stored balances keep their sign, so a $500 checking account changed to a credit card reads as $500 in credit. Decide whether Edit Account flips the history's sign or warns first (`account-controller.ts`, `updateAccount`).
 
 ### Major dependency upgrades

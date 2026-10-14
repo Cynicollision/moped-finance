@@ -9,7 +9,8 @@ const uniqueViolationMessages: Record<string, string> = {
     institutions_name_unique_idx: 'An institution with that name already exists.',
     category_groups_name_unique_idx: 'A category group with that name already exists.',
     categories_name_unique_idx: 'A category with that name already exists.',
-    balance_history_account_id_date_unique: 'An account can only have one balance per date.'
+    balance_history_account_id_date_unique: 'An account can only have one balance per date.',
+    transaction_parts_transaction_id_position_unique_idx: 'A split transaction can only have one part in each place.'
 };
 
 // A foreign key fails in one of two directions, with the same constraint name:
@@ -43,9 +44,11 @@ const foreignKeyViolationMessages: Record<string, ForeignKeyMessages> = {
     transactions_category_id_categories_id_fk: {
         missingReference: 'Category not found.'
     },
-    transactions_split_parent_id_transactions_id_fk: {
-        missingReference: 'Split parent transaction not found.',
-        stillReferenced: 'Cannot delete a transaction that has split transactions.'
+    transaction_parts_transaction_id_transactions_id_fk: {
+        missingReference: 'Transaction not found.'
+    },
+    transaction_parts_category_id_categories_id_fk: {
+        missingReference: 'Category not found.'
     },
     budget_streams_category_id_categories_id_fk: {
         missingReference: 'Category not found.',

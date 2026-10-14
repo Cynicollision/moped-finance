@@ -69,9 +69,7 @@ describe('AddTransactionComponent', () => {
             originalStatement: '',
             notes: '',
             isHidden: false,
-            adjustsBalance: false,
-            isSplit: false,
-            splitParentId: ''
+            adjustsBalance: false
         });
         expect(notificationService.success).toHaveBeenCalledWith('Transaction added');
         expect(navigate).toHaveBeenCalledWith(['/transactions']);

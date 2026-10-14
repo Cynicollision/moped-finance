@@ -9,7 +9,7 @@ import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
 import { TransactionController } from './transaction-controller';
 import { IFinanceTransactionData } from './transaction-data';
-import { createTransactionSchema, updateTransactionSchema } from './transaction-schema';
+import { createTransactionSchema, splitTransactionSchema, updateTransactionSchema } from './transaction-schema';
 
 const domain = 'Transaction';
 
@@ -171,6 +171,28 @@ export function createTransactionRouter(
                 return controller.saveTransaction(context, params.id, body);
             }
         );
+    });
+
+    // PUT /:id/split - Split a Transaction, or Change Its Parts
+    router.put('/:id/split', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'splitTransaction' };
+        handler.execute(
+            req,
+            res,
+            op,
+            { params: idParamsSchema, body: splitTransactionSchema },
+            (context, { params, body }) => {
+                return controller.splitTransaction(context, params.id, body);
+            }
+        );
+    });
+
+    // DELETE /:id/split - Unsplit a Transaction
+    router.delete('/:id/split', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'unsplitTransaction' };
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.unsplitTransaction(context, params.id);
+        });
     });
 
     // DELETE /:id - Delete Transaction

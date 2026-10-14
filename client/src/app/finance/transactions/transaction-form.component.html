@@ -29,10 +29,33 @@
                 <div class="value">{{ transactionForm.value.originalStatement || '-' }}</div>
             </div>
 
-            <div class="readonly-field">
-                <div class="label">Category</div>
-                <div class="value">{{ getCategoryName(transactionForm.value.category) || Uncategorized.name }}</div>
-            </div>
+            @if (isSplit()) {
+                <!-- The parts replace the category (TXN-4.5). -->
+                <div class="readonly-field">
+                    <div class="label">Split into {{ transaction()!.parts.length }} parts</div>
+                    <ul class="parts">
+                        @for (part of transaction()!.parts; track part.id) {
+                            <li class="part">
+                                <div class="part-text">
+                                    <span>{{ getCategoryName(part.categoryId) || Uncategorized.name }}</span>
+                                    <span class="part-detail">
+                                        {{ part.merchant }}
+                                        @if (part.notes) {
+                                            · {{ part.notes }}
+                                        }
+                                    </span>
+                                </div>
+                                <app-money [amount]="part.amount" tone="transaction"></app-money>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            } @else {
+                <div class="readonly-field">
+                    <div class="label">Category</div>
+                    <div class="value">{{ getCategoryName(transactionForm.value.category) || Uncategorized.name }}</div>
+                </div>
+            }
 
             <div class="readonly-field">
                 <div class="label">Date</div>
@@ -56,6 +79,13 @@
                 </div>
             }
         } @else {
+            @if (isSplit()) {
+                <p class="split-note">
+                    This transaction is split. Unsplit it to change its amount, date or account, or edit its parts'
+                    categories with Edit split.
+                </p>
+            }
+
             <!-- A positive amount, with its sign from the switch (TXN-2.13). -->
             <mat-button-toggle-group
                 class="direction-toggle"
@@ -103,23 +133,25 @@
                 <input type="text" matInput formControlName="originalStatement" />
             </mat-form-field>
 
-            <!-- Left empty, the transaction is Uncategorized (CAT-5.2). -->
-            <mat-form-field appearance="outline" floatLabel="always">
-                <mat-label>Category</mat-label>
-                <input
-                    type="text"
-                    matInput
-                    formControlName="category"
-                    [matAutocomplete]="autoCategory"
-                    [placeholder]="Uncategorized.name"
-                />
-                <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
-                    <mat-option value="">{{ Uncategorized.name }}</mat-option>
-                    @for (c of categoryOptions(); track c.id) {
-                        <mat-option [value]="c.id"> {{ c.icon }} {{ c.name }} </mat-option>
-                    }
-                </mat-autocomplete>
-            </mat-form-field>
+            <!-- Left empty, the transaction is Uncategorized (CAT-5.2). A split one's parts have its categories. -->
+            @if (!isSplit()) {
+                <mat-form-field appearance="outline" floatLabel="always">
+                    <mat-label>Category</mat-label>
+                    <input
+                        type="text"
+                        matInput
+                        formControlName="category"
+                        [matAutocomplete]="autoCategory"
+                        [placeholder]="Uncategorized.name"
+                    />
+                    <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
+                        <mat-option value="">{{ Uncategorized.name }}</mat-option>
+                        @for (c of categoryOptions(); track c.id) {
+                            <mat-option [value]="c.id"> {{ c.icon }} {{ c.name }} </mat-option>
+                        }
+                    </mat-autocomplete>
+                </mat-form-field>
+            }
 
             <mat-form-field appearance="outline">
                 <mat-label>Date</mat-label>

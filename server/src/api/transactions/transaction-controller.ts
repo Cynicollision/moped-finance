@@ -8,6 +8,7 @@ import {
     TransactionSearchOptions
 } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
+import { TransactionSplit } from '@shared/finance/util';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
@@ -17,7 +18,7 @@ import { IFinanceCategoryData } from './../categories/category-data';
 import { Spending } from './spending';
 import { TransactionCsv } from './transaction-csv';
 import { adjustmentChange, IFinanceTransactionData } from './transaction-data';
-import { CreateTransactionRequest, UpdateTransactionRequest } from './transaction-schema';
+import { CreateTransactionRequest, SplitTransactionRequest, UpdateTransactionRequest } from './transaction-schema';
 
 export class TransactionController {
     constructor(
@@ -46,8 +47,7 @@ export class TransactionController {
         const transaction = FinanceEntityFactory.createTransaction({
             ...input,
             isHidden: input.isHidden ?? false,
-            adjustsBalance: input.adjustsBalance ?? false,
-            isSplit: input.isSplit ?? false
+            adjustsBalance: input.adjustsBalance ?? false
         });
 
         const refusal = await this.checkAdjustment(null, transaction);
@@ -84,6 +84,17 @@ export class TransactionController {
         }
 
         const transaction = { ...current, ...changes };
+        // A split transaction's total, date and account stay put, and its parts have the categories (TXN-4.7).
+        if (current.parts.length > 0) {
+            const { amount, date, accountId, categoryId } = transaction;
+            if (amount !== current.amount || date !== current.date || accountId !== current.accountId) {
+                return Result.userError('Unsplit this transaction to change its amount, date or account.');
+            }
+            if (categoryId) {
+                return Result.userError("A split transaction's parts have its categories.");
+            }
+        }
+
         const refusal = await this.checkAdjustment(current, transaction);
         if (refusal) {
             return Result.userError(refusal);
@@ -95,6 +106,46 @@ export class TransactionController {
         }
 
         return Result.successUpdated(updated);
+    }
+
+    /** Splits a transaction, or replaces the parts of one that's split (TXN-4.1, TXN-4.2, TXN-4.5). */
+    public async splitTransaction(
+        context: OperationContext,
+        transactionId: string,
+        input: SplitTransactionRequest
+    ): Promise<OperationResult<Transaction>> {
+        const current = await this.transactionData.retrieveSingle(transactionId);
+        if (!current) {
+            return Result.userErrorNotFound();
+        }
+        const remainder = TransactionSplit.remainder(
+            current.amount,
+            input.parts.map(p => p.amount)
+        );
+        if (remainder !== 0) {
+            return Result.userError("The parts' amounts must add up to the transaction's amount.");
+        }
+
+        // A missing category fails the insert's foreign key, which OperationHandler reports as a 400.
+        const split = await this.transactionData.split(transactionId, input.parts);
+        return split ? Result.successUpdated(split) : Result.userErrorNotFound();
+    }
+
+    /** Turns a split transaction back into one, with its first part's category, merchant and notes (TXN-4.5). */
+    public async unsplitTransaction(
+        context: OperationContext,
+        transactionId: string
+    ): Promise<OperationResult<Transaction>> {
+        const current = await this.transactionData.retrieveSingle(transactionId);
+        if (!current) {
+            return Result.userErrorNotFound();
+        }
+        if (current.parts.length === 0) {
+            return Result.userError("This transaction isn't split.");
+        }
+
+        const unsplit = await this.transactionData.unsplit(transactionId);
+        return unsplit ? Result.successUpdated(unsplit) : Result.userErrorNotFound();
     }
 
     public async deleteTransaction(context: OperationContext, transactionId: string): Promise<OperationResult<void>> {

@@ -8,6 +8,18 @@
                 <mat-icon>edit</mat-icon>
                 <span>Edit</span>
             </button>
+            @if (transaction()) {
+                <button mat-menu-item (click)="split()">
+                    <mat-icon>call_split</mat-icon>
+                    <span>{{ isSplit() ? 'Edit split' : 'Split' }}</span>
+                </button>
+            }
+            @if (isSplit()) {
+                <button mat-menu-item (click)="unsplit()">
+                    <mat-icon>merge</mat-icon>
+                    <span>Unsplit</span>
+                </button>
+            }
             <button mat-menu-item class="danger-item" (click)="deleteTransaction()">
                 <mat-icon>delete</mat-icon>
                 <span>Delete</span>

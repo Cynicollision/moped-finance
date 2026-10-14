@@ -5,7 +5,7 @@ import { Category, CategoryGroup, CategoryUsage } from '@shared/finance/types';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { budgetStreamSchema } from './../budget/budget-stream-schema';
-import { transactionSchema } from './../transactions/transaction-schema';
+import { transactionPartSchema, transactionSchema } from './../transactions/transaction-schema';
 import { categoryGroupSchema } from './category-groups/category-group-schema';
 import { categorySchema } from './category-schema';
 
@@ -68,16 +68,21 @@ export class FinanceCategoryData implements IFinanceCategoryData {
     }
 
     public async retrieveUsage(id: string): Promise<CategoryUsage> {
+        // A split transaction's parts count one each, since each has its own category (TXN-4).
         const [transactions] = await this.db
             .select({ count: count() })
             .from(transactionSchema)
             .where(eq(transactionSchema.categoryId, id));
+        const [parts] = await this.db
+            .select({ count: count() })
+            .from(transactionPartSchema)
+            .where(eq(transactionPartSchema.categoryId, id));
         const [streams] = await this.db
             .select({ count: count() })
             .from(budgetStreamSchema)
             .where(eq(budgetStreamSchema.categoryId, id));
 
-        return { transactionCount: transactions.count, budgetStreamCount: streams.count };
+        return { transactionCount: transactions.count + parts.count, budgetStreamCount: streams.count };
     }
 
     public async delete(id: string, moveToId: string | null = null): Promise<boolean> {
@@ -89,6 +94,10 @@ export class FinanceCategoryData implements IFinanceCategoryData {
                     .update(transactionSchema)
                     .set({ categoryId: moveToId, updatedAt: DateTimeUtil.now() })
                     .where(eq(transactionSchema.categoryId, id));
+                await tx
+                    .update(transactionPartSchema)
+                    .set({ categoryId: moveToId, updatedAt: DateTimeUtil.now() })
+                    .where(eq(transactionPartSchema.categoryId, id));
             }
 
             const result = await tx

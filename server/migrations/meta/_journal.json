@@ -99,6 +99,13 @@
       "when": 1791928760197,
       "tag": "0013_transaction_adjusts_balance",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792016117093,
+      "tag": "0014_transaction_parts",
+      "breakpoints": true
     }
   ]
 }

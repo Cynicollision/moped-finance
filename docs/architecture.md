@@ -55,7 +55,7 @@ Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>`, be
 One Postgres 16 database with two schemas:
 
 - `core`: `users`, `logs`, `sessions`, `secrets` (the generated session secret), `api_tokens` (hashes only)
-- `finance`: `institutions`, `accounts`, `balance_history`, `category_groups`, `categories`, `transactions`, `budget_streams`
+- `finance`: `institutions`, `accounts`, `balance_history`, `category_groups`, `categories`, `transactions`, `transaction_parts` (the parts of split transactions, TXN-4), `budget_streams`
 
 Each instance has one owner (AUTH-7). `core.users` exists for login, and registration closes after the first user. Finance tables have no `user_id`: every signed-in request sees all finance data. `core.logs.user_id` records who performed an operation.
 

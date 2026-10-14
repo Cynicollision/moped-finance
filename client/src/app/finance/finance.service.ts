@@ -23,6 +23,7 @@ import {
     CategoryGroup,
     CategoryUsage,
     Transaction,
+    TransactionPartFields,
     BudgetStream,
     BudgetStreamFields
 } from '@shared/finance/types';
@@ -210,7 +211,8 @@ export class FinanceService {
         return this.api.put<Transaction>(`${API_BASE_PATH}/transactions/${transaction.id}`, transaction);
     }
 
-    createTransaction(transaction: NewEntity<Transaction>): Promise<Transaction | undefined> {
+    /** A new transaction isn't split; it's split afterwards (TXN-4.1). */
+    createTransaction(transaction: Omit<NewEntity<Transaction>, 'parts'>): Promise<Transaction | undefined> {
         return this.api.post<Transaction>(`${API_BASE_PATH}/transactions`, transaction);
     }
 
@@ -240,6 +242,16 @@ export class FinanceService {
 
     deleteTransaction(id: string): Promise<boolean> {
         return this.api.delete(`${API_BASE_PATH}/transactions/${id}`);
+    }
+
+    /** Splits a transaction into the parts, or replaces the parts of a split one (TXN-4.1, TXN-4.5). */
+    splitTransaction(id: string, parts: TransactionPartFields[]): Promise<Transaction | undefined> {
+        return this.api.put<Transaction>(`${API_BASE_PATH}/transactions/${id}/split`, { parts });
+    }
+
+    /** Turns a split transaction back into one (TXN-4.5). */
+    unsplitTransaction(id: string): Promise<boolean> {
+        return this.api.delete(`${API_BASE_PATH}/transactions/${id}/split`);
     }
 
     // Budget

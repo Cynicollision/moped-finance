@@ -6,7 +6,8 @@ import {
     Category,
     CategoryGroup,
     Institution,
-    Transaction
+    Transaction,
+    TransactionPart
 } from '@shared/finance/types';
 import { BalanceEntrySource } from '@shared/finance/enum';
 import { AccountTypeUtil } from '@shared/finance/util';
@@ -23,6 +24,7 @@ export enum FinanceEntityIdPrefix {
     Account = 'AC',
     BalanceHistory = 'BAL',
     Transaction = 'TRX',
+    TransactionPart = 'TRP',
     Institution = 'IN',
     Category = 'CT',
     CategoryGroup = 'CTG',
@@ -61,13 +63,20 @@ export class FinanceEntityFactory {
         });
     }
 
+    /** Not split unless given parts (TXN-4). */
     public static createTransaction(
-        transaction: Omit<NewEntity<Transaction>, 'adjustsBalance'> & Partial<Pick<Transaction, 'adjustsBalance'>>
+        transaction: Omit<NewEntity<Transaction>, 'adjustsBalance' | 'parts'> &
+            Partial<Pick<Transaction, 'adjustsBalance' | 'parts'>>
     ): Transaction {
         return FinanceEntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, {
             adjustsBalance: false,
+            parts: [],
             ...transaction
         });
+    }
+
+    public static createTransactionPart(part: NewEntity<TransactionPart>): TransactionPart {
+        return FinanceEntityFactory.createEntity<TransactionPart>(FinanceEntityIdPrefix.TransactionPart, part);
     }
 
     public static createInstitution(institution: NewEntity<Institution>): Institution {
