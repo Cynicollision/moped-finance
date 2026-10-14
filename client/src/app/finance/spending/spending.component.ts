@@ -20,7 +20,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
-import { CategoryType, TransactionsSortKey } from '@shared/finance/enum';
+import { BudgetStreamType, CategoryType, TransactionsSortKey } from '@shared/finance/enum';
 import { BudgetStreamUtil, Uncategorized } from '@shared/finance/util';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { LayoutService } from './../../core/layout/layout.service';
@@ -217,17 +217,6 @@ export class FinanceSpendingComponent {
     private readonly groupMap = computed(() => new Map((this.lookups.value()?.groups ?? []).map(g => [g.id, g])));
     private readonly categoryTotals = computed(() => this.totals.value()?.totals ?? []);
 
-    /** Each category's budget streams as a monthly amount (BUD-1.6). */
-    private readonly monthlyBudgets = computed(() => {
-        const budgets = new Map<string, number>();
-        for (const stream of this.lookups.value()?.budgetStreams ?? []) {
-            budgets.set(
-                stream.categoryId,
-                (budgets.get(stream.categoryId) ?? 0) + BudgetStreamUtil.monthlyAmount(stream)
-            );
-        }
-        return budgets;
-    });
     private readonly budgetMonths = computed(() =>
         BudgetStreamUtil.monthsIn(this.totals.value()?.period ?? this.selection().period)
     );
@@ -347,39 +336,31 @@ export class FinanceSpendingComponent {
         const income = new Map<string, SpendingRow>();
         const expense = new Map<string, SpendingRow>();
 
-        // The row a category's amounts and budget go in, by category or by group, and whether it's income; none for a
-        // Transfer category. Uncategorized goes by the sign it's given.
-        const rowFor = (categoryId: string, isUncategorizedIncome: boolean) => {
+        // The row a category's amounts and budget go in, by category or by group, in the section the server or the
+        // stream puts it in. Uncategorized amounts come in both sections.
+        const rowFor = (categoryId: string, isIncome: boolean) => {
             const cat = categoryId ? this.categoryMap().get(categoryId) : undefined;
             const group = cat ? this.groupMap().get(cat.groupId) : undefined;
-            if (group?.type === CategoryType.Transfer) {
-                return undefined;
-            }
-
             const id = byGroup ? group?.id : cat?.id;
             const name = byGroup ? group?.name || 'Uncategorized' : cat ? categoryLabel(cat) : 'Uncategorized';
-            const isIncome = group ? group.type === CategoryType.Income : isUncategorizedIncome;
             const rows = isIncome ? income : expense;
             const necessity = isIncome || byGroup ? undefined : expenseNecessityOf(cat);
             const row = rows.get(id ?? '') ?? { id, name, amount: 0, necessity };
             rows.set(id ?? '', row);
-            return { row, isIncome };
+            return row;
         };
 
+        // The server decides income or expense and leaves out transfers (CASH-1.3).
         for (const total of this.categoryTotals()) {
-            // Uncategorized counts by sign: the server totals its money in and money out apart (CASH-1.3).
-            const target = rowFor(total.categoryId, total.amount > 0);
-            // Spending is money out, so an expense row counts amounts the other way round.
-            if (target) {
-                target.row.amount += target.isIncome ? total.amount : -total.amount;
-            }
+            rowFor(total.categoryId, total.type === CategoryType.Income).amount += total.amount;
         }
 
-        // A budgeted category shows even with nothing spent, so the rows add up to the budget (CASH-1.10).
-        for (const [categoryId, monthly] of this.monthlyBudgets()) {
-            const target = rowFor(categoryId, false);
-            if (target) {
-                target.row.budget = (target.row.budget ?? 0) + monthly * this.budgetMonths();
+        // A budgeted category shows even with nothing spent, so the rows add up to the budget (CASH-1.10). Savings
+        // streams aren't compared here (CASH Notes).
+        for (const stream of this.lookups.value()?.budgetStreams ?? []) {
+            if (stream.type !== BudgetStreamType.Savings) {
+                const row = rowFor(stream.categoryId, stream.type === BudgetStreamType.Income);
+                row.budget = (row.budget ?? 0) + BudgetStreamUtil.monthlyAmount(stream) * this.budgetMonths();
             }
         }
 

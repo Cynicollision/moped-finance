@@ -9,6 +9,7 @@ import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
+import { Spending } from './spending';
 import { TransactionCsv } from './transaction-csv';
 import { adjustmentChange, IFinanceTransactionData } from './transaction-data';
 import { CreateTransactionRequest, UpdateTransactionRequest } from './transaction-schema';
@@ -144,8 +145,8 @@ export class TransactionController {
         asOfDate?: CalendarDate
     ): Promise<OperationResult<SpendingTotal[]>> {
         const { startDate, endDate } = CalendarDateUtil.getPeriod(period, asOfDate ?? DateTimeUtil.today());
-        const totals = await this.transactionData.retrieveSpendingByCategory(startDate, endDate);
-        return Result.success(totals);
+        const flows = await this.transactionData.retrieveCategoryFlows(startDate, endDate);
+        return Result.success(Spending.totals(flows));
     }
 
     public async exportTransactions(context: OperationContext, accountId?: string): Promise<OperationResult<string>> {

@@ -20,7 +20,8 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 ## Next
 
 ### 10. Budget 12-month averages
-- [ ] BUD-1.8, 1.9: server endpoint for each category's monthly average over the past 12 full months (counting what Spending counts), shown in the stream panel and beside each category in Budget's lists.
+- [ ] BUD-1.8: server endpoint for each category's average month over the past 12 full months (fewer with less history; counting what Spending counts, and money out only for Transfer categories), shown in the stream panel with the category's other streams.
+- [ ] CASH-1.12: Spending's **Average** view, the same average month for every category beside its monthly budget.
 
 ### 11. Split transactions: core
 - [ ] TXN-4.1 to 4.3, 4.5, 4.7: split, edit split and unsplit, using the existing `is_split` / `split_parent_id` columns (or replacing them if a parts table fits better). The split dialog with the remainder filling the last part. Splits adjust the balance once, by the total.
@@ -68,7 +69,6 @@ Manual entry and import/export come first. Constraints for when this gets picked
 - [ ] **Duplicate detection on transaction import** (Transactions Known gaps): importing the same file twice creates everything twice. Decide on a match (date, account, amount, statement) and how the dry run reports it; related to bank sync's de-duplication.
 - [ ] **CSV import trims every value** (`CsvFile` in `csv-file.ts` trims each cell), so an exported value with leading or trailing spaces, such as an Original Statement of "BIG STORE U*** ", comes back without them, though TXN-3.1 says exports re-import unchanged. Either trim text fields when saving them (form and API), so exports never carry the spaces, or keep text cells as written on import. Balances and amounts aren't affected (found checking ACCT-3.11).
 - [ ] **Changing an account between asset and liability types** (Accounts Known gaps): the stored balances keep their sign, so a $500 checking account changed to a credit card reads as $500 in credit. Decide whether Edit Account flips the history's sign or warns first (`account-controller.ts`, `updateAccount`).
-- [ ] **Spending classifies in the browser** (Spending Known gaps): income versus expense (CASH-1.3) is worked out in `spending.component.ts` from loaded categories. Move it to the server, which item 10's averages endpoint may already need.
 
 ### Major dependency upgrades
 - [ ] Majors held back on 2026-10-06, when everything was brought up to date within its range (see [development.md](docs/development.md#dependencies)). None has a known vulnerability; Angular 21 keeps getting security releases until its LTS ends. One PR each, checking the release notes' breaking changes:
