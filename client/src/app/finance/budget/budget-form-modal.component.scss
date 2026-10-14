@@ -2,3 +2,18 @@
     display: flex;
     flex-direction: column;
 }
+
+// Under the Category field, before the Amount it helps set (BUD-1.8).
+.category-insight {
+    color: var(--text-muted);
+    font: var(--mat-sys-body-medium);
+
+    p {
+        margin: 0 0 4px;
+    }
+
+    // Clear of the Amount field's floating label.
+    p:last-child {
+        margin-bottom: 20px;
+    }
+}

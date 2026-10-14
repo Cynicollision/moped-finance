@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CalendarPeriod } from '@shared/core/enum';
+import { SpendingAverage } from '@shared/finance/contracts';
 import { BudgetStreamType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
+import { DateProviderService } from './../../core/date-provider.service';
 import { ModalService } from './../../core/modal/modal.service';
 import { FinanceService } from './../finance.service';
 import { FinanceBudgetComponent } from './budget.component';
@@ -36,11 +38,20 @@ describe('FinanceBudgetComponent', () => {
         stream(BudgetStreamType.Income, 'Salary', 'pay', 3000)
     ];
 
+    const average: SpendingAverage = {
+        startDate: '2025-05-01',
+        endDate: '2026-04-30',
+        months: 12,
+        totals: [{ categoryId: 'rent', type: CategoryType.Expense, amount: 1500 }],
+        transfers: []
+    };
+
     async function render(budgetStreams = streams, withCategories = categories) {
         const financeService = {
             fetchCategories: vi.fn().mockResolvedValue(withCategories),
             fetchCategoryGroups: vi.fn().mockResolvedValue(groups),
-            fetchBudgetStreams: vi.fn().mockResolvedValue(budgetStreams)
+            fetchBudgetStreams: vi.fn().mockResolvedValue(budgetStreams),
+            fetchSpendingAverage: vi.fn().mockResolvedValue(average)
         };
         const modalService = { open: vi.fn().mockResolvedValue(undefined) };
         TestBed.configureTestingModule({
@@ -48,13 +59,14 @@ describe('FinanceBudgetComponent', () => {
             providers: [
                 provideRouter([]),
                 { provide: FinanceService, useValue: financeService },
-                { provide: ModalService, useValue: modalService }
+                { provide: ModalService, useValue: modalService },
+                { provide: DateProviderService, useValue: { today: () => '2026-05-17' } }
             ]
         });
 
         const fixture = TestBed.createComponent(FinanceBudgetComponent);
         await fixture.whenStable();
-        return { fixture, element: fixture.nativeElement as HTMLElement, modalService };
+        return { fixture, element: fixture.nativeElement as HTMLElement, modalService, financeService };
     }
 
     function section(element: HTMLElement, title: string): HTMLElement {
@@ -124,6 +136,19 @@ describe('FinanceBudgetComponent', () => {
         expect(modalService.open).toHaveBeenCalledWith(
             FinanceBudgetFormModalComponent,
             expect.objectContaining({ type: BudgetStreamType.Savings }),
+            { size: 'panel' }
+        );
+    });
+
+    it("BUD-1.8 should give the panel the average month as of today, and every stream for the category's others", async () => {
+        const { element, modalService, financeService } = await render();
+
+        section(element, 'Expenses').querySelector<HTMLButtonElement>('[aria-label="Add Expenses"]')!.click();
+
+        expect(financeService.fetchSpendingAverage).toHaveBeenCalledWith('2026-05-17');
+        expect(modalService.open).toHaveBeenCalledWith(
+            FinanceBudgetFormModalComponent,
+            expect.objectContaining({ type: BudgetStreamType.Expense, streams, average }),
             { size: 'panel' }
         );
     });

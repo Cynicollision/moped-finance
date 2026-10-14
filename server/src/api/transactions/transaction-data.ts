@@ -1,4 +1,4 @@
-import { AnyColumn, eq, and, desc, asc, ilike, isNull, gt, gte, lt, lte, sql, SQL } from 'drizzle-orm';
+import { AnyColumn, eq, and, desc, asc, ilike, isNull, gt, gte, lt, lte, min, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
@@ -42,6 +42,8 @@ export interface IFinanceTransactionData {
     retrieveMerchants(): Promise<string[]>;
     /** What came in and went out per category over the dates, counting what Spending counts (CASH-1.2). */
     retrieveCategoryFlows(startDate: CalendarDate, endDate: CalendarDate): Promise<CategoryFlow[]>;
+    /** The date of the oldest transaction Spending counts, if there are any. */
+    retrieveFirstDate(): Promise<CalendarDate | undefined>;
     retrieveSingle(id: string): Promise<Transaction | null>;
     insert(transaction: Transaction): Promise<Transaction>;
     /**
@@ -71,6 +73,9 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
         splitParentId: row.splitParentId ?? ''
     };
 }
+
+// Spending leaves out hidden transactions and those in hidden accounts (CASH-1.2). Needs the account joined.
+const countedBySpending = and(eq(transactionSchema.isHidden, false), eq(accountSchema.isHidden, false));
 
 // Sorting by name ignores case. Ties (same day, same merchant, ...) fall back to newest first, then id, so paging is stable.
 function getSearchOrder(sortKey: TransactionsSortKey, direction: SortDirection): SQL[] {
@@ -312,14 +317,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
             .leftJoin(categorySchema, eq(categorySchema.id, transactionSchema.categoryId))
             .leftJoin(categoryGroupSchema, eq(categoryGroupSchema.id, categorySchema.groupId))
-            .where(
-                and(
-                    gte(transactionSchema.date, startDate),
-                    lte(transactionSchema.date, endDate),
-                    eq(transactionSchema.isHidden, false),
-                    eq(accountSchema.isHidden, false)
-                )
-            )
+            .where(and(gte(transactionSchema.date, startDate), lte(transactionSchema.date, endDate), countedBySpending))
             .groupBy(transactionSchema.categoryId, categoryGroupSchema.type);
 
         return rows.map(row => ({
@@ -328,6 +326,15 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             moneyIn: row.moneyIn,
             moneyOut: row.moneyOut
         }));
+    }
+
+    public async retrieveFirstDate(): Promise<CalendarDate | undefined> {
+        const rows = await this.db
+            .select({ date: min(transactionSchema.date) })
+            .from(transactionSchema)
+            .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
+            .where(countedBySpending);
+        return rows[0]?.date ?? undefined;
     }
 
     public async insert(transaction: Transaction): Promise<Transaction> {

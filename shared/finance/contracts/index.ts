@@ -1,5 +1,6 @@
 export type { BalanceImportResult } from './balance-import-result';
 export type { CategoryImportResult } from './category-import-result';
+export type { SpendingAverage, TransferAverage } from './spending-average';
 export type { SpendingTotal } from './spending-total';
 export type { DailyBalance, GetAccountBalanceHistoryOptions } from './get-balance-history';
 export type { TransactionSearchOptions, TransactionSearchFilterItem } from './transaction-search';

@@ -1,7 +1,12 @@
 import { CalendarPeriod } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
-import { SpendingTotal, TransactionImportResult, TransactionSearchOptions } from '@shared/finance/contracts';
+import {
+    SpendingAverage,
+    SpendingTotal,
+    TransactionImportResult,
+    TransactionSearchOptions
+} from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
@@ -147,6 +152,17 @@ export class TransactionController {
         const { startDate, endDate } = CalendarDateUtil.getPeriod(period, asOfDate ?? DateTimeUtil.today());
         const flows = await this.transactionData.retrieveCategoryFlows(startDate, endDate);
         return Result.success(Spending.totals(flows));
+    }
+
+    public async getSpendingAverage(
+        context: OperationContext,
+        asOfDate?: CalendarDate
+    ): Promise<OperationResult<SpendingAverage>> {
+        const firstDate = await this.transactionData.retrieveFirstDate();
+        const window = Spending.averageWindow(asOfDate ?? DateTimeUtil.today(), firstDate);
+        const flows =
+            window.months > 0 ? await this.transactionData.retrieveCategoryFlows(window.startDate, window.endDate) : [];
+        return Result.success(Spending.average(flows, window));
     }
 
     public async exportTransactions(context: OperationContext, accountId?: string): Promise<OperationResult<string>> {

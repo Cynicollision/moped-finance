@@ -16,6 +16,30 @@
                 </mat-autocomplete>
             </mat-form-field>
 
+            <!-- What the category has averaged, and its other streams, to help set the amount (BUD-1.8). -->
+            <div class="category-insight" aria-live="polite">
+                @if (categoryInsight(); as insight) {
+                    @if (insight.average; as average) {
+                        <p>
+                            You've averaged
+                            <app-money [amount]="average.amount" digits="1.0-0"></app-money>
+                            a month in {{ insight.name }} over the past {{ average.over }}.
+                        </p>
+                    }
+                    @if (insight.others; as others) {
+                        <p>
+                            @if (others.count === 1) {
+                                Your other stream in {{ insight.name }} comes to
+                            } @else {
+                                Your other streams in {{ insight.name }} come to
+                            }
+                            <app-money [amount]="others.monthly" digits="1.0-0"></app-money>
+                            a month.
+                        </p>
+                    }
+                }
+            </div>
+
             <mat-form-field appearance="outline">
                 <mat-label>Amount</mat-label>
                 <span matTextPrefix>$&nbsp;</span>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, signal, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,8 +9,9 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { startWith, map } from 'rxjs';
 import { CalendarPeriod } from '@shared/core/enum';
+import { SpendingAverage } from '@shared/finance/contracts';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
-import { BudgetStreamType } from '@shared/finance/enum';
+import { BudgetStreamType, CategoryType } from '@shared/finance/enum';
 import { BudgetStreamUtil } from '@shared/finance/util';
 import { ModalCancelDirective } from './../../core/modal/modal-cancel.directive';
 import { ModalLayoutComponent } from './../../core/modal/modal-layout.component';
@@ -18,12 +19,19 @@ import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { HasUnsavedChanges } from './../../core/unsaved-changes';
 import { categoryLabel } from './../common/category-label';
+import { MoneyComponent } from './../common/money.component';
 import { FinanceService } from './../finance.service';
 
 const typeLabels: Record<BudgetStreamType, string> = {
     [BudgetStreamType.Income]: 'Income',
     [BudgetStreamType.Expense]: 'Expense',
     [BudgetStreamType.Savings]: 'Savings'
+};
+
+// Which Spending totals an Income or Expense stream's category is averaged from.
+const incomeOrExpense: Partial<Record<BudgetStreamType, CategoryType>> = {
+    [BudgetStreamType.Income]: CategoryType.Income,
+    [BudgetStreamType.Expense]: CategoryType.Expense
 };
 
 const namePlaceholders: Record<BudgetStreamType, string> = {
@@ -53,6 +61,19 @@ export interface BudgetFormModalData {
     type: BudgetStreamType;
     categories: Category[];
     groups: CategoryGroup[];
+    /** Every stream, for the category's others (BUD-1.8). */
+    streams: BudgetStream[];
+    /** The average month, for the chosen category's (BUD-1.8). */
+    average?: SpendingAverage;
+}
+
+/** What the panel says about the chosen category (BUD-1.8). */
+export interface CategoryInsight {
+    name: string;
+    /** Its average month, and over how long ("12 months", "month"); undefined with no history. */
+    average?: { amount: number; over: string };
+    /** Its other streams, as a monthly amount; undefined when it has none. */
+    others?: { count: number; monthly: number };
 }
 
 /**
@@ -72,7 +93,8 @@ export interface BudgetFormModalData {
         MatSelectModule,
         MatAutocompleteModule,
         ModalCancelDirective,
-        ModalLayoutComponent
+        ModalLayoutComponent,
+        MoneyComponent
     ],
     templateUrl: './budget-form-modal.component.html',
     styleUrl: './budget-form-modal.component.scss'
@@ -96,6 +118,10 @@ export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChange
     readonly recurrenceOptions = Object.values(CalendarPeriod);
     readonly categories = signal<Category[]>([]);
     readonly filteredCategories = signal<Category[]>([]);
+
+    /** The chosen category's ID, once the field holds one rather than typed text. */
+    private readonly categoryId = signal('');
+    readonly categoryInsight = computed(() => this.insightFor(this.categoryId()));
 
     readonly typeString = streamTypeLabel(this.data.type);
     readonly namePlaceholder = namePlaceholders[this.data.type];
@@ -139,6 +165,41 @@ export class FinanceBudgetFormModalComponent implements OnInit, HasUnsavedChange
                 map(name => _filterCategories(name))
             )
             .subscribe(filtered => this.filteredCategories.set(filtered));
+
+        this.budgetForm.controls.categoryId.valueChanges
+            .pipe(startWith(this.budgetForm.controls.categoryId.value))
+            .subscribe(value => this.categoryId.set(value ?? ''));
+    }
+
+    // The category's average month (Income and Expense by their net, Transfer by its money out) and its other
+    // streams, the one being edited left out (BUD-1.8).
+    private insightFor(categoryId: string): CategoryInsight | undefined {
+        const category = this.categories().find(c => c.id === categoryId);
+        if (!category) {
+            return undefined;
+        }
+
+        const insight: CategoryInsight = { name: category.name };
+        const average = this.data.average;
+        if (average && average.months > 0) {
+            const amounts =
+                this.data.type === BudgetStreamType.Savings
+                    ? average.transfers
+                    : average.totals.filter(t => t.type === incomeOrExpense[this.data.type]);
+            insight.average = {
+                amount: amounts.find(a => a.categoryId === categoryId)?.amount ?? 0,
+                over: average.months === 1 ? 'month' : `${average.months} months`
+            };
+        }
+
+        const others = this.data.streams.filter(s => s.categoryId === categoryId && s.id !== this.data.stream?.id);
+        if (others.length > 0) {
+            insight.others = {
+                count: others.length,
+                monthly: others.reduce((sum, s) => sum + BudgetStreamUtil.monthlyAmount(s), 0)
+            };
+        }
+        return insight;
     }
 
     displayCategory = (id: string): string => {

@@ -107,6 +107,18 @@ export function createTransactionRouter(
         });
     });
 
+    // GET /spending/average - Get the Average Month over the Past 12 Months
+    const spendingAverageQuerySchema = z.object({
+        asOfDate: QueryField.date().optional()
+    });
+
+    router.get('/spending/average', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'getSpendingAverage' };
+        handler.execute(req, res, op, { query: spendingAverageQuerySchema }, (context, { query }) => {
+            return controller.getSpendingAverage(context, query.asOfDate);
+        });
+    });
+
     // GET /export - Export Transactions
     const exportQuerySchema = z.object({
         accountId: z.string().min(1).optional()

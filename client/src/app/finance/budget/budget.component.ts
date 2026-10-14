@@ -9,6 +9,7 @@ import { CalendarPeriod } from '@shared/core/enum';
 import { BudgetStreamType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { BudgetStreamUtil } from '@shared/finance/util';
+import { DateProviderService } from './../../core/date-provider.service';
 import { PageHeaderComponent } from './../../core/layout/page-header.component';
 import { ListColumn, ListModule } from './../../core/list/list.component';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
@@ -86,6 +87,7 @@ export class FinanceBudgetComponent {
     private financeService = inject(FinanceService);
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
+    private readonly today = inject(DateProviderService).today();
 
     readonly periods = recurrenceOrder;
     // Narrow: the name and amount, with the category and recurrence under the name (BUD-1.2).
@@ -100,12 +102,13 @@ export class FinanceBudgetComponent {
 
     readonly data = viewResource({
         loader: async () => {
-            const [categories, groups, budgetStreams] = await Promise.all([
+            const [categories, groups, budgetStreams, average] = await Promise.all([
                 this.financeService.fetchCategories(false),
                 this.financeService.fetchCategoryGroups(),
-                this.financeService.fetchBudgetStreams()
+                this.financeService.fetchBudgetStreams(),
+                this.financeService.fetchSpendingAverage(this.today)
             ]);
-            return { categories, groups, budgetStreams };
+            return { categories, groups, budgetStreams, average };
         }
     });
     private readonly categories = computed<Category[]>(() => this.data.value()?.categories ?? []);
@@ -171,14 +174,21 @@ export class FinanceBudgetComponent {
     }
 
     async startAdd(type: BudgetStreamType) {
-        await this.openStream({ type, categories: this.categories(), groups: this.groups() });
+        await this.openStream({ type });
     }
 
     async startEdit(stream: BudgetStream) {
-        await this.openStream({ stream, type: stream.type, categories: this.categories(), groups: this.groups() });
+        await this.openStream({ stream, type: stream.type });
     }
 
-    private async openStream(data: BudgetFormModalData) {
+    private async openStream(opening: Pick<BudgetFormModalData, 'stream' | 'type'>) {
+        const data: BudgetFormModalData = {
+            ...opening,
+            categories: this.categories(),
+            groups: this.groups(),
+            streams: this.data.value()?.budgetStreams ?? [],
+            average: this.data.value()?.average
+        };
         const changed = await this.modalService.open<FinanceBudgetFormModalComponent, BudgetFormModalData, boolean>(
             FinanceBudgetFormModalComponent,
             data,
