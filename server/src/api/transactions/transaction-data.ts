@@ -1,15 +1,16 @@
-import { AnyColumn, eq, and, desc, asc, ilike, isNull, sum, gt, gte, lt, lte, sql, SQL } from 'drizzle-orm';
+import { AnyColumn, eq, and, desc, asc, ilike, isNull, gt, gte, lt, lte, sql, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { Transaction } from '@shared/finance/types';
-import { SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
-import { TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { TransactionSearchOptions } from '@shared/finance/contracts';
+import { CategoryType, TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Uncategorized } from '@shared/finance/util';
 import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
 import { applyAdjustment, DbTransaction, undoAdjustment } from './../accounts/balance-history-data';
+import { categoryGroupSchema } from './../categories/category-groups/category-group-schema';
 import { categorySchema } from './../categories/category-schema';
 import { transactionSchema } from './transaction-schema';
 
@@ -25,11 +26,22 @@ export interface TransactionExport {
     isHidden: boolean;
 }
 
+/** A category's money in and money out over some dates, both as positive amounts. */
+export interface CategoryFlow {
+    /** Empty for uncategorized transactions. */
+    categoryId: string;
+    /** The category's group type; undefined for uncategorized transactions. */
+    categoryType?: CategoryType;
+    moneyIn: number;
+    moneyOut: number;
+}
+
 export interface IFinanceTransactionData {
     search(options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
     retrieveForExport(accountId?: string): Promise<TransactionExport[]>;
     retrieveMerchants(): Promise<string[]>;
-    retrieveSpendingByCategory(startDate: CalendarDate, endDate: CalendarDate): Promise<SpendingTotal[]>;
+    /** What came in and went out per category over the dates, counting what Spending counts (CASH-1.2). */
+    retrieveCategoryFlows(startDate: CalendarDate, endDate: CalendarDate): Promise<CategoryFlow[]>;
     retrieveSingle(id: string): Promise<Transaction | null>;
     insert(transaction: Transaction): Promise<Transaction>;
     /**
@@ -287,16 +299,19 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         return mapRowToTransaction(rows[0]);
     }
 
-    public async retrieveSpendingByCategory(startDate: CalendarDate, endDate: CalendarDate): Promise<SpendingTotal[]> {
-        // Uncategorized money in and money out are totalled apart, since one is income and the other spending (CASH-1.3).
-        const uncategorizedIn = sql<boolean>`${transactionSchema.categoryId} is null and ${transactionSchema.amount} > 0`;
+    public async retrieveCategoryFlows(startDate: CalendarDate, endDate: CalendarDate): Promise<CategoryFlow[]> {
+        const amount = transactionSchema.amount;
         const rows = await this.db
             .select({
                 categoryId: transactionSchema.categoryId,
-                amount: sum(transactionSchema.amount).mapWith(Number)
+                categoryType: categoryGroupSchema.type,
+                moneyIn: sql`coalesce(sum(${amount}) filter (where ${amount} > 0), 0)`.mapWith(Number),
+                moneyOut: sql`coalesce(-sum(${amount}) filter (where ${amount} < 0), 0)`.mapWith(Number)
             })
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
+            .leftJoin(categorySchema, eq(categorySchema.id, transactionSchema.categoryId))
+            .leftJoin(categoryGroupSchema, eq(categoryGroupSchema.id, categorySchema.groupId))
             .where(
                 and(
                     gte(transactionSchema.date, startDate),
@@ -305,11 +320,13 @@ export class FinanceTransactionData implements IFinanceTransactionData {
                     eq(accountSchema.isHidden, false)
                 )
             )
-            .groupBy(transactionSchema.categoryId, uncategorizedIn);
+            .groupBy(transactionSchema.categoryId, categoryGroupSchema.type);
 
         return rows.map(row => ({
             categoryId: row.categoryId ?? '',
-            amount: Number(row.amount)
+            categoryType: (row.categoryType as CategoryType | null) ?? undefined,
+            moneyIn: row.moneyIn,
+            moneyOut: row.moneyOut
         }));
     }
 

@@ -369,28 +369,26 @@ describe('Transaction Routes', () => {
     });
 
     describe('GET /spending', () => {
-        it('CASH-1.2 should return spending by category', async () => {
-            await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
-                    accountId: testAccountId,
-                    categoryId: testCategoryId,
-                    date: '2026-06-06',
-                    amount: 500,
-                    merchant: 'Test Merchant',
-                    isHidden: false,
-                    isSplit: false,
-                    originalStatement: '',
-                    notes: '',
-                    splitParentId: ''
-                })
+        // A category in a new group of the given type.
+        async function insertCategory(type: CategoryType, name: string): Promise<string> {
+            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type, name }));
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name, icon: '', isActive: true })
             );
+            return category.id!;
+        }
 
-            const response = await request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-06-15');
+        function getJune(): request.Test {
+            return request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-06-15');
+        }
+
+        it('CASH-1.2 should return spending by category', async () => {
+            await insertTransaction({ amount: -500 });
+
+            const response = await getJune();
 
             expect(response.status).toBe(200);
-            expect(response.body.length).toBe(1);
-            expect(response.body[0].categoryId).toBe(testCategoryId);
-            expect(response.body[0].amount).toBe(500);
+            expect(response.body).toEqual([{ categoryId: testCategoryId, type: CategoryType.Expense, amount: 500 }]);
         });
 
         it('APP-5.6 CASH-1.2 should count the first and last days of the month and nothing from the next, west of UTC', async () => {
@@ -402,18 +400,16 @@ describe('Transaction Routes', () => {
 
             const response = await request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-04-15');
 
-            expect(response.body).toEqual([{ categoryId: testCategoryId, amount: -110 }]);
+            expect(response.body).toEqual([{ categoryId: testCategoryId, type: CategoryType.Expense, amount: 110 }]);
         });
-
-        function getJune(): request.Test {
-            return request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-06-15');
-        }
 
         it('CASH-1.2 should leave out hidden transactions', async () => {
             await insertTransaction({ amount: -10 });
             await insertTransaction({ amount: -100, isHidden: true });
 
-            expect((await getJune()).body).toEqual([{ categoryId: testCategoryId, amount: -10 }]);
+            expect((await getJune()).body).toEqual([
+                { categoryId: testCategoryId, type: CategoryType.Expense, amount: 10 }
+            ]);
         });
 
         it('CASH-1.2 should leave out hidden accounts', async () => {
@@ -421,10 +417,34 @@ describe('Transaction Routes', () => {
             await insertTransaction({ amount: -10 });
             await insertTransaction({ accountId: hiddenAccountId, amount: -100 });
 
-            expect((await getJune()).body).toEqual([{ categoryId: testCategoryId, amount: -10 }]);
+            expect((await getJune()).body).toEqual([
+                { categoryId: testCategoryId, type: CategoryType.Expense, amount: 10 }
+            ]);
         });
 
-        it('CASH-1.3 should total uncategorized money in and money out separately', async () => {
+        it('CASH-1.3 should count income categories as income and leave out transfer categories', async () => {
+            const paycheckId = await insertCategory(CategoryType.Income, 'Paycheck');
+            const cardPaymentId = await insertCategory(CategoryType.Transfer, 'Card Payment');
+            await insertTransaction({ categoryId: paycheckId, amount: 4000 });
+            await insertTransaction({ categoryId: paycheckId, amount: -150 });
+            await insertTransaction({ categoryId: cardPaymentId, amount: -900 });
+            await insertTransaction({ categoryId: cardPaymentId, amount: 900 });
+
+            expect((await getJune()).body).toEqual([
+                { categoryId: paycheckId, type: CategoryType.Income, amount: 3850 }
+            ]);
+        });
+
+        it('CASH-1.9 should net refunds against an expense category, going negative when they exceed its spending', async () => {
+            await insertTransaction({ amount: -30.1 });
+            await insertTransaction({ amount: 50.2 });
+
+            expect((await getJune()).body).toEqual([
+                { categoryId: testCategoryId, type: CategoryType.Expense, amount: -20.1 }
+            ]);
+        });
+
+        it('CASH-1.3 should count uncategorized money in as income and money out as expenses', async () => {
             await insertTransaction({ categoryId: '', amount: 25 });
             await insertTransaction({ categoryId: '', amount: 15 });
             await insertTransaction({ categoryId: '', amount: -60 });
@@ -436,9 +456,9 @@ describe('Transaction Routes', () => {
             expect(response.body).toHaveLength(3);
             expect(response.body).toEqual(
                 expect.arrayContaining([
-                    { categoryId: testCategoryId, amount: -25 },
-                    { categoryId: '', amount: 40 },
-                    { categoryId: '', amount: -60 }
+                    { categoryId: testCategoryId, type: CategoryType.Expense, amount: 25 },
+                    { categoryId: '', type: CategoryType.Income, amount: 40 },
+                    { categoryId: '', type: CategoryType.Expense, amount: 60 }
                 ])
             );
         });

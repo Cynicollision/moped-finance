@@ -3,8 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
-import { BudgetStreamType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
+import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
+import { BudgetStreamUtil } from '@shared/finance/util';
 import { DateProviderService } from './../../core/date-provider.service';
 import { LayoutService } from './../../core/layout/layout.service';
 import { FinanceService } from './../finance.service';
@@ -66,18 +67,30 @@ describe('FinanceSpendingComponent', () => {
             ...created
         }
     ];
+    // The period's totals as the server classifies them (CASH-1.3): transfers are left out.
+    const income = (categoryId: string, amount: number): SpendingTotal => ({
+        categoryId,
+        type: CategoryType.Income,
+        amount
+    });
+    const expense = (categoryId: string, amount: number): SpendingTotal => ({
+        categoryId,
+        type: CategoryType.Expense,
+        amount
+    });
     const totals: SpendingTotal[] = [
-        { categoryId: 'pay', amount: 4000 },
-        { categoryId: 'rent', amount: -1500 },
-        { categoryId: 'utilities', amount: -200 },
-        { categoryId: 'groceries', amount: -300 },
-        { categoryId: 'card', amount: -900 }
+        income('pay', 4000),
+        expense('rent', 1500),
+        expense('utilities', 200),
+        expense('groceries', 300)
     ];
 
+    // A stream's type follows from its category's (BUD-1.1).
     function stream(categoryId: string, amount: number, recurrence = CalendarPeriod.Monthly): BudgetStream {
+        const groupId = categories.find(c => c.id === categoryId)!.groupId;
         return {
             id: `${categoryId}-${amount}`,
-            type: BudgetStreamType.Expense,
+            type: BudgetStreamUtil.typeOf(groups.find(g => g.id === groupId)!.type),
             name: categoryId,
             categoryId,
             amount,
@@ -166,17 +179,14 @@ describe('FinanceSpendingComponent', () => {
         return element.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
     }
 
-    it('CASH-1.3 CASH-1.4 should total income and expenses, ignoring transfers', async () => {
+    it('CASH-1.4 should total income and expenses', async () => {
         const { element } = await render();
 
         expect(summary(element)).toEqual(['$2,000', '50% of income', '$4,000', '$2,000']);
     });
 
     it('CASH-1.4 should show negative savings signed and red, and expenses never red', async () => {
-        const { element } = await render([
-            { categoryId: 'pay', amount: 1000 },
-            { categoryId: 'rent', amount: -1500 }
-        ]);
+        const { element } = await render([income('pay', 1000), expense('rent', 1500)]);
 
         expect(summary(element)).toEqual(['-$500', '-50% of income', '$1,000', '$1,500']);
         const colours = Array.from(element.querySelectorAll('.summary-card :is(.headline, .value) span')).map(
@@ -186,7 +196,7 @@ describe('FinanceSpendingComponent', () => {
     });
 
     it('CASH-1.4 should show a savings rate of 0% when there is no income', async () => {
-        const { element } = await render([{ categoryId: 'rent', amount: -1500 }]);
+        const { element } = await render([expense('rent', 1500)]);
 
         expect(summary(element)[1]).toBe('0% of income');
     });
@@ -199,7 +209,7 @@ describe('FinanceSpendingComponent', () => {
     });
 
     it('CASH-1.3 should count uncategorized money in as income and money out as expenses', async () => {
-        const { element } = await render([...totals, { categoryId: '', amount: 50 }, { categoryId: '', amount: -80 }]);
+        const { element } = await render([...totals, income('', 50), expense('', 80)]);
 
         expect(sectionRows(element, 'Income')).toEqual(['💼 Paycheck $4,000.00', 'Uncategorized $50.00']);
         expect(sectionRows(element, 'Expenses')).toEqual([
@@ -211,7 +221,10 @@ describe('FinanceSpendingComponent', () => {
     });
 
     it('CASH-1.9 should show an expense category that is net money in as a negative expense', async () => {
-        const { element } = await render([...totals, { categoryId: 'groceries', amount: 320 }]);
+        const { element } = await render([
+            ...totals.filter(t => t.categoryId !== 'groceries'),
+            expense('groceries', -20)
+        ]);
 
         expect(sectionRows(element, 'Expenses')).toEqual([
             '🏠 Rent $1,500.00',
@@ -422,7 +435,7 @@ describe('FinanceSpendingComponent', () => {
 
     describe('Essential and Discretionary', () => {
         // Expenses of $2,180: $2,000 essential (rent, utilities, groceries), $100 discretionary (dining), $80 uncategorized.
-        const split = [...totals, { categoryId: 'dining', amount: -100 }, { categoryId: '', amount: -80 }];
+        const split = [...totals, expense('dining', 100), expense('', 80)];
 
         function subheaders(element: HTMLElement): string[] {
             return Array.from(section(element, 'Expenses').querySelectorAll('[appListSubheader]')).map(header =>
