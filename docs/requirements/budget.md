@@ -21,10 +21,6 @@ Screen: **Budget** (`/budget`). Adding and editing happen in a side panel (a ful
 | BUD-1.10 | The summary card shall lead with **Left over**: income minus expenses minus savings for the chosen period (BUD-1.6), in green, or in red with a "-" when negative. | Implemented |
 | BUD-1.6 | The summary card shall have a **Monthly** / **Quarterly** / **Yearly** switch (default Monthly), and every total on the screen, the summary's **Income**, **Expenses** and **Savings** and each section's total, shall be for the chosen period, in whole dollars. Every stream is first converted to a monthly amount (quarterly divided by 3, yearly by 12); the quarterly total is 3 times the monthly total and the yearly total is 12 times it. | Implemented |
 
-## Known gaps
-
-- **Add buttons' screen-reader labels** say "Add Expenses" rather than BUD-1.3's "Add Expense" (`budget.component.html` builds them from the section title).
-
 ## Notes
 
 - **Stream amounts are positive.** Unlike transactions, a stream's direction comes from its category's type, so amounts are entered and stored without a sign. Comparisons with actuals (BUD-1.8, CASH-1.10, CASH-1.12) use the size of the actual amount.

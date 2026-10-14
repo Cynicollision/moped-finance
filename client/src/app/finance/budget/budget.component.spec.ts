@@ -131,6 +131,11 @@ describe('FinanceBudgetComponent', () => {
     it("BUD-1.3 should add a stream of the section's type in a side panel", async () => {
         const { element, modalService } = await render();
 
+        const addLabels = Array.from(element.querySelectorAll('.section-header button')).map(b =>
+            b.getAttribute('aria-label')
+        );
+        expect(addLabels).toEqual(['Add Income', 'Add Expense', 'Add Savings']);
+
         section(element, 'Savings').querySelector<HTMLButtonElement>('[aria-label="Add Savings"]')!.click();
 
         expect(modalService.open).toHaveBeenCalledWith(
@@ -143,7 +148,7 @@ describe('FinanceBudgetComponent', () => {
     it("BUD-1.8 should give the panel the average month as of today, and every stream for the category's others", async () => {
         const { element, modalService, financeService } = await render();
 
-        section(element, 'Expenses').querySelector<HTMLButtonElement>('[aria-label="Add Expenses"]')!.click();
+        section(element, 'Expenses').querySelector<HTMLButtonElement>('[aria-label="Add Expense"]')!.click();
 
         expect(financeService.fetchSpendingAverage).toHaveBeenCalledWith('2026-05-17');
         expect(modalService.open).toHaveBeenCalledWith(

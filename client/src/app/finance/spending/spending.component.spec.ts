@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
-import { SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
+import { SpendingAverage, SpendingTotal, TransactionSearchOptions } from '@shared/finance/contracts';
 import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { BudgetStream, Category, CategoryGroup } from '@shared/finance/types';
 import { BudgetStreamUtil } from '@shared/finance/util';
@@ -85,6 +85,15 @@ describe('FinanceSpendingComponent', () => {
         expense('groceries', 300)
     ];
 
+    // The average month over May 2025 to April 2026, as the server works it out (CASH-1.12).
+    const average: SpendingAverage = {
+        startDate: '2025-05-01',
+        endDate: '2026-04-30',
+        months: 12,
+        totals: [income('pay', 4100), expense('rent', 1500), expense('groceries', 425)],
+        transfers: []
+    };
+
     // A stream's type follows from its category's (BUD-1.1).
     function stream(categoryId: string, amount: number, recurrence = CalendarPeriod.Monthly): BudgetStream {
         const groupId = categories.find(c => c.id === categoryId)!.groupId;
@@ -116,7 +125,8 @@ describe('FinanceSpendingComponent', () => {
         oldest?: string,
         newest?: string,
         budgetStreams: BudgetStream[] = [],
-        withCategories = categories
+        withCategories = categories,
+        url = '/'
     ) {
         const edge = (date?: string) => (date ? [{ id: date, date }] : []);
         const financeService = {
@@ -124,6 +134,7 @@ describe('FinanceSpendingComponent', () => {
             fetchCategoryGroups: vi.fn().mockResolvedValue(groups),
             fetchBudgetStreams: vi.fn().mockResolvedValue(budgetStreams),
             fetchSpendingTotals: vi.fn().mockResolvedValue(periodTotals),
+            fetchSpendingAverage: vi.fn().mockResolvedValue(average),
             fetchTransactions: vi.fn((search: TransactionSearchOptions) =>
                 Promise.resolve(search.sortDirection === SortDirection.Asc ? edge(oldest) : edge(newest))
             )
@@ -141,6 +152,7 @@ describe('FinanceSpendingComponent', () => {
             ]
         });
 
+        await TestBed.inject(Router).navigateByUrl(url);
         const fixture = TestBed.createComponent(FinanceSpendingComponent);
         await fixture.whenStable();
         return Object.assign(fixture, { financeService, element: fixture.nativeElement as HTMLElement });
@@ -349,6 +361,96 @@ describe('FinanceSpendingComponent', () => {
         const selected = Array.from(document.querySelectorAll('.picker-option[aria-pressed="true"]')).map(text);
         expect(selected).toEqual(['May']);
         fixture.componentInstance.closePicker();
+    });
+
+    describe('Average month', () => {
+        async function renderAverage(window: Partial<SpendingAverage> = {}) {
+            const fixture = await render(totals, undefined, undefined, budget);
+            fixture.financeService.fetchSpendingAverage.mockResolvedValue({ ...average, ...window });
+            fixture.componentInstance.selection.set({ period: 'average', start: '2026-05-01' });
+            await fixture.whenStable();
+            return fixture;
+        }
+
+        it('CASH-1.12 should offer the average month in the picker, without a year', async () => {
+            const fixture = await render();
+            const { componentInstance: spending, element, financeService } = fixture;
+
+            spending.openPicker();
+            spending.pickerPeriod.set('average');
+            await fixture.whenStable();
+            expect(Array.from(document.querySelectorAll('.picker-type mat-button-toggle')).map(text)).toEqual([
+                'Month',
+                'Quarter',
+                'Year',
+                'Average'
+            ]);
+            expect(document.querySelector('.picker-year')).toBeNull();
+            const options = Array.from(document.querySelectorAll<HTMLButtonElement>('.picker-option'));
+            expect(options.map(text)).toEqual(['Past 12 months']);
+            options[0].click();
+            await fixture.whenStable();
+
+            expect(financeService.fetchSpendingAverage).toHaveBeenCalledWith('2026-05-17');
+            expect(text(element.querySelector('.period-button'))).toBe(
+                'Average month, May 2025 to Apr 2026 arrow_drop_down'
+            );
+            expect(button(element, 'Previous period').disabled).toBe(true);
+            expect(button(element, 'Next period').disabled).toBe(true);
+        });
+
+        it('CASH-1.12 should compare each average month with the monthly budget', async () => {
+            const { element } = await renderAverage();
+
+            expect(summary(element)).toEqual(['$2,175', '53% of income', '$4,100', '$1,925']);
+            expect(budgeted(element)).toEqual(['of $2,050 budgeted', 'of $4,200 budgeted', 'of $2,150 budgeted']);
+            expect(sectionRows(element, 'Income')).toEqual(['💼 Paycheck Budget $4,200 $100 under $4,100.00']);
+            expect(sectionRows(element, 'Expenses')).toEqual([
+                '🏠 Rent Budget $1,500 on budget $1,500.00',
+                '🛒 Groceries Budget $400 $25 over $425.00',
+                '💡 Utilities Budget $150 $150 under $0.00',
+                '🍽️ Dining Budget $100 $100 under $0.00'
+            ]);
+        });
+
+        it('CASH-1.6 CASH-1.12 should open Transactions for the whole window', async () => {
+            const { element } = await renderAverage();
+
+            const rent = Array.from(element.querySelectorAll<HTMLAnchorElement>('a.app-list-row')).find(row =>
+                text(row).includes('Rent')
+            )!;
+            const params = new URL(rent.href).searchParams;
+            expect(params.get('startDate')).toBe('2025-05-01');
+            expect(params.get('endDate')).toBe('2026-04-30');
+        });
+
+        it('CASH-1.12 should name a one-month window by its month, and no window at all without history', async () => {
+            const oneMonth = await renderAverage({ startDate: '2026-04-01', months: 1 });
+            expect(text(oneMonth.element.querySelector('.period-button'))).toBe(
+                'Average month, Apr 2026 arrow_drop_down'
+            );
+            TestBed.resetTestingModule();
+
+            const none = await renderAverage({ startDate: '2026-05-01', months: 0, totals: [] });
+            expect(text(none.element.querySelector('.period-button'))).toBe('Average month arrow_drop_down');
+            expect(text(section(none.element, 'Income').querySelector('.section-total'))).toBe('$0');
+        });
+
+        it('CASH-1.12 should open on the average month when the URL asks for it', async () => {
+            const { element, financeService } = await render(
+                totals,
+                undefined,
+                undefined,
+                [],
+                categories,
+                '/?period=average'
+            );
+
+            expect(financeService.fetchSpendingTotals).not.toHaveBeenCalled();
+            expect(text(element.querySelector('.period-button'))).toBe(
+                'Average month, May 2025 to Apr 2026 arrow_drop_down'
+            );
+        });
     });
 
     it("CASH-1.10 should show each budgeted category's budget and how the actual compares", async () => {

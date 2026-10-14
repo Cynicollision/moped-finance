@@ -9,7 +9,7 @@ import {
     viewChild
 } from '@angular/core';
 import { NgTemplateOutlet, PercentPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
@@ -81,10 +81,21 @@ interface SpendingSection {
     parts?: NecessityPart[];
 }
 
-/** The period on screen: a month, quarter or year, by its first day (CASH-1.1). */
+/** A calendar period (CASH-1.1), or the average month over the past 12 (CASH-1.12). */
+export type SpendingPeriodType = CalendarPeriod | 'average';
+
+/** The period on screen: a month, quarter or year by its first day, or the average month (CASH-1.1, CASH-1.12). */
 export interface SpendingPeriod {
-    period: CalendarPeriod;
+    period: SpendingPeriodType;
+    /** The first day of the period; for the average month, of the current month. */
     start: CalendarDate;
+}
+
+/** The dates the totals on screen are for, and how many months they span. */
+interface SpendingWindow {
+    startDate: CalendarDate;
+    endDate: CalendarDate;
+    months: number;
 }
 
 /** One choice in the period picker's grid: a month, a quarter or a year. */
@@ -116,10 +127,11 @@ const budgetColumns: ListColumn[] = [
 ];
 
 // What the stepper's buttons and the picker call each period type.
-const periodNouns: Record<CalendarPeriod, string> = {
+const periodNouns: Record<SpendingPeriodType, string> = {
     [CalendarPeriod.Monthly]: 'month',
     [CalendarPeriod.Quarterly]: 'quarter',
-    [CalendarPeriod.Yearly]: 'year'
+    [CalendarPeriod.Yearly]: 'year',
+    average: 'period'
 };
 
 @Component({
@@ -150,10 +162,11 @@ export class FinanceSpendingComponent {
     readonly isCompact = inject(LayoutService).isCompact;
 
     readonly CalendarPeriod = CalendarPeriod;
-    readonly periodTypes = [
+    readonly periodTypes: { value: SpendingPeriodType; label: string }[] = [
         { value: CalendarPeriod.Monthly, label: 'Month' },
         { value: CalendarPeriod.Quarterly, label: 'Quarter' },
-        { value: CalendarPeriod.Yearly, label: 'Year' }
+        { value: CalendarPeriod.Yearly, label: 'Year' },
+        { value: 'average', label: 'Average' }
     ];
     /** The budget and difference columns show only when there's a budget to compare with (CASH-1.10). */
     readonly columns = computed<ListColumn[]>(() => [
@@ -163,11 +176,15 @@ export class FinanceSpendingComponent {
     ]);
 
     private readonly today = inject(DateProviderService).today();
+    private readonly currentMonth = CalendarDateUtil.getPeriod(CalendarPeriod.Monthly, this.today).startDate;
 
-    /** Opens on the current month (CASH-1.1). */
+    /** Opens on the current month (CASH-1.1), or on the average month when the URL asks for it (CASH-1.12). */
     readonly selection = signal<SpendingPeriod>({
-        period: CalendarPeriod.Monthly,
-        start: CalendarDateUtil.getPeriod(CalendarPeriod.Monthly, this.today).startDate
+        period:
+            inject(ActivatedRoute).snapshot.queryParamMap.get('period') === 'average'
+                ? 'average'
+                : CalendarPeriod.Monthly,
+        start: this.currentMonth
     });
     readonly viewMode = signal<SpendingViewMode>('category');
 
@@ -202,13 +219,18 @@ export class FinanceSpendingComponent {
     });
 
     // The period's totals: reloads when the period changes, keeping the old ones on screen meanwhile. They carry the
-    // period they're for, so the budgets beside them match until the new ones arrive.
+    // period and dates they're for, so the budgets and drill-downs beside them match until the new ones arrive.
     readonly totals = viewResource({
         params: () => this.selection(),
-        loader: async ({ period, start }) => ({
-            period,
-            totals: await this.financeService.fetchSpendingTotals(period, start)
-        })
+        loader: async ({ period, start }) => {
+            if (period === 'average') {
+                const { totals, ...window } = await this.financeService.fetchSpendingAverage(this.today);
+                return { period, totals, window };
+            }
+            const { startDate, endDate } = CalendarDateUtil.getPeriod(period, start);
+            const window = { startDate, endDate, months: BudgetStreamUtil.monthsIn(period) };
+            return { period, totals: await this.financeService.fetchSpendingTotals(period, start), window };
+        }
     });
 
     private readonly categoryMap = computed(
@@ -217,9 +239,11 @@ export class FinanceSpendingComponent {
     private readonly groupMap = computed(() => new Map((this.lookups.value()?.groups ?? []).map(g => [g.id, g])));
     private readonly categoryTotals = computed(() => this.totals.value()?.totals ?? []);
 
-    private readonly budgetMonths = computed(() =>
-        BudgetStreamUtil.monthsIn(this.totals.value()?.period ?? this.selection().period)
-    );
+    // The average month is compared with the monthly budget (CASH-1.12).
+    private readonly budgetMonths = computed(() => {
+        const period = this.totals.value()?.period ?? this.selection().period;
+        return period === 'average' ? 1 : BudgetStreamUtil.monthsIn(period);
+    });
 
     readonly error = computed(() => this.lookups.error() ?? this.totals.error());
     readonly isLoaded = computed(() => this.lookups.value() !== undefined && this.totals.value() !== undefined);
@@ -231,10 +255,10 @@ export class FinanceSpendingComponent {
 
     // The stepper (CASH-1.1)
 
-    /** The period in full: "May 2026", "Q2 2026" or "2026". */
-    readonly periodLabel = computed(() => labelFor(this.selection(), false));
-    /** As the stepper shows it, with a short month on phones ("Sep 2026") so the controls fit one row. */
-    readonly periodText = computed(() => labelFor(this.selection(), this.isCompact()));
+    /** The period in full: "May 2026", "Q2 2026", "2026" or "Average month, May 2025 to Apr 2026". */
+    readonly periodLabel = computed(() => this.labelFor(false));
+    /** As the stepper shows it, with a short month on phones ("Sep 2026", "Avg, ...") so the controls fit one row. */
+    readonly periodText = computed(() => this.labelFor(this.isCompact()));
     readonly periodNoun = computed(() => periodNouns[this.selection().period]);
     readonly canStepBack = computed(() => this.canStep(-1));
     readonly canStepForward = computed(() => this.canStep(1));
@@ -246,13 +270,33 @@ export class FinanceSpendingComponent {
         }
     }
 
+    // The average month doesn't step (CASH-1.12).
     private canStep(direction: -1 | 1): boolean {
         const { period, start } = this.selection();
-        return this.years().includes(yearOf(this.stepped(period, start, direction)));
+        return period !== 'average' && this.years().includes(yearOf(this.stepped(period, start, direction)));
     }
 
-    private stepped(period: CalendarPeriod, start: CalendarDate, direction: -1 | 1): CalendarDate {
-        return CalendarDateUtil.addMonths(start, direction * BudgetStreamUtil.monthsIn(period));
+    private stepped(period: SpendingPeriodType, start: CalendarDate, direction: -1 | 1): CalendarDate {
+        return period === 'average'
+            ? start
+            : CalendarDateUtil.addMonths(start, direction * BudgetStreamUtil.monthsIn(period));
+    }
+
+    private labelFor(shortMonth: boolean): string {
+        const selection = this.selection();
+        if (selection.period !== 'average') {
+            return labelFor(selection.period, selection.start, shortMonth);
+        }
+
+        // The window is known once it has loaded: "Average month, May 2025 to Apr 2026" (CASH-1.12).
+        const prefix = shortMonth ? 'Avg' : 'Average month';
+        const loaded = this.totals.value();
+        if (loaded?.period !== 'average' || loaded.window.months === 0) {
+            return prefix;
+        }
+        const from = labelFor(CalendarPeriod.Monthly, loaded.window.startDate, true);
+        const to = labelFor(CalendarPeriod.Monthly, loaded.window.endDate, true);
+        return `${prefix}, ${from === to ? to : `${from} to ${to}`}`;
     }
 
     // The period picker: a popover on wider screens, a bottom sheet on phones (CASH-1.1)
@@ -263,7 +307,11 @@ export class FinanceSpendingComponent {
     readonly isPopoverOpen = signal(false);
 
     /** The period type and year the picker is showing, before a choice is made. */
-    readonly pickerPeriod = signal(CalendarPeriod.Monthly);
+    readonly pickerPeriod = signal<SpendingPeriodType>(CalendarPeriod.Monthly);
+    /** Months and quarters are chosen within a year; years and the average month aren't. */
+    readonly showsPickerYear = computed(
+        () => this.pickerPeriod() === CalendarPeriod.Monthly || this.pickerPeriod() === CalendarPeriod.Quarterly
+    );
     readonly pickerYear = signal(yearOf(this.today));
 
     readonly pickerOptions = computed<PeriodOption[]>(() => {
@@ -281,8 +329,16 @@ export class FinanceSpendingComponent {
                     ariaLabel: `Q${q} ${year}`,
                     start: firstDay(year, (q - 1) * 3)
                 }));
-            default:
+            case CalendarPeriod.Yearly:
                 return this.years().map(y => ({ label: `${y}`, ariaLabel: `${y}`, start: firstDay(y, 0) }));
+            default:
+                return [
+                    {
+                        label: 'Past 12 months',
+                        ariaLabel: 'Average month over the past 12 months',
+                        start: this.currentMonth
+                    }
+                ];
         }
     });
 
@@ -457,11 +513,12 @@ export class FinanceSpendingComponent {
             queryParams['categoryId'] = row.id;
         }
 
-        // The same period the server totalled (CASH-1.6).
-        const { period, start } = this.selection();
-        const { startDate, endDate } = CalendarDateUtil.getPeriod(period, start);
-        queryParams['startDate'] = startDate;
-        queryParams['endDate'] = endDate;
+        // The same dates the server totalled: the period, or the average month's whole window (CASH-1.6, CASH-1.12).
+        const window: SpendingWindow | undefined = this.totals.value()?.window;
+        if (window) {
+            queryParams['startDate'] = window.startDate;
+            queryParams['endDate'] = window.endDate;
+        }
         return queryParams;
     }
 }
@@ -485,7 +542,7 @@ function firstDay(year: number, monthIndex: number): CalendarDate {
     return `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
 }
 
-function labelFor({ period, start }: SpendingPeriod, shortMonth: boolean): string {
+function labelFor(period: CalendarPeriod, start: CalendarDate, shortMonth: boolean): string {
     const year = yearOf(start);
     const monthIndex = Number(start.slice(5, 7)) - 1;
     switch (period) {

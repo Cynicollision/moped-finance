@@ -199,7 +199,7 @@
             }
         </mat-button-toggle-group>
 
-        @if (pickerPeriod() !== CalendarPeriod.Yearly) {
+        @if (showsPickerYear()) {
             <div class="picker-year">
                 <button
                     mat-icon-button
@@ -221,7 +221,11 @@
             </div>
         }
 
-        <div class="picker-grid" [class.quarters]="pickerPeriod() === CalendarPeriod.Quarterly">
+        <div
+            class="picker-grid"
+            [class.quarters]="pickerPeriod() === CalendarPeriod.Quarterly"
+            [class.single]="pickerPeriod() === 'average'"
+        >
             @for (option of pickerOptions(); track option.start) {
                 <button
                     mat-button

@@ -40,6 +40,8 @@ export interface NecessityPart {
 export interface BudgetSection {
     type: BudgetStreamType;
     title: string;
+    /** The Add button's label for screen readers: "Add Income", "Add Expense" or "Add Savings" (BUD-1.3). */
+    addLabel: string;
     empty: string;
     tone: MoneyTone;
     streams: BudgetStream[];
@@ -125,7 +127,14 @@ export class FinanceBudgetComponent {
         return [BudgetStreamType.Income, BudgetStreamType.Expense, BudgetStreamType.Savings].map(type => {
             const ofType = streams.filter(s => s.type === type).sort((a, b) => this.compareStreams(a, b));
             const necessityParts = type === BudgetStreamType.Expense ? this.splitByNecessity(ofType) : undefined;
-            return { type, ...sectionText[type], streams: ofType, monthly: monthlyTotal(ofType), necessityParts };
+            return {
+                type,
+                ...sectionText[type],
+                addLabel: `Add ${streamTypeLabel(type)}`,
+                streams: ofType,
+                monthly: monthlyTotal(ofType),
+                necessityParts
+            };
         });
     });
 

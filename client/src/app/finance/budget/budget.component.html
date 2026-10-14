@@ -47,7 +47,7 @@
                         [tone]="section.tone"
                         digits="1.0-0"
                     ></app-money>
-                    <button mat-button (click)="startAdd(section.type)" [attr.aria-label]="'Add ' + section.title">
+                    <button mat-button (click)="startAdd(section.type)" [attr.aria-label]="section.addLabel">
                         <mat-icon>add</mat-icon> Add
                     </button>
                 </div>

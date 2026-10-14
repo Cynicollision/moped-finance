@@ -191,7 +191,7 @@ app-page-header {
 
 // The period picker, in a popover or a bottom sheet (CASH-1.1).
 .period-popover {
-    width: 296px;
+    width: 344px;
     padding: 16px;
     border-radius: var(--mat-sys-corner-large);
     background-color: var(--mat-sys-surface-container);
@@ -235,6 +235,10 @@ app-page-header {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
+
+    &.single {
+        grid-template-columns: minmax(0, 1fr);
+    }
 
     &.quarters {
         grid-template-columns: repeat(2, minmax(0, 1fr));
