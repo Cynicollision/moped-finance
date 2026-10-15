@@ -1,15 +1,23 @@
 import * as bcrypt from 'bcrypt';
-import { RegistrationStatus } from '@shared/core/contracts';
+import { PasswordPolicy as PasswordPolicyInfo, RegistrationStatus } from '@shared/core/contracts';
 import { User } from '@shared/core/types';
 import { CoreEntityIdPrefix, EntityId } from '@server/data';
 import { OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
+import { PasswordPolicy } from './password-policy';
 import { IUserData } from './user-data';
 
 export class AuthController {
     private readonly saltRounds = 10;
 
-    constructor(private userData: IUserData) {}
+    constructor(
+        private userData: IUserData,
+        private passwordPolicy = new PasswordPolicy()
+    ) {}
+
+    async getPasswordPolicy(): Promise<OperationResult<PasswordPolicyInfo>> {
+        return Result.success({ minLength: this.passwordPolicy.minLength });
+    }
 
     async loginUser(username: string, password?: string): Promise<OperationResult<User>> {
         if (!password) {
@@ -46,6 +54,11 @@ export class AuthController {
             return Result.userError('Username already taken.');
         }
 
+        const passwordProblems = this.passwordPolicy.problems(password, username);
+        if (passwordProblems.length > 0) {
+            return Result.userError(passwordProblems.join(' '), 'INVALID_PASSWORD');
+        }
+
         const hash = await bcrypt.hash(password, this.saltRounds);
 
         const newUser: User = {
@@ -77,6 +90,11 @@ export class AuthController {
         const match = await bcrypt.compare(oldPassword, userWithPassword.passwordHash);
         if (!match) {
             return Result.userError('Invalid old password.');
+        }
+
+        const passwordProblems = this.passwordPolicy.problems(newPassword, user.username);
+        if (passwordProblems.length > 0) {
+            return Result.userError(passwordProblems.join(' '), 'INVALID_PASSWORD');
         }
 
         const newHash = await bcrypt.hash(newPassword, this.saltRounds);

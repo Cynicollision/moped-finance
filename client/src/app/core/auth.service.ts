@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { RegistrationStatus, UpdateProfileRequest } from '@shared/core/contracts';
+import { PasswordPolicy, RegistrationStatus, UpdateProfileRequest } from '@shared/core/contracts';
 import { User } from '@shared/core/types/user';
 import { ApiService } from './api.service';
 
@@ -31,6 +31,17 @@ export class AuthService {
     async isRegistrationOpen(): Promise<boolean> {
         const status = await this.api.get<RegistrationStatus>('auth/registration');
         return status?.isOpen ?? false;
+    }
+
+    /** The password rules' minimum length (AUTH-9.4), for a screen to load with `viewResource`. */
+    fetchPasswordPolicy(): Promise<PasswordPolicy> {
+        return this.api.load<PasswordPolicy>('auth/password-policy');
+    }
+
+    /** Changes the password (AUTH-5.1); false if the server refused, which it has already reported. */
+    async changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
+        const result = await this.api.put<unknown>('auth/password', { oldPassword, newPassword });
+        return result !== undefined;
     }
 
     async register(username: string, displayName: string, password?: string, returnUrl?: string): Promise<void> {

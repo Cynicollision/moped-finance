@@ -19,11 +19,8 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 14. Change Password and password rules
-- [ ] AUTH-5.2, 5.3: Change Password in Settings. AUTH-9.1, 9.4, 9.5, AUTH-2.11: fixed password rules (minimum length 12, or `PASSWORD_MIN_LENGTH` from 8 to 64 in `.env`; at most 72 bytes; not the username), shown under every password field and enforced by the server. The client needs the minimum length from the server (for example in `GET /auth/registration`). Add `PASSWORD_MIN_LENGTH` to `.env.example`.
-
 ### 15. Register screen
-- [ ] AUTH-2.8, 2.9, 2.10; CAT-6.1, 6.2: explain single-owner registration, field limits for username and display name, and **Start with default categories** (the CAT-6 list, with necessities) or **Start empty**. Ship the defaults as a CSV in the CAT-7.1 format and load them with `CategoryCsv.read` and `FinanceCategoryData.insertBulk` (`category-csv.ts`, `category-data.ts`), as categories.md's Notes suggest. Known gap: close the AUTH-2.7 registration race (two simultaneous registrations on a fresh instance) at the database.
+- [ ] AUTH-2.9, 2.10; CAT-6.1, 6.2: field limits for username and display name, and **Start with default categories** (the CAT-6 list, with necessities) or **Start empty**. Ship the defaults as a CSV in the CAT-7.1 format and load them with `CategoryCsv.read` and `FinanceCategoryData.insertBulk` (`category-csv.ts`, `category-data.ts`), as categories.md's Notes suggest. Known gap: close the AUTH-2.7 registration race (two simultaneous registrations on a fresh instance) at the database.
 
 ### 16. Sign-in protection
 - [ ] AUTH-10.1, 10.3, 10.5 to 10.7: per-address lockout after failed sign-ins, the limits as optional `.env` variables (not Settings), logged lockouts, and `TRUST_FIRST_PROXY` for the client address behind a proxy.

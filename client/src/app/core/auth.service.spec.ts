@@ -120,4 +120,23 @@ describe('AuthService', () => {
         expect(auth.currentUser()).toBeNull();
         expect(navigate).toHaveBeenCalledWith(['/login']);
     });
+
+    it('AUTH-5.1 should send the current and new passwords, and report whether the server took them', async () => {
+        const { auth, http, notificationService } = setup();
+
+        const changed = auth.changePassword('old password', 'a new password');
+        const request = http.expectOne('/auth/password');
+        expect(request.request.method).toBe('PUT');
+        expect(request.request.body).toEqual({ oldPassword: 'old password', newPassword: 'a new password' });
+        request.flush(null);
+        expect(await changed).toBe(true);
+
+        const refused = auth.changePassword('wrong password', 'a new password');
+        http.expectOne('/auth/password').flush(
+            { code: 'BAD_REQUEST', message: 'Invalid old password.' },
+            { status: 400, statusText: 'Bad Request' }
+        );
+        expect(await refused).toBe(false);
+        expect(notificationService.error).toHaveBeenCalledWith('Invalid old password.');
+    });
 });

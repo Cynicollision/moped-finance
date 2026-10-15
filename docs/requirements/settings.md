@@ -38,7 +38,7 @@ Bank sync uses [SimpleFIN Bridge](https://beta-bridge.simplefin.org) (decided 20
 
 ## Known gaps
 
-- **Only Profile, Appearance, Dashboard, Institutions and Accounts, Categories and API Tokens exist (SET-1.1).** Rules, Bank Sync and Change Password aren't built.
+- **Rules and Bank Sync aren't built (SET-1.1).** The other sections exist.
 
 ## Notes
 
