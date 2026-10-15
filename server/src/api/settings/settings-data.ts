@@ -25,17 +25,18 @@ export class SettingsData implements ISettingsData {
     public async retrieve(): Promise<AppSettings> {
         const rows = await this.db.select().from(settingsSchema);
 
-        const settings: AppSettings = { ...DEFAULT_SETTINGS };
+        // Each value is checked against its own setting's type
+        const stored: Partial<Record<keyof AppSettings, unknown>> = {};
         for (const { key, value } of rows) {
             if (!isSettingKey(key)) {
                 continue;
             }
             const parsed = settingFields[key].safeParse(value);
             if (parsed.success) {
-                settings[key] = parsed.data;
+                stored[key] = parsed.data;
             }
         }
-        return settings;
+        return { ...DEFAULT_SETTINGS, ...stored } as AppSettings;
     }
 
     /** Saves the settings in `changes`, in one statement; the others keep their values. */

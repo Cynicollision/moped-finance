@@ -1,0 +1,23 @@
+<app-page-header title="Appearance" [crumbs]="[{ label: 'Settings', link: '/settings' }]"></app-page-header>
+
+<mat-card class="settings-section">
+    <mat-card-content class="section-content">
+        <span id="theme-label" class="option-label">Theme</span>
+        <mat-radio-group
+            class="theme-options"
+            aria-labelledby="theme-label"
+            [value]="selected()"
+            [disabled]="saving()"
+            (change)="onThemeChange($event)"
+        >
+            @for (option of themeOptions; track option.value) {
+                <mat-radio-button [value]="option.value">
+                    {{ option.label }}
+                    @if (option.hint) {
+                        <span class="hint">{{ option.hint }}</span>
+                    }
+                </mat-radio-button>
+            }
+        </mat-radio-group>
+    </mat-card-content>
+</mat-card>

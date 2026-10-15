@@ -83,6 +83,8 @@ client/src/app/
   core/layout/  LayoutService, the page header, profile menu and tab-title strategy
   core/list/    the responsive list (columns when wide, two-line rows when narrow)
   core/chart/   the Chart.js wrapper, its theme colours and axis labels
+  core/theme/   ThemeService: the theme setting (SET-3.1), applied as `data-theme` on <html>; public/theme.js
+              applies the browser's copy of it before the app loads
   core/emoji-picker/  the emoji form field (emoji-picker-element in a popover or bottom sheet)
   core/import/  the CSV import flow shared by the import screens (choose, validate, confirm)
   finance/    one folder per screen area: accounts, budget, categories, dashboard,

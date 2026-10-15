@@ -30,7 +30,7 @@ describe('Settings Routes', () => {
             const response = await request(app).get('/settings');
 
             expect(response.status).toBe(200);
-            expect(response.body).toEqual({ showRetirementGroup: true });
+            expect(response.body).toEqual({ theme: 'Dark', showRetirementGroup: true });
         });
 
         it('SET-1.2 should use the default for a stored value that no longer fits, and ignore unknown settings', async () => {
@@ -43,7 +43,7 @@ describe('Settings Routes', () => {
             const response = await request(app).get('/settings');
 
             expect(response.status).toBe(200);
-            expect(response.body).toEqual({ showRetirementGroup: true });
+            expect(response.body).toEqual({ theme: 'Dark', showRetirementGroup: true });
         });
     });
 
@@ -52,8 +52,8 @@ describe('Settings Routes', () => {
             const response = await request(app).put('/settings').send({ showRetirementGroup: false });
 
             expect(response.status).toBe(200);
-            expect(response.body).toEqual({ showRetirementGroup: false });
-            expect((await request(app).get('/settings')).body).toEqual({ showRetirementGroup: false });
+            expect(response.body).toEqual({ theme: 'Dark', showRetirementGroup: false });
+            expect((await request(app).get('/settings')).body).toEqual({ theme: 'Dark', showRetirementGroup: false });
         });
 
         it('SET-1.2 should store one row per setting, and update it in place', async () => {
@@ -77,7 +77,20 @@ describe('Settings Routes', () => {
             const response = await request(app).put('/settings').send({});
 
             expect(response.status).toBe(200);
-            expect(response.body).toEqual({ showRetirementGroup: false });
+            expect(response.body).toEqual({ theme: 'Dark', showRetirementGroup: false });
+        });
+
+        it('SET-3.1 should save the theme', async () => {
+            const response = await request(app).put('/settings').send({ theme: 'System' });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ theme: 'System', showRetirementGroup: true });
+        });
+
+        it('SET-3.1 should refuse a theme it does not offer', async () => {
+            const response = await request(app).put('/settings').send({ theme: 'Sepia' });
+
+            expect(response.status).toBe(400);
         });
 
         it('SET-1.2 should refuse a value of the wrong type', async () => {

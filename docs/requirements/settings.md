@@ -19,7 +19,7 @@ Settings (`/settings`) is where the owner changes how the app works for them: a 
 
 | ID | Requirement | Status |
 |---|---|---|
-| SET-3.1 | **Appearance** shall offer **Theme**: **Dark** (selected; today's look), **Light**, or **Match system**. The choice shall apply straight away, be stored with the instance (SET-1.2), and be applied before the first screen draws, so the app doesn't flash the other theme. | Planned |
+| SET-3.1 | **Appearance** shall offer **Theme**: **Dark** (the default), **Light**, or **Match system**, which follows the device's light or dark setting as it changes. The choice shall apply straight away, charts included, be stored with the instance (SET-1.2), and be applied before the first screen draws, so the app doesn't flash the other theme. | Implemented |
 
 ## SET-4 The user can control bank sync
 
@@ -38,11 +38,11 @@ Bank sync uses [SimpleFIN Bridge](https://beta-bridge.simplefin.org) (decided 20
 
 ## Known gaps
 
-- **Only Profile, Dashboard, Institutions and Accounts, Categories and API Tokens exist (SET-1.1).** Appearance, Rules, Bank Sync and Change Password aren't built.
-- **The app is dark only (SET-3.1).**
+- **Only Profile, Appearance, Dashboard, Institutions and Accounts, Categories and API Tokens exist (SET-1.1).** Rules, Bank Sync and Change Password aren't built.
 
 ## Notes
 
 - AUTH-8 held the Settings screen and Profile until 2026-09-27. They moved here because Settings also holds sections that aren't about authentication, such as Appearance.
 - **Some limits are server configuration, not settings** (decided 2026-10-15). The password's minimum length (AUTH-9.1) and the sign-in protection limits (AUTH-10.7) have defaults that suit nearly everyone, so they're optional environment variables rather than Settings pages. That keeps Settings to what the owner changes day to day.
+- **How the theme shows before the app loads (SET-3.1).** The browser keeps a copy of the last theme it showed and applies it before anything draws (`public/theme.js`). A browser that has never opened the app, or whose site data was cleared, has no copy: it starts dark and switches once the stored setting loads after signing in.
 - **Why the SimpleFIN connection isn't an environment variable.** A setup token works once: the app has to exchange it for the access URL, which is the real credential. Pasting the token into Settings does that in one step; an environment variable would mean exchanging it by hand. Bridge can revoke the access URL at any time, after which the user connects again with a new token.
