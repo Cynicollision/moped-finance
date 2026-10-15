@@ -34,6 +34,34 @@
                 <div class="value">{{ getCategoryName(transactionForm.value.category) || Uncategorized.name }}</div>
             </div>
 
+            @if (splitParts().length > 0) {
+                <!-- Every part of its split, this one marked, the others linked (TXN-4.5). -->
+                <div class="readonly-field">
+                    <div class="label">Split into {{ splitParts().length }} parts</div>
+                    <ul class="parts">
+                        @for (part of splitParts(); track part.id) {
+                            <li class="part" [class.current-part]="part.id === transaction()?.id">
+                                <div class="part-text">
+                                    @if (part.id === transaction()?.id) {
+                                        <span>{{ getCategoryName(part.categoryId) || Uncategorized.name }}</span>
+                                    } @else {
+                                        <a class="account-link" [routerLink]="['/transactions', part.id]">{{
+                                            getCategoryName(part.categoryId) || Uncategorized.name
+                                        }}</a>
+                                    }
+                                    <span class="part-detail">{{ part.merchant }}</span>
+                                </div>
+                                <app-money [amount]="part.amount" tone="transaction"></app-money>
+                            </li>
+                        }
+                        <li class="part split-total">
+                            <span>Total</span>
+                            <app-money [amount]="splitTotal()" tone="transaction"></app-money>
+                        </li>
+                    </ul>
+                </div>
+            }
+
             <div class="readonly-field">
                 <div class="label">Date</div>
                 <div class="value">{{ transactionForm.value.date | date }}</div>
@@ -56,6 +84,13 @@
                 </div>
             }
         } @else {
+            @if (isSplit()) {
+                <p class="split-note">
+                    This is one part of a split transaction. Change its amount with Edit split. A new account, original
+                    statement, date, hidden or adjust balance setting applies to every part.
+                </p>
+            }
+
             <!-- A positive amount, with its sign from the switch (TXN-2.13). -->
             <mat-button-toggle-group
                 class="direction-toggle"

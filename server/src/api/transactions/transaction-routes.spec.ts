@@ -102,10 +102,8 @@ describe('Transaction Routes', () => {
                 amount: 100,
                 merchant: 'Test Merchant',
                 isHidden: false,
-                isSplit: false,
                 originalStatement: '',
                 notes: '',
-                splitParentId: '',
                 ...fields
             })
         );
@@ -148,10 +146,8 @@ describe('Transaction Routes', () => {
                     amount: 100,
                     merchant: 'Test Merchant 1',
                     isHidden: false,
-                    isSplit: false,
                     originalStatement: '',
-                    notes: '',
-                    splitParentId: ''
+                    notes: ''
                 })
             );
             const txn2 = await transactionsData.insert(
@@ -162,10 +158,8 @@ describe('Transaction Routes', () => {
                     amount: 200,
                     merchant: 'Test Merchant 2',
                     isHidden: false,
-                    isSplit: false,
                     originalStatement: '',
-                    notes: '',
-                    splitParentId: ''
+                    notes: ''
                 })
             );
 
@@ -186,10 +180,8 @@ describe('Transaction Routes', () => {
                     amount: 100,
                     merchant: 'Test Merchant',
                     isHidden: false,
-                    isSplit: false,
                     originalStatement: '',
-                    notes: '',
-                    splitParentId: ''
+                    notes: ''
                 })
             );
 
@@ -340,10 +332,8 @@ describe('Transaction Routes', () => {
                     amount: 100,
                     merchant: 'Amazon',
                     isHidden: false,
-                    isSplit: false,
                     originalStatement: '',
-                    notes: '',
-                    splitParentId: ''
+                    notes: ''
                 })
             );
             await transactionsData.insert(
@@ -354,10 +344,8 @@ describe('Transaction Routes', () => {
                     amount: 100,
                     merchant: 'Walmart',
                     isHidden: false,
-                    isSplit: false,
                     originalStatement: '',
-                    notes: '',
-                    splitParentId: ''
+                    notes: ''
                 })
             );
 
@@ -567,10 +555,8 @@ describe('Transaction Routes', () => {
                     amount: 100,
                     merchant: 'Test Merchant',
                     isHidden: false,
-                    isSplit: false,
                     originalStatement: '',
-                    notes: '',
-                    splitParentId: ''
+                    notes: ''
                 })
             );
 
@@ -597,10 +583,8 @@ describe('Transaction Routes', () => {
                     amount: 100,
                     merchant: 'Test Merchant',
                     isHidden: false,
-                    isSplit: false,
                     originalStatement: '',
-                    notes: '',
-                    splitParentId: ''
+                    notes: ''
                 })
             );
 
@@ -624,8 +608,7 @@ describe('Transaction Routes', () => {
                 date: '2026-06-06',
                 accountId: testAccountId,
                 categoryId: testCategoryId,
-                isHidden: false,
-                isSplit: false
+                isHidden: false
             });
 
             expect(response.status).toBe(404);
@@ -643,10 +626,8 @@ describe('Transaction Routes', () => {
                     amount: 100,
                     merchant: 'Test Merchant',
                     isHidden: false,
-                    isSplit: false,
                     originalStatement: '',
-                    notes: '',
-                    splitParentId: ''
+                    notes: ''
                 })
             );
 
@@ -676,10 +657,8 @@ describe('Transaction Routes', () => {
                     amount: 100,
                     merchant: 'Test Merchant',
                     isHidden: false,
-                    isSplit: false,
                     originalStatement: '',
-                    notes: '',
-                    splitParentId: ''
+                    notes: ''
                 })
             );
 
@@ -1037,7 +1016,6 @@ describe('Transaction Routes', () => {
                 amount: 10,
                 merchant: 'Test',
                 isHidden: false,
-                isSplit: false,
                 originalStatement: '',
                 notes: ''
             };
@@ -1448,6 +1426,37 @@ describe('Transaction Routes', () => {
             expect(await amounts()).toEqual([1000, 950, 850, 500, 450]);
         });
 
+        it('TXN-4.7 should keep the balances as for one transaction of the total through split, hide, move and delete', async () => {
+            await seedBalances(history);
+            const created = await postAdjusting();
+            const before = await balances();
+
+            const split = await request(app)
+                .put(`/transactions/${created.id}/split`)
+                .send({
+                    parts: [
+                        { id: created.id, amount: -20, merchant: 'Shop' },
+                        { amount: -30, merchant: 'Shop' }
+                    ]
+                })
+                .expect(200);
+            const added = split.body[1];
+            expect(added).toMatchObject({ date: '2026-05-05', adjustsBalance: true });
+            expect(await balances()).toEqual(before);
+
+            await request(app).put(`/transactions/${added.id}`).send({ isHidden: true }).expect(200);
+            expect(await amounts()).toEqual([1000, 1000, 900, 500, 450]);
+            await request(app).put(`/transactions/${added.id}`).send({ isHidden: false }).expect(200);
+            expect(await balances()).toEqual(before);
+
+            await request(app).put(`/transactions/${created.id}`).send({ date: '2026-05-15' }).expect(200);
+            expect(await amounts()).toEqual([1000, 1000, 900, 850, 500, 450]);
+
+            await request(app).delete(`/transactions/${added.id}`).expect(204);
+            expect(await amounts()).toEqual([1000, 1000, 900, 900, 500, 450]);
+            expect(await countTransactions()).toBe(0);
+        });
+
         it('ACCT-4.4 ACCT-5.5 should refuse Adjust balance for a connected account', async () => {
             const create = await post({ accountId: testAccountId, adjustsBalance: true });
             const plain = await insertTransaction();
@@ -1597,6 +1606,264 @@ describe('Transaction Routes', () => {
                     );
                 }
             });
+        });
+    });
+
+    describe('split transactions (TXN-4)', () => {
+        let dining: string;
+
+        beforeEach(async () => {
+            const group = await groupsData.insert(
+                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Going Out' })
+            );
+            const category = await categoriesData.insert(
+                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Dining', icon: '', isActive: true })
+            );
+            dining = category.id!;
+        });
+
+        function split(id: string, parts: object[]): request.Test {
+            return request(app).put(`/transactions/${id}/split`).send({ parts });
+        }
+
+        // Splits a $100 purchase into $60 of groceries and $40 of dining.
+        async function insertSplit(fields: Partial<Transaction> = {}): Promise<Transaction[]> {
+            const transaction = await insertTransaction({
+                amount: -100,
+                merchant: 'Big Store',
+                originalStatement: 'BIG STORE 123',
+                notes: 'receipt',
+                ...fields
+            });
+            const response = await split(transaction.id, [
+                { id: transaction.id, amount: -60, categoryId: testCategoryId, merchant: 'Big Store', notes: 'food' },
+                { amount: -40, categoryId: dining, merchant: 'Big Store Cafe' }
+            ]);
+            expect(response.status).toBe(200);
+            return response.body;
+        }
+
+        it('TXN-4.1 TXN-4.2 should turn a transaction into parts that are transactions sharing its date, account and statement', async () => {
+            const [first, second] = await insertSplit();
+
+            expect(first).toMatchObject({
+                amount: -60,
+                categoryId: testCategoryId,
+                merchant: 'Big Store',
+                notes: 'food'
+            });
+            expect(second).toMatchObject({ amount: -40, categoryId: dining, merchant: 'Big Store Cafe', notes: '' });
+            for (const part of [first, second]) {
+                expect(part).toMatchObject({
+                    accountId: testAccountId,
+                    date: '2026-06-06',
+                    originalStatement: 'BIG STORE 123',
+                    isHidden: false,
+                    splitId: first.splitId
+                });
+            }
+            expect(first.splitId).not.toBe('');
+
+            const fetched = await request(app).get(`/transactions/${second.id}/split`);
+            expect(fetched.body.map((t: Transaction) => t.id)).toEqual([first.id, second.id]);
+        });
+
+        it("TXN-4.5 should return no parts for a transaction that isn't split, and 404 for a missing one", async () => {
+            const transaction = await insertTransaction();
+
+            expect((await request(app).get(`/transactions/${transaction.id}/split`)).body).toEqual([]);
+            await request(app).get('/transactions/missing/split').expect(404);
+        });
+
+        it('TXN-4.4 should list each part as its own transaction, so a category filter finds just that part', async () => {
+            const [, second] = await insertSplit();
+
+            const all = await request(app).get('/transactions');
+            const dined = await request(app)
+                .get('/transactions')
+                .query({ filters: JSON.stringify([{ key: TransactionsFilterKey.Category, value: dining }]) });
+
+            expect(all.body).toHaveLength(2);
+            expect(dined.body.map((t: Transaction) => t.id)).toEqual([second.id]);
+        });
+
+        it('TXN-4.6 CASH-1.2 should count each part under its own category', async () => {
+            await insertSplit();
+
+            const response = await request(app).get('/transactions/spending?period=Monthly&asOfDate=2026-06-15');
+
+            expect(response.body).toHaveLength(2);
+            expect(response.body).toEqual(
+                expect.arrayContaining([
+                    { categoryId: testCategoryId, type: CategoryType.Expense, amount: 60 },
+                    { categoryId: dining, type: CategoryType.Expense, amount: 40 }
+                ])
+            );
+        });
+
+        it("TXN-4.2 should refuse parts that don't add up, or a part in the other direction", async () => {
+            const transaction = await insertTransaction({ amount: -100 });
+
+            const short = await split(transaction.id, [
+                { amount: -60, merchant: 'Big Store' },
+                { amount: -40.01, merchant: 'Big Store' }
+            ]);
+            const opposite = await split(transaction.id, [
+                { amount: -120, merchant: 'Big Store' },
+                { amount: 20, merchant: 'Big Store' }
+            ]);
+
+            expect(short.status).toBe(400);
+            expect(short.body.message).toBe("The parts' amounts must add up to the transaction's amount.");
+            expect(opposite.status).toBe(400);
+            expect(opposite.body.message).toBe('Every part must be money out, like the transaction.');
+            expect(await countTransactions()).toBe(1);
+        });
+
+        it('TXN-4.1 TXN-4.2 should refuse fewer than 2 or more than 20 parts, a part of 0, or a part without a merchant', async () => {
+            const transaction = await insertTransaction({ amount: -100 });
+            const part = (amount: number) => ({ amount, merchant: 'Big Store' });
+
+            await split(transaction.id, [part(-100)]).expect(400);
+            await split(
+                transaction.id,
+                Array.from({ length: 21 }, () => part(-100 / 21))
+            ).expect(400);
+            await split(transaction.id, [part(-100), part(0)]).expect(400);
+            await split(transaction.id, [part(-50), { amount: -50, merchant: '' }]).expect(400);
+            const twenty = await split(
+                transaction.id,
+                Array.from({ length: 20 }, () => part(-5))
+            );
+            expect(twenty.status).toBe(200);
+            expect(await countTransactions()).toBe(20);
+        });
+
+        it("APP-5.5 should refuse a part whose category doesn't exist, changing nothing", async () => {
+            const transaction = await insertTransaction({ amount: -100 });
+
+            const response = await split(transaction.id, [
+                { id: transaction.id, amount: -60, merchant: 'Big Store' },
+                { amount: -40, categoryId: 'missing', merchant: 'Big Store' }
+            ]);
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe('Category not found.');
+            expect(await transactionsData.retrieveSingle(transaction.id)).toMatchObject({ amount: -100, splitId: '' });
+            expect(await countTransactions()).toBe(1);
+        });
+
+        it('TXN-4.5 should change, add and remove parts when the split is edited, from any part', async () => {
+            const [first, second] = await insertSplit();
+
+            const response = await split(second.id, [
+                { id: second.id, amount: -10, categoryId: dining, merchant: 'Big Store Cafe' },
+                { amount: -20, merchant: 'B' },
+                { amount: -70, categoryId: testCategoryId, merchant: 'C' }
+            ]);
+
+            expect(response.status).toBe(200);
+            expect(response.body.map((t: Transaction) => [t.amount, t.merchant])).toEqual([
+                [-10, 'Big Store Cafe'],
+                [-20, 'B'],
+                [-70, 'C']
+            ]);
+            expect(response.body[0].id).toBe(second.id);
+            expect(await transactionsData.retrieveSingle(first.id)).toBeNull();
+            expect(await countTransactions()).toBe(3);
+        });
+
+        it("TXN-4.5 should refuse to keep a part that isn't in the split", async () => {
+            await insertSplit();
+            const other = await insertTransaction({ amount: -100 });
+
+            const response = await split(other.id, [
+                { id: other.id, amount: -50, merchant: 'A' },
+                { id: 'not-a-part', amount: -50, merchant: 'B' }
+            ]);
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe('A part to keep is not part of this transaction.');
+        });
+
+        it("TXN-4.5 should unsplit from any part into its first part, with the total and the first part's category, merchant and notes", async () => {
+            const [first, second] = await insertSplit();
+
+            const response = await request(app).delete(`/transactions/${second.id}/split`);
+
+            expect(response.status).toBe(200);
+            expect(response.body).toMatchObject({
+                id: first.id,
+                amount: -100,
+                categoryId: testCategoryId,
+                merchant: 'Big Store',
+                notes: 'food',
+                splitId: ''
+            });
+            expect(await countTransactions()).toBe(1);
+        });
+
+        it("TXN-4.5 should refuse to unsplit a transaction that isn't split, and return 404 for a missing one", async () => {
+            const transaction = await insertTransaction();
+
+            const response = await request(app).delete(`/transactions/${transaction.id}/split`);
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe("This transaction isn't split.");
+            await request(app).delete('/transactions/missing/split').expect(404);
+            await split('missing', [
+                { amount: -1, merchant: 'A' },
+                { amount: -1, merchant: 'B' }
+            ]).expect(404);
+        });
+
+        it("TXN-4.7 should refuse a change to a part's amount", async () => {
+            const [first] = await insertSplit();
+
+            const response = await request(app).put(`/transactions/${first.id}`).send({ amount: -90 });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe("Change a split transaction's amounts with Edit split.");
+        });
+
+        it("TXN-4.7 should change one part's category, merchant and notes, and every part's date, account, statement and hidden flag", async () => {
+            const [first, second] = await insertSplit();
+            const otherAccountId = await insertAccount({});
+
+            const response = await request(app).put(`/transactions/${first.id}`).send({
+                amount: -60,
+                categoryId: dining,
+                merchant: 'Renamed',
+                notes: 'n',
+                date: '2026-06-01',
+                accountId: otherAccountId,
+                originalStatement: 'NEW',
+                isHidden: true
+            });
+
+            expect(response.status).toBe(200);
+            const shared = { date: '2026-06-01', accountId: otherAccountId, originalStatement: 'NEW', isHidden: true };
+            expect(await transactionsData.retrieveSingle(first.id)).toMatchObject({
+                ...shared,
+                categoryId: dining,
+                merchant: 'Renamed',
+                notes: 'n'
+            });
+            expect(await transactionsData.retrieveSingle(second.id)).toMatchObject({
+                ...shared,
+                amount: -40,
+                merchant: 'Big Store Cafe',
+                notes: ''
+            });
+        });
+
+        it('TXN-4.7 should delete every part when one is deleted', async () => {
+            const [, second] = await insertSplit();
+            await insertTransaction();
+
+            await request(app).delete(`/transactions/${second.id}`).expect(204);
+
+            expect(await countTransactions()).toBe(1);
         });
     });
 });

@@ -23,6 +23,7 @@ export enum FinanceEntityIdPrefix {
     Account = 'AC',
     BalanceHistory = 'BAL',
     Transaction = 'TRX',
+    TransactionSplit = 'SPL',
     Institution = 'IN',
     Category = 'CT',
     CategoryGroup = 'CTG',
@@ -61,13 +62,21 @@ export class FinanceEntityFactory {
         });
     }
 
+    /** Not split unless given a split ID (TXN-4). */
     public static createTransaction(
-        transaction: Omit<NewEntity<Transaction>, 'adjustsBalance'> & Partial<Pick<Transaction, 'adjustsBalance'>>
+        transaction: Omit<NewEntity<Transaction>, 'adjustsBalance' | 'splitId'> &
+            Partial<Pick<Transaction, 'adjustsBalance' | 'splitId'>>
     ): Transaction {
         return FinanceEntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, {
             adjustsBalance: false,
+            splitId: '',
             ...transaction
         });
+    }
+
+    /** The ID the parts of a new split share (TXN-4). */
+    public static createSplitId(): string {
+        return EntityId.generate(FinanceEntityIdPrefix.TransactionSplit);
     }
 
     public static createInstitution(institution: NewEntity<Institution>): Institution {

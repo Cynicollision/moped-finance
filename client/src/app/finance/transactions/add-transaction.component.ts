@@ -32,7 +32,7 @@ export class AddTransactionComponent implements HasUnsavedChanges {
     }
 
     async onSave(transaction: Partial<Transaction>) {
-        const newTransaction: NewEntity<Transaction> = {
+        const newTransaction: Omit<NewEntity<Transaction>, 'splitId'> = {
             accountId: transaction.accountId!,
             categoryId: transaction.categoryId || '',
             date: transaction.date!,
@@ -41,9 +41,7 @@ export class AddTransactionComponent implements HasUnsavedChanges {
             originalStatement: transaction.originalStatement || '',
             notes: transaction.notes || '',
             isHidden: transaction.isHidden || false,
-            adjustsBalance: transaction.adjustsBalance || false,
-            isSplit: false,
-            splitParentId: ''
+            adjustsBalance: transaction.adjustsBalance || false
         };
 
         this.saving.set(true);

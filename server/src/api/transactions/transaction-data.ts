@@ -1,12 +1,29 @@
-import { AnyColumn, eq, and, desc, asc, ilike, isNull, gt, gte, lt, lte, min, sql, SQL } from 'drizzle-orm';
+import {
+    AnyColumn,
+    eq,
+    and,
+    desc,
+    asc,
+    ilike,
+    inArray,
+    isNull,
+    gt,
+    gte,
+    lt,
+    lte,
+    min,
+    ne,
+    sql,
+    SQL
+} from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
-import { Transaction } from '@shared/finance/types';
+import { Transaction, TransactionSplitPart } from '@shared/finance/types';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { CategoryType, TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Uncategorized } from '@shared/finance/util';
-import { IDatabaseClient } from '@server/data';
+import { FinanceEntityFactory, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
 import { applyAdjustment, DbTransaction, undoAdjustment } from './../accounts/balance-history-data';
@@ -45,13 +62,31 @@ export interface IFinanceTransactionData {
     /** The date of the oldest transaction Spending counts, if there are any. */
     retrieveFirstDate(): Promise<CalendarDate | undefined>;
     retrieveSingle(id: string): Promise<Transaction | null>;
+    /** The parts of a split, in order (TXN-4). */
+    retrieveSplit(splitId: string): Promise<Transaction[]>;
     insert(transaction: Transaction): Promise<Transaction>;
     /**
      * Inserts all of the transactions or, if any insert fails, none of them, applying the balance changes of those
      * that adjust the balance in the same database transaction (ACCT-5.6, TXN-3.11).
      */
     insertBulk(transactions: Transaction[]): Promise<void>;
+    /**
+     * Saves the transaction. When it's split, the date, account, original statement, hidden flag and Adjust balance go
+     * to every part (TXN-4.7).
+     */
     update(transaction: Transaction): Promise<Transaction | null>;
+    /**
+     * Makes the parts of the transaction's split, in order: those with an ID it already has are changed, the others
+     * added with its date, account, original statement, hidden flag and Adjust balance, and parts left out are deleted
+     * (TXN-4.1, TXN-4.5). A transaction that isn't split is its own only part. Null when it doesn't exist.
+     */
+    split(id: string, parts: TransactionSplitPart[]): Promise<Transaction[] | null>;
+    /**
+     * Turns a split back into one transaction: its first part, with the total, and the others deleted (TXN-4.5). Null
+     * when it doesn't exist.
+     */
+    unsplit(id: string): Promise<Transaction | null>;
+    /** Deletes the transaction, with every part of its split (TXN-4.7). */
     delete(id: string): Promise<boolean>;
 }
 
@@ -69,8 +104,7 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
         notes: row.notes ?? '',
         isHidden: row.isHidden,
         adjustsBalance: row.adjustsBalance,
-        isSplit: row.isSplit,
-        splitParentId: row.splitParentId ?? ''
+        splitId: row.splitId ?? ''
     };
 }
 
@@ -111,8 +145,7 @@ function mapTransactionToRow(transaction: Transaction): typeof transactionSchema
         notes: transaction.notes || null,
         isHidden: transaction.isHidden,
         adjustsBalance: transaction.adjustsBalance,
-        isSplit: transaction.isSplit,
-        splitParentId: transaction.splitParentId || null
+        splitId: transaction.splitId || null
     };
 }
 
@@ -304,6 +337,15 @@ export class FinanceTransactionData implements IFinanceTransactionData {
         return mapRowToTransaction(rows[0]);
     }
 
+    public async retrieveSplit(splitId: string): Promise<Transaction[]> {
+        const rows = await this.db
+            .select()
+            .from(transactionSchema)
+            .where(eq(transactionSchema.splitId, splitId))
+            .orderBy(asc(transactionSchema.splitPosition), asc(transactionSchema.id));
+        return rows.map(mapRowToTransaction);
+    }
+
     public async retrieveCategoryFlows(startDate: CalendarDate, endDate: CalendarDate): Promise<CategoryFlow[]> {
         const amount = transactionSchema.amount;
         const rows = await this.db
@@ -402,19 +444,148 @@ export class FinanceTransactionData implements IFinanceTransactionData {
 
             const updated = mapRowToTransaction(rows[0]);
             await moveAdjustment(tx, mapRowToTransaction(current), updated);
+
+            // The rest of the split keeps the same date, account, statement, hidden flag and Adjust balance (TXN-4.7).
+            if (current.splitId) {
+                const others = await tx
+                    .select()
+                    .from(transactionSchema)
+                    .where(and(eq(transactionSchema.splitId, current.splitId), ne(transactionSchema.id, current.id)))
+                    .for('update');
+                for (const other of others) {
+                    const [changed] = await tx
+                        .update(transactionSchema)
+                        .set({
+                            accountId: updated.accountId,
+                            date: updated.date,
+                            originalStatement: updated.originalStatement || null,
+                            isHidden: updated.isHidden,
+                            adjustsBalance: updated.adjustsBalance,
+                            updatedAt: DateTimeUtil.now()
+                        })
+                        .where(eq(transactionSchema.id, other.id))
+                        .returning();
+                    await moveAdjustment(tx, mapRowToTransaction(other), mapRowToTransaction(changed));
+                }
+            }
             return updated;
+        });
+    }
+
+    public async split(id: string, parts: TransactionSplitPart[]): Promise<Transaction[] | null> {
+        // The parts add up to what they replace, on the same date and account, so the balances don't change (TXN-4.7).
+        return this.db.transaction(async tx => {
+            const [transaction] = await tx.select().from(transactionSchema).where(eq(transactionSchema.id, id));
+            if (!transaction) {
+                return null;
+            }
+            const current = transaction.splitId
+                ? await tx
+                      .select()
+                      .from(transactionSchema)
+                      .where(eq(transactionSchema.splitId, transaction.splitId))
+                      .for('update')
+                : [transaction];
+            const splitId = transaction.splitId ?? FinanceEntityFactory.createSplitId();
+            const kept = new Set(parts.map(part => part.id));
+
+            const removed = current.filter(row => !kept.has(row.id)).map(row => row.id);
+            if (removed.length > 0) {
+                await tx.delete(transactionSchema).where(inArray(transactionSchema.id, removed));
+            }
+
+            for (const [position, part] of parts.entries()) {
+                const fields = {
+                    amount: part.amount.toString(),
+                    categoryId: part.categoryId || null,
+                    merchant: part.merchant,
+                    notes: part.notes || null,
+                    splitId,
+                    splitPosition: position
+                };
+                if (part.id) {
+                    await tx
+                        .update(transactionSchema)
+                        .set({ ...fields, updatedAt: DateTimeUtil.now() })
+                        .where(eq(transactionSchema.id, part.id));
+                } else {
+                    const added = FinanceEntityFactory.createTransaction({
+                        ...mapRowToTransaction(transaction),
+                        id: undefined,
+                        ...part
+                    });
+                    await tx.insert(transactionSchema).values({ ...mapTransactionToRow(added), ...fields });
+                }
+            }
+
+            const rows = await tx
+                .select()
+                .from(transactionSchema)
+                .where(eq(transactionSchema.splitId, splitId))
+                .orderBy(asc(transactionSchema.splitPosition));
+            return rows.map(mapRowToTransaction);
+        });
+    }
+
+    public async unsplit(id: string): Promise<Transaction | null> {
+        // The first part takes the total, on the same date and account, so the balances don't change.
+        return this.db.transaction(async tx => {
+            const [transaction] = await tx.select().from(transactionSchema).where(eq(transactionSchema.id, id));
+            if (!transaction?.splitId) {
+                return transaction ? mapRowToTransaction(transaction) : null;
+            }
+
+            const parts = await tx
+                .select()
+                .from(transactionSchema)
+                .where(eq(transactionSchema.splitId, transaction.splitId))
+                .orderBy(asc(transactionSchema.splitPosition), asc(transactionSchema.id))
+                .for('update');
+            const [first, ...others] = parts;
+            const cents = parts.reduce((sum, part) => sum + Math.round(Number(part.amount) * 100), 0);
+
+            if (others.length > 0) {
+                await tx.delete(transactionSchema).where(
+                    inArray(
+                        transactionSchema.id,
+                        others.map(part => part.id)
+                    )
+                );
+            }
+            const [merged] = await tx
+                .update(transactionSchema)
+                .set({
+                    amount: (cents / 100).toString(),
+                    splitId: null,
+                    splitPosition: null,
+                    updatedAt: DateTimeUtil.now()
+                })
+                .where(eq(transactionSchema.id, first.id))
+                .returning();
+            return mapRowToTransaction(merged);
         });
     }
 
     public async delete(id: string): Promise<boolean> {
         return this.db.transaction(async tx => {
-            const rows = await tx.delete(transactionSchema).where(eq(transactionSchema.id, id)).returning();
-            if (rows.length === 0) {
+            const [transaction] = await tx.select().from(transactionSchema).where(eq(transactionSchema.id, id));
+            if (!transaction) {
                 return false;
             }
 
-            await moveAdjustment(tx, mapRowToTransaction(rows[0]), null);
-            return true;
+            // Deleting a part deletes the whole split (TXN-4.7).
+            const rows = await tx
+                .delete(transactionSchema)
+                .where(
+                    transaction.splitId
+                        ? eq(transactionSchema.splitId, transaction.splitId)
+                        : eq(transactionSchema.id, transaction.id)
+                )
+                .returning();
+            for (const row of rows) {
+                await moveAdjustment(tx, mapRowToTransaction(row), null);
+            }
+            return rows.length > 0;
         });
     }
 }

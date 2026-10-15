@@ -563,10 +563,8 @@ describe('Category Routes', () => {
                     amount: -1500,
                     merchant: 'Landlord',
                     isHidden: false,
-                    isSplit: false,
                     originalStatement: '',
                     notes: '',
-                    splitParentId: '',
                     ...fields
                 })
             );

@@ -69,6 +69,8 @@ The server applies pending migrations on startup, before it listens (APP-5.8), u
 
 Migrations run on startup rather than as a separate step because there's one instance and one owner: updating means pulling a new image and restarting, with nothing to run by hand. If this ever runs as more than one instance, move migrations to a one-off job so two servers don't race.
 
+The parts of a split transaction (TXN-4) are rows of `transactions` like any other, sharing a `split_id` and ordered by `split_position`.
+
 Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates with no time zone, read and written as `YYYY-MM-DD` strings (Drizzle's `mode: 'string'`) and passed through the API unchanged; money is `DECIMAL(12, 2)`. Names of institutions, category groups and categories are unique ignoring case (unique indexes on `lower(name)`), and there's one balance per account per date. `OperationHandler` turns unique and foreign-key violations into a 400 with a message from `DatabaseErrorUtil`.
 
 ## Client

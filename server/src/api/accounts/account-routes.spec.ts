@@ -785,9 +785,7 @@ describe('Account Routes', () => {
                         originalStatement: '',
                         notes: '',
                         isHidden: false,
-                        adjustsBalance: true,
-                        isSplit: false,
-                        splitParentId: ''
+                        adjustsBalance: true
                     })
                 );
             const before = await insert('2026-06-05');
@@ -910,9 +908,7 @@ describe('Account Routes', () => {
                     merchant: 'Store',
                     originalStatement: '',
                     notes: '',
-                    isHidden: false,
-                    isSplit: false,
-                    splitParentId: ''
+                    isHidden: false
                 })
             );
 
@@ -1149,9 +1145,7 @@ describe('Account Routes', () => {
                     merchant,
                     originalStatement: '',
                     notes: '',
-                    isHidden: false,
-                    isSplit: false,
-                    splitParentId: ''
+                    isHidden: false
                 })
             );
         }

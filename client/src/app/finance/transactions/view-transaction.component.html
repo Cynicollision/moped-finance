@@ -8,6 +8,18 @@
                 <mat-icon>edit</mat-icon>
                 <span>Edit</span>
             </button>
+            @if (transaction()) {
+                <button mat-menu-item (click)="split()">
+                    <mat-icon>call_split</mat-icon>
+                    <span>{{ isSplit() ? 'Edit split' : 'Split' }}</span>
+                </button>
+            }
+            @if (isSplit()) {
+                <button mat-menu-item (click)="unsplit()">
+                    <mat-icon>merge</mat-icon>
+                    <span>Unsplit</span>
+                </button>
+            }
             <button mat-menu-item class="danger-item" (click)="deleteTransaction()">
                 <mat-icon>delete</mat-icon>
                 <span>Delete</span>
@@ -17,7 +29,8 @@
     @if (data.error(); as error) {
         <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
     } @else if (transaction(); as transaction) {
-        <app-transaction-form [transaction]="transaction" mode="readonly"> </app-transaction-form>
+        <app-transaction-form [transaction]="transaction" [splitParts]="splitParts()" mode="readonly">
+        </app-transaction-form>
     } @else {
         <app-card-skeleton [rows]="5"></app-card-skeleton>
     }

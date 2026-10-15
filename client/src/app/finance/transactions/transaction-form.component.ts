@@ -27,7 +27,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { CalendarDateUtil } from '@shared/core/util';
 import { TransactionDirection } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
-import { Uncategorized } from '@shared/finance/util';
+import { TransactionSplit, Uncategorized } from '@shared/finance/util';
 import { DateProviderService } from './../../core/date-provider.service';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
@@ -65,6 +65,8 @@ export type TransactionFormMode = 'create' | 'edit' | 'readonly';
 })
 export class TransactionFormComponent implements OnInit, OnChanges {
     readonly transaction = input<Transaction | null>(null);
+    /** The parts of its split, in order, when it's split (TXN-4.5). */
+    readonly splitParts = input<Transaction[]>([]);
     readonly mode = input<TransactionFormMode>('readonly');
     readonly defaultAccountId = input<string>();
     /** While the parent saves: Save is disabled and shows a spinner. */
@@ -122,6 +124,10 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     /** Only a manual account's transactions can adjust its balance (TXN-2.8, TXN-2.9, ACCT-5.5). */
     readonly canAdjustBalance = computed(() => this.accounts().find(a => a.id === this.accountId())?.isManual ?? false);
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
+    /** One part of a split, whose amount changes only with Edit split (TXN-4.7). */
+    readonly isSplit = computed(() => !!this.transaction()?.splitId);
+    /** What the split's parts add up to. */
+    readonly splitTotal = computed(() => TransactionSplit.total(this.splitParts().map(part => part.amount)));
     /** The categories to choose from: active ones, plus the one the transaction already has (CAT-4.1, CAT-4.2). */
     readonly categoryOptions = computed(() => {
         const currentId = this.transaction()?.categoryId;
@@ -168,8 +174,13 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         if (mode === 'readonly') {
             this.transactionForm.disable();
         } else {
-            // All fields stay editable in edit mode, including bank-provided ones (amount, merchant, account).
+            // All fields stay editable in edit mode, including bank-provided ones (amount, merchant, account), except
+            // a part's amount, which changes with the others in Edit split (TXN-4.7).
             this.transactionForm.enable();
+            if (this.isSplit()) {
+                this.transactionForm.controls.amount.disable();
+                this.transactionForm.controls.direction.disable();
+            }
         }
     }
 

@@ -19,8 +19,7 @@ describe('EditTransactionComponent', () => {
         notes: '',
         isHidden: false,
         adjustsBalance: false,
-        isSplit: false,
-        splitParentId: '',
+        splitId: '',
         createdAt: new Date(2026, 0, 1),
         updatedAt: new Date(2026, 0, 1)
     };

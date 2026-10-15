@@ -1,0 +1,107 @@
+<app-modal-layout [title]="isEditing ? 'Edit Split' : 'Split Transaction'">
+    <div class="split-summary">
+        <div class="summary-text">
+            <span class="summary-merchant">{{ summary.merchant || '-' }}</span>
+            <span class="summary-date">{{ summary.date | date }}</span>
+        </div>
+        <app-money class="summary-amount" [amount]="total" tone="transaction"></app-money>
+    </div>
+    <p class="split-direction">Every part is money {{ total < 0 ? 'out' : 'in' }}, like the transaction.</p>
+
+    @if (lookups.error(); as error) {
+        <app-load-error [message]="error" (retry)="lookups.reload()"></app-load-error>
+    } @else if (lookups.value()) {
+        <form id="split-form" [formGroup]="form" (ngSubmit)="save()">
+            <div formArrayName="parts" class="parts">
+                @for (part of parts.controls; track part; let i = $index) {
+                    <section class="part" [formGroupName]="i" [attr.aria-label]="'Part ' + (i + 1)">
+                        <div class="part-header">
+                            <h3 class="part-title">Part {{ i + 1 }}</h3>
+                            @if (parts.length > minParts) {
+                                <button
+                                    mat-icon-button
+                                    type="button"
+                                    (click)="removePart(i)"
+                                    [attr.aria-label]="'Remove part ' + (i + 1)"
+                                >
+                                    <mat-icon>close</mat-icon>
+                                </button>
+                            }
+                        </div>
+
+                        <mat-form-field appearance="outline" class="amount-field">
+                            <mat-label>Amount</mat-label>
+                            <span matTextPrefix>$&nbsp;</span>
+                            <input type="number" matInput formControlName="amount" min="0" step="0.01" />
+                            @if (part.controls.amount.hasError('required')) {
+                                <mat-error>Amount is required</mat-error>
+                            } @else if (part.controls.amount.hasError('min')) {
+                                <mat-error>Amount must be more than 0</mat-error>
+                            }
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" floatLabel="always">
+                            <mat-label>Category</mat-label>
+                            <input
+                                type="text"
+                                matInput
+                                formControlName="categoryId"
+                                [matAutocomplete]="autoCategory"
+                                [placeholder]="Uncategorized.name"
+                            />
+                            <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
+                                <mat-option value="">{{ Uncategorized.name }}</mat-option>
+                                @for (c of categoryOptions(part.controls.categoryId.value); track c.id) {
+                                    <mat-option [value]="c.id">{{ c.icon }} {{ c.name }}</mat-option>
+                                }
+                            </mat-autocomplete>
+                            @if (part.controls.categoryId.hasError('unknownCategory')) {
+                                <mat-error>Choose a category from the list</mat-error>
+                            }
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Merchant</mat-label>
+                            <input type="text" matInput formControlName="merchant" maxlength="255" />
+                            @if (part.controls.merchant.hasError('required')) {
+                                <mat-error>Merchant is required</mat-error>
+                            }
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Notes</mat-label>
+                            <input type="text" matInput formControlName="notes" />
+                        </mat-form-field>
+                    </section>
+                }
+            </div>
+
+            <div class="split-footer">
+                <button mat-button type="button" (click)="addPart()" [disabled]="parts.length >= maxParts">
+                    <mat-icon>add</mat-icon>
+                    Add part
+                </button>
+                <span class="remaining" [class.unbalanced]="remaining() !== 0" aria-live="polite">
+                    Remaining: <app-money [amount]="remaining()"></app-money>
+                </span>
+            </div>
+        </form>
+    } @else {
+        <app-card-skeleton [rows]="4"></app-card-skeleton>
+    }
+
+    <div modal-actions>
+        <button mat-button appModalCancel type="button">Cancel</button>
+        <button
+            mat-flat-button
+            type="submit"
+            form="split-form"
+            [disabled]="!lookups.value() || form.invalid || remaining() !== 0 || isSaving()"
+        >
+            @if (isSaving()) {
+                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+            }
+            Save
+        </button>
+    </div>
+</app-modal-layout>

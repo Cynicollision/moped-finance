@@ -106,9 +106,7 @@ export class TransactionCsv {
                     merchant: values['Merchant'],
                     originalStatement: values['OriginalStatement'],
                     notes: values['Notes'],
-                    isHidden: isHidden.value,
-                    isSplit: false,
-                    splitParentId: ''
+                    isHidden: isHidden.value
                 })
             );
         }

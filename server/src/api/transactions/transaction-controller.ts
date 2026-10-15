@@ -8,6 +8,7 @@ import {
     TransactionSearchOptions
 } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
+import { TransactionSplit } from '@shared/finance/util';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
@@ -17,7 +18,7 @@ import { IFinanceCategoryData } from './../categories/category-data';
 import { Spending } from './spending';
 import { TransactionCsv } from './transaction-csv';
 import { adjustmentChange, IFinanceTransactionData } from './transaction-data';
-import { CreateTransactionRequest, UpdateTransactionRequest } from './transaction-schema';
+import { CreateTransactionRequest, SplitTransactionRequest, UpdateTransactionRequest } from './transaction-schema';
 
 export class TransactionController {
     constructor(
@@ -46,8 +47,7 @@ export class TransactionController {
         const transaction = FinanceEntityFactory.createTransaction({
             ...input,
             isHidden: input.isHidden ?? false,
-            adjustsBalance: input.adjustsBalance ?? false,
-            isSplit: input.isSplit ?? false
+            adjustsBalance: input.adjustsBalance ?? false
         });
 
         const refusal = await this.checkAdjustment(null, transaction);
@@ -84,6 +84,11 @@ export class TransactionController {
         }
 
         const transaction = { ...current, ...changes };
+        // A part's amount changes with the others, so they keep adding up (TXN-4.7).
+        if (current.splitId && transaction.amount !== current.amount) {
+            return Result.userError("Change a split transaction's amounts with Edit split.");
+        }
+
         const refusal = await this.checkAdjustment(current, transaction);
         if (refusal) {
             return Result.userError(refusal);
@@ -95,6 +100,72 @@ export class TransactionController {
         }
 
         return Result.successUpdated(updated);
+    }
+
+    /** The parts of the transaction's split, in order, or none when it isn't split (TXN-4.5). */
+    public async getTransactionSplit(
+        context: OperationContext,
+        transactionId: string
+    ): Promise<OperationResult<Transaction[]>> {
+        const transaction = await this.transactionData.retrieveSingle(transactionId);
+        if (!transaction) {
+            return Result.userErrorNotFound();
+        }
+        const parts = transaction.splitId ? await this.transactionData.retrieveSplit(transaction.splitId) : [];
+        return Result.success(parts);
+    }
+
+    /** Splits a transaction, or changes the parts of a split one (TXN-4.1, TXN-4.2, TXN-4.5). */
+    public async splitTransaction(
+        context: OperationContext,
+        transactionId: string,
+        input: SplitTransactionRequest
+    ): Promise<OperationResult<Transaction[]>> {
+        const transaction = await this.transactionData.retrieveSingle(transactionId);
+        if (!transaction) {
+            return Result.userErrorNotFound();
+        }
+
+        const current = transaction.splitId
+            ? await this.transactionData.retrieveSplit(transaction.splitId)
+            : [transaction];
+        const total = TransactionSplit.total(current.map(part => part.amount));
+        const currentIds = new Set(current.map(part => part.id));
+        if (input.parts.some(part => part.id && !currentIds.has(part.id))) {
+            return Result.userError('A part to keep is not part of this transaction.');
+        }
+        if (input.parts.some(part => Math.sign(part.amount) !== Math.sign(total))) {
+            return Result.userError(`Every part must be money ${total < 0 ? 'out' : 'in'}, like the transaction.`);
+        }
+        if (
+            TransactionSplit.remainder(
+                total,
+                input.parts.map(part => part.amount)
+            ) !== 0
+        ) {
+            return Result.userError("The parts' amounts must add up to the transaction's amount.");
+        }
+
+        // A missing category fails the foreign key, which OperationHandler reports as a 400.
+        const parts = await this.transactionData.split(transactionId, input.parts);
+        return parts ? Result.successUpdated(parts) : Result.userErrorNotFound();
+    }
+
+    /** Turns a split back into one transaction, with its first part's category, merchant and notes (TXN-4.5). */
+    public async unsplitTransaction(
+        context: OperationContext,
+        transactionId: string
+    ): Promise<OperationResult<Transaction>> {
+        const transaction = await this.transactionData.retrieveSingle(transactionId);
+        if (!transaction) {
+            return Result.userErrorNotFound();
+        }
+        if (!transaction.splitId) {
+            return Result.userError("This transaction isn't split.");
+        }
+
+        const merged = await this.transactionData.unsplit(transactionId);
+        return merged ? Result.successUpdated(merged) : Result.userErrorNotFound();
     }
 
     public async deleteTransaction(context: OperationContext, transactionId: string): Promise<OperationResult<void>> {

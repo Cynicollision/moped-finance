@@ -1,6 +1,7 @@
-import { AnyPgColumn, varchar, timestamp, numeric, boolean, text, date, index } from 'drizzle-orm/pg-core';
+import { varchar, timestamp, numeric, boolean, text, date, index, integer } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
+import { TransactionSplit } from '@shared/finance/util';
 import { financeSchema, SchemaUtil } from '@server/data';
 import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';
@@ -26,15 +27,16 @@ export const transactionSchema = financeSchema.table(
         isHidden: boolean('is_hidden').notNull().default(false),
         // Changes the account's balance history while it isn't hidden (ACCT-5.2, TXN-2.10).
         adjustsBalance: boolean('adjusts_balance').notNull().default(false),
-        isSplit: boolean('is_split').notNull().default(false),
-        splitParentId: varchar('split_parent_id', { length: 50 }).references((): AnyPgColumn => transactionSchema.id, {
-            onDelete: 'restrict'
-        })
+        // The parts of a split transaction share a split ID, and are in order by position (TXN-4). Both are null for a
+        // transaction that isn't split.
+        splitId: varchar('split_id', { length: 50 }),
+        splitPosition: integer('split_position')
     },
     table => [
         index('transactions_date_idx').on(table.date),
         index('transactions_account_id_date_idx').on(table.accountId, table.date),
-        index('transactions_category_id_idx').on(table.categoryId)
+        index('transactions_category_id_idx').on(table.categoryId),
+        index('transactions_split_id_idx').on(table.splitId)
     ]
 );
 
@@ -47,9 +49,7 @@ export const createTransactionSchema = createInsertSchema(transactionSchema, {
     originalStatement: SchemaUtil.optionalText(),
     notes: SchemaUtil.optionalText(),
     isHidden: z.boolean().optional(),
-    adjustsBalance: z.boolean().optional(),
-    isSplit: z.boolean().optional(),
-    splitParentId: SchemaUtil.optionalText(50)
+    adjustsBalance: z.boolean().optional()
 }).pick({
     accountId: true,
     categoryId: true,
@@ -59,18 +59,25 @@ export const createTransactionSchema = createInsertSchema(transactionSchema, {
     originalStatement: true,
     notes: true,
     isHidden: true,
-    adjustsBalance: true,
-    isSplit: true,
-    splitParentId: true
+    adjustsBalance: true
 });
 
-// Split fields can't be changed after creation.
-export const updateTransactionSchema = createTransactionSchema
-    .omit({
-        isSplit: true,
-        splitParentId: true
-    })
-    .partial();
+// A transaction is split, and its parts changed, only through the split endpoints.
+export const updateTransactionSchema = createTransactionSchema.partial();
+
+// A part's amount is signed like the transaction's, so it can't be 0 (TXN-4.2).
+export const splitTransactionSchema = z.object({
+    parts: z
+        .array(
+            createTransactionSchema.pick({ categoryId: true, merchant: true, notes: true }).extend({
+                id: z.string().min(1).max(50).optional(),
+                amount: SchemaUtil.money().refine(v => v !== 0, "Can't be 0")
+            })
+        )
+        .min(TransactionSplit.minParts)
+        .max(TransactionSplit.maxParts)
+});
 
 export type CreateTransactionRequest = z.output<typeof createTransactionSchema>;
 export type UpdateTransactionRequest = z.output<typeof updateTransactionSchema>;
+export type SplitTransactionRequest = z.output<typeof splitTransactionSchema>;

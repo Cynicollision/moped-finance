@@ -43,10 +43,6 @@ const foreignKeyViolationMessages: Record<string, ForeignKeyMessages> = {
     transactions_category_id_categories_id_fk: {
         missingReference: 'Category not found.'
     },
-    transactions_split_parent_id_transactions_id_fk: {
-        missingReference: 'Split parent transaction not found.',
-        stillReferenced: 'Cannot delete a transaction that has split transactions.'
-    },
     budget_streams_category_id_categories_id_fk: {
         missingReference: 'Category not found.',
         stillReferenced:
