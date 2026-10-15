@@ -1,23 +1,16 @@
 import * as bcrypt from 'bcrypt';
-import { PasswordPolicy as PasswordPolicyInfo, RegistrationStatus } from '@shared/core/contracts';
+import { RegistrationStatus } from '@shared/core/contracts';
 import { User } from '@shared/core/types';
+import { PasswordRules } from '@shared/core/util';
 import { CoreEntityIdPrefix, EntityId } from '@server/data';
 import { OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
-import { PasswordPolicy } from './password-policy';
 import { IUserData } from './user-data';
 
 export class AuthController {
     private readonly saltRounds = 10;
 
-    constructor(
-        private userData: IUserData,
-        private passwordPolicy = new PasswordPolicy()
-    ) {}
-
-    async getPasswordPolicy(): Promise<OperationResult<PasswordPolicyInfo>> {
-        return Result.success({ minLength: this.passwordPolicy.minLength });
-    }
+    constructor(private userData: IUserData) {}
 
     async loginUser(username: string, password?: string): Promise<OperationResult<User>> {
         if (!password) {
@@ -54,7 +47,7 @@ export class AuthController {
             return Result.userError('Username already taken.');
         }
 
-        const passwordProblems = this.passwordPolicy.problems(password, username);
+        const passwordProblems = PasswordRules.problems(password, username);
         if (passwordProblems.length > 0) {
             return Result.userError(passwordProblems.join(' '), 'INVALID_PASSWORD');
         }
@@ -92,7 +85,7 @@ export class AuthController {
             return Result.userError('Invalid old password.');
         }
 
-        const passwordProblems = this.passwordPolicy.problems(newPassword, user.username);
+        const passwordProblems = PasswordRules.problems(newPassword, user.username);
         if (passwordProblems.length > 0) {
             return Result.userError(passwordProblems.join(' '), 'INVALID_PASSWORD');
         }

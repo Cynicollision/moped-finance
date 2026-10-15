@@ -16,11 +16,8 @@ import { PasswordRules } from '@shared/core/util';
 export class PasswordRulesComponent {
     readonly password = input.required<string>();
     readonly username = input.required<string>();
-    readonly minLength = input.required<number>();
 
     readonly checks = computed(() =>
-        PasswordRules.check(this.password(), this.username(), this.minLength()).filter(
-            check => check.alwaysListed || !check.met
-        )
+        PasswordRules.check(this.password(), this.username()).filter(check => check.alwaysListed || !check.met)
     );
 }

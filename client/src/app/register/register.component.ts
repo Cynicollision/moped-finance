@@ -9,8 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { PasswordRules } from '@shared/core/util';
 import { AuthService } from './../core/auth.service';
-import { LoadErrorComponent } from './../core/loading/load-error.component';
-import { viewResource } from './../core/loading/view-resource';
 import { PasswordRulesComponent } from './../core/password/password-rules.component';
 
 @Component({
@@ -25,7 +23,6 @@ import { PasswordRulesComponent } from './../core/password/password-rules.compon
         MatProgressSpinnerModule,
         MatIconModule,
         RouterLink,
-        LoadErrorComponent,
         PasswordRulesComponent
     ],
     templateUrl: './register.component.html',
@@ -42,12 +39,8 @@ export class RegisterComponent {
     readonly errorMessage = signal('');
     readonly submitting = signal(false);
 
-    // The password rules to check as the user types (AUTH-2.11, AUTH-9.4)
-    readonly passwordPolicy = viewResource({ loader: () => this.authService.fetchPasswordPolicy() });
-    readonly meetsPasswordRules = computed(() => {
-        const policy = this.passwordPolicy.value();
-        return !!policy && PasswordRules.problems(this.password(), this.username(), policy.minLength).length === 0;
-    });
+    // The password rules, checked as the user types (AUTH-2.11, AUTH-9.4)
+    readonly meetsPasswordRules = computed(() => PasswordRules.problems(this.password(), this.username()).length === 0);
 
     async onRegister() {
         this.errorMessage.set('');

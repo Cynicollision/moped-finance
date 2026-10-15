@@ -9,7 +9,6 @@ import {
     buildAuthRouter,
     buildAuthMiddleware,
     AuthController,
-    PasswordPolicy,
     SecretData,
     SessionUtil,
     UserData
@@ -21,15 +20,6 @@ import { buildErrorHandler, buildSecurityHeaders } from '@server/routing';
 
 // True when users reach the app over HTTPS, through a reverse proxy. Off by default: plain HTTP on the LAN.
 const useHttps = process.env.USE_HTTPS === 'true';
-
-// The password rules' minimum length (AUTH-9.1). A bad PASSWORD_MIN_LENGTH stops the server here.
-let passwordPolicy: PasswordPolicy;
-try {
-    passwordPolicy = PasswordPolicy.fromEnvironment();
-} catch (error) {
-    console.error(errorMessage(error));
-    process.exit(1);
-}
 
 // Core services
 const dbConfig: DatabaseClientConfig = {
@@ -74,7 +64,7 @@ function buildApp(sessionSecret: string): express.Express {
 
     // Auth module
     const userData = new UserData(dbClient);
-    const authController = new AuthController(userData, passwordPolicy);
+    const authController = new AuthController(userData);
     const apiTokenController = new ApiTokenController(new ApiTokenData(dbClient));
     const authMiddleware = buildAuthMiddleware(apiTokenController);
     app.use('/auth/tokens', buildApiTokenRouter(logger, apiTokenController, authMiddleware));

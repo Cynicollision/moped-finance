@@ -36,15 +36,7 @@
                     />
                 </mat-form-field>
 
-                @if (passwordPolicy.error(); as error) {
-                    <app-load-error [message]="error" (retry)="passwordPolicy.reload()"></app-load-error>
-                } @else if (passwordPolicy.value(); as policy) {
-                    <app-password-rules
-                        [password]="password()"
-                        [username]="username()"
-                        [minLength]="policy.minLength"
-                    ></app-password-rules>
-                }
+                <app-password-rules [password]="password()" [username]="username()"></app-password-rules>
 
                 <mat-form-field class="full-width">
                     <mat-label>Confirm Password</mat-label>

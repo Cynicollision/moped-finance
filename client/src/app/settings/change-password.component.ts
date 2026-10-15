@@ -9,9 +9,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PasswordRules } from '@shared/core/util';
 import { AuthService } from './../core/auth.service';
 import { PageHeaderComponent } from './../core/layout/page-header.component';
-import { LoadErrorComponent } from './../core/loading/load-error.component';
-import { SkeletonComponent } from './../core/loading/skeleton.component';
-import { viewResource } from './../core/loading/view-resource';
 import { NotificationService } from './../core/notification.service';
 import { PasswordRulesComponent } from './../core/password/password-rules.component';
 import { HasUnsavedChanges } from './../core/unsaved-changes';
@@ -27,8 +24,6 @@ import { HasUnsavedChanges } from './../core/unsaved-changes';
         MatInputModule,
         MatProgressSpinnerModule,
         PageHeaderComponent,
-        LoadErrorComponent,
-        SkeletonComponent,
         PasswordRulesComponent
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,7 +34,6 @@ export class ChangePasswordComponent implements HasUnsavedChanges {
     private authService = inject(AuthService);
     private notificationService = inject(NotificationService);
 
-    readonly passwordPolicy = viewResource({ loader: () => this.authService.fetchPasswordPolicy() });
     readonly username = computed(() => this.authService.currentUser()?.username ?? '');
     readonly saving = signal(false);
 
@@ -56,10 +50,9 @@ export class ChangePasswordComponent implements HasUnsavedChanges {
         const { newPassword, confirmPassword } = this.values();
         return !!newPassword && !!confirmPassword && newPassword !== confirmPassword;
     });
-    readonly meetsPasswordRules = computed(() => {
-        const policy = this.passwordPolicy.value();
-        return !!policy && PasswordRules.problems(this.newPassword(), this.username(), policy.minLength).length === 0;
-    });
+    readonly meetsPasswordRules = computed(
+        () => PasswordRules.problems(this.newPassword(), this.username()).length === 0
+    );
     /** All three filled in (AUTH-5.2), matching, and the new one meeting the rules. */
     readonly canSubmit = computed(() => {
         const { currentPassword, newPassword, confirmPassword } = this.values();

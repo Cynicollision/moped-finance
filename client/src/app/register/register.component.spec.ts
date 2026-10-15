@@ -13,8 +13,7 @@ describe('RegisterComponent', () => {
     beforeEach(async () => {
         mockAuthService = {
             currentUser: signal(null),
-            register: vi.fn().mockResolvedValue(undefined),
-            fetchPasswordPolicy: vi.fn().mockResolvedValue({ minLength: 12 })
+            register: vi.fn().mockResolvedValue(undefined)
         };
 
         mockActivatedRoute = {
@@ -114,10 +113,10 @@ describe('RegisterComponent', () => {
     });
 
     it('AUTH-2.11 AUTH-9.4 should list the password rules, marked as the user types, and register only once they are met', async () => {
-        component.username.set('testuser');
+        component.username.set('tester');
         component.displayName.set('Test User');
-        component.password.set('testuser');
-        component.confirmPassword.set('testuser');
+        component.password.set('Tester');
+        component.confirmPassword.set('Tester');
         await fixture.whenStable();
 
         const rules = () =>
@@ -125,7 +124,7 @@ describe('RegisterComponent', () => {
                 li => [li.querySelector('mat-icon + span')!.textContent, li.classList.contains('met')]
             );
         expect(rules()).toEqual([
-            ['At least 12 characters', false],
+            ['At least 8 characters', false],
             ['Not the same as the username', false]
         ]);
         expect(registerButton().disabled).toBe(true);
@@ -137,7 +136,7 @@ describe('RegisterComponent', () => {
         await fixture.whenStable();
 
         expect(rules()).toEqual([
-            ['At least 12 characters', true],
+            ['At least 8 characters', true],
             ['Not the same as the username', true]
         ]);
         expect(registerButton().disabled).toBe(false);

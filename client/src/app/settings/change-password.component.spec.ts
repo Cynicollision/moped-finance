@@ -9,7 +9,6 @@ describe('ChangePasswordComponent', () => {
     async function render(changePassword = vi.fn().mockResolvedValue(true)) {
         const authService = {
             currentUser: signal({ id: 'user-1', username: 'ada', displayName: 'Ada' }),
-            fetchPasswordPolicy: vi.fn().mockResolvedValue({ minLength: 12 }),
             changePassword
         };
         const notificationService = { success: vi.fn() };

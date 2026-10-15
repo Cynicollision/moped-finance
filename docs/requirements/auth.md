@@ -87,15 +87,15 @@ Retired: the Settings screen and Profile moved to their own domain (SET), since 
 
 ## AUTH-9 Passwords are long enough to resist guessing
 
-The rules are fixed and simple: a minimum length, without character-class rules that push people toward predictable patterns (decided 2026-10-15, replacing rules the owner could edit in Settings).
+The rules are fixed and simple: a minimum length, without character-class rules that push people toward predictable patterns. Nothing about them is configurable (decided 2026-10-15, replacing rules the owner could edit in Settings).
 
 | ID | Requirement | Status |
 |---|---|---|
-| AUTH-9.1 | A password shall be at least the minimum length, at most 72 bytes when encoded as UTF-8 (bcrypt's limit), and not the same as the username, ignoring case. The minimum length is 12 characters, or `PASSWORD_MIN_LENGTH` in the server's environment if it's set, from 8 to 64; the server shall refuse to start with any other value. | Implemented |
-| AUTH-9.2 | **Password Rules** in Settings shall let the user set the **Minimum length**, from 12 to 64, and turn on any of: **Require an uppercase letter**, **Require a lowercase letter**, **Require a number**, **Require a symbol**. All four are off by default. | Retired (2026-10-15: the rules are fixed, with the minimum length set in the environment, AUTH-9.1) |
+| AUTH-9.1 | A password shall be at least 8 characters, at most 72 bytes when encoded as UTF-8 (bcrypt's limit), and not the same as the username, ignoring case. | Implemented |
+| AUTH-9.2 | **Password Rules** in Settings shall let the user set the **Minimum length**, from 12 to 64, and turn on any of: **Require an uppercase letter**, **Require a lowercase letter**, **Require a number**, **Require a symbol**. All four are off by default. | Retired (2026-10-15: the rules are fixed, AUTH-9.1) |
 | AUTH-9.3 | The rules shall be stored with the instance, so they apply after restarts and upgrades. Changing them doesn't affect the current password; they apply the next time it's set. | Retired (2026-10-15: nothing is stored, see AUTH-9.5) |
-| AUTH-9.4 | Wherever a password is set (Register, Change Password), the form shall show the rules under the field ("At least 12 characters") and mark them met or unmet as the user types, and the server shall refuse a password that breaks any of them with a message naming each one (for example "Password must be at least 12 characters."). | Implemented |
-| AUTH-9.5 | Changing the minimum length shall not affect the current password: the rules apply the next time a password is set. | Implemented |
+| AUTH-9.4 | Wherever a password is set (Register, Change Password), the form shall show the rules under the field ("At least 8 characters") and mark them met or unmet as the user types, and the server shall refuse a password that breaks any of them with a message naming each one (for example "Password must be at least 8 characters."). | Implemented |
+| AUTH-9.5 | A password set before the rules (or before they change) shall keep working for signing in: the rules apply the next time a password is set. | Implemented |
 
 ## AUTH-10 Repeated wrong passwords are slowed down
 

@@ -11,7 +11,6 @@ import { TestDatabaseUtil, TestExpressUtil } from '@server/utility/testing';
 import { ApiTokenController } from './api-token-controller';
 import { ApiTokenData } from './api-token-data';
 import { AuthController } from './auth-controller';
-import { PasswordPolicy } from './password-policy';
 import { SecretData } from './secret-data';
 import { SESSION_COOKIE_NAME, SessionUtil } from './session';
 
@@ -27,10 +26,8 @@ describe('Auth Routes', () => {
 
     // Builds the app the way index.ts does, with sessions stored in the database. Each call is a fresh
     // server process as far as sessions go: only the database is shared.
-    function buildApp(
-        options: { secureCookie: boolean; passwordPolicy?: PasswordPolicy } = { secureCookie: false }
-    ): express.Express {
-        const controller = new AuthController(userData, options.passwordPolicy);
+    function buildApp(options: { secureCookie: boolean } = { secureCookie: false }): express.Express {
+        const controller = new AuthController(userData);
         const middleware = buildAuthMiddleware(new ApiTokenController(new ApiTokenData(dbClient)));
         const authRoutes = buildAuthRouter(
             mockLogger,
@@ -139,23 +136,6 @@ describe('Auth Routes', () => {
     });
 
     describe('Password rules', () => {
-        it('AUTH-9.4 should tell forms the minimum length', async () => {
-            const response = await agent.get('/auth/password-policy');
-
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual({ minLength: 12 });
-        });
-
-        it('AUTH-9.1 should use the minimum length the server is configured with', async () => {
-            const strictApp = buildApp({ secureCookie: false, passwordPolicy: new PasswordPolicy(20) });
-
-            expect((await request(strictApp).get('/auth/password-policy')).body).toEqual({ minLength: 20 });
-            const response = await request(strictApp)
-                .post('/auth/register')
-                .send({ username: 'u', name: 'U', password: 'nineteen characters' });
-            expect(response.body.message).toBe('Password must be at least 20 characters.');
-        });
-
         it('AUTH-2.11 AUTH-9.4 should refuse to register with a password that breaks the rules, naming each one', async () => {
             const response = await agent
                 .post('/auth/register')
@@ -164,7 +144,7 @@ describe('Auth Routes', () => {
             expect(response.status).toBe(400);
             expect(response.body.code).toBe('INVALID_PASSWORD');
             expect(response.body.message).toBe(
-                'Password must be at least 12 characters. Password must not be the same as the username.'
+                'Password must be at least 8 characters. Password must not be the same as the username.'
             );
             expect((await agent.get('/auth/registration')).body).toEqual({ isOpen: true });
         });
@@ -179,9 +159,7 @@ describe('Auth Routes', () => {
                 .send({ oldPassword: 'correct horse battery', newPassword: 'ChangeUser1' });
 
             expect(response.status).toBe(400);
-            expect(response.body.message).toBe(
-                'Password must be at least 12 characters. Password must not be the same as the username.'
-            );
+            expect(response.body.message).toBe('Password must not be the same as the username.');
             const login = await request(app)
                 .post('/auth/login')
                 .send({ username: 'changeuser1', password: 'correct horse battery' });

@@ -46,12 +46,6 @@ export function buildAuthRouter(
         });
     });
 
-    // GET /password-policy - The password rules' minimum length, for forms that set a password (AUTH-9.4)
-    router.get('/password-policy', (req, res) => {
-        const op: OperationDefinition = { domain, operation: 'passwordPolicy' };
-        handler.execute(req, res, op, () => controller.getPasswordPolicy());
-    });
-
     // POST /register - Register user
     const registerSchema = z.object({
         username: z.string().min(1),
