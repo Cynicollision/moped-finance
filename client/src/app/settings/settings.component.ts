@@ -33,7 +33,7 @@ export class SettingsComponent {
             icon: 'dashboard'
         },
         {
-            label: 'Accounts and Institutions',
+            label: 'Institutions and Accounts',
             description: 'Banks, brokerages and lenders, and every account at each, including hidden ones',
             route: '/settings/institutions',
             icon: 'account_balance'

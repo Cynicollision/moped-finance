@@ -80,7 +80,7 @@ Each domain file has an introduction, then one table per requirement, then up to
 | Manual / connected | A connected institution has a bank connection; a connected account is linked to an account at it and gets its balances and transactions from sync. Everything else is manual (INST-2, ACCT-4). |
 | Balance history | Dated balance entries for an account, at most one per date. An account's current balance is its latest entry on or before today. |
 | Set / adjusted entry | A set balance entry is one the user entered or imported, or sync recorded; it's a checkpoint. An adjusted entry exists only because of transactions that adjust the balance (ACCT-5.1). |
-| Hidden account | Left out of everything but the Accounts and Institutions screen and its own details, past included (ACCT-1.9). |
+| Hidden account | Left out of everything but the Institutions and Accounts screen and its own details, past included (ACCT-1.9). |
 | Closed account | No longer held: off the Dashboard lists, but its past still counts (ACCT-6). |
 | Money in / money out | A transaction's direction: money in is stored positive, money out negative (APP-6.3). It says nothing about purpose, so it fits transfers and card payments too; whether an amount is income or an expense comes from its category's type (CASH-1.3). |
 | Category group / category | Two-level classification of transactions and budget streams. A category group has a type (`Income`, `Expense`, `Transfer`) and contains categories. |

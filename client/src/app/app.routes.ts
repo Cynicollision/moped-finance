@@ -90,7 +90,7 @@ export const routes: Routes = [
             {
                 path: 'settings/institutions',
                 component: FinanceInstitutionsComponent,
-                title: 'Accounts and Institutions'
+                title: 'Institutions and Accounts'
             },
             { path: 'settings/categories', component: FinanceCategoriesComponent, title: 'Categories' },
             {

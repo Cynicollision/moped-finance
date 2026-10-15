@@ -54,7 +54,7 @@ Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>` (`/
 
 One Postgres 16 database with two schemas:
 
-- `core`: `users`, `logs`, `sessions`, `secrets` (the generated session secret), `api_tokens` (hashes only), `settings` (one row of instance settings, SET-1.2, whose column defaults are the settings' defaults)
+- `core`: `users`, `logs`, `sessions`, `secrets` (the generated session secret), `api_tokens` (hashes only), `settings` (instance settings, SET-1.2: a JSON value per setting the user has changed; the types and defaults are in `settings-schema.ts`, so adding a setting needs no migration)
 - `finance`: `institutions`, `accounts`, `balance_history`, `category_groups`, `categories`, `transactions`, `budget_streams`
 
 Each instance has one owner (AUTH-7). `core.users` exists for login, and registration closes after the first user. Finance tables have no `user_id`: every signed-in request sees all finance data. `core.logs.user_id` records who performed an operation.
@@ -87,8 +87,8 @@ client/src/app/
   core/import/  the CSV import flow shared by the import screens (choose, validate, confirm)
   finance/    one folder per screen area: accounts, budget, categories, dashboard,
               institutions, spending, transactions, common (the value-history chart, the money display)
-  settings/   the Settings list, Profile, Dashboard settings, API Tokens and SettingsService (Accounts and
-              Institutions, and Categories, live in finance/)
+  settings/   the Settings list, Profile, Dashboard settings, API Tokens and SettingsService (Institutions
+              and Accounts, and Categories, live in finance/)
   login/, register/
 ```
 

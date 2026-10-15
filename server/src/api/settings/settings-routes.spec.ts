@@ -32,6 +32,19 @@ describe('Settings Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body).toEqual({ showRetirementGroup: true });
         });
+
+        it('SET-1.2 should use the default for a stored value that no longer fits, and ignore unknown settings', async () => {
+            await pglite.exec(`
+                INSERT INTO core.settings (key, value) VALUES
+                    ('showRetirementGroup', '"no"'),
+                    ('removedSetting', 'true');
+            `);
+
+            const response = await request(app).get('/settings');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ showRetirementGroup: true });
+        });
     });
 
     describe('PUT /settings', () => {
@@ -41,6 +54,21 @@ describe('Settings Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body).toEqual({ showRetirementGroup: false });
             expect((await request(app).get('/settings')).body).toEqual({ showRetirementGroup: false });
+        });
+
+        it('SET-1.2 should store one row per setting, and update it in place', async () => {
+            await request(app).put('/settings').send({ showRetirementGroup: false });
+            await request(app).put('/settings').send({ showRetirementGroup: true });
+
+            const rows = await pglite.query<{ key: string; value: unknown }>('SELECT key, value FROM core.settings');
+            expect(rows.rows).toEqual([{ key: 'showRetirementGroup', value: true }]);
+        });
+
+        it('SET-1.2 should not store settings it does not know', async () => {
+            await request(app).put('/settings').send({ unknownSetting: 1 });
+
+            const rows = await pglite.query('SELECT key FROM core.settings');
+            expect(rows.rows).toEqual([]);
         });
 
         it('SET-1.2 should keep settings that are not sent', async () => {

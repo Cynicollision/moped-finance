@@ -1,5 +1,5 @@
 {
-  "id": "f2c8f2e4-caad-4bc9-8bc4-238e113efbca",
+  "id": "5a5d5ffc-2c58-49c2-b0c4-8b1c246f48a2",
   "prevId": "8c4580a1-34b5-4af5-b82d-cd92e572ed1c",
   "version": "7",
   "dialect": "postgresql",
@@ -840,12 +840,11 @@
       "name": "settings",
       "schema": "core",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
+        "key": {
+          "name": "key",
+          "type": "varchar(100)",
           "primaryKey": true,
-          "notNull": true,
-          "default": 1
+          "notNull": true
         },
         "updated_at": {
           "name": "updated_at",
@@ -854,12 +853,11 @@
           "notNull": true,
           "default": "now()"
         },
-        "show_retirement_group": {
-          "name": "show_retirement_group",
-          "type": "boolean",
+        "value": {
+          "name": "value",
+          "type": "jsonb",
           "primaryKey": false,
-          "notNull": true,
-          "default": true
+          "notNull": true
         }
       },
       "indexes": {},
@@ -867,12 +865,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "settings_single_row": {
-          "name": "settings_single_row",
-          "value": "\"core\".\"settings\".\"id\" = 1"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "finance.transactions": {

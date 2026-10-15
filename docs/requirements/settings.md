@@ -6,7 +6,7 @@ Settings (`/settings`) is where the owner changes how the app works for them: a 
 
 | ID | Requirement | Status |
 |---|---|---|
-| SET-1.1 | The profile menu's **Settings** (APP-1.5) shall open Settings (`/settings`, page title "Settings"), listing these sections in this order, each with a one-line description and linking to its own page: **Profile** (SET-2), **Appearance** (SET-3), **Dashboard** (SET-5), **Accounts and Institutions** (INST-1), **Categories** (CAT-1), **Rules** (CAT-8), **Bank Sync** (SET-4), **Change Password** (AUTH-5.2) and **API Tokens** (AUTH-11). Sections that aren't built yet are left out. | Partial |
+| SET-1.1 | The profile menu's **Settings** (APP-1.5) shall open Settings (`/settings`, page title "Settings"), listing these sections in this order, each with a one-line description and linking to its own page: **Profile** (SET-2), **Appearance** (SET-3), **Dashboard** (SET-5), **Institutions and Accounts** (INST-1), **Categories** (CAT-1), **Rules** (CAT-8), **Bank Sync** (SET-4), **Change Password** (AUTH-5.2) and **API Tokens** (AUTH-11). Sections that aren't built yet are left out. | Partial |
 | SET-1.2 | Settings shall be stored with the instance, not in the browser, so every device sees the same ones and they survive restarts and upgrades. A setting the user has never changed has its default. | Implemented |
 
 ## SET-2 The user can manage their profile
@@ -38,7 +38,7 @@ Bank sync uses [SimpleFIN Bridge](https://beta-bridge.simplefin.org) (decided 20
 
 ## Known gaps
 
-- **Only Profile, Dashboard, Accounts and Institutions, Categories and API Tokens exist (SET-1.1).** Appearance, Rules, Bank Sync and Change Password aren't built.
+- **Only Profile, Dashboard, Institutions and Accounts, Categories and API Tokens exist (SET-1.1).** Appearance, Rules, Bank Sync and Change Password aren't built.
 - **The app is dark only (SET-3.1).**
 
 ## Notes
