@@ -29,10 +29,12 @@ import { accountSchema } from './../accounts/account-schema';
 import { applyAdjustment, DbTransaction, undoAdjustment } from './../accounts/balance-history-data';
 import { categoryGroupSchema } from './../categories/category-groups/category-group-schema';
 import { categorySchema } from './../categories/category-schema';
+import { TransactionMatchFields } from './transaction-duplicates';
 import { transactionSchema } from './transaction-schema';
 
 /** A transaction as written to CSV: the date as YYYY-MM-DD and the amount exactly as stored. */
 export interface TransactionExport {
+    id: string;
     date: string;
     accountName: string;
     merchant: string;
@@ -57,6 +59,17 @@ export interface IFinanceTransactionData {
     search(options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
     retrieveForExport(accountId?: string): Promise<TransactionExport[]>;
     retrieveMerchants(): Promise<string[]>;
+    /** The account of each of the transactions that exists, by transaction ID. */
+    retrieveAccountIds(ids: string[]): Promise<Map<string, string>>;
+    /**
+     * What an import row without an Id is matched on (TXN-3.12) for each transaction in the accounts over the dates,
+     * hidden ones included. The parts of a split count once, with their total, as the bank recorded it.
+     */
+    retrieveMatchFields(
+        accountIds: string[],
+        startDate: CalendarDate,
+        endDate: CalendarDate
+    ): Promise<TransactionMatchFields[]>;
     /** What came in and went out per category over the dates, counting what Spending counts (CASH-1.2). */
     retrieveCategoryFlows(startDate: CalendarDate, endDate: CalendarDate): Promise<CategoryFlow[]>;
     /** The date of the oldest transaction Spending counts, if there are any. */
@@ -202,6 +215,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
 
         const rows = await this.db
             .select({
+                id: transactionSchema.id,
                 date: transactionSchema.date,
                 accountName: accountSchema.name,
                 merchant: transactionSchema.merchant,
@@ -218,6 +232,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .orderBy(asc(transactionSchema.date), asc(transactionSchema.id));
 
         return rows.map(row => ({
+            id: row.id,
             date: row.date,
             accountName: row.accountName,
             merchant: row.merchant,
@@ -325,6 +340,51 @@ export class FinanceTransactionData implements IFinanceTransactionData {
             .orderBy(transactionSchema.merchant);
 
         return rows.map(row => row.merchant);
+    }
+
+    public async retrieveAccountIds(ids: string[]): Promise<Map<string, string>> {
+        const accountIds = new Map<string, string>();
+        // In chunks, to stay under Postgres's bind-parameter limit.
+        for (let i = 0; i < ids.length; i += bulkInsertChunkSize) {
+            const rows = await this.db
+                .select({ id: transactionSchema.id, accountId: transactionSchema.accountId })
+                .from(transactionSchema)
+                .where(inArray(transactionSchema.id, ids.slice(i, i + bulkInsertChunkSize)));
+            rows.forEach(row => accountIds.set(row.id, row.accountId));
+        }
+        return accountIds;
+    }
+
+    public async retrieveMatchFields(
+        accountIds: string[],
+        startDate: CalendarDate,
+        endDate: CalendarDate
+    ): Promise<TransactionMatchFields[]> {
+        if (accountIds.length === 0) {
+            return [];
+        }
+        const rows = await this.db
+            .select({
+                accountId: transactionSchema.accountId,
+                date: transactionSchema.date,
+                originalStatement: transactionSchema.originalStatement,
+                amount: sql`sum(${transactionSchema.amount})`.mapWith(Number)
+            })
+            .from(transactionSchema)
+            .where(
+                and(
+                    inArray(transactionSchema.accountId, accountIds),
+                    gte(transactionSchema.date, startDate),
+                    lte(transactionSchema.date, endDate)
+                )
+            )
+            .groupBy(
+                sql`coalesce(${transactionSchema.splitId}, ${transactionSchema.id})`,
+                transactionSchema.accountId,
+                transactionSchema.date,
+                transactionSchema.originalStatement
+            );
+        return rows.map(row => ({ ...row, originalStatement: row.originalStatement ?? '' }));
     }
 
     public async retrieveSingle(id: string): Promise<Transaction | null> {

@@ -58,7 +58,8 @@ export class ImportTransactionsComponent {
         );
 
     onImported(result: TransactionImportResult) {
-        this.notificationService.success(`Successfully created ${result.createdCount} transactions.`);
+        const skipped = result.duplicateCount > 0 ? ` Skipped ${result.duplicateCount} already imported.` : '';
+        this.notificationService.success(`Successfully created ${result.createdCount} transactions.${skipped}`);
         const id = this.accountId();
         this.router.navigate(id ? ['/accounts', id] : ['/transactions']);
     }

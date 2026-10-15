@@ -5,6 +5,7 @@ import { FinanceEntityFactory } from '@server/data';
 import { TransactionExport } from './transaction-data';
 
 const columns: CsvColumn<TransactionExport>[] = [
+    { header: 'Id', value: t => t.id },
     { header: 'Date', value: t => t.date },
     { header: 'AccountName', value: t => t.accountName },
     { header: 'Merchant', value: t => t.merchant },
@@ -26,10 +27,16 @@ export interface TransactionCsvLookups {
     targetAccountId?: string;
 }
 
+/** An import row's transaction-to-be, and the Id it had in the file ('' for none, TXN-3.2). */
+export interface TransactionCsvRow {
+    fileId: string;
+    transaction: Transaction;
+}
+
 export type TransactionCsvReadResult =
     | {
           success: true;
-          transactions: Transaction[];
+          rows: TransactionCsvRow[];
           failedRowMessages: string[];
           /** CategoryNames that match no category, by first spelling, with the rows that use them (TXN-3.4). */
           unmatchedCategories: { name: string; rowNumbers: number[] }[];
@@ -47,15 +54,18 @@ export class TransactionCsv {
      * transaction and each invalid row gets one message listing all of its problems.
      */
     public static read(file: Buffer | undefined, lookups: TransactionCsvLookups): TransactionCsvReadResult {
+        // Free text is kept as written, so an export re-imports unchanged (TXN-3.1).
+        // Id is optional (TXN-3.2). Free text is kept as written, so an export re-imports unchanged (TXN-3.1).
         const csv = CsvFile.read(
             file,
-            columns.map(c => c.header)
+            columns.filter(c => c.header !== 'Id').map(c => c.header),
+            ['Merchant', 'OriginalStatement', 'Notes']
         );
         if (!csv.success) {
             return csv;
         }
 
-        const transactions: Transaction[] = [];
+        const rows: TransactionCsvRow[] = [];
         const failedRowMessages: string[] = [];
         const unmatchedCategories = new Map<string, { name: string; rowNumbers: number[] }>();
 
@@ -70,7 +80,7 @@ export class TransactionCsv {
 
             // A blank CategoryName, "Uncategorized", or a name that isn't a category leaves the row uncategorized. The
             // last is reported, so the user can catch a typo before importing (TXN-3.4).
-            const categoryName = values['CategoryName'].trim();
+            const categoryName = values['CategoryName'];
             const categoryId = lookups.categoryIds.get(categoryName.toLowerCase()) ?? '';
             if (categoryName && !categoryId && !Uncategorized.isName(categoryName)) {
                 const key = categoryName.toLowerCase();
@@ -97,8 +107,9 @@ export class TransactionCsv {
                 continue;
             }
 
-            transactions.push(
-                FinanceEntityFactory.createTransaction({
+            rows.push({
+                fileId: values['Id'] ?? '',
+                transaction: FinanceEntityFactory.createTransaction({
                     accountId,
                     categoryId,
                     date: date.value,
@@ -108,12 +119,12 @@ export class TransactionCsv {
                     notes: values['Notes'],
                     isHidden: isHidden.value
                 })
-            );
+            });
         }
 
         return {
             success: true,
-            transactions,
+            rows,
             failedRowMessages,
             unmatchedCategories: [...unmatchedCategories.values()]
         };

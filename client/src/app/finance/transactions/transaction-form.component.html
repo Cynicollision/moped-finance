@@ -150,10 +150,13 @@
                 />
                 <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
                     <mat-option value="">{{ Uncategorized.name }}</mat-option>
-                    @for (c of categoryOptions(); track c.id) {
+                    @for (c of categoryOptions(transactionForm.controls.category.value); track c.id) {
                         <mat-option [value]="c.id"> {{ c.icon }} {{ c.name }} </mat-option>
                     }
                 </mat-autocomplete>
+                @if (transactionForm.controls.category.hasError('unknownCategory')) {
+                    <mat-error>Choose a category from the list</mat-error>
+                }
             </mat-form-field>
 
             <mat-form-field appearance="outline">

@@ -2,6 +2,10 @@
     Select a CSV file containing {{ subject() }}. The file must have the following columns:
     <strong>{{ columns() }}</strong
     >.
+    @if (optionalColumns()) {
+        It can also have: <strong>{{ optionalColumns() }}</strong
+        >.
+    }
 </p>
 
 <div class="file-upload-section">

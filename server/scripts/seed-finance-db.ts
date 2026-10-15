@@ -145,8 +145,8 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         if (transactions.failedRowMessages.length > 0) {
             throw new Error(`transactions.csv: ${transactions.failedRowMessages.join('; ')}`);
         }
-        await new FinanceTransactionData(dbClient).insertBulk(transactions.transactions);
-        console.log(`✅ ${transactions.transactions.length} transactions`);
+        await new FinanceTransactionData(dbClient).insertBulk(transactions.rows.map(row => row.transaction));
+        console.log(`✅ ${transactions.rows.length} transactions`);
 
         const balancesFile = 'balance-history.csv';
         const balances = readRows(balancesFile, ['Date', 'AccountName', 'Balance']).map(row =>

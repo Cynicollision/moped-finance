@@ -6,7 +6,6 @@
         </div>
         <app-money class="summary-amount" [amount]="total" tone="transaction"></app-money>
     </div>
-    <p class="split-direction">Every part is money {{ total < 0 ? 'out' : 'in' }}, like the transaction.</p>
 
     @if (lookups.error(); as error) {
         <app-load-error [message]="error" (retry)="lookups.reload()"></app-load-error>
