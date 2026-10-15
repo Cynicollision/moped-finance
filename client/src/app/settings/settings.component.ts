@@ -21,7 +21,19 @@ interface SettingsSection {
 export class SettingsComponent {
     readonly sections: SettingsSection[] = [
         {
-            label: 'Institutions',
+            label: 'Profile',
+            description: 'Your username and display name',
+            route: '/settings/profile',
+            icon: 'person'
+        },
+        {
+            label: 'Dashboard',
+            description: 'How the Dashboard groups your accounts',
+            route: '/settings/dashboard',
+            icon: 'dashboard'
+        },
+        {
+            label: 'Institutions and Accounts',
             description: 'Banks, brokerages and lenders, and every account at each, including hidden ones',
             route: '/settings/institutions',
             icon: 'account_balance'

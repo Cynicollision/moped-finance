@@ -4,10 +4,15 @@ import { AccountGroupChange } from '@shared/finance/contracts';
 import { AccountGroup, AccountType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
+import { SettingsService } from './../../settings/settings.service';
 import { FinanceService } from './../finance.service';
 import { DashboardComponent } from './dashboard.component';
 
 describe('DashboardComponent', () => {
+    function settingsProvider(showRetirementGroup = true) {
+        return { provide: SettingsService, useValue: { fetch: vi.fn().mockResolvedValue({ showRetirementGroup }) } };
+    }
+
     function account(name: string, type: AccountType, balance: number): Account {
         return {
             id: name,
@@ -23,7 +28,11 @@ describe('DashboardComponent', () => {
     }
 
     // Renders the summary once its accounts have loaded, the way the screen first appears.
-    async function render(accounts: Account[], groupChanges: AccountGroupChange[] = []): Promise<HTMLElement> {
+    async function render(
+        accounts: Account[],
+        groupChanges: AccountGroupChange[] = [],
+        showRetirementGroup = true
+    ): Promise<HTMLElement> {
         const financeService = {
             fetchAllAccounts: vi.fn().mockResolvedValue(accounts),
             fetchTotalValueHistory: vi.fn().mockResolvedValue([]),
@@ -31,7 +40,11 @@ describe('DashboardComponent', () => {
         };
         TestBed.configureTestingModule({
             imports: [DashboardComponent],
-            providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }]
+            providers: [
+                provideRouter([]),
+                { provide: FinanceService, useValue: financeService },
+                settingsProvider(showRetirementGroup)
+            ]
         });
 
         const fixture = TestBed.createComponent(DashboardComponent);
@@ -111,7 +124,7 @@ describe('DashboardComponent', () => {
         };
         TestBed.configureTestingModule({
             imports: [DashboardComponent],
-            providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }]
+            providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }, settingsProvider()]
         });
 
         const fixture = TestBed.createComponent(DashboardComponent);
@@ -134,7 +147,7 @@ describe('DashboardComponent', () => {
         };
         TestBed.configureTestingModule({
             imports: [DashboardComponent],
-            providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }]
+            providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }, settingsProvider()]
         });
         const fixture = TestBed.createComponent(DashboardComponent);
         await fixture.whenStable();
@@ -231,6 +244,40 @@ describe('DashboardComponent', () => {
             ['arrow_upward', true],
             ['arrow_downward', true]
         ]);
+    });
+
+    it('SET-5.1 should list Retirement accounts under Investments when Settings says so', async () => {
+        const element = await render(
+            [
+                account('Brokerage', AccountType.Brokerage, 1000),
+                account('Roth IRA', AccountType.RothIRA, 5000),
+                account('Checking', AccountType.Checking, 100)
+            ],
+            [],
+            false
+        );
+
+        expect(groupRows(element)).toEqual(['Cash $100.00', 'Investments $6,000.00']);
+        const investments = element.querySelectorAll('.account-group')[1];
+        expect(Array.from(investments.querySelectorAll('a')).map(a => a.textContent)).toEqual([
+            'Brokerage',
+            'Roth IRA'
+        ]);
+    });
+
+    it("SET-5.1 should combine Investments' and Retirement's changes from the earlier first day", async () => {
+        const element = await render(
+            [account('Brokerage', AccountType.Brokerage, 300), account('Roth IRA', AccountType.RothIRA, 500)],
+            [
+                // The Roth IRA's first entry is after the timeframe starts, so it adds nothing on the first day.
+                { group: AccountGroup.Retirement, startDate: '2026-05-01', startAmount: 400, endAmount: 500 },
+                { group: AccountGroup.Investments, startDate: '2026-04-17', startAmount: 200, endAmount: 300 }
+            ],
+            false
+        );
+
+        const changes = Array.from(element.querySelectorAll<HTMLElement>('.account-group .change-amount'));
+        expect(changes.map(c => c.textContent!.trim())).toEqual(['$600.00 (300.0%)']);
     });
 
     it('DASH-2.1 should leave out a section with no accounts', async () => {

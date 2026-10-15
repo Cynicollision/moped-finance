@@ -84,6 +84,14 @@ export class AuthController {
         return Result.success();
     }
 
+    async updateProfile(userId: string, displayName: string): Promise<OperationResult<User>> {
+        const user = await this.userData.updateDisplayName(userId, displayName);
+        if (!user) {
+            return Result.userErrorNotFound('User not found.');
+        }
+        return Result.successUpdated(user);
+    }
+
     private async isRegistrationOpen(): Promise<boolean> {
         return (await this.userData.retrieveCount()) === 0;
     }

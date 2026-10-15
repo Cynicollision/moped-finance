@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterLink } from '@angular/router';
 import { HistoryTimeframe } from '@shared/core/enum';
+import { AccountGroupChange } from '@shared/finance/contracts';
 import { AccountCategory, AccountGroup, ValueHistoryType } from '@shared/finance/enum';
 import { Account } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
@@ -14,6 +15,7 @@ import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
 import { FinanceValueHistoryComponent, TimeframeOptions } from './../common/value-history.component';
 import { FinanceValuePeriodChangeComponent, ValuePeriodChange } from './../common/value-period-change.component';
+import { SettingsService } from './../../settings/settings.service';
 import { FinanceService } from './../finance.service';
 
 /** One account group in the list, in display order. Liability groups show magnitudes, without the minus sign. */
@@ -53,6 +55,7 @@ interface AccountSection {
 })
 export class DashboardComponent {
     private financeService = inject(FinanceService);
+    private settingsService = inject(SettingsService);
     readonly Math = Math;
 
     // View State for Chart Options
@@ -69,9 +72,26 @@ export class DashboardComponent {
         return TimeframeOptions.find(t => t.value === this.selectedTimeframe())?.label || 'Period';
     });
 
-    readonly accounts = viewResource({ loader: () => this.financeService.fetchAllAccounts() });
+    // The accounts, with the setting that decides which group lists each one (SET-5.1), so the lists first draw
+    // already grouped.
+    readonly accountData = viewResource({
+        loader: async () => {
+            const [accounts, settings] = await Promise.all([
+                this.financeService.fetchAllAccounts(),
+                this.settingsService.fetch()
+            ]);
+            return { accounts, showRetirementGroup: settings.showRetirementGroup };
+        }
+    });
     /** No accounts yet: the screen shows how to add one instead of an empty chart (DASH-1.8). */
-    readonly hasNoAccounts = computed(() => this.accounts.value()?.length === 0);
+    readonly hasNoAccounts = computed(() => this.accountData.value()?.accounts.length === 0);
+
+    /** The group an account is listed under: Retirement goes under Investments if Settings says so (SET-5.1). */
+    private readonly listedGroup = computed(() => {
+        const showRetirementGroup = this.accountData.value()?.showRetirementGroup ?? true;
+        return (group: AccountGroup) =>
+            group === AccountGroup.Retirement && !showRetirementGroup ? AccountGroup.Investments : group;
+    });
 
     // The chart (DASH-1.1, DASH-1.2): reloads when the view type or timeframe changes, keeping the old chart
     // on screen meanwhile.
@@ -87,8 +107,30 @@ export class DashboardComponent {
     });
 
     readonly groupPeriodChanges = computed(() => {
+        // Combine the groups listed together (SET-5.1) as though they were one: the combined first day is the
+        // earlier of theirs, on which a group that starts later has no entries yet, so adds nothing (DASH-2.2).
+        const listedGroup = this.listedGroup();
+        const combined = new Map<AccountGroup, AccountGroupChange>();
+        for (const change of this.groupChanges.value() ?? []) {
+            const group = listedGroup(change.group);
+            const other = combined.get(group);
+            if (!other || change.startDate < other.startDate) {
+                combined.set(group, {
+                    ...change,
+                    group,
+                    endAmount: change.endAmount + (other?.endAmount ?? 0)
+                });
+            } else {
+                combined.set(group, {
+                    ...other,
+                    startAmount: other.startAmount + (change.startDate === other.startDate ? change.startAmount : 0),
+                    endAmount: other.endAmount + change.endAmount
+                });
+            }
+        }
+
         const changes = new Map<AccountGroup, ValuePeriodChange>();
-        for (const { group, startAmount, endAmount } of this.groupChanges.value() ?? []) {
+        for (const { group, startAmount, endAmount } of combined.values()) {
             const changeAmount = endAmount - startAmount;
             const changePercentage = startAmount !== 0 ? (changeAmount / Math.abs(startAmount)) * 100 : 0;
 
@@ -112,7 +154,7 @@ export class DashboardComponent {
     });
 
     readonly isRefreshing = computed(
-        () => this.accounts.isRefreshing() || this.history.isRefreshing() || this.groupChanges.isRefreshing()
+        () => this.accountData.isRefreshing() || this.history.isRefreshing() || this.groupChanges.isRefreshing()
     );
 
     onChartTypeChange(type: ValueHistoryType) {
@@ -125,7 +167,7 @@ export class DashboardComponent {
 
     // The big number above the chart, for the chosen view type; undefined until the accounts load.
     readonly currentChartValue = computed(() => {
-        if (!this.accounts.value()) {
+        if (!this.accountData.value()) {
             return undefined;
         }
         switch (this.selectedChartType()) {
@@ -150,11 +192,12 @@ export class DashboardComponent {
             isLiability: info.category === AccountCategory.Liability
         }));
         const byGroup = new Map(groups.map(g => [g.group, g]));
+        const listedGroup = this.listedGroup();
 
         // Hidden accounts are left out of the lists and totals (DASH-2.9). Closed ones are left out of the lists, but
         // still count, so the totals match the chart (DASH-2.10, DASH-1.7).
-        for (const account of (this.accounts.value() ?? []).filter(a => !a.isHidden)) {
-            const group = byGroup.get(account.group)!;
+        for (const account of (this.accountData.value()?.accounts ?? []).filter(a => !a.isHidden)) {
+            const group = byGroup.get(listedGroup(account.group))!;
             group.total += Number(account.balance) || 0;
             if (!account.closedOn) {
                 group.accounts.push(account);

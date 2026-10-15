@@ -1,0 +1,20 @@
+.settings-section {
+    max-width: 600px;
+    background-color: var(--bg-card);
+    border-radius: 8px;
+}
+
+.section-content {
+    padding: 1rem 1.5rem;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.actions-row {
+    display: flex;
+    justify-content: flex-end;
+}

@@ -24,7 +24,7 @@ Aliases are set in each package's `tsconfig.json`, and in `server/jest.config.js
 ```
 server/
   index.ts          app setup: session, routers, static files, graceful shutdown
-  src/api/<domain>/ finance endpoints, one folder per domain
+  src/api/<domain>/ finance endpoints, one folder per domain, plus settings/ (the instance's settings)
   src/auth/         login/register/session, auth middleware, users
   src/health/       GET /health (database ping), used by the Docker health check
   src/csv/          CSV reading/writing and cell parsing for imports and exports
@@ -48,13 +48,13 @@ Each finance domain (`accounts`, `budget`, `categories`, `institutions`, `transa
 
 `OperationHandler` logs the operation, maps the result's `OperationStatus` to an HTTP status code, sends `data` or `{ code, message, details? }`, and turns thrown errors into a 400 (constraint violations, via `DatabaseErrorUtil`) or a generic 500. Errors raised before an operation runs (malformed JSON, rejected uploads) reach `buildErrorHandler` (`src/routing/error-handler.ts`), registered last in `index.ts`, which answers in the same `{ code, message }` shape. Uploads go through `singleFileUpload` (`src/routing/upload.ts`): one file, at most 5 MB, held in memory.
 
-Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>`, behind `resolveUser` + `requireAuth`, which accept a browser session or a personal API token (`Authorization: Bearer mf_…`, AUTH-11); a read-only token may only `GET`. Auth is mounted separately at `/auth` (`login`, `register`, `registration`, `logout`, `me`, `password`, and `tokens` to manage API tokens), only accepts the browser session (`requireSession`), and uses a cookie session (`express-session`, stored in `core.sessions` by `connect-pg-simple`; see `src/auth/session.ts`). `helmet` sets security headers on every response (`src/routing/security-headers.ts`).
+Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>` (`/api/v1/settings` for the settings), behind `resolveUser` + `requireAuth`, which accept a browser session or a personal API token (`Authorization: Bearer mf_…`, AUTH-11); a read-only token may only `GET`. Auth is mounted separately at `/auth` (`login`, `register`, `registration`, `logout`, `me`, `profile`, `password`, and `tokens` to manage API tokens), only accepts the browser session (`requireSession`), and uses a cookie session (`express-session`, stored in `core.sessions` by `connect-pg-simple`; see `src/auth/session.ts`). `helmet` sets security headers on every response (`src/routing/security-headers.ts`).
 
 ## Database
 
 One Postgres 16 database with two schemas:
 
-- `core`: `users`, `logs`, `sessions`, `secrets` (the generated session secret), `api_tokens` (hashes only)
+- `core`: `users`, `logs`, `sessions`, `secrets` (the generated session secret), `api_tokens` (hashes only), `settings` (instance settings, SET-1.2: a JSON value per setting the user has changed; the types and defaults are in `settings-schema.ts`, so adding a setting needs no migration)
 - `finance`: `institutions`, `accounts`, `balance_history`, `category_groups`, `categories`, `transactions`, `budget_streams`
 
 Each instance has one owner (AUTH-7). `core.users` exists for login, and registration closes after the first user. Finance tables have no `user_id`: every signed-in request sees all finance data. `core.logs.user_id` records who performed an operation.
@@ -87,7 +87,8 @@ client/src/app/
   core/import/  the CSV import flow shared by the import screens (choose, validate, confirm)
   finance/    one folder per screen area: accounts, budget, categories, dashboard,
               institutions, spending, transactions, common (the value-history chart, the money display)
-  settings/   the Settings list and API Tokens (Institutions and Categories live in finance/)
+  settings/   the Settings list, Profile, Dashboard settings, API Tokens and SettingsService (Institutions
+              and Accounts, and Categories, live in finance/)
   login/, register/
 ```
 

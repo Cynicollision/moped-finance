@@ -31,14 +31,12 @@ describe('ProfileMenuComponent', () => {
         expect((fixture.nativeElement as HTMLElement).querySelector('.avatar')!.textContent).toBe('AK');
     });
 
-    it('APP-1.5 should offer Institutions, Categories, Settings and Sign out', async () => {
+    it('APP-1.5 should offer Settings and Sign out', async () => {
         const { items } = await openMenu('Ada Lovelace');
 
         expect(
             items.map(item => [item.querySelector('mat-icon + span')!.textContent, item.getAttribute('href')])
         ).toEqual([
-            ['Institutions', '/settings/institutions'],
-            ['Categories', '/settings/categories'],
             ['Settings', '/settings'],
             ['Sign out', null]
         ]);

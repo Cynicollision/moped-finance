@@ -1,0 +1,31 @@
+<app-page-header
+    title="Dashboard"
+    [crumbs]="[{ label: 'Settings', link: '/settings' }]"
+    [refreshing]="settings.isRefreshing()"
+></app-page-header>
+
+<mat-card class="settings-section">
+    <mat-card-content class="section-content">
+        @if (settings.error(); as error) {
+            <app-load-error [message]="error" (retry)="settings.reload()"></app-load-error>
+        } @else if (settings.value(); as settings) {
+            <div class="option">
+                <mat-slide-toggle
+                    [checked]="settings.showRetirementGroup"
+                    [disabled]="saving()"
+                    (change)="toggle('showRetirementGroup', $event)"
+                    aria-describedby="retirement-group-hint"
+                    >Show Retirement as its own group</mat-slide-toggle
+                >
+                <p id="retirement-group-hint" class="hint">
+                    When off, retirement accounts are listed and totalled under Investments.
+                </p>
+            </div>
+        } @else {
+            <div class="option" aria-busy="true" aria-label="Loading">
+                <app-skeleton width="50%" height="24px"></app-skeleton>
+                <app-skeleton width="70%" height="16px"></app-skeleton>
+            </div>
+        }
+    </mat-card-content>
+</mat-card>
