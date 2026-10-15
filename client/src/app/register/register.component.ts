@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,7 +7,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink, ActivatedRoute } from '@angular/router';
+import { PasswordRules } from '@shared/core/util';
 import { AuthService } from './../core/auth.service';
+import { PasswordRulesComponent } from './../core/password/password-rules.component';
 
 @Component({
     selector: 'app-register',
@@ -20,7 +22,8 @@ import { AuthService } from './../core/auth.service';
         MatButtonModule,
         MatProgressSpinnerModule,
         MatIconModule,
-        RouterLink
+        RouterLink,
+        PasswordRulesComponent
     ],
     templateUrl: './register.component.html',
     styleUrl: './register.component.scss'
@@ -36,6 +39,9 @@ export class RegisterComponent {
     readonly errorMessage = signal('');
     readonly submitting = signal(false);
 
+    // The password rules, checked as the user types (AUTH-2.11, AUTH-9.4)
+    readonly meetsPasswordRules = computed(() => PasswordRules.problems(this.password(), this.username()).length === 0);
+
     async onRegister() {
         this.errorMessage.set('');
 
@@ -46,6 +52,11 @@ export class RegisterComponent {
 
         if (this.password() !== this.confirmPassword()) {
             this.errorMessage.set('Passwords do not match.');
+            return;
+        }
+
+        // The rules are listed under the field, marked unmet
+        if (!this.meetsPasswordRules()) {
             return;
         }
 

@@ -26,8 +26,17 @@
 
                 <mat-form-field class="full-width">
                     <mat-label>Password</mat-label>
-                    <input matInput type="password" [(ngModel)]="password" name="password" required />
+                    <input
+                        matInput
+                        type="password"
+                        [(ngModel)]="password"
+                        name="password"
+                        autocomplete="new-password"
+                        required
+                    />
                 </mat-form-field>
+
+                <app-password-rules [password]="password()" [username]="username()"></app-password-rules>
 
                 <mat-form-field class="full-width">
                     <mat-label>Confirm Password</mat-label>
@@ -44,7 +53,14 @@
                     <button
                         mat-flat-button
                         type="submit"
-                        [disabled]="!username() || !displayName() || !password() || !confirmPassword() || submitting()"
+                        [disabled]="
+                            !username() ||
+                            !displayName() ||
+                            !password() ||
+                            !confirmPassword() ||
+                            !meetsPasswordRules() ||
+                            submitting()
+                        "
                     >
                         @if (submitting()) {
                             <mat-progress-spinner

@@ -21,6 +21,7 @@ import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { ApiTokensComponent } from './settings/api-tokens.component';
 import { AppearanceComponent } from './settings/appearance.component';
+import { ChangePasswordComponent } from './settings/change-password.component';
 import { DashboardSettingsComponent } from './settings/dashboard-settings.component';
 import { ProfileComponent } from './settings/profile.component';
 import { SettingsComponent } from './settings/settings.component';
@@ -99,6 +100,12 @@ export const routes: Routes = [
                 path: 'settings/categories/import',
                 component: ImportCategoriesComponent,
                 title: 'Import Categories'
+            },
+            {
+                path: 'settings/change-password',
+                component: ChangePasswordComponent,
+                title: 'Change Password',
+                canDeactivate: [unsavedChangesGuard]
             },
             { path: 'settings/api-tokens', component: ApiTokensComponent, title: 'API Tokens' }
         ]

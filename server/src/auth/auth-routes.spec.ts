@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcrypt';
 import express from 'express';
 import request from 'supertest';
 import TestAgent from 'supertest/lib/agent';
@@ -83,7 +84,7 @@ describe('Auth Routes', () => {
             const response = await agent.post('/auth/register').send({
                 username: 'newuser',
                 name: 'New User',
-                password: 'password123'
+                password: 'correct horse battery'
             });
 
             if (response.status !== 200) {
@@ -117,13 +118,13 @@ describe('Auth Routes', () => {
             await agent.post('/auth/register').send({
                 username: 'firstuser',
                 name: 'First User',
-                password: 'password123'
+                password: 'correct horse battery'
             });
 
             const response = await request(app).post('/auth/register').send({
                 username: 'seconduser',
                 name: 'Second User',
-                password: 'password123'
+                password: 'correct horse battery'
             });
 
             expect(response.status).toBe(400);
@@ -131,6 +132,56 @@ describe('Auth Routes', () => {
 
             const user = await userData.retrieveByUsername('seconduser');
             expect(user).toBeNull();
+        });
+    });
+
+    describe('Password rules', () => {
+        it('AUTH-2.11 AUTH-9.4 should refuse to register with a password that breaks the rules, naming each one', async () => {
+            const response = await agent
+                .post('/auth/register')
+                .send({ username: 'short', name: 'Short', password: 'short' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.code).toBe('INVALID_PASSWORD');
+            expect(response.body.message).toBe(
+                'Password must be at least 8 characters. Password must not be the same as the username.'
+            );
+            expect((await agent.get('/auth/registration')).body).toEqual({ isOpen: true });
+        });
+
+        it('AUTH-5.3 should refuse a new password that breaks the rules, keeping the old one', async () => {
+            await agent
+                .post('/auth/register')
+                .send({ username: 'changeuser1', name: 'U', password: 'correct horse battery' });
+
+            const response = await agent
+                .put('/auth/password')
+                .send({ oldPassword: 'correct horse battery', newPassword: 'ChangeUser1' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe('Password must not be the same as the username.');
+            const login = await request(app)
+                .post('/auth/login')
+                .send({ username: 'changeuser1', password: 'correct horse battery' });
+            expect(login.status).toBe(200);
+        });
+
+        it('AUTH-9.5 should still sign in with a password set before the rules', async () => {
+            const hash = await bcrypt.hash('old', 10);
+            await userData.create(
+                {
+                    id: 'user-old',
+                    username: 'olduser',
+                    displayName: 'Old',
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                },
+                hash
+            );
+
+            const response = await agent.post('/auth/login').send({ username: 'olduser', password: 'old' });
+
+            expect(response.status).toBe(200);
         });
     });
 
@@ -146,7 +197,7 @@ describe('Auth Routes', () => {
             await agent.post('/auth/register').send({
                 username: 'firstuser',
                 name: 'First User',
-                password: 'password123'
+                password: 'correct horse battery'
             });
 
             const response = await request(app).get('/auth/registration');
@@ -161,7 +212,7 @@ describe('Auth Routes', () => {
             await agent.post('/auth/register').send({
                 username: 'loginuser',
                 name: 'Login User',
-                password: 'password123'
+                password: 'correct horse battery'
             });
             // We need a fresh agent to simulate an unauthenticated login attempt
             agent = request.agent(app);
@@ -170,7 +221,7 @@ describe('Auth Routes', () => {
         it('AUTH-1.3 should sign in with valid credentials', async () => {
             const response = await agent.post('/auth/login').send({
                 username: 'loginuser',
-                password: 'password123'
+                password: 'correct horse battery'
             });
 
             expect(response.status).toBe(200);
@@ -185,7 +236,7 @@ describe('Auth Routes', () => {
             });
             const unknownUser = await agent.post('/auth/login').send({
                 username: 'nobody',
-                password: 'password123'
+                password: 'correct horse battery'
             });
 
             expect(wrongPassword.status).toBe(400);
@@ -198,7 +249,7 @@ describe('Auth Routes', () => {
         it('AUTH-1.6 should treat usernames as case-sensitive', async () => {
             const response = await agent.post('/auth/login').send({
                 username: 'LoginUser',
-                password: 'password123'
+                password: 'correct horse battery'
             });
 
             expect(response.status).toBe(400);
@@ -210,15 +261,15 @@ describe('Auth Routes', () => {
             await agent.post('/auth/register').send({
                 username: 'pwduser',
                 name: 'Pwd User',
-                password: 'oldpassword'
+                password: 'old password 1234'
             });
             // We are still logged in via agent from registration
         });
 
         it('AUTH-5.1 should successfully change password', async () => {
             const response = await agent.put('/auth/password').send({
-                oldPassword: 'oldpassword',
-                newPassword: 'newpassword'
+                oldPassword: 'old password 1234',
+                newPassword: 'new password 1234'
             });
 
             expect(response.status).toBe(200);
@@ -227,15 +278,15 @@ describe('Auth Routes', () => {
             const newAgent = request.agent(app);
             const loginRes = await newAgent.post('/auth/login').send({
                 username: 'pwduser',
-                password: 'newpassword'
+                password: 'new password 1234'
             });
             expect(loginRes.status).toBe(200);
         });
 
         it('AUTH-5.1 should fail to change password if old password is wrong', async () => {
             const response = await agent.put('/auth/password').send({
-                oldPassword: 'wrongoldpassword',
-                newPassword: 'newpassword'
+                oldPassword: 'wrong old password',
+                newPassword: 'new password 1234'
             });
 
             expect(response.status).toBe(400);
@@ -247,7 +298,7 @@ describe('Auth Routes', () => {
         beforeEach(async () => {
             await agent
                 .post('/auth/register')
-                .send({ username: 'profileuser', name: 'Old Name', password: 'password' });
+                .send({ username: 'profileuser', name: 'Old Name', password: 'correct horse battery' });
         });
 
         it('SET-2.1 should change the display name, trimmed, and the session user with it', async () => {
@@ -286,7 +337,7 @@ describe('Auth Routes', () => {
             await agent.post('/auth/register').send({
                 username: 'meuser',
                 name: 'Me User',
-                password: 'password123'
+                password: 'correct horse battery'
             });
 
             const response = await agent.get('/auth/me');
@@ -307,7 +358,7 @@ describe('Auth Routes', () => {
             const loginResponse = await agent.post('/auth/register').send({
                 username: 'logoutuser',
                 name: 'Logout User',
-                password: 'password123'
+                password: 'correct horse battery'
             });
             expect(loginResponse.status).toBe(200);
 
@@ -324,7 +375,7 @@ describe('Auth Routes', () => {
         it('AUTH-3.8 should clear the cookie with the attributes it was set with', async () => {
             const registerResponse = await agent
                 .post('/auth/register')
-                .send({ username: 'u', name: 'U', password: 'p' });
+                .send({ username: 'u', name: 'U', password: 'long enough password' });
             const logoutResponse = await agent.post('/auth/logout');
 
             const cleared = sessionCookie(logoutResponse);
@@ -342,7 +393,7 @@ describe('Auth Routes', () => {
             const registerResponse = await httpsAgent
                 .post('/auth/register')
                 .set('X-Forwarded-Proto', 'https')
-                .send({ username: 'u', name: 'U', password: 'p' });
+                .send({ username: 'u', name: 'U', password: 'long enough password' });
             expect(sessionCookie(registerResponse)).toContain('; Secure');
 
             const logoutResponse = await httpsAgent.post('/auth/logout').set('X-Forwarded-Proto', 'https');
@@ -352,7 +403,9 @@ describe('Auth Routes', () => {
 
     describe('Sessions', () => {
         it('AUTH-3.8 should set an HTTP-only, SameSite=Lax session cookie without Secure over plain HTTP', async () => {
-            const response = await agent.post('/auth/register').send({ username: 'u', name: 'U', password: 'p' });
+            const response = await agent
+                .post('/auth/register')
+                .send({ username: 'u', name: 'U', password: 'long enough password' });
 
             const cookie = sessionCookie(response);
             expect(cookie).toContain('; HttpOnly');
@@ -361,7 +414,7 @@ describe('Auth Routes', () => {
         });
 
         it('AUTH-3.2 should restart the 24 hours on every request', async () => {
-            await agent.post('/auth/register').send({ username: 'u', name: 'U', password: 'p' });
+            await agent.post('/auth/register').send({ username: 'u', name: 'U', password: 'long enough password' });
             const response = await agent.get('/auth/me');
 
             // The cookie is sent again with a new expiry, and the stored session is extended to match
@@ -375,7 +428,9 @@ describe('Auth Routes', () => {
         });
 
         it('AUTH-3.6 should keep the user signed in across a server restart', async () => {
-            await agent.post('/auth/register').send({ username: 'restartuser', name: 'U', password: 'p' });
+            await agent
+                .post('/auth/register')
+                .send({ username: 'restartuser', name: 'U', password: 'long enough password' });
 
             // The same browser, now talking to a newly started server
             const restartedAgent = request.agent(buildApp());

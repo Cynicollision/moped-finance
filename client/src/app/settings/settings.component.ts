@@ -51,6 +51,12 @@ export class SettingsComponent {
             icon: 'category'
         },
         {
+            label: 'Change Password',
+            description: 'The password you sign in with',
+            route: '/settings/change-password',
+            icon: 'password'
+        },
+        {
             label: 'API Tokens',
             description: 'Let scripts and tools call the API without signing in',
             route: '/settings/api-tokens',

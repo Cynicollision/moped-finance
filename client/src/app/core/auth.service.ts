@@ -33,6 +33,12 @@ export class AuthService {
         return status?.isOpen ?? false;
     }
 
+    /** Changes the password (AUTH-5.1); false if the server refused, which it has already reported. */
+    async changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
+        const result = await this.api.put<unknown>('auth/password', { oldPassword, newPassword });
+        return result !== undefined;
+    }
+
     async register(username: string, displayName: string, password?: string, returnUrl?: string): Promise<void> {
         const payload = { username, name: displayName, password };
         const response = await this.api.post<User>('auth/register', payload);

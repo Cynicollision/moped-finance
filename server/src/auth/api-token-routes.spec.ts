@@ -64,7 +64,9 @@ describe('API Tokens', () => {
         await TestDatabaseUtil.clearCoreData(pglite);
         await TestDatabaseUtil.clearFinanceData(pglite);
         agent = request.agent(app);
-        await agent.post('/auth/register').send({ username: 'owner', name: 'Owner', password: 'password123' });
+        await agent
+            .post('/auth/register')
+            .send({ username: 'owner', name: 'Owner', password: 'correct horse battery' });
     });
 
     async function createToken(body: object = readWrite): Promise<string> {
@@ -249,7 +251,7 @@ describe('API Tokens', () => {
             const password = await request(app)
                 .put('/auth/password')
                 .set(bearer)
-                .send({ oldPassword: 'password123', newPassword: 'changed' });
+                .send({ oldPassword: 'correct horse battery', newPassword: 'changed password 1234' });
             expect(password.status).toBe(401);
         });
 
@@ -277,7 +279,7 @@ describe('API Tokens', () => {
 
             const change = await agent
                 .put('/auth/password')
-                .send({ oldPassword: 'password123', newPassword: 'changed' });
+                .send({ oldPassword: 'correct horse battery', newPassword: 'changed password 1234' });
             expect(change.status).toBe(200);
 
             expect(

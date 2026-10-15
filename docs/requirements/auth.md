@@ -26,10 +26,10 @@ Screens: **Login** (`/login`), **Register** (`/register`), the **Sign out** acti
 | AUTH-2.5 | Successful registration shall sign the user in immediately and navigate the same way as AUTH-1.3. | Implemented |
 | AUTH-2.6 | Passwords shall be stored only as salted bcrypt hashes (10 rounds) and shall never be returned by any API. | Implemented |
 | AUTH-2.7 | Once a first user exists, registration shall be disabled: the API shall reject it with "Registration is closed.", the Login screen shall hide its Register link, and navigating to Register shall redirect to Login. | Implemented |
-| AUTH-2.8 | The Register screen shall explain, before the user submits, that they're creating the only account for this instance, that it will own all of the instance's data, and that registration closes once it's done, so the Register screen won't be available again. | Planned |
+| AUTH-2.8 | The Register screen shall explain, before the user submits, that they're creating the only account for this instance, that it will own all of the instance's data, and that registration closes once it's done, so the Register screen won't be available again. | Implemented |
 | AUTH-2.9 | The Register screen shall ask whether to **Start with default categories** (selected) or **Start empty**, and registration shall set up categories accordingly (CAT-6). | Planned |
 | AUTH-2.10 | The username shall be 1 to 50 characters with no leading or trailing spaces, and the display name 1 to 100 characters. The Register screen shall flag a field that breaks these before submitting, and the server shall refuse it. | Planned |
-| AUTH-2.11 | The password shall meet the password rules (AUTH-9). | Planned |
+| AUTH-2.11 | The password shall meet the password rules (AUTH-9). | Implemented |
 
 ## AUTH-3 The user stays signed in, and only signed-in users see finance data
 
@@ -55,8 +55,8 @@ Screens: **Login** (`/login`), **Register** (`/register`), the **Sign out** acti
 | ID | Requirement | Status |
 |---|---|---|
 | AUTH-5.1 | The API shall let a signed-in user change their password by supplying the current password and a new one. A wrong current password shall be rejected with "Invalid old password." | Implemented |
-| AUTH-5.2 | Settings shall have a **Change Password** section with **Current Password**, **New Password** and **Confirm New Password**. **Change Password** stays disabled until all three are filled; mismatched new passwords show "Passwords do not match." | Planned |
-| AUTH-5.3 | The new password shall meet the password rules (AUTH-9). On success the screen shall say "Password changed.", clear the fields, and keep the user signed in. | Planned |
+| AUTH-5.2 | Settings shall have a **Change Password** section with **Current Password**, **New Password** and **Confirm New Password**. **Change Password** stays disabled until all three are filled, the new passwords match and the new one meets the rules (AUTH-9.4); mismatched new passwords show "Passwords do not match." | Implemented |
+| AUTH-5.3 | The new password shall meet the password rules (AUTH-9). On success the screen shall say "Password changed.", clear the fields, and keep the user signed in. | Implemented |
 
 ## AUTH-6 A user can only see and change their own data
 
@@ -87,15 +87,15 @@ Retired: the Settings screen and Profile moved to their own domain (SET), since 
 
 ## AUTH-9 Passwords are long enough to resist guessing
 
-The rules are fixed and simple: a minimum length, without character-class rules that push people toward predictable patterns (decided 2026-10-15, replacing rules the owner could edit in Settings).
+The rules are fixed and simple: a minimum length, without character-class rules that push people toward predictable patterns. Nothing about them is configurable (decided 2026-10-15, replacing rules the owner could edit in Settings).
 
 | ID | Requirement | Status |
 |---|---|---|
-| AUTH-9.1 | A password shall be at least the minimum length, at most 72 bytes when encoded as UTF-8 (bcrypt's limit), and not the same as the username, ignoring case. The minimum length is 12 characters, or `PASSWORD_MIN_LENGTH` in the server's environment if it's set, from 8 to 64; the server shall refuse to start with any other value. | Planned |
-| AUTH-9.2 | **Password Rules** in Settings shall let the user set the **Minimum length**, from 12 to 64, and turn on any of: **Require an uppercase letter**, **Require a lowercase letter**, **Require a number**, **Require a symbol**. All four are off by default. | Retired (2026-10-15: the rules are fixed, with the minimum length set in the environment, AUTH-9.1) |
+| AUTH-9.1 | A password shall be at least 8 characters, at most 72 bytes when encoded as UTF-8 (bcrypt's limit), and not the same as the username, ignoring case. | Implemented |
+| AUTH-9.2 | **Password Rules** in Settings shall let the user set the **Minimum length**, from 12 to 64, and turn on any of: **Require an uppercase letter**, **Require a lowercase letter**, **Require a number**, **Require a symbol**. All four are off by default. | Retired (2026-10-15: the rules are fixed, AUTH-9.1) |
 | AUTH-9.3 | The rules shall be stored with the instance, so they apply after restarts and upgrades. Changing them doesn't affect the current password; they apply the next time it's set. | Retired (2026-10-15: nothing is stored, see AUTH-9.5) |
-| AUTH-9.4 | Wherever a password is set (Register, Change Password), the form shall show the rules under the field ("At least 12 characters") and mark them met or unmet as the user types, and the server shall refuse a password that breaks any of them with a message naming each one (for example "Password must be at least 12 characters."). | Planned |
-| AUTH-9.5 | Changing the minimum length shall not affect the current password: the rules apply the next time a password is set. | Planned |
+| AUTH-9.4 | Wherever a password is set (Register, Change Password), the form shall show the rules under the field ("At least 8 characters") and mark them met or unmet as the user types, and the server shall refuse a password that breaks any of them with a message naming each one (for example "Password must be at least 8 characters."). | Implemented |
+| AUTH-9.5 | A password set before the rules (or before they change) shall keep working for signing in: the rules apply the next time a password is set. | Implemented |
 
 ## AUTH-10 Repeated wrong passwords are slowed down
 
@@ -131,8 +131,7 @@ Personal API tokens let a script, a scheduled job, or a tool like `curl` call th
 
 ## Known gaps
 
-- **No Change Password section (AUTH-5.2).** Changing the password is API-only (AUTH-5.1). See SET for the rest of Settings.
-- **No password rules (AUTH-9).** A password only has to be non-empty. Register doesn't limit the username or display name beyond the column size, or check the username for spaces (AUTH-2.10); Profile already limits the display name (SET-2.1).
+- **No field limits on Register (AUTH-2.10).** Register doesn't limit the username or display name beyond the column size, or check the username for spaces (AUTH-2.10); Profile already limits the display name (SET-2.1).
 - **No limit on failed sign-ins (AUTH-10).**
 - **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.
 

@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { RegistrationStatus } from '@shared/core/contracts';
 import { User } from '@shared/core/types';
+import { PasswordRules } from '@shared/core/util';
 import { CoreEntityIdPrefix, EntityId } from '@server/data';
 import { OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
@@ -46,6 +47,11 @@ export class AuthController {
             return Result.userError('Username already taken.');
         }
 
+        const passwordProblems = PasswordRules.problems(password, username);
+        if (passwordProblems.length > 0) {
+            return Result.userError(passwordProblems.join(' '), 'INVALID_PASSWORD');
+        }
+
         const hash = await bcrypt.hash(password, this.saltRounds);
 
         const newUser: User = {
@@ -77,6 +83,11 @@ export class AuthController {
         const match = await bcrypt.compare(oldPassword, userWithPassword.passwordHash);
         if (!match) {
             return Result.userError('Invalid old password.');
+        }
+
+        const passwordProblems = PasswordRules.problems(newPassword, user.username);
+        if (passwordProblems.length > 0) {
+            return Result.userError(passwordProblems.join(' '), 'INVALID_PASSWORD');
         }
 
         const newHash = await bcrypt.hash(newPassword, this.saltRounds);
