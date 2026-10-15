@@ -243,6 +243,44 @@ describe('Auth Routes', () => {
         });
     });
 
+    describe('PUT /auth/profile', () => {
+        beforeEach(async () => {
+            await agent
+                .post('/auth/register')
+                .send({ username: 'profileuser', name: 'Old Name', password: 'password' });
+        });
+
+        it('SET-2.1 should change the display name, trimmed, and the session user with it', async () => {
+            const response = await agent.put('/auth/profile').send({ displayName: '  New Name  ' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.displayName).toBe('New Name');
+            expect(response.body.username).toBe('profileuser');
+
+            const me = await agent.get('/auth/me');
+            expect(me.body.displayName).toBe('New Name');
+        });
+
+        it('SET-2.1 should ignore a username sent with the display name', async () => {
+            const response = await agent.put('/auth/profile').send({ displayName: 'New Name', username: 'other' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.username).toBe('profileuser');
+        });
+
+        it('SET-2.1 should refuse a blank or over-long display name', async () => {
+            expect((await agent.put('/auth/profile').send({ displayName: '   ' })).status).toBe(400);
+            expect((await agent.put('/auth/profile').send({ displayName: 'x'.repeat(101) })).status).toBe(400);
+            expect((await agent.put('/auth/profile').send({ displayName: 'x'.repeat(100) })).status).toBe(200);
+        });
+
+        it('SET-2.1 should need a signed-in session', async () => {
+            const response = await request(app).put('/auth/profile').send({ displayName: 'New Name' });
+
+            expect(response.status).toBe(401);
+        });
+    });
+
     describe('GET /auth/me', () => {
         it('AUTH-3.1 should return user profile when logged in', async () => {
             await agent.post('/auth/register').send({

@@ -85,6 +85,23 @@ export function buildAuthRouter(
         });
     });
 
+    // PUT /profile - Update Profile (SET-2.1): the display name; the username can't be changed
+    const profileSchema = z.object({
+        displayName: z.string().trim().min(1).max(100)
+    });
+
+    router.put('/profile', middleware.requireSession, (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'updateProfile' };
+        handler.execute(req, res, op, { body: profileSchema }, async (context, { body }) => {
+            const result = await controller.updateProfile(context.user.getId(), body.displayName);
+            if (result.success && result.data) {
+                // GET /me answers from the session
+                context.req.session.user = result.data;
+            }
+            return result;
+        });
+    });
+
     // POST /logout - Logout
     router.post('/logout', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'logout' };

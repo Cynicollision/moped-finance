@@ -23,6 +23,8 @@ export interface IUserData {
     retrieveSingle(id: string): Promise<User | null>;
     retrieveByUsername(username: string): Promise<UserWithPassword | null>;
     updatePassword(id: string, passwordHash: string): Promise<void>;
+    /** The updated user, or null if there's no user with that ID. */
+    updateDisplayName(id: string, displayName: string): Promise<User | null>;
     retrieveCount(): Promise<number>;
 }
 
@@ -103,6 +105,25 @@ export class UserData implements IUserData {
         if (rows.length === 0) {
             throw new Error('User not found.');
         }
+    }
+
+    public async updateDisplayName(id: string, displayName: string): Promise<User | null> {
+        const rows = await this.db
+            .update(userSchema)
+            .set({
+                displayName,
+                updatedAt: DateTimeUtil.now()
+            })
+            .where(eq(userSchema.id, id))
+            .returning({
+                id: userSchema.id,
+                createdAt: userSchema.createdAt,
+                updatedAt: userSchema.updatedAt,
+                username: userSchema.username,
+                displayName: userSchema.displayName
+            });
+
+        return rows.length > 0 ? (rows[0] as User) : null;
     }
 
     public async retrieveCount(): Promise<number> {

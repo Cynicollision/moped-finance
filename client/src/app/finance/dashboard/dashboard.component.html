@@ -1,7 +1,7 @@
 <app-page-header title="Dashboard" [refreshing]="isRefreshing()"></app-page-header>
 
-@if (accounts.error(); as error) {
-    <app-load-error [message]="error" (retry)="accounts.reload()"></app-load-error>
+@if (accountData.error(); as error) {
+    <app-load-error [message]="error" (retry)="accountData.reload()"></app-load-error>
 } @else if (hasNoAccounts()) {
     <div class="empty-state">
         <p>Add an institution and its accounts to see your net worth here.</p>
@@ -28,7 +28,7 @@
     </div>
 
     <div class="account-sections">
-        @if (accounts.value()) {
+        @if (accountData.value()) {
             @for (section of summary().sections; track section.title) {
                 <section class="account-section">
                     <h2 class="section-title">{{ section.title }}</h2>

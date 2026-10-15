@@ -2,7 +2,7 @@
 
 Moped Finance is a single-user app: one person keeps their finances in it, behind a login. Each instance has one owner (AUTH-7), so finance data isn't partitioned by user; the login only decides whether you get in.
 
-Screens: **Login** (`/login`), **Register** (`/register`), the **Sign out** action in the profile menu, and sections of **Settings** (`/settings`, SET-1.1): **Change Password**, **API Tokens**, **Password Rules** and **Sign-in Protection**.
+Screens: **Login** (`/login`), **Register** (`/register`), the **Sign out** action in the profile menu, and sections of **Settings** (`/settings`, SET-1.1): **Change Password** and **API Tokens**.
 
 ## AUTH-1 The user can sign in to reach their finances
 
@@ -29,7 +29,7 @@ Screens: **Login** (`/login`), **Register** (`/register`), the **Sign out** acti
 | AUTH-2.8 | The Register screen shall explain, before the user submits, that they're creating the only account for this instance, that it will own all of the instance's data, and that registration closes once it's done, so the Register screen won't be available again. | Planned |
 | AUTH-2.9 | The Register screen shall ask whether to **Start with default categories** (selected) or **Start empty**, and registration shall set up categories accordingly (CAT-6). | Planned |
 | AUTH-2.10 | The username shall be 1 to 50 characters with no leading or trailing spaces, and the display name 1 to 100 characters. The Register screen shall flag a field that breaks these before submitting, and the server shall refuse it. | Planned |
-| AUTH-2.11 | The password shall meet the password rules (AUTH-9), which are the defaults at registration. | Planned |
+| AUTH-2.11 | The password shall meet the password rules (AUTH-9). | Planned |
 
 ## AUTH-3 The user stays signed in, and only signed-in users see finance data
 
@@ -85,16 +85,17 @@ Retired: the Settings screen and Profile moved to their own domain (SET), since 
 | AUTH-8.1 | The profile menu's **Settings** (APP-1.5) shall open the Settings screen (`/settings`, page title "Settings"), with the sections **Profile**, **Change Password** (AUTH-5.2), **Password Rules** (AUTH-9) and **Sign-in Protection** (AUTH-10). | Retired (see SET-1.1) |
 | AUTH-8.2 | **Profile** shall show the username read-only (it can't be changed) and let the user edit **Display Name** (AUTH-2.10). Saving shall update the profile control's name and initials (APP-1.4) straight away. | Retired (see SET-2.1) |
 
-## AUTH-9 The owner decides how strong the password must be
+## AUTH-9 Passwords are long enough to resist guessing
 
-The defaults are a sensible middle: long enough to resist guessing, without character-class rules that push people toward predictable patterns. The owner can make them stricter, not weaker.
+The rules are fixed and simple: a minimum length, without character-class rules that push people toward predictable patterns (decided 2026-10-15, replacing rules the owner could edit in Settings).
 
 | ID | Requirement | Status |
 |---|---|---|
-| AUTH-9.1 | A password shall always be at least the minimum length (default 12 characters), at most 72 bytes when encoded as UTF-8 (bcrypt's limit), and not the same as the username, ignoring case. | Planned |
-| AUTH-9.2 | **Password Rules** in Settings shall let the user set the **Minimum length**, from 12 to 64, and turn on any of: **Require an uppercase letter**, **Require a lowercase letter**, **Require a number**, **Require a symbol**. All four are off by default. | Planned |
-| AUTH-9.3 | The rules shall be stored with the instance, so they apply after restarts and upgrades. Changing them doesn't affect the current password; they apply the next time it's set. | Planned |
-| AUTH-9.4 | Wherever a password is set (Register, Change Password), the form shall list the current rules under the field and mark each one met or unmet as the user types, and the server shall refuse a password that breaks any of them with a message naming each one (for example "Password must be at least 12 characters. Password must contain a number."). | Planned |
+| AUTH-9.1 | A password shall be at least the minimum length, at most 72 bytes when encoded as UTF-8 (bcrypt's limit), and not the same as the username, ignoring case. The minimum length is 12 characters, or `PASSWORD_MIN_LENGTH` in the server's environment if it's set, from 8 to 64; the server shall refuse to start with any other value. | Planned |
+| AUTH-9.2 | **Password Rules** in Settings shall let the user set the **Minimum length**, from 12 to 64, and turn on any of: **Require an uppercase letter**, **Require a lowercase letter**, **Require a number**, **Require a symbol**. All four are off by default. | Retired (2026-10-15: the rules are fixed, with the minimum length set in the environment, AUTH-9.1) |
+| AUTH-9.3 | The rules shall be stored with the instance, so they apply after restarts and upgrades. Changing them doesn't affect the current password; they apply the next time it's set. | Retired (2026-10-15: nothing is stored, see AUTH-9.5) |
+| AUTH-9.4 | Wherever a password is set (Register, Change Password), the form shall show the rules under the field ("At least 12 characters") and mark them met or unmet as the user types, and the server shall refuse a password that breaks any of them with a message naming each one (for example "Password must be at least 12 characters."). | Planned |
+| AUTH-9.5 | Changing the minimum length shall not affect the current password: the rules apply the next time a password is set. | Planned |
 
 ## AUTH-10 Repeated wrong passwords are slowed down
 
@@ -105,9 +106,10 @@ Guessing is limited per network address rather than by locking the account, so s
 | AUTH-10.1 | After the maximum number of failed sign-ins (default 5) from one network address within the window (default 15 minutes), the server shall refuse further sign-in attempts from that address until the lockout (default 15 minutes) has passed, even with the right password, with 429 "Too many failed sign-in attempts. Try again in N minutes." | Planned |
 | AUTH-10.2 | Failed HTTP Basic credentials (AUTH-3.5) shall count toward the same limit, and a locked-out address shall be refused there too. | Retired: HTTP Basic was removed. API tokens (AUTH-11) are 256-bit random values that can't practically be guessed, so they need no limit |
 | AUTH-10.3 | A successful sign-in shall reset that address's count. | Planned |
-| AUTH-10.4 | **Sign-in Protection** in Settings shall let the user set **Maximum failed attempts** (3 to 10), **Window** (5 to 60 minutes) and **Lockout** (5 to 60 minutes). | Planned |
+| AUTH-10.4 | **Sign-in Protection** in Settings shall let the user set **Maximum failed attempts** (3 to 10), **Window** (5 to 60 minutes) and **Lockout** (5 to 60 minutes). | Retired (2026-10-15: the limits are server configuration, AUTH-10.7) |
 | AUTH-10.5 | The server shall log each lockout with the address and time, without the username or password tried. | Planned |
 | AUTH-10.6 | Behind a reverse proxy, the address shall be the client's, not the proxy's, when the server is configured to trust the proxy (`TRUST_FIRST_PROXY`). | Planned |
+| AUTH-10.7 | The limits shall be the defaults in AUTH-10.1 unless set in the server's environment: maximum failed attempts from 3 to 10, and the window and lockout from 5 to 60 minutes. The server shall refuse to start with a value outside those ranges. | Planned |
 
 ## AUTH-11 The user can let scripts and tools use the API with tokens
 
@@ -130,7 +132,7 @@ Personal API tokens let a script, a scheduled job, or a tool like `curl` call th
 ## Known gaps
 
 - **No Change Password section (AUTH-5.2).** Changing the password is API-only (AUTH-5.1). See SET for the rest of Settings.
-- **No password rules (AUTH-9).** A password only has to be non-empty, and usernames and display names have no length limits or space checks beyond the column size (AUTH-2.10).
+- **No password rules (AUTH-9).** A password only has to be non-empty. Register doesn't limit the username or display name beyond the column size, or check the username for spaces (AUTH-2.10); Profile already limits the display name (SET-2.1).
 - **No limit on failed sign-ins (AUTH-10).**
 - **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.
 

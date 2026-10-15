@@ -19,17 +19,17 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 13. Settings: Profile and Appearance
-- [ ] SET-1.1, 2.1, 3.1: instance-level settings storage (also used by items 14 and 16), Profile (edit display name), Appearance (Dark, Light, Match system, applied before first paint). Light theme means a second set of the `styles.scss` tokens; likely a PR of its own.
+### 13. Settings: Appearance
+- [ ] SET-3.1: Appearance (Dark, Light, Match system), stored in `core.settings` (SET-1.2) and applied before first paint. The server's setting is the source of truth; the browser needs a cached copy to apply before the app loads. Light theme means a second set of the `styles.scss` tokens and `mat.theme`'s `theme-type`.
 
 ### 14. Change Password and password rules
-- [ ] AUTH-5.2, 5.3: Change Password in Settings. AUTH-9.1 to 9.4, AUTH-2.11: password rules (length, character classes) stored with the instance, editable in Settings, shown live under every password field and enforced by the server.
+- [ ] AUTH-5.2, 5.3: Change Password in Settings. AUTH-9.1, 9.4, 9.5, AUTH-2.11: fixed password rules (minimum length 12, or `PASSWORD_MIN_LENGTH` from 8 to 64 in `.env`; at most 72 bytes; not the username), shown under every password field and enforced by the server. The client needs the minimum length from the server (for example in `GET /auth/registration`). Add `PASSWORD_MIN_LENGTH` to `.env.example`.
 
 ### 15. Register screen
 - [ ] AUTH-2.8, 2.9, 2.10; CAT-6.1, 6.2: explain single-owner registration, field limits for username and display name, and **Start with default categories** (the CAT-6 list, with necessities) or **Start empty**. Ship the defaults as a CSV in the CAT-7.1 format and load them with `CategoryCsv.read` and `FinanceCategoryData.insertBulk` (`category-csv.ts`, `category-data.ts`), as categories.md's Notes suggest. Known gap: close the AUTH-2.7 registration race (two simultaneous registrations on a fresh instance) at the database.
 
 ### 16. Sign-in protection
-- [ ] AUTH-10.1 to 10.6: per-address lockout after failed sign-ins, settings for the limits, logged lockouts, and `TRUST_FIRST_PROXY` for the client address behind a proxy.
+- [ ] AUTH-10.1, 10.3, 10.5 to 10.7: per-address lockout after failed sign-ins, the limits as optional `.env` variables (not Settings), logged lockouts, and `TRUST_FIRST_PROXY` for the client address behind a proxy.
 
 ### 17. Demo mode
 - [ ] APP-4.2, 4.3: populate demo mode from `server/seed-data/`: `demo.interceptor.ts` answers everything but auth with an empty list. Needs the CSVs turned into client-side data (a build step or JSON) and in-browser create/edit/delete. Last, so it covers the finished screens.
@@ -43,12 +43,12 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ### Automated bank sync
 Manual entry and import/export come first. Constraints for when this gets picked up:
-- **No paid subscription.** It must fit a single user on a free tier (or use a free alternative). Check the current terms before building anything.
+- **Provider: SimpleFIN Bridge** (decided 2026-10-15, replacing a Plaid-style link flow). It's a paid subscription (about $15 a year in 2026; check the current price), which the owner accepted. The user links banks in Bridge and pastes a one-time setup token into Settings → Bank Sync (SET-4.2), which the server exchanges for an access URL. One connection covers every bank, so INST-2's per-institution Connect, Reconnect and Disconnect need rewriting before building: for example, map each SimpleFIN account (and its `org`) to an institution and account on the first sync.
 - **Polling only.** The host isn't reachable from the internet, so no webhooks. Sync on a schedule and/or on demand. Scheduling: a built-in timer (no setup for self-hosters) as the main schedule, with the sync endpoints also callable by an external scheduler using a Read & write API token (AUTH-11).
-- [ ] **Design.** Write `docs/integrations/bank-sync.md` before coding: provider choice and cost, link flow, encrypted storage of access tokens, cursor-based incremental sync, mapping provider items/accounts to institutions/accounts, de-duplicating against CSV imports, and sandbox → production.
+- [ ] **Design.** Write `docs/integrations/bank-sync.md` before coding: claiming the setup token and storing the access URL (it embeds credentials; decide whether to encrypt it at rest and with what key), polling within Bridge's rate limits and date ranges (`start-date`, `pending`), mapping SimpleFIN orgs/accounts to institutions/accounts, de-duplicating against CSV imports by transaction ID, and testing with Bridge's demo token. Rewrite INST-2 and ACCT-4 for the single connection.
 - [ ] **Connect and link.** INST-2.1 to 2.4, 2.6; ACCT-4.3 (connected derived from the link, replacing `is_manual`); ACCT-2.6's Manual/Connected; ACCT-5.5 (linking turns off `adjusts_balance` on the account's transactions).
 - [ ] **Combining histories.** INST-2.8 to 2.11: Combine / Use the bank's history / Keep my history only, with the preview counts and one database transaction.
-- [ ] **Sync.** INST-2.12, ACCT-4.1, 4.2; TXN-2.12, TXN-4.8 (synced transactions' read-only fields and splits); SET-4.1 (Bank Sync settings, schedule).
+- [ ] **Sync.** INST-2.12, ACCT-4.1, 4.2; TXN-2.12, TXN-4.8 (synced transactions' read-only fields and splits); SET-4.1 (Bank Sync settings, schedule), SET-4.2 (setup token).
 - [ ] **Disconnect.** INST-2.5, 2.7; ACCT-4.4, 4.5; ACCT-1.5's read-only institution for connected accounts; ACCT-6.1's disconnect on close.
 
 ### Automatic categorization

@@ -13,7 +13,7 @@ import { InstitutionDialogComponent, InstitutionDialogData } from './../institut
 import { FinanceService } from './../finance.service';
 import { AccountFormComponent } from './account-form.component';
 
-// Add Account (ACCT-1.3), from the Institutions screen or, with ?institutionId=, from an institution's menu.
+// Add Account (ACCT-1.3), from the Accounts and Institutions screen or, with ?institutionId=, from an institution's menu.
 @Component({
     selector: 'app-finance-add-account',
     changeDetection: ChangeDetectionStrategy.OnPush,

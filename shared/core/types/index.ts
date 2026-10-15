@@ -1,3 +1,4 @@
+export type { AppSettings } from './app-settings';
 export type { ApiToken } from './api-token';
 export type { CalendarDate } from './calendar-date';
 export type { Entity, NewEntity } from './entity-base';

@@ -20,6 +20,8 @@ import { FinanceTransactionsComponent } from './finance/transactions/transaction
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { ApiTokensComponent } from './settings/api-tokens.component';
+import { DashboardSettingsComponent } from './settings/dashboard-settings.component';
+import { ProfileComponent } from './settings/profile.component';
 import { SettingsComponent } from './settings/settings.component';
 
 export const routes: Routes = [
@@ -78,7 +80,18 @@ export const routes: Routes = [
             { path: 'cashflow', redirectTo: 'spending' },
             { path: 'budget', component: FinanceBudgetComponent, title: 'Budget' },
             { path: 'settings', component: SettingsComponent, title: 'Settings' },
-            { path: 'settings/institutions', component: FinanceInstitutionsComponent, title: 'Institutions' },
+            {
+                path: 'settings/profile',
+                component: ProfileComponent,
+                title: 'Profile',
+                canDeactivate: [unsavedChangesGuard]
+            },
+            { path: 'settings/dashboard', component: DashboardSettingsComponent, title: 'Dashboard Settings' },
+            {
+                path: 'settings/institutions',
+                component: FinanceInstitutionsComponent,
+                title: 'Accounts and Institutions'
+            },
             { path: 'settings/categories', component: FinanceCategoriesComponent, title: 'Categories' },
             {
                 path: 'settings/categories/import',

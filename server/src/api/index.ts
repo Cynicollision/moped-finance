@@ -6,6 +6,7 @@ import { FinanceAccountData, FinanceBalanceHistoryData, createAccountRouter } fr
 import { FinanceBudgetStreamData, createBudgetStreamRouter } from './budget';
 import { FinanceCategoryData, FinanceCategoryGroupData, createCategoryRouter } from './categories';
 import { FinanceInstitutionData, createInstitutionRouter } from './institutions';
+import { SettingsData, createSettingsRouter } from './settings';
 import { FinanceTransactionData, createTransactionRouter } from './transactions';
 
 export function buildFinanceRouter(logger: IAppLogger, db: DatabaseClient, authMiddleware: AuthMiddleware): Router {
@@ -18,6 +19,7 @@ export function buildFinanceRouter(logger: IAppLogger, db: DatabaseClient, authM
     const categoryData = new FinanceCategoryData(db);
     const institutionData = new FinanceInstitutionData(db);
     const transactionData = new FinanceTransactionData(db);
+    const settingsData = new SettingsData(db);
 
     const accounts = createAccountRouter(logger, accountData, balanceHistoryData, transactionData);
     router.use('/v1/accounts', authMiddleware.resolveUser, authMiddleware.requireAuth, accounts);
@@ -30,6 +32,9 @@ export function buildFinanceRouter(logger: IAppLogger, db: DatabaseClient, authM
 
     const institutions = createInstitutionRouter(logger, institutionData, accountData);
     router.use('/v1/institutions', authMiddleware.resolveUser, authMiddleware.requireAuth, institutions);
+
+    const settings = createSettingsRouter(logger, settingsData);
+    router.use('/v1/settings', authMiddleware.resolveUser, authMiddleware.requireAuth, settings);
 
     const transactions = createTransactionRouter(logger, accountData, categoryData, transactionData);
     router.use('/v1/transactions', authMiddleware.resolveUser, authMiddleware.requireAuth, transactions);
