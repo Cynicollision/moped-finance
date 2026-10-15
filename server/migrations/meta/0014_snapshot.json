@@ -1,5 +1,5 @@
 {
-  "id": "7222c123-bb48-4e06-b7c6-7c41575a191f",
+  "id": "8c4580a1-34b5-4af5-b82d-cd92e572ed1c",
   "prevId": "8c6d6479-2dfb-4d98-aa0b-11d1f3a4ab81",
   "version": "7",
   "dialect": "postgresql",
@@ -836,141 +836,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "finance.transaction_parts": {
-      "name": "transaction_parts",
-      "schema": "finance",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(50)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "transaction_id": {
-          "name": "transaction_id",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "numeric(12, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "category_id": {
-          "name": "category_id",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "merchant": {
-          "name": "merchant",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "transaction_parts_transaction_id_position_unique_idx": {
-          "name": "transaction_parts_transaction_id_position_unique_idx",
-          "columns": [
-            {
-              "expression": "transaction_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "position",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "transaction_parts_category_id_idx": {
-          "name": "transaction_parts_category_id_idx",
-          "columns": [
-            {
-              "expression": "category_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "transaction_parts_transaction_id_transactions_id_fk": {
-          "name": "transaction_parts_transaction_id_transactions_id_fk",
-          "tableFrom": "transaction_parts",
-          "tableTo": "transactions",
-          "schemaTo": "finance",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "transaction_parts_category_id_categories_id_fk": {
-          "name": "transaction_parts_category_id_categories_id_fk",
-          "tableFrom": "transaction_parts",
-          "tableTo": "categories",
-          "schemaTo": "finance",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "finance.transactions": {
       "name": "transactions",
       "schema": "finance",
@@ -1050,6 +915,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "split_id": {
+          "name": "split_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "split_position": {
+          "name": "split_position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -1094,6 +971,21 @@
           "columns": [
             {
               "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "transactions_split_id_idx": {
+          "name": "transactions_split_id_idx",
+          "columns": [
+            {
+              "expression": "split_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

@@ -6,8 +6,7 @@ import {
     Category,
     CategoryGroup,
     Institution,
-    Transaction,
-    TransactionPart
+    Transaction
 } from '@shared/finance/types';
 import { BalanceEntrySource } from '@shared/finance/enum';
 import { AccountTypeUtil } from '@shared/finance/util';
@@ -24,7 +23,7 @@ export enum FinanceEntityIdPrefix {
     Account = 'AC',
     BalanceHistory = 'BAL',
     Transaction = 'TRX',
-    TransactionPart = 'TRP',
+    TransactionSplit = 'SPL',
     Institution = 'IN',
     Category = 'CT',
     CategoryGroup = 'CTG',
@@ -63,20 +62,21 @@ export class FinanceEntityFactory {
         });
     }
 
-    /** Not split unless given parts (TXN-4). */
+    /** Not split unless given a split ID (TXN-4). */
     public static createTransaction(
-        transaction: Omit<NewEntity<Transaction>, 'adjustsBalance' | 'parts'> &
-            Partial<Pick<Transaction, 'adjustsBalance' | 'parts'>>
+        transaction: Omit<NewEntity<Transaction>, 'adjustsBalance' | 'splitId'> &
+            Partial<Pick<Transaction, 'adjustsBalance' | 'splitId'>>
     ): Transaction {
         return FinanceEntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, {
             adjustsBalance: false,
-            parts: [],
+            splitId: '',
             ...transaction
         });
     }
 
-    public static createTransactionPart(part: NewEntity<TransactionPart>): TransactionPart {
-        return FinanceEntityFactory.createEntity<TransactionPart>(FinanceEntityIdPrefix.TransactionPart, part);
+    /** The ID the parts of a new split share (TXN-4). */
+    public static createSplitId(): string {
+        return EntityId.generate(FinanceEntityIdPrefix.TransactionSplit);
     }
 
     public static createInstitution(institution: NewEntity<Institution>): Institution {

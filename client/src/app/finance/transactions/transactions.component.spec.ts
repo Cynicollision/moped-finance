@@ -27,7 +27,7 @@ describe('FinanceTransactionsComponent', () => {
             notes: '',
             isHidden: false,
             adjustsBalance: false,
-            parts: [],
+            splitId: '',
             createdAt: new Date(2026, 0, 1),
             updatedAt: new Date(2026, 0, 1)
         };
@@ -223,6 +223,19 @@ describe('FinanceTransactionsComponent', () => {
         expect(rows.map(r => r.classList.contains('hidden-transaction'))).toEqual([true, false]);
         expect(rows[0].querySelector('mat-icon[aria-label="Hidden"]')!.textContent!.trim()).toBe('visibility_off');
         expect(rows[1].querySelector('mat-icon')).toBeNull();
+    });
+
+    it('TXN-4.4 should list the parts of a split as rows of their own, each marked with a split icon', async () => {
+        const parts = ['p1', 'p2'].map(id => ({ ...transaction(id, '2026-05-02'), splitId: 's1' }));
+        const { element } = await render({}, [...parts, transaction('a', '2026-05-01')]);
+        const rows = Array.from(element.querySelectorAll('a.app-list-row'));
+
+        expect(rows.map(r => r.querySelector('mat-icon[aria-label="Split"]')?.textContent!.trim())).toEqual([
+            'call_split',
+            'call_split',
+            undefined
+        ]);
+        expect(rows[1].getAttribute('href')).toBe('/transactions/p2');
     });
 
     it('TXN-1.12 should leave hidden accounts out of the Account filter, unless opened filtered to one', async () => {

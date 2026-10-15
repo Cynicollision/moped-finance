@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Mock } from 'vitest';
+import { of } from 'rxjs';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { Transaction } from '@shared/finance/types';
@@ -22,7 +23,7 @@ describe('ViewTransactionComponent', () => {
         notes: '',
         isHidden: false,
         adjustsBalance: false,
-        parts: [],
+        splitId: '',
         createdAt: new Date(2026, 0, 1),
         updatedAt: new Date(2026, 0, 1)
     };
@@ -30,10 +31,11 @@ describe('ViewTransactionComponent', () => {
     // Renders Transaction Details once it has loaded, unless `loaded` is false.
     async function render(
         fetchTransaction: Mock = vi.fn().mockResolvedValue(transaction),
-        options: { confirm?: boolean; deleted?: boolean; loaded?: boolean } = {}
+        options: { confirm?: boolean; deleted?: boolean; loaded?: boolean; splitParts?: Transaction[] } = {}
     ) {
         const financeService = {
             fetchTransaction,
+            fetchTransactionSplit: vi.fn().mockResolvedValue(options.splitParts ?? []),
             fetchCategories: vi.fn().mockResolvedValue([]),
             fetchAllAccounts: vi.fn().mockResolvedValue([]),
             deleteTransaction: vi.fn().mockResolvedValue(options.deleted ?? true),
@@ -50,7 +52,10 @@ describe('ViewTransactionComponent', () => {
                 provideRouter([]),
                 {
                     provide: ActivatedRoute,
-                    useValue: { snapshot: { paramMap: convertToParamMap({ transactionId: 't1' }) } }
+                    useValue: {
+                        snapshot: { paramMap: convertToParamMap({ transactionId: 't1' }) },
+                        paramMap: of(convertToParamMap({ transactionId: 't1' }))
+                    }
                 },
                 {
                     provide: DateProviderService,
@@ -170,13 +175,13 @@ describe('ViewTransactionComponent', () => {
     });
 
     describe('split transactions (TXN-4)', () => {
-        const split: Transaction = {
-            ...transaction,
-            parts: [
-                { id: 'p1', amount: -6, categoryId: '', merchant: 'Corner Shop', notes: '' },
-                { id: 'p2', amount: -4, categoryId: '', merchant: 'Corner Shop', notes: '' }
-            ].map(p => ({ ...p, createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1) }))
-        };
+        const parts: Transaction[] = [
+            { ...transaction, splitId: 's1', amount: -6 },
+            { ...transaction, id: 't2', splitId: 's1', amount: -3 },
+            { ...transaction, id: 't3', splitId: 's1', amount: -1 }
+        ];
+        const renderPart = (options: { confirm?: boolean } = {}) =>
+            render(vi.fn().mockResolvedValue(parts[0]), { ...options, splitParts: parts });
 
         function menuItems(): string[] {
             return Array.from(document.querySelectorAll('.mat-mdc-menu-item .mat-mdc-menu-item-text')).map(i =>
@@ -191,31 +196,44 @@ describe('ViewTransactionComponent', () => {
             await fixture.whenStable();
         }
 
-        it("TXN-4.1 should offer Split for a transaction that isn't split, and open the split dialog", async () => {
+        it("TXN-4.1 should offer Split for a transaction that isn't split, and reload once it's split", async () => {
             const { fixture, financeService, modalService } = await render();
-            modalService.open = vi.fn().mockResolvedValue(true);
+            modalService.open = vi.fn().mockResolvedValue([transaction, { ...transaction, id: 't2' }]);
 
             await openMenu(fixture);
             expect(menuItems()).toEqual(['Edit', 'Split', 'Delete']);
             document.querySelectorAll<HTMLButtonElement>('.mat-mdc-menu-item')[1].click();
             await fixture.whenStable();
 
-            expect(modalService.open).toHaveBeenCalledWith(SplitTransactionModalComponent, { transaction });
+            expect(modalService.open).toHaveBeenCalledWith(SplitTransactionModalComponent, { transaction, parts: [] });
             expect(financeService.fetchTransaction).toHaveBeenCalledTimes(2);
+            expect(financeService.fetchTransactionSplit).not.toHaveBeenCalled();
         });
 
-        it('TXN-4.5 should offer Edit split and Unsplit for a split transaction', async () => {
-            const { fixture } = await render(vi.fn().mockResolvedValue(split));
+        it("TXN-4.5 should load a part's split, and offer Edit split and Unsplit", async () => {
+            const { fixture, financeService, element } = await renderPart();
 
+            expect(financeService.fetchTransactionSplit).toHaveBeenCalledWith('t1');
+            expect(element.textContent).toContain('Split into 3 parts');
             await openMenu(fixture);
-
             expect(menuItems()).toEqual(['Edit', 'Edit split', 'Unsplit', 'Delete']);
         });
 
+        it('TXN-4.5 should open the first part when the split is edited without this one', async () => {
+            const { fixture, modalService, navigate } = await renderPart();
+            modalService.open = vi.fn().mockResolvedValue([parts[1], parts[2]]);
+
+            await chooseFromMenu(fixture, 'Edit split');
+
+            expect(modalService.open).toHaveBeenCalledWith(SplitTransactionModalComponent, {
+                transaction: parts[0],
+                parts
+            });
+            expect(navigate).toHaveBeenCalledWith(['/transactions', 't2']);
+        });
+
         it('TXN-4.5 APP-2.8 should unsplit after confirming, say so and reload', async () => {
-            const { fixture, financeService, modalService, notificationService } = await render(
-                vi.fn().mockResolvedValue(split)
-            );
+            const { fixture, financeService, modalService, notificationService } = await renderPart();
 
             await chooseFromMenu(fixture, 'Unsplit');
 
@@ -228,11 +246,23 @@ describe('ViewTransactionComponent', () => {
         });
 
         it('TXN-4.5 should leave the split alone when Unsplit is cancelled', async () => {
-            const { fixture, financeService } = await render(vi.fn().mockResolvedValue(split), { confirm: false });
+            const { fixture, financeService } = await renderPart({ confirm: false });
 
             await chooseFromMenu(fixture, 'Unsplit');
 
             expect(financeService.unsplitTransaction).not.toHaveBeenCalled();
+        });
+
+        it('TXN-4.7 should say that deleting a part deletes the others', async () => {
+            const { fixture, modalService } = await renderPart({ confirm: false });
+
+            await chooseFromMenu(fixture, 'Delete');
+
+            expect(modalService.confirm).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    message: "Delete this transaction and its 2 other parts? This can't be undone."
+                })
+            );
         });
     });
 });

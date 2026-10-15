@@ -1,11 +1,12 @@
 <app-modal-layout [title]="isEditing ? 'Edit Split' : 'Split Transaction'">
     <div class="split-summary">
         <div class="summary-text">
-            <span class="summary-merchant">{{ transaction.merchant || '-' }}</span>
-            <span class="summary-date">{{ transaction.date | date }}</span>
+            <span class="summary-merchant">{{ summary.merchant || '-' }}</span>
+            <span class="summary-date">{{ summary.date | date }}</span>
         </div>
-        <app-money class="summary-amount" [amount]="transaction.amount" tone="transaction"></app-money>
+        <app-money class="summary-amount" [amount]="total" tone="transaction"></app-money>
     </div>
+    <p class="split-direction">Every part is money {{ total < 0 ? 'out' : 'in' }}, like the transaction.</p>
 
     @if (lookups.error(); as error) {
         <app-load-error [message]="error" (retry)="lookups.reload()"></app-load-error>
@@ -28,27 +29,16 @@
                             }
                         </div>
 
-                        <div class="amount-row">
-                            <mat-button-toggle-group
-                                formControlName="direction"
-                                aria-label="Money out or money in"
-                                hideSingleSelectionIndicator
-                            >
-                                <mat-button-toggle [value]="Direction.Out">Money out</mat-button-toggle>
-                                <mat-button-toggle [value]="Direction.In">Money in</mat-button-toggle>
-                            </mat-button-toggle-group>
-
-                            <mat-form-field appearance="outline" class="amount-field">
-                                <mat-label>Amount</mat-label>
-                                <span matTextPrefix>$&nbsp;</span>
-                                <input type="number" matInput formControlName="amount" min="0" step="0.01" />
-                                @if (part.controls.amount.hasError('required')) {
-                                    <mat-error>Amount is required</mat-error>
-                                } @else if (part.controls.amount.hasError('min')) {
-                                    <mat-error>Amount must be more than 0</mat-error>
-                                }
-                            </mat-form-field>
-                        </div>
+                        <mat-form-field appearance="outline" class="amount-field">
+                            <mat-label>Amount</mat-label>
+                            <span matTextPrefix>$&nbsp;</span>
+                            <input type="number" matInput formControlName="amount" min="0" step="0.01" />
+                            @if (part.controls.amount.hasError('required')) {
+                                <mat-error>Amount is required</mat-error>
+                            } @else if (part.controls.amount.hasError('min')) {
+                                <mat-error>Amount must be more than 0</mat-error>
+                            }
+                        </mat-form-field>
 
                         <mat-form-field appearance="outline" floatLabel="always">
                             <mat-label>Category</mat-label>
@@ -91,7 +81,7 @@
                     <mat-icon>add</mat-icon>
                     Add part
                 </button>
-                <span class="remaining" [class.unbalanced]="remainder() !== 0" aria-live="polite">
+                <span class="remaining" [class.unbalanced]="remaining() !== 0" aria-live="polite">
                     Remaining: <app-money [amount]="remaining()"></app-money>
                 </span>
             </div>
@@ -106,7 +96,7 @@
             mat-flat-button
             type="submit"
             form="split-form"
-            [disabled]="!lookups.value() || form.invalid || remainder() !== 0 || isSaving()"
+            [disabled]="!lookups.value() || form.invalid || remaining() !== 0 || isSaving()"
         >
             @if (isSaving()) {
                 <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>

@@ -3,6 +3,11 @@ export const TransactionSplit = {
     minParts: 2,
     maxParts: 20,
 
+    /** The parts' amounts added up, to the cent. */
+    total(partAmounts: number[]): number {
+        return partAmounts.reduce((sum, amount) => sum + Math.round(amount * 100), 0) / 100;
+    },
+
     /** What's left of the total once the parts' amounts are taken off, to the cent. 0 when they add up (TXN-4.2). */
     remainder(total: number, partAmounts: number[]): number {
         const cents = partAmounts.reduce((sum, amount) => sum - Math.round(amount * 100), Math.round(total * 100));

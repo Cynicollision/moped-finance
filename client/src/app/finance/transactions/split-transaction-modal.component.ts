@@ -5,14 +5,12 @@ import { AbstractControl, FormArray, FormControl, FormGroup, ReactiveFormsModule
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { merge } from 'rxjs';
-import { TransactionDirection } from '@shared/finance/enum';
-import { Category, Transaction, TransactionPartFields } from '@shared/finance/types';
+import { CategoryType } from '@shared/finance/enum';
+import { Category, Transaction, TransactionSplitPart } from '@shared/finance/types';
 import { TransactionSplit, Uncategorized } from '@shared/finance/util';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
@@ -26,12 +24,16 @@ import { MoneyComponent } from './../common/money.component';
 import { FinanceService } from './../finance.service';
 
 export interface SplitTransactionModalData {
+    /** The transaction to split, or any part of a split one. */
     transaction: Transaction;
+    /** The parts of its split, in order, when it's split already. */
+    parts: Transaction[];
 }
 
 type PartForm = FormGroup<{
-    // The amount's size, with its sign from the direction, as on the transaction form (TXN-2.13).
-    direction: FormControl<TransactionDirection>;
+    /** The part's own transaction, for a part it already has; empty for a new one. */
+    id: FormControl<string>;
+    /** The amount's size: every part goes the transaction's way (TXN-4.2). */
     amount: FormControl<number | null>;
     categoryId: FormControl<string>;
     merchant: FormControl<string>;
@@ -39,8 +41,8 @@ type PartForm = FormGroup<{
 }>;
 
 /**
- * Splits a transaction into parts, or changes the parts of a split one (TXN-4.1 to TXN-4.3, TXN-4.5). Saves itself and
- * closes with true once it has.
+ * Splits a transaction, or changes the parts of a split one (TXN-4.1 to TXN-4.3, TXN-4.5). Saves itself and closes with
+ * the parts once it has.
  */
 @Component({
     selector: 'app-split-transaction-modal',
@@ -50,7 +52,6 @@ type PartForm = FormGroup<{
         ReactiveFormsModule,
         MatAutocompleteModule,
         MatButtonModule,
-        MatButtonToggleModule,
         MatFormFieldModule,
         MatIconModule,
         MatInputModule,
@@ -67,36 +68,67 @@ type PartForm = FormGroup<{
 export class SplitTransactionModalComponent implements HasUnsavedChanges {
     private financeService = inject(FinanceService);
     private notificationService = inject(NotificationService);
-    private dialogRef = inject<MatDialogRef<SplitTransactionModalComponent, boolean>>(MatDialogRef);
+    private dialogRef = inject<MatDialogRef<SplitTransactionModalComponent, Transaction[]>>(MatDialogRef);
     private destroyRef = inject(DestroyRef);
-    readonly transaction = inject<SplitTransactionModalData>(MAT_DIALOG_DATA).transaction;
+    private readonly data = inject<SplitTransactionModalData>(MAT_DIALOG_DATA);
 
-    readonly Direction = TransactionDirection;
     readonly Uncategorized = Uncategorized;
     readonly minParts = TransactionSplit.minParts;
     readonly maxParts = TransactionSplit.maxParts;
-    readonly isEditing = this.transaction.parts.length > 0;
-    /** Parts start in the transaction's direction (TXN-4.2). */
-    private readonly direction = this.transaction.amount > 0 ? TransactionDirection.In : TransactionDirection.Out;
+    readonly isEditing = this.data.parts.length > 0;
+    private readonly currentParts = this.isEditing ? this.data.parts : [this.data.transaction];
+    /** What's split: the transaction's amount, or the parts' total once it's split. */
+    readonly total = TransactionSplit.total(this.currentParts.map(part => part.amount));
+    /** Every part goes the same way as the total: -1 for money out, 1 for money in (TXN-4.2). */
+    private readonly sign = this.total < 0 ? -1 : 1;
+    readonly summary = this.data.transaction;
 
-    readonly lookups = viewResource({ loader: () => this.financeService.fetchCategories(false) });
-    private readonly categoryMap = computed(() => new Map((this.lookups.value() ?? []).map(c => [c.id, c])));
+    readonly lookups = viewResource({
+        loader: async () => {
+            const [categories, groups] = await Promise.all([
+                this.financeService.fetchCategories(false),
+                this.financeService.fetchCategoryGroups()
+            ]);
+            return { categories, groups };
+        }
+    });
+    private readonly categoryMap = computed(
+        () => new Map((this.lookups.value()?.categories ?? []).map(c => [c.id, c]))
+    );
+    private readonly typeOf = computed(() => {
+        const groupTypes = new Map((this.lookups.value()?.groups ?? []).map(g => [g.id, g.type]));
+        return (categoryId: string) => groupTypes.get(this.categoryMap().get(categoryId)?.groupId ?? '');
+    });
+    /**
+     * The category types the parts can have: the type of the transaction's category, or Expense for money out and
+     * Income for money in when it has neither, plus Transfer, so extra principal can be split off a loan payment.
+     */
+    readonly allowedTypes = computed(() => {
+        const types = this.currentParts.map(part => this.typeOf()(part.categoryId));
+        const own = types.includes(CategoryType.Expense)
+            ? CategoryType.Expense
+            : types.includes(CategoryType.Income)
+              ? CategoryType.Income
+              : this.sign < 0
+                ? CategoryType.Expense
+                : CategoryType.Income;
+        return new Set([own, CategoryType.Transfer]);
+    });
 
     readonly parts = new FormArray<PartForm>([]);
     readonly form = new FormGroup({ parts: this.parts });
     /** Whether the last part fills itself with the remainder, which it does until the user changes it (TXN-4.3). */
     private fillLast = true;
-    /** What's left of the total for the parts to cover, signed as the transaction (TXN-4.2). */
-    readonly remainder = signal(0);
-    /** The remainder as the dialog shows it: positive while the parts come to less than the total. */
-    readonly remaining = computed(() => (this.direction === TransactionDirection.Out ? -1 : 1) * this.remainder());
+    /** What the parts still have to cover, as a size: negative once they come to more than the total (TXN-4.2). */
+    readonly remaining = signal(0);
     readonly isSaving = signal(false);
 
     constructor() {
-        const { parts, merchant, categoryId, notes } = this.transaction;
-        // A new split starts with the transaction's category and notes on the first part (TXN-4.3).
-        const initial: Partial<TransactionPartFields>[] =
-            parts.length > 0 ? parts : [{ merchant, categoryId, notes }, { merchant }];
+        const { id, merchant, categoryId, notes } = this.data.transaction;
+        // A new split starts from the transaction, with a second part to take the rest (TXN-4.3).
+        const initial: Partial<TransactionSplitPart>[] = this.isEditing
+            ? this.data.parts
+            : [{ id, merchant, categoryId, notes }, { merchant }];
         initial.forEach(part => this.parts.push(this.createPart(part)));
         this.update();
         this.parts.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.update());
@@ -108,14 +140,10 @@ export class SplitTransactionModalComponent implements HasUnsavedChanges {
         });
     }
 
-    private createPart(part: Partial<TransactionPartFields>): PartForm {
-        const amount = part.amount ?? 0;
+    private createPart(part: Partial<TransactionSplitPart>): PartForm {
         const group: PartForm = new FormGroup({
-            direction: new FormControl(
-                amount === 0 ? this.direction : amount > 0 ? TransactionDirection.In : TransactionDirection.Out,
-                { nonNullable: true }
-            ),
-            amount: new FormControl<number | null>(amount === 0 ? null : Math.abs(amount), {
+            id: new FormControl(part.id ?? '', { nonNullable: true }),
+            amount: new FormControl<number | null>(part.amount ? Math.abs(part.amount) : null, {
                 validators: [Validators.required, Validators.min(0.01)]
             }),
             categoryId: new FormControl(part.categoryId ?? '', {
@@ -130,13 +158,11 @@ export class SplitTransactionModalComponent implements HasUnsavedChanges {
         });
 
         // Changing the last part's amount stops it filling itself.
-        merge(group.controls.amount.valueChanges, group.controls.direction.valueChanges)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => {
-                if (group === this.parts.at(-1)) {
-                    this.fillLast = false;
-                }
-            });
+        group.controls.amount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            if (group === this.parts.at(-1)) {
+                this.fillLast = false;
+            }
+        });
         return group;
     }
 
@@ -146,33 +172,26 @@ export class SplitTransactionModalComponent implements HasUnsavedChanges {
     }
 
     private signedAmount(part: PartForm): number {
-        const { direction, amount } = part.getRawValue();
-        return direction === TransactionDirection.Out ? -(amount ?? 0) : (amount ?? 0);
+        return this.sign * (part.controls.amount.value ?? 0);
     }
 
     /** Fills the last part with the remainder when it still fills itself, and works out what's left. */
     private update() {
         const parts = this.parts.controls;
         if (this.fillLast) {
-            const last = parts[parts.length - 1];
             const left = TransactionSplit.remainder(
-                this.transaction.amount,
+                this.total,
                 parts.slice(0, -1).map(p => this.signedAmount(p))
             );
-            last.patchValue(
-                {
-                    direction: left > 0 ? TransactionDirection.In : TransactionDirection.Out,
-                    amount: left === 0 ? null : Math.abs(left)
-                },
-                { emitEvent: false }
-            );
+            // Nothing, or less than nothing, is left for it once the others cover the total.
+            const size = this.sign * left;
+            parts[parts.length - 1].controls.amount.setValue(size > 0 ? size : null, { emitEvent: false });
         }
-        this.remainder.set(
-            TransactionSplit.remainder(
-                this.transaction.amount,
-                parts.map(p => this.signedAmount(p))
-            )
+        const left = TransactionSplit.remainder(
+            this.total,
+            parts.map(p => this.signedAmount(p))
         );
+        this.remaining.set(this.sign * left);
     }
 
     /** Adds a last part, which takes over the remainder (TXN-4.3). */
@@ -184,7 +203,7 @@ export class SplitTransactionModalComponent implements HasUnsavedChanges {
             this.parts.at(-1).controls.amount.setValue(null, { emitEvent: false });
         }
         this.fillLast = true;
-        this.parts.push(this.createPart({ merchant: this.transaction.merchant }));
+        this.parts.push(this.createPart({ merchant: this.data.transaction.merchant }));
         this.form.markAsDirty();
     }
 
@@ -196,14 +215,18 @@ export class SplitTransactionModalComponent implements HasUnsavedChanges {
         this.form.markAsDirty();
     }
 
-    /** The categories a part can have: Uncategorized and the active ones, plus its own, matching what's typed. */
+    /**
+     * The categories a part can have, matching what's typed: the active ones of the allowed types (`allowedTypes`),
+     * plus the one it has.
+     */
     categoryOptions(value: string): Category[] {
-        const categories = this.lookups.value() ?? [];
+        const categories = this.lookups.value()?.categories ?? [];
+        const allowed = (c: Category) => c.isActive && this.allowedTypes().has(this.typeOf()(c.id)!);
         if (this.categoryMap().has(value)) {
-            return categories.filter(c => c.isActive || c.id === value);
+            return categories.filter(c => allowed(c) || c.id === value);
         }
         const text = value.toLowerCase();
-        return categories.filter(c => c.isActive && c.name.toLowerCase().includes(text));
+        return categories.filter(c => allowed(c) && c.name.toLowerCase().includes(text));
     }
 
     readonly displayCategory = (id: string): string => {
@@ -216,22 +239,22 @@ export class SplitTransactionModalComponent implements HasUnsavedChanges {
     }
 
     async save() {
-        if (this.form.invalid || this.remainder() !== 0 || this.isSaving()) {
+        if (this.form.invalid || this.remaining() !== 0 || this.isSaving()) {
             return;
         }
 
         this.isSaving.set(true);
-        const parts = this.parts.controls.map(part => {
-            const { categoryId, merchant, notes } = part.getRawValue();
-            return { amount: this.signedAmount(part), categoryId, merchant, notes };
+        const parts: TransactionSplitPart[] = this.parts.controls.map(part => {
+            const { id, categoryId, merchant, notes } = part.getRawValue();
+            return { ...(id ? { id } : {}), amount: this.signedAmount(part), categoryId, merchant, notes };
         });
-        const saved = await this.financeService.splitTransaction(this.transaction.id, parts);
+        const saved = await this.financeService.splitTransaction(this.data.transaction.id, parts);
         this.isSaving.set(false);
 
         if (saved) {
             this.notificationService.success(this.isEditing ? 'Split saved' : 'Transaction split');
             this.form.markAsPristine();
-            this.dialogRef.close(true);
+            this.dialogRef.close(saved);
         }
     }
 }

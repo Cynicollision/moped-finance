@@ -32,7 +32,7 @@ export class AddTransactionComponent implements HasUnsavedChanges {
     }
 
     async onSave(transaction: Partial<Transaction>) {
-        const newTransaction: Omit<NewEntity<Transaction>, 'parts'> = {
+        const newTransaction: Omit<NewEntity<Transaction>, 'splitId'> = {
             accountId: transaction.accountId!,
             categoryId: transaction.categoryId || '',
             date: transaction.date!,

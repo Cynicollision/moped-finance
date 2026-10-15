@@ -3,7 +3,7 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 16px;
-    padding: 8px 0 16px;
+    padding: 8px 0 4px;
 
     .summary-text {
         display: flex;
@@ -60,20 +60,10 @@
     color: var(--text-muted);
 }
 
-.amount-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 0 16px;
-
-    mat-button-toggle-group {
-        margin-bottom: 16px;
-    }
-
-    .amount-field {
-        flex: 1 1 140px;
-        width: auto;
-    }
+.split-direction {
+    margin: 0 0 16px;
+    font-size: 0.875rem;
+    color: var(--text-muted);
 }
 
 .split-footer {

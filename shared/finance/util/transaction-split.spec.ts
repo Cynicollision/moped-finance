@@ -1,6 +1,13 @@
 import { TransactionSplit } from './transaction-split';
 
 describe('TransactionSplit', () => {
+    describe('total', () => {
+        it('TXN-4.5 should add the parts up to the cent', () => {
+            expect(TransactionSplit.total([-0.1, -0.2])).toBe(-0.3);
+            expect(TransactionSplit.total([])).toBe(0);
+        });
+    });
+
     describe('remainder', () => {
         it('TXN-4.2 should be 0 when the parts add up to the total, to the cent', () => {
             expect(TransactionSplit.remainder(-0.3, [-0.1, -0.2])).toBe(0);

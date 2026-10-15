@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
-import { TransactionDirection } from '@shared/finance/enum';
-import { Category, Transaction } from '@shared/finance/types';
+import { CategoryType } from '@shared/finance/enum';
+import { Category, CategoryGroup, Transaction } from '@shared/finance/types';
 import { ModalService } from './../../core/modal/modal.service';
 import { NotificationService } from './../../core/notification.service';
 import { FinanceService } from './../finance.service';
-import { SplitTransactionModalComponent } from './split-transaction-modal.component';
+import { SplitTransactionModalComponent, SplitTransactionModalData } from './split-transaction-modal.component';
 
 describe('SplitTransactionModalComponent', () => {
     const transaction: Transaction = {
@@ -20,26 +20,34 @@ describe('SplitTransactionModalComponent', () => {
         notes: 'weekly shop',
         isHidden: false,
         adjustsBalance: false,
-        parts: [],
+        splitId: '',
         createdAt: new Date(2026, 0, 1),
         updatedAt: new Date(2026, 0, 1)
     };
+    const groups = [
+        { id: 'food', name: 'Food', type: CategoryType.Expense },
+        { id: 'work', name: 'Work', type: CategoryType.Income },
+        { id: 'moves', name: 'Moves', type: CategoryType.Transfer }
+    ] as CategoryGroup[];
     const categories = [
-        { id: 'groceries', name: 'Groceries', icon: '🍎', isActive: true },
-        { id: 'household', name: 'Household', icon: '', isActive: true }
+        { id: 'groceries', name: 'Groceries', icon: '🍎', groupId: 'food', isActive: true },
+        { id: 'household', name: 'Household', icon: '', groupId: 'food', isActive: true },
+        { id: 'salary', name: 'Salary', icon: '', groupId: 'work', isActive: true },
+        { id: 'principal', name: 'Extra Principal', icon: '', groupId: 'moves', isActive: true }
     ] as Category[];
 
-    async function render(data: Transaction = transaction) {
+    async function render(data: SplitTransactionModalData = { transaction, parts: [] }) {
         const financeService = {
             fetchCategories: vi.fn().mockResolvedValue(categories),
-            splitTransaction: vi.fn().mockResolvedValue(data)
+            fetchCategoryGroups: vi.fn().mockResolvedValue(groups),
+            splitTransaction: vi.fn().mockResolvedValue([transaction])
         };
         const dialogRef = { close: vi.fn() };
         const notificationService = { success: vi.fn() };
         TestBed.configureTestingModule({
             imports: [SplitTransactionModalComponent],
             providers: [
-                { provide: MAT_DIALOG_DATA, useValue: { transaction: data } },
+                { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useValue: dialogRef },
                 { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
                 { provide: FinanceService, useValue: financeService },
@@ -75,19 +83,21 @@ describe('SplitTransactionModalComponent', () => {
         };
     }
 
+    // A $100 purchase already split into $70 of groceries and $30 of household.
+    const splitParts: Transaction[] = [
+        { ...transaction, splitId: 's1', amount: -70, notes: '' },
+        { ...transaction, id: 't2', splitId: 's1', amount: -30, categoryId: 'household', notes: 'soap' }
+    ];
+
     it("TXN-4.3 should open with two parts, the first with the transaction's category and notes", async () => {
         const { component, element } = await render();
 
         expect(element.querySelectorAll('section.part')).toHaveLength(2);
+        expect(element.querySelector('mat-button-toggle-group')).toBeNull();
+        expect(element.textContent).toContain('Every part is money out, like the transaction.');
         expect(component.parts.getRawValue()).toEqual([
-            {
-                direction: TransactionDirection.Out,
-                amount: null,
-                categoryId: 'groceries',
-                merchant: 'Big Store',
-                notes: 'weekly shop'
-            },
-            { direction: TransactionDirection.Out, amount: 100, categoryId: '', merchant: 'Big Store', notes: '' }
+            { id: 't1', amount: null, categoryId: 'groceries', merchant: 'Big Store', notes: 'weekly shop' },
+            { id: '', amount: 100, categoryId: '', merchant: 'Big Store', notes: '' }
         ]);
     });
 
@@ -117,8 +127,16 @@ describe('SplitTransactionModalComponent', () => {
         expect(saveButton().disabled).toBe(true);
     });
 
+    it('TXN-4.2 should leave the last part empty when the others already cover the total', async () => {
+        const { amounts, typeAmount } = await render();
+
+        await typeAmount(0, 120);
+
+        expect(amounts()).toEqual([120, null]);
+    });
+
     it('TXN-4.3 should give the remainder to a part that is added', async () => {
-        const { component, element, amounts, typeAmount, fixture } = await render();
+        const { element, amounts, typeAmount, fixture } = await render();
         await typeAmount(0, 60);
 
         Array.from(element.querySelectorAll('button'))
@@ -129,18 +147,22 @@ describe('SplitTransactionModalComponent', () => {
 
         await typeAmount(1, 15);
         expect(amounts()).toEqual([60, 15, 25]);
-        expect(component.parts.length).toBe(3);
     });
 
-    it('TXN-4.2 should set a remainder against the direction by flipping the last part to money in', async () => {
-        const { component, typeAmount } = await render();
+    it("TXN-4.2 should offer categories of the transaction's type and Transfer categories", async () => {
+        const { component } = await render();
 
-        await typeAmount(0, 120);
-
-        expect(component.parts.at(1).getRawValue()).toMatchObject({ direction: TransactionDirection.In, amount: 20 });
+        expect(component.categoryOptions('').map(c => c.id)).toEqual(['groceries', 'household', 'principal']);
+        expect(component.categoryOptions('h').map(c => c.id)).toEqual(['household']);
     });
 
-    it('TXN-4.1 APP-2.8 should save the parts with their signs, say so and close', async () => {
+    it('TXN-4.2 should offer Income and Transfer categories for uncategorized money in', async () => {
+        const { component } = await render({ transaction: { ...transaction, amount: 50, categoryId: '' }, parts: [] });
+
+        expect(component.categoryOptions('').map(c => c.id)).toEqual(['salary', 'principal']);
+    });
+
+    it("TXN-4.1 APP-2.8 should save the parts with the transaction's sign, say so and close with them", async () => {
         const { component, financeService, notificationService, dialogRef, typeAmount } = await render();
         await typeAmount(0, 60);
         component.parts.at(1).controls.categoryId.setValue('household');
@@ -148,30 +170,30 @@ describe('SplitTransactionModalComponent', () => {
         await component.save();
 
         expect(financeService.splitTransaction).toHaveBeenCalledWith('t1', [
-            { amount: -60, categoryId: 'groceries', merchant: 'Big Store', notes: 'weekly shop' },
+            { id: 't1', amount: -60, categoryId: 'groceries', merchant: 'Big Store', notes: 'weekly shop' },
             { amount: -40, categoryId: 'household', merchant: 'Big Store', notes: '' }
         ]);
         expect(notificationService.success).toHaveBeenCalledWith('Transaction split');
-        expect(dialogRef.close).toHaveBeenCalledWith(true);
+        expect(dialogRef.close).toHaveBeenCalledWith([transaction]);
     });
 
-    it('TXN-4.5 should open a split transaction with its parts, and stay open if the server refuses', async () => {
-        const split: Transaction = {
-            ...transaction,
-            categoryId: '',
-            parts: [
-                { id: 'p1', amount: -70, categoryId: 'groceries', merchant: 'Big Store', notes: '' },
-                { id: 'p2', amount: -30, categoryId: 'household', merchant: 'Big Store', notes: 'soap' }
-            ].map(p => ({ ...p, createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1) }))
-        };
-        const { component, element, dialogRef, financeService, amounts } = await render(split);
+    it('TXN-4.5 should open a split with its parts and total, keep their IDs, and stay open if the server refuses', async () => {
+        const { component, element, dialogRef, financeService, amounts } = await render({
+            transaction: splitParts[1],
+            parts: splitParts
+        });
         financeService.splitTransaction.mockResolvedValue(undefined);
 
         expect(element.querySelector('h2')!.textContent).toContain('Edit Split');
+        expect(element.querySelector('.summary-amount')!.textContent).toContain('$100.00');
         expect(amounts()).toEqual([70, 30]);
 
         await component.save();
 
+        expect(financeService.splitTransaction).toHaveBeenCalledWith('t2', [
+            expect.objectContaining({ id: 't1', amount: -70 }),
+            expect.objectContaining({ id: 't2', amount: -30, notes: 'soap' })
+        ]);
         expect(dialogRef.close).not.toHaveBeenCalled();
     });
 

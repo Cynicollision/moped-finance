@@ -173,6 +173,14 @@ export function createTransactionRouter(
         );
     });
 
+    // GET /:id/split - Get the Parts of a Transaction's Split
+    router.get('/:id/split', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'getTransactionSplit' };
+        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
+            return controller.getTransactionSplit(context, params.id);
+        });
+    });
+
     // PUT /:id/split - Split a Transaction, or Change Its Parts
     router.put('/:id/split', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'splitTransaction' };

@@ -104,6 +104,14 @@
         min-width: 0;
     }
 
+    .current-part {
+        font-weight: 500;
+    }
+
+    .split-total {
+        color: var(--text-muted);
+    }
+
     .part-detail {
         font-size: 0.875rem;
         color: var(--text-muted);

@@ -19,7 +19,7 @@ describe('TransactionFormComponent', () => {
         notes: '',
         isHidden: false,
         adjustsBalance: false,
-        parts: [],
+        splitId: '',
         createdAt: new Date(2026, 0, 1),
         updatedAt: new Date(2026, 0, 1)
     };
@@ -302,40 +302,39 @@ describe('TransactionFormComponent', () => {
 
     describe('split transactions (TXN-4)', () => {
         const categories = [{ id: 'food', name: 'Food', icon: '🍎', isActive: true }] as Category[];
-        const split: Transaction = {
-            ...transaction,
-            amount: -100,
-            parts: [
-                { id: 'p1', amount: -70, categoryId: 'food', merchant: 'Shop', notes: 'lunch' },
-                { id: 'p2', amount: -30, categoryId: '', merchant: 'Shop Cafe', notes: '' }
-            ].map(p => ({ ...p, createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1) }))
-        };
+        const parts: Transaction[] = [
+            { ...transaction, splitId: 's1', amount: -70, categoryId: 'food' },
+            { ...transaction, id: 't2', splitId: 's1', amount: -30, merchant: 'Shop Cafe' }
+        ];
 
-        it('TXN-4.5 should list the parts in place of the category when viewing a split transaction', async () => {
-            const { element } = await render('readonly', split, categories);
+        it('TXN-4.5 should list every part of the split with its total, linking to the others', async () => {
+            const { fixture, element } = await render('readonly', parts[0], categories);
+            fixture.componentRef.setInput('splitParts', parts);
+            await fixture.whenStable();
 
-            const parts = Array.from(element.querySelectorAll('li.part')).map(p =>
-                p.textContent!.replace(/\s+/g, ' ').trim()
-            );
-            expect(parts).toEqual(['🍎 Food Shop · lunch $70.00', 'Uncategorized Shop Cafe $30.00']);
+            const rows = Array.from(element.querySelectorAll('li.part')).map(p => p.textContent!.replace(/\s+/g, ''));
+            expect(rows).toEqual(['🍎FoodShop$70.00', 'UncategorizedShopCafe$30.00', 'Total$100.00']);
             expect(element.textContent).toContain('Split into 2 parts');
-            expect(element.textContent).not.toContain('Category');
+            expect(element.querySelector<HTMLAnchorElement>('li.part a')!.getAttribute('href')).toBe(
+                '/transactions/t2'
+            );
         });
 
-        it("TXN-4.7 should lock a split transaction's amount, date and account, and hide its category, on Edit", async () => {
-            const { fixture, element, saved } = await render('edit', split, categories);
+        it("TXN-4.7 should lock a part's amount on Edit, and save its other fields", async () => {
+            const { fixture, element, saved } = await render('edit', parts[0], categories);
             const controls = fixture.componentInstance.transactionForm.controls;
 
-            expect(
-                [controls.amount, controls.direction, controls.date, controls.accountId].map(c => c.disabled)
-            ).toEqual([true, true, true, true]);
-            expect(controls.merchant.enabled).toBe(true);
-            expect(element.querySelector('.split-note')!.textContent).toContain('Unsplit it to change');
-            expect(element.querySelector('input[formControlName="category"]')).toBeNull();
+            expect([controls.amount, controls.direction].map(c => c.disabled)).toEqual([true, true]);
+            expect([controls.date, controls.accountId, controls.category].map(c => c.enabled)).toEqual([
+                true,
+                true,
+                true
+            ]);
+            expect(element.querySelector('.split-note')!.textContent).toContain('Change its amount with Edit split.');
 
             controls.merchant.setValue('Renamed');
             fixture.componentInstance.onSave();
-            expect(saved[0]).toMatchObject({ amount: -100, date: '2026-05-01', categoryId: '', merchant: 'Renamed' });
+            expect(saved[0]).toMatchObject({ amount: -70, categoryId: 'food', merchant: 'Renamed' });
         });
     });
 });

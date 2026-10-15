@@ -594,19 +594,6 @@ describe('Category Routes', () => {
                 expect(response.body).toEqual({ transactionCount: 2, budgetStreamCount: 1 });
             });
 
-            it('CAT-4.4 TXN-4 should count each part of a split transaction that uses a category', async () => {
-                const transaction = await insertTransaction(mortgage.id);
-                await transactionsData.split(transaction.id, [
-                    { amount: -1000, categoryId: rent.id, merchant: 'Landlord', notes: '' },
-                    { amount: -300, categoryId: rent.id, merchant: 'Landlord', notes: '' },
-                    { amount: -200, categoryId: mortgage.id, merchant: 'Landlord', notes: '' }
-                ]);
-
-                const response = await request(app).get(`/categories/${rent.id}/usage`);
-
-                expect(response.body).toEqual({ transactionCount: 2, budgetStreamCount: 0 });
-            });
-
             it('CAT-4.4 should return 404 when the category does not exist', async () => {
                 const response = await request(app).get('/categories/missing/usage');
 
@@ -637,22 +624,6 @@ describe('Category Routes', () => {
                 expect((await transactionsData.retrieveSingle(first.id))?.categoryId).toBe(mortgage.id);
                 expect((await transactionsData.retrieveSingle(hidden.id))?.categoryId).toBe(mortgage.id);
                 expect((await transactionsData.retrieveSingle(other.id))?.categoryId).toBe('');
-            });
-
-            it('CAT-4.4 CAT-5.2 TXN-4 should move the parts of split transactions too, or leave them Uncategorized', async () => {
-                const transaction = await insertTransaction('');
-                await transactionsData.split(transaction.id, [
-                    { amount: -1000, categoryId: rent.id, merchant: 'Landlord', notes: '' },
-                    { amount: -500, categoryId: mortgage.id, merchant: 'Landlord', notes: '' }
-                ]);
-                const partCategories = async () =>
-                    (await transactionsData.retrieveSingle(transaction.id))?.parts.map(p => p.categoryId);
-
-                await request(app).delete(`/categories/${rent.id}?moveTo=${mortgage.id}`).expect(204);
-                expect(await partCategories()).toEqual([mortgage.id, mortgage.id]);
-
-                await request(app).delete(`/categories/${mortgage.id}`).expect(204);
-                expect(await partCategories()).toEqual(['', '']);
             });
 
             it('CAT-4.4 should refuse a target that does not exist, and change nothing', async () => {

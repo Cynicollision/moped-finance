@@ -55,7 +55,7 @@ Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>`, be
 One Postgres 16 database with two schemas:
 
 - `core`: `users`, `logs`, `sessions`, `secrets` (the generated session secret), `api_tokens` (hashes only)
-- `finance`: `institutions`, `accounts`, `balance_history`, `category_groups`, `categories`, `transactions`, `transaction_parts` (the parts of split transactions, TXN-4), `budget_streams`
+- `finance`: `institutions`, `accounts`, `balance_history`, `category_groups`, `categories`, `transactions`, `budget_streams`
 
 Each instance has one owner (AUTH-7). `core.users` exists for login, and registration closes after the first user. Finance tables have no `user_id`: every signed-in request sees all finance data. `core.logs.user_id` records who performed an operation.
 
@@ -68,6 +68,8 @@ drizzle-kit compares the tables with the last snapshot in `server/migrations/met
 The server applies pending migrations on startup, before it listens (APP-5.8), using `DatabaseClient.migrate`. Drizzle records applied ones in `drizzle.__drizzle_migrations` and runs all pending ones in a single transaction, so a failed migration leaves the database as it was and the server exits. The test database (`TestDatabaseUtil.createMockDatabase`) applies the same migrations to PGlite.
 
 Migrations run on startup rather than as a separate step because there's one instance and one owner: updating means pulling a new image and restarting, with nothing to run by hand. If this ever runs as more than one instance, move migrations to a one-off job so two servers don't race.
+
+The parts of a split transaction (TXN-4) are rows of `transactions` like any other, sharing a `split_id` and ordered by `split_position`.
 
 Conventions: timestamps are `TIMESTAMPTZ`; `date` columns are calendar dates with no time zone, read and written as `YYYY-MM-DD` strings (Drizzle's `mode: 'string'`) and passed through the API unchanged; money is `DECIMAL(12, 2)`. Names of institutions, category groups and categories are unique ignoring case (unique indexes on `lower(name)`), and there's one balance per account per date. `OperationHandler` turns unique and foreign-key violations into a 400 with a message from `DatabaseErrorUtil`.
 

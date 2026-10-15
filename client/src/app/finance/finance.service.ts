@@ -23,7 +23,7 @@ import {
     CategoryGroup,
     CategoryUsage,
     Transaction,
-    TransactionPartFields,
+    TransactionSplitPart,
     BudgetStream,
     BudgetStreamFields
 } from '@shared/finance/types';
@@ -212,7 +212,7 @@ export class FinanceService {
     }
 
     /** A new transaction isn't split; it's split afterwards (TXN-4.1). */
-    createTransaction(transaction: Omit<NewEntity<Transaction>, 'parts'>): Promise<Transaction | undefined> {
+    createTransaction(transaction: Omit<NewEntity<Transaction>, 'splitId'>): Promise<Transaction | undefined> {
         return this.api.post<Transaction>(`${API_BASE_PATH}/transactions`, transaction);
     }
 
@@ -244,9 +244,14 @@ export class FinanceService {
         return this.api.delete(`${API_BASE_PATH}/transactions/${id}`);
     }
 
-    /** Splits a transaction into the parts, or replaces the parts of a split one (TXN-4.1, TXN-4.5). */
-    splitTransaction(id: string, parts: TransactionPartFields[]): Promise<Transaction | undefined> {
-        return this.api.put<Transaction>(`${API_BASE_PATH}/transactions/${id}/split`, { parts });
+    /** The parts of the transaction's split, in order; none when it isn't split (TXN-4.5). */
+    fetchTransactionSplit(id: string): Promise<Transaction[]> {
+        return this.api.load<Transaction[]>(`${API_BASE_PATH}/transactions/${id}/split`);
+    }
+
+    /** Splits a transaction into the parts, or changes the parts of a split one (TXN-4.1, TXN-4.5). */
+    splitTransaction(id: string, parts: TransactionSplitPart[]): Promise<Transaction[] | undefined> {
+        return this.api.put<Transaction[]>(`${API_BASE_PATH}/transactions/${id}/split`, { parts });
     }
 
     /** Turns a split transaction back into one (TXN-4.5). */

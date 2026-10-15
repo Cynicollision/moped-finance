@@ -1,4 +1,4 @@
-import { varchar, timestamp, numeric, boolean, text, date, index, integer, uniqueIndex } from 'drizzle-orm/pg-core';
+import { varchar, timestamp, numeric, boolean, text, date, index, integer } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { TransactionSplit } from '@shared/finance/util';
@@ -26,12 +26,17 @@ export const transactionSchema = financeSchema.table(
         notes: text('notes'),
         isHidden: boolean('is_hidden').notNull().default(false),
         // Changes the account's balance history while it isn't hidden (ACCT-5.2, TXN-2.10).
-        adjustsBalance: boolean('adjusts_balance').notNull().default(false)
+        adjustsBalance: boolean('adjusts_balance').notNull().default(false),
+        // The parts of a split transaction share a split ID, and are in order by position (TXN-4). Both are null for a
+        // transaction that isn't split.
+        splitId: varchar('split_id', { length: 50 }),
+        splitPosition: integer('split_position')
     },
     table => [
         index('transactions_date_idx').on(table.date),
         index('transactions_account_id_date_idx').on(table.accountId, table.date),
-        index('transactions_category_id_idx').on(table.categoryId)
+        index('transactions_category_id_idx').on(table.categoryId),
+        index('transactions_split_id_idx').on(table.splitId)
     ]
 );
 
@@ -57,49 +62,20 @@ export const createTransactionSchema = createInsertSchema(transactionSchema, {
     adjustsBalance: true
 });
 
+// A transaction is split, and its parts changed, only through the split endpoints.
 export const updateTransactionSchema = createTransactionSchema.partial();
 
-// The parts of a split transaction (TXN-4). While a transaction has parts, they have its categories, and its own
-// category is empty. Deleting the transaction deletes its parts.
-export const transactionPartSchema = financeSchema.table(
-    'transaction_parts',
-    {
-        id: varchar('id', { length: 50 }).primaryKey(),
-        createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-        updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-        transactionId: varchar('transaction_id', { length: 50 })
-            .notNull()
-            .references(() => transactionSchema.id, { onDelete: 'cascade' }),
-        // The part's place in the split, from 0. Unsplit keeps the first part's category, merchant and notes (TXN-4.5).
-        position: integer('position').notNull(),
-        amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
-        categoryId: varchar('category_id', { length: 50 }).references(() => categorySchema.id, {
-            onDelete: 'set null'
-        }),
-        merchant: varchar('merchant', { length: 255 }).notNull(),
-        notes: text('notes')
-    },
-    table => [
-        uniqueIndex('transaction_parts_transaction_id_position_unique_idx').on(table.transactionId, table.position),
-        index('transaction_parts_category_id_idx').on(table.categoryId)
-    ]
-);
-
-// Each part's amount is entered as a size with a direction (TXN-4.2), so it can't be 0.
-const transactionPartRequestSchema = createInsertSchema(transactionPartSchema, {
-    amount: SchemaUtil.money().refine(v => v !== 0, "Can't be 0"),
-    categoryId: SchemaUtil.optionalText(50),
-    merchant: schema => schema.min(1).max(255),
-    notes: SchemaUtil.optionalText()
-}).pick({
-    amount: true,
-    categoryId: true,
-    merchant: true,
-    notes: true
-});
-
+// A part's amount is signed like the transaction's, so it can't be 0 (TXN-4.2).
 export const splitTransactionSchema = z.object({
-    parts: z.array(transactionPartRequestSchema).min(TransactionSplit.minParts).max(TransactionSplit.maxParts)
+    parts: z
+        .array(
+            createTransactionSchema.pick({ categoryId: true, merchant: true, notes: true }).extend({
+                id: z.string().min(1).max(50).optional(),
+                amount: SchemaUtil.money().refine(v => v !== 0, "Can't be 0")
+            })
+        )
+        .min(TransactionSplit.minParts)
+        .max(TransactionSplit.maxParts)
 });
 
 export type CreateTransactionRequest = z.output<typeof createTransactionSchema>;
