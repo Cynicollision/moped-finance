@@ -8,10 +8,24 @@
 
 html {
     height: 100%;
+
+    // The theme (SET-3.1) is `data-theme` on this element, set by ThemeService and, before the app loads,
+    // public/theme.js. It only sets color-scheme: Material's colours and the tokens below are light-dark() pairs,
+    // which follow it. Dark is the default.
+    color-scheme: dark;
+
+    &[data-theme='Light'] {
+        color-scheme: light;
+    }
+
+    &[data-theme='System'] {
+        color-scheme: light dark;
+    }
+
     @include mat.theme(
         (
             color: (
-                theme-type: dark,
+                theme-type: color-scheme,
                 primary: mat.$azure-palette,
                 tertiary: mat.$blue-palette
             ),
@@ -23,7 +37,7 @@ html {
 
 :root {
     // App colour tokens. Use these (or Material's --mat-sys-* variables) in component styles rather than
-    // literal colours, so a light theme (SET-3.1) only has to change the theme above.
+    // literal colours, so they work in both themes (SET-3.1). A literal colour needs a light-dark() pair.
     --bg-main: var(--mat-sys-surface);
     --bg-card: var(--mat-sys-surface-container-low);
     --bg-highlight: color-mix(in srgb, var(--mat-sys-on-surface) 5%, transparent);
@@ -31,17 +45,14 @@ html {
     --text-main: var(--mat-sys-on-surface);
     --text-muted: var(--mat-sys-on-surface-variant);
     --border-color: var(--mat-sys-outline-variant);
-    --color-positive: #81c784; // Material 3 has no "success" role.
+    --color-positive: light-dark(#2e7d32, #81c784); // Material 3 has no "success" role.
     --color-negative: var(--mat-sys-error);
     --color-link: var(--mat-sys-primary);
-    --color-demo: #9c27b0; // the Demo Mode and Debug Mode badges
-    --color-debug: #ff9800;
+    --color-demo: light-dark(#7b1fa2, #9c27b0); // the Demo Mode and Debug Mode badges
+    --color-debug: light-dark(#e65100, #ff9800);
 }
 
 body {
-    // Default the application to a dark color theme.
-    color-scheme: dark;
-
     // Set a default background, font and text colors for the application using
     // Angular Material's system-level CSS variables.
     background-color: var(--mat-sys-surface);

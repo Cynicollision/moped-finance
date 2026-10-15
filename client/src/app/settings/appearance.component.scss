@@ -1,0 +1,26 @@
+.settings-section {
+    max-width: 600px;
+    background-color: var(--bg-card);
+    border-radius: 8px;
+}
+
+.section-content {
+    padding: 1rem 1.5rem;
+}
+
+.option-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font: var(--mat-sys-title-small);
+}
+
+.theme-options {
+    display: flex;
+    flex-direction: column;
+}
+
+.hint {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}

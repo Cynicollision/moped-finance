@@ -1,5 +1,6 @@
 import { jsonb, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
+import { AppTheme } from '@shared/core/enum';
 import { AppSettings } from '@shared/core/types';
 import { coreSchema } from '@server/data';
 
@@ -14,10 +15,12 @@ export const settingsSchema = coreSchema.table('settings', {
 
 /** Each setting's type. A stored value that no longer fits is ignored in favour of the default. */
 export const settingFields = {
+    theme: z.enum(AppTheme),
     showRetirementGroup: z.boolean()
 } satisfies { [K in keyof AppSettings]: z.ZodType<AppSettings[K]> };
 
 export const DEFAULT_SETTINGS: AppSettings = {
+    theme: AppTheme.Dark,
     showRetirementGroup: true
 };
 

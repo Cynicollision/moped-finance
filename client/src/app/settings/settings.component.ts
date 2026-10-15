@@ -27,6 +27,12 @@ export class SettingsComponent {
             icon: 'person'
         },
         {
+            label: 'Appearance',
+            description: 'Dark, light, or matching your device',
+            route: '/settings/appearance',
+            icon: 'palette'
+        },
+        {
             label: 'Dashboard',
             description: 'How the Dashboard groups your accounts',
             route: '/settings/dashboard',

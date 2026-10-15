@@ -20,6 +20,7 @@ import { FinanceTransactionsComponent } from './finance/transactions/transaction
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { ApiTokensComponent } from './settings/api-tokens.component';
+import { AppearanceComponent } from './settings/appearance.component';
 import { DashboardSettingsComponent } from './settings/dashboard-settings.component';
 import { ProfileComponent } from './settings/profile.component';
 import { SettingsComponent } from './settings/settings.component';
@@ -86,6 +87,7 @@ export const routes: Routes = [
                 title: 'Profile',
                 canDeactivate: [unsavedChangesGuard]
             },
+            { path: 'settings/appearance', component: AppearanceComponent, title: 'Appearance' },
             { path: 'settings/dashboard', component: DashboardSettingsComponent, title: 'Dashboard Settings' },
             {
                 path: 'settings/institutions',

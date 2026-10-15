@@ -19,9 +19,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 13. Settings: Appearance
-- [ ] SET-3.1: Appearance (Dark, Light, Match system), stored in `core.settings` (SET-1.2) and applied before first paint. The server's setting is the source of truth; the browser needs a cached copy to apply before the app loads. Light theme means a second set of the `styles.scss` tokens and `mat.theme`'s `theme-type`.
-
 ### 14. Change Password and password rules
 - [ ] AUTH-5.2, 5.3: Change Password in Settings. AUTH-9.1, 9.4, 9.5, AUTH-2.11: fixed password rules (minimum length 12, or `PASSWORD_MIN_LENGTH` from 8 to 64 in `.env`; at most 72 bytes; not the username), shown under every password field and enforced by the server. The client needs the minimum length from the server (for example in `GET /auth/registration`). Add `PASSWORD_MIN_LENGTH` to `.env.example`.
 

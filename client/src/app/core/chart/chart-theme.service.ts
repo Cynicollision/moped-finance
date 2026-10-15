@@ -1,4 +1,4 @@
-import { DOCUMENT, Injectable, inject } from '@angular/core';
+import { DOCUMENT, Injectable, inject, signal } from '@angular/core';
 
 /** The theme's colours for charts, as `rgb()` values. */
 export interface ChartColors {
@@ -15,15 +15,32 @@ export interface ChartColors {
 
 /**
  * Reads the theme tokens in `styles.scss` for Chart.js, which draws on a canvas and can't use CSS variables.
- * Read them when a chart is drawn rather than once, so a change of theme (SET-3.1) reaches the next chart.
+ * A change of theme (SET-3.1) changes `changes`, which `colors()` reads, so a `computed()` or effect that
+ * reads colours runs again and its chart redraws in the new colours.
  */
 @Injectable({
     providedIn: 'root'
 })
 export class ChartThemeService {
     private readonly document = inject(DOCUMENT);
+    private readonly changeCount = signal(0);
+
+    /** Counts changes of the colours showing: the theme, or the device's light or dark setting under Match system. */
+    readonly changes = this.changeCount.asReadonly();
+
+    constructor() {
+        const changed = () => this.changeCount.update(count => count + 1);
+        // Watch the page rather than ThemeService, so charts don't depend on how the theme is chosen.
+        new MutationObserver(changed).observe(this.document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-theme']
+        });
+        this.document.defaultView?.matchMedia?.('(prefers-color-scheme: light)').addEventListener('change', changed);
+    }
 
     colors(): ChartColors {
+        this.changeCount();
+
         // A token can be another variable or a Material expression, so let the browser resolve it as a colour.
         const probe = this.document.createElement('span');
         this.document.body.appendChild(probe);

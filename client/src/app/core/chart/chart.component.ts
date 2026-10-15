@@ -38,12 +38,15 @@ export class ChartComponent {
 
     private chart: Chart | undefined;
     private chartType: ChartConfiguration['type'] | undefined;
+    private themeChanges: number | undefined;
 
     constructor() {
         // After render, so the canvas is in the page and sized before Chart.js measures it.
         afterRenderEffect(() => {
             const config = this.config();
-            if (this.chart && this.chartType === config.type) {
+            // A new theme needs new defaults, which only a new chart picks up (SET-3.1).
+            const themeChanges = this.theme.changes();
+            if (this.chart && this.chartType === config.type && this.themeChanges === themeChanges) {
                 this.chart.data = config.data;
                 this.chart.options = config.options ?? {};
                 this.chart.update();
@@ -57,6 +60,7 @@ export class ChartComponent {
                 this.applyTheme();
                 this.chart = new Chart(context, config);
                 this.chartType = config.type;
+                this.themeChanges = themeChanges;
             }
         });
 
