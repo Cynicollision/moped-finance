@@ -119,15 +119,18 @@
                         <a appListRow [routerLink]="['/transactions', t.id]">
                             <span appListCell="date">{{ t.date | date: 'mediumDate' }}</span>
                             <span appListCell="merchant">
+                                {{ t.merchant }}
+                            </span>
+                            <span appListCell="category">{{ getCategoryName(t.categoryId) }}</span>
+                            <!-- A part of a split is marked by its amount (TXN-4.4). -->
+                            <span appListCell="amount">
                                 @if (t.splitId) {
                                     <mat-icon class="split-icon" inline aria-hidden="false" aria-label="Split"
                                         >call_split</mat-icon
                                     >
                                 }
-                                {{ t.merchant }}
+                                <app-money [amount]="t.amount" tone="transaction"></app-money>
                             </span>
-                            <span appListCell="category">{{ getCategoryName(t.categoryId) }}</span>
-                            <app-money appListCell="amount" [amount]="t.amount" tone="transaction"></app-money>
                         </a>
                     }
                 </app-list>

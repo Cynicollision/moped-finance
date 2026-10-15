@@ -94,7 +94,6 @@ describe('SplitTransactionModalComponent', () => {
 
         expect(element.querySelectorAll('section.part')).toHaveLength(2);
         expect(element.querySelector('mat-button-toggle-group')).toBeNull();
-        expect(element.textContent).toContain('Every part is money out, like the transaction.');
         expect(component.parts.getRawValue()).toEqual([
             { id: 't1', amount: null, categoryId: 'groceries', merchant: 'Big Store', notes: 'weekly shop' },
             { id: '', amount: 100, categoryId: '', merchant: 'Big Store', notes: '' }

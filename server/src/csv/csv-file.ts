@@ -3,7 +3,7 @@ import Papa from 'papaparse';
 /** One data row. `rowNumber` counts the header as row 1, matching what a spreadsheet shows for simple files. */
 export interface CsvRow {
     rowNumber: number;
-    /** Trimmed text by header name; a column missing from this row is ''. */
+    /** Text by header name, trimmed unless its column is read as written; a column missing from this row is ''. */
     values: Record<string, string>;
     /** Set when the row has the wrong number of columns. */
     error?: string;
@@ -21,8 +21,11 @@ export class CsvFile {
      * Parses a CSV with a header row. File-level problems (no file, unparseable, a required header
      * missing, no data rows) fail the whole read. A row with the wrong number of columns comes back
      * with `error` set, so the caller can report it alongside its own row checks.
+     *
+     * Cells are trimmed, except in the `asWritten` columns: free text such as a bank's statement, which keeps its
+     * leading and trailing spaces so an export re-imports unchanged (TXN-3.1).
      */
-    public static read(file: Buffer | undefined, requiredHeaders: string[]): CsvReadResult {
+    public static read(file: Buffer | undefined, requiredHeaders: string[], asWritten: string[] = []): CsvReadResult {
         if (!file) {
             return { success: false, message: 'No file provided.' };
         }
@@ -56,7 +59,8 @@ export class CsvFile {
         const rows = parsed.data.map((record, index): CsvRow => {
             const values: Record<string, string> = {};
             for (const header of headers) {
-                values[header] = (record[header] ?? '').trim();
+                const text = record[header] ?? '';
+                values[header] = asWritten.includes(header) ? text : text.trim();
             }
             return { rowNumber: index + 2, values, error: rowErrors.get(index) };
         });

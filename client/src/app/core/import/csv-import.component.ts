@@ -34,6 +34,8 @@ export class CsvImportComponent<T extends ImportReport> {
     readonly subject = input.required<string>();
     /** The columns the file must have, as listed to the user: "Date, AccountName, Balance". */
     readonly columns = input.required<string>();
+    /** Columns the file may also have, listed after the required ones: "Id". */
+    readonly optionalColumns = input('');
     /** Posts the file, as a dry run or for real. Resolves undefined when the request failed (ApiService reports it). */
     readonly run = input.required<(form: FormData, dryRun: boolean) => Promise<T | undefined>>();
     /** Marks the confirm panel with a warning, for an import that replaces what's there. */

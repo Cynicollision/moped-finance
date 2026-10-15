@@ -12,6 +12,7 @@ describe('ImportTransactionsComponent', () => {
         isValidToImport: true,
         resultMessage: '',
         createdCount: 2,
+        duplicateCount: 0,
         failedRowMessages: [],
         uncategorizedCount: 1,
         unmatchedCategories: []
@@ -96,6 +97,7 @@ describe('ImportTransactionsComponent', () => {
 
         expect(Array.from(element.querySelectorAll('.dry-run-results > ul li')).map(li => li.textContent)).toEqual([
             'Transactions to create: 20',
+            'Already imported: 0',
             'Uncategorized: 15',
             'Rows with errors: 0'
         ]);
@@ -123,6 +125,24 @@ describe('ImportTransactionsComponent', () => {
         expect(financeService.importTransactions).toHaveBeenLastCalledWith(expect.any(FormData), false, null, false);
         expect(notificationService.success).toHaveBeenCalledWith('Successfully created 2 transactions.');
         expect(navigate).toHaveBeenCalledWith(['/transactions']);
+    });
+
+    it('TXN-3.12 should count the rows already imported, and say how many were skipped', async () => {
+        const { element, click, validate, financeService, notificationService } = await render({
+            ...clean,
+            duplicateCount: 3
+        });
+        financeService.importTransactions.mockResolvedValue({ ...clean, duplicateCount: 3 });
+        await validate();
+
+        expect(element.textContent).toContain('Already imported: 3');
+        expect(element.textContent).toContain('It can also have: Id.');
+
+        await click('Begin Import');
+
+        expect(notificationService.success).toHaveBeenCalledWith(
+            'Successfully created 2 transactions. Skipped 3 already imported.'
+        );
     });
 
     it('TXN-3.5 should import into the account it was opened from, and return to it', async () => {

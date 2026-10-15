@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
-import { AbstractControl, FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,6 +19,7 @@ import { ModalCancelDirective } from './../../core/modal/modal-cancel.directive'
 import { ModalLayoutComponent } from './../../core/modal/modal-layout.component';
 import { NotificationService } from './../../core/notification.service';
 import { HasUnsavedChanges } from './../../core/unsaved-changes';
+import { categoryChoices, chosenCategoryValidator } from './../common/category-choice';
 import { categoryLabel } from './../common/category-label';
 import { MoneyComponent } from './../common/money.component';
 import { FinanceService } from './../finance.service';
@@ -148,7 +149,7 @@ export class SplitTransactionModalComponent implements HasUnsavedChanges {
             }),
             categoryId: new FormControl(part.categoryId ?? '', {
                 nonNullable: true,
-                validators: [control => this.validateCategory(control)]
+                validators: [chosenCategoryValidator(this.categoryMap)]
             }),
             merchant: new FormControl(part.merchant ?? '', {
                 nonNullable: true,
@@ -164,11 +165,6 @@ export class SplitTransactionModalComponent implements HasUnsavedChanges {
             }
         });
         return group;
-    }
-
-    /** A category typed but not chosen from the list isn't one. */
-    private validateCategory(control: AbstractControl<string>) {
-        return !control.value || this.categoryMap().has(control.value) ? null : { unknownCategory: true };
     }
 
     private signedAmount(part: PartForm): number {
@@ -220,13 +216,11 @@ export class SplitTransactionModalComponent implements HasUnsavedChanges {
      * plus the one it has.
      */
     categoryOptions(value: string): Category[] {
-        const categories = this.lookups.value()?.categories ?? [];
-        const allowed = (c: Category) => c.isActive && this.allowedTypes().has(this.typeOf()(c.id)!);
-        if (this.categoryMap().has(value)) {
-            return categories.filter(c => allowed(c) || c.id === value);
-        }
-        const text = value.toLowerCase();
-        return categories.filter(c => allowed(c) && c.name.toLowerCase().includes(text));
+        return categoryChoices(
+            this.lookups.value()?.categories ?? [],
+            value,
+            c => c.isActive && this.allowedTypes().has(this.typeOf()(c.id)!)
+        );
     }
 
     readonly displayCategory = (id: string): string => {

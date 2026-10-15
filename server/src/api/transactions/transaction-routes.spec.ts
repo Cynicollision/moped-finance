@@ -675,18 +675,20 @@ describe('Transaction Routes', () => {
             expect(response.text).toContain('Test Merchant');
         });
 
-        it('TXN-3.1 should write dates as YYYY-MM-DD and amounts with two decimals', async () => {
-            await insertTransaction({ date: '2026-06-06', amount: -12.5, merchant: 'Shop' });
+        it('TXN-3.1 should write the Id, dates as YYYY-MM-DD and amounts with two decimals', async () => {
+            const transaction = await insertTransaction({ date: '2026-06-06', amount: -12.5, merchant: 'Shop' });
 
             const response = await request(app).get('/transactions/export');
 
-            expect(response.text).toBe(csvHeader + '2026-06-06,Checking,Shop,Groceries,-12.50,,,false\n');
+            expect(response.text).toBe(
+                `Id,${csvHeader}${transaction.id},2026-06-06,Checking,Shop,Groceries,-12.50,,,false\n`
+            );
         });
 
         it('TXN-3.1 should have only the header row when there are no transactions', async () => {
             const response = await request(app).get('/transactions/export');
 
-            expect(response.text).toBe(csvHeader);
+            expect(response.text).toBe(`Id,${csvHeader}`);
         });
 
         it('TXN-3.1 should return 404 when exporting an account that does not exist', async () => {
@@ -932,12 +934,13 @@ describe('Transaction Routes', () => {
             expect(response.body.message).toBe('Account not found.');
         });
 
-        it('TXN-3.1 should re-import its own export unchanged', async () => {
+        it('TXN-3.1 TXN-3.10 should re-import its own export unchanged, spaces in its text included', async () => {
             await insertTransaction({
                 date: '2026-06-06',
                 amount: -12.5,
                 merchant: 'Café, "Quoted"',
-                notes: 'Line one',
+                originalStatement: 'BIG STORE U*** ',
+                notes: ' Line one',
                 isHidden: true
             });
             const exported = await request(app).get('/transactions/export');
@@ -954,10 +957,129 @@ describe('Transaction Routes', () => {
                     date: '2026-06-06',
                     amount: -12.5,
                     merchant: 'Café, "Quoted"',
-                    notes: 'Line one',
+                    originalStatement: 'BIG STORE U*** ',
+                    notes: ' Line one',
                     isHidden: true
                 })
             ]);
+        });
+
+        it('TXN-3.10 should still trim the cells it parses or looks up', async () => {
+            const response = await importCsv(' 2026-06-06 , checking , Shop , Groceries , -5.00 ,,, TRUE ');
+
+            expect(response.status).toBe(201);
+            const [saved] = await transactionsData.search({ includeHidden: true });
+            expect(saved).toMatchObject({
+                date: '2026-06-06',
+                accountId: testAccountId,
+                categoryId: testCategoryId,
+                amount: -5,
+                merchant: ' Shop ',
+                isHidden: true
+            });
+        });
+
+        describe('rows already imported (TXN-3.12)', () => {
+            const idHeader = `Id,${csvHeader}`;
+
+            function importWithIds(rows: string, query = ''): request.Test {
+                return request(app)
+                    .post(`/transactions/import${query}`)
+                    .attach('file', Buffer.from(idHeader + rows), 'import.csv');
+            }
+
+            it('TXN-3.12 TXN-3.3 should skip every row of its own export when imported again', async () => {
+                await insertTransaction({ amount: -5 });
+                await insertTransaction({ amount: -5 });
+                const exported = await request(app).get('/transactions/export');
+                const upload = () =>
+                    request(app).post('/transactions/import').attach('file', Buffer.from(exported.text), 'export.csv');
+
+                const dryRun = await upload().query({ dryRun: true });
+                const imported = await upload();
+
+                expect(dryRun.body).toMatchObject({ createdCount: 0, duplicateCount: 2, isValidToImport: true });
+                expect(imported.status).toBe(201);
+                expect(imported.body).toMatchObject({ createdCount: 0, duplicateCount: 2 });
+                expect(await countTransactions()).toBe(2);
+            });
+
+            it("TXN-3.12 should create a row whose Id isn't in the account it goes to", async () => {
+                const transaction = await insertTransaction({ amount: -5 });
+                const savingsId = await insertAccount({});
+
+                const elsewhere = await importWithIds(
+                    `${transaction.id},2026-06-06,Checking,Shop,Groceries,-5,,,false\n`,
+                    `?accountId=${savingsId}`
+                );
+                const unknown = await importWithIds('TRXgone,2026-06-06,Checking,Shop,Groceries,-5,,,false\n');
+
+                expect(elsewhere.body).toMatchObject({ createdCount: 1, duplicateCount: 0 });
+                expect(unknown.body).toMatchObject({ createdCount: 1, duplicateCount: 0 });
+                expect(await countTransactions()).toBe(3);
+            });
+
+            it('TXN-3.12 should match a row without an Id on date, account, amount and statement, one for one', async () => {
+                await insertTransaction({ date: '2026-06-06', amount: -5, originalStatement: 'COFFEE 1' });
+
+                const response = await importCsv(
+                    [
+                        '2026-06-06,Checking,Coffee,,-5.00,COFFEE 1,,false',
+                        '2026-06-06,Checking,Coffee,,-5.00,COFFEE 1,,false',
+                        '2026-06-06,Checking,Coffee,,-5.00,COFFEE 2,,false',
+                        '2026-06-05,Checking,Coffee,,-5.00,COFFEE 1,,false',
+                        '2026-06-06,Checking,Coffee,,-6.00,COFFEE 1,,false'
+                    ].join('\n'),
+                    '?dryRun=true'
+                );
+
+                expect(response.body).toMatchObject({ createdCount: 4, duplicateCount: 1 });
+            });
+
+            it("TXN-3.12 should match a split's parts as one transaction for their total", async () => {
+                const transaction = await insertTransaction({ amount: -200, originalStatement: 'BIG STORE' });
+                await request(app)
+                    .put(`/transactions/${transaction.id}/split`)
+                    .send({
+                        parts: [
+                            { id: transaction.id, amount: -101, merchant: 'Big Store' },
+                            { amount: -99, merchant: 'Big Store' }
+                        ]
+                    })
+                    .expect(200);
+
+                const response = await importCsv(
+                    '2026-06-06,Checking,Big Store,,-200.00,BIG STORE,,false',
+                    '?dryRun=true'
+                );
+
+                expect(response.body).toMatchObject({ createdCount: 0, duplicateCount: 1 });
+            });
+
+            it('TXN-3.11 TXN-3.12 should adjust balances for the rows it creates only', async () => {
+                const manual = await accountsData.insert(
+                    FinanceEntityFactory.createAccount({
+                        institutionId: testInstitutionId,
+                        name: 'Wallet',
+                        type: AccountType.Checking,
+                        isHidden: false,
+                        isManual: true,
+                        balance: 0
+                    })
+                );
+                await insertTransaction({ accountId: manual.id, amount: -5, originalStatement: 'A' });
+
+                await importCsv(
+                    '2026-06-06,Wallet,A,,-5.00,A,,false\n2026-06-06,Wallet,B,,-7.00,B,,false',
+                    `?accountId=${manual.id}&adjustBalances=true`
+                ).expect(201);
+
+                const result = await pglite.query<{ balance: string }>(
+                    'SELECT balance FROM finance.balance_history WHERE account_id = $1',
+                    [manual.id]
+                );
+                expect(result.rows.map(r => Number(r.balance))).toEqual([-7]);
+            });
         });
 
         it('APP-5.4 should reject a file larger than 5 MB', async () => {

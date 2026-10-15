@@ -7,6 +7,7 @@
                 #importer
                 subject="your transactions"
                 columns="Date, AccountName, Merchant, CategoryName, Amount, OriginalStatement, Notes, IsHidden"
+                optionalColumns="Id"
                 [run]="runImport"
                 (imported)="onImported($event)"
             >
@@ -14,6 +15,8 @@
                     <p>Please review the validated results before finalizing the import.</p>
                     <ul>
                         <li>Transactions to create: {{ results.createdCount }}</li>
+                        <!-- Rows already in the app are skipped (TXN-3.12). -->
+                        <li>Already imported: {{ results.duplicateCount }}</li>
                         <li>Uncategorized: {{ results.uncategorizedCount }}</li>
                         <li>Rows with errors: {{ results.failedRowMessages.length }}</li>
                     </ul>

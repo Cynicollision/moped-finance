@@ -187,7 +187,7 @@ describe('TransactionFormComponent', () => {
         it('CAT-4.1 should offer only active categories for a new transaction', async () => {
             const { fixture } = await render('create', null, categories);
 
-            expect(fixture.componentInstance.categoryOptions().map(c => c.name)).toEqual(['Groceries']);
+            expect(fixture.componentInstance.categoryOptions('').map(c => c.name)).toEqual(['Groceries']);
         });
 
         it('CAT-5.2 should show an empty category as Uncategorized, and save it that way', async () => {
@@ -202,6 +202,26 @@ describe('TransactionFormComponent', () => {
             );
         });
 
+        it('TXN-2.1 should narrow the categories to those whose name has the typed text', async () => {
+            const { fixture } = await render('create', null, categories);
+
+            expect(fixture.componentInstance.categoryOptions('GRO').map(c => c.name)).toEqual(['Groceries']);
+            expect(fixture.componentInstance.categoryOptions('gym')).toEqual([]);
+        });
+
+        it('TXN-2.1 should refuse text that is not a category chosen from the list, keeping Save off', async () => {
+            const { fixture, element, saved } = await render('create', null, categories);
+            const form = fixture.componentInstance.transactionForm;
+            form.patchValue({ accountId: 'acct', amount: 5, merchant: 'Shop', category: 'Groc' });
+            form.controls.category.markAsTouched();
+            await fixture.whenStable();
+
+            expect(form.controls.category.hasError('unknownCategory')).toBe(true);
+            expect(element.textContent).toContain('Choose a category from the list');
+            fixture.componentInstance.onSave();
+            expect(saved).toEqual([]);
+        });
+
         it('CAT-5.2 should show Uncategorized when viewing a transaction with no category', async () => {
             const { element } = await render('readonly', { ...transaction, categoryId: '' }, categories);
 
@@ -211,7 +231,7 @@ describe('TransactionFormComponent', () => {
         it('CAT-4.2 should keep offering an inactive category the transaction already has', async () => {
             const { fixture } = await render('edit', { ...transaction, categoryId: 'old' }, categories);
 
-            expect(fixture.componentInstance.categoryOptions().map(c => c.name)).toEqual(['Groceries', 'Old Gym']);
+            expect(fixture.componentInstance.categoryOptions('old').map(c => c.name)).toEqual(['Groceries', 'Old Gym']);
             expect(fixture.componentInstance.displayCategory('old')).toBe('🏋️ Old Gym');
         });
     });

@@ -16,7 +16,8 @@ import { DateTimeUtil } from '@server/utility';
 import { IFinanceAccountData } from './../accounts/account-data';
 import { IFinanceCategoryData } from './../categories/category-data';
 import { Spending } from './spending';
-import { TransactionCsv } from './transaction-csv';
+import { TransactionCsv, TransactionCsvRow } from './transaction-csv';
+import { TransactionDuplicates } from './transaction-duplicates';
 import { adjustmentChange, IFinanceTransactionData } from './transaction-data';
 import { CreateTransactionRequest, SplitTransactionRequest, UpdateTransactionRequest } from './transaction-schema';
 
@@ -215,6 +216,24 @@ export class TransactionController {
         return null;
     }
 
+    /** The indexes of the rows already in the app (TXN-3.12). */
+    private async findDuplicates(rows: TransactionCsvRow[]): Promise<Set<number>> {
+        const fileIds = rows.map(row => row.fileId).filter(id => id);
+        const accountIdsById = await this.transactionData.retrieveAccountIds(fileIds);
+
+        const unlabeled = rows.filter(row => !row.fileId).map(row => row.transaction);
+        const dates = unlabeled.map(t => t.date).sort();
+        const existing =
+            unlabeled.length > 0
+                ? await this.transactionData.retrieveMatchFields(
+                      [...new Set(unlabeled.map(t => t.accountId))],
+                      dates[0],
+                      dates[dates.length - 1]
+                  )
+                : [];
+        return TransactionDuplicates.find(rows, accountIdsById, existing);
+    }
+
     public async getSpendingByCategory(
         context: OperationContext,
         period: CalendarPeriod,
@@ -292,20 +311,37 @@ export class TransactionController {
             return Result.userError(csv.message);
         }
 
-        const { transactions, failedRowMessages, unmatchedCategories } = csv;
+        const { rows, failedRowMessages, unmatchedCategories } = csv;
         const isValidToImport = failedRowMessages.length === 0;
-        const uncategorizedCount = transactions.filter(t => !t.categoryId).length;
-        const report = { failedRowMessages, isValidToImport, uncategorizedCount, unmatchedCategories };
 
         // All or nothing: a file with any bad row saves nothing. The dry run reports the rows so the user
         // can fix the file; a real import of a bad file (which the client doesn't send) is a 400.
         if (!isValidToImport) {
-            const summary = `Found errors in ${failedRowMessages.length} of ${transactions.length + failedRowMessages.length} rows.`;
-            const result: TransactionImportResult = { ...report, createdCount: 0, resultMessage: summary };
+            const summary = `Found errors in ${failedRowMessages.length} of ${rows.length + failedRowMessages.length} rows.`;
+            const result: TransactionImportResult = {
+                failedRowMessages,
+                isValidToImport,
+                uncategorizedCount: rows.filter(row => !row.transaction.categoryId).length,
+                unmatchedCategories,
+                duplicateCount: 0,
+                createdCount: 0,
+                resultMessage: summary
+            };
             return dryRun
                 ? Result.success(result)
                 : Result.userError(`Nothing was imported. ${summary}`, 'INVALID_IMPORT', result);
         }
+
+        // Rows already in the app are skipped, so importing a file twice, or overlapping files, adds nothing twice.
+        const duplicates = await this.findDuplicates(rows);
+        const transactions = rows.filter((_, index) => !duplicates.has(index)).map(row => row.transaction);
+        const report = {
+            failedRowMessages,
+            isValidToImport,
+            uncategorizedCount: transactions.filter(t => !t.categoryId).length,
+            unmatchedCategories,
+            duplicateCount: duplicates.size
+        };
 
         if (dryRun) {
             return Result.success({

@@ -19,13 +19,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 12. Transaction CSV and the Category field
-Decided 2026-10-14. Splits are done (TXN-4); each part is a transaction of its own, so export already writes one row per part.
-- [ ] **Id column** (TXN-3.1, 3.2): export adds an `Id` column, each row's transaction ID (unique per row, parts included). Import accepts it as optional.
-- [ ] **Duplicate detection** (Transactions Known gaps): a row whose Id is a transaction already in the account it's going to is skipped. A row with no Id (a bank's file) is matched on date, account, amount and original statement, counting copies (two identical rows in the file against one in the app skip only one). Rows whose Id is in another account aren't duplicates, so moving an account (ACCT-3.11) still works. The dry run reports "Already imported: N" and only new rows are created. Write it up as TXN-3 requirements.
-- [ ] **Keep text as written** (TXN-3.1): `CsvFile` (`csv-file.ts`) stops trimming cells; values that get parsed or looked up (dates, amounts, booleans, account and category names) are trimmed where they're parsed, and free text (Merchant, Original Statement, Notes) is kept exactly, so exports re-import unchanged. Check the category and balance-history CSVs still trim their names.
-- [ ] **Category field** (TXN-2.1): the transaction form's Category (`transaction-form.component.ts`, `categoryOptions`) doesn't narrow as you type, though TXN-2.1 says it's searchable, and saving typed text that isn't a category gets "Category not found." from the server. Reuse the split dialog's `categoryOptions` and `validateCategory` (`split-transaction-modal.component.ts`).
-
 ### 13. Settings: Profile and Appearance
 - [ ] SET-1.1, 2.1, 3.1: instance-level settings storage (also used by items 14 and 16), Profile (edit display name), Appearance (Dark, Light, Match system, applied before first paint). Light theme means a second set of the `styles.scss` tokens; likely a PR of its own.
 

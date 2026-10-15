@@ -2,6 +2,7 @@ import {
     ChangeDetectionStrategy,
     Component,
     computed,
+    effect,
     inject,
     OnInit,
     SimpleChanges,
@@ -26,12 +27,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { CalendarDateUtil } from '@shared/core/util';
 import { TransactionDirection } from '@shared/finance/enum';
-import { Transaction } from '@shared/finance/types';
+import { Category, Transaction } from '@shared/finance/types';
 import { TransactionSplit, Uncategorized } from '@shared/finance/util';
 import { DateProviderService } from './../../core/date-provider.service';
 import { CardSkeletonComponent } from './../../core/loading/card-skeleton.component';
 import { LoadErrorComponent } from './../../core/loading/load-error.component';
 import { viewResource } from './../../core/loading/view-resource';
+import { categoryChoices, chosenCategoryValidator } from './../common/category-choice';
 import { categoryLabel } from './../common/category-label';
 import { MoneyComponent } from './../common/money.component';
 import { FinanceService } from './../finance.service';
@@ -91,7 +93,10 @@ export class TransactionFormComponent implements OnInit, OnChanges {
             validators: [Validators.required, Validators.maxLength(255)]
         }),
         originalStatement: new FormControl<string>('', { nonNullable: true }),
-        category: new FormControl<string>('', { nonNullable: true }),
+        category: new FormControl<string>('', {
+            nonNullable: true,
+            validators: [chosenCategoryValidator(() => this.categoryMap())]
+        }),
         date: new FormControl<Date>(this.dateProvider.now(), { nonNullable: true, validators: [Validators.required] }),
         notes: new FormControl<string>('', { nonNullable: true }),
         isHidden: new FormControl<boolean>(false, { nonNullable: true }),
@@ -128,11 +133,23 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     readonly isSplit = computed(() => !!this.transaction()?.splitId);
     /** What the split's parts add up to. */
     readonly splitTotal = computed(() => TransactionSplit.total(this.splitParts().map(part => part.amount)));
-    /** The categories to choose from: active ones, plus the one the transaction already has (CAT-4.1, CAT-4.2). */
-    readonly categoryOptions = computed(() => {
+
+    constructor() {
+        // A category can only be checked once they've loaded.
+        effect(() => {
+            this.categoryMap();
+            this.transactionForm.controls.category.updateValueAndValidity({ emitEvent: false });
+        });
+    }
+
+    /**
+     * The categories to choose from, matching what's typed (TXN-2.1): active ones, plus the one the transaction already
+     * has (CAT-4.1, CAT-4.2).
+     */
+    categoryOptions(value: string): Category[] {
         const currentId = this.transaction()?.categoryId;
-        return this.categories().filter(c => c.isActive || c.id === currentId);
-    });
+        return categoryChoices(this.categories(), value, c => c.isActive || c.id === currentId);
+    }
 
     ngOnInit() {
         this.updateFormState();
