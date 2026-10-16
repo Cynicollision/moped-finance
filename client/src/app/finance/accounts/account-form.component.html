@@ -20,7 +20,7 @@
     <mat-form-field appearance="outline" class="full-width">
         <mat-label>Type</mat-label>
         <mat-select formControlName="type">
-            @for (typeGroup of typeGroups; track typeGroup.group) {
+            @for (typeGroup of typeGroups(); track typeGroup.group) {
                 <mat-optgroup [label]="typeGroup.group">
                     @for (type of typeGroup.types; track type) {
                         <mat-option [value]="type">{{ type }}</mat-option>

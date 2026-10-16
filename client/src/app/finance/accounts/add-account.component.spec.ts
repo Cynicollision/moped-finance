@@ -175,7 +175,7 @@ describe('FinanceAddAccountComponent', () => {
         const form = fixture.debugElement.query(By.directive(AccountFormComponent))
             .componentInstance as AccountFormComponent;
 
-        expect(form.typeGroups.map(g => g.group)).toEqual([
+        expect(form.typeGroups().map(g => g.group)).toEqual([
             'Cash',
             'Investments',
             'Retirement',

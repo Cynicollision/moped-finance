@@ -47,6 +47,32 @@ describe('AccountFormComponent', () => {
         return Array.from(element.querySelectorAll('mat-label')).map(label => label.textContent!.trim());
     }
 
+    function offeredCategories(form: AccountFormComponent): AccountCategory[] {
+        return [...new Set(form.typeGroups().map(info => info.category))];
+    }
+
+    it("ACCT-1.13 should offer only the types on an edited account's side", async () => {
+        const asset = await renderEdit(account());
+        expect(offeredCategories(asset.form)).toEqual([AccountCategory.Asset]);
+
+        TestBed.resetTestingModule();
+        const liability = await renderEdit(
+            account({ type: AccountType.CreditCard, group: AccountGroup.CreditCards, balance: -450.25 })
+        );
+        expect(offeredCategories(liability.form)).toEqual([AccountCategory.Liability]);
+    });
+
+    it('ACCT-1.13 should offer every type when adding an account', async () => {
+        TestBed.configureTestingModule({ imports: [AccountFormComponent] });
+        const fixture = TestBed.createComponent(AccountFormComponent);
+        await fixture.whenStable();
+
+        expect(offeredCategories(fixture.componentInstance)).toEqual([
+            AccountCategory.Asset,
+            AccountCategory.Liability
+        ]);
+    });
+
     it("ACCT-2.2 should show a manual account's current balance, with no date to choose", async () => {
         const { form, element } = await renderEdit(account());
 

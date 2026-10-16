@@ -2,14 +2,20 @@
 
 Work items and ideas, grouped by priority. Move items up or down as priorities change; delete them once done (git history is the changelog).
 
-- **Now**: technical baseline: deployment and tooling.
+- **Now**: technical baseline: a public repository, deployment and tooling.
 - **Next**: finishing the requirements (`docs/requirements/`): every `Partial` and `Planned` sub-requirement except bank sync and automatic categorization. Each item is about a day's work or one Claude Code session, possibly several PRs, listed in the order to work through them (later items build on earlier ones).
-- **Later**: bank sync, automatic categorization, and known gaps that aren't requirements yet.
+- **Later**: bank sync, automatic categorization, real estate values, and other larger work not yet written up as requirements.
 - **Ideas**: unsorted thoughts, not yet committed to.
 
 ---
 
 ## Now
+
+### Public repository
+Make `Cynicollision/moped-finance` public, with the early experimental history squashed. Comes before the GHCR job below, since public images and Actions minutes follow from it.
+- [ ] **Squash the history before `7e0ce17`** ("rename project to Moped Finance", 2026-09-25, just before PR #1). Keep `7e0ce17` and everything after it as they are (authors, dates, messages), with `7e0ce17` becoming the root commit and keeping its tree. One way, on a fresh clone: `git replace --graft 7e0ce17` (no parents), then `git filter-repo` to make it permanent. Every SHA from there on changes, so merge or close open branches first and delete the stale `origin/claude/*` branches. Turn off the force-push rule on `main` for the push, turn it back on afterwards, and re-clone everywhere.
+- [ ] **Old commits stay reachable through PRs.** GitHub keeps each PR's `refs/pull/N/head`, which the owner can't delete, and those heads have the old history as ancestors, so it would stay public by SHA and through the PRs' commit lists. Decide: ask GitHub Support to remove the old PR refs and garbage-collect after the push, publish the rewritten history as a new repository instead (losing the PRs and their discussion), or accept it. Check GitHub's current guidance at the time.
+- [ ] **Before making it public:** scan the history being kept for secrets and personal data (for example `gitleaks detect`), including `.env*` files and logs (`server/seed-data/` is synthetic); choose a licence and add `LICENSE`; make sure `README.md` reads well for a stranger (what it is, self-hosting status per deployment.md); and review GitHub settings (Actions approval for fork PRs, secret scanning, Dependabot alerts).
 
 ### Data & deployment
 - [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
@@ -19,10 +25,14 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 18. Demo mode
+### 18. Spending periods and consistency with Budget
+- [ ] **Decide, then write CASH requirements.** Make the kind of period (Month / Quarter / Year / Average) more prominent than CASH-1.1's picker, which hides it behind the period row: for example a visible switch like Budget's Monthly / Quarterly / Yearly (BUD-1.6). Consider more averages than CASH-1.12's Past 12 months, such as This year (the average month so far) and All time, and what each does to Previous / Next and the drill-down to Transactions (CASH-1.6).
+- [ ] **Make Spending and Budget look alike**: the same summary card layout, period switch, section headings and list columns where they show the same things (Saved vs Left over, the Essential / Discretionary headings of CASH-1.8 and BUD-1.7). Compare the two screens side by side at each breakpoint first, and write any shared pattern into conventions.md. `spending.component.*`, `budget.component.*`.
+
+### 19. Demo mode
 - [ ] APP-4.2, 4.3: populate demo mode from `server/seed-data/`: `demo.interceptor.ts` answers everything but auth with an empty list. Needs the CSVs turned into client-side data (a build step or JSON) and in-browser create/edit/delete. Last, so it covers the finished screens.
 
-### 19. Install as an app
+### 20. Install as an app
 - [ ] APP-9.1, 9.2: web app manifest (name, icons, theme colours, start URL), and a service worker if browsers still need one to offer installation. Choose caching so a new version shows up after an update (APP-9.2), for example Angular's `@angular/service-worker` with its update checks, or no caching at all. Installing needs HTTPS (app.md Notes), so test with `USE_HTTPS` or on localhost.
 
 ---
@@ -43,8 +53,12 @@ Manual entry and import/export come first. Constraints for when this gets picked
 - [ ] **Rules.** CAT-8.1 to 8.5, 8.7, CAT-5.5: Rules screen in Settings (SET-1.1), matching on statement, merchant and amount, first match wins, applied on add, import and sync, with "apply to existing Uncategorized".
 - [ ] **Learning.** CAT-9.1 to 9.4, CAT-8.6: Learn from my transactions, and View Transaction saying how a category was set.
 
-### Known gaps
-- [ ] **Changing an account between asset and liability types** (Accounts Known gaps): the stored balances keep their sign, so a $500 checking account changed to a credit card reads as $500 in credit. Decide whether Edit Account flips the history's sign or warns first (`account-controller.ts`, `updateAccount`).
+### Real estate values
+- [ ] Keep Real Estate accounts' (ACCT-1.2) values up to date from an online estimate, such as Zillow's Zestimate, with the property's address entered on the account (only for Real Estate types). Write requirements first (ACCT, plus SET for any provider key), deciding:
+  - **Provider.** Zillow no longer offers a public Zestimate API, and scraping breaks its terms, so compare what's available then: property-data APIs with value estimates (for example RentCast or ATTOM) on price, free tier, rate limits, coverage and terms for personal use. A key would be entered in Settings, like SimpleFIN's setup token.
+  - **How values land.** Probably a set balance entry (ACCT-5) per sync, on the estimate's date, so a value the user enters by hand still works as before. Decide how often (monthly is plenty), whether to backfill history the provider offers, and how the user turns it off or overrides it.
+  - **Polling only** (no webhooks, as for bank sync): reuse bank sync's scheduler if it exists by then, or a sync-now action on Account Details.
+  - **Privacy.** The address goes to a third party; say so where it's entered.
 
 ### Major dependency upgrades
 - [ ] Majors held back on 2026-10-06, when everything was brought up to date within its range (see [development.md](docs/development.md#dependencies)). None has a known vulnerability; Angular 21 keeps getting security releases until its LTS ends. One PR each, checking the release notes' breaking changes:

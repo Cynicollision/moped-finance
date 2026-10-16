@@ -153,7 +153,13 @@ mat-card.mat-mdc-card-outlined {
     }
 }
 
-// Snackbars clear the bottom navigation bar on phones (APP-2.8).
+// Snackbars clear the bottom navigation bar on phones (APP-2.8). The margin is inside the overlay pane, which sits
+// over the bar, so the pane lets taps through and only the message itself takes them.
+.cdk-overlay-pane:has(> .snackbar-above-bottom-nav) {
+    pointer-events: none;
+}
+
 .mat-mdc-snack-bar-container.snackbar-above-bottom-nav {
     margin-bottom: calc(88px + env(safe-area-inset-bottom));
+    pointer-events: auto;
 }

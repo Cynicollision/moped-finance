@@ -4,10 +4,6 @@
         [crumbs]="[{ label: 'Settings', link: '/settings' }]"
         [refreshing]="data.isRefreshing()"
     >
-        <a mat-flat-button class="page-action" routerLink="/accounts/new" aria-label="Add account">
-            <mat-icon>add</mat-icon>
-            <span class="page-action-label">Add account</span>
-        </a>
         <button mat-icon-button [matMenuTriggerFor]="pageMenu" aria-label="More options">
             <mat-icon>more_vert</mat-icon>
         </button>
@@ -16,6 +12,10 @@
                 <mat-icon>account_balance</mat-icon>
                 <span>Add Institution</span>
             </button>
+            <a mat-menu-item routerLink="/accounts/new">
+                <mat-icon>add</mat-icon>
+                <span>Add Account</span>
+            </a>
         </mat-menu>
     </app-page-header>
 

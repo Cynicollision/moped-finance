@@ -63,8 +63,18 @@ export class AccountFormComponent implements OnInit, OnChanges {
     readonly save = output<AccountRequest>();
     readonly cancelled = output<void>();
 
-    /** The Type select's options, under their groups (ACCT-1.2). */
-    readonly typeGroups = AccountTypeUtil.groups;
+    /**
+     * The Type select's options, under their groups (ACCT-1.2). An account being edited keeps to its own side of Asset
+     * or Liability (ACCT-1.13).
+     */
+    readonly typeGroups = computed(() => {
+        const account = this.account();
+        if (this.mode() !== 'edit' || !account) {
+            return AccountTypeUtil.groups;
+        }
+        const category = AccountTypeUtil.categoryOf(account.type);
+        return AccountTypeUtil.groups.filter(info => info.category === category);
+    });
 
     readonly accountForm = new FormGroup({
         name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),

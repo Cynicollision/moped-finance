@@ -1611,6 +1611,16 @@ describe('Account Routes', () => {
             expect(response.body.group).toBe(AccountGroup.OtherAssets);
         });
 
+        it('ACCT-1.13 should refuse a type on the other side of Asset or Liability', async () => {
+            const account = await insertAccount();
+
+            const response = await request(app).put(`/accounts/${account.id}`).send({ type: AccountType.CreditCard });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe("An account can't change between an asset and a liability.");
+            expect((await accountData.retrieveSingle(account.id!))?.type).toBe(account.type);
+        });
+
         it('APP-5.5 should reject an account whose institution does not exist', async () => {
             const payload = {
                 institutionId: 'missing',
