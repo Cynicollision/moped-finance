@@ -15,6 +15,7 @@ import { TestDatabaseUtil, TestExpressUtil } from '@server/utility/testing';
 import { ApiTokenController } from './api-token-controller';
 import { ApiTokenData } from './api-token-data';
 import { AuthController, IDefaultCategories } from './auth-controller';
+import { PasswordReset } from './password-reset';
 import { SecretData } from './secret-data';
 import { SESSION_COOKIE_NAME, SessionUtil } from './session';
 import { SignInLimiter } from './sign-in-limiter';
@@ -563,6 +564,80 @@ describe('Auth Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.message).toBe('Invalid old password.');
+        });
+
+        it('AUTH-5.3 should sign out every other session and keep this one', async () => {
+            const otherDevice = request.agent(app);
+            await otherDevice.post('/auth/login').send({ username: 'pwduser', password: 'old password 1234' });
+            expect((await otherDevice.get('/auth/me')).body.username).toBe('pwduser');
+
+            const response = await agent
+                .put('/auth/password')
+                .send({ oldPassword: 'old password 1234', newPassword: 'new password 1234' });
+
+            expect(response.status).toBe(200);
+            expect((await agent.get('/auth/me')).body.username).toBe('pwduser');
+            expect((await otherDevice.get('/auth/me')).body).toEqual({});
+        });
+
+        it('AUTH-5.3 should leave other sessions signed in when the change is refused', async () => {
+            const otherDevice = request.agent(app);
+            await otherDevice.post('/auth/login').send({ username: 'pwduser', password: 'old password 1234' });
+
+            await agent
+                .put('/auth/password')
+                .send({ oldPassword: 'wrong old password', newPassword: 'new password 1234' });
+
+            expect((await otherDevice.get('/auth/me')).body.username).toBe('pwduser');
+        });
+    });
+
+    describe('Password reset', () => {
+        let reset: PasswordReset;
+
+        beforeEach(() => {
+            reset = new PasswordReset(userData);
+        });
+
+        it('AUTH-12.2 should find no one to reset while registration is open', async () => {
+            expect(await reset.owner()).toBeNull();
+        });
+
+        it('AUTH-12.2 AUTH-12.4 should save the new password and sign out every session', async () => {
+            await agent
+                .post('/auth/register')
+                .send({ username: 'owner', name: 'Owner', password: 'forgotten password', defaultCategories: false });
+            const otherDevice = request.agent(app);
+            await otherDevice.post('/auth/login').send({ username: 'owner', password: 'forgotten password' });
+
+            const owner = (await reset.owner())!;
+            expect(owner).toMatchObject({ username: 'owner', displayName: 'Owner' });
+            await reset.reset(owner, 'brand new password');
+
+            expect((await agent.get('/auth/me')).body).toEqual({});
+            expect((await otherDevice.get('/auth/me')).body).toEqual({});
+            const oldPassword = await request(app)
+                .post('/auth/login')
+                .send({ username: 'owner', password: 'forgotten password' });
+            const newPassword = await request(app)
+                .post('/auth/login')
+                .send({ username: 'owner', password: 'brand new password' });
+            expect(oldPassword.status).toBe(400);
+            expect(newPassword.status).toBe(200);
+        });
+
+        it('AUTH-12.3 should refuse a password that breaks the rules or does not match its confirmation', async () => {
+            await agent
+                .post('/auth/register')
+                .send({ username: 'owner', name: 'Owner', password: 'forgotten password', defaultCategories: false });
+            const owner = (await reset.owner())!;
+
+            expect(reset.problems(owner, 'brand new password', 'brand new passwort')).toEqual([
+                'Passwords do not match.'
+            ]);
+            expect(reset.problems(owner, 'short', 'short')).toEqual(['Password must be at least 8 characters.']);
+            expect(reset.problems(owner, 'OWNER', 'OWNER')).toHaveLength(2);
+            expect(reset.problems(owner, 'brand new password', 'brand new password')).toEqual([]);
         });
     });
 

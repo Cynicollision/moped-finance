@@ -46,6 +46,17 @@ export class DatabaseClient implements IDatabaseClient {
         return new DatabaseClient(drizzle(pool), pool);
     }
 
+    /** Connects with the standard Postgres variables (`PGUSER`, `PGPASSWORD`, `PGHOST`, `PGDATABASE`, `PGPORT`). */
+    public static fromEnvironment(env: NodeJS.ProcessEnv = process.env): DatabaseClient {
+        return DatabaseClient.fromConfig({
+            user: env.PGUSER || '',
+            password: env.PGPASSWORD || '',
+            host: env.PGHOST || 'localhost',
+            database: env.PGDATABASE || '',
+            port: parseInt(env.PGPORT || '5432')
+        });
+    }
+
     /** Runs a trivial query; throws if the database can't be reached. */
     public async ping(): Promise<void> {
         await this.drizzle.execute(sql`SELECT 1`);

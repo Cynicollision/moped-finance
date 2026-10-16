@@ -150,6 +150,15 @@ jobs:
           curl -fsS -b cookies.txt http://127.0.0.1:3000/api/v1/categories | grep -q '"name":"Groceries"'
           curl -fsS http://127.0.0.1:3000/auth/registration | grep -q '"isOpen":false'
 
+      - name: Check the compiled reset-password command works (AUTH-12)
+        run: |
+          printf 'reset smoke password\nreset smoke password\n' | docker exec -i app npm run --silent reset-password
+          # The reset signed out the session from registering, and the new password signs in
+          test "$(curl -s -o /dev/null -w '%{http_code}' -b cookies.txt http://127.0.0.1:3000/api/v1/categories)" = 401
+          curl -fsS -H 'Content-Type: application/json' \
+            -d '{"username":"smoke","password":"reset smoke password"}' \
+            http://127.0.0.1:3000/auth/login
+
       - name: Check / serves index.html
         run: curl -fsS http://127.0.0.1:3000/ | grep -q '<app-root'
 

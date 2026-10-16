@@ -5,6 +5,7 @@
     },
     "include": [
         "index.ts",
+        "reset-password.ts",
         "src/**/*.ts"
     ],
     "exclude": [

@@ -34,6 +34,8 @@ export class LoginComponent implements OnInit {
     readonly password = signal(Environment.devPassword);
     readonly registrationOpen = signal(false);
     readonly submitting = signal(false);
+    /** How to reset a forgotten password, shown on request (AUTH-12.1). */
+    readonly showForgotPassword = signal(false);
 
     async ngOnInit() {
         this.registrationOpen.set(await this.authService.isRegistrationOpen());

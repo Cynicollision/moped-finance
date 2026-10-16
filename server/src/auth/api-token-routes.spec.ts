@@ -13,6 +13,7 @@ import { buildApiTokenRouter } from './api-token-routes';
 import { AuthController } from './auth-controller';
 import { buildAuthMiddleware } from './auth-middleware';
 import { buildAuthRouter } from './auth-routes';
+import { PasswordReset } from './password-reset';
 import { SessionUtil } from './session';
 import { SignInLimiter } from './sign-in-limiter';
 import { UserData } from './user-data';
@@ -283,6 +284,17 @@ describe('API Tokens', () => {
                 .put('/auth/password')
                 .send({ oldPassword: 'correct horse battery', newPassword: 'changed password 1234' });
             expect(change.status).toBe(200);
+
+            expect(
+                (await request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`)).status
+            ).toBe(200);
+        });
+
+        it('AUTH-11.11 AUTH-12.4 should keep tokens working after a password reset', async () => {
+            const token = await createToken();
+            const reset = new PasswordReset(new UserData(dbClient));
+
+            await reset.reset((await reset.owner())!, 'reset password 1234');
 
             expect(
                 (await request(app).get('/api/v1/institutions').set('Authorization', `Bearer ${token}`)).status

@@ -24,6 +24,7 @@ Aliases are set in each package's `tsconfig.json`, and in `server/jest.config.js
 ```
 server/
   index.ts          app setup: session, routers, static files, graceful shutdown
+  reset-password.ts the command that sets a new password for a forgotten one (AUTH-12), built into the image
   src/api/<domain>/ finance endpoints, one folder per domain, plus settings/ (the instance's settings)
   src/auth/         login/register/session, auth middleware, users
   src/health/       GET /health (database ping), used by the Docker health check

@@ -97,6 +97,27 @@ describe('LoginComponent', () => {
         expect(fixture.nativeElement.querySelector('.register-prompt')).not.toBeNull();
     });
 
+    it('AUTH-12.1 should show how to reset a forgotten password, and end a lockout, once asked', async () => {
+        const element = fixture.nativeElement as HTMLElement;
+        const forgot = Array.from(element.querySelectorAll('button')).find(
+            button => button.textContent?.trim() === 'Forgot password?'
+        )!;
+        const hiddenAtFirst = element.querySelector('.forgot-password-help');
+
+        forgot.click();
+        await fixture.whenStable();
+
+        const commands = Array.from(element.querySelectorAll('.forgot-password-help code')).map(
+            code => code.textContent
+        );
+        expect(hiddenAtFirst).toBeNull();
+        expect(forgot.getAttribute('aria-expanded')).toBe('true');
+        expect(commands).toEqual([
+            'docker exec -it moped-finance-api npm run reset-password',
+            'docker restart moped-finance-api'
+        ]);
+    });
+
     it('APP-3.1 should show the product name', () => {
         expect(fixture.nativeElement.querySelector('.brand-title').textContent).toBe('Moped Finance');
     });

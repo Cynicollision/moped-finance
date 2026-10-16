@@ -15,7 +15,7 @@ import {
     SignInLimits,
     UserData
 } from '@server/auth';
-import { DatabaseClient, DatabaseClientConfig } from '@server/data';
+import { DatabaseClient } from '@server/data';
 import { buildHealthRouter } from '@server/health';
 import { AppLogger } from '@server/logging';
 import { buildErrorHandler, buildSecurityHeaders } from '@server/routing';
@@ -24,15 +24,7 @@ import { buildErrorHandler, buildSecurityHeaders } from '@server/routing';
 const useHttps = process.env.USE_HTTPS === 'true';
 
 // Core services
-const dbConfig: DatabaseClientConfig = {
-    user: process.env.PGUSER || '',
-    password: process.env.PGPASSWORD || '',
-    host: process.env.PGHOST || 'localhost',
-    database: process.env.PGDATABASE || '',
-    port: parseInt(process.env.PGPORT || '5432')
-};
-
-const dbClient = DatabaseClient.fromConfig(dbConfig);
+const dbClient = DatabaseClient.fromEnvironment();
 const logger = AppLogger.fromEnvironment(dbClient);
 
 let isShuttingDown = false;
