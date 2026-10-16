@@ -196,6 +196,9 @@ export class OperationHandler {
             case OperationStatus.NotFound:
                 statusCode = 404;
                 break;
+            case OperationStatus.TooManyRequests:
+                statusCode = 429;
+                break;
             case OperationStatus.UnhandledError:
             default:
                 statusCode = 500;

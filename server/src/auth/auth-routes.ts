@@ -6,13 +6,18 @@ import { OperationDefinition, OperationHandler, OperationResult, Result } from '
 import { AuthController } from './auth-controller';
 import { AuthMiddleware } from './auth-middleware';
 import { SESSION_COOKIE_NAME } from './session';
+import { SignInLimiter } from './sign-in-limiter';
 
-/** `sessionCookie` is the session cookie's options (`SessionUtil.cookieOptions`), which logout clears it with. */
+/**
+ * `sessionCookie` is the session cookie's options (`SessionUtil.cookieOptions`), which logout clears it with.
+ * `signInLimiter` counts failed sign-ins per network address (AUTH-10).
+ */
 export function buildAuthRouter(
     logger: IAppLogger,
     controller: AuthController,
     middleware: AuthMiddleware,
-    sessionCookie: CookieOptions
+    sessionCookie: CookieOptions,
+    signInLimiter: SignInLimiter
 ) {
     const domain = 'Auth';
     const handler = new OperationHandler(logger);
@@ -27,13 +32,36 @@ export function buildAuthRouter(
     router.post('/login', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'login' };
         handler.execute(req, res, op, { body: loginSchema }, async (context, { body }) => {
+            // Behind a trusted proxy (TRUST_FIRST_PROXY), Express gives the client's address, not the proxy's (AUTH-10.6)
+            const address = context.req.ip ?? '';
+            const minutesLockedOut = signInLimiter.minutesLockedOut(address);
+            if (minutesLockedOut > 0) {
+                // Refused even with the right password (AUTH-10.1)
+                res.set('Retry-After', String(minutesLockedOut * 60));
+                const unit = minutesLockedOut === 1 ? 'minute' : 'minutes';
+                return Result.tooManyRequests(
+                    `Too many failed sign-in attempts. Try again in ${minutesLockedOut} ${unit}.`,
+                    'SIGN_IN_LOCKED_OUT'
+                );
+            }
+
             const { username, password } = body;
             const result = await controller.loginUser(username, password);
 
             if (!result.success || !result.data) {
+                if (signInLimiter.recordFailure(address)) {
+                    // The address, and the time on the log entry; never the username or password tried (AUTH-10.5)
+                    const { maxFailedAttempts, lockoutMinutes } = signInLimiter.limits;
+                    logger.warn(
+                        '',
+                        `Sign-in locked out for ${address} for ${lockoutMinutes} minutes after ${maxFailedAttempts} failed attempts.`,
+                        context
+                    );
+                }
                 return result;
             }
 
+            signInLimiter.recordSuccess(address);
             context.req.session.user = result.data;
             return result;
         });

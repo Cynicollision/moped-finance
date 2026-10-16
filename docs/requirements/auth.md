@@ -103,13 +103,13 @@ Guessing is limited per network address rather than by locking the account, so s
 
 | ID | Requirement | Status |
 |---|---|---|
-| AUTH-10.1 | After the maximum number of failed sign-ins (default 5) from one network address within the window (default 15 minutes), the server shall refuse further sign-in attempts from that address until the lockout (default 15 minutes) has passed, even with the right password, with 429 "Too many failed sign-in attempts. Try again in N minutes." | Planned |
+| AUTH-10.1 | After the maximum number of failed sign-ins (default 5) from one network address within the window (default 15 minutes), the server shall refuse further sign-in attempts from that address until the lockout (default 15 minutes) has passed, even with the right password, with 429 "Too many failed sign-in attempts. Try again in N minutes." ("1 minute" when one is left), and a `Retry-After` header. A failed sign-in counts only within the window: older ones drop out of the count. | Implemented |
 | AUTH-10.2 | Failed HTTP Basic credentials (AUTH-3.5) shall count toward the same limit, and a locked-out address shall be refused there too. | Retired: HTTP Basic was removed. API tokens (AUTH-11) are 256-bit random values that can't practically be guessed, so they need no limit |
-| AUTH-10.3 | A successful sign-in shall reset that address's count. | Planned |
+| AUTH-10.3 | A successful sign-in shall reset that address's count. | Implemented |
 | AUTH-10.4 | **Sign-in Protection** in Settings shall let the user set **Maximum failed attempts** (3 to 10), **Window** (5 to 60 minutes) and **Lockout** (5 to 60 minutes). | Retired (2026-10-15: the limits are server configuration, AUTH-10.7) |
-| AUTH-10.5 | The server shall log each lockout with the address and time, without the username or password tried. | Planned |
-| AUTH-10.6 | Behind a reverse proxy, the address shall be the client's, not the proxy's, when the server is configured to trust the proxy (`TRUST_FIRST_PROXY`). | Planned |
-| AUTH-10.7 | The limits shall be the defaults in AUTH-10.1 unless set in the server's environment: maximum failed attempts from 3 to 10, and the window and lockout from 5 to 60 minutes. The server shall refuse to start with a value outside those ranges. | Planned |
+| AUTH-10.5 | The server shall log each lockout as a warning with the address and time, without the username or password tried. | Implemented |
+| AUTH-10.6 | Behind a reverse proxy, the address shall be the client's, not the proxy's, when the server is configured to trust the proxy (`TRUST_FIRST_PROXY`). Without it, the server ignores `X-Forwarded-For`, so a client can't escape a lockout by changing it. | Implemented |
+| AUTH-10.7 | The limits shall be the defaults in AUTH-10.1 unless set in the server's environment: maximum failed attempts from 3 to 10, and the window and lockout from 5 to 60 minutes. The variables are `SIGN_IN_MAX_FAILED_ATTEMPTS`, `SIGN_IN_WINDOW_MINUTES` and `SIGN_IN_LOCKOUT_MINUTES`. The server shall refuse to start with a value that isn't a whole number in its range, logging which variable is wrong. | Implemented |
 
 ## AUTH-11 The user can let scripts and tools use the API with tokens
 
@@ -129,12 +129,10 @@ Personal API tokens let a script, a scheduled job, or a tool like `curl` call th
 | AUTH-11.10 | **Last used** shall be updated when a token is used successfully, accurate to the minute. | Implemented |
 | AUTH-11.11 | Changing the password shall not affect tokens. Each stays valid until it's revoked or expires. | Implemented |
 
-## Known gaps
-
-- **No limit on failed sign-ins (AUTH-10).**
-
 ## Notes
 
 - **API tokens over plain HTTP.** Like the session cookie, a token crosses the network in clear text unless the app is served over HTTPS (see `docs/deployment.md`). Unlike the password, a token can be revoked on its own, expires, can be limited to reading, and isn't reused on other sites.
+
+- **Lockouts are kept in memory** (decided 2026-10-16). There's one server process, so nothing is lost by not storing them, and restarting the server clears every lockout: the way back in for an owner who locked themselves out. Behind a reverse proxy without `TRUST_FIRST_PROXY`, every request seems to come from the proxy, so one person's failed sign-ins lock everyone out; deployment.md says to set it with a proxy.
 
 - **Fresh instances are claimable.** Whoever registers first on a fresh instance becomes its owner. Accepted (2026-09-26) for a LAN-only host: the owner registers right after the first start (see `docs/deployment.md`), and AUTH-2.8 makes the one-time nature clear on screen.

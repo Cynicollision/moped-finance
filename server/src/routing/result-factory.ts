@@ -101,6 +101,18 @@ export class Result {
         };
     }
 
+    public static tooManyRequests<T>(message: string, code = 'TOO_MANY_REQUESTS'): OperationResult<T> {
+        return {
+            success: false,
+            status: OperationStatus.TooManyRequests,
+            timestamp: DateTimeUtil.getCurrentTimestamp(),
+            error: {
+                code,
+                message
+            }
+        };
+    }
+
     public static internalError<T>(
         message = 'An unexpected error occurred',
         code = 'INTERNAL_ERROR'

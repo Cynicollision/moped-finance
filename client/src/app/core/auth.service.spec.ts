@@ -82,6 +82,19 @@ describe('AuthService', () => {
         expect(notificationService.error).toHaveBeenCalledWith('Invalid username or password.');
     });
 
+    it('AUTH-10.1 should show the lockout message when the server refuses too many failed sign-ins', async () => {
+        const { auth, http, navigate, notificationService } = setup();
+        const message = 'Too many failed sign-in attempts. Try again in 15 minutes.';
+
+        const login = auth.login('owner', 'correct horse battery');
+        http.expectOne('/auth/login').flush({ message }, { status: 429, statusText: 'Too Many Requests' });
+        await login;
+
+        expect(auth.currentUser()).toBeNull();
+        expect(navigate).not.toHaveBeenCalled();
+        expect(notificationService.error).toHaveBeenCalledWith(message);
+    });
+
     it('AUTH-2.5 should sign in straight after registering', async () => {
         const { auth, http, navigate } = setup();
         const body = { username: 'owner', name: 'Owner', password: 'secret', defaultCategories: true };

@@ -9,5 +9,6 @@ export enum OperationStatus {
     UserError = 'UserError',
     NotFound = 'NotFound',
     Forbidden = 'Forbidden',
-    Unauthorized = 'Unauthorized'
+    Unauthorized = 'Unauthorized',
+    TooManyRequests = 'TooManyRequests'
 }

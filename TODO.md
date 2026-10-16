@@ -19,9 +19,6 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 16. Sign-in protection
-- [ ] AUTH-10.1, 10.3, 10.5 to 10.7: per-address lockout after failed sign-ins, the limits as optional `.env` variables (not Settings), logged lockouts, and `TRUST_FIRST_PROXY` for the client address behind a proxy.
-
 ### 17. Forgotten password
 - [ ] A password reset command run on the host (decided 2026-10-16, over a recovery key in `.env` or recovery codes): `docker exec -it moped-finance-api npm run reset-password` shows the username, asks for a new password twice, applies the AUTH-9 rules, and signs out every session while leaving API tokens alone (as AUTH-11.11 does). It has to work in the production image (compiled, no ts-node), so build it with the server. Login gets a **Forgot password?** link explaining it, and deployment.md documents it. Write the requirements first (a new AUTH section).
 - [ ] Change Password (AUTH-5.3) signs out every other session, keeping the current one.
