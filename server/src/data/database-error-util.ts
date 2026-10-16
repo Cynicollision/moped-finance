@@ -5,6 +5,7 @@ const RESTRICT_VIOLATION = '23001';
 
 const uniqueViolationMessages: Record<string, string> = {
     users_username_unique: 'Username already taken.',
+    users_single_user_idx: 'Registration is closed.',
     api_tokens_token_hash_unique_idx: 'That API token already exists.',
     institutions_name_unique_idx: 'An institution with that name already exists.',
     category_groups_name_unique_idx: 'A category group with that name already exists.',

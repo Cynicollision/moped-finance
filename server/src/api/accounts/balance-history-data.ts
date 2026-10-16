@@ -5,7 +5,7 @@ import { AccountGroupChange, DailyBalance, TotalValueHistory } from '@shared/fin
 import { AccountType, ValueHistoryType, AccountCategory, BalanceEntrySource } from '@shared/finance/enum';
 import { AccountBalanceEntry, BalanceHistory } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
-import { FinanceEntityFactory, IDatabaseClient } from '@server/data';
+import { DbTransaction, FinanceEntityFactory, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
@@ -16,8 +16,6 @@ export interface BalanceHistoryExport {
     accountName: string;
     balance: string;
 }
-
-export type DbTransaction = Parameters<Parameters<NodePgDatabase['transaction']>[0]>[0];
 
 const bulkInsertChunkSize = 1000;
 

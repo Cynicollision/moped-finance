@@ -16,12 +16,34 @@
             <form (ngSubmit)="onRegister()">
                 <mat-form-field class="full-width">
                     <mat-label>Username</mat-label>
-                    <input matInput [(ngModel)]="username" name="username" required />
+                    <input
+                        matInput
+                        [(ngModel)]="username"
+                        name="username"
+                        required
+                        [maxlength]="usernameMaxLength"
+                        pattern="\S(.*\S)?"
+                        autocomplete="username"
+                    />
+                    @if (usernameProblem()) {
+                        <mat-error>{{ usernameProblem() }}</mat-error>
+                    }
                 </mat-form-field>
 
                 <mat-form-field class="full-width">
                     <mat-label>Display Name</mat-label>
-                    <input matInput [(ngModel)]="displayName" name="displayName" required />
+                    <input
+                        matInput
+                        [(ngModel)]="displayName"
+                        name="displayName"
+                        required
+                        [maxlength]="displayNameMaxLength"
+                        pattern=".*\S.*"
+                        autocomplete="name"
+                    />
+                    @if (displayNameProblem()) {
+                        <mat-error>{{ displayNameProblem() }}</mat-error>
+                    }
                 </mat-form-field>
 
                 <mat-form-field class="full-width">
@@ -43,6 +65,27 @@
                     <input matInput type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required />
                 </mat-form-field>
 
+                <!-- AUTH-2.9, CAT-6.1 -->
+                <div class="start-with">
+                    <span id="start-with-label" class="start-with-label">Categories</span>
+                    <mat-radio-group
+                        [(ngModel)]="defaultCategories"
+                        name="defaultCategories"
+                        aria-labelledby="start-with-label"
+                    >
+                        <mat-radio-button [value]="true">
+                            Start with default categories
+                            <span class="option-hint"
+                                >Common ones like Groceries and Rent or Mortgage, ready to change</span
+                            >
+                        </mat-radio-button>
+                        <mat-radio-button [value]="false">
+                            Start empty
+                            <span class="option-hint">Create your own, or import them from a file</span>
+                        </mat-radio-button>
+                    </mat-radio-group>
+                </div>
+
                 @if (errorMessage()) {
                     <div class="error-message">
                         {{ errorMessage() }}
@@ -58,6 +101,8 @@
                             !displayName() ||
                             !password() ||
                             !confirmPassword() ||
+                            !!usernameProblem() ||
+                            !!displayNameProblem() ||
                             !meetsPasswordRules() ||
                             submitting()
                         "

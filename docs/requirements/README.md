@@ -25,7 +25,7 @@ The drafts were refined on 2026-09-25 by walking the running app (development bu
 
 Covered: Accounts summary, Account Details and its menus, Edit Account, Add Account, Institutions (list, view, edit, delete rule), Transactions (list, filters, sorting, add form, view, delete dialog, import validation), Spending (then called Cashflow; all periods, Category/Group toggle, drill-down), Budget (screen and add dialog), Categories (screen and dialogs), the profile menu, and the handset-width navigation.
 
-Not exercised, so still as first drafted from the code: Login and Register screens (the session was already signed in and Sign out was left alone), demo mode, saving any form, confirming an import, downloading CSVs, and the API-only rules (AUTH-3.4 to AUTH-3.5, AUTH-5.1).
+Not exercised, so still as first drafted from the code: the Login screen (the session was already signed in and Sign out was left alone), demo mode, saving any form, confirming an import, downloading CSVs, and the API-only rules (AUTH-3.4 to AUTH-3.5, AUTH-5.1).
 
 ## Numbering
 

@@ -1,8 +1,11 @@
 import * as bcrypt from 'bcrypt';
 import express from 'express';
+import path from 'path';
 import request from 'supertest';
 import TestAgent from 'supertest/lib/agent';
 import { PGlite } from '@electric-sql/pglite';
+import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
+import { DefaultCategories, FinanceCategoryData, FinanceCategoryGroupData } from '@server/api';
 import { buildAuthRouter } from './auth-routes';
 import { buildAuthMiddleware } from './auth-middleware';
 import { DatabaseClient } from '@server/data';
@@ -10,7 +13,7 @@ import { UserData } from '@server/auth/user-data';
 import { TestDatabaseUtil, TestExpressUtil } from '@server/utility/testing';
 import { ApiTokenController } from './api-token-controller';
 import { ApiTokenData } from './api-token-data';
-import { AuthController } from './auth-controller';
+import { AuthController, IDefaultCategories } from './auth-controller';
 import { SecretData } from './secret-data';
 import { SESSION_COOKIE_NAME, SessionUtil } from './session';
 
@@ -19,6 +22,9 @@ describe('Auth Routes', () => {
     let dbClient: DatabaseClient;
     let pglite: PGlite;
     let userData: UserData;
+    let categoryData: FinanceCategoryData;
+    let groupData: FinanceCategoryGroupData;
+    let defaultCategories: DefaultCategories;
     const mockLogger = TestExpressUtil.createMockLogger();
     mockLogger.error.mockImplementation((...args: any[]) => {
         console.error('SERVER ERROR LOG:', ...args);
@@ -26,15 +32,13 @@ describe('Auth Routes', () => {
 
     // Builds the app the way index.ts does, with sessions stored in the database. Each call is a fresh
     // server process as far as sessions go: only the database is shared.
-    function buildApp(options: { secureCookie: boolean } = { secureCookie: false }): express.Express {
-        const controller = new AuthController(userData);
+    function buildApp(
+        options: { secureCookie?: boolean; defaultCategories?: IDefaultCategories } = {}
+    ): express.Express {
+        const secureCookie = options.secureCookie ?? false;
+        const controller = new AuthController(userData, options.defaultCategories ?? defaultCategories);
         const middleware = buildAuthMiddleware(new ApiTokenController(new ApiTokenData(dbClient)));
-        const authRoutes = buildAuthRouter(
-            mockLogger,
-            controller,
-            middleware,
-            SessionUtil.cookieOptions(options.secureCookie)
-        );
+        const authRoutes = buildAuthRouter(mockLogger, controller, middleware, SessionUtil.cookieOptions(secureCookie));
 
         const testApp = express();
         // Lets a test stand in for an HTTPS reverse proxy with X-Forwarded-Proto
@@ -43,7 +47,7 @@ describe('Auth Routes', () => {
         testApp.use(
             SessionUtil.buildMiddleware({
                 secret: 'test-secret',
-                secureCookie: options.secureCookie,
+                secureCookie,
                 store: SessionUtil.createStore(dbClient, false)
             })
         );
@@ -63,6 +67,13 @@ describe('Auth Routes', () => {
         dbClient = mockDb.dbClient;
         pglite = mockDb.pglite;
         userData = new UserData(dbClient);
+        categoryData = new FinanceCategoryData(dbClient);
+        groupData = new FinanceCategoryGroupData(dbClient);
+        defaultCategories = new DefaultCategories(
+            path.join(__dirname, '../../default-data/categories.csv'),
+            categoryData,
+            groupData
+        );
         app = buildApp();
     });
 
@@ -76,6 +87,7 @@ describe('Auth Routes', () => {
     beforeEach(async () => {
         // Clear tables before each test
         await TestDatabaseUtil.clearCoreData(pglite);
+        await TestDatabaseUtil.clearFinanceData(pglite);
         agent = request.agent(app);
     });
 
@@ -84,7 +96,8 @@ describe('Auth Routes', () => {
             const response = await agent.post('/auth/register').send({
                 username: 'newuser',
                 name: 'New User',
-                password: 'correct horse battery'
+                password: 'correct horse battery',
+                defaultCategories: false
             });
 
             if (response.status !== 200) {
@@ -118,13 +131,15 @@ describe('Auth Routes', () => {
             await agent.post('/auth/register').send({
                 username: 'firstuser',
                 name: 'First User',
-                password: 'correct horse battery'
+                password: 'correct horse battery',
+                defaultCategories: false
             });
 
             const response = await request(app).post('/auth/register').send({
                 username: 'seconduser',
                 name: 'Second User',
-                password: 'correct horse battery'
+                password: 'correct horse battery',
+                defaultCategories: false
             });
 
             expect(response.status).toBe(400);
@@ -133,13 +148,129 @@ describe('Auth Routes', () => {
             const user = await userData.retrieveByUsername('seconduser');
             expect(user).toBeNull();
         });
+
+        it('AUTH-2.7 should let only one of two simultaneous registrations through', async () => {
+            const register = (username: string) =>
+                request(app)
+                    .post('/auth/register')
+                    .send({ username, name: username, password: 'correct horse battery', defaultCategories: true });
+
+            const responses = await Promise.all([register('first'), register('second')]);
+
+            expect(responses.map(r => r.status).sort()).toEqual([200, 400]);
+            expect(responses.find(r => r.status === 400)!.body.message).toBe('Registration is closed.');
+            expect(await userData.retrieveCount()).toBe(1);
+            // The refused registration's categories were rolled back with it
+            expect(await categoryData.retrieveAll()).toHaveLength(42);
+        });
+
+        it('AUTH-2.7 AUTH-7.2 should refuse a second user at the database', async () => {
+            await TestDatabaseUtil.createTestUser(dbClient);
+
+            const second = {
+                ...(await userData.retrieveSingle('01testuser123456'))!,
+                id: 'second',
+                username: 'second'
+            };
+            await expect(userData.create(second, 'hash')).rejects.toThrow();
+        });
+
+        it('AUTH-2.9 CAT-6.2 should start with the default categories', async () => {
+            const response = await agent
+                .post('/auth/register')
+                .send({ username: 'owner', name: 'Owner', password: 'correct horse battery', defaultCategories: true });
+
+            expect(response.status).toBe(200);
+            const groups = await groupData.retrieveAll();
+            const categories = await categoryData.retrieveAll();
+            expect(groups).toHaveLength(11);
+            expect(categories).toHaveLength(42);
+
+            const food = groups.find(g => g.name === 'Food')!;
+            expect(food.type).toBe(CategoryType.Expense);
+            expect(categories.find(c => c.name === 'Groceries')).toMatchObject({
+                groupId: food.id,
+                icon: '🛒',
+                necessity: CategoryNecessity.Essential,
+                isActive: true
+            });
+            expect(categories.find(c => c.name === 'Restaurants')!.necessity).toBe(CategoryNecessity.Discretionary);
+            expect(categories.find(c => c.name === 'Paycheck')!.necessity).toBeNull();
+        });
+
+        it('AUTH-2.9 CAT-6.2 should start empty', async () => {
+            const response = await agent.post('/auth/register').send({
+                username: 'owner',
+                name: 'Owner',
+                password: 'correct horse battery',
+                defaultCategories: false
+            });
+
+            expect(response.status).toBe(200);
+            expect(await groupData.retrieveAll()).toHaveLength(0);
+            expect(await categoryData.retrieveAll()).toHaveLength(0);
+        });
+
+        it('AUTH-2.9 should save neither the user nor the categories if saving the categories fails', async () => {
+            const failing: IDefaultCategories = {
+                prepare: async () => async () => {
+                    throw new Error('Saving the categories failed.');
+                }
+            };
+            mockLogger.error.mockImplementationOnce(() => undefined);
+
+            const response = await request(buildApp({ defaultCategories: failing }))
+                .post('/auth/register')
+                .send({ username: 'owner', name: 'Owner', password: 'correct horse battery', defaultCategories: true });
+
+            expect(response.status).toBe(500);
+            expect(await userData.retrieveCount()).toBe(0);
+        });
+
+        it('AUTH-2.10 should accept a 50-character username and a 100-character display name', async () => {
+            const response = await agent.post('/auth/register').send({
+                username: 'u'.repeat(50),
+                name: 'N'.repeat(100),
+                password: 'correct horse battery',
+                defaultCategories: false
+            });
+
+            expect(response.status).toBe(200);
+        });
+
+        it.each([
+            ['an empty username', '', 'Owner'],
+            ['a 51-character username', 'u'.repeat(51), 'Owner'],
+            ['a username starting with a space', ' owner', 'Owner'],
+            ['a username ending with a space', 'owner ', 'Owner'],
+            ['a blank display name', 'owner', '   '],
+            ['a 101-character display name', 'owner', 'N'.repeat(101)]
+        ])('AUTH-2.10 should refuse %s', async (_case, username, name) => {
+            const response = await agent
+                .post('/auth/register')
+                .send({ username, name, password: 'correct horse battery', defaultCategories: false });
+
+            expect(response.status).toBe(400);
+            expect(await userData.retrieveCount()).toBe(0);
+        });
+
+        it('AUTH-2.10 should save the display name trimmed', async () => {
+            const response = await agent.post('/auth/register').send({
+                username: 'owner',
+                name: '  Owner  ',
+                password: 'correct horse battery',
+                defaultCategories: false
+            });
+
+            expect(response.body.displayName).toBe('Owner');
+        });
     });
 
     describe('Password rules', () => {
         it('AUTH-2.11 AUTH-9.4 should refuse to register with a password that breaks the rules, naming each one', async () => {
             const response = await agent
                 .post('/auth/register')
-                .send({ username: 'short', name: 'Short', password: 'short' });
+                .send({ username: 'short', name: 'Short', password: 'short', defaultCategories: false });
 
             expect(response.status).toBe(400);
             expect(response.body.code).toBe('INVALID_PASSWORD');
@@ -150,9 +281,12 @@ describe('Auth Routes', () => {
         });
 
         it('AUTH-5.3 should refuse a new password that breaks the rules, keeping the old one', async () => {
-            await agent
-                .post('/auth/register')
-                .send({ username: 'changeuser1', name: 'U', password: 'correct horse battery' });
+            await agent.post('/auth/register').send({
+                username: 'changeuser1',
+                name: 'U',
+                password: 'correct horse battery',
+                defaultCategories: false
+            });
 
             const response = await agent
                 .put('/auth/password')
@@ -197,7 +331,8 @@ describe('Auth Routes', () => {
             await agent.post('/auth/register').send({
                 username: 'firstuser',
                 name: 'First User',
-                password: 'correct horse battery'
+                password: 'correct horse battery',
+                defaultCategories: false
             });
 
             const response = await request(app).get('/auth/registration');
@@ -212,7 +347,8 @@ describe('Auth Routes', () => {
             await agent.post('/auth/register').send({
                 username: 'loginuser',
                 name: 'Login User',
-                password: 'correct horse battery'
+                password: 'correct horse battery',
+                defaultCategories: false
             });
             // We need a fresh agent to simulate an unauthenticated login attempt
             agent = request.agent(app);
@@ -261,7 +397,8 @@ describe('Auth Routes', () => {
             await agent.post('/auth/register').send({
                 username: 'pwduser',
                 name: 'Pwd User',
-                password: 'old password 1234'
+                password: 'old password 1234',
+                defaultCategories: false
             });
             // We are still logged in via agent from registration
         });
@@ -296,9 +433,12 @@ describe('Auth Routes', () => {
 
     describe('PUT /auth/profile', () => {
         beforeEach(async () => {
-            await agent
-                .post('/auth/register')
-                .send({ username: 'profileuser', name: 'Old Name', password: 'correct horse battery' });
+            await agent.post('/auth/register').send({
+                username: 'profileuser',
+                name: 'Old Name',
+                password: 'correct horse battery',
+                defaultCategories: false
+            });
         });
 
         it('SET-2.1 should change the display name, trimmed, and the session user with it', async () => {
@@ -337,7 +477,8 @@ describe('Auth Routes', () => {
             await agent.post('/auth/register').send({
                 username: 'meuser',
                 name: 'Me User',
-                password: 'correct horse battery'
+                password: 'correct horse battery',
+                defaultCategories: false
             });
 
             const response = await agent.get('/auth/me');
@@ -358,7 +499,8 @@ describe('Auth Routes', () => {
             const loginResponse = await agent.post('/auth/register').send({
                 username: 'logoutuser',
                 name: 'Logout User',
-                password: 'correct horse battery'
+                password: 'correct horse battery',
+                defaultCategories: false
             });
             expect(loginResponse.status).toBe(200);
 
@@ -375,7 +517,7 @@ describe('Auth Routes', () => {
         it('AUTH-3.8 should clear the cookie with the attributes it was set with', async () => {
             const registerResponse = await agent
                 .post('/auth/register')
-                .send({ username: 'u', name: 'U', password: 'long enough password' });
+                .send({ username: 'u', name: 'U', password: 'long enough password', defaultCategories: false });
             const logoutResponse = await agent.post('/auth/logout');
 
             const cleared = sessionCookie(logoutResponse);
@@ -393,7 +535,7 @@ describe('Auth Routes', () => {
             const registerResponse = await httpsAgent
                 .post('/auth/register')
                 .set('X-Forwarded-Proto', 'https')
-                .send({ username: 'u', name: 'U', password: 'long enough password' });
+                .send({ username: 'u', name: 'U', password: 'long enough password', defaultCategories: false });
             expect(sessionCookie(registerResponse)).toContain('; Secure');
 
             const logoutResponse = await httpsAgent.post('/auth/logout').set('X-Forwarded-Proto', 'https');
@@ -405,7 +547,7 @@ describe('Auth Routes', () => {
         it('AUTH-3.8 should set an HTTP-only, SameSite=Lax session cookie without Secure over plain HTTP', async () => {
             const response = await agent
                 .post('/auth/register')
-                .send({ username: 'u', name: 'U', password: 'long enough password' });
+                .send({ username: 'u', name: 'U', password: 'long enough password', defaultCategories: false });
 
             const cookie = sessionCookie(response);
             expect(cookie).toContain('; HttpOnly');
@@ -414,7 +556,9 @@ describe('Auth Routes', () => {
         });
 
         it('AUTH-3.2 should restart the 24 hours on every request', async () => {
-            await agent.post('/auth/register').send({ username: 'u', name: 'U', password: 'long enough password' });
+            await agent
+                .post('/auth/register')
+                .send({ username: 'u', name: 'U', password: 'long enough password', defaultCategories: false });
             const response = await agent.get('/auth/me');
 
             // The cookie is sent again with a new expiry, and the stored session is extended to match
@@ -428,9 +572,12 @@ describe('Auth Routes', () => {
         });
 
         it('AUTH-3.6 should keep the user signed in across a server restart', async () => {
-            await agent
-                .post('/auth/register')
-                .send({ username: 'restartuser', name: 'U', password: 'long enough password' });
+            await agent.post('/auth/register').send({
+                username: 'restartuser',
+                name: 'U',
+                password: 'long enough password',
+                defaultCategories: false
+            });
 
             // The same browser, now talking to a newly started server
             const restartedAgent = request.agent(buildApp());

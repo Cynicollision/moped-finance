@@ -22,13 +22,13 @@ Screens: **Login** (`/login`), **Register** (`/register`), the **Sign out** acti
 | AUTH-2.1 | The Register screen shall show **Username**, **Display Name**, **Password** and **Confirm Password** fields, a **Register** button, and a link "Login here" to the Login screen. | Implemented |
 | AUTH-2.2 | The Register button shall be disabled until all four fields are non-empty. | Implemented |
 | AUTH-2.3 | If Password and Confirm Password differ, the screen shall show "Passwords do not match." and shall not submit. | Implemented |
-| AUTH-2.4 | Usernames shall be unique. Registering an existing username shall be rejected with "Username already taken." | Implemented |
+| AUTH-2.4 | Usernames shall be unique. Registering an existing username shall be rejected with "Username already taken." | Retired: with one user per instance (AUTH-7.2), registration is open only while there's no username to clash with |
 | AUTH-2.5 | Successful registration shall sign the user in immediately and navigate the same way as AUTH-1.3. | Implemented |
 | AUTH-2.6 | Passwords shall be stored only as salted bcrypt hashes (10 rounds) and shall never be returned by any API. | Implemented |
-| AUTH-2.7 | Once a first user exists, registration shall be disabled: the API shall reject it with "Registration is closed.", the Login screen shall hide its Register link, and navigating to Register shall redirect to Login. | Implemented |
+| AUTH-2.7 | Once a first user exists, registration shall be disabled: the API shall reject it with "Registration is closed.", the Login screen shall hide its Register link, and navigating to Register shall redirect to Login. The database shall hold at most one user, so of two registrations submitted at the same moment on a fresh instance, only one succeeds. | Implemented |
 | AUTH-2.8 | The Register screen shall explain, before the user submits, that they're creating the only account for this instance, that it will own all of the instance's data, and that registration closes once it's done, so the Register screen won't be available again. | Implemented |
-| AUTH-2.9 | The Register screen shall ask whether to **Start with default categories** (selected) or **Start empty**, and registration shall set up categories accordingly (CAT-6). | Planned |
-| AUTH-2.10 | The username shall be 1 to 50 characters with no leading or trailing spaces, and the display name 1 to 100 characters. The Register screen shall flag a field that breaks these before submitting, and the server shall refuse it. | Planned |
+| AUTH-2.9 | The Register screen shall ask whether to **Start with default categories** (selected) or **Start empty**, and registration shall set up categories accordingly (CAT-6), saving them with the user or not at all. | Implemented |
+| AUTH-2.10 | The username shall be 1 to 50 characters with no leading or trailing spaces, and the display name 1 to 100 characters. The Register screen shall stop each field at its limit, flag a username with a leading or trailing space or a display name of only spaces, and keep **Register** disabled until they're fixed, and the server shall refuse them. The display name is saved without leading or trailing spaces. | Implemented |
 | AUTH-2.11 | The password shall meet the password rules (AUTH-9). | Implemented |
 
 ## AUTH-3 The user stays signed in, and only signed-in users see finance data
@@ -131,9 +131,7 @@ Personal API tokens let a script, a scheduled job, or a tool like `curl` call th
 
 ## Known gaps
 
-- **No field limits on Register (AUTH-2.10).** Register doesn't limit the username or display name beyond the column size, or check the username for spaces (AUTH-2.10); Profile already limits the display name (SET-2.1).
 - **No limit on failed sign-ins (AUTH-10).**
-- **Registration race.** AUTH-2.7 checks for an existing user before inserting, so two registrations submitted at the same moment on a fresh instance could both succeed. Low risk for a self-hosted app whose owner registers once.
 
 ## Notes
 

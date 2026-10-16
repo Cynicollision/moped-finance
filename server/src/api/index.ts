@@ -9,6 +9,8 @@ import { FinanceInstitutionData, createInstitutionRouter } from './institutions'
 import { SettingsData, createSettingsRouter } from './settings';
 import { FinanceTransactionData, createTransactionRouter } from './transactions';
 
+export { DefaultCategories, FinanceCategoryData, FinanceCategoryGroupData } from './categories';
+
 export function buildFinanceRouter(logger: IAppLogger, db: DatabaseClient, authMiddleware: AuthMiddleware): Router {
     const router = Router();
 

@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { Server } from 'http';
 import path from 'path';
-import { buildFinanceRouter } from '@server/api';
+import { buildFinanceRouter, DefaultCategories, FinanceCategoryData, FinanceCategoryGroupData } from '@server/api';
 import {
     ApiTokenController,
     ApiTokenData,
@@ -64,7 +64,14 @@ function buildApp(sessionSecret: string): express.Express {
 
     // Auth module
     const userData = new UserData(dbClient);
-    const authController = new AuthController(userData);
+    // Registration can start the instance with the default categories (CAT-6.2). Like the migrations, the file sits
+    // next to this one: server/default-data in development, dist/server/default-data in the production image.
+    const defaultCategories = new DefaultCategories(
+        path.join(__dirname, 'default-data', 'categories.csv'),
+        new FinanceCategoryData(dbClient),
+        new FinanceCategoryGroupData(dbClient)
+    );
+    const authController = new AuthController(userData, defaultCategories);
     const apiTokenController = new ApiTokenController(new ApiTokenData(dbClient));
     const authMiddleware = buildAuthMiddleware(apiTokenController);
     app.use('/auth/tokens', buildApiTokenRouter(logger, apiTokenController, authMiddleware));
