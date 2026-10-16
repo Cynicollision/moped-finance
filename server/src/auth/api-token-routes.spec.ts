@@ -14,6 +14,7 @@ import { AuthController } from './auth-controller';
 import { buildAuthMiddleware } from './auth-middleware';
 import { buildAuthRouter } from './auth-routes';
 import { SessionUtil } from './session';
+import { SignInLimiter } from './sign-in-limiter';
 import { UserData } from './user-data';
 
 describe('API Tokens', () => {
@@ -50,7 +51,8 @@ describe('API Tokens', () => {
                 logger,
                 new AuthController(new UserData(dbClient), { prepare: async () => async () => undefined }),
                 middleware,
-                SessionUtil.cookieOptions(false)
+                SessionUtil.cookieOptions(false),
+                new SignInLimiter()
             )
         );
         app.use('/api', buildFinanceRouter(logger, dbClient, middleware));

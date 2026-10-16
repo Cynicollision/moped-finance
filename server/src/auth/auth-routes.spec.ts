@@ -10,12 +10,14 @@ import { buildAuthRouter } from './auth-routes';
 import { buildAuthMiddleware } from './auth-middleware';
 import { DatabaseClient } from '@server/data';
 import { UserData } from '@server/auth/user-data';
+import { DateTimeUtil } from '@server/utility';
 import { TestDatabaseUtil, TestExpressUtil } from '@server/utility/testing';
 import { ApiTokenController } from './api-token-controller';
 import { ApiTokenData } from './api-token-data';
 import { AuthController, IDefaultCategories } from './auth-controller';
 import { SecretData } from './secret-data';
 import { SESSION_COOKIE_NAME, SessionUtil } from './session';
+import { SignInLimiter } from './sign-in-limiter';
 
 describe('Auth Routes', () => {
     let app: express.Express;
@@ -31,18 +33,31 @@ describe('Auth Routes', () => {
     });
 
     // Builds the app the way index.ts does, with sessions stored in the database. Each call is a fresh
-    // server process as far as sessions go: only the database is shared.
+    // server process as far as sessions and sign-in limits go: only the database is shared.
     function buildApp(
-        options: { secureCookie?: boolean; defaultCategories?: IDefaultCategories } = {}
+        options: {
+            secureCookie?: boolean;
+            defaultCategories?: IDefaultCategories;
+            signInLimiter?: SignInLimiter;
+            trustProxy?: boolean;
+        } = {}
     ): express.Express {
         const secureCookie = options.secureCookie ?? false;
         const controller = new AuthController(userData, options.defaultCategories ?? defaultCategories);
         const middleware = buildAuthMiddleware(new ApiTokenController(new ApiTokenData(dbClient)));
-        const authRoutes = buildAuthRouter(mockLogger, controller, middleware, SessionUtil.cookieOptions(secureCookie));
+        const authRoutes = buildAuthRouter(
+            mockLogger,
+            controller,
+            middleware,
+            SessionUtil.cookieOptions(secureCookie),
+            options.signInLimiter ?? new SignInLimiter()
+        );
 
         const testApp = express();
-        // Lets a test stand in for an HTTPS reverse proxy with X-Forwarded-Proto
-        testApp.set('trust proxy', 1);
+        // Lets a test stand in for a reverse proxy with X-Forwarded-Proto and X-Forwarded-For (TRUST_FIRST_PROXY)
+        if (options.trustProxy ?? true) {
+            testApp.set('trust proxy', 1);
+        }
         testApp.use(express.json());
         testApp.use(
             SessionUtil.buildMiddleware({
@@ -88,6 +103,8 @@ describe('Auth Routes', () => {
         // Clear tables before each test
         await TestDatabaseUtil.clearCoreData(pglite);
         await TestDatabaseUtil.clearFinanceData(pglite);
+        // A new limiter each time, so one test's failed sign-ins don't count against the next
+        app = buildApp();
         agent = request.agent(app);
     });
 
@@ -389,6 +406,124 @@ describe('Auth Routes', () => {
             });
 
             expect(response.status).toBe(400);
+        });
+    });
+
+    describe('Sign-in protection', () => {
+        const start = new Date('2026-10-16T12:00:00Z');
+        const right = { username: 'owner', password: 'correct horse battery' };
+        const wrong = { username: 'owner', password: 'wrong password' };
+
+        beforeEach(async () => {
+            DateTimeUtil.setClock(start);
+            await request(app)
+                .post('/auth/register')
+                .send({ ...right, name: 'Owner', defaultCategories: false });
+        });
+
+        afterEach(() => {
+            DateTimeUtil.resetClock();
+        });
+
+        function advanceMinutes(minutes: number): void {
+            DateTimeUtil.setClock(DateTimeUtil.addMilliseconds(DateTimeUtil.now(), minutes * 60_000));
+        }
+
+        async function failSignIns(count: number, target = app, address?: string): Promise<request.Response[]> {
+            const responses: request.Response[] = [];
+            for (let i = 0; i < count; i++) {
+                const attempt = request(target).post('/auth/login');
+                responses.push(await (address ? attempt.set('X-Forwarded-For', address) : attempt).send(wrong));
+            }
+            return responses;
+        }
+
+        it('AUTH-10.1 should refuse an address after 5 failed sign-ins, even with the right password', async () => {
+            const failures = await failSignIns(5);
+            const signIn = request.agent(app);
+            const response = await signIn.post('/auth/login').send(right);
+
+            expect(failures.map(r => r.status)).toEqual([400, 400, 400, 400, 400]);
+            expect(response.status).toBe(429);
+            expect(response.body.message).toBe('Too many failed sign-in attempts. Try again in 15 minutes.');
+            expect(response.headers['retry-after']).toBe('900');
+            expect((await signIn.get('/auth/me')).body).toEqual({});
+        });
+
+        it('AUTH-10.1 should let the address sign in again once the lockout has passed', async () => {
+            await failSignIns(5);
+
+            advanceMinutes(14.5);
+            const almost = await request(app).post('/auth/login').send(right);
+            advanceMinutes(0.5);
+            const after = await request(app).post('/auth/login').send(right);
+
+            expect(almost.status).toBe(429);
+            expect(almost.body.message).toBe('Too many failed sign-in attempts. Try again in 1 minute.');
+            expect(after.status).toBe(200);
+        });
+
+        it('AUTH-10.1 should only count failed sign-ins within the 15-minute window', async () => {
+            await failSignIns(4);
+            advanceMinutes(16);
+            await failSignIns(4);
+
+            expect((await request(app).post('/auth/login').send(right)).status).toBe(200);
+        });
+
+        it("AUTH-10.3 should start an address's count again after a successful sign-in", async () => {
+            await failSignIns(4);
+            expect((await request(app).post('/auth/login').send(right)).status).toBe(200);
+            await failSignIns(4);
+
+            expect((await request(app).post('/auth/login').send(right)).status).toBe(200);
+        });
+
+        it('AUTH-10.5 should log the lockout with the address, without the username or password', async () => {
+            mockLogger.warn.mockClear();
+
+            await failSignIns(5, app, '10.0.0.7');
+
+            const messages = mockLogger.warn.mock.calls.map(call => String(call[1]));
+            const lockouts = mockLogger.warn.mock.calls.filter(call =>
+                String(call[1]).startsWith('Sign-in locked out')
+            );
+            expect(lockouts).toHaveLength(1);
+            expect(lockouts[0][0]).toBe('');
+            expect(lockouts[0][1]).toBe('Sign-in locked out for 10.0.0.7 for 15 minutes after 5 failed attempts.');
+            // No warning logged along the way names the username or password tried
+            expect(messages.filter(m => m.includes('owner') || m.includes('wrong password'))).toEqual([]);
+        });
+
+        it("AUTH-10.6 should count each client's address behind a trusted proxy", async () => {
+            await failSignIns(5, app, '10.0.0.1');
+
+            const lockedOut = await request(app).post('/auth/login').set('X-Forwarded-For', '10.0.0.1').send(right);
+            const other = await request(app).post('/auth/login').set('X-Forwarded-For', '10.0.0.2').send(right);
+
+            expect(lockedOut.status).toBe(429);
+            expect(other.status).toBe(200);
+        });
+
+        it('AUTH-10.6 should ignore X-Forwarded-For without a trusted proxy, so changing it gets around nothing', async () => {
+            const direct = buildApp({ trustProxy: false });
+            await failSignIns(5, direct, '10.0.0.1');
+
+            const response = await request(direct).post('/auth/login').set('X-Forwarded-For', '10.0.0.2').send(right);
+
+            expect(response.status).toBe(429);
+        });
+
+        it('AUTH-10.7 should use the limits it is given', async () => {
+            const strict = buildApp({
+                signInLimiter: new SignInLimiter({ maxFailedAttempts: 3, windowMinutes: 5, lockoutMinutes: 30 })
+            });
+            await failSignIns(3, strict);
+
+            const response = await request(strict).post('/auth/login').send(right);
+
+            expect(response.status).toBe(429);
+            expect(response.body.message).toBe('Too many failed sign-in attempts. Try again in 30 minutes.');
         });
     });
 

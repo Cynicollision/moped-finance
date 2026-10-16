@@ -6,5 +6,6 @@ export { AuthMiddleware, buildAuthMiddleware } from './auth-middleware';
 export { buildAuthRouter } from './auth-routes';
 export { SecretData } from './secret-data';
 export { SESSION_COOKIE_NAME, SessionConfig, SessionUtil } from './session';
+export { SignInLimiter, SignInLimits } from './sign-in-limiter';
 export { UserContext } from './user-context';
 export { UserData } from './user-data';

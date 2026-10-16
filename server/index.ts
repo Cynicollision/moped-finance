@@ -11,6 +11,8 @@ import {
     AuthController,
     SecretData,
     SessionUtil,
+    SignInLimiter,
+    SignInLimits,
     UserData
 } from '@server/auth';
 import { DatabaseClient, DatabaseClientConfig } from '@server/data';
@@ -35,7 +37,7 @@ const logger = AppLogger.fromEnvironment(dbClient);
 
 let isShuttingDown = false;
 
-function buildApp(sessionSecret: string): express.Express {
+function buildApp(sessionSecret: string, signInLimits: SignInLimits): express.Express {
     const app = express();
 
     if (process.env.TRUST_FIRST_PROXY === 'true') {
@@ -75,7 +77,16 @@ function buildApp(sessionSecret: string): express.Express {
     const apiTokenController = new ApiTokenController(new ApiTokenData(dbClient));
     const authMiddleware = buildAuthMiddleware(apiTokenController);
     app.use('/auth/tokens', buildApiTokenRouter(logger, apiTokenController, authMiddleware));
-    app.use('/auth', buildAuthRouter(logger, authController, authMiddleware, SessionUtil.cookieOptions(useHttps)));
+    app.use(
+        '/auth',
+        buildAuthRouter(
+            logger,
+            authController,
+            authMiddleware,
+            SessionUtil.cookieOptions(useHttps),
+            new SignInLimiter(signInLimits)
+        )
+    );
 
     // API module
     const apiRouter = buildFinanceRouter(logger, dbClient, authMiddleware);
@@ -104,6 +115,16 @@ let server: Server | undefined;
 // If migrating fails (including when the database isn't reachable yet), exit and let Docker's restart
 // policy try again.
 async function start(): Promise<void> {
+    // The sign-in limits from the environment (AUTH-10.7). A value out of range stops the server from starting.
+    let signInLimits: SignInLimits;
+    try {
+        signInLimits = SignInLimiter.limitsFromEnvironment(process.env);
+    } catch (error) {
+        console.error(errorMessage(error));
+        await dbClient.close().catch(() => undefined);
+        process.exit(1);
+    }
+
     try {
         await dbClient.migrate(path.join(__dirname, 'migrations'));
     } catch (error) {
@@ -134,7 +155,7 @@ async function start(): Promise<void> {
         }
     }
 
-    server = buildApp(sessionSecret).listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    server = buildApp(sessionSecret, signInLimits).listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
 function errorMessage(error: unknown): string {
