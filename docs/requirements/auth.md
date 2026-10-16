@@ -2,7 +2,7 @@
 
 Moped Finance is a single-user app: one person keeps their finances in it, behind a login. Each instance has one owner (AUTH-7), so finance data isn't partitioned by user; the login only decides whether you get in.
 
-Screens: **Login** (`/login`), **Register** (`/register`), the **Sign out** action in the profile menu, and sections of **Settings** (`/settings`, SET-1.1): **Change Password** and **API Tokens**.
+Screens: **Login** (`/login`, with **Forgot password?**), **Register** (`/register`), the **Sign out** action in the profile menu, and sections of **Settings** (`/settings`, SET-1.1): **Change Password** and **API Tokens**.
 
 ## AUTH-1 The user can sign in to reach their finances
 
@@ -56,7 +56,7 @@ Screens: **Login** (`/login`), **Register** (`/register`), the **Sign out** acti
 |---|---|---|
 | AUTH-5.1 | The API shall let a signed-in user change their password by supplying the current password and a new one. A wrong current password shall be rejected with "Invalid old password." | Implemented |
 | AUTH-5.2 | Settings shall have a **Change Password** section with **Current Password**, **New Password** and **Confirm New Password**. **Change Password** stays disabled until all three are filled, the new passwords match and the new one meets the rules (AUTH-9.4); mismatched new passwords show "Passwords do not match." | Implemented |
-| AUTH-5.3 | The new password shall meet the password rules (AUTH-9). On success the screen shall say "Password changed.", clear the fields, and keep the user signed in. | Implemented |
+| AUTH-5.3 | The new password shall meet the password rules (AUTH-9). On success the screen shall say "Password changed.", clear the fields, and keep this browser signed in, and every other session shall be signed out. The section shall say so before the user changes it: "Changing your password signs out your other devices." | Implemented |
 
 ## AUTH-6 A user can only see and change their own data
 
@@ -127,7 +127,19 @@ Personal API tokens let a script, a scheduled job, or a tool like `curl` call th
 | AUTH-11.8 | A **Read-only** token shall be allowed only `GET` requests. Any other method shall get 403 "This API token is read-only." | Implemented |
 | AUTH-11.9 | Tokens shall not work on the sign-in, registration, password and token endpoints (`/auth`): there they're ignored, so only a browser session can manage the account and its tokens. | Implemented |
 | AUTH-11.10 | **Last used** shall be updated when a token is used successfully, accurate to the minute. | Implemented |
-| AUTH-11.11 | Changing the password shall not affect tokens. Each stays valid until it's revoked or expires. | Implemented |
+| AUTH-11.11 | Changing or resetting the password (AUTH-5, AUTH-12) shall not affect tokens. Each stays valid until it's revoked or expires. | Implemented |
+
+## AUTH-12 The owner can get back in after forgetting the password
+
+There's no email and no recovery key. Whoever can run commands on the host already controls the instance and its data, so the reset is a command run there, as in other self-hosted apps (decided 2026-10-16, over a recovery key in `.env` or recovery codes shown at registration).
+
+| ID | Requirement | Status |
+|---|---|---|
+| AUTH-12.1 | The Login screen shall have a **Forgot password?** link that shows how to reset the password: run `docker exec -it moped-finance-api npm run reset-password` on the host (AUTH-12.2). It shall also say that restarting the app (`docker restart moped-finance-api`) ends a sign-in lockout (AUTH-10). | Implemented |
+| AUTH-12.2 | The `reset-password` command shall show the instance's username and display name, ask for a **New password** and **Confirm new password** without showing what's typed, and save it. With no user yet, it shall say that registration is still open and change nothing. | Implemented |
+| AUTH-12.3 | The new password shall meet the password rules (AUTH-9). One that breaks them, or doesn't match its confirmation, shall be refused with the reason and asked for again. Ctrl+C cancels without changing anything. | Implemented |
+| AUTH-12.4 | Resetting the password shall sign out every session. API tokens keep working (AUTH-11.11). | Implemented |
+| AUTH-12.5 | Without a terminal (input piped in), the command shall read the new password and its confirmation from the first two lines, so it can be scripted; a refused password then ends the command with an error instead of asking again. | Implemented |
 
 ## Notes
 

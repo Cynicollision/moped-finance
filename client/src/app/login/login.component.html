@@ -33,6 +33,28 @@
                 </div>
             </form>
 
+            <!-- AUTH-12.1 -->
+            <div class="forgot-password">
+                <button
+                    mat-button
+                    type="button"
+                    aria-controls="forgot-password-help"
+                    [attr.aria-expanded]="showForgotPassword()"
+                    (click)="showForgotPassword.set(!showForgotPassword())"
+                >
+                    Forgot password?
+                </button>
+                @if (showForgotPassword()) {
+                    <div id="forgot-password-help" class="forgot-password-help">
+                        <p>Set a new password by running this on the server that hosts Moped Finance:</p>
+                        <code>docker exec -it moped-finance-api npm run reset-password</code>
+                        <p>It signs out every device.</p>
+                        <p>Refused for too many failed sign-ins? Restarting the app ends that right away:</p>
+                        <code>docker restart moped-finance-api</code>
+                    </div>
+                }
+            </div>
+
             @if (registrationOpen()) {
                 <div class="register-prompt">Don't have an account? <a routerLink="/register">Register here</a></div>
             }

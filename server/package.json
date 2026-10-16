@@ -6,6 +6,8 @@
         "build": "tsc && tsc-alias",
         "build:prod": "tsc --project tsconfig.prod.json && tsc-alias --project tsconfig.prod.json",
         "dev": "nodemon --legacy-watch",
+        "reset-password": "node dist/server/reset-password.js",
+        "reset-password:dev": "ts-node --files -r tsconfig-paths/register -r dotenv/config reset-password.ts dotenv_config_path=../.env",
         "db:generate": "drizzle-kit generate",
         "db:migrate": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/migrate-db.ts dotenv_config_path=../.env",
         "db:drop": "ts-node -r dotenv/config scripts/drop-db.ts dotenv_config_path=../.env",

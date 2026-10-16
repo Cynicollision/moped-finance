@@ -1,10 +1,10 @@
-import * as bcrypt from 'bcrypt';
 import { RegistrationStatus } from '@shared/core/contracts';
 import { User } from '@shared/core/types';
 import { PasswordRules } from '@shared/core/util';
 import { CoreEntityIdPrefix, DbTransaction, EntityId } from '@server/data';
 import { OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
+import { PasswordHash } from './password-hash';
 import { IUserData } from './user-data';
 
 /** The default categories (CAT-6.2): `prepare` returns the step that saves them in the registration's transaction. */
@@ -13,8 +13,6 @@ export interface IDefaultCategories {
 }
 
 export class AuthController {
-    private readonly saltRounds = 10;
-
     constructor(
         private userData: IUserData,
         private defaultCategories: IDefaultCategories
@@ -30,7 +28,7 @@ export class AuthController {
             return Result.userError('Invalid username or password.');
         }
 
-        const match = await bcrypt.compare(password, userWithPassword.passwordHash);
+        const match = await PasswordHash.matches(password, userWithPassword.passwordHash);
         if (match) {
             // Strip passwordHash before returning
             const { passwordHash, ...user } = userWithPassword;
@@ -61,7 +59,7 @@ export class AuthController {
             return Result.userError(passwordProblems.join(' '), 'INVALID_PASSWORD');
         }
 
-        const hash = await bcrypt.hash(password, this.saltRounds);
+        const hash = await PasswordHash.create(password);
 
         const newUser: User = {
             id: EntityId.generate(CoreEntityIdPrefix.User),
@@ -76,7 +74,13 @@ export class AuthController {
         return Result.success(await this.userData.create(newUser, hash, setUp));
     }
 
-    async changePassword(userId: string, oldPassword?: string, newPassword?: string): Promise<OperationResult<void>> {
+    /** Changes the password and signs out every session but `currentSessionId`, the one asking (AUTH-5.3). */
+    async changePassword(
+        userId: string,
+        currentSessionId: string,
+        oldPassword?: string,
+        newPassword?: string
+    ): Promise<OperationResult<void>> {
         if (!oldPassword || !newPassword) {
             return Result.userError('Old and new passwords are required.');
         }
@@ -91,7 +95,7 @@ export class AuthController {
             return Result.userError('User not found.');
         }
 
-        const match = await bcrypt.compare(oldPassword, userWithPassword.passwordHash);
+        const match = await PasswordHash.matches(oldPassword, userWithPassword.passwordHash);
         if (!match) {
             return Result.userError('Invalid old password.');
         }
@@ -101,8 +105,8 @@ export class AuthController {
             return Result.userError(passwordProblems.join(' '), 'INVALID_PASSWORD');
         }
 
-        const newHash = await bcrypt.hash(newPassword, this.saltRounds);
-        await this.userData.updatePassword(userId, newHash);
+        const newHash = await PasswordHash.create(newPassword);
+        await this.userData.updatePassword(userId, newHash, currentSessionId);
         return Result.success();
     }
 

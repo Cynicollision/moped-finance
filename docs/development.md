@@ -44,6 +44,7 @@ Run these inside the API container (`docker compose exec api npm run <script>`),
 | `db:seed` | Adds the `SEED_USER_*` user and the synthetic sample data in `server/seed-data/` (about two years up to the debug "today"). `db:seed:core` and `db:seed:finance` do one part; `db:seed:finance` needs an empty finance schema |
 | `db:drop` | Drops the `core`, `finance` and `drizzle` schemas: **all data** and the migration history |
 | `db:reset` | `drop`, then `migrate`, then `seed` |
+| `reset-password:dev` | Sets a new password for the instance's user, signing out every session (AUTH-12). Run it with `docker compose exec -it api npm run reset-password:dev` so it can ask for the password. The production image runs the compiled `reset-password` instead |
 
 A database created before migrations existed (by the old `db:init`) can't be migrated, since its tables already exist; run `db:reset` once.
 

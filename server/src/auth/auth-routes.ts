@@ -115,7 +115,7 @@ export function buildAuthRouter(
             const { oldPassword, newPassword } = body;
 
             const userId = context.user.getId();
-            return await controller.changePassword(userId, oldPassword, newPassword);
+            return await controller.changePassword(userId, context.req.sessionID, oldPassword, newPassword);
         });
     });
 

@@ -4,6 +4,7 @@ export { buildApiTokenRouter } from './api-token-routes';
 export { AuthController } from './auth-controller';
 export { AuthMiddleware, buildAuthMiddleware } from './auth-middleware';
 export { buildAuthRouter } from './auth-routes';
+export { PasswordReset } from './password-reset';
 export { SecretData } from './secret-data';
 export { SESSION_COOKIE_NAME, SessionConfig, SessionUtil } from './session';
 export { SignInLimiter, SignInLimits } from './sign-in-limiter';

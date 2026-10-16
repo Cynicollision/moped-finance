@@ -55,6 +55,14 @@ describe('ChangePasswordComponent', () => {
         expect(button.textContent!.trim()).toBe('Change Password');
     });
 
+    it('AUTH-5.3 should say that changing the password signs out the other devices', async () => {
+        const { element } = await render();
+
+        expect(element.querySelector('.section-description')!.textContent).toBe(
+            'Changing your password signs out your other devices.'
+        );
+    });
+
     it('AUTH-5.2 should keep Change Password disabled until all three are filled', async () => {
         const { button, fill } = await render();
 

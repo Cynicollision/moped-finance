@@ -31,6 +31,31 @@ mat-card {
     min-width: 300px;
 }
 
+.forgot-password {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.forgot-password-help {
+    margin-top: 0.5rem;
+    text-align: left;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+
+    p {
+        margin: 0.75rem 0 0.25rem;
+    }
+
+    code {
+        display: block;
+        padding: 0.5rem;
+        border-radius: 4px;
+        background-color: var(--mat-sys-surface-container-highest);
+        color: var(--text-main);
+        overflow-wrap: anywhere;
+    }
+}
+
 .register-prompt {
     margin-top: 1.5rem;
     text-align: center;

@@ -1,9 +1,10 @@
-import { count, eq, sql } from 'drizzle-orm';
+import { count, eq, ne, sql } from 'drizzle-orm';
 import { varchar, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { User } from '@shared/core/types/user';
 import { coreSchema, DbTransaction, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
+import { sessionSchema } from './session-data';
 
 export const userSchema = coreSchema.table(
     'users',
@@ -31,7 +32,13 @@ export interface IUserData {
     create(user: User, passwordHash: string, setUp?: (tx: DbTransaction) => Promise<void>): Promise<User>;
     retrieveSingle(id: string): Promise<User | null>;
     retrieveByUsername(username: string): Promise<UserWithPassword | null>;
-    updatePassword(id: string, passwordHash: string): Promise<void>;
+    /** The instance's one user (AUTH-7.2), or null if there's none yet. */
+    retrieveOwner(): Promise<User | null>;
+    /**
+     * Saves a new password hash and signs out every session except `keepSessionId` (every session when it's left out),
+     * together or not at all (AUTH-5.3, AUTH-12.4).
+     */
+    updatePassword(id: string, passwordHash: string, keepSessionId?: string): Promise<void>;
     /** The updated user, or null if there's no user with that ID. */
     updateDisplayName(id: string, displayName: string): Promise<User | null>;
     retrieveCount(): Promise<number>;
@@ -104,19 +111,39 @@ export class UserData implements IUserData {
         return null;
     }
 
-    public async updatePassword(id: string, passwordHash: string): Promise<void> {
+    public async retrieveOwner(): Promise<User | null> {
         const rows = await this.db
-            .update(userSchema)
-            .set({
-                passwordHash: passwordHash,
-                updatedAt: DateTimeUtil.now()
+            .select({
+                id: userSchema.id,
+                createdAt: userSchema.createdAt,
+                updatedAt: userSchema.updatedAt,
+                username: userSchema.username,
+                displayName: userSchema.displayName
             })
-            .where(eq(userSchema.id, id))
-            .returning({ id: userSchema.id });
+            .from(userSchema)
+            .limit(1);
 
-        if (rows.length === 0) {
-            throw new Error('User not found.');
-        }
+        return rows.length > 0 ? (rows[0] as User) : null;
+    }
+
+    public async updatePassword(id: string, passwordHash: string, keepSessionId?: string): Promise<void> {
+        await this.db.transaction(async tx => {
+            const rows = await tx
+                .update(userSchema)
+                .set({
+                    passwordHash: passwordHash,
+                    updatedAt: DateTimeUtil.now()
+                })
+                .where(eq(userSchema.id, id))
+                .returning({ id: userSchema.id });
+
+            if (rows.length === 0) {
+                throw new Error('User not found.');
+            }
+
+            // One user per instance, so every session is theirs
+            await tx.delete(sessionSchema).where(keepSessionId ? ne(sessionSchema.sid, keepSessionId) : undefined);
+        });
     }
 
     public async updateDisplayName(id: string, displayName: string): Promise<User | null> {
