@@ -2,15 +2,23 @@ import * as bcrypt from 'bcrypt';
 import { RegistrationStatus } from '@shared/core/contracts';
 import { User } from '@shared/core/types';
 import { PasswordRules } from '@shared/core/util';
-import { CoreEntityIdPrefix, EntityId } from '@server/data';
+import { CoreEntityIdPrefix, DbTransaction, EntityId } from '@server/data';
 import { OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IUserData } from './user-data';
 
+/** The default categories (CAT-6.2): `prepare` returns the step that saves them in the registration's transaction. */
+export interface IDefaultCategories {
+    prepare(): Promise<(tx: DbTransaction) => Promise<void>>;
+}
+
 export class AuthController {
     private readonly saltRounds = 10;
 
-    constructor(private userData: IUserData) {}
+    constructor(
+        private userData: IUserData,
+        private defaultCategories: IDefaultCategories
+    ) {}
 
     async loginUser(username: string, password?: string): Promise<OperationResult<User>> {
         if (!password) {
@@ -36,15 +44,16 @@ export class AuthController {
         return Result.success({ isOpen: await this.isRegistrationOpen() });
     }
 
-    async createUser(username: string, name: string, password: string): Promise<OperationResult<User>> {
-        // Single-user app: only the first user can register (AUTH-2.7).
+    async createUser(
+        username: string,
+        name: string,
+        password: string,
+        defaultCategories: boolean
+    ): Promise<OperationResult<User>> {
+        // Single-user app: only the first user can register (AUTH-2.7). Two registrations that both get past this
+        // check can't both save: users_single_user_idx allows one row, so the second is refused with the same message.
         if (!(await this.isRegistrationOpen())) {
             return Result.userError('Registration is closed.', 'REGISTRATION_CLOSED');
-        }
-
-        const existingUser = await this.userData.retrieveByUsername(username);
-        if (existingUser) {
-            return Result.userError('Username already taken.');
         }
 
         const passwordProblems = PasswordRules.problems(password, username);
@@ -62,7 +71,9 @@ export class AuthController {
             displayName: name
         };
 
-        return Result.success(await this.userData.create(newUser, hash));
+        // The categories are saved with the user, or neither is (AUTH-2.9, CAT-6.2).
+        const setUp = defaultCategories ? await this.defaultCategories.prepare() : undefined;
+        return Result.success(await this.userData.create(newUser, hash, setUp));
     }
 
     async changePassword(userId: string, oldPassword?: string, newPassword?: string): Promise<OperationResult<void>> {

@@ -2,7 +2,7 @@ import { eq, and, count, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CategoryNecessity } from '@shared/finance/enum';
 import { Category, CategoryGroup, CategoryUsage } from '@shared/finance/types';
-import { IDatabaseClient } from '@server/data';
+import { DbTransaction, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { budgetStreamSchema } from './../budget/budget-stream-schema';
 import { transactionSchema } from './../transactions/transaction-schema';
@@ -34,6 +34,34 @@ function mapRowToCategory(row: typeof categorySchema.$inferSelect): Category {
         isActive: row.isActive,
         necessity: row.necessity as CategoryNecessity | null
     };
+}
+
+/**
+ * Inserts new groups and the categories in them inside the caller's transaction, in chunks. Groups go first, for the
+ * categories' foreign key. Registration uses it to save the default categories with the new user (CAT-6.2).
+ */
+export async function insertGroupsAndCategories(
+    tx: DbTransaction,
+    categories: Category[],
+    groups: CategoryGroup[]
+): Promise<void> {
+    for (let i = 0; i < groups.length; i += bulkInsertChunkSize) {
+        const chunk = groups.slice(i, i + bulkInsertChunkSize);
+        await tx.insert(categoryGroupSchema).values(chunk.map(g => ({ id: g.id, type: g.type, name: g.name })));
+    }
+    for (let i = 0; i < categories.length; i += bulkInsertChunkSize) {
+        const chunk = categories.slice(i, i + bulkInsertChunkSize);
+        await tx.insert(categorySchema).values(
+            chunk.map(c => ({
+                id: c.id,
+                groupId: c.groupId,
+                icon: c.icon || null,
+                name: c.name,
+                isActive: c.isActive,
+                necessity: c.necessity
+            }))
+        );
+    }
 }
 
 export class FinanceCategoryData implements IFinanceCategoryData {
@@ -117,26 +145,8 @@ export class FinanceCategoryData implements IFinanceCategoryData {
     }
 
     public async insertBulk(categories: Category[], groups: CategoryGroup[]): Promise<void> {
-        // One transaction, so a failure in any chunk rolls back the rest. Groups go first, for the categories' foreign key.
-        await this.db.transaction(async tx => {
-            for (let i = 0; i < groups.length; i += bulkInsertChunkSize) {
-                const chunk = groups.slice(i, i + bulkInsertChunkSize);
-                await tx.insert(categoryGroupSchema).values(chunk.map(g => ({ id: g.id, type: g.type, name: g.name })));
-            }
-            for (let i = 0; i < categories.length; i += bulkInsertChunkSize) {
-                const chunk = categories.slice(i, i + bulkInsertChunkSize);
-                await tx.insert(categorySchema).values(
-                    chunk.map(c => ({
-                        id: c.id,
-                        groupId: c.groupId,
-                        icon: c.icon || null,
-                        name: c.name,
-                        isActive: c.isActive,
-                        necessity: c.necessity
-                    }))
-                );
-            }
-        });
+        // One transaction, so a failure in any chunk rolls back the rest.
+        await this.db.transaction(tx => insertGroupsAndCategories(tx, categories, groups));
     }
 
     public async update(category: Category): Promise<Category | null> {

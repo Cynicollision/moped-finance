@@ -6,8 +6,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { MatRadioModule } from '@angular/material/radio';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-import { PasswordRules } from '@shared/core/util';
+import { DISPLAY_NAME_MAX_LENGTH, PasswordRules, USERNAME_MAX_LENGTH } from '@shared/core/util';
 import { AuthService } from './../core/auth.service';
 import { PasswordRulesComponent } from './../core/password/password-rules.component';
 
@@ -22,6 +23,7 @@ import { PasswordRulesComponent } from './../core/password/password-rules.compon
         MatButtonModule,
         MatProgressSpinnerModule,
         MatIconModule,
+        MatRadioModule,
         RouterLink,
         PasswordRulesComponent
     ],
@@ -36,8 +38,29 @@ export class RegisterComponent {
     readonly displayName = signal('');
     readonly password = signal('');
     readonly confirmPassword = signal('');
+    /** Start with the default categories, or with none (AUTH-2.9, CAT-6.1). */
+    readonly defaultCategories = signal(true);
     readonly errorMessage = signal('');
     readonly submitting = signal(false);
+
+    readonly usernameMaxLength = USERNAME_MAX_LENGTH;
+    readonly displayNameMaxLength = DISPLAY_NAME_MAX_LENGTH;
+
+    // The field limits (AUTH-2.10), flagged under each field. Blank fields only keep Register disabled (AUTH-2.2).
+    readonly usernameProblem = computed(() => {
+        const username = this.username();
+        if (username.length > USERNAME_MAX_LENGTH) {
+            return `Username can't be longer than ${USERNAME_MAX_LENGTH} characters`;
+        }
+        return username.trim() !== username ? "Username can't start or end with a space" : '';
+    });
+    readonly displayNameProblem = computed(() => {
+        const displayName = this.displayName();
+        if (displayName.length > DISPLAY_NAME_MAX_LENGTH) {
+            return `Display name can't be longer than ${DISPLAY_NAME_MAX_LENGTH} characters`;
+        }
+        return displayName && !displayName.trim() ? 'Display name is required' : '';
+    });
 
     // The password rules, checked as the user types (AUTH-2.11, AUTH-9.4)
     readonly meetsPasswordRules = computed(() => PasswordRules.problems(this.password(), this.username()).length === 0);
@@ -47,6 +70,10 @@ export class RegisterComponent {
 
         if (!this.username() || !this.displayName() || !this.password()) {
             this.errorMessage.set('All fields are required.');
+            return;
+        }
+
+        if (this.usernameProblem() || this.displayNameProblem()) {
             return;
         }
 
@@ -63,7 +90,15 @@ export class RegisterComponent {
         this.submitting.set(true);
         try {
             const returnUrl = this.route.snapshot.queryParams['returnUrl'];
-            await this.authService.register(this.username(), this.displayName(), this.password(), returnUrl);
+            await this.authService.register(
+                {
+                    username: this.username(),
+                    name: this.displayName(),
+                    password: this.password(),
+                    defaultCategories: this.defaultCategories()
+                },
+                returnUrl
+            );
         } catch (error) {
             // API service handles showing notifications, but we can set local error if needed.
             this.errorMessage.set(error instanceof Error ? error.message : 'An error occurred during registration.');

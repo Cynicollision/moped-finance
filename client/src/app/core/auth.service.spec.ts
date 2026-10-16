@@ -82,12 +82,13 @@ describe('AuthService', () => {
         expect(notificationService.error).toHaveBeenCalledWith('Invalid username or password.');
     });
 
-    it('AUTH-2.5 should sign in straight after registering, sending the display name as name', async () => {
+    it('AUTH-2.5 should sign in straight after registering', async () => {
         const { auth, http, navigate } = setup();
+        const body = { username: 'owner', name: 'Owner', password: 'secret', defaultCategories: true };
 
-        const register = auth.register('owner', 'Owner', 'secret', '/budget');
+        const register = auth.register(body, '/budget');
         const request = http.expectOne('/auth/register');
-        expect(request.request.body).toEqual({ username: 'owner', name: 'Owner', password: 'secret' });
+        expect(request.request.body).toEqual(body);
         request.flush(user);
         await register;
 

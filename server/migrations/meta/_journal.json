@@ -113,6 +113,13 @@
       "when": 1792100120624,
       "tag": "0015_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792148914062,
+      "tag": "0016_single_user",
+      "breakpoints": true
     }
   ]
 }

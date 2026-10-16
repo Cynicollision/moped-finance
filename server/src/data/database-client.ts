@@ -4,6 +4,9 @@ import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { DateTimeUtil } from '@server/utility';
 
+/** The `tx` a `transaction(async tx => ...)` callback receives, for helpers that write inside one. */
+export type DbTransaction = Parameters<Parameters<NodePgDatabase['transaction']>[0]>[0];
+
 export interface IDatabaseClient {
     drizzle: NodePgDatabase;
 }

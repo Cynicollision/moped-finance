@@ -22,6 +22,28 @@ mat-card-header {
     }
 }
 
+.start-with {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+
+    mat-radio-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .option-hint {
+        display: block;
+        font: var(--mat-sys-body-small);
+        color: var(--text-muted);
+    }
+}
+
+.start-with-label {
+    font: var(--mat-sys-title-small);
+}
+
 .error-message {
     color: var(--color-negative);
     font-size: 0.875rem;

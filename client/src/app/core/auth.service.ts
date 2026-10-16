@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { RegistrationStatus, UpdateProfileRequest } from '@shared/core/contracts';
+import { RegisterRequest, RegistrationStatus, UpdateProfileRequest } from '@shared/core/contracts';
 import { User } from '@shared/core/types/user';
 import { ApiService } from './api.service';
 
@@ -39,9 +39,8 @@ export class AuthService {
         return result !== undefined;
     }
 
-    async register(username: string, displayName: string, password?: string, returnUrl?: string): Promise<void> {
-        const payload = { username, name: displayName, password };
-        const response = await this.api.post<User>('auth/register', payload);
+    async register(request: RegisterRequest, returnUrl?: string): Promise<void> {
+        const response = await this.api.post<User>('auth/register', request);
 
         if (response) {
             this.currentUser.set(response);

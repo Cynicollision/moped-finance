@@ -48,7 +48,7 @@ describe('API Tokens', () => {
             '/auth',
             buildAuthRouter(
                 logger,
-                new AuthController(new UserData(dbClient)),
+                new AuthController(new UserData(dbClient), { prepare: async () => async () => undefined }),
                 middleware,
                 SessionUtil.cookieOptions(false)
             )
@@ -66,7 +66,7 @@ describe('API Tokens', () => {
         agent = request.agent(app);
         await agent
             .post('/auth/register')
-            .send({ username: 'owner', name: 'Owner', password: 'correct horse battery' });
+            .send({ username: 'owner', name: 'Owner', password: 'correct horse battery', defaultCategories: false });
     });
 
     async function createToken(body: object = readWrite): Promise<string> {

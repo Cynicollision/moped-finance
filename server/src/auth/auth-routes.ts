@@ -1,5 +1,6 @@
 import { CookieOptions, Router } from 'express';
 import { z } from 'zod';
+import { DISPLAY_NAME_MAX_LENGTH, USERNAME_MAX_LENGTH } from '@shared/core/util';
 import { IAppLogger } from '@server/logging';
 import { OperationDefinition, OperationHandler, OperationResult, Result } from '@server/routing';
 import { AuthController } from './auth-controller';
@@ -46,19 +47,24 @@ export function buildAuthRouter(
         });
     });
 
-    // POST /register - Register user
+    // POST /register - Register user. Username and display name limits: AUTH-2.10
     const registerSchema = z.object({
-        username: z.string().min(1),
-        name: z.string().min(1),
-        password: z.string().min(1)
+        username: z
+            .string()
+            .min(1)
+            .max(USERNAME_MAX_LENGTH)
+            .refine(username => username.trim() === username, "Username can't start or end with a space."),
+        name: z.string().trim().min(1).max(DISPLAY_NAME_MAX_LENGTH),
+        password: z.string().min(1),
+        defaultCategories: z.boolean()
     });
 
     router.post('/register', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'register' };
         handler.execute(req, res, op, { body: registerSchema }, async (context, { body }) => {
-            const { username, name, password } = body;
+            const { username, name, password, defaultCategories } = body;
 
-            const result = await controller.createUser(username, name, password);
+            const result = await controller.createUser(username, name, password, defaultCategories);
             if (!result.success || !result.data) {
                 return result;
             }
@@ -87,7 +93,7 @@ export function buildAuthRouter(
 
     // PUT /profile - Update Profile (SET-2.1): the display name; the username can't be changed
     const profileSchema = z.object({
-        displayName: z.string().trim().min(1).max(100)
+        displayName: z.string().trim().min(1).max(DISPLAY_NAME_MAX_LENGTH)
     });
 
     router.put('/profile', middleware.requireSession, (req, res) => {

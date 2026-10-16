@@ -73,8 +73,8 @@ A category the user has stopped using can be made **inactive**, which keeps it o
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-6.1 | The Register screen shall ask how to start: **Start with default categories** (selected) or **Start empty**. See AUTH-2.9. | Planned |
-| CAT-6.2 | **Start with default categories** shall create the groups and categories listed below when registration completes. **Start empty** shall create none. | Planned |
+| CAT-6.1 | The Register screen shall ask how to start: **Start with default categories** (selected) or **Start empty**. See AUTH-2.9. | Implemented |
+| CAT-6.2 | **Start with default categories** shall create the groups and categories listed below when registration completes. **Start empty** shall create none. | Implemented |
 
 Default categories (E = Essential, D = Discretionary):
 
@@ -126,10 +126,9 @@ Default categories (E = Essential, D = Discretionary):
 ## Known gaps
 
 - **No automatic categorization (CAT-8, CAT-9).** Every transaction's category is chosen by hand or given in the import file.
-- **New users start empty (CAT-6).** The user builds every group and category by hand or imports them (CAT-7); until then, every transaction is Uncategorized.
 
 ## Notes
 
 - The emoji picker is emoji-picker-element, which shows the device's own emoji (no images) and hides emoji the device can't display. Its data (`client/public/emoji/data.json`) is served by the app, which makes no third-party requests. It's generated from emoji-picker-element-data by `npm run emoji-data` in `client/`, which leaves out the Flags group: Chrome and Edge on Windows have no flag emoji and show each flag as two letters. The picker always shows a tab per group, so the field hides the empty Flags tab.
-- The defaults (CAT-6.2) would be simplest to ship as a CSV in the CAT-7.1 format, loaded through the category import, so the list and the format can't drift apart.
+- The defaults (CAT-6.2) are a CSV in the CAT-7.1 format, `server/default-data/categories.csv`, read by the import's own reader (`DefaultCategories`), so the list and the format can't drift apart. Change the list in both places.
 - Type is looked up through the category's group whenever Budget or Spending runs, which is why moving a category (CAT-1.16) needs no change to its transactions.

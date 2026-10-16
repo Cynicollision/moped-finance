@@ -29,11 +29,16 @@ if (!SEED_USER_USERNAME || !SEED_USER_DISPLAY_NAME || !SEED_USER_PASSWORD) {
         const defaultHash = bcrypt.hashSync(SEED_USER_PASSWORD, 10);
         const userId = EntityId.generate(CoreEntityIdPrefix.User);
 
-        await client.query(
-            'INSERT INTO core.users (id, display_name, username, password_hash) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING',
+        // An instance has one user (AUTH-7.2), so there's nothing to add once one exists.
+        const result = await client.query(
+            'INSERT INTO core.users (id, display_name, username, password_hash) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING',
             [userId, SEED_USER_DISPLAY_NAME, SEED_USER_USERNAME, defaultHash]
         );
-        console.log(`✅ Seeded 1 core.user (${SEED_USER_USERNAME}) with ID: ${userId}`);
+        if (result.rowCount) {
+            console.log(`✅ Seeded 1 core.user (${SEED_USER_USERNAME}) with ID: ${userId}`);
+        } else {
+            console.log('⏭️  A user already exists; skipped.');
+        }
     } catch (err) {
         console.error('❌ Core seeding failed:', err);
         process.exit(1);

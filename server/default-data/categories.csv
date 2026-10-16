@@ -1,0 +1,43 @@
+Type,Group,Name,Icon,Necessity,IsActive
+Income,Income,Paycheck,💼,,true
+Income,Income,Bonus,💰,,true
+Income,Income,Interest,💸,,true
+Income,Income,Dividends,📊,,true
+Income,Income,Other Income,🎁,,true
+Expense,Housing,Rent or Mortgage,🏠,Essential,true
+Expense,Housing,Home Insurance,☂️,Essential,true
+Expense,Housing,Home Maintenance,🔧,Essential,true
+Expense,Housing,Home Improvement,🔨,Discretionary,true
+Expense,Bills & Utilities,Electric & Gas,⚡,Essential,true
+Expense,Bills & Utilities,Water & Sewer,💧,Essential,true
+Expense,Bills & Utilities,Internet,🌐,Essential,true
+Expense,Bills & Utilities,Phone,📱,Essential,true
+Expense,Food,Groceries,🛒,Essential,true
+Expense,Food,Restaurants,🍽️,Discretionary,true
+Expense,Food,Coffee,☕,Discretionary,true
+Expense,Transportation,Fuel,⛽,Essential,true
+Expense,Transportation,Car Payment,🚗,Essential,true
+Expense,Transportation,Auto Insurance,🛡️,Essential,true
+Expense,Transportation,Auto Maintenance,🛠️,Essential,true
+Expense,Transportation,Parking & Transit,🚇,Essential,true
+Expense,Transportation,Rideshare,🚕,Discretionary,true
+Expense,Health,Medical,🩺,Essential,true
+Expense,Health,Pharmacy,💊,Essential,true
+Expense,Health,Fitness,🏋️,Discretionary,true
+Expense,Shopping,Household Supplies,🧻,Essential,true
+Expense,Shopping,Clothing,👕,Discretionary,true
+Expense,Shopping,Electronics,💻,Discretionary,true
+Expense,Shopping,General Shopping,🛍️,Discretionary,true
+Expense,Lifestyle,Entertainment,🎬,Discretionary,true
+Expense,Lifestyle,Subscriptions,📺,Discretionary,true
+Expense,Lifestyle,Hobbies,🎨,Discretionary,true
+Expense,Lifestyle,Travel,✈️,Discretionary,true
+Expense,Lifestyle,Personal Care,💇,Discretionary,true
+Expense,Giving,Gifts,🎀,Discretionary,true
+Expense,Giving,Charity,❤️,Discretionary,true
+Expense,Financial,Taxes,🏛️,Essential,true
+Expense,Financial,Fees,🏦,Essential,true
+Transfer,Transfers,Credit Card Payment,💳,,true
+Transfer,Transfers,Account Transfer,🔁,,true
+Transfer,Transfers,Investment Contribution,📈,,true
+Transfer,Transfers,Extra Loan Payment,📉,,true

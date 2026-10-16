@@ -109,7 +109,93 @@ describe('RegisterComponent', () => {
         await component.onRegister();
 
         expect(component.errorMessage()).toBe('');
-        expect(mockAuthService.register).toHaveBeenCalledWith('testuser', 'Test User', 'password1234', undefined);
+        expect(mockAuthService.register).toHaveBeenCalledWith(
+            { username: 'testuser', name: 'Test User', password: 'password1234', defaultCategories: true },
+            undefined
+        );
+    });
+
+    function fillIn(fields: { username?: string; displayName?: string } = {}) {
+        component.username.set(fields.username ?? 'testuser');
+        component.displayName.set(fields.displayName ?? 'Test User');
+        component.password.set('password1234');
+        component.confirmPassword.set('password1234');
+    }
+
+    function radioLabels(): string[] {
+        return Array.from(fixture.nativeElement.querySelectorAll('mat-radio-button') as NodeListOf<HTMLElement>).map(
+            radio => radio.querySelector('label')!.firstChild!.textContent!.trim()
+        );
+    }
+
+    it('AUTH-2.9 CAT-6.1 should offer default categories, selected, or starting empty', () => {
+        const checked = fixture.nativeElement.querySelector('mat-radio-button.mat-mdc-radio-checked');
+
+        expect(radioLabels()).toEqual(['Start with default categories', 'Start empty']);
+        expect(checked.textContent).toContain('Start with default categories');
+    });
+
+    it('AUTH-2.9 should register without the default categories once Start empty is chosen', async () => {
+        fillIn();
+        const startEmpty = fixture.nativeElement.querySelectorAll('mat-radio-button input')[1] as HTMLInputElement;
+        startEmpty.click();
+        await fixture.whenStable();
+
+        await component.onRegister();
+
+        expect(component.defaultCategories()).toBe(false);
+        expect(mockAuthService.register).toHaveBeenCalledWith(
+            expect.objectContaining({ defaultCategories: false }),
+            undefined
+        );
+    });
+
+    it.each([
+        [' testuser', "Username can't start or end with a space"],
+        ['testuser ', "Username can't start or end with a space"],
+        ['u'.repeat(51), "Username can't be longer than 50 characters"]
+    ])('AUTH-2.10 should flag the username %j and not register', async (username, problem) => {
+        fillIn({ username });
+        await fixture.whenStable();
+
+        await component.onRegister();
+
+        expect(component.usernameProblem()).toBe(problem);
+        expect(registerButton().disabled).toBe(true);
+        expect(mockAuthService.register).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['   ', 'Display name is required'],
+        ['N'.repeat(101), "Display name can't be longer than 100 characters"]
+    ])('AUTH-2.10 should flag the display name %j and not register', async (displayName, problem) => {
+        fillIn({ displayName });
+        await fixture.whenStable();
+
+        await component.onRegister();
+
+        expect(component.displayNameProblem()).toBe(problem);
+        expect(registerButton().disabled).toBe(true);
+        expect(mockAuthService.register).not.toHaveBeenCalled();
+    });
+
+    it('AUTH-2.10 should show the username problem under the field once it has been left', async () => {
+        const input = fixture.nativeElement.querySelector('input[name="username"]') as HTMLInputElement;
+        input.value = ' testuser';
+        input.dispatchEvent(new Event('input'));
+        input.dispatchEvent(new Event('blur'));
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('mat-error')?.textContent).toContain(
+            "Username can't start or end with a space"
+        );
+    });
+
+    it('AUTH-2.10 should stop the username at 50 characters and the display name at 100', () => {
+        const element = fixture.nativeElement as HTMLElement;
+
+        expect(element.querySelector('input[name="username"]')!.getAttribute('maxlength')).toBe('50');
+        expect(element.querySelector('input[name="displayName"]')!.getAttribute('maxlength')).toBe('100');
     });
 
     it('AUTH-2.11 AUTH-9.4 should list the password rules, marked as the user types, and register only once they are met', async () => {

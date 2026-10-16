@@ -5,13 +5,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { DISPLAY_NAME_MAX_LENGTH } from '@shared/core/util';
 import { AuthService } from './../core/auth.service';
 import { PageHeaderComponent } from './../core/layout/page-header.component';
 import { NotificationService } from './../core/notification.service';
 import { HasUnsavedChanges } from './../core/unsaved-changes';
-
-/** AUTH-2.10's limit, which the server enforces too. */
-export const DISPLAY_NAME_MAX_LENGTH = 100;
 
 // The Profile page of Settings (SET-2.1): the username, read-only, and the display name.
 @Component({

@@ -19,16 +19,17 @@ Work items and ideas, grouped by priority. Move items up or down as priorities c
 
 ## Next
 
-### 15. Register screen
-- [ ] AUTH-2.9, 2.10; CAT-6.1, 6.2: field limits for username and display name, and **Start with default categories** (the CAT-6 list, with necessities) or **Start empty**. Ship the defaults as a CSV in the CAT-7.1 format and load them with `CategoryCsv.read` and `FinanceCategoryData.insertBulk` (`category-csv.ts`, `category-data.ts`), as categories.md's Notes suggest. Known gap: close the AUTH-2.7 registration race (two simultaneous registrations on a fresh instance) at the database.
-
 ### 16. Sign-in protection
 - [ ] AUTH-10.1, 10.3, 10.5 to 10.7: per-address lockout after failed sign-ins, the limits as optional `.env` variables (not Settings), logged lockouts, and `TRUST_FIRST_PROXY` for the client address behind a proxy.
 
-### 17. Demo mode
+### 17. Forgotten password
+- [ ] A password reset command run on the host (decided 2026-10-16, over a recovery key in `.env` or recovery codes): `docker exec -it moped-finance-api npm run reset-password` shows the username, asks for a new password twice, applies the AUTH-9 rules, and signs out every session while leaving API tokens alone (as AUTH-11.11 does). It has to work in the production image (compiled, no ts-node), so build it with the server. Login gets a **Forgot password?** link explaining it, and deployment.md documents it. Write the requirements first (a new AUTH section).
+- [ ] Change Password (AUTH-5.3) signs out every other session, keeping the current one.
+
+### 18. Demo mode
 - [ ] APP-4.2, 4.3: populate demo mode from `server/seed-data/`: `demo.interceptor.ts` answers everything but auth with an empty list. Needs the CSVs turned into client-side data (a build step or JSON) and in-browser create/edit/delete. Last, so it covers the finished screens.
 
-### 18. Install as an app
+### 19. Install as an app
 - [ ] APP-9.1, 9.2: web app manifest (name, icons, theme colours, start URL), and a service worker if browsers still need one to offer installation. Choose caching so a new version shows up after an update (APP-9.2), for example Angular's `@angular/service-worker` with its update checks, or no caching at all. Installing needs HTTPS (app.md Notes), so test with `USE_HTTPS` or on localhost.
 
 ---

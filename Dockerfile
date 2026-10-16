@@ -65,6 +65,9 @@ COPY --from=server-builder /app/server/dist ./server/dist
 # applies any pending ones on startup.
 COPY server/migrations ./server/dist/server/migrations
 
+# Copy the default categories a new instance can start with (CAT-6.2), also next to index.js.
+COPY server/default-data ./server/dist/server/default-data
+
 # Copy the built frontend from the client-builder stage. Express serves static files from
 # 'public' next to the compiled index.js (dist/server/public).
 COPY --from=client-builder /app/client/dist/moped-finance/browser ./server/dist/server/public
