@@ -19,7 +19,7 @@ Screens, all pages of Settings: **Institutions and Accounts** (`/settings/instit
 | INST-1.7 | Each institution card's menu shall offer **Edit** and **Add account**, which opens Add Account with that institution selected (ACCT-1.3), plus the connection actions in INST-2. | Implemented |
 | INST-1.8 | The user can delete an institution with the Edit Institution dialog's **Delete** button (APP-2.4), after confirming. Deleting closes the dialog and says "Institution deleted". | Implemented |
 | INST-1.9 | An institution that still has accounts cannot be deleted. The dialog's **Delete** button shall be disabled, with the note "To delete this institution, first delete its N accounts." ("1 account" for one), and the server shall reject the request with the same rule. | Implemented |
-| INST-1.10 | The Institutions and Accounts screen's header shall have an **Add account** button (ACCT-1.3) and a menu with **Add Institution**, which opens the Add Institution dialog, in addition to the per-card menus and the empty-state button (INST-1.3). | Implemented |
+| INST-1.10 | The Institutions and Accounts screen's header shall have a menu (⋮) with **Add Institution**, which opens the Add Institution dialog (INST-1.4), and **Add Account**, which opens Add Account (ACCT-1.3), in addition to the per-card menus (INST-1.7) and the empty-state button (INST-1.3). The header has no button of its own. | Implemented |
 | INST-1.11 | Institution names shall be unique, ignoring case. Saving a duplicate shall be rejected with "An institution with that name already exists." (Numbered INST-1.10 before 2026-09-26, which duplicated the ID above.) | Implemented |
 
 ## INST-2 The user can have institution data kept up to date automatically

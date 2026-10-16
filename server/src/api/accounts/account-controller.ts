@@ -10,6 +10,7 @@ import {
     TransactionSearchOptions
 } from '@shared/finance/contracts';
 import { Account, Transaction } from '@shared/finance/types';
+import { AccountTypeUtil } from '@shared/finance/util';
 import { FinanceEntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
@@ -69,6 +70,10 @@ export class AccountController {
         }
 
         const { balanceEntry, ...fields } = changes;
+        // An account stays an Asset or a Liability, since its balances are stored signed for that side (ACCT-1.13).
+        if (fields.type && AccountTypeUtil.categoryOf(fields.type) !== AccountTypeUtil.categoryOf(current.type)) {
+            return Result.userError("An account can't change between an asset and a liability.");
+        }
         // A connected account's balance comes from its bank (ACCT-4.4).
         if (balanceEntry && !current.isManual) {
             return Result.userError("A connected account's balance comes from its bank.");
