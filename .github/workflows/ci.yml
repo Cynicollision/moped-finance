@@ -147,7 +147,7 @@ jobs:
           curl -fsS -c cookies.txt -H 'Content-Type: application/json' \
             -d '{"username":"smoke","name":"Smoke Test","password":"smoke test password","defaultCategories":true}' \
             http://127.0.0.1:3000/auth/register
-          curl -fsS -b cookies.txt http://127.0.0.1:3000/api/categories | grep -q '"name":"Groceries"'
+          curl -fsS -b cookies.txt http://127.0.0.1:3000/api/v1/categories | grep -q '"name":"Groceries"'
           curl -fsS http://127.0.0.1:3000/auth/registration | grep -q '"isOpen":false'
 
       - name: Check / serves index.html
