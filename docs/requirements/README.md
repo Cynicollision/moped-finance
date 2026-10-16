@@ -19,14 +19,6 @@ The first set was written by reading the running app and its code, so domains no
 | `BUD` | Budget (recurring income and expense streams) | [budget.md](budget.md) |
 | `CASH` | Spending (actual income, expenses, savings for a period) | [spending.md](spending.md) |
 
-## Verification against the running app
-
-The drafts were refined on 2026-09-25 by walking the running app (development build, so "today" is 2026-05-17) as a signed-in user with the sample data set, plus dry-run CSV imports. Nothing was saved, deleted or imported. Where the app disagreed with a draft, the requirement now states the observed behavior and the difference is called out in the domain's Known gaps.
-
-Covered: Accounts summary, Account Details and its menus, Edit Account, Add Account, Institutions (list, view, edit, delete rule), Transactions (list, filters, sorting, add form, view, delete dialog, import validation), Spending (then called Cashflow; all periods, Category/Group toggle, drill-down), Budget (screen and add dialog), Categories (screen and dialogs), the profile menu, and the handset-width navigation.
-
-Not exercised, so still as first drafted from the code: the Login screen (the session was already signed in and Sign out was left alone), demo mode, saving any form, confirming an import, downloading CSVs, and the API-only rules (AUTH-3.4 to AUTH-3.5, AUTH-5.1).
-
 ## Numbering
 
 Requirements come in two levels, and the ID tells you which:
