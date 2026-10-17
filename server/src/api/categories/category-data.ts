@@ -11,7 +11,7 @@ import { categorySchema } from './category-schema';
 
 const bulkInsertChunkSize = 1000;
 
-export interface IFinanceCategoryData {
+export interface ICategoryData {
     retrieveAll(activeOnly?: boolean): Promise<Category[]>;
     retrieveSingle(id: string): Promise<Category | null>;
     retrieveUsage(id: string): Promise<CategoryUsage>;
@@ -64,7 +64,7 @@ export async function insertGroupsAndCategories(
     }
 }
 
-export class FinanceCategoryData implements IFinanceCategoryData {
+export class CategoryData implements ICategoryData {
     private readonly db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {

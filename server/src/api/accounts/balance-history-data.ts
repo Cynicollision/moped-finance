@@ -5,7 +5,7 @@ import { AccountGroupChange, DailyBalance, TotalValueHistory } from '@shared/fin
 import { AccountType, ValueHistoryType, AccountCategory, BalanceEntrySource } from '@shared/finance/enum';
 import { AccountBalanceEntry, BalanceHistory } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
-import { DbTransaction, FinanceEntityFactory, IDatabaseClient } from '@server/data';
+import { DbTransaction, EntityFactory, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
 import { balanceHistorySchema } from './balance-history-schema';
@@ -92,7 +92,7 @@ async function shiftUntilNextSetEntry(
  */
 export async function writeSetEntry(tx: DbTransaction, accountId: string, entry: AccountBalanceEntry): Promise<void> {
     const carried = await retrieveCarried(tx, accountId, entry.date);
-    const record = FinanceEntityFactory.createBalanceHistory({ accountId, ...entry, source: BalanceEntrySource.Set });
+    const record = EntityFactory.createBalanceHistory({ accountId, ...entry, source: BalanceEntrySource.Set });
     await tx
         .insert(balanceHistorySchema)
         .values(mapBalanceHistoryToRow(record))
@@ -130,7 +130,7 @@ export async function applyAdjustment(
 ): Promise<void> {
     const carried = await retrieveCarried(tx, accountId, date);
     if (carried?.date !== date) {
-        const record = FinanceEntityFactory.createBalanceHistory({
+        const record = EntityFactory.createBalanceHistory({
             accountId,
             date,
             balance: carried?.balance ?? 0,
@@ -155,7 +155,7 @@ export async function undoAdjustment(
     await shiftUntilNextSetEntry(tx, accountId, date, -amount, true);
 }
 
-export interface IFinanceBalanceHistoryData {
+export interface IBalanceHistoryData {
     /** The account's balance on every day from startDate to endDate (ACCT-2.11), as `retrieveSumByDate`. */
     retrieveDailyForAccount(accountId: string, startDate: CalendarDate, endDate: CalendarDate): Promise<DailyBalance[]>;
     /**
@@ -187,7 +187,7 @@ export interface IFinanceBalanceHistoryData {
     retrieveForExport(accountId: string): Promise<BalanceHistoryExport[]>;
 }
 
-export class FinanceBalanceHistoryData implements IFinanceBalanceHistoryData {
+export class BalanceHistoryData implements IBalanceHistoryData {
     private readonly db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {

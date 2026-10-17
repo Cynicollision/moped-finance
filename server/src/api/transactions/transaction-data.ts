@@ -23,7 +23,7 @@ import { Transaction, TransactionSplitPart } from '@shared/finance/types';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { CategoryType, TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
 import { Uncategorized } from '@shared/finance/util';
-import { DbTransaction, FinanceEntityFactory, IDatabaseClient } from '@server/data';
+import { DbTransaction, EntityFactory, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
 import { applyAdjustment, undoAdjustment } from './../accounts/balance-history-data';
@@ -55,7 +55,7 @@ export interface CategoryFlow {
     moneyOut: number;
 }
 
-export interface IFinanceTransactionData {
+export interface ITransactionData {
     search(options: TransactionSearchOptions, accountId?: string): Promise<Transaction[]>;
     retrieveForExport(accountId?: string): Promise<TransactionExport[]>;
     retrieveMerchants(): Promise<string[]>;
@@ -199,7 +199,7 @@ async function moveAdjustment(tx: DbTransaction, before: Transaction | null, aft
     }
 }
 
-export class FinanceTransactionData implements IFinanceTransactionData {
+export class TransactionData implements ITransactionData {
     private readonly db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {
@@ -546,7 +546,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
                       .where(eq(transactionSchema.splitId, transaction.splitId))
                       .for('update')
                 : [transaction];
-            const splitId = transaction.splitId ?? FinanceEntityFactory.createSplitId();
+            const splitId = transaction.splitId ?? EntityFactory.createSplitId();
             const kept = new Set(parts.map(part => part.id));
 
             const removed = current.filter(row => !kept.has(row.id)).map(row => row.id);
@@ -569,7 +569,7 @@ export class FinanceTransactionData implements IFinanceTransactionData {
                         .set({ ...fields, updatedAt: DateTimeUtil.now() })
                         .where(eq(transactionSchema.id, part.id));
                 } else {
-                    const added = FinanceEntityFactory.createTransaction({
+                    const added = EntityFactory.createTransaction({
                         ...mapRowToTransaction(transaction),
                         id: undefined,
                         ...part

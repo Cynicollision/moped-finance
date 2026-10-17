@@ -45,7 +45,7 @@ Each finance domain (`accounts`, `budget`, `categories`, `institutions`, `transa
 
 1. **`*-routes.ts`**: defines Express routes and calls `OperationHandler.execute` with the request schemas (`{ params, query, body }`) and a callback. `execute` parses those parts with Zod, answers 400 naming the invalid fields, or passes the typed values to the callback.
 2. **`*-controller.ts`**: business rules, such as returning `Result.userErrorNotFound()` when a requested resource doesn't exist. Returns an `OperationResult` built with `Result.success(...)`, `Result.userErrorNotFound(...)` and similar; never touches `res`. Imports and exports use the domain's CSV format (`transaction-csv.ts`, `balance-history-csv.ts`), built on `src/csv/`.
-3. **`*-data.ts`**: Drizzle queries, mapping rows to `@shared` types. Each domain's `IFinance*Data` interface declares its own methods, typically `retrieveAll`, `retrieveSingle`, `insert`, `update` and `delete`.
+3. **`*-data.ts`**: Drizzle queries, mapping rows to `@shared` types. Each domain's `I*Data` interface declares its own methods, typically `retrieveAll`, `retrieveSingle`, `insert`, `update` and `delete`.
 4. **`*-schema.ts`**: Drizzle table definitions and `drizzle-zod` validation schemas.
 
 `OperationHandler` logs the operation, maps the result's `OperationStatus` to an HTTP status code, sends `data` or `{ code, message, details? }`, and turns thrown errors into a 400 (constraint violations, via `DatabaseErrorUtil`) or a generic 500. Errors raised before an operation runs (malformed JSON, rejected uploads) reach `buildErrorHandler` (`src/routing/error-handler.ts`), registered last in `index.ts`, which answers in the same `{ code, message }` shape. Uploads go through `singleFileUpload` (`src/routing/upload.ts`): one file, at most 5 MB, held in memory.
@@ -91,10 +91,12 @@ client/src/app/
               applies the browser's copy of it before the app loads
   core/emoji-picker/  the emoji form field (emoji-picker-element in a popover or bottom sheet)
   core/import/  the CSV import flow shared by the import screens (choose, validate, confirm)
-  finance/    one folder per screen area: accounts, budget, categories, dashboard,
-              institutions, spending, transactions, common (the value-history chart, the money display)
+  common/     what the screens share: FinanceService (the finance API), the value-history chart, the money
+              display, category labels and choices
+  accounts/, budget/, categories/, dashboard/, institutions/, spending/, transactions/
+              one folder per screen area
   settings/   the Settings list, Profile, Dashboard settings, API Tokens and SettingsService (Institutions
-              and Accounts, and Categories, live in finance/)
+              and Accounts, and Categories, have their own folders)
   login/, register/
 ```
 

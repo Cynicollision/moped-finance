@@ -13,7 +13,7 @@ import { balanceHistorySchema } from './balance-history-schema';
 import { transactionSchema } from './../transactions/transaction-schema';
 
 /** Accounts come with their balance as of a date: their latest entry on or before it (ACCT-2.1). Default: today. */
-export interface IFinanceAccountData {
+export interface IAccountData {
     retrieveAll(asOfDate?: CalendarDate): Promise<Account[]>;
     retrieveByInstitutionId(institutionId: string, asOfDate?: CalendarDate): Promise<Account[]>;
     retrieveSingle(id: string, asOfDate?: CalendarDate): Promise<Account | null>;
@@ -54,7 +54,7 @@ function mapRowToAccount(
     };
 }
 
-export class FinanceAccountData implements IFinanceAccountData {
+export class AccountData implements IAccountData {
     private readonly db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {

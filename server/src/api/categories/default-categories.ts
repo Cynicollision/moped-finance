@@ -1,8 +1,8 @@
 import { readFile } from 'fs/promises';
 import { DbTransaction } from '@server/data';
 import { CategoryCsv } from './category-csv';
-import { IFinanceCategoryData, insertGroupsAndCategories } from './category-data';
-import { IFinanceCategoryGroupData } from './category-groups';
+import { ICategoryData, insertGroupsAndCategories } from './category-data';
+import { ICategoryGroupData } from './category-groups';
 
 /**
  * The groups and categories a new instance can start with (CAT-6.2). They're a CSV in the import format (CAT-7.1),
@@ -11,8 +11,8 @@ import { IFinanceCategoryGroupData } from './category-groups';
 export class DefaultCategories {
     constructor(
         private readonly file: string,
-        private readonly categoryData: IFinanceCategoryData,
-        private readonly groupData: IFinanceCategoryGroupData
+        private readonly categoryData: ICategoryData,
+        private readonly groupData: ICategoryGroupData
     ) {}
 
     /**

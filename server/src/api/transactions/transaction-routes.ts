@@ -5,10 +5,10 @@ import { TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from
 import { SchemaUtil } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { idParamsSchema, OperationDefinition, OperationHandler, QueryField, singleFileUpload } from '@server/routing';
-import { IFinanceAccountData } from './../accounts/account-data';
-import { IFinanceCategoryData } from './../categories/category-data';
+import { IAccountData } from './../accounts/account-data';
+import { ICategoryData } from './../categories/category-data';
 import { TransactionController } from './transaction-controller';
-import { IFinanceTransactionData } from './transaction-data';
+import { ITransactionData } from './transaction-data';
 import { createTransactionSchema, splitTransactionSchema, updateTransactionSchema } from './transaction-schema';
 
 const domain = 'Transaction';
@@ -62,9 +62,9 @@ export const transactionSearchQuerySchema = z.object({
 
 export function createTransactionRouter(
     logger: IAppLogger,
-    accountData: IFinanceAccountData,
-    categoryData: IFinanceCategoryData,
-    transactionsData: IFinanceTransactionData
+    accountData: IAccountData,
+    categoryData: ICategoryData,
+    transactionsData: ITransactionData
 ) {
     const router = Router();
     const controller = new TransactionController(logger, accountData, categoryData, transactionsData);

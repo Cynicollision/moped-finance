@@ -5,7 +5,7 @@ import request from 'supertest';
 import TestAgent from 'supertest/lib/agent';
 import { PGlite } from '@electric-sql/pglite';
 import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
-import { DefaultCategories, FinanceCategoryData, FinanceCategoryGroupData } from '@server/api';
+import { CategoryData, CategoryGroupData, DefaultCategories } from '@server/api';
 import { buildAuthRouter } from './auth-routes';
 import { buildAuthMiddleware } from './auth-middleware';
 import { DatabaseClient } from '@server/data';
@@ -25,8 +25,8 @@ describe('Auth Routes', () => {
     let dbClient: DatabaseClient;
     let pglite: PGlite;
     let userData: UserData;
-    let categoryData: FinanceCategoryData;
-    let groupData: FinanceCategoryGroupData;
+    let categoryData: CategoryData;
+    let groupData: CategoryGroupData;
     let defaultCategories: DefaultCategories;
     const mockLogger = TestExpressUtil.createMockLogger();
     mockLogger.error.mockImplementation((...args: any[]) => {
@@ -83,8 +83,8 @@ describe('Auth Routes', () => {
         dbClient = mockDb.dbClient;
         pglite = mockDb.pglite;
         userData = new UserData(dbClient);
-        categoryData = new FinanceCategoryData(dbClient);
-        groupData = new FinanceCategoryGroupData(dbClient);
+        categoryData = new CategoryData(dbClient);
+        groupData = new CategoryGroupData(dbClient);
         defaultCategories = new DefaultCategories(
             path.join(__dirname, '../../default-data/categories.csv'),
             categoryData,

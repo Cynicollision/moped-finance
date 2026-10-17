@@ -2,16 +2,16 @@ import fs from 'fs';
 import path from 'path';
 import { CalendarPeriod } from '@shared/core/enum';
 import { AccountType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
-import { FinanceAccountData } from '@server/api/accounts/account-data';
-import { FinanceBalanceHistoryData } from '@server/api/accounts/balance-history-data';
-import { FinanceBudgetStreamData } from '@server/api/budget/budget-stream-data';
-import { FinanceCategoryGroupData } from '@server/api/categories/category-groups/category-group-data';
-import { FinanceCategoryData } from '@server/api/categories/category-data';
-import { FinanceInstitutionData } from '@server/api/institutions/institution-data';
+import { AccountData } from '@server/api/accounts/account-data';
+import { BalanceHistoryData } from '@server/api/accounts/balance-history-data';
+import { BudgetStreamData } from '@server/api/budget/budget-stream-data';
+import { CategoryGroupData } from '@server/api/categories/category-groups/category-group-data';
+import { CategoryData } from '@server/api/categories/category-data';
+import { InstitutionData } from '@server/api/institutions/institution-data';
 import { TransactionCsv } from '@server/api/transactions/transaction-csv';
-import { FinanceTransactionData } from '@server/api/transactions/transaction-data';
+import { TransactionData } from '@server/api/transactions/transaction-data';
 import { CsvFile, CsvRow, CsvValue, CsvValueResult } from '@server/csv';
-import { DatabaseClient, FinanceEntityFactory } from '@server/data';
+import { DatabaseClient, EntityFactory } from '@server/data';
 
 // Imports come from the data files rather than the domain barrels, which load the routes and auth middleware.
 // Seeds the synthetic sample data in server/seed-data/ (see its README). Records are linked by name, and
@@ -62,8 +62,8 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         console.log('🌱 Seeding finance data...');
 
         // Institutions are created from the accounts' InstitutionName, like category groups from categories.
-        const institutionData = new FinanceInstitutionData(dbClient);
-        const accountData = new FinanceAccountData(dbClient);
+        const institutionData = new InstitutionData(dbClient);
+        const accountData = new AccountData(dbClient);
         const institutionIds = new Map<string, string>();
         const accountIds = new Map<string, string>();
         const accountsFile = 'accounts.csv';
@@ -75,13 +75,13 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
             let institutionId = institutionIds.get(row.values['InstitutionName'].toLowerCase());
             if (!institutionId) {
                 const institution = await institutionData.insert(
-                    FinanceEntityFactory.createInstitution({ name: row.values['InstitutionName'] })
+                    EntityFactory.createInstitution({ name: row.values['InstitutionName'] })
                 );
                 institutionId = institution.id;
                 institutionIds.set(institution.name.toLowerCase(), institution.id);
             }
             const account = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId,
                     name: row.values['Name'],
                     type: row.values['Type'] as AccountType,
@@ -93,8 +93,8 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         }
         console.log(`✅ ${institutionIds.size} institutions, ${accountIds.size} accounts`);
 
-        const groupData = new FinanceCategoryGroupData(dbClient);
-        const categoryData = new FinanceCategoryData(dbClient);
+        const groupData = new CategoryGroupData(dbClient);
+        const categoryData = new CategoryData(dbClient);
         const groupIds = new Map<string, string>();
         const categoryIds = new Map<string, string>();
         const categoriesFile = 'categories.csv';
@@ -102,7 +102,7 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
             let groupId = groupIds.get(row.values['Group'].toLowerCase());
             if (!groupId) {
                 const group = await groupData.insert(
-                    FinanceEntityFactory.createCategoryGroup({
+                    EntityFactory.createCategoryGroup({
                         type: row.values['Type'].toLowerCase() as CategoryType,
                         name: row.values['Group']
                     })
@@ -111,7 +111,7 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
                 groupIds.set(group.name.toLowerCase(), group.id);
             }
             const category = await categoryData.insert(
-                FinanceEntityFactory.createCategory({
+                EntityFactory.createCategory({
                     groupId,
                     icon: row.values['Icon'],
                     name: row.values['Name'],
@@ -123,12 +123,12 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         }
         console.log(`✅ ${groupIds.size} category groups, ${categoryIds.size} categories`);
 
-        const budgetStreamData = new FinanceBudgetStreamData(dbClient);
+        const budgetStreamData = new BudgetStreamData(dbClient);
         const streamsFile = 'budget-streams.csv';
         const streamRows = readRows(streamsFile, ['Name', 'CategoryName', 'Recurrence', 'Amount']);
         for (const row of streamRows) {
             await budgetStreamData.insert(
-                FinanceEntityFactory.createBudgetStream({
+                EntityFactory.createBudgetStream({
                     name: row.values['Name'],
                     categoryId: idOf(categoryIds, row.values['CategoryName'], streamsFile, row),
                     recurrence: row.values['Recurrence'] as CalendarPeriod,
@@ -145,18 +145,18 @@ function idOf(ids: Map<string, string>, name: string, fileName: string, row: Csv
         if (transactions.failedRowMessages.length > 0) {
             throw new Error(`transactions.csv: ${transactions.failedRowMessages.join('; ')}`);
         }
-        await new FinanceTransactionData(dbClient).insertBulk(transactions.rows.map(row => row.transaction));
+        await new TransactionData(dbClient).insertBulk(transactions.rows.map(row => row.transaction));
         console.log(`✅ ${transactions.rows.length} transactions`);
 
         const balancesFile = 'balance-history.csv';
         const balances = readRows(balancesFile, ['Date', 'AccountName', 'Balance']).map(row =>
-            FinanceEntityFactory.createBalanceHistory({
+            EntityFactory.createBalanceHistory({
                 accountId: idOf(accountIds, row.values['AccountName'], balancesFile, row),
                 date: valueOf(balancesFile, row, CsvValue.date('Date', row.values['Date'])),
                 balance: valueOf(balancesFile, row, CsvValue.amount('Balance', row.values['Balance']))
             })
         );
-        await new FinanceBalanceHistoryData(dbClient).insertBulk(balances);
+        await new BalanceHistoryData(dbClient).insertBulk(balances);
         console.log(`✅ ${balances.length} balance history entries`);
     } catch (err) {
         console.error(

@@ -1,0 +1,197 @@
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { AccountType } from '@shared/finance/enum';
+import { Institution } from '@shared/finance/types';
+import { DateProviderService } from './../core/date-provider.service';
+import { AuthService } from './../core/auth.service';
+import { ModalService } from './../core/modal/modal.service';
+import { NotificationService } from './../core/notification.service';
+import { InstitutionDialogComponent } from './../institutions/institution-dialog.component';
+import { FinanceService } from './../common/finance.service';
+import { AccountFormComponent } from './account-form.component';
+import { AddAccountComponent } from './add-account.component';
+
+describe('AddAccountComponent', () => {
+    function institution(id: string, name: string): Institution {
+        return { id, name, createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1) } as Institution;
+    }
+
+    async function render(institutions: Institution[], institutionId: string | null = null) {
+        const financeService = {
+            fetchInstitutions: vi.fn().mockResolvedValue(institutions),
+            createAccount: vi.fn().mockResolvedValue({ id: 'new-account' })
+        };
+        const modalService = { open: vi.fn().mockResolvedValue(true) };
+        const notificationService = { success: vi.fn() };
+        TestBed.configureTestingModule({
+            imports: [AddAccountComponent],
+            providers: [
+                provideRouter([]),
+                {
+                    provide: ActivatedRoute,
+                    useValue: { snapshot: { queryParamMap: convertToParamMap(institutionId ? { institutionId } : {}) } }
+                },
+                { provide: FinanceService, useValue: financeService },
+                { provide: ModalService, useValue: modalService },
+                { provide: NotificationService, useValue: notificationService },
+                { provide: AuthService, useValue: { currentUser: signal(null) } },
+                {
+                    provide: DateProviderService,
+                    useValue: { today: () => '2026-05-17', now: () => new Date(2026, 4, 17) }
+                }
+            ]
+        });
+
+        const fixture = TestBed.createComponent(AddAccountComponent);
+        await fixture.whenStable();
+        return {
+            fixture,
+            element: fixture.nativeElement as HTMLElement,
+            financeService,
+            modalService,
+            notificationService
+        };
+    }
+
+    function labels(element: HTMLElement): string[] {
+        return Array.from(element.querySelectorAll('mat-label, mat-checkbox label')).map(label =>
+            label.textContent!.trim()
+        );
+    }
+
+    it('ACCT-1.3 should go straight to the form, with no Connect option or Manual Account checkbox', async () => {
+        const { element } = await render([institution('inst-1', 'First Bank')]);
+
+        expect(element.querySelector('app-account-form')).not.toBeNull();
+        expect(element.textContent).not.toMatch(/connect|coming soon/i);
+        expect(labels(element)).toEqual(['Account Name', 'Institution', 'Type', 'Starting Balance', 'Hide Account']);
+    });
+
+    it('ACCT-1.4 should start with a blank Starting Balance', async () => {
+        const { fixture } = await render([institution('inst-1', 'First Bank')]);
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+
+        expect(form.accountForm.controls.balance.value).toBeNull();
+    });
+
+    it('ACCT-1.3 should list institutions by name and start at the one it was opened from', async () => {
+        const { fixture } = await render(
+            [institution('inst-2', 'credit union'), institution('inst-1', 'Big Bank')],
+            'inst-2'
+        );
+
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+        expect(form.institutions().map(i => i.name)).toEqual(['Big Bank', 'credit union']);
+        expect(form.accountForm.controls.institutionId.value).toBe('inst-2');
+    });
+
+    it('ACCT-1.3 ACCT-1.4 should save the account with no balance when Starting Balance is blank, say so, and open its details', async () => {
+        const { fixture, element, financeService, notificationService } = await render(
+            [institution('inst-1', 'First Bank')],
+            'inst-1'
+        );
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+        form.accountForm.controls.name.setValue('Joint Checking');
+        await fixture.whenStable();
+        element.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+        await fixture.whenStable();
+
+        expect(financeService.createAccount).toHaveBeenCalledWith({
+            institutionId: 'inst-1',
+            name: 'Joint Checking',
+            type: AccountType.Checking,
+            isHidden: false
+        });
+        expect(notificationService.success).toHaveBeenCalledWith('Account added');
+        expect(navigate).toHaveBeenCalledWith(['/accounts', 'new-account']);
+        expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('ACCT-2.2 should save a starting balance as of today', async () => {
+        const { fixture, element, financeService } = await render([institution('inst-1', 'First Bank')], 'inst-1');
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+
+        form.accountForm.patchValue({ name: 'Checking', balance: 1250.5 });
+        await fixture.whenStable();
+        element.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+
+        expect(financeService.createAccount).toHaveBeenCalledWith(
+            expect.objectContaining({ balanceEntry: { date: '2026-05-17', balance: 1250.5 } })
+        );
+    });
+
+    it("APP-6.3 should ask for a liability's Amount owed and save it negative", async () => {
+        const { fixture, element, financeService } = await render([institution('inst-1', 'First Bank')], 'inst-1');
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+
+        form.accountForm.patchValue({ name: 'Visa', type: AccountType.CreditCard, balance: 300 });
+        await fixture.whenStable();
+
+        expect(labels(element)).toContain('Amount owed');
+        expect(labels(element)).not.toContain('Starting Balance');
+        element.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+        expect(financeService.createAccount).toHaveBeenCalledWith(
+            expect.objectContaining({ balanceEntry: { date: '2026-05-17', balance: -300 } })
+        );
+    });
+
+    it('APP-2.7 should have unsaved changes once the form is edited', async () => {
+        const { fixture } = await render([institution('inst-1', 'First Bank')]);
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+
+        expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
+        form.accountForm.controls.name.setValue('Joint Checking');
+        form.accountForm.markAsDirty();
+        expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('ACCT-1.3 should ask for an institution first when there are none, then show the form', async () => {
+        const { fixture, element, financeService, modalService } = await render([]);
+
+        expect(element.querySelector('app-account-form')).toBeNull();
+
+        financeService.fetchInstitutions.mockResolvedValue([institution('inst-1', 'First Bank')]);
+        element.querySelector<HTMLButtonElement>('.no-institutions button')!.click();
+        await fixture.whenStable();
+
+        expect(modalService.open).toHaveBeenCalledWith(InstitutionDialogComponent, {});
+        expect(element.querySelector('app-account-form')).not.toBeNull();
+    });
+
+    it('ACCT-1.2 should offer every type under its group and show the group and Asset or Liability it decides', async () => {
+        const { fixture, element } = await render([institution('inst-1', 'First Bank')], 'inst-1');
+        const form = fixture.debugElement.query(By.directive(AccountFormComponent))
+            .componentInstance as AccountFormComponent;
+
+        expect(form.typeGroups().map(g => g.group)).toEqual([
+            'Cash',
+            'Investments',
+            'Retirement',
+            'Real Estate',
+            'Other Assets',
+            'Credit Cards',
+            'Loans'
+        ]);
+        expect(element.querySelector('mat-hint')!.textContent!.trim()).toBe('Cash · Asset');
+
+        form.accountForm.controls.type.setValue(AccountType.CreditCard);
+        await fixture.whenStable();
+
+        expect(element.querySelector('mat-hint')!.textContent!.trim()).toBe('Credit Cards · Liability');
+        expect(form.accountForm.valid).toBe(false); // no name yet
+        form.accountForm.controls.name.setValue('Visa');
+        expect(form.accountForm.valid).toBe(true);
+    });
+});

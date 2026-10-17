@@ -3,16 +3,16 @@ import { z } from 'zod';
 import { IAppLogger } from '@server/logging';
 import { idParamsSchema, OperationDefinition, OperationHandler, QueryField, singleFileUpload } from '@server/routing';
 import { CategoryController } from './category-controller';
-import { IFinanceCategoryData } from './category-data';
+import { ICategoryData } from './category-data';
 import { createCategorySchema, updateCategorySchema } from './category-schema';
-import { IFinanceCategoryGroupData, createCategoryGroupSchema, updateCategoryGroupSchema } from './category-groups';
+import { ICategoryGroupData, createCategoryGroupSchema, updateCategoryGroupSchema } from './category-groups';
 
 const domain = 'Category';
 
 export function createCategoryRouter(
     logger: IAppLogger,
-    categoriesData: IFinanceCategoryData,
-    groupsData: IFinanceCategoryGroupData
+    categoriesData: ICategoryData,
+    groupsData: ICategoryGroupData
 ) {
     const router = Router();
     const controller = new CategoryController(logger, categoriesData, groupsData);

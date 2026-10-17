@@ -2,25 +2,25 @@ import { Router } from 'express';
 import { AuthMiddleware } from '@server/auth';
 import { DatabaseClient } from '@server/data';
 import { IAppLogger } from '@server/logging';
-import { FinanceAccountData, FinanceBalanceHistoryData, createAccountRouter } from './accounts';
-import { FinanceBudgetStreamData, createBudgetStreamRouter } from './budget';
-import { FinanceCategoryData, FinanceCategoryGroupData, createCategoryRouter } from './categories';
-import { FinanceInstitutionData, createInstitutionRouter } from './institutions';
+import { AccountData, BalanceHistoryData, createAccountRouter } from './accounts';
+import { BudgetStreamData, createBudgetStreamRouter } from './budget';
+import { CategoryData, CategoryGroupData, createCategoryRouter } from './categories';
+import { InstitutionData, createInstitutionRouter } from './institutions';
 import { SettingsData, createSettingsRouter } from './settings';
-import { FinanceTransactionData, createTransactionRouter } from './transactions';
+import { TransactionData, createTransactionRouter } from './transactions';
 
-export { DefaultCategories, FinanceCategoryData, FinanceCategoryGroupData } from './categories';
+export { CategoryData, CategoryGroupData, DefaultCategories } from './categories';
 
 export function buildFinanceRouter(logger: IAppLogger, db: DatabaseClient, authMiddleware: AuthMiddleware): Router {
     const router = Router();
 
-    const accountData = new FinanceAccountData(db);
-    const balanceHistoryData = new FinanceBalanceHistoryData(db);
-    const budgetStreamData = new FinanceBudgetStreamData(db);
-    const categoryGroupData = new FinanceCategoryGroupData(db);
-    const categoryData = new FinanceCategoryData(db);
-    const institutionData = new FinanceInstitutionData(db);
-    const transactionData = new FinanceTransactionData(db);
+    const accountData = new AccountData(db);
+    const balanceHistoryData = new BalanceHistoryData(db);
+    const budgetStreamData = new BudgetStreamData(db);
+    const categoryGroupData = new CategoryGroupData(db);
+    const categoryData = new CategoryData(db);
+    const institutionData = new InstitutionData(db);
+    const transactionData = new TransactionData(db);
     const settingsData = new SettingsData(db);
 
     const accounts = createAccountRouter(logger, accountData, balanceHistoryData, transactionData);

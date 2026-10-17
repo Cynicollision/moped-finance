@@ -1,17 +1,17 @@
 import { CalendarDate } from '@shared/core/types';
 import { Account, Institution } from '@shared/finance/types';
-import { FinanceEntityFactory } from '@server/data';
+import { EntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
-import { IFinanceAccountData } from './../accounts';
-import { IFinanceInstitutionData } from './institution-data';
+import { IAccountData } from './../accounts';
+import { IInstitutionData } from './institution-data';
 import { CreateInstitutionRequest, UpdateInstitutionRequest } from './institution-schema';
 
 export class InstitutionController {
     constructor(
         private logger: IAppLogger,
-        private institutionData: IFinanceInstitutionData,
-        private accountData: IFinanceAccountData
+        private institutionData: IInstitutionData,
+        private accountData: IAccountData
     ) {}
 
     public async getInstitution(
@@ -48,7 +48,7 @@ export class InstitutionController {
         context: OperationContext,
         input: CreateInstitutionRequest
     ): Promise<OperationResult<Institution>> {
-        const institution = FinanceEntityFactory.createInstitution(input);
+        const institution = EntityFactory.createInstitution(input);
         const created = await this.institutionData.insert(institution);
         return Result.successCreated(created);
     }

@@ -12,19 +12,19 @@ import {
     singleFileUpload
 } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
-import { IFinanceTransactionData, transactionSearchQuerySchema } from './../transactions';
+import { ITransactionData, transactionSearchQuerySchema } from './../transactions';
 import { AccountController } from './account-controller';
-import { IFinanceAccountData } from './account-data';
+import { IAccountData } from './account-data';
 import { closeAccountSchema, createAccountSchema, updateAccountSchema } from './account-schema';
-import { IFinanceBalanceHistoryData } from './balance-history-data';
+import { IBalanceHistoryData } from './balance-history-data';
 
 const domain = 'Account';
 
 export function createAccountRouter(
     logger: IAppLogger,
-    accountData: IFinanceAccountData,
-    balanceHistoryData: IFinanceBalanceHistoryData,
-    transactionData: IFinanceTransactionData
+    accountData: IAccountData,
+    balanceHistoryData: IBalanceHistoryData,
+    transactionData: ITransactionData
 ) {
     const router = Router();
     const controller = new AccountController(logger, accountData, balanceHistoryData, transactionData);

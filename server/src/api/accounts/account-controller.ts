@@ -11,22 +11,22 @@ import {
 } from '@shared/finance/contracts';
 import { Account, Transaction } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
-import { FinanceEntityFactory } from '@server/data';
+import { EntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
-import { IFinanceTransactionData } from './../transactions';
-import { IFinanceAccountData } from './account-data';
+import { ITransactionData } from './../transactions';
+import { IAccountData } from './account-data';
 import { CloseAccountRequest, CreateAccountRequest, UpdateAccountRequest } from './account-schema';
 import { BalanceHistoryCsv } from './balance-history-csv';
-import { IFinanceBalanceHistoryData } from './balance-history-data';
+import { IBalanceHistoryData } from './balance-history-data';
 
 export class AccountController {
     constructor(
         private logger: IAppLogger,
-        private accountData: IFinanceAccountData,
-        private balanceHistoryData: IFinanceBalanceHistoryData,
-        private transactionData: IFinanceTransactionData
+        private accountData: IAccountData,
+        private balanceHistoryData: IBalanceHistoryData,
+        private transactionData: ITransactionData
     ) {}
 
     public async getAccount(
@@ -53,7 +53,7 @@ export class AccountController {
         const { balanceEntry, ...fields } = input;
         // Accounts are manual until they're linked to a bank connection (ACCT-1.3, ACCT-4.3).
         // A missing institution fails the insert's foreign key, which OperationHandler reports as a 400.
-        const account = FinanceEntityFactory.createAccount({ ...fields, isManual: true });
+        const account = EntityFactory.createAccount({ ...fields, isManual: true });
 
         const created = await this.accountData.insert(account, balanceEntry);
         return Result.successCreated(created);

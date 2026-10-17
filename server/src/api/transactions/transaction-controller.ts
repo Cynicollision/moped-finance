@@ -9,24 +9,24 @@ import {
 } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { TransactionSplit } from '@shared/finance/util';
-import { FinanceEntityFactory } from '@server/data';
+import { EntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
-import { IFinanceAccountData } from './../accounts/account-data';
-import { IFinanceCategoryData } from './../categories/category-data';
+import { IAccountData } from './../accounts/account-data';
+import { ICategoryData } from './../categories/category-data';
 import { Spending } from './spending';
 import { TransactionCsv, TransactionCsvRow } from './transaction-csv';
 import { TransactionDuplicates } from './transaction-duplicates';
-import { adjustmentChange, IFinanceTransactionData } from './transaction-data';
+import { adjustmentChange, ITransactionData } from './transaction-data';
 import { CreateTransactionRequest, SplitTransactionRequest, UpdateTransactionRequest } from './transaction-schema';
 
 export class TransactionController {
     constructor(
         private logger: IAppLogger,
-        private accountData: IFinanceAccountData,
-        private categoryData: IFinanceCategoryData,
-        private transactionData: IFinanceTransactionData
+        private accountData: IAccountData,
+        private categoryData: ICategoryData,
+        private transactionData: ITransactionData
     ) {}
 
     public async getTransaction(
@@ -45,7 +45,7 @@ export class TransactionController {
         input: CreateTransactionRequest
     ): Promise<OperationResult<Transaction>> {
         // A missing account or category fails the insert's foreign key, which OperationHandler reports as a 400.
-        const transaction = FinanceEntityFactory.createTransaction({
+        const transaction = EntityFactory.createTransaction({
             ...input,
             isHidden: input.isHidden ?? false,
             adjustsBalance: input.adjustsBalance ?? false

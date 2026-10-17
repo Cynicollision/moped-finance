@@ -11,24 +11,24 @@ import {
 import { SortDirection } from '@shared/core/enum';
 import { DailyBalance, TotalValueHistory } from '@shared/finance/contracts';
 import { Account, BalanceHistory } from '@shared/finance/types';
-import { DatabaseClient, FinanceEntityFactory } from '@server/data';
+import { DatabaseClient, EntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { DateTimeUtil } from '@server/utility';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
-import { FinanceAccountData } from './account-data';
+import { AccountData } from './account-data';
 import { createAccountRouter } from './account-routes';
-import { FinanceBalanceHistoryData } from './balance-history-data';
-import { FinanceTransactionData } from './../transactions/transaction-data';
-import { FinanceInstitutionData } from './../institutions/institution-data';
+import { BalanceHistoryData } from './balance-history-data';
+import { TransactionData } from './../transactions/transaction-data';
+import { InstitutionData } from './../institutions/institution-data';
 
 describe('Account Routes', () => {
     let app: express.Express;
     let dbClient: DatabaseClient;
     let pglite: PGlite;
-    let accountData: FinanceAccountData;
-    let balanceHistoryData: FinanceBalanceHistoryData;
-    let transactionsData: FinanceTransactionData;
-    let institutionData: FinanceInstitutionData;
+    let accountData: AccountData;
+    let balanceHistoryData: BalanceHistoryData;
+    let transactionsData: TransactionData;
+    let institutionData: InstitutionData;
     let mockLogger: jest.Mocked<IAppLogger>;
     let testUserId: string;
     let testInstitutionId: string;
@@ -42,10 +42,10 @@ describe('Account Routes', () => {
         const user = await TestDatabaseUtil.createTestUser(dbClient);
         testUserId = user.id!;
 
-        accountData = new FinanceAccountData(dbClient);
-        balanceHistoryData = new FinanceBalanceHistoryData(dbClient);
-        transactionsData = new FinanceTransactionData(dbClient);
-        institutionData = new FinanceInstitutionData(dbClient);
+        accountData = new AccountData(dbClient);
+        balanceHistoryData = new BalanceHistoryData(dbClient);
+        transactionsData = new TransactionData(dbClient);
+        institutionData = new InstitutionData(dbClient);
 
         mockLogger = TestExpressUtil.createMockLogger();
 
@@ -60,9 +60,7 @@ describe('Account Routes', () => {
     beforeEach(async () => {
         await TestDatabaseUtil.clearFinanceData(pglite);
 
-        const inst = await institutionData.insert(
-            FinanceEntityFactory.createInstitution({ id: 'inst1', name: 'Test Bank' })
-        );
+        const inst = await institutionData.insert(EntityFactory.createInstitution({ id: 'inst1', name: 'Test Bank' }));
         testInstitutionId = inst.id!;
 
         // Note: we need to use raw pglite exec because CategoryGroupData requires an import and we already have a long list.
@@ -76,7 +74,7 @@ describe('Account Routes', () => {
 
     function insertAccount(name = 'Checking') {
         return accountData.insert(
-            FinanceEntityFactory.createAccount({
+            EntityFactory.createAccount({
                 institutionId: testInstitutionId,
                 name,
                 type: AccountType.Checking
@@ -129,7 +127,7 @@ describe('Account Routes', () => {
     describe('GET /accounts', () => {
         it('INST-1.1 should return every account', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking,
@@ -139,7 +137,7 @@ describe('Account Routes', () => {
                 })
             );
             const acc2 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Savings',
                     type: AccountType.Savings,
@@ -159,8 +157,8 @@ describe('Account Routes', () => {
         it('ACCT-2.1 should give each account its latest balance on or before asOfDate, or 0 if it has none', async () => {
             const account = await insertAccount();
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
+                EntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
+                EntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
             ]);
 
             const balanceOn = async (asOfDate: string) =>
@@ -175,8 +173,8 @@ describe('Account Routes', () => {
             DateTimeUtil.setClock(new Date('2026-05-17T12:00:00Z'));
             const account = await insertAccount();
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
+                EntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
+                EntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
             ]);
 
             const list = await request(app).get('/accounts');
@@ -200,7 +198,7 @@ describe('Account Routes', () => {
     describe('GET /accounts/total-value-history', () => {
         it('DASH-2.6 should return net worth as total assets less the size of total liabilities', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking,
@@ -210,7 +208,7 @@ describe('Account Routes', () => {
                 })
             );
             const loan = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Mortgage',
                     type: AccountType.Mortgage
@@ -227,7 +225,7 @@ describe('Account Routes', () => {
                     createdAt: DateTimeUtil.now(),
                     updatedAt: DateTimeUtil.now()
                 },
-                FinanceEntityFactory.createBalanceHistory({
+                EntityFactory.createBalanceHistory({
                     accountId: loan.id,
                     balance: -1000,
                     date: DateTimeUtil.today()
@@ -247,7 +245,7 @@ describe('Account Routes', () => {
         it('DASH-1.2 should default to the past thirty days up to today', async () => {
             DateTimeUtil.setClock(new Date('2026-06-01T16:00:00Z'));
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking
@@ -255,7 +253,7 @@ describe('Account Routes', () => {
             );
             await balanceHistoryData.insertBulk(
                 ['2026-05-01', '2026-05-02', '2026-06-01', '2026-06-02'].map(date =>
-                    FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 1, date })
+                    EntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 1, date })
                 )
             );
 
@@ -269,7 +267,7 @@ describe('Account Routes', () => {
         it('DASH-1.4 ACCT-1.9 should leave out hidden accounts on every day', async () => {
             const checking = await insertAccount('Checking');
             const hidden = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Old Savings',
                     type: AccountType.Savings,
@@ -277,8 +275,8 @@ describe('Account Routes', () => {
                 })
             );
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: hidden.id, date: '2026-05-01', balance: 500 }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: checking.id, date: '2026-05-10', balance: 100 })
+                EntityFactory.createBalanceHistory({ accountId: hidden.id, date: '2026-05-01', balance: 500 }),
+                EntityFactory.createBalanceHistory({ accountId: checking.id, date: '2026-05-10', balance: 100 })
             ]);
 
             const response = await request(app).get(
@@ -309,11 +307,11 @@ describe('Account Routes', () => {
     describe('GET /accounts/group-changes', () => {
         async function insertTyped(name: string, type: AccountType, entries: [string, number][], isHidden = false) {
             const account = await accountData.insert(
-                FinanceEntityFactory.createAccount({ institutionId: testInstitutionId, name, type, isHidden })
+                EntityFactory.createAccount({ institutionId: testInstitutionId, name, type, isHidden })
             );
             await balanceHistoryData.insertBulk(
                 entries.map(([date, balance]) =>
-                    FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date, balance })
+                    EntityFactory.createBalanceHistory({ accountId: account.id, date, balance })
                 )
             );
         }
@@ -392,7 +390,7 @@ describe('Account Routes', () => {
     describe('GET /accounts/:accountId', () => {
         it('ACCT-2.6 should return a single account when found', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking,
@@ -420,8 +418,8 @@ describe('Account Routes', () => {
             const account = await insertAccount();
             const before = await request(app).get(`/accounts/${account.id}?asOfDate=2026-05-17`);
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
+                EntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
+                EntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
             ]);
 
             const after = await request(app).get(`/accounts/${account.id}?asOfDate=2026-05-17`);
@@ -433,8 +431,8 @@ describe('Account Routes', () => {
         it('ACCT-2.1 should give the balance as of asOfDate', async () => {
             const account = await insertAccount();
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
+                EntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
+                EntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-20', balance: 200 })
             ]);
 
             const response = await request(app).get(`/accounts/${account.id}?asOfDate=2026-05-17`);
@@ -570,7 +568,7 @@ describe('Account Routes', () => {
     describe('PUT /accounts/:accountId', () => {
         it('ACCT-1.5 should update an account when input is valid', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Old Checking',
                     type: AccountType.Checking,
@@ -612,14 +610,14 @@ describe('Account Routes', () => {
         it('ACCT-2.2 should record the balance as a set entry, replacing one on that date and keeping the rest', async () => {
             const account = await insertAccount();
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
-                FinanceEntityFactory.createBalanceHistory({
+                EntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-01', balance: 100 }),
+                EntityFactory.createBalanceHistory({
                     accountId: account.id,
                     date: '2026-05-05',
                     balance: 90,
                     source: BalanceEntrySource.Adjusted
                 }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-09', balance: 80 })
+                EntityFactory.createBalanceHistory({ accountId: account.id, date: '2026-05-09', balance: 80 })
             ]);
 
             const response = await request(app)
@@ -664,7 +662,7 @@ describe('Account Routes', () => {
                         ['2026-05-12', 75, adjusted]
                     ] as const
                 ).map(([date, balance, source]) =>
-                    FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date, balance, source })
+                    EntityFactory.createBalanceHistory({ accountId: account.id, date, balance, source })
                 )
             );
 
@@ -709,7 +707,7 @@ describe('Account Routes', () => {
 
         it("ACCT-4.4 should refuse a connected account's balance", async () => {
             const account = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Synced',
                     type: AccountType.Checking,
@@ -745,7 +743,7 @@ describe('Account Routes', () => {
             const account = await insertAccount();
             await balanceHistoryData.insertBulk(
                 entries.map(([date, balance]) =>
-                    FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date, balance })
+                    EntityFactory.createBalanceHistory({ accountId: account.id, date, balance })
                 )
             );
             return account;
@@ -776,7 +774,7 @@ describe('Account Routes', () => {
             const account = await insertWithBalances([['2026-05-01', 500]]);
             const insert = (date: string) =>
                 transactionsData.insert(
-                    FinanceEntityFactory.createTransaction({
+                    EntityFactory.createTransaction({
                         accountId: account.id,
                         categoryId: testCategoryId,
                         date,
@@ -889,7 +887,7 @@ describe('Account Routes', () => {
     describe('DELETE /accounts/:accountId', () => {
         it('ACCT-1.6 should delete an account with its balance history and transactions', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking,
@@ -900,7 +898,7 @@ describe('Account Routes', () => {
             );
             await importBalances(acc1.id!, 'Date,Balance\n2026-06-01,1');
             const transaction = await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId: acc1.id,
                     categoryId: testCategoryId,
                     date: '2026-06-01',
@@ -934,7 +932,7 @@ describe('Account Routes', () => {
         it('ACCT-2.4 should default to the past thirty days up to today', async () => {
             DateTimeUtil.setClock(new Date('2026-06-01T16:00:00Z'));
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking Account',
                     type: AccountType.Checking,
@@ -945,7 +943,7 @@ describe('Account Routes', () => {
             );
             await balanceHistoryData.insertBulk(
                 ['2026-05-01', '2026-05-02', '2026-06-01', '2026-06-02'].map(date =>
-                    FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 500, date })
+                    EntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 500, date })
                 )
             );
 
@@ -959,7 +957,7 @@ describe('Account Routes', () => {
 
         it('ACCT-2.4 should return every day from 30 days before asOfDate through asOfDate, dated YYYY-MM-DD', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking Account',
                     type: AccountType.Checking,
@@ -970,7 +968,7 @@ describe('Account Routes', () => {
             );
             await balanceHistoryData.insertBulk(
                 ['2026-05-01', '2026-05-02', '2026-06-01', '2026-06-02'].map(date =>
-                    FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 1, date })
+                    EntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 1, date })
                 )
             );
 
@@ -989,8 +987,8 @@ describe('Account Routes', () => {
         it('ACCT-2.11 should carry each entry forward to the next, starting at the first entry', async () => {
             const account = await insertAccount();
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: 100, date: '2026-05-10' }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: 200, date: '2026-05-13' })
+                EntityFactory.createBalanceHistory({ accountId: account.id, balance: 100, date: '2026-05-10' }),
+                EntityFactory.createBalanceHistory({ accountId: account.id, balance: 200, date: '2026-05-13' })
             ]);
 
             const response = await request(app)
@@ -1010,7 +1008,7 @@ describe('Account Routes', () => {
         it('ACCT-2.11 should carry an entry from before the timeframe into its first day', async () => {
             const account = await insertAccount();
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: 100, date: '2026-01-01' })
+                EntityFactory.createBalanceHistory({ accountId: account.id, balance: 100, date: '2026-01-01' })
             ]);
 
             const response = await request(app)
@@ -1033,24 +1031,24 @@ describe('Account Routes', () => {
 
         it('DASH-1.2 should total balances for each day of the timeframe, oldest first, dated YYYY-MM-DD', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking
                 })
             );
             const acc2 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Savings',
                     type: AccountType.Savings
                 })
             );
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 100, date: '2026-05-31' }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 100, date: '2026-06-01' }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: acc2.id, balance: 50, date: '2026-06-01' }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 999, date: '2026-06-02' })
+                EntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 100, date: '2026-05-31' }),
+                EntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 100, date: '2026-06-01' }),
+                EntityFactory.createBalanceHistory({ accountId: acc2.id, balance: 50, date: '2026-06-01' }),
+                EntityFactory.createBalanceHistory({ accountId: acc1.id, balance: 999, date: '2026-06-02' })
             ]);
 
             const response = await request(app).get(
@@ -1067,9 +1065,9 @@ describe('Account Routes', () => {
             const a = await insertAccount('A');
             const b = await insertAccount('B');
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({ accountId: a.id, balance: 100, date: '2026-06-01' }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: b.id, balance: 50, date: '2026-06-03' }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: a.id, balance: 300, date: '2026-06-05' })
+                EntityFactory.createBalanceHistory({ accountId: a.id, balance: 100, date: '2026-06-01' }),
+                EntityFactory.createBalanceHistory({ accountId: b.id, balance: 50, date: '2026-06-03' }),
+                EntityFactory.createBalanceHistory({ accountId: a.id, balance: 300, date: '2026-06-05' })
             ]);
 
             const history = await request(app).get(
@@ -1094,10 +1092,10 @@ describe('Account Routes', () => {
             const types = [AccountType.Vehicle, AccountType.RothIRA, AccountType.CreditCard, AccountType.AutoLoan];
             for (const [i, type] of types.entries()) {
                 const account = await accountData.insert(
-                    FinanceEntityFactory.createAccount({ institutionId: testInstitutionId, name: type, type })
+                    EntityFactory.createAccount({ institutionId: testInstitutionId, name: type, type })
                 );
                 await balanceHistoryData.insertBulk([
-                    FinanceEntityFactory.createBalanceHistory({
+                    EntityFactory.createBalanceHistory({
                         accountId: account.id,
                         balance: account.category === AccountCategory.Asset ? 10 ** i : -(10 ** i),
                         date: '2026-06-01'
@@ -1115,7 +1113,7 @@ describe('Account Routes', () => {
 
         it('APP-5.7 should return 400 when timeframe is invalid', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking Account',
                     type: AccountType.Checking,
@@ -1137,7 +1135,7 @@ describe('Account Routes', () => {
     describe('GET /accounts/:accountId/transactions', () => {
         function insertTransaction(accountId: string, date: string, merchant = 'Store') {
             return transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId,
                     categoryId: testCategoryId,
                     date,
@@ -1178,7 +1176,7 @@ describe('Account Routes', () => {
 
         it("ACCT-1.9 should list a hidden account's own transactions", async () => {
             const account = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Old Savings',
                     type: AccountType.Savings,
@@ -1212,7 +1210,7 @@ describe('Account Routes', () => {
     describe('GET /:accountId/export-balances', () => {
         it('ACCT-3.1 should return a CSV file named after the account', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking,
@@ -1223,7 +1221,7 @@ describe('Account Routes', () => {
             );
 
             const balanceHistory: BalanceHistory[] = [
-                FinanceEntityFactory.createBalanceHistory({
+                EntityFactory.createBalanceHistory({
                     accountId: acc1.id!,
                     balance: 100.0,
                     date: DateTimeUtil.today()
@@ -1245,12 +1243,12 @@ describe('Account Routes', () => {
         it('ACCT-3.1 should write dates as YYYY-MM-DD and balances with two decimals, newest first', async () => {
             const account = await insertAccount();
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({
+                EntityFactory.createBalanceHistory({
                     accountId: account.id,
                     balance: 100.5,
                     date: '2026-06-01'
                 }),
-                FinanceEntityFactory.createBalanceHistory({ accountId: account.id, balance: -3, date: '2026-06-02' })
+                EntityFactory.createBalanceHistory({ accountId: account.id, balance: -3, date: '2026-06-02' })
             ]);
 
             const response = await request(app).get(`/accounts/${account.id}/export-balances`);
@@ -1275,7 +1273,7 @@ describe('Account Routes', () => {
                         ['2026-05-12', 75, adjusted]
                     ] as const
                 ).map(([date, balance, source]) =>
-                    FinanceEntityFactory.createBalanceHistory({ accountId: account.id, date, balance, source })
+                    EntityFactory.createBalanceHistory({ accountId: account.id, date, balance, source })
                 )
             );
 
@@ -1298,7 +1296,7 @@ describe('Account Routes', () => {
 
         it('ACCT-3.5 should process a CSV file and return import statistics', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking,
@@ -1323,7 +1321,7 @@ describe('Account Routes', () => {
 
         it('ACCT-3.3 should perform a dry run without saving when dryRun=true', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking,
@@ -1361,7 +1359,7 @@ describe('Account Routes', () => {
         it('ACCT-3.5 should import set entries, replacing adjusted ones in the range', async () => {
             const account = await insertAccount();
             await balanceHistoryData.insertBulk([
-                FinanceEntityFactory.createBalanceHistory({
+                EntityFactory.createBalanceHistory({
                     accountId: account.id,
                     date: '2026-06-02',
                     balance: 5,
@@ -1379,7 +1377,7 @@ describe('Account Routes', () => {
 
         it('ACCT-3.4 should report a missing Date or Balance by row', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking,
@@ -1405,7 +1403,7 @@ describe('Account Routes', () => {
 
         it('ACCT-3.9 should reject a second balance for the same date', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking,
@@ -1556,7 +1554,7 @@ describe('Account Routes', () => {
     describe('POST /accounts/:accountId/sync', () => {
         it('should return sync stub success', async () => {
             const acc1 = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking Account',
                     type: AccountType.Checking,
@@ -1576,7 +1574,7 @@ describe('Account Routes', () => {
     describe('field rules and partial updates', () => {
         it('ACCT-1.5 should change only the fields sent', async () => {
             const account = await accountData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Checking',
                     type: AccountType.Checking,
