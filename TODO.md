@@ -20,12 +20,6 @@ Within a milestone, items are listed in the order to work through them (later it
 
 The core application with manual accounts. Done once the items below are, the image runs on the home server, and it passes testing on a phone over the LAN.
 
-### Public repository
-Make `Cynicollision/moped-finance` public. Comes before the GHCR job below, since public images and Actions minutes follow from it. The history stays as it is (decided 2026-10-17): every PR's `refs/pull/N/head` keeps the early commits reachable anyway, and a regex scan of every branch's history that day found no secrets or personal data.
-- [ ] **Scan with gitleaks** over the full history of every branch (`gitleaks detect --log-opts="--all"`), and look at anything it flags.
-- [ ] **Tidy branches:** delete the merged `origin/claude/*` branches and turn on "Automatically delete head branches".
-- [ ] **Review GitHub settings:** require approval for Actions on fork PRs, secret scanning with push protection, Dependabot alerts, and private vulnerability reporting. Then make it public.
-
 ### Spending periods and consistency with Budget
 - [ ] **More averages.** Decide whether Average (CASH-1.12, only the past 12 months today) needs more choices, such as This year (the average month so far) and All time, and what each does to the drill-down to Transactions (CASH-1.6). Average has its own entry in the period dropdown (CASH-1.1) and nothing to pick, so more choices would bring back the period button's picker for it, or become dropdown entries of their own. The server's `fetchSpendingAverage` works out only the past-12-months window.
 - [ ] **Make Spending and Budget look alike**: the same summary card layout, section headings and list columns where they show the same things (Saved vs Left over, the Essential / Discretionary headings of CASH-1.8 and BUD-1.7). The period controls already share a row between the summary and the sections (conventions.md, View controls), but Budget's Monthly / Quarterly / Yearly is still a button toggle beside Spending's dropdown pills; decide whether it becomes a pill dropdown too. Compare the two screens side by side at each breakpoint first, and write any shared pattern into conventions.md. `spending.component.*`, `budget.component.*`.
