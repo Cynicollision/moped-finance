@@ -31,9 +31,8 @@ Make `Cynicollision/moped-finance` public. Comes before the GHCR job below, sinc
 
 ### Major dependency upgrades
 - [ ] Majors held back on 2026-10-06, when everything was brought up to date within its range (see [development.md](docs/development.md#dependencies)). None has a known vulnerability; Angular 21 keeps getting security releases until its LTS ends. One PR each, checking the release notes' breaking changes:
-  - Client: Angular, CDK, Material and `angular-eslint` 21 → 22; `vitest` 4 → 5; `jsdom` 27 → 29. TypeScript 5.9 → 6 or 7 only once Angular supports it.
-  - Server: Express 4 → 5 with `@types/express` 5 (route path syntax and `req.query` handling changed); `dotenv` 16 → 18; TypeScript to match the client.
-  - `@types/node` is `^20` while Node is 22 everywhere (`Dockerfile`, CI, development.md); move it to `^22`.
+  - Client: Angular, CDK, Material and `angular-eslint` 21 → 22, with TypeScript 5.9 → 6.0 (Angular 22 supports only 6.0); `vitest` 4 → 5; `jsdom` 27 → 30.
+  - Server: Express 4 → 5 with `@types/express` 5 (route path syntax and `req.query` handling changed); `dotenv` 16 → 18; TypeScript 6.0 to match the client.
   - The server's dev-only audit findings (development.md) go away only with new releases of `nodemon`, `tsc-alias`, Jest's coverage packages and `drizzle-kit` (1.0 drops `@esbuild-kit`). Check again when doing these.
 
 ### Spending periods and consistency with Budget
@@ -99,6 +98,8 @@ Manual entry and import/export come first. Constraints for when this gets picked
 ---
 
 ## Ideas
+
+- TypeScript 7 (the native compiler) once Angular, typescript-eslint and ts-jest support it; on 2026-10-17 they all stopped below 7, so both packages stay on 6.0 (decided 2026-10-17).
 
 - Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Spending does, and round at the edges. Revisit integer cents only if totals ever drift.
 - Project Claude Code skills (e.g. `new-finance-resource`, `verify`, `schema-change` once migrations exist). Skipped for now; revisit if the same multi-step instructions keep getting repeated.

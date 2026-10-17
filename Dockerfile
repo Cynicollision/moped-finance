@@ -1,7 +1,7 @@
 # STAGE 1: Build the Angular Frontend
 # This stage builds the Angular application. It copies over the client and shared
 # source code, installs dependencies, and runs the production build.
-FROM node:22-alpine AS client-builder
+FROM node:24-alpine AS client-builder
 
 ARG BUILD_CONFIG=production
 
@@ -21,7 +21,7 @@ RUN npm run build --prefix client -- --configuration=$BUILD_CONFIG
 
 # STAGE 2: Build the TypeScript Backend
 # 2a: Install dependencies (Target this stage for Development)
-FROM node:22-alpine AS server-deps
+FROM node:24-alpine AS server-deps
 
 WORKDIR /app
 
@@ -44,7 +44,7 @@ RUN npm run build:prod --prefix server
 # This stage creates the final, lean production image. It installs only the
 # production dependencies for the server and copies in the build artifacts
 # from the previous two stages.
-FROM node:22-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
