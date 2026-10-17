@@ -124,7 +124,11 @@ describe('RegisterComponent', () => {
 
     function radioLabels(): string[] {
         return Array.from(fixture.nativeElement.querySelectorAll('mat-radio-button') as NodeListOf<HTMLElement>).map(
-            radio => radio.querySelector('label')!.firstChild!.textContent!.trim()
+            radio => {
+                const label = radio.cloneNode(true) as HTMLElement;
+                label.querySelector('.option-hint')?.remove();
+                return label.textContent!.trim();
+            }
         );
     }
 

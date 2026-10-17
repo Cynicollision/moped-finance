@@ -4,7 +4,7 @@ The API and Postgres run in Docker with hot reload; the Angular dev server runs 
 
 ## Prerequisites
 
-- Node.js 24
+- Node.js 24.15 or later (Angular 22 needs it)
 - Docker with Compose v2 (Docker Desktop, or Docker Engine on Linux)
 
 Any OS works. Development has mostly happened on Windows with Docker Desktop's WSL2 backend. That's why nodemon polls for changes (`--legacy-watch`): file-change events don't reliably reach containers through Windows bind mounts. Polling also works on macOS and Linux.
