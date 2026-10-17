@@ -53,6 +53,7 @@
         <!-- The period, between the summary and the sections (CASH-1.1). -->
         <div class="controls">
             <mat-form-field class="control-select period-type" appearance="outline" subscriptSizing="dynamic">
+                <mat-icon matPrefix class="control-icon">timelapse</mat-icon>
                 <mat-select
                     [value]="selection().period"
                     (selectionChange)="choosePeriodType($event.value)"
@@ -66,7 +67,9 @@
 
             <!-- The average month has nothing to pick (CASH-1.12). -->
             @if (selection().period === 'average') {
-                <span class="period-text">{{ periodText() }}</span>
+                <span class="period-text"
+                    ><mat-icon class="control-icon">calendar_month</mat-icon>{{ periodText() }}</span
+                >
             } @else {
                 <button
                     mat-stroked-button
@@ -79,6 +82,7 @@
                     [attr.aria-expanded]="isPopoverOpen()"
                     [attr.aria-label]="periodLabel() + ', choose a ' + periodNoun()"
                 >
+                    <mat-icon class="control-icon">calendar_month</mat-icon>
                     {{ periodText() }}
                     <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
                 </button>

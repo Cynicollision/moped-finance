@@ -159,8 +159,11 @@ describe('SpendingComponent', () => {
         return Object.assign(fixture, { financeService, isCompact, element: fixture.nativeElement as HTMLElement });
     }
 
+    /** The element's text, without the row's leading icons (CASH-1.1). */
     function text(element: Element | null): string {
-        return element!.textContent!.replace(/\s+/g, ' ').trim();
+        const copy = element!.cloneNode(true) as Element;
+        copy.querySelectorAll('.control-icon').forEach(icon => icon.remove());
+        return copy.textContent!.replace(/\s+/g, ' ').trim();
     }
 
     function budgeted(element: HTMLElement): string[] {
