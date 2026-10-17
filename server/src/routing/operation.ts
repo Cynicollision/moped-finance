@@ -156,7 +156,9 @@ export class OperationHandler {
                 continue;
             }
 
-            const result = schema.safeParse(req[part]);
+            // The body is undefined when no JSON was sent; parse it as an empty object.
+            const value = part === 'body' ? (req[part] ?? {}) : req[part];
+            const result = schema.safeParse(value);
             if (!result.success) {
                 const issues = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
                 return {
