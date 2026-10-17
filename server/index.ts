@@ -147,7 +147,7 @@ async function start(): Promise<void> {
         }
     }
 
-    // Express 5 hands a listen error (port in use) to the callback rather than throwing it.
+    // A listen error (port in use) arrives here rather than being thrown.
     server = buildApp(sessionSecret, signInLimits).listen(PORT, async error => {
         if (error) {
             console.error(`Could not listen on port ${PORT}: ${error.message}`);
