@@ -1,6 +1,6 @@
 # Deployment
 
-> **Status: not deployed yet.** The production image builds, creates its schema on an empty database, serves the client and answers `/health`; CI checks this on every PR (the smoke test in `.github/workflows/ci.yml`). It hasn't been run on the target host yet. This page describes the intended setup; fill in the exact steps once it has.
+> **Status: not deployed yet.** The production image builds, creates its schema on an empty database, serves the client and answers `/health`, and its host commands work; CI checks this on every PR (the smoke test in `.github/workflows/ci.yml`) and publishes the image from `main`. It hasn't been run on the target host yet. This page describes the intended setup; fill in the exact steps once it has.
 
 ## Target
 
@@ -9,14 +9,15 @@ A Docker host on a private network (a NAS, home server or similar), reachable fr
 ## Intended setup
 
 - **Image:** the root `Dockerfile` builds the client and server and produces one image. The API serves the built client, so there's one port (3000).
-- **Delivery:** either GitHub Actions builds and pushes `ghcr.io/cynicollision/moped-finance` (the commented-out job in `.github/workflows/ci.yml`) and the host pulls it, or you build the image on the host.
-- **Run:** `docker-compose.prod.yml` next to a `.env` on the host. It runs the `moped-finance-api` and `moped-finance-db` containers, with Postgres data in the `moped-finance_db_data` volume. Set the image with `DOCKER_IMAGE`.
+- **Delivery:** CI's publish job pushes `ghcr.io/cynicollision/moped-finance` (public, `linux/amd64`) once the other jobs pass: `latest` and `sha-<commit>` for every push to `main`, and `0.1.0` and `0.1` for a release tag `v0.1.0`. The host pulls it; no sign-in is needed. To run something else, such as a release or an image built on the host (`docker build -t moped-finance .`), set `DOCKER_IMAGE`.
+- **Run:** `docker-compose.prod.yml` next to a `.env` on the host. It runs the `moped-finance-api` and `moped-finance-db` containers, with Postgres data in the `moped-finance_db_data` volume. The app is on port 3000 of the host; set `APP_PORT` to use another.
 - **Config:** the same variables as `.env.example`. `SESSION_SECRET` is optional: without it, the server generates a random one on first start and keeps it in the database (`core.secrets`), so sessions survive restarts (AUTH-3.6, AUTH-3.7). If you set it, use a long random value. Sessions are stored in `core.sessions`.
 - **Sign-in protection:** after 5 failed sign-ins from one address within 15 minutes, that address is refused for 15 minutes (AUTH-10). `SIGN_IN_MAX_FAILED_ATTEMPTS`, `SIGN_IN_WINDOW_MINUTES` and `SIGN_IN_LOCKOUT_MINUTES` change those numbers (see `.env.example` for the ranges); a value out of range stops the container from starting, with the reason in `docker logs moped-finance-api`. Lockouts are logged as warnings and kept in memory, so restarting the container (`docker restart moped-finance-api`) clears them.
 - **Forgotten password:** run `docker exec -it moped-finance-api npm run reset-password` on the host (AUTH-12). It shows the username, asks for a new password twice without showing it, and signs out every device; API tokens keep working. To script it, pipe in the password and its confirmation on two lines (`-i` instead of `-it`). The Login screen's **Forgot password?** shows the same command.
 - **Time zone:** set `TZ` in `.env` to your IANA zone (for example `America/New_York`); the compose files pass it to both containers and default to UTC. The server works out "today" and Spending period boundaries in this zone (APP-5.6). Postgres only stores calendar dates and `TIMESTAMPTZ`, so its zone affects log output, and it only reads `TZ` when the data volume is first initialized.
 - **Database schema:** nothing to run by hand. On every start the server applies any migrations the image has that the database hasn't run yet, then starts listening (APP-5.8). On an empty database that creates everything. If a migration fails, it's rolled back, the error is in `docker logs moped-finance-api`, and the container exits; `restart: always` retries, so it shows as restarting until fixed. The same happens if Postgres isn't accepting connections yet, for example while the host boots, and clears up once it is.
 - **First user:** the first person to register owns the instance, and registration closes after that (AUTH-2.7, AUTH-7.2). Register right after the first start, before anyone else on the network can reach the app. There's no seeded or default user in production; `SEED_USER_*` and `db:seed` are for development only.
+- **Starting over and sample data:** `docker exec -it moped-finance-api npm run wipe-database` deletes everything, the user included, after you type `wipe`, and leaves the instance as on first start (APP-10.1). Restart the app afterwards. `docker exec moped-finance-api npm run load-sample-data` fills an empty instance with the synthetic data in `server/seed-data/`, its dates moved up to this month (APP-10.3, APP-10.4), to try the app out before entering real data; run it before or after registering, and wipe before starting for real.
 - **Health:** `GET /health` returns 200 when the API can reach the database and 503 otherwise (APP-5.3). `docker-compose.prod.yml` uses it as the `api` health check, so `docker ps` shows `unhealthy` when the database is unreachable.
 - **Stopping and updating:** on `docker stop` the API finishes in-flight requests for up to 25 seconds before exiting (APP-5.2); `stop_grace_period: 30s` gives it room before Docker kills it. To update, pull or build the new image and `docker compose -f docker-compose.prod.yml up -d`; the new container migrates the database as it starts. Migrations only go forward, so back up the database before an update that includes one, in case you need to return to the old image.
 
@@ -40,4 +41,3 @@ The app itself only speaks plain HTTP. Choose one of these:
 These are tracked in `TODO.md` under the initial release:
 
 - Backup and restore for the database volume.
-- How images are delivered (GHCR from CI, or built on the host).

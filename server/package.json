@@ -8,6 +8,8 @@
         "dev": "nodemon --legacy-watch",
         "reset-password": "node dist/server/reset-password.js",
         "reset-password:dev": "cross-env TS_NODE_FILES=true node --env-file-if-exists=../.env -r ts-node/register -r tsconfig-paths/register reset-password.ts",
+        "wipe-database": "node dist/server/wipe-database.js",
+        "load-sample-data": "node dist/server/load-sample-data.js",
         "db:generate": "drizzle-kit generate",
         "db:migrate": "node --env-file-if-exists=../.env -r ts-node/register -r tsconfig-paths/register scripts/migrate-db.ts",
         "db:drop": "node --env-file-if-exists=../.env -r ts-node/register scripts/drop-db.ts",

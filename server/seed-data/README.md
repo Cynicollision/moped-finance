@@ -1,8 +1,8 @@
 # Seed data
 
-Synthetic sample data for development, loaded by `npm run db:seed:finance` (`scripts/seed-finance-db.ts`). Every name, merchant and amount is made up.
+Synthetic sample data, loaded by `npm run db:seed:finance` in development and by the production image's `load-sample-data` command (APP-10.3), both through `src/sample-data/sample-data.ts`. Every name, merchant and amount is made up.
 
-It covers one household from 2024-02-29 to 2026-05-15, just before the development build's fixed "today" (2026-05-17), so every chart timeframe up to two years has data:
+It covers one household from 2024-02-29 to 2026-05-15, just before the development build's fixed "today" (2026-05-17), so every chart timeframe up to two years has data. `load-sample-data` moves the dates forward by whole months to end near the real today (APP-10.4).
 
 | File | Contents | Format |
 |---|---|---|

@@ -1,23 +1,9 @@
-import fs from 'fs';
 import path from 'path';
-import { CalendarPeriod } from '@shared/core/enum';
-import { AccountType, CategoryNecessity, CategoryType } from '@shared/finance/enum';
-import { AccountData } from '@server/api/accounts/account-data';
-import { BalanceHistoryData } from '@server/api/accounts/balance-history-data';
-import { BudgetStreamData } from '@server/api/budget/budget-stream-data';
-import { CategoryGroupData } from '@server/api/categories/category-groups/category-group-data';
-import { CategoryData } from '@server/api/categories/category-data';
-import { InstitutionData } from '@server/api/institutions/institution-data';
-import { TransactionCsv } from '@server/api/transactions/transaction-csv';
-import { TransactionData } from '@server/api/transactions/transaction-data';
-import { CsvFile, CsvRow, CsvValue, CsvValueResult } from '@server/csv';
-import { DatabaseClient, EntityFactory } from '@server/data';
+import { DatabaseClient } from '@server/data';
+import { SampleData } from '@server/sample-data/sample-data';
 
-// Imports come from the data files rather than the domain barrels, which load the routes and auth middleware.
-// Seeds the synthetic sample data in server/seed-data/ (see its README). Records are linked by name, and
-// transactions.csv goes through the same reader as a transaction import.
-const DATA_DIR = path.join(__dirname, './../seed-data');
-
+// Seeds the synthetic sample data in server/seed-data/ (see its README) with its dates as written, which end just
+// before the development build's fixed "today". The production image's load-sample-data moves them up to today.
 const dbClient = DatabaseClient.fromConfig({
     user: process.env.PGUSER,
     password: process.env.PGPASSWORD,
@@ -26,138 +12,15 @@ const dbClient = DatabaseClient.fromConfig({
     port: parseInt(process.env.PGPORT || '5432')
 });
 
-function readFile(fileName: string): Buffer {
-    return fs.readFileSync(path.join(DATA_DIR, fileName));
-}
-
-function readRows(fileName: string, headers: string[]): CsvRow[] {
-    const csv = CsvFile.read(readFile(fileName), headers);
-    if (!csv.success) {
-        throw new Error(`${fileName}: ${csv.message}`);
-    }
-    const badRow = csv.rows.find(row => row.error);
-    if (badRow) {
-        throw new Error(`${fileName} row ${badRow.rowNumber}: ${badRow.error}`);
-    }
-    return csv.rows;
-}
-
-function valueOf<T>(fileName: string, row: CsvRow, result: CsvValueResult<T>): T {
-    if (!result.success) {
-        throw new Error(`${fileName} row ${row.rowNumber}: ${result.message}`);
-    }
-    return result.value;
-}
-
-function idOf(ids: Map<string, string>, name: string, fileName: string, row: CsvRow): string {
-    const id = ids.get(name.toLowerCase());
-    if (!id) {
-        throw new Error(`${fileName} row ${row.rowNumber}: '${name}' not found.`);
-    }
-    return id;
-}
-
 (async () => {
     try {
         console.log('🌱 Seeding finance data...');
-
-        // Institutions are created from the accounts' InstitutionName, like category groups from categories.
-        const institutionData = new InstitutionData(dbClient);
-        const accountData = new AccountData(dbClient);
-        const institutionIds = new Map<string, string>();
-        const accountIds = new Map<string, string>();
-        const accountsFile = 'accounts.csv';
-        const accountTypes: string[] = Object.values(AccountType);
-        for (const row of readRows(accountsFile, ['InstitutionName', 'Name', 'Type', 'IsHidden'])) {
-            if (!accountTypes.includes(row.values['Type'])) {
-                throw new Error(`${accountsFile} row ${row.rowNumber}: unknown type '${row.values['Type']}'.`);
-            }
-            let institutionId = institutionIds.get(row.values['InstitutionName'].toLowerCase());
-            if (!institutionId) {
-                const institution = await institutionData.insert(
-                    EntityFactory.createInstitution({ name: row.values['InstitutionName'] })
-                );
-                institutionId = institution.id;
-                institutionIds.set(institution.name.toLowerCase(), institution.id);
-            }
-            const account = await accountData.insert(
-                EntityFactory.createAccount({
-                    institutionId,
-                    name: row.values['Name'],
-                    type: row.values['Type'] as AccountType,
-                    isHidden: valueOf(accountsFile, row, CsvValue.boolean('IsHidden', row.values['IsHidden'])),
-                    isManual: true
-                })
-            );
-            accountIds.set(account.name.toLowerCase(), account.id);
-        }
-        console.log(`✅ ${institutionIds.size} institutions, ${accountIds.size} accounts`);
-
-        const groupData = new CategoryGroupData(dbClient);
-        const categoryData = new CategoryData(dbClient);
-        const groupIds = new Map<string, string>();
-        const categoryIds = new Map<string, string>();
-        const categoriesFile = 'categories.csv';
-        for (const row of readRows(categoriesFile, ['Type', 'Group', 'Name', 'Icon', 'Necessity', 'IsActive'])) {
-            let groupId = groupIds.get(row.values['Group'].toLowerCase());
-            if (!groupId) {
-                const group = await groupData.insert(
-                    EntityFactory.createCategoryGroup({
-                        type: row.values['Type'].toLowerCase() as CategoryType,
-                        name: row.values['Group']
-                    })
-                );
-                groupId = group.id;
-                groupIds.set(group.name.toLowerCase(), group.id);
-            }
-            const category = await categoryData.insert(
-                EntityFactory.createCategory({
-                    groupId,
-                    icon: row.values['Icon'],
-                    name: row.values['Name'],
-                    isActive: valueOf(categoriesFile, row, CsvValue.boolean('IsActive', row.values['IsActive'])),
-                    necessity: (row.values['Necessity'].toLowerCase() || null) as CategoryNecessity | null
-                })
-            );
-            categoryIds.set(category.name.toLowerCase(), category.id);
-        }
-        console.log(`✅ ${groupIds.size} category groups, ${categoryIds.size} categories`);
-
-        const budgetStreamData = new BudgetStreamData(dbClient);
-        const streamsFile = 'budget-streams.csv';
-        const streamRows = readRows(streamsFile, ['Name', 'CategoryName', 'Recurrence', 'Amount']);
-        for (const row of streamRows) {
-            await budgetStreamData.insert(
-                EntityFactory.createBudgetStream({
-                    name: row.values['Name'],
-                    categoryId: idOf(categoryIds, row.values['CategoryName'], streamsFile, row),
-                    recurrence: row.values['Recurrence'] as CalendarPeriod,
-                    amount: valueOf(streamsFile, row, CsvValue.amount('Amount', row.values['Amount']))
-                })
-            );
-        }
-        console.log(`✅ ${streamRows.length} budget streams`);
-
-        const transactions = TransactionCsv.read(readFile('transactions.csv'), { accountIds, categoryIds });
-        if (!transactions.success) {
-            throw new Error(`transactions.csv: ${transactions.message}`);
-        }
-        if (transactions.failedRowMessages.length > 0) {
-            throw new Error(`transactions.csv: ${transactions.failedRowMessages.join('; ')}`);
-        }
-        await new TransactionData(dbClient).insertBulk(transactions.rows.map(row => row.transaction));
-        console.log(`✅ ${transactions.rows.length} transactions`);
-
-        const balancesFile = 'balance-history.csv';
-        const balances = readRows(balancesFile, ['Date', 'AccountName', 'Balance']).map(row =>
-            EntityFactory.createBalanceHistory({
-                accountId: idOf(accountIds, row.values['AccountName'], balancesFile, row),
-                date: valueOf(balancesFile, row, CsvValue.date('Date', row.values['Date'])),
-                balance: valueOf(balancesFile, row, CsvValue.amount('Balance', row.values['Balance']))
-            })
-        );
-        await new BalanceHistoryData(dbClient).insertBulk(balances);
-        console.log(`✅ ${balances.length} balance history entries`);
+        const saved = await new SampleData(dbClient, path.join(__dirname, './../seed-data')).load();
+        console.log(`✅ ${saved.institutions} institutions, ${saved.accounts} accounts`);
+        console.log(`✅ ${saved.categoryGroups} category groups, ${saved.categories} categories`);
+        console.log(`✅ ${saved.budgetStreams} budget streams`);
+        console.log(`✅ ${saved.transactions} transactions`);
+        console.log(`✅ ${saved.balances} balance history entries`);
     } catch (err) {
         console.error(
             '❌ Finance seeding failed. It expects an empty finance schema; run db:reset to start over.',
