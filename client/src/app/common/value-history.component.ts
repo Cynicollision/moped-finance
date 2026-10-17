@@ -25,19 +25,21 @@ export interface TimeframeOption {
     label: string;
     /** The button text under the chart ("30D"). */
     shortLabel: string;
+    /** Offered from the menu at the end of the row rather than as a button of its own (DASH-1.2). */
+    inMenu?: boolean;
 }
 
-/** The timeframes offered under the chart (DASH-1.2, ACCT-2.4), shortest first. */
+/** The timeframes offered under the chart (DASH-1.2, ACCT-2.4), shortest first; those over a year go in a menu. */
 export const TimeframeOptions: TimeframeOption[] = [
     { value: HistoryTimeframe.PastThirtyDays, label: 'Past 30 Days', shortLabel: '30D' },
     { value: HistoryTimeframe.PastSixtyDays, label: 'Past 60 Days', shortLabel: '60D' },
     { value: HistoryTimeframe.PastNinetyDays, label: 'Past 90 Days', shortLabel: '90D' },
     { value: HistoryTimeframe.YearToDate, label: 'Year To Date', shortLabel: 'YTD' },
     { value: HistoryTimeframe.PastOneYear, label: 'Past Year', shortLabel: '1Y' },
-    { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years', shortLabel: '2Y' },
-    { value: HistoryTimeframe.PastFiveYears, label: 'Past 5 Years', shortLabel: '5Y' },
-    { value: HistoryTimeframe.PastTenYears, label: 'Past 10 Years', shortLabel: '10Y' },
-    { value: HistoryTimeframe.All, label: 'All Time', shortLabel: 'All' }
+    { value: HistoryTimeframe.PastTwoYears, label: 'Past 2 Years', shortLabel: '2Y', inMenu: true },
+    { value: HistoryTimeframe.PastFiveYears, label: 'Past 5 Years', shortLabel: '5Y', inMenu: true },
+    { value: HistoryTimeframe.PastTenYears, label: 'Past 10 Years', shortLabel: '10Y', inMenu: true },
+    { value: HistoryTimeframe.All, label: 'All Time', shortLabel: 'All', inMenu: true }
 ];
 
 @Component({
@@ -75,6 +77,13 @@ export class ValueHistoryComponent {
 
     readonly chartTypeChange = output<ValueHistoryType>();
     readonly timeframeChange = output<HistoryTimeframe>();
+
+    readonly buttonTimeframes = computed(() => this.timeframeOptions().filter(t => !t.inMenu));
+    readonly menuTimeframes = computed(() => this.timeframeOptions().filter(t => t.inMenu));
+    /** The selected timeframe when it's one of the menu's, which the menu's button then shows. */
+    readonly selectedMenuTimeframe = computed(() =>
+        this.menuTimeframes().find(t => t.value === this.selectedTimeframe())
+    );
 
     // Computed Properties
     readonly selectedChartLabel = computed(() => {

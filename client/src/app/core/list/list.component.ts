@@ -118,7 +118,8 @@ export class ListComponent {
     readonly showHeader = input(true);
     readonly sortChange = output<ListSort>();
 
-    readonly sortableColumns = computed(() => this.columns().filter(c => c.sort));
+    /** The sort menu's columns: it shows only on narrow screens, so only the columns shown there (APP-7.2). */
+    readonly sortableColumns = computed(() => this.columns().filter(c => c.sort && c.compact));
     readonly sortColumn = computed(() => this.columns().find(c => c.key === this.sort()?.key));
 
     readonly wideColumns = computed(() =>

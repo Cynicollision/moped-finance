@@ -52,19 +52,45 @@
             }
         </div>
 
-        <!-- Timeframe (DASH-1.2, ACCT-2.4), below the chart -->
-        <mat-button-toggle-group
-            class="timeframes"
-            aria-label="Timeframe"
-            hideSingleSelectionIndicator
-            [value]="selectedTimeframe()"
-            (change)="timeframeChange.emit($event.value)"
-        >
-            @for (option of timeframeOptions(); track option.value) {
-                <mat-button-toggle [value]="option.value" [aria-label]="option.label" [title]="option.label">
-                    {{ option.shortLabel }}
-                </mat-button-toggle>
+        <!-- Timeframe (DASH-1.2, ACCT-2.4), below the chart: the shorter ones as buttons, the rest in a menu -->
+        <div class="timeframes">
+            <mat-button-toggle-group
+                aria-label="Timeframe"
+                hideSingleSelectionIndicator
+                [value]="selectedTimeframe()"
+                (change)="timeframeChange.emit($event.value)"
+            >
+                @for (option of buttonTimeframes(); track option.value) {
+                    <mat-button-toggle [value]="option.value" [aria-label]="option.label" [title]="option.label">
+                        {{ option.shortLabel }}
+                    </mat-button-toggle>
+                }
+            </mat-button-toggle-group>
+
+            @if (menuTimeframes().length > 0) {
+                <button
+                    type="button"
+                    class="more-timeframes"
+                    [class.selected]="selectedMenuTimeframe()"
+                    [matMenuTriggerFor]="timeframeMenu"
+                    [attr.aria-label]="
+                        selectedMenuTimeframe()
+                            ? selectedMenuTimeframe()!.label + ', more timeframes'
+                            : 'More timeframes'
+                    "
+                >
+                    <span>{{ selectedMenuTimeframe()?.shortLabel ?? 'More' }}</span>
+                    <mat-icon>arrow_drop_down</mat-icon>
+                </button>
+                <mat-menu #timeframeMenu="matMenu" xPosition="before">
+                    @for (option of menuTimeframes(); track option.value) {
+                        <button mat-menu-item (click)="timeframeChange.emit(option.value)">
+                            <mat-icon>{{ option.value === selectedTimeframe() ? 'check' : '' }}</mat-icon>
+                            <span>{{ option.label }}</span>
+                        </button>
+                    }
+                </mat-menu>
             }
-        </mat-button-toggle-group>
+        </div>
     </mat-card-content>
 </mat-card>

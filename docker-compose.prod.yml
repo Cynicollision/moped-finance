@@ -16,6 +16,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${PGUSER}"]
       interval: 5s
       timeout: 3s
+      # The first start initialises the data directory, which takes longer than 25s on slower hardware such as a NAS
+      start_period: 60s
       retries: 5
 
   api:

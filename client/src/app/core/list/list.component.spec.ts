@@ -22,7 +22,7 @@ import { ListColumn, ListModule, ListSort } from './list.component';
 class ListHostComponent {
     readonly columns: ListColumn[] = [
         { key: 'date', label: 'Date', width: '8rem', sort: 'desc', compact: 'secondary' },
-        { key: 'account', label: 'Account' },
+        { key: 'account', label: 'Account', sort: 'asc' },
         { key: 'merchant', label: 'Merchant', sort: 'asc', compact: 'primary' },
         { key: 'category', label: 'Category', compact: 'secondary' },
         { key: 'amount', label: 'Amount', align: 'end', sort: 'asc', compact: 'trailing' }
@@ -54,7 +54,7 @@ describe('ListComponent', () => {
         );
         expect(headings).toEqual([
             'Date arrow_downward',
-            'Account',
+            'Account arrow_upward',
             'Merchant arrow_upward',
             'Category',
             'Amount arrow_upward'
@@ -81,7 +81,7 @@ describe('ListComponent', () => {
                 button.textContent!.includes(label)
             )!;
 
-        expect(list.querySelectorAll('.app-list-header button').length).toBe(3);
+        expect(list.querySelectorAll('.app-list-header button').length).toBe(4);
 
         heading('Merchant').click();
         await fixture.whenStable();
@@ -95,7 +95,7 @@ describe('ListComponent', () => {
         expect(fixture.componentInstance.sort()).toEqual({ key: 'date', direction: 'desc' });
     });
 
-    it('APP-7.2 should offer the sortable columns in a sort menu for narrow screens', async () => {
+    it('APP-7.2 should offer the sortable columns shown on narrow screens in a sort menu', async () => {
         const { fixture, list } = await render();
 
         const trigger = list.querySelector<HTMLButtonElement>('.app-list-sort-bar button')!;
