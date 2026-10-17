@@ -1,42 +1,6 @@
 <div class="spending-container">
     <app-page-header title="Spending" [refreshing]="totals.isRefreshing()"></app-page-header>
 
-    <!-- The period stepper (CASH-1.1). -->
-    <div class="controls">
-        <div class="stepper">
-            <button
-                mat-icon-button
-                (click)="step(-1)"
-                [disabled]="!canStepBack()"
-                [attr.aria-label]="'Previous ' + periodNoun()"
-            >
-                <mat-icon>chevron_left</mat-icon>
-            </button>
-            <button
-                mat-button
-                #pickerTrigger
-                class="period-button"
-                cdkOverlayOrigin
-                #pickerOrigin="cdkOverlayOrigin"
-                (click)="openPicker()"
-                aria-haspopup="dialog"
-                [attr.aria-expanded]="isPopoverOpen()"
-                [attr.aria-label]="periodLabel() + ', choose a period'"
-            >
-                {{ periodText() }}
-                <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
-            </button>
-            <button
-                mat-icon-button
-                (click)="step(1)"
-                [disabled]="!canStepForward()"
-                [attr.aria-label]="'Next ' + periodNoun()"
-            >
-                <mat-icon>chevron_right</mat-icon>
-            </button>
-        </div>
-    </div>
-
     @if (error(); as error) {
         <app-load-error [message]="error" (retry)="retry()"></app-load-error>
     } @else if (isLoaded()) {
@@ -73,17 +37,69 @@
             </div>
         </mat-card>
 
-        <!-- Between the summary and the sections it changes (CASH-1.5). -->
-        <mat-button-toggle-group
-            class="view-toggle"
-            [value]="viewMode()"
-            (change)="viewMode.set($event.value)"
-            hideSingleSelectionIndicator
-            aria-label="Show by"
-        >
-            <mat-button-toggle value="category">Category</mat-button-toggle>
-            <mat-button-toggle value="group">Group</mat-button-toggle>
-        </mat-button-toggle-group>
+        <!-- Category or Group, then the period, between the summary and the sections (CASH-1.1, CASH-1.5). -->
+        <div class="controls">
+            <mat-form-field class="control-select view-mode" appearance="outline" subscriptSizing="dynamic">
+                <mat-select [value]="viewMode()" (selectionChange)="viewMode.set($event.value)" aria-label="Show by">
+                    <mat-option value="category">By category</mat-option>
+                    <mat-option value="group">By group</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="control-select period-type" appearance="outline" subscriptSizing="dynamic">
+                <mat-select
+                    [value]="selection().period"
+                    (selectionChange)="choosePeriodType($event.value)"
+                    aria-label="Period type"
+                >
+                    @for (type of periodTypes; track type.value) {
+                        <mat-option [value]="type.value">{{ type.label }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+
+            <!-- The average month has nothing to pick (CASH-1.12). -->
+            @if (selection().period === 'average') {
+                <span class="period-text">{{ periodText() }}</span>
+            } @else {
+                <button
+                    mat-stroked-button
+                    #pickerTrigger
+                    class="period-button"
+                    cdkOverlayOrigin
+                    #pickerOrigin="cdkOverlayOrigin"
+                    (click)="openPicker()"
+                    aria-haspopup="dialog"
+                    [attr.aria-expanded]="isPopoverOpen()"
+                    [attr.aria-label]="periodLabel() + ', choose a ' + periodNoun()"
+                >
+                    {{ periodText() }}
+                    <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+                </button>
+
+                <!-- The picker opens below the period on wider screens, and in a bottom sheet on phones. -->
+                <ng-template
+                    cdkConnectedOverlay
+                    [cdkConnectedOverlayOrigin]="pickerOrigin"
+                    [cdkConnectedOverlayOpen]="isPopoverOpen()"
+                    cdkConnectedOverlayHasBackdrop
+                    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                    (backdropClick)="closePicker()"
+                    (overlayKeydown)="$event.key === 'Escape' && closePicker()"
+                    (detach)="closePicker()"
+                >
+                    <div
+                        class="period-popover"
+                        role="dialog"
+                        [attr.aria-label]="'Choose a ' + periodNoun()"
+                        cdkTrapFocus
+                        cdkTrapFocusAutoCapture
+                    >
+                        <ng-container [ngTemplateOutlet]="pickerContent"></ng-container>
+                    </div>
+                </ng-template>
+            }
+        </div>
 
         @for (section of sections(); track section.title) {
             <mat-card class="section-card" appearance="outlined">
@@ -161,44 +177,16 @@
     }
 </div>
 
-<!-- The picker opens below the period on wider screens... -->
-<ng-template
-    cdkConnectedOverlay
-    [cdkConnectedOverlayOrigin]="pickerOrigin"
-    [cdkConnectedOverlayOpen]="isPopoverOpen()"
-    cdkConnectedOverlayHasBackdrop
-    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-    (backdropClick)="closePicker()"
-    (overlayKeydown)="$event.key === 'Escape' && closePicker()"
-    (detach)="closePicker()"
->
-    <div class="period-popover" role="dialog" aria-label="Choose a period" cdkTrapFocus cdkTrapFocusAutoCapture>
-        <ng-container [ngTemplateOutlet]="pickerContent"></ng-container>
-    </div>
-</ng-template>
-
-<!-- ...and in a bottom sheet on phones. -->
 <ng-template #pickerSheet>
     <div class="period-sheet">
-        <h2 class="period-sheet-title">Period</h2>
+        <h2 class="period-sheet-title">Choose a {{ periodNoun() }}</h2>
         <ng-container [ngTemplateOutlet]="pickerContent"></ng-container>
     </div>
 </ng-template>
 
+<!-- Months and quarters within a year, or the years on offer (CASH-1.1). -->
 <ng-template #pickerContent>
     <div class="period-picker">
-        <mat-button-toggle-group
-            class="picker-type"
-            [value]="pickerPeriod()"
-            (change)="pickerPeriod.set($event.value)"
-            hideSingleSelectionIndicator
-            aria-label="Period type"
-        >
-            @for (type of periodTypes; track type.value) {
-                <mat-button-toggle [value]="type.value">{{ type.label }}</mat-button-toggle>
-            }
-        </mat-button-toggle-group>
-
         @if (showsPickerYear()) {
             <div class="picker-year">
                 <button
@@ -221,11 +209,7 @@
             </div>
         }
 
-        <div
-            class="picker-grid"
-            [class.quarters]="pickerPeriod() === CalendarPeriod.Quarterly"
-            [class.single]="pickerPeriod() === 'average'"
-        >
+        <div class="picker-grid" [class.quarters]="selection().period === CalendarPeriod.Quarterly">
             @for (option of pickerOptions(); track option.start) {
                 <button
                     mat-button

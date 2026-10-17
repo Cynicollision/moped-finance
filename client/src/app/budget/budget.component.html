@@ -5,22 +5,9 @@
         <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
     } @else if (data.value()) {
         <mat-card class="summary-card" appearance="outlined">
-            <div class="summary-top">
-                <div class="left-over">
-                    <span class="label">Left over</span>
-                    <app-money class="headline" [amount]="leftOver()" tone="favourable" digits="1.0-0"></app-money>
-                </div>
-                <mat-button-toggle-group
-                    class="period-toggle"
-                    [value]="period()"
-                    (change)="period.set($event.value)"
-                    hideSingleSelectionIndicator
-                    aria-label="Period"
-                >
-                    @for (p of periods; track p) {
-                        <mat-button-toggle [value]="p">{{ p }}</mat-button-toggle>
-                    }
-                </mat-button-toggle-group>
+            <div class="left-over">
+                <span class="label">Left over</span>
+                <app-money class="headline" [amount]="leftOver()" tone="favourable" digits="1.0-0"></app-money>
             </div>
             <div class="summary-figures">
                 @for (section of sections(); track section.type) {
@@ -36,6 +23,19 @@
                 }
             </div>
         </mat-card>
+
+        <!-- Between the summary and the sections, where Spending has its period (BUD-1.6, CASH-1.1). -->
+        <mat-button-toggle-group
+            class="period-toggle"
+            [value]="period()"
+            (change)="period.set($event.value)"
+            hideSingleSelectionIndicator
+            aria-label="Period"
+        >
+            @for (p of periods; track p) {
+                <mat-button-toggle [value]="p">{{ p }}</mat-button-toggle>
+            }
+        </mat-button-toggle-group>
 
         @for (section of sections(); track section.type) {
             <mat-card class="section-card" appearance="outlined">

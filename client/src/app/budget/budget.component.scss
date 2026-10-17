@@ -1,3 +1,4 @@
+@use '@angular/material' as mat;
 @use 'breakpoints' as bp;
 
 .budget-container {
@@ -22,18 +23,21 @@ app-page-header {
     letter-spacing: 0.05em;
 }
 
-// Left over and the period switch, then each section's total (BUD-1.6, BUD-1.10).
+// Left over, then each section's total (BUD-1.10).
 .summary-card {
     padding: 20px;
     gap: 20px;
 }
 
-.summary-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 16px;
+// The period switch, between the summary and the sections as on Spending (BUD-1.6).
+.period-toggle {
+    align-self: flex-start;
+
+    @include mat.button-toggle-overrides(
+        (
+            height: 40px
+        )
+    );
 }
 
 .left-over {

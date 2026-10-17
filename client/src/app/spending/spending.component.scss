@@ -23,60 +23,126 @@ app-page-header {
     letter-spacing: 0.05em;
 }
 
-// The period stepper (CASH-1.1).
+// Category or Group, the period type and the period, in one row between the summary and the sections (CASH-1.1,
+// CASH-1.5): three pills of the same height, outline and text. Each is sized for its longest value, so none changes
+// width with the choice; on phones they share out the row's whole width.
 .controls {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-.stepper {
-    display: flex;
-    align-items: center;
-    margin-left: -8px;
-}
+.control-select {
+    min-width: 0;
 
-// Wide enough for "September 2026", so the arrows stay put as the period changes.
-.period-button {
-    min-width: 10.5rem;
-    font: var(--mat-sys-title-medium);
-}
-
-// The Category / Group switch, between the summary and the sections (CASH-1.5).
-.view-toggle {
-    align-self: flex-start;
-
-    @include mat.button-toggle-overrides(
+    @include mat.form-field-overrides(
         (
-            height: 36px
+            container-height: 40px,
+            container-vertical-padding: 8px,
+            outlined-container-shape: 20px
+        )
+    );
+
+    // Sized by the row rather than the field's default width, with the choice centred.
+    ::ng-deep {
+        .mat-mdc-form-field-infix {
+            width: auto;
+        }
+
+        .mat-mdc-select-value {
+            text-align: center;
+        }
+    }
+}
+
+.view-mode {
+    flex: 0 0 9.5rem;
+}
+
+.period-type {
+    flex: 0 0 7.75rem;
+}
+
+.period-button {
+    flex: 0 0 11rem;
+}
+
+// Last in the row, so it can be as wide as its text.
+.period-text {
+    flex: 0 1 auto;
+}
+
+// The text centred and the arrow at the end, as in the dropdowns; the padding balances the arrow.
+.period-button {
+    ::ng-deep .mdc-button__label {
+        flex: 1;
+        padding-left: 18px;
+        text-align: center;
+    }
+
+    @include mat.button-overrides(
+        (
+            outlined-outline-color: var(--mat-sys-outline),
+            outlined-label-text-color: var(--mat-sys-on-surface),
+            outlined-label-text-font: var(--mat-sys-body-large-font),
+            outlined-label-text-size: var(--mat-sys-body-large-size),
+            outlined-label-text-weight: var(--mat-sys-body-large-weight),
+            outlined-horizontal-padding: 16px
         )
     );
 }
 
-// Phones show "Sep 2026" and smaller arrows, and the switch spans the width.
-@include bp.content-below(bp.$medium) {
-    .view-toggle {
-        width: 100%;
+.period-text {
+    box-sizing: border-box;
+    padding-left: 8px;
+    font: var(--mat-sys-body-large);
+}
 
-        mat-button-toggle {
-            flex: 1;
+// Phones get smaller text and padding, and a short month ("Sep 2026"), so all three fit one line.
+@include bp.content-below(bp.$medium) {
+    .control-select {
+        @include mat.select-overrides(
+            (
+                trigger-text-size: var(--mat-sys-body-medium-size)
+            )
+        );
+
+        ::ng-deep .mat-mdc-text-field-wrapper {
+            padding: 0 10px;
         }
     }
 
-    .stepper {
-        margin-left: -6px;
-
-        @include mat.icon-button-density(-3);
+    .view-mode {
+        flex: 1 1 7rem;
     }
 
+    .period-type {
+        flex: 1 1 5.5rem;
+    }
+
+    .period-button,
+    .period-text {
+        flex: 1 1 6.25rem;
+    }
+
+    // No room on phones to balance the arrow.
     .period-button {
-        min-width: 6.5rem;
+        ::ng-deep .mdc-button__label {
+            padding-left: 0;
+        }
 
         @include mat.button-overrides(
             (
-                text-horizontal-padding: 6px,
-                text-with-icon-horizontal-padding: 6px
+                outlined-label-text-size: var(--mat-sys-body-medium-size),
+                outlined-horizontal-padding: 10px
             )
         );
+    }
+
+    .period-text {
+        font: var(--mat-sys-body-medium);
+        text-align: center;
     }
 }
 
@@ -213,14 +279,6 @@ app-page-header {
     gap: 12px;
 }
 
-.picker-type {
-    width: 100%;
-
-    mat-button-toggle {
-        flex: 1;
-    }
-}
-
 .picker-year {
     display: flex;
     align-items: center;
@@ -235,10 +293,6 @@ app-page-header {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
-
-    &.single {
-        grid-template-columns: minmax(0, 1fr);
-    }
 
     &.quarters {
         grid-template-columns: repeat(2, minmax(0, 1fr));
