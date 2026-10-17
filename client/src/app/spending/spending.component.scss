@@ -23,32 +23,17 @@ app-page-header {
     letter-spacing: 0.05em;
 }
 
-// The period type and stepper, then the Category / Group switch, between the summary and the sections (CASH-1.1,
-// CASH-1.5). On phones the switch goes under the period, across the width.
+// Category or Group, the period type and the period, in one row between the summary and the sections (CASH-1.1,
+// CASH-1.5): three pills of the same height, outline and text, each as wide as what it shows.
 .controls {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     flex-wrap: wrap;
-    gap: 8px 16px;
-
-    @include mat.button-toggle-overrides(
-        (
-            height: 40px
-        )
-    );
-}
-
-.period-controls {
-    display: flex;
-    align-items: center;
     gap: 8px;
-    min-width: 0;
 }
 
-// As tall and round as the switch, and wide enough for "Average" so the stepper stays put as the type changes.
-.period-type {
-    width: 8.5rem;
+.control-select {
+    width: auto;
 
     @include mat.form-field-overrides(
         (
@@ -57,55 +42,81 @@ app-page-header {
             outlined-container-shape: 20px
         )
     );
+
+    // Sized by the choice rather than the field's default width, with the arrow spaced like the period's.
+    ::ng-deep {
+        .mat-mdc-text-field-wrapper {
+            padding: 0 16px;
+        }
+
+        .mat-mdc-form-field-infix {
+            width: auto;
+        }
+
+        .mat-mdc-select-arrow-wrapper {
+            padding-left: 10px;
+        }
+    }
 }
 
-.stepper {
-    display: flex;
-    align-items: center;
-}
-
-// Wide enough for "September 2026", so the arrows stay put as the period changes.
 .period-button {
-    min-width: 10.5rem;
-    font: var(--mat-sys-title-medium);
+    @include mat.button-overrides(
+        (
+            outlined-container-height: 40px,
+            outlined-container-shape: 20px,
+            outlined-outline-color: var(--mat-sys-outline),
+            outlined-label-text-color: var(--mat-sys-on-surface),
+            outlined-label-text-font: var(--mat-sys-body-large-font),
+            outlined-label-text-size: var(--mat-sys-body-large-size),
+            outlined-label-text-weight: var(--mat-sys-body-large-weight),
+            outlined-horizontal-padding: 16px,
+            outlined-icon-offset: -4px
+        )
+    );
 }
 
 .period-text {
-    font: var(--mat-sys-title-medium);
+    padding: 0 8px;
+    font: var(--mat-sys-body-large);
     color: var(--mat-sys-on-surface);
 }
 
-// Phones show "Sep 2026" and smaller arrows, and the switch spans the width.
+// Phones get smaller text and padding, and a short month ("Sep 2026"), so all three fit one line.
 @include bp.content-below(bp.$medium) {
-    .view-toggle {
-        width: 100%;
-
-        mat-button-toggle {
-            flex: 1;
-        }
-    }
-
-    .period-controls {
+    .controls {
         gap: 4px;
     }
 
-    .period-type {
-        width: 7.5rem;
-    }
+    .control-select {
+        @include mat.select-overrides(
+            (
+                trigger-text-size: var(--mat-sys-body-medium-size)
+            )
+        );
 
-    .stepper {
-        @include mat.icon-button-density(-3);
+        ::ng-deep {
+            .mat-mdc-text-field-wrapper {
+                padding: 0 10px;
+            }
+
+            .mat-mdc-select-arrow-wrapper {
+                padding-left: 8px;
+            }
+        }
     }
 
     .period-button {
-        min-width: 6.5rem;
-
         @include mat.button-overrides(
             (
-                text-horizontal-padding: 6px,
-                text-with-icon-horizontal-padding: 6px
+                outlined-label-text-size: var(--mat-sys-body-medium-size),
+                outlined-horizontal-padding: 10px
             )
         );
+    }
+
+    .period-text {
+        padding: 0 0 0 4px;
+        font: var(--mat-sys-body-medium);
     }
 }
 

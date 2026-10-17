@@ -37,92 +37,68 @@
             </div>
         </mat-card>
 
-        <!-- The period and the Category / Group switch, between the summary and the sections (CASH-1.1, CASH-1.5). -->
+        <!-- Category or Group, then the period, between the summary and the sections (CASH-1.1, CASH-1.5). -->
         <div class="controls">
-            <div class="period-controls">
-                <mat-form-field class="period-type" appearance="outline" subscriptSizing="dynamic">
-                    <mat-select
-                        [value]="selection().period"
-                        (selectionChange)="choosePeriodType($event.value)"
-                        aria-label="Period type"
-                    >
-                        @for (type of periodTypes; track type.value) {
-                            <mat-option [value]="type.value">{{ type.label }}</mat-option>
-                        }
-                    </mat-select>
-                </mat-form-field>
+            <mat-form-field class="control-select view-mode" appearance="outline" subscriptSizing="dynamic">
+                <mat-select [value]="viewMode()" (selectionChange)="viewMode.set($event.value)" aria-label="Show by">
+                    <mat-option value="category">By category</mat-option>
+                    <mat-option value="group">By group</mat-option>
+                </mat-select>
+            </mat-form-field>
 
-                <!-- The average month has nothing to step to or pick (CASH-1.12). -->
-                @if (selection().period === 'average') {
-                    <span class="period-text">{{ periodText() }}</span>
-                } @else {
-                    <div class="stepper">
-                        <button
-                            mat-icon-button
-                            (click)="step(-1)"
-                            [disabled]="!canStepBack()"
-                            [attr.aria-label]="'Previous ' + periodNoun()"
-                        >
-                            <mat-icon>chevron_left</mat-icon>
-                        </button>
-                        <button
-                            mat-button
-                            #pickerTrigger
-                            class="period-button"
-                            cdkOverlayOrigin
-                            #pickerOrigin="cdkOverlayOrigin"
-                            (click)="openPicker()"
-                            aria-haspopup="dialog"
-                            [attr.aria-expanded]="isPopoverOpen()"
-                            [attr.aria-label]="periodLabel() + ', choose a ' + periodNoun()"
-                        >
-                            {{ periodText() }}
-                            <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
-                        </button>
-                        <button
-                            mat-icon-button
-                            (click)="step(1)"
-                            [disabled]="!canStepForward()"
-                            [attr.aria-label]="'Next ' + periodNoun()"
-                        >
-                            <mat-icon>chevron_right</mat-icon>
-                        </button>
+            <mat-form-field class="control-select period-type" appearance="outline" subscriptSizing="dynamic">
+                <mat-select
+                    [value]="selection().period"
+                    (selectionChange)="choosePeriodType($event.value)"
+                    aria-label="Period type"
+                >
+                    @for (type of periodTypes; track type.value) {
+                        <mat-option [value]="type.value">{{ type.label }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+
+            <!-- The average month has nothing to pick (CASH-1.12). -->
+            @if (selection().period === 'average') {
+                <span class="period-text">{{ periodText() }}</span>
+            } @else {
+                <button
+                    mat-stroked-button
+                    #pickerTrigger
+                    class="period-button"
+                    cdkOverlayOrigin
+                    #pickerOrigin="cdkOverlayOrigin"
+                    (click)="openPicker()"
+                    aria-haspopup="dialog"
+                    [attr.aria-expanded]="isPopoverOpen()"
+                    [attr.aria-label]="periodLabel() + ', choose a ' + periodNoun()"
+                >
+                    {{ periodText() }}
+                    <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+                </button>
+
+                <!-- The picker opens below the period on wider screens, and in a bottom sheet on phones. -->
+                <ng-template
+                    cdkConnectedOverlay
+                    [cdkConnectedOverlayOrigin]="pickerOrigin"
+                    [cdkConnectedOverlayOpen]="isPopoverOpen()"
+                    cdkConnectedOverlayHasBackdrop
+                    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                    (backdropClick)="closePicker()"
+                    (overlayKeydown)="$event.key === 'Escape' && closePicker()"
+                    (detach)="closePicker()"
+                >
+                    <div
+                        class="period-popover"
+                        role="dialog"
+                        [attr.aria-label]="'Choose a ' + periodNoun()"
+                        cdkTrapFocus
+                        cdkTrapFocusAutoCapture
+                    >
+                        <ng-container [ngTemplateOutlet]="pickerContent"></ng-container>
                     </div>
-
-                    <!-- The picker opens below the period on wider screens, and in a bottom sheet on phones. -->
-                    <ng-template
-                        cdkConnectedOverlay
-                        [cdkConnectedOverlayOrigin]="pickerOrigin"
-                        [cdkConnectedOverlayOpen]="isPopoverOpen()"
-                        cdkConnectedOverlayHasBackdrop
-                        cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-                        (backdropClick)="closePicker()"
-                        (overlayKeydown)="$event.key === 'Escape' && closePicker()"
-                        (detach)="closePicker()"
-                    >
-                        <div
-                            class="period-popover"
-                            role="dialog"
-                            [attr.aria-label]="'Choose a ' + periodNoun()"
-                            cdkTrapFocus
-                            cdkTrapFocusAutoCapture
-                        >
-                            <ng-container [ngTemplateOutlet]="pickerContent"></ng-container>
-                        </div>
-                    </ng-template>
-                }
-            </div>
-
-            <mat-button-toggle-group
-                class="view-toggle"
-                [value]="viewMode()"
-                (change)="viewMode.set($event.value)"
-                hideSingleSelectionIndicator
-                aria-label="Show by"
-            >
-                <mat-button-toggle value="category">Category</mat-button-toggle>
-                <mat-button-toggle value="group">Group</mat-button-toggle>
-            </mat-button-toggle-group>
+                </ng-template>
+            }
         </div>
 
         @for (section of sections(); track section.title) {

@@ -14,7 +14,6 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -128,7 +127,7 @@ const budgetColumns: ListColumn[] = [
     { key: 'difference', label: 'Difference', width: '8rem', align: 'end', compact: 'secondary' }
 ];
 
-// What the stepper's buttons and the picker call each period type.
+// What the picker calls each period type.
 const periodNouns: Record<SpendingPeriodType, string> = {
     [CalendarPeriod.Monthly]: 'month',
     [CalendarPeriod.Quarterly]: 'quarter',
@@ -146,7 +145,6 @@ const periodNouns: Record<SpendingPeriodType, string> = {
         A11yModule,
         OverlayModule,
         MatButtonModule,
-        MatButtonToggleModule,
         MatCardModule,
         MatFormFieldModule,
         MatIconModule,
@@ -257,7 +255,7 @@ export class SpendingComponent {
         this.totals.reload();
     }
 
-    // The period type and the stepper (CASH-1.1)
+    // The period type and the period (CASH-1.1)
 
     /**
      * Shows the period of the chosen type that holds today, if the one on screen does, or else the one holding its
@@ -283,46 +281,28 @@ export class SpendingComponent {
 
     /** The period in full: "May 2026", "Q2 2026", "2026" or "Average month, May 2025 to Apr 2026". */
     readonly periodLabel = computed(() => this.labelFor(false));
-    /** As the stepper shows it, with a short month on phones ("Sep 2026", "Avg, ...") so the period controls fit one row. */
+    /** As the row shows it, shorter on phones so the row fits: "Sep 2026", or "Past 12 months" for the average month. */
     readonly periodText = computed(() => this.labelFor(this.isCompact()));
     readonly periodNoun = computed(() => periodNouns[this.selection().period]);
-    readonly canStepBack = computed(() => this.canStep(-1));
-    readonly canStepForward = computed(() => this.canStep(1));
 
-    /** Moves to the previous or next month, quarter or year, within the years on offer. */
-    step(direction: -1 | 1) {
-        if (this.canStep(direction)) {
-            this.selection.update(({ period, start }) => ({ period, start: this.stepped(period, start, direction) }));
-        }
-    }
-
-    // The average month doesn't step (CASH-1.12).
-    private canStep(direction: -1 | 1): boolean {
-        const { period, start } = this.selection();
-        return period !== 'average' && this.years().includes(yearOf(this.stepped(period, start, direction)));
-    }
-
-    private stepped(period: SpendingPeriodType, start: CalendarDate, direction: -1 | 1): CalendarDate {
-        return period === 'average'
-            ? start
-            : CalendarDateUtil.addMonths(start, direction * BudgetStreamUtil.monthsIn(period));
-    }
-
-    private labelFor(shortMonth: boolean): string {
+    private labelFor(compact: boolean): string {
         const selection = this.selection();
         if (selection.period !== 'average') {
-            return labelFor(selection.period, selection.start, shortMonth);
+            return labelFor(selection.period, selection.start, compact);
         }
 
-        // The window is known once it has loaded: "Average month, May 2025 to Apr 2026" (CASH-1.12).
-        const prefix = shortMonth ? 'Avg' : 'Average month';
+        // The window is known once it has loaded (CASH-1.12). On phones the dropdown beside it already says Average.
         const loaded = this.totals.value();
         if (loaded?.period !== 'average' || loaded.window.months === 0) {
-            return prefix;
+            return 'Average month';
         }
-        const from = labelFor(CalendarPeriod.Monthly, loaded.window.startDate, true);
-        const to = labelFor(CalendarPeriod.Monthly, loaded.window.endDate, true);
-        return `${prefix}, ${from === to ? to : `${from} to ${to}`}`;
+        const { startDate, endDate, months } = loaded.window;
+        if (compact) {
+            return months === 1 ? 'Past month' : `Past ${months} months`;
+        }
+        const from = labelFor(CalendarPeriod.Monthly, startDate, true);
+        const to = labelFor(CalendarPeriod.Monthly, endDate, true);
+        return `Average month, ${from === to ? to : `${from} to ${to}`}`;
     }
 
     // The period picker: a popover on wider screens, a bottom sheet on phones (CASH-1.1)
