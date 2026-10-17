@@ -1,25 +1,26 @@
 {
     "compilerOptions": {
         "target": "ES2020",
-        "module": "commonjs",
+        "module": "node20",
+        "rootDir": "./..",
         "outDir": "./dist",
-        "baseUrl": "./",
         "paths": {
             "@shared/*": [
                 "./../shared/*"
             ],
             "@server/*": [
-                "src/*"
+                "./src/*"
             ]
         },
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "strict": true,
+        "isolatedModules": true,
         "skipLibCheck": true,
         "sourceMap": true,
-        "typeRoots": [
-            "./node_modules/@types",
-            "./src/types"
+        "types": [
+            "node",
+            "jest"
         ]
     },
     "include": [

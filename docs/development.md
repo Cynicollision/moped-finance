@@ -37,6 +37,8 @@ The container runs whatever is in your working tree, so switching branches switc
 
 Run these inside the API container (`docker compose exec api npm run <script>`), except `db:generate`, which doesn't need a database and runs anywhere.
 
+The scripts read the repository root's `.env` with Node's `--env-file-if-exists`. The container has no `.env` (Compose passes the variables in), so there Node prints that it's continuing without one.
+
 | Script | Does |
 |---|---|
 | `db:generate` | Writes a migration for Drizzle table changes to `server/migrations/` |
