@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [main]
+    # A release tag also publishes the image under its version (the publish job)
+    tags: ['v*']
   pull_request:
     branches: [main]
 
@@ -159,6 +161,29 @@ jobs:
             -d '{"username":"smoke","password":"reset smoke password"}' \
             http://127.0.0.1:3000/auth/login
 
+      - name: Check wipe-database empties the instance (APP-10.1)
+        run: |
+          if echo nope | docker exec -i app npm run --silent wipe-database; then
+            echo 'wipe-database went ahead without its confirmation'
+            exit 1
+          fi
+          curl -fsS http://127.0.0.1:3000/auth/registration | grep -q '"isOpen":false'
+          echo wipe | docker exec -i app npm run --silent wipe-database
+          curl -fsS http://127.0.0.1:3000/auth/registration | grep -q '"isOpen":true'
+
+      - name: Check load-sample-data fills an empty instance (APP-10.3)
+        run: |
+          docker exec app npm run --silent load-sample-data
+          # Registering works straight after a wipe, without restarting the app
+          curl -fsS -c cookies.txt -H 'Content-Type: application/json' \
+            -d '{"username":"smoke","name":"Smoke Test","password":"smoke test password","defaultCategories":false}' \
+            http://127.0.0.1:3000/auth/register
+          curl -fsS -b cookies.txt http://127.0.0.1:3000/api/v1/accounts | grep -q '"name":"Everyday Checking"'
+          if docker exec app npm run --silent load-sample-data; then
+            echo 'load-sample-data loaded into an instance that already had data'
+            exit 1
+          fi
+
       - name: Check / serves index.html
         run: curl -fsS http://127.0.0.1:3000/ | grep -q '<app-root'
 
@@ -169,29 +194,46 @@ jobs:
         if: always()
         run: docker logs app
 
-#   build-and-push:
-#     name: Build & Push Docker Image
-#     needs: [server, client, smoke]
-#     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-#     runs-on: ubuntu-latest
-#     permissions:
-#       contents: read
-#       packages: write
-#     steps:
-#       - uses: actions/checkout@v4
-# 
-#       - name: Log in to GitHub Container Registry
-#         uses: docker/login-action@v3
-#         with:
-#           registry: ghcr.io
-#           username: ${{ github.actor }}
-#           password: ${{ secrets.GITHUB_TOKEN }}
-# 
-#       - name: Build and push Docker image
-#         uses: docker/build-push-action@v6
-#         with:
-#           context: .
-#           push: true
-#           tags: |
-#             ghcr.io/${{ github.repository_owner }}/moped-finance:latest
-#             ghcr.io/${{ github.repository_owner }}/moped-finance:${{ github.sha }}
+  publish:
+    name: Publish image
+    needs: [format, server, client, smoke]
+    # Pushes to main and release tags only, never pull requests
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # main: latest and sha-<commit>. A release tag v1.2.3: 1.2.3, 1.2 and sha-<commit>.
+      - name: Work out tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/cynicollision/moped-finance
+          flavor: latest=false
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

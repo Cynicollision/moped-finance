@@ -19,11 +19,13 @@ services:
       retries: 5
 
   api:
-    image: ${DOCKER_IMAGE:-moped-finance:latest}
+    # The image CI publishes from main; set DOCKER_IMAGE for a release (ghcr.io/cynicollision/moped-finance:0.1) or a local build
+    image: ${DOCKER_IMAGE:-ghcr.io/cynicollision/moped-finance:latest}
     container_name: moped-finance-api
     restart: always
     ports:
-      - "3000:3000"
+      # APP_PORT is the port on the host; the app listens on 3000 inside the container
+      - "${APP_PORT:-3000}:3000"
     env_file:
       - .env
     environment:

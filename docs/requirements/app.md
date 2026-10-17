@@ -89,6 +89,17 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 | APP-9.1 | The app shall be installable as a progressive web app from a browser that offers it (for example Chrome's **Install** in the address bar or menu), named "Moped Finance" with its own icon and theme colours, and open in its own window at the Dashboard (APP-1.6). | Planned |
 | APP-9.2 | An installed app shall pick up a new version after the server is updated, at the latest the next time it's opened, without the user clearing anything. | Planned |
 
+## APP-10 The owner can start over, or try the app with sample data
+
+Commands run on the host, like the password reset (AUTH-12): whoever can run them already controls the instance.
+
+| ID | Requirement | Status |
+|---|---|---|
+| APP-10.1 | The `wipe-database` command (`docker exec -it moped-finance-api npm run wipe-database`) shall say what it deletes (the user, if there is one, and all finance data), and only after the owner types `wipe` delete everything and recreate the empty tables, leaving the instance as on first start with registration open. Anything else typed changes nothing. With input piped in, the confirmation is the first line. | Implemented |
+| APP-10.2 | The app shall keep working after a wipe without a restart. The command shall say to restart it anyway (`docker restart moped-finance-api`), which replaces the session secret and clears sign-in lockouts (AUTH-10). | Implemented |
+| APP-10.3 | The `load-sample-data` command (`docker exec moped-finance-api npm run load-sample-data`) shall save the synthetic sample data (`server/seed-data/`) into an instance with no institutions, accounts, categories, budget items, transactions or balances, before or after registering, and say what it saved. An instance with any of those shall be refused with a message pointing to `wipe-database`, and nothing saved. | Implemented |
+| APP-10.4 | `load-sample-data` shall move the sample's transaction and balance dates forward by whole months, as far as possible without the newest passing today, so the current month has data. A day past the end of a shorter month becomes its last day, keeping one balance per account and day. | Implemented |
+
 ## Known gaps
 
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.

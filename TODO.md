@@ -32,7 +32,6 @@ The core application with manual accounts. Done once the items below are, the im
 
 ### Data & deployment
 - [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
-- [ ] Re-enable the commented-out GHCR build-and-push job in CI (or decide on another way to deliver images). Tag images with the release version as well as `latest`.
 
 ### Release
 - [ ] **Deploy** the image to the home server following deployment.md, and replace its "not deployed yet" status and intended setup with the exact steps.

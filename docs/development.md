@@ -48,6 +48,8 @@ The scripts read the repository root's `.env` with Node's `--env-file-if-exists`
 | `db:reset` | `drop`, then `migrate`, then `seed` |
 | `reset-password:dev` | Sets a new password for the instance's user, signing out every session (AUTH-12). Run it with `docker compose exec -it api npm run reset-password:dev` so it can ask for the password. The production image runs the compiled `reset-password` instead |
 
+The production image has no ts-node, so these don't run there; it has `wipe-database` and `load-sample-data` instead ([deployment.md](deployment.md)).
+
 A database created before migrations existed (by the old `db:init`) can't be migrated, since its tables already exist; run `db:reset` once.
 
 ### Changing the schema

@@ -6,6 +6,8 @@
     "include": [
         "index.ts",
         "reset-password.ts",
+        "wipe-database.ts",
+        "load-sample-data.ts",
         "src/**/*.ts"
     ],
     "exclude": [
