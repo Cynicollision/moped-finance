@@ -29,11 +29,6 @@ Make `Cynicollision/moped-finance` public. Comes before the GHCR job below, sinc
 ### Naming
 - [ ] **Drop the leftover `Finance` prefix** from when this was one app of several: components (`FinanceAccountDetailsComponent`, `FinanceBudgetComponent`, ...) and server classes (`FinanceAccountData`, `FinanceEntityFactory`, `FinanceEntityIdPrefix`, ...), whose files are already named without it. Move the client's `app/finance/*` folders up to `app/*`, beside `settings/` and `login/`. `FinanceService`, `@shared/finance` and the `finance` database schema keep the name: there it marks the domain layer as opposed to `core`.
 
-### Major dependency upgrades
-- [ ] Majors held back on 2026-10-06, when everything was brought up to date within its range (see [development.md](docs/development.md#dependencies)). None has a known vulnerability. One PR each, checking the release notes' breaking changes:
-  - Client: `vitest` 4 → 5; `jsdom` 27 → 30.
-  - The server's dev-only audit findings (development.md) go away only with new releases of `nodemon`, `tsc-alias`, Jest's coverage packages and `drizzle-kit` (1.0 drops `@esbuild-kit`). Check again when doing these.
-
 ### Fixes
 - [ ] **Red menu entries** (APP-1.10, APP-2.4): the profile menu's Sign out and the records' ⋮ Delete show in the normal text colour, though APP-1.10 is marked Implemented. `.danger-item` in `styles.scss` sets `color` with the same specificity as Material's `.mat-mdc-menu-item` rule, and Material's menu styles load after the global ones, so they win (seen on Angular 21 and 22, 2026-10-17). Set the colour through `mat.menu-overrides` (`item-label-text-color`, `item-icon-color`) under `.danger-item`, and add a test that would catch it.
 
@@ -102,6 +97,7 @@ Manual entry and import/export come first. Constraints for when this gets picked
 ## Ideas
 
 - TypeScript 7 (the native compiler) once Angular, typescript-eslint and ts-jest support it; on 2026-10-17 they all stopped below 7, so both packages stay on 6.0 (decided 2026-10-17).
+- Drizzle 1.0 (`drizzle-orm` and `drizzle-kit`) once it's out of release candidates; kit 1.0 drops `@esbuild-kit`, which clears the server's `esbuild` audit finding (development.md). Check its migration guide: the migrations folder format and the relational query API change.
 
 - Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Spending does, and round at the edges. Revisit integer cents only if totals ever drift.
 - Project Claude Code skills (e.g. `new-finance-resource`, `verify`, `schema-change` once migrations exist). Skipped for now; revisit if the same multi-step instructions keep getting repeated.
