@@ -80,6 +80,21 @@ The emoji data is committed, so every build serves the same file. Run `npm run e
 - `npm update` fixes most findings within the version ranges. Commit the lock file, then rebuild the API container (above), since it installs its own copy.
 - Plain `npm audit` adds the build and test tooling. On 2026-10-17 the server's tooling had findings with no fixed release yet: `braces` through `nodemon` and `tsc-alias`, `sprintf-js` through Jest's coverage instrumentation, and an old `esbuild` through `drizzle-kit` (1.0, in release candidates then, drops it). None of them run in production or take untrusted input. `npm audit fix --force` "fixes" them by downgrading to years-old majors; don't.
 
+## Secret scanning
+
+GitHub's secret scanning, with push protection, refuses pushes that contain known token formats. [gitleaks](https://github.com/gitleaks/gitleaks) checks more broadly, through all of history; run it when something sensitive might have been committed. Install it with `winget install Gitleaks.Gitleaks` (or `brew install gitleaks`, or the `zricethezav/gitleaks` Docker image), then from the repository root:
+
+```bash
+git fetch origin '+refs/pull/*/head:refs/scan/pull/*'
+gitleaks git --log-opts="--all" --redact
+gitleaks dir --redact .
+git for-each-ref --format='%(refname)' refs/scan | xargs -n 1 git update-ref -d
+```
+
+The fetch matters: squash merges leave each PR's original commits reachable only from GitHub's `refs/pull/N/head`, which a clone doesn't fetch, and anyone can still read them there. The last command deletes those local copies. `gitleaks dir` scans the working tree and flags the gitignored `.env`; that's expected. The 2026-10-17 scan (310 commits) found nothing.
+
+If a real secret turns up, revoke or rotate it first. Rewriting history doesn't remove it, since the PR refs keep the old commits and only GitHub Support can purge those.
+
 ## Before opening a PR
 
 - `npm run format` in the repository root (or `npm run format:check` to only check)
@@ -88,7 +103,7 @@ The emoji data is committed, so every build serves the same file. Run `npm run e
 
 See [testing.md](testing.md) for how the tests are set up.
 
-`main` has a ruleset ("Protect main": pull request required, CI passing, branch up to date, no force pushes). GitHub doesn't enforce rulesets on a private repository on the free plan, so it only takes effect if the repository becomes public or moves to GitHub Pro. Follow it anyway.
+`main` has a ruleset ("Protect main": pull request required, CI passing, branch up to date, no force pushes). Merged branches are deleted automatically, and Actions runs on a fork's PR only once it's approved.
 
 ## Releases
 
