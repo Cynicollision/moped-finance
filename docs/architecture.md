@@ -4,7 +4,7 @@ Moped Finance is a single-user personal finance app: an Angular client, a Node/E
 
 | Folder | What | Key tech |
 |---|---|---|
-| `client/` | Web UI | Angular 21, Angular Material, Vitest |
+| `client/` | Web UI | Angular 22, Angular Material, Vitest |
 | `server/` | REST API; also serves the built client in production | Express 5, Drizzle ORM, express-session, Jest + PGlite |
 | `shared/` | Types, enums, API contracts, and calendar-date and budget-stream helpers used by both | Plain TypeScript, no runtime dependencies |
 
