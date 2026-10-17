@@ -17,7 +17,7 @@ The root `package.json` holds only repository-wide tooling (Prettier).
 | `@shared/*` | `shared/*` | client and server |
 | `@server/*` | `server/src/*` | server |
 
-Aliases are set in each package's `tsconfig.json`, and in `server/jest.config.js` for tests. The server build runs `tsc-alias` after `tsc` to rewrite them to relative paths in `dist/`. Because the server imports `../shared`, `tsc` emits to `dist/server/` and `dist/shared/`, so the entry point is `dist/server/index.js`.
+Aliases are set in each package's `tsconfig.json`, and in `server/jest.config.js` for tests. The server build runs `tsc-alias` after `tsc` to rewrite them to relative paths in `dist/`. Because the server imports `../shared`, its `rootDir` is the repository root and `tsc` emits to `dist/server/` and `dist/shared/`, so the entry point is `dist/server/index.js`.
 
 ## Server
 

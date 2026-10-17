@@ -1,4 +1,4 @@
-export { FinanceInstitutionData, IFinanceInstitutionData } from './institution-data';
+export { FinanceInstitutionData, type IFinanceInstitutionData } from './institution-data';
 export { InstitutionController } from './institution-controller';
 export { createInstitutionRouter } from './institution-routes';
 export { institutionSchema, createInstitutionSchema, updateInstitutionSchema } from './institution-schema';

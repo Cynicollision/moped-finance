@@ -7,13 +7,13 @@
         "build:prod": "tsc --project tsconfig.prod.json && tsc-alias --project tsconfig.prod.json",
         "dev": "nodemon --legacy-watch",
         "reset-password": "node dist/server/reset-password.js",
-        "reset-password:dev": "ts-node --files -r tsconfig-paths/register -r dotenv/config reset-password.ts dotenv_config_path=../.env",
+        "reset-password:dev": "cross-env TS_NODE_FILES=true node --env-file-if-exists=../.env -r ts-node/register -r tsconfig-paths/register reset-password.ts",
         "db:generate": "drizzle-kit generate",
-        "db:migrate": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/migrate-db.ts dotenv_config_path=../.env",
-        "db:drop": "ts-node -r dotenv/config scripts/drop-db.ts dotenv_config_path=../.env",
+        "db:migrate": "node --env-file-if-exists=../.env -r ts-node/register -r tsconfig-paths/register scripts/migrate-db.ts",
+        "db:drop": "node --env-file-if-exists=../.env -r ts-node/register scripts/drop-db.ts",
         "db:seed": "npm run db:seed:core && npm run db:seed:finance",
-        "db:seed:core": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/seed-core-db.ts dotenv_config_path=../.env",
-        "db:seed:finance": "ts-node -r tsconfig-paths/register -r dotenv/config scripts/seed-finance-db.ts dotenv_config_path=../.env",
+        "db:seed:core": "node --env-file-if-exists=../.env -r ts-node/register -r tsconfig-paths/register scripts/seed-core-db.ts",
+        "db:seed:finance": "node --env-file-if-exists=../.env -r ts-node/register -r tsconfig-paths/register scripts/seed-finance-db.ts",
         "db:reset": "npm run db:drop && npm run db:migrate && npm run db:seed",
         "lint": "eslint . ../shared",
         "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
@@ -22,7 +22,6 @@
     "dependencies": {
         "bcrypt": "^6.0.0",
         "connect-pg-simple": "^10.0.0",
-        "dotenv": "^16.4.5",
         "drizzle-orm": "^0.45.2",
         "drizzle-zod": "^0.8.3",
         "express": "^5.3.0",
@@ -57,7 +56,7 @@
         "ts-node": "^10.9.2",
         "tsc-alias": "^1.9.5",
         "tsconfig-paths": "^4.2.0",
-        "typescript": "^5.3.3",
+        "typescript": "~6.0.3",
         "typescript-eslint": "^8.59.2"
     }
 }

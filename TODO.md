@@ -31,9 +31,7 @@ Make `Cynicollision/moped-finance` public. Comes before the GHCR job below, sinc
 
 ### Major dependency upgrades
 - [ ] Majors held back on 2026-10-06, when everything was brought up to date within its range (see [development.md](docs/development.md#dependencies)). None has a known vulnerability; Angular 21 keeps getting security releases until its LTS ends. One PR each, checking the release notes' breaking changes:
-  - Client: Angular, CDK, Material and `angular-eslint` 21 → 22, with TypeScript 5.9 → 6.0 (Angular 22 supports only 6.0); `vitest` 4 → 5; `jsdom` 27 → 30.
-  - Server: `dotenv` 16 → 18; TypeScript 6.0 to match the client.
-  - The server's dev-only audit findings (development.md) go away only with new releases of `nodemon`, `tsc-alias`, Jest's coverage packages and `drizzle-kit` (1.0 drops `@esbuild-kit`). Check again when doing these.
+  - Client: Angular, CDK, Material and `angular-eslint` 21 → 22, with TypeScript 5.9 → 6.0 (Angular 22 supports only 6.0); `vitest` 4 → 5; `jsdom` 27 → 30.  - The server's dev-only audit findings (development.md) go away only with new releases of `nodemon`, `tsc-alias`, Jest's coverage packages and `drizzle-kit` (1.0 drops `@esbuild-kit`). Check again when doing these.
 
 ### Spending periods and consistency with Budget
 - [ ] **Decide, then write CASH requirements.** Make the kind of period (Month / Quarter / Year / Average) more prominent than CASH-1.1's picker, which hides it behind the period row: for example a visible switch like Budget's Monthly / Quarterly / Yearly (BUD-1.6). Consider more averages than CASH-1.12's Past 12 months, such as This year (the average month so far) and All time, and what each does to Previous / Next and the drill-down to Transactions (CASH-1.6).

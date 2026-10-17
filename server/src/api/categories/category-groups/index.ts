@@ -1,8 +1,8 @@
-export { FinanceCategoryGroupData, IFinanceCategoryGroupData } from './category-group-data';
+export { FinanceCategoryGroupData, type IFinanceCategoryGroupData } from './category-group-data';
 export {
     createCategoryGroupSchema,
     updateCategoryGroupSchema,
     categoryGroupSchema,
-    CreateCategoryGroupRequest,
-    UpdateCategoryGroupRequest
+    type CreateCategoryGroupRequest,
+    type UpdateCategoryGroupRequest
 } from './category-group-schema';

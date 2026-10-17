@@ -1,1 +1,1 @@
-export { buildHealthRouter, HealthCheckDependencies } from './health-routes';
+export { buildHealthRouter, type HealthCheckDependencies } from './health-routes';

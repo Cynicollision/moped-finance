@@ -1,5 +1,5 @@
 export * from './category-groups';
-export { FinanceCategoryData, IFinanceCategoryData } from './category-data';
+export { FinanceCategoryData, type IFinanceCategoryData } from './category-data';
 export { CategoryController } from './category-controller';
 export { DefaultCategories } from './default-categories';
 export { createCategoryRouter } from './category-routes';
