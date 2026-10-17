@@ -26,9 +26,6 @@ Make `Cynicollision/moped-finance` public. Comes before the GHCR job below, sinc
 - [ ] **Tidy branches:** delete the merged `origin/claude/*` branches and turn on "Automatically delete head branches".
 - [ ] **Review GitHub settings:** require approval for Actions on fork PRs, secret scanning with push protection, Dependabot alerts, and private vulnerability reporting. Then make it public.
 
-### Fixes
-- [ ] **Red menu entries** (APP-1.10, APP-2.4): the profile menu's Sign out and the records' ⋮ Delete show in the normal text colour, though APP-1.10 is marked Implemented. `.danger-item` in `styles.scss` sets `color` with the same specificity as Material's `.mat-mdc-menu-item` rule, and Material's menu styles load after the global ones, so they win (seen on Angular 21 and 22, 2026-10-17). Set the colour through `mat.menu-overrides` (`item-label-text-color`, `item-icon-color`) under `.danger-item`, and add a test that would catch it.
-
 ### Spending periods and consistency with Budget
 - [ ] **Decide, then write CASH requirements.** Make the kind of period (Month / Quarter / Year / Average) more prominent than CASH-1.1's picker, which hides it behind the period row: for example a visible switch like Budget's Monthly / Quarterly / Yearly (BUD-1.6). Consider more averages than CASH-1.12's Past 12 months, such as This year (the average month so far) and All time, and what each does to Previous / Next and the drill-down to Transactions (CASH-1.6).
 - [ ] **Make Spending and Budget look alike**: the same summary card layout, period switch, section headings and list columns where they show the same things (Saved vs Left over, the Essential / Discretionary headings of CASH-1.8 and BUD-1.7). Compare the two screens side by side at each breakpoint first, and write any shared pattern into conventions.md. `spending.component.*`, `budget.component.*`.
