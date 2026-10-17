@@ -74,7 +74,7 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 | ID | Requirement | Status |
 |---|---|---|
 | APP-7.1 | Lists of records (Transactions, Account Details' recent transactions, Budget, Spending) shall show columns under headings when the page area is at least 840px wide. Narrower, each row shall show its main text and its amount on the first line, with details in smaller text on a second line, and leave out the rest. A list shall never scroll sideways. | Implemented |
-| APP-7.2 | A sortable list shall sort by its column headings when wide, with an arrow on the current one, and by a sort menu above the list when narrow. Choosing a new column sorts it in its natural direction; choosing the current one reverses it. | Implemented |
+| APP-7.2 | A sortable list shall sort by its column headings when wide, with an arrow on the current one, and by a sort menu above the list when narrow, which offers only the columns a narrow row shows. Choosing a new column sorts it in its natural direction; choosing the current one reverses it. | Implemented |
 
 ## APP-8 Balances and transactions record what has happened
 

@@ -165,6 +165,6 @@ mat-card.mat-mdc-card-outlined {
 }
 
 .mat-mdc-snack-bar-container.snackbar-above-bottom-nav {
-    margin-bottom: calc(88px + env(safe-area-inset-bottom));
+    margin-bottom: 88px;
     pointer-events: auto;
 }

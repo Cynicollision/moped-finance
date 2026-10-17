@@ -7,10 +7,15 @@
 }
 
 .large-value {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
     font-weight: bold;
     margin-top: 1rem;
     margin-bottom: 0.5rem;
+
+    @include bp.content-below(bp.$medium) {
+        font-size: 1.75rem;
+        margin-top: 0.5rem;
+    }
 }
 
 .chart-header {
@@ -43,17 +48,27 @@
     }
 }
 
-// One row of short labels under the chart (DASH-1.2); on phones it spans the card, sharing the width equally.
+// One outlined row under the chart (DASH-1.2): the button toggles, then the menu of longer timeframes as one more
+// segment. On phones it spans the card, the toggles sharing the width equally.
 .timeframes {
     display: flex;
     width: fit-content;
     margin-top: 16px;
+    border: 1px solid var(--mat-button-toggle-divider-color, var(--mat-sys-outline));
+    border-radius: var(--mat-button-toggle-shape, var(--mat-sys-corner-full));
+    overflow: hidden;
 
     @include mat.button-toggle-overrides(
         (
             height: 36px
         )
     );
+
+    // The row draws the outline, so the group doesn't
+    mat-button-toggle-group {
+        border: none;
+        border-radius: 0;
+    }
 
     mat-button-toggle {
         min-width: 56px;
@@ -62,16 +77,41 @@
     @include bp.content-below(bp.$medium) {
         width: 100%;
 
+        mat-button-toggle-group {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
         mat-button-toggle {
             flex: 1 1 0;
             min-width: 0;
         }
+    }
+}
 
-        // Nine buttons share about 310px on a phone: drop Material's 12px label padding (it has no token)
-        // so "YTD" and "10Y" clear the dividers.
-        ::ng-deep .mat-button-toggle-label-content {
-            padding: 0 2px;
-        }
+// Sized for "More", so choosing 10Y or All doesn't change its width
+.more-timeframes {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 5.5rem;
+    padding: 0 4px 0 8px;
+    border: none;
+    border-left: 1px solid var(--mat-button-toggle-divider-color, var(--mat-sys-outline));
+    background: none;
+    color: var(--mat-sys-on-surface);
+    font: var(--mat-sys-label-large);
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+        background-color: var(--bg-hover);
+    }
+
+    &.selected {
+        background-color: var(--mat-sys-secondary-container);
+        color: var(--mat-sys-on-secondary-container);
     }
 }
 
@@ -87,6 +127,10 @@
     overflow: hidden;
     position: relative;
     display: block;
+
+    @include bp.content-below(bp.$medium) {
+        height: 240px;
+    }
 }
 
 .no-data-message {

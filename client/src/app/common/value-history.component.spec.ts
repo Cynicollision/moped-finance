@@ -89,23 +89,13 @@ describe('ValueHistoryComponent', () => {
         expect(element.querySelector('.chart-title')!.textContent).toContain('Total Assets');
     });
 
-    it('DASH-1.2 ACCT-2.4 should offer the timeframes, up to 10 years, as short buttons below the chart', async () => {
+    it('DASH-1.2 ACCT-2.4 should offer the timeframes up to a year as short buttons below the chart', async () => {
         const { fixture, element } = await render(viewTypes);
         const chosen: HistoryTimeframe[] = [];
         fixture.componentInstance.timeframeChange.subscribe(timeframe => chosen.push(timeframe));
 
-        const toggles = Array.from(element.querySelectorAll<HTMLButtonElement>('.timeframes button'));
-        expect(toggles.map(toggle => toggle.textContent!.trim())).toEqual([
-            '30D',
-            '60D',
-            '90D',
-            'YTD',
-            '1Y',
-            '2Y',
-            '5Y',
-            '10Y',
-            'All'
-        ]);
+        const toggles = Array.from(element.querySelectorAll<HTMLButtonElement>('.timeframes mat-button-toggle button'));
+        expect(toggles.map(toggle => toggle.textContent!.trim())).toEqual(['30D', '60D', '90D', 'YTD', '1Y']);
         expect(toggles[4].getAttribute('aria-label')).toBe('Past Year');
         expect(
             element.querySelector('.chart-wrapper')!.compareDocumentPosition(element.querySelector('.timeframes')!)
@@ -114,5 +104,35 @@ describe('ValueHistoryComponent', () => {
         toggles[4].click();
 
         expect(chosen).toEqual([HistoryTimeframe.PastOneYear]);
+    });
+
+    it('DASH-1.2 should offer the timeframes over a year from a More menu, which then shows the one chosen', async () => {
+        const { fixture, element } = await render(viewTypes);
+        const chosen: HistoryTimeframe[] = [];
+        fixture.componentInstance.timeframeChange.subscribe(timeframe => chosen.push(timeframe));
+
+        const more = element.querySelector<HTMLButtonElement>('.more-timeframes')!;
+        expect(more.textContent).toContain('More');
+        expect(more.getAttribute('aria-label')).toBe('More timeframes');
+
+        more.click();
+        await fixture.whenStable();
+        const items = Array.from(document.querySelectorAll<HTMLElement>('.mat-mdc-menu-item'));
+        expect(items.map(item => item.querySelector('span')!.textContent)).toEqual([
+            'Past 2 Years',
+            'Past 5 Years',
+            'Past 10 Years',
+            'All Time'
+        ]);
+        items[1].click();
+        expect(chosen).toEqual([HistoryTimeframe.PastFiveYears]);
+        document.querySelectorAll('.cdk-overlay-container').forEach(container => container.remove());
+
+        fixture.componentRef.setInput('selectedTimeframe', HistoryTimeframe.PastFiveYears);
+        await fixture.whenStable();
+        expect(more.textContent).toContain('5Y');
+        expect(more.classList).toContain('selected');
+        expect(more.getAttribute('aria-label')).toBe('Past 5 Years, more timeframes');
+        expect(element.querySelector('.mat-button-toggle-checked')).toBeNull();
     });
 });
