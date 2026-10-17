@@ -192,7 +192,7 @@ describe('SpendingComponent', () => {
         return element.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
     }
 
-    /** Opens one of the row's dropdowns (`.view-mode` or `.period-type`) and returns its options. */
+    /** Opens a dropdown in the row (`.period-type`) and returns its options. */
     async function dropdownOptions(
         fixture: Awaited<ReturnType<typeof render>>,
         dropdown: string
@@ -278,17 +278,21 @@ describe('SpendingComponent', () => {
         ]);
     });
 
-    it('CASH-1.5 should switch both sections to category groups with the one By category / By group dropdown', async () => {
+    it('CASH-1.5 should switch both sections to category groups from the page menu', async () => {
         const fixture = await render();
         const { element } = fixture;
 
-        expect(element.querySelectorAll('.view-mode')).toHaveLength(1);
-        expect(text(element.querySelector('.view-mode'))).toBe('By category');
-        expect((await dropdownOptions(fixture, '.view-mode')).map(text)).toEqual(['By category', 'By group']);
-        await choose(fixture, '.view-mode', 'By group');
+        button(element, 'More options').click();
+        await fixture.whenStable();
+        const items = Array.from(document.querySelectorAll<HTMLElement>('.mat-mdc-menu-item'));
+        expect(items.map(item => text(item.querySelector('span')))).toEqual(['By category', 'By group']);
+        expect(text(items[0].querySelector('mat-icon'))).toBe('check');
+        items[1].click();
+        await fixture.whenStable();
 
         expect(sectionRows(element, 'Income')).toEqual(['Income $4,000.00']);
         expect(sectionRows(element, 'Expenses')).toEqual(['Housing $1,700.00', 'Food $300.00']);
+        document.querySelectorAll('.cdk-overlay-container').forEach(container => container.remove());
     });
 
     it('CASH-1.7 should say when a section has nothing for the period', async () => {
@@ -575,7 +579,7 @@ describe('SpendingComponent', () => {
         expect(rent.getAttribute('href')).toBe('/transactions?categoryId=rent&startDate=2026-04-01&endDate=2026-06-30');
     });
 
-    it('CASH-1.1 CASH-1.5 should put Category or Group, then the period, between the summary and the sections', async () => {
+    it('CASH-1.1 should put the period between the summary and the sections', async () => {
         const { element } = await render();
 
         const order = Array.from(element.querySelectorAll('.summary-card, .controls, .section-card')).map(e =>
@@ -583,9 +587,9 @@ describe('SpendingComponent', () => {
         );
         expect(order).toEqual(['summary-card', 'controls', 'section-card', 'section-card']);
         const controls = Array.from(element.querySelectorAll('.controls > *')).map(e =>
-            ['view-mode', 'period-type', 'period-button'].find(name => e.classList.contains(name))
+            ['period-type', 'period-button'].find(name => e.classList.contains(name))
         );
-        expect(controls).toEqual(['view-mode', 'period-type', 'period-button']);
+        expect(controls).toEqual(['period-type', 'period-button']);
     });
 
     describe('Essential and Discretionary', () => {

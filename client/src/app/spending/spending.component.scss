@@ -56,10 +56,6 @@ app-page-header {
     }
 }
 
-.view-mode {
-    flex: 0 0 9.5rem;
-}
-
 .period-type {
     flex: 0 0 7.75rem;
 }
@@ -99,7 +95,7 @@ app-page-header {
     font: var(--mat-sys-body-large);
 }
 
-// Phones get smaller text and padding, and a short month ("Sep 2026"), so all three fit one line.
+// Phones get smaller text and padding, and a short month ("Sep 2026"), so both fit one line.
 @include bp.content-below(bp.$medium) {
     .control-select {
         @include mat.select-overrides(
@@ -111,10 +107,6 @@ app-page-header {
         ::ng-deep .mat-mdc-text-field-wrapper {
             padding: 0 10px;
         }
-    }
-
-    .view-mode {
-        flex: 1 1 7rem;
     }
 
     .period-type {

@@ -17,6 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
@@ -148,6 +149,7 @@ const periodNouns: Record<SpendingPeriodType, string> = {
         MatCardModule,
         MatFormFieldModule,
         MatIconModule,
+        MatMenuModule,
         MatSelectModule,
         PageHeaderComponent,
         CardSkeletonComponent,
@@ -169,6 +171,11 @@ export class SpendingComponent {
         { value: CalendarPeriod.Quarterly, label: 'Quarter' },
         { value: CalendarPeriod.Yearly, label: 'Year' },
         { value: 'average', label: 'Average' }
+    ];
+    /** The page menu's choice of rows for both sections (CASH-1.5). */
+    readonly viewModes: { value: SpendingViewMode; label: string }[] = [
+        { value: 'category', label: 'By category' },
+        { value: 'group', label: 'By group' }
     ];
     /** The budget and difference columns show only when there's a budget to compare with (CASH-1.10). */
     readonly columns = computed<ListColumn[]>(() => [

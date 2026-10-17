@@ -1,5 +1,18 @@
 <div class="spending-container">
-    <app-page-header title="Spending" [refreshing]="totals.isRefreshing()"></app-page-header>
+    <app-page-header title="Spending" [refreshing]="totals.isRefreshing()">
+        <!-- By category or by group, for both sections (CASH-1.5) -->
+        <button mat-icon-button [matMenuTriggerFor]="viewMenu" aria-label="More options">
+            <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #viewMenu="matMenu">
+            @for (mode of viewModes; track mode.value) {
+                <button mat-menu-item (click)="viewMode.set(mode.value)">
+                    <mat-icon>{{ mode.value === viewMode() ? 'check' : '' }}</mat-icon>
+                    <span>{{ mode.label }}</span>
+                </button>
+            }
+        </mat-menu>
+    </app-page-header>
 
     @if (error(); as error) {
         <app-load-error [message]="error" (retry)="retry()"></app-load-error>
@@ -37,15 +50,8 @@
             </div>
         </mat-card>
 
-        <!-- Category or Group, then the period, between the summary and the sections (CASH-1.1, CASH-1.5). -->
+        <!-- The period, between the summary and the sections (CASH-1.1). -->
         <div class="controls">
-            <mat-form-field class="control-select view-mode" appearance="outline" subscriptSizing="dynamic">
-                <mat-select [value]="viewMode()" (selectionChange)="viewMode.set($event.value)" aria-label="Show by">
-                    <mat-option value="category">By category</mat-option>
-                    <mat-option value="group">By group</mat-option>
-                </mat-select>
-            </mat-form-field>
-
             <mat-form-field class="control-select period-type" appearance="outline" subscriptSizing="dynamic">
                 <mat-select
                     [value]="selection().period"
