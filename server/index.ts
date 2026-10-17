@@ -83,13 +83,13 @@ function buildApp(sessionSecret: string, signInLimits: SignInLimits): express.Ex
     // API module
     const apiRouter = buildFinanceRouter(logger, dbClient, authMiddleware);
     app.use('/api', apiRouter);
-    app.all('/api/*', (req: Request, res: Response) => {
+    app.all('/api/{*path}', (req: Request, res: Response) => {
         res.status(404).send(`${req.originalUrl} not found.`);
     });
 
     // Frontend
     app.use(express.static(path.join(__dirname, 'public')));
-    app.get('*', (_req: Request, res: Response) => {
+    app.get('/{*path}', (_req: Request, res: Response) => {
         res.sendFile(path.join(__dirname, 'public', 'index.html'));
     });
 
@@ -147,7 +147,15 @@ async function start(): Promise<void> {
         }
     }
 
-    server = buildApp(sessionSecret, signInLimits).listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    // Express 5 hands a listen error (port in use) to the callback rather than throwing it.
+    server = buildApp(sessionSecret, signInLimits).listen(PORT, async error => {
+        if (error) {
+            console.error(`Could not listen on port ${PORT}: ${error.message}`);
+            await dbClient.close().catch(() => undefined);
+            process.exit(1);
+        }
+        console.log(`Server running on port ${PORT}`);
+    });
 }
 
 function errorMessage(error: unknown): string {

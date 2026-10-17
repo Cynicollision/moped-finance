@@ -156,7 +156,9 @@ export class OperationHandler {
                 continue;
             }
 
-            const result = schema.safeParse(req[part]);
+            // Express 5 leaves the body undefined when no JSON was sent; parse it as an empty object, as Express 4 did.
+            const value = part === 'body' ? (req[part] ?? {}) : req[part];
+            const result = schema.safeParse(value);
             if (!result.success) {
                 const issues = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
                 return {

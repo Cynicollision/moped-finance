@@ -667,7 +667,7 @@ describe('Transaction Routes', () => {
             expect(response.status).toBe(200);
             expect(response.header['content-type']).toContain('text/csv');
             expect(response.header['content-disposition']).toMatch(
-                /filename="Transactions_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.csv"/
+                /filename="?Transactions_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.csv"?$/
             );
             expect(response.text).toContain(
                 'Date,AccountName,Merchant,CategoryName,Amount,OriginalStatement,Notes,IsHidden'

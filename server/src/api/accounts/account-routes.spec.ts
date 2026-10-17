@@ -1236,7 +1236,7 @@ describe('Account Routes', () => {
             expect(response.status).toBe(200);
             expect(response.header['content-type']).toContain('text/csv');
             expect(response.header['content-disposition']).toMatch(
-                /filename="Balances_Checking_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.csv"/
+                /filename="?Balances_Checking_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.csv"?$/
             );
             expect(response.text).toContain('Date,AccountName,Balance');
             expect(response.text).toContain('100');
@@ -1590,6 +1590,15 @@ describe('Account Routes', () => {
             expect(response.body).toEqual(
                 expect.objectContaining({ name: 'Renamed', type: AccountType.Checking, isHidden: true })
             );
+        });
+
+        it('ACCT-1.5 should treat an update without a body as changing nothing', async () => {
+            const account = await insertAccount();
+
+            const response = await request(app).put(`/accounts/${account.id}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual(expect.objectContaining({ name: account.name, type: account.type }));
         });
 
         it('ACCT-1.11 should refuse to clear the type', async () => {
