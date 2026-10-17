@@ -30,7 +30,7 @@ Version 1.0 is the release that finishes the last of these.
 
 ## Running it
 
-- **Development:** Node.js 22 and Docker. See [docs/development.md](docs/development.md).
+- **Development:** Node.js 24 and Docker. See [docs/development.md](docs/development.md).
 - **Self-hosting:** one Docker image plus Postgres, on a private network. See [docs/deployment.md](docs/deployment.md); it describes the intended setup, which hasn't been run on a real host yet.
 
 Built with Angular, Node.js and Express, and PostgreSQL with Drizzle ORM.
