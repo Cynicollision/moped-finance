@@ -96,10 +96,15 @@ mat-card.mat-mdc-card-outlined {
 }
 
 // A destructive menu entry: the profile menu's Sign out (APP-1.10) and a record's Delete (APP-2.4).
-// Menus render in an overlay, outside any component's styles.
-.danger-item,
-.danger-item mat-icon {
-    color: var(--color-negative);
+// Menus render in an overlay, outside any component's styles. Material's menu styles load after these and set the
+// item's colour from its tokens, so a plain `color` here would lose to them.
+.danger-item {
+    @include mat.menu-overrides(
+        (
+            item-label-text-color: var(--color-negative),
+            item-icon-color: var(--color-negative)
+        )
+    );
 }
 
 // A button for a destructive action (APP-2.4): as a text button, Delete in a dialog; as a filled button, the
