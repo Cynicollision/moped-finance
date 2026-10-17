@@ -87,3 +87,13 @@ The emoji data is committed, so every build serves the same file. Run `npm run e
 See [testing.md](testing.md) for how the tests are set up.
 
 `main` has a ruleset ("Protect main": pull request required, CI passing, branch up to date, no force pushes). GitHub doesn't enforce rulesets on a private repository on the free plan, so it only takes effect if the repository becomes public or moves to GitHub Pro. Follow it anyway.
+
+## Releases
+
+Releases follow the milestones in [TODO.md](../TODO.md): each one finished is a minor version (`v0.1.0`, `v0.2.0`, ...), and the one that finishes the last milestone is `v1.0.0`. A fix released between milestones is a patch version (`v0.1.1`).
+
+To release, tag the merge commit on `main` and publish the release with notes generated from the merged PRs:
+
+```bash
+gh release create v0.1.0 --target main --generate-notes
+```
