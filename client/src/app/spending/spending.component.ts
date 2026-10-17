@@ -16,7 +16,9 @@ import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-shee
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
@@ -146,7 +148,9 @@ const periodNouns: Record<SpendingPeriodType, string> = {
         MatButtonModule,
         MatButtonToggleModule,
         MatCardModule,
+        MatFormFieldModule,
         MatIconModule,
+        MatSelectModule,
         PageHeaderComponent,
         CardSkeletonComponent,
         LoadErrorComponent,
@@ -253,11 +257,33 @@ export class SpendingComponent {
         this.totals.reload();
     }
 
-    // The stepper (CASH-1.1)
+    // The period type and the stepper (CASH-1.1)
+
+    /**
+     * Shows the period of the chosen type that holds today, if the one on screen does, or else the one holding its
+     * first day: May 2026 becomes Q2 2026, and 2025 becomes January 2025.
+     */
+    choosePeriodType(type: SpendingPeriodType) {
+        const { period, start } = this.selection();
+        if (type === period) {
+            return;
+        }
+        if (type === 'average') {
+            this.selection.set({ period: type, start: this.currentMonth });
+            return;
+        }
+        const anchor = period === 'average' || this.holdsToday(period, start) ? this.today : start;
+        this.selection.set({ period: type, start: CalendarDateUtil.getPeriod(type, anchor).startDate });
+    }
+
+    private holdsToday(period: CalendarPeriod, start: CalendarDate): boolean {
+        const { startDate, endDate } = CalendarDateUtil.getPeriod(period, start);
+        return startDate <= this.today && this.today <= endDate;
+    }
 
     /** The period in full: "May 2026", "Q2 2026", "2026" or "Average month, May 2025 to Apr 2026". */
     readonly periodLabel = computed(() => this.labelFor(false));
-    /** As the stepper shows it, with a short month on phones ("Sep 2026", "Avg, ...") so the controls fit one row. */
+    /** As the stepper shows it, with a short month on phones ("Sep 2026", "Avg, ...") so the period controls fit one row. */
     readonly periodText = computed(() => this.labelFor(this.isCompact()));
     readonly periodNoun = computed(() => periodNouns[this.selection().period]);
     readonly canStepBack = computed(() => this.canStep(-1));
@@ -306,17 +332,15 @@ export class SpendingComponent {
     private pickerSheetRef?: MatBottomSheetRef;
     readonly isPopoverOpen = signal(false);
 
-    /** The period type and year the picker is showing, before a choice is made. */
-    readonly pickerPeriod = signal<SpendingPeriodType>(CalendarPeriod.Monthly);
-    /** Months and quarters are chosen within a year; years and the average month aren't. */
+    /** Months and quarters are chosen within a year, which the picker steps through before a choice is made. */
     readonly showsPickerYear = computed(
-        () => this.pickerPeriod() === CalendarPeriod.Monthly || this.pickerPeriod() === CalendarPeriod.Quarterly
+        () => this.selection().period === CalendarPeriod.Monthly || this.selection().period === CalendarPeriod.Quarterly
     );
     readonly pickerYear = signal(yearOf(this.today));
 
     readonly pickerOptions = computed<PeriodOption[]>(() => {
         const year = this.pickerYear();
-        switch (this.pickerPeriod()) {
+        switch (this.selection().period) {
             case CalendarPeriod.Monthly:
                 return monthNames.map((name, i) => ({
                     label: name.slice(0, 3),
@@ -332,13 +356,7 @@ export class SpendingComponent {
             case CalendarPeriod.Yearly:
                 return this.years().map(y => ({ label: `${y}`, ariaLabel: `${y}`, start: firstDay(y, 0) }));
             default:
-                return [
-                    {
-                        label: 'Past 12 months',
-                        ariaLabel: 'Average month over the past 12 months',
-                        start: this.currentMonth
-                    }
-                ];
+                return [];
         }
     });
 
@@ -346,13 +364,11 @@ export class SpendingComponent {
     readonly canPickNextYear = computed(() => this.years().includes(this.pickerYear() + 1));
 
     openPicker() {
-        const { period, start } = this.selection();
-        this.pickerPeriod.set(period);
-        this.pickerYear.set(yearOf(start));
+        this.pickerYear.set(yearOf(this.selection().start));
 
         if (this.isCompact()) {
             this.pickerSheetRef = this.bottomSheet.open(this.pickerSheet(), {
-                ariaLabel: 'Choose a period',
+                ariaLabel: `Choose a ${this.periodNoun()}`,
                 autoFocus: 'dialog'
             });
         } else {
@@ -374,12 +390,11 @@ export class SpendingComponent {
     }
 
     isSelected(option: PeriodOption): boolean {
-        const { period, start } = this.selection();
-        return period === this.pickerPeriod() && start === option.start;
+        return this.selection().start === option.start;
     }
 
     pick(option: PeriodOption) {
-        this.selection.set({ period: this.pickerPeriod(), start: option.start });
+        this.selection.update(({ period }) => ({ period, start: option.start }));
         this.closePicker();
     }
 

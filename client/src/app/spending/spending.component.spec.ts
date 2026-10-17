@@ -191,6 +191,19 @@ describe('SpendingComponent', () => {
         return element.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
     }
 
+    /** Opens the period type dropdown and returns its options. */
+    async function periodTypeOptions(fixture: Awaited<ReturnType<typeof render>>): Promise<HTMLElement[]> {
+        fixture.element.querySelector<HTMLElement>('.period-type .mat-mdc-select-trigger')!.click();
+        await fixture.whenStable();
+        return Array.from(document.querySelectorAll<HTMLElement>('mat-option'));
+    }
+
+    /** Chooses a period type from the dropdown (CASH-1.1). */
+    async function choosePeriodType(fixture: Awaited<ReturnType<typeof render>>, label: string) {
+        (await periodTypeOptions(fixture)).find(option => text(option) === label)!.click();
+        await fixture.whenStable();
+    }
+
     it('CASH-1.4 should total income and expenses', async () => {
         const { element } = await render();
 
@@ -327,12 +340,44 @@ describe('SpendingComponent', () => {
         expect(button(element, 'Next year').disabled).toBe(true);
     });
 
+    it('CASH-1.1 should offer each kind of period in a dropdown', async () => {
+        const fixture = await render();
+
+        expect(text(fixture.element.querySelector('.period-type'))).toBe('Month');
+        expect((await periodTypeOptions(fixture)).map(text)).toEqual(['Month', 'Quarter', 'Year', 'Average']);
+    });
+
+    it("CASH-1.1 should change the kind of period to the one holding today, or the one on screen's first day", async () => {
+        const fixture = await render(totals, '2025-06-01');
+        const { element, financeService } = fixture;
+
+        await choosePeriodType(fixture, 'Quarter');
+        expect(text(element.querySelector('.period-button'))).toBe('Q2 2026 arrow_drop_down');
+        await choosePeriodType(fixture, 'Year');
+        button(element, 'Previous year').click();
+        await fixture.whenStable();
+        expect(text(element.querySelector('.period-button'))).toBe('2025 arrow_drop_down');
+        await choosePeriodType(fixture, 'Month');
+        expect(text(element.querySelector('.period-button'))).toBe('January 2025 arrow_drop_down');
+        await choosePeriodType(fixture, 'Average');
+        await choosePeriodType(fixture, 'Month');
+
+        expect(financeService.fetchSpendingTotals.mock.calls).toEqual([
+            [CalendarPeriod.Monthly, '2026-05-01'],
+            [CalendarPeriod.Quarterly, '2026-04-01'],
+            [CalendarPeriod.Yearly, '2026-01-01'],
+            [CalendarPeriod.Yearly, '2025-01-01'],
+            [CalendarPeriod.Monthly, '2025-01-01'],
+            [CalendarPeriod.Monthly, '2026-05-01']
+        ]);
+    });
+
     it('CASH-1.1 should choose a quarter from the picker, then step a quarter at a time', async () => {
         const fixture = await render();
         const { componentInstance: spending, element, financeService } = fixture;
 
+        await choosePeriodType(fixture, 'Quarter');
         spending.openPicker();
-        spending.pickerPeriod.set(CalendarPeriod.Quarterly);
         await fixture.whenStable();
         const options = Array.from(document.querySelectorAll<HTMLButtonElement>('.picker-option'));
         expect(options.map(text)).toEqual(['Q1', 'Q2', 'Q3', 'Q4']);
@@ -347,6 +392,7 @@ describe('SpendingComponent', () => {
 
         expect(financeService.fetchSpendingTotals.mock.calls).toEqual([
             [CalendarPeriod.Monthly, '2026-05-01'],
+            [CalendarPeriod.Quarterly, '2026-04-01'],
             [CalendarPeriod.Quarterly, '2026-01-01'],
             [CalendarPeriod.Quarterly, '2026-04-01']
         ]);
@@ -372,31 +418,15 @@ describe('SpendingComponent', () => {
             return fixture;
         }
 
-        it('CASH-1.12 should offer the average month in the picker, without a year', async () => {
+        it('CASH-1.12 should show the average month from the dropdown, with nothing to step to or pick', async () => {
             const fixture = await render();
-            const { componentInstance: spending, element, financeService } = fixture;
+            const { element, financeService } = fixture;
 
-            spending.openPicker();
-            spending.pickerPeriod.set('average');
-            await fixture.whenStable();
-            expect(Array.from(document.querySelectorAll('.picker-type mat-button-toggle')).map(text)).toEqual([
-                'Month',
-                'Quarter',
-                'Year',
-                'Average'
-            ]);
-            expect(document.querySelector('.picker-year')).toBeNull();
-            const options = Array.from(document.querySelectorAll<HTMLButtonElement>('.picker-option'));
-            expect(options.map(text)).toEqual(['Past 12 months']);
-            options[0].click();
-            await fixture.whenStable();
+            await choosePeriodType(fixture, 'Average');
 
             expect(financeService.fetchSpendingAverage).toHaveBeenCalledWith('2026-05-17');
-            expect(text(element.querySelector('.period-button'))).toBe(
-                'Average month, May 2025 to Apr 2026 arrow_drop_down'
-            );
-            expect(button(element, 'Previous period').disabled).toBe(true);
-            expect(button(element, 'Next period').disabled).toBe(true);
+            expect(text(element.querySelector('.period-text'))).toBe('Average month, May 2025 to Apr 2026');
+            expect(element.querySelector('.stepper')).toBeNull();
         });
 
         it('CASH-1.12 should compare each average month with the monthly budget', async () => {
@@ -426,13 +456,11 @@ describe('SpendingComponent', () => {
 
         it('CASH-1.12 should name a one-month window by its month, and no window at all without history', async () => {
             const oneMonth = await renderAverage({ startDate: '2026-04-01', months: 1 });
-            expect(text(oneMonth.element.querySelector('.period-button'))).toBe(
-                'Average month, Apr 2026 arrow_drop_down'
-            );
+            expect(text(oneMonth.element.querySelector('.period-text'))).toBe('Average month, Apr 2026');
             TestBed.resetTestingModule();
 
             const none = await renderAverage({ startDate: '2026-05-01', months: 0, totals: [] });
-            expect(text(none.element.querySelector('.period-button'))).toBe('Average month arrow_drop_down');
+            expect(text(none.element.querySelector('.period-text'))).toBe('Average month');
             expect(text(section(none.element, 'Income').querySelector('.section-total'))).toBe('$0');
         });
 
@@ -447,9 +475,8 @@ describe('SpendingComponent', () => {
             );
 
             expect(financeService.fetchSpendingTotals).not.toHaveBeenCalled();
-            expect(text(element.querySelector('.period-button'))).toBe(
-                'Average month, May 2025 to Apr 2026 arrow_drop_down'
-            );
+            expect(text(element.querySelector('.period-text'))).toBe('Average month, May 2025 to Apr 2026');
+            expect(text(element.querySelector('.period-type'))).toBe('Average');
         });
     });
 
@@ -525,13 +552,19 @@ describe('SpendingComponent', () => {
         expect(rent.getAttribute('href')).toBe('/transactions?categoryId=rent&startDate=2026-04-01&endDate=2026-06-30');
     });
 
-    it('CASH-1.5 should put the Category / Group switch between the summary and the sections', async () => {
+    it('CASH-1.1 CASH-1.5 should put the period and the Category / Group switch between the summary and the sections', async () => {
         const { element } = await render();
 
-        const order = Array.from(element.querySelectorAll('.summary-card, .view-toggle, .section-card')).map(e =>
-            ['summary-card', 'view-toggle', 'section-card'].find(name => e.classList.contains(name))
+        const order = Array.from(element.querySelectorAll('.summary-card, .controls, .section-card')).map(e =>
+            ['summary-card', 'controls', 'section-card'].find(name => e.classList.contains(name))
         );
-        expect(order).toEqual(['summary-card', 'view-toggle', 'section-card', 'section-card']);
+        expect(order).toEqual(['summary-card', 'controls', 'section-card', 'section-card']);
+        const controls = element.querySelector('.controls')!;
+        expect(['.period-type', '.stepper', '.view-toggle'].map(c => controls.querySelector(c) !== null)).toEqual([
+            true,
+            true,
+            true
+        ]);
         expect(Array.from(element.querySelectorAll('mat-button-toggle')).map(text)).toEqual(['Category', 'Group']);
     });
 

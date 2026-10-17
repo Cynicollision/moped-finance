@@ -23,16 +23,45 @@ app-page-header {
     letter-spacing: 0.05em;
 }
 
-// The period stepper (CASH-1.1).
+// The period type and stepper, then the Category / Group switch, between the summary and the sections (CASH-1.1,
+// CASH-1.5). On phones the switch goes under the period, across the width.
 .controls {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+
+    @include mat.button-toggle-overrides(
+        (
+            height: 40px
+        )
+    );
+}
+
+.period-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+// As tall and round as the switch, and wide enough for "Average" so the stepper stays put as the type changes.
+.period-type {
+    width: 8.5rem;
+
+    @include mat.form-field-overrides(
+        (
+            container-height: 40px,
+            container-vertical-padding: 8px,
+            outlined-container-shape: 20px
+        )
+    );
 }
 
 .stepper {
     display: flex;
     align-items: center;
-    margin-left: -8px;
 }
 
 // Wide enough for "September 2026", so the arrows stay put as the period changes.
@@ -41,15 +70,9 @@ app-page-header {
     font: var(--mat-sys-title-medium);
 }
 
-// The Category / Group switch, between the summary and the sections (CASH-1.5).
-.view-toggle {
-    align-self: flex-start;
-
-    @include mat.button-toggle-overrides(
-        (
-            height: 36px
-        )
-    );
+.period-text {
+    font: var(--mat-sys-title-medium);
+    color: var(--mat-sys-on-surface);
 }
 
 // Phones show "Sep 2026" and smaller arrows, and the switch spans the width.
@@ -62,9 +85,15 @@ app-page-header {
         }
     }
 
-    .stepper {
-        margin-left: -6px;
+    .period-controls {
+        gap: 4px;
+    }
 
+    .period-type {
+        width: 7.5rem;
+    }
+
+    .stepper {
         @include mat.icon-button-density(-3);
     }
 
@@ -213,14 +242,6 @@ app-page-header {
     gap: 12px;
 }
 
-.picker-type {
-    width: 100%;
-
-    mat-button-toggle {
-        flex: 1;
-    }
-}
-
 .picker-year {
     display: flex;
     align-items: center;
@@ -235,10 +256,6 @@ app-page-header {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
-
-    &.single {
-        grid-template-columns: minmax(0, 1fr);
-    }
 
     &.quarters {
         grid-template-columns: repeat(2, minmax(0, 1fr));

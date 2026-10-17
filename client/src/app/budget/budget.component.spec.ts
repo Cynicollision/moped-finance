@@ -117,6 +117,20 @@ describe('BudgetComponent', () => {
         expect(summary(element)).toEqual(['$15,000', '$36,000', '$21,000', '$0']);
     });
 
+    it('BUD-1.6 should put the period switch between the summary and the sections', async () => {
+        const { element } = await render();
+
+        const order = Array.from(element.querySelectorAll('.summary-card, .period-toggle, .section-card')).map(e =>
+            ['summary-card', 'period-toggle', 'section-card'].find(name => e.classList.contains(name))
+        );
+        expect(order).toEqual(['summary-card', 'period-toggle', 'section-card', 'section-card', 'section-card']);
+        expect(Array.from(element.querySelectorAll('.period-toggle button')).map(b => b.textContent!.trim())).toEqual([
+            'Monthly',
+            'Quarterly',
+            'Yearly'
+        ]);
+    });
+
     it('BUD-1.10 should show a negative Left over in red', async () => {
         const { element } = await render([
             stream(BudgetStreamType.Income, 'Salary', 'pay', 1000),
