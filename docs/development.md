@@ -78,7 +78,7 @@ The emoji data is committed, so every build serves the same file. Run `npm run e
 
 - `npm audit --omit=dev` in `client/` and `server/` covers what ships: the server's runtime packages and the Angular packages built into the client. Keep it at 0.
 - `npm update` fixes most findings within the version ranges. Commit the lock file, then rebuild the API container (above), since it installs its own copy.
-- Plain `npm audit` adds the build and test tooling. On 2026-10-06 the server's tooling had findings with no fixed release yet: `braces` through `nodemon` and `tsc-alias`, `sprintf-js` and `js-yaml` through Jest's coverage instrumentation, and an old `esbuild` through `drizzle-kit`. None of them run in production or take untrusted input. `npm audit fix --force` "fixes" them by downgrading to years-old majors; don't.
+- Plain `npm audit` adds the build and test tooling. On 2026-10-17 the server's tooling had findings with no fixed release yet: `braces` through `nodemon` and `tsc-alias`, `sprintf-js` through Jest's coverage instrumentation, and an old `esbuild` through `drizzle-kit` (1.0, in release candidates then, drops it). None of them run in production or take untrusted input. `npm audit fix --force` "fixes" them by downgrading to years-old majors; don't.
 
 ## Before opening a PR
 
