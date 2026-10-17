@@ -5,7 +5,7 @@ import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { institutionSchema } from './institution-schema';
 
-export interface IFinanceInstitutionData {
+export interface IInstitutionData {
     retrieveAll(): Promise<Institution[]>;
     retrieveSingle(id: string): Promise<Institution | null>;
     insert(institution: Institution): Promise<Institution>;
@@ -22,7 +22,7 @@ function mapRowToInstitution(row: typeof institutionSchema.$inferSelect): Instit
     };
 }
 
-export class FinanceInstitutionData implements IFinanceInstitutionData {
+export class InstitutionData implements IInstitutionData {
     private readonly db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {

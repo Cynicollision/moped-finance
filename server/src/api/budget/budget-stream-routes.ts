@@ -2,12 +2,12 @@ import { Router } from 'express';
 import { IAppLogger } from '@server/logging';
 import { idParamsSchema, OperationDefinition, OperationHandler } from '@server/routing';
 import { BudgetStreamController } from './budget-stream-controller';
-import { IFinanceBudgetStreamData } from './budget-stream-data';
+import { IBudgetStreamData } from './budget-stream-data';
 import { createBudgetStreamSchema, updateBudgetStreamSchema } from './budget-stream-schema';
 
 const domain = 'BudgetStream';
 
-export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: IFinanceBudgetStreamData) {
+export function createBudgetStreamRouter(logger: IAppLogger, budgetStreamData: IBudgetStreamData) {
     const router = Router();
     const handler = new OperationHandler(logger);
     const controller = new BudgetStreamController(logger, budgetStreamData);

@@ -30,7 +30,7 @@ export enum FinanceEntityIdPrefix {
     BudgetStream = 'BS'
 }
 
-export class FinanceEntityFactory {
+export class EntityFactory {
     private static createEntity<T extends { id: string; createdAt: Date; updatedAt: Date }>(
         prefix: string,
         newEntity: NewEntity<T>
@@ -45,7 +45,7 @@ export class FinanceEntityFactory {
 
     /** Adds the group and Asset/Liability that the type decides (ACCT-1.2). */
     public static createAccount(account: Omit<NewEntity<Account>, 'group' | 'category'>): Account {
-        return FinanceEntityFactory.createEntity<Account>(FinanceEntityIdPrefix.Account, {
+        return EntityFactory.createEntity<Account>(FinanceEntityIdPrefix.Account, {
             ...account,
             group: AccountTypeUtil.groupOf(account.type),
             category: AccountTypeUtil.categoryOf(account.type)
@@ -56,7 +56,7 @@ export class FinanceEntityFactory {
     public static createBalanceHistory(
         history: Omit<NewEntity<BalanceHistory>, 'source'> & Partial<Pick<BalanceHistory, 'source'>>
     ): BalanceHistory {
-        return FinanceEntityFactory.createEntity<BalanceHistory>(FinanceEntityIdPrefix.BalanceHistory, {
+        return EntityFactory.createEntity<BalanceHistory>(FinanceEntityIdPrefix.BalanceHistory, {
             source: BalanceEntrySource.Set,
             ...history
         });
@@ -67,7 +67,7 @@ export class FinanceEntityFactory {
         transaction: Omit<NewEntity<Transaction>, 'adjustsBalance' | 'splitId'> &
             Partial<Pick<Transaction, 'adjustsBalance' | 'splitId'>>
     ): Transaction {
-        return FinanceEntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, {
+        return EntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, {
             adjustsBalance: false,
             splitId: '',
             ...transaction
@@ -80,23 +80,23 @@ export class FinanceEntityFactory {
     }
 
     public static createInstitution(institution: NewEntity<Institution>): Institution {
-        return FinanceEntityFactory.createEntity<Institution>(FinanceEntityIdPrefix.Institution, institution);
+        return EntityFactory.createEntity<Institution>(FinanceEntityIdPrefix.Institution, institution);
     }
 
     public static createCategory(
         category: Omit<NewEntity<Category>, 'necessity'> & Partial<Pick<Category, 'necessity'>>
     ): Category {
-        return FinanceEntityFactory.createEntity<Category>(FinanceEntityIdPrefix.Category, {
+        return EntityFactory.createEntity<Category>(FinanceEntityIdPrefix.Category, {
             necessity: null,
             ...category
         });
     }
 
     public static createCategoryGroup(group: NewEntity<CategoryGroup>): CategoryGroup {
-        return FinanceEntityFactory.createEntity<CategoryGroup>(FinanceEntityIdPrefix.CategoryGroup, group);
+        return EntityFactory.createEntity<CategoryGroup>(FinanceEntityIdPrefix.CategoryGroup, group);
     }
 
     public static createBudgetStream(stream: NewEntity<BudgetStreamFields>): BudgetStreamFields {
-        return FinanceEntityFactory.createEntity<BudgetStreamFields>(FinanceEntityIdPrefix.BudgetStream, stream);
+        return EntityFactory.createEntity<BudgetStreamFields>(FinanceEntityIdPrefix.BudgetStream, stream);
     }
 }

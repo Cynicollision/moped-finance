@@ -2,14 +2,14 @@ import { CategoryImportResult } from '@shared/finance/contracts';
 import { CategoryType } from '@shared/finance/enum';
 import { Category, CategoryGroup, CategoryUsage } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
-import { FinanceEntityFactory } from '@server/data';
+import { EntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { CategoryCsv, CategoryExport } from './category-csv';
-import { IFinanceCategoryData } from './category-data';
+import { ICategoryData } from './category-data';
 import { CreateCategoryRequest, UpdateCategoryRequest } from './category-schema';
-import { CreateCategoryGroupRequest, IFinanceCategoryGroupData, UpdateCategoryGroupRequest } from './category-groups';
+import { CreateCategoryGroupRequest, ICategoryGroupData, UpdateCategoryGroupRequest } from './category-groups';
 
 const necessityRefusal = 'Only expense categories can have a necessity.';
 
@@ -19,8 +19,8 @@ const reservedNameRefusal = 'Uncategorized is reserved for transactions without 
 export class CategoryController {
     constructor(
         private logger: IAppLogger,
-        private categoryData: IFinanceCategoryData,
-        private groupData: IFinanceCategoryGroupData
+        private categoryData: ICategoryData,
+        private groupData: ICategoryGroupData
     ) {}
 
     public async getGroup(context: OperationContext, groupId: string): Promise<OperationResult<CategoryGroup>> {
@@ -40,7 +40,7 @@ export class CategoryController {
         context: OperationContext,
         input: CreateCategoryGroupRequest
     ): Promise<OperationResult<CategoryGroup>> {
-        const group = FinanceEntityFactory.createCategoryGroup(input);
+        const group = EntityFactory.createCategoryGroup(input);
         const created = await this.groupData.insert(group);
         return Result.successCreated(created);
     }
@@ -120,7 +120,7 @@ export class CategoryController {
         }
 
         // A missing group fails the insert's foreign key, which OperationHandler reports as a 400.
-        const category = FinanceEntityFactory.createCategory({
+        const category = EntityFactory.createCategory({
             ...input,
             isActive: input.isActive ?? true,
             necessity

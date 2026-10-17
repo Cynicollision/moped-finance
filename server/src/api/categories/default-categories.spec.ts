@@ -1,17 +1,17 @@
 import path from 'path';
 import { PGlite } from '@electric-sql/pglite';
 import { CategoryType } from '@shared/finance/enum';
-import { DatabaseClient, FinanceEntityFactory } from '@server/data';
+import { DatabaseClient, EntityFactory } from '@server/data';
 import { TestDatabaseUtil } from '@server/utility/testing';
-import { FinanceCategoryData } from './category-data';
-import { FinanceCategoryGroupData } from './category-groups';
+import { CategoryData } from './category-data';
+import { CategoryGroupData } from './category-groups';
 import { DefaultCategories } from './default-categories';
 
 describe('DefaultCategories', () => {
     let dbClient: DatabaseClient;
     let pglite: PGlite;
-    let categoryData: FinanceCategoryData;
-    let groupData: FinanceCategoryGroupData;
+    let categoryData: CategoryData;
+    let groupData: CategoryGroupData;
     let defaults: DefaultCategories;
 
     async function save(): Promise<void> {
@@ -21,8 +21,8 @@ describe('DefaultCategories', () => {
 
     beforeAll(async () => {
         ({ dbClient, pglite } = await TestDatabaseUtil.createMockDatabase());
-        categoryData = new FinanceCategoryData(dbClient);
-        groupData = new FinanceCategoryGroupData(dbClient);
+        categoryData = new CategoryData(dbClient);
+        groupData = new CategoryGroupData(dbClient);
         defaults = new DefaultCategories(
             path.join(__dirname, '../../../default-data/categories.csv'),
             categoryData,
@@ -70,10 +70,10 @@ describe('DefaultCategories', () => {
     });
 
     it('CAT-6.2 should skip a category that already exists, as an import does (CAT-7.3)', async () => {
-        const group = FinanceEntityFactory.createCategoryGroup({ name: 'Food', type: CategoryType.Expense });
+        const group = EntityFactory.createCategoryGroup({ name: 'Food', type: CategoryType.Expense });
         await groupData.insert(group);
         await categoryData.insert(
-            FinanceEntityFactory.createCategory({ groupId: group.id, name: 'groceries', icon: '', isActive: true })
+            EntityFactory.createCategory({ groupId: group.id, name: 'groceries', icon: '', isActive: true })
         );
 
         await save();

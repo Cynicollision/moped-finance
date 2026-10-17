@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { Server } from 'http';
 import path from 'path';
-import { buildFinanceRouter, DefaultCategories, FinanceCategoryData, FinanceCategoryGroupData } from '@server/api';
+import { buildFinanceRouter, CategoryData, CategoryGroupData, DefaultCategories } from '@server/api';
 import {
     ApiTokenController,
     ApiTokenData,
@@ -62,8 +62,8 @@ function buildApp(sessionSecret: string, signInLimits: SignInLimits): express.Ex
     // next to this one: server/default-data in development, dist/server/default-data in the production image.
     const defaultCategories = new DefaultCategories(
         path.join(__dirname, 'default-data', 'categories.csv'),
-        new FinanceCategoryData(dbClient),
-        new FinanceCategoryGroupData(dbClient)
+        new CategoryData(dbClient),
+        new CategoryGroupData(dbClient)
     );
     const authController = new AuthController(userData, defaultCategories);
     const apiTokenController = new ApiTokenController(new ApiTokenData(dbClient));

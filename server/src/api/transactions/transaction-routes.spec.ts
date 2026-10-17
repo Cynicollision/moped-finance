@@ -12,24 +12,24 @@ import {
 import { Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { IAppLogger } from '@server/logging';
-import { DatabaseClient, FinanceEntityFactory } from '@server/data';
+import { DatabaseClient, EntityFactory } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
-import { FinanceAccountData, FinanceBalanceHistoryData } from './../accounts';
-import { FinanceCategoryData, FinanceCategoryGroupData } from './../categories';
-import { FinanceInstitutionData } from './../institutions';
+import { AccountData, BalanceHistoryData } from './../accounts';
+import { CategoryData, CategoryGroupData } from './../categories';
+import { InstitutionData } from './../institutions';
 import { createTransactionRouter } from './transaction-routes';
-import { FinanceTransactionData } from './transaction-data';
+import { TransactionData } from './transaction-data';
 
 describe('Transaction Routes', () => {
     let app: express.Express;
     let dbClient: DatabaseClient;
     let pglite: PGlite;
-    let transactionsData: FinanceTransactionData;
-    let accountsData: FinanceAccountData;
-    let categoriesData: FinanceCategoryData;
-    let groupsData: FinanceCategoryGroupData;
-    let institutionsData: FinanceInstitutionData;
+    let transactionsData: TransactionData;
+    let accountsData: AccountData;
+    let categoriesData: CategoryData;
+    let groupsData: CategoryGroupData;
+    let institutionsData: InstitutionData;
     let mockLogger: jest.Mocked<IAppLogger>;
     let testUserId: string;
 
@@ -45,11 +45,11 @@ describe('Transaction Routes', () => {
         const user = await TestDatabaseUtil.createTestUser(dbClient);
         testUserId = user.id;
 
-        transactionsData = new FinanceTransactionData(dbClient);
-        accountsData = new FinanceAccountData(dbClient);
-        categoriesData = new FinanceCategoryData(dbClient);
-        groupsData = new FinanceCategoryGroupData(dbClient);
-        institutionsData = new FinanceInstitutionData(dbClient);
+        transactionsData = new TransactionData(dbClient);
+        accountsData = new AccountData(dbClient);
+        categoriesData = new CategoryData(dbClient);
+        groupsData = new CategoryGroupData(dbClient);
+        institutionsData = new InstitutionData(dbClient);
         mockLogger = TestExpressUtil.createMockLogger();
 
         const router = createTransactionRouter(mockLogger, accountsData, categoriesData, transactionsData);
@@ -63,10 +63,10 @@ describe('Transaction Routes', () => {
     beforeEach(async () => {
         await TestDatabaseUtil.clearFinanceData(pglite);
 
-        const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Bank' }));
+        const inst = await institutionsData.insert(EntityFactory.createInstitution({ name: 'Bank' }));
         testInstitutionId = inst.id!;
         const account = await accountsData.insert(
-            FinanceEntityFactory.createAccount({
+            EntityFactory.createAccount({
                 institutionId: inst.id!,
                 name: 'Checking',
                 type: AccountType.Checking,
@@ -78,10 +78,10 @@ describe('Transaction Routes', () => {
         testAccountId = account.id!;
 
         const group = await groupsData.insert(
-            FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Food' })
+            EntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Food' })
         );
         const category = await categoriesData.insert(
-            FinanceEntityFactory.createCategory({
+            EntityFactory.createCategory({
                 groupId: group.id!,
                 name: 'Groceries',
                 icon: '🍎',
@@ -95,7 +95,7 @@ describe('Transaction Routes', () => {
 
     function insertTransaction(fields: Partial<Transaction> = {}): Promise<Transaction> {
         return transactionsData.insert(
-            FinanceEntityFactory.createTransaction({
+            EntityFactory.createTransaction({
                 accountId: testAccountId,
                 categoryId: testCategoryId,
                 date: '2026-06-06',
@@ -112,7 +112,7 @@ describe('Transaction Routes', () => {
     // A second account alongside Checking, with the given flags.
     async function insertAccount(flags: { isHidden?: boolean }): Promise<string> {
         const account = await accountsData.insert(
-            FinanceEntityFactory.createAccount({
+            EntityFactory.createAccount({
                 institutionId: testInstitutionId,
                 name: 'Savings',
                 type: AccountType.Savings,
@@ -139,7 +139,7 @@ describe('Transaction Routes', () => {
     describe('GET /', () => {
         it('TXN-1.2 TXN-1.8 should list transactions newest first, leaving out hidden ones, by default', async () => {
             const txn1 = await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId: testAccountId,
                     categoryId: testCategoryId,
                     date: '2026-06-06',
@@ -151,7 +151,7 @@ describe('Transaction Routes', () => {
                 })
             );
             const txn2 = await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId: testAccountId,
                     categoryId: testCategoryId,
                     date: '2026-06-07',
@@ -173,7 +173,7 @@ describe('Transaction Routes', () => {
 
         it('TXN-1.5 should apply every filter together', async () => {
             const txn = await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId: testAccountId,
                     categoryId: testCategoryId,
                     date: '2026-06-06',
@@ -325,7 +325,7 @@ describe('Transaction Routes', () => {
     describe('GET /merchants', () => {
         it('TXN-1.6 should return the merchants used before', async () => {
             await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId: testAccountId,
                     categoryId: testCategoryId,
                     date: '2026-06-06',
@@ -337,7 +337,7 @@ describe('Transaction Routes', () => {
                 })
             );
             await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId: testAccountId,
                     categoryId: testCategoryId,
                     date: '2026-06-06',
@@ -359,9 +359,9 @@ describe('Transaction Routes', () => {
     describe('GET /spending', () => {
         // A category in a new group of the given type.
         async function insertCategory(type: CategoryType, name: string): Promise<string> {
-            const group = await groupsData.insert(FinanceEntityFactory.createCategoryGroup({ type, name }));
+            const group = await groupsData.insert(EntityFactory.createCategoryGroup({ type, name }));
             const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name, icon: '', isActive: true })
+                EntityFactory.createCategory({ groupId: group.id!, name, icon: '', isActive: true })
             );
             return category.id!;
         }
@@ -526,10 +526,10 @@ describe('Transaction Routes', () => {
 
         it('BUD-1.8 should average a transfer category by its money out only', async () => {
             const group = await groupsData.insert(
-                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Transfer, name: 'Transfers' })
+                EntityFactory.createCategoryGroup({ type: CategoryType.Transfer, name: 'Transfers' })
             );
             const savings = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Savings', icon: '', isActive: true })
+                EntityFactory.createCategory({ groupId: group.id!, name: 'Savings', icon: '', isActive: true })
             );
             const savingsAccountId = await insertAccount({});
             for (const date of ['2026-04-01', '2026-05-01']) {
@@ -548,7 +548,7 @@ describe('Transaction Routes', () => {
     describe('GET /:id', () => {
         it('TXN-2.2 should return a single transaction when found', async () => {
             const txn = await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId: testAccountId,
                     categoryId: testCategoryId,
                     date: '2026-06-06',
@@ -576,7 +576,7 @@ describe('Transaction Routes', () => {
     describe('PUT /:id', () => {
         it('TXN-2.3 should update a transaction when valid', async () => {
             const txn = await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId: testAccountId,
                     categoryId: testCategoryId,
                     date: '2026-06-06',
@@ -619,7 +619,7 @@ describe('Transaction Routes', () => {
     describe('DELETE /:id', () => {
         it('TXN-2.4 should delete a transaction', async () => {
             const txn = await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId: testAccountId,
                     categoryId: testCategoryId,
                     date: '2026-06-06',
@@ -650,7 +650,7 @@ describe('Transaction Routes', () => {
     describe('GET /export', () => {
         it('TXN-3.1 should return a CSV file of exported transactions', async () => {
             await transactionsData.insert(
-                FinanceEntityFactory.createTransaction({
+                EntityFactory.createTransaction({
                     accountId: testAccountId,
                     categoryId: testCategoryId,
                     date: '2026-06-06',
@@ -1058,7 +1058,7 @@ describe('Transaction Routes', () => {
 
             it('TXN-3.11 TXN-3.12 should adjust balances for the rows it creates only', async () => {
                 const manual = await accountsData.insert(
-                    FinanceEntityFactory.createAccount({
+                    EntityFactory.createAccount({
                         institutionId: testInstitutionId,
                         name: 'Wallet',
                         type: AccountType.Checking,
@@ -1182,19 +1182,19 @@ describe('Transaction Routes', () => {
         });
 
         it('TXN-1.2 should sort by account name and by category name, ignoring case', async () => {
-            const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Other Bank' }));
+            const inst = await institutionsData.insert(EntityFactory.createInstitution({ name: 'Other Bank' }));
             const savings = await accountsData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: inst.id,
                     name: 'savings',
                     type: AccountType.Savings
                 })
             );
             const group = await groupsData.insert(
-                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Home' })
+                EntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Home' })
             );
             const rent = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id, name: 'rent', icon: '🏠', isActive: true })
+                EntityFactory.createCategory({ groupId: group.id, name: 'rent', icon: '🏠', isActive: true })
             );
 
             const checkingGroceries = await insertTransaction({ merchant: 'A' });
@@ -1315,9 +1315,9 @@ describe('Transaction Routes', () => {
         });
 
         it('TXN-2.3 should move a transaction to another account', async () => {
-            const inst = await institutionsData.insert(FinanceEntityFactory.createInstitution({ name: 'Other Bank' }));
+            const inst = await institutionsData.insert(EntityFactory.createInstitution({ name: 'Other Bank' }));
             const other = await accountsData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: inst.id,
                     name: 'Other',
                     type: AccountType.Checking
@@ -1349,7 +1349,7 @@ describe('Transaction Routes', () => {
 
         beforeEach(async () => {
             const account = await accountsData.insert(
-                FinanceEntityFactory.createAccount({
+                EntityFactory.createAccount({
                     institutionId: testInstitutionId,
                     name: 'Wallet',
                     type: AccountType.Checking,
@@ -1362,9 +1362,9 @@ describe('Transaction Routes', () => {
         });
 
         async function seedBalances(entries: [string, number, BalanceEntrySource][], accountId = manualAccountId) {
-            await new FinanceBalanceHistoryData(dbClient).insertBulk(
+            await new BalanceHistoryData(dbClient).insertBulk(
                 entries.map(([date, balance, source]) =>
-                    FinanceEntityFactory.createBalanceHistory({ accountId, date, balance, source })
+                    EntityFactory.createBalanceHistory({ accountId, date, balance, source })
                 )
             );
         }
@@ -1524,8 +1524,8 @@ describe('Transaction Routes', () => {
             await seedBalances([['2026-05-01', 1000, Set]]);
             const created = await postAdjusting();
             // An import over the date replaces its entries with ones that already count the transaction.
-            await new FinanceBalanceHistoryData(dbClient).replaceRange(manualAccountId, '2026-05-01', '2026-05-10', [
-                FinanceEntityFactory.createBalanceHistory({
+            await new BalanceHistoryData(dbClient).replaceRange(manualAccountId, '2026-05-01', '2026-05-10', [
+                EntityFactory.createBalanceHistory({
                     accountId: manualAccountId,
                     date: '2026-05-10',
                     balance: 940
@@ -1736,10 +1736,10 @@ describe('Transaction Routes', () => {
 
         beforeEach(async () => {
             const group = await groupsData.insert(
-                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Going Out' })
+                EntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Going Out' })
             );
             const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Dining', icon: '', isActive: true })
+                EntityFactory.createCategory({ groupId: group.id!, name: 'Dining', icon: '', isActive: true })
             );
             dining = category.id!;
         });

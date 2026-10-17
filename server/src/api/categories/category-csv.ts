@@ -2,7 +2,7 @@ import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
 import { Category, CategoryGroup } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { CsvColumn, CsvFile, CsvValue } from '@server/csv';
-import { FinanceEntityFactory } from '@server/data';
+import { EntityFactory } from '@server/data';
 import { EmojiUtil } from '@server/utility';
 
 /** One category as the file shows it: with its group's name and type rather than the group's ID. */
@@ -148,12 +148,12 @@ export class CategoryCsv {
             const groupKey = groupName.toLowerCase();
             let group = groupsByName.get(groupKey) ?? newGroups.get(groupKey);
             if (!group) {
-                group = FinanceEntityFactory.createCategoryGroup({ name: fileGroups.get(groupKey)!.name, type });
+                group = EntityFactory.createCategoryGroup({ name: fileGroups.get(groupKey)!.name, type });
                 newGroups.set(groupKey, group);
             }
 
             categories.push(
-                FinanceEntityFactory.createCategory({
+                EntityFactory.createCategory({
                     groupId: group.id,
                     name,
                     icon,

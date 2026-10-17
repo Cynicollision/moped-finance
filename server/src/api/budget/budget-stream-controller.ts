@@ -1,14 +1,14 @@
 import { BudgetStream } from '@shared/finance/types';
-import { FinanceEntityFactory } from '@server/data';
+import { EntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { OperationContext, OperationResult, Result } from '@server/routing';
-import { IFinanceBudgetStreamData } from './budget-stream-data';
+import { IBudgetStreamData } from './budget-stream-data';
 import { CreateBudgetStreamRequest, UpdateBudgetStreamRequest } from './budget-stream-schema';
 
 export class BudgetStreamController {
     constructor(
         private logger: IAppLogger,
-        private budgetStreamData: IFinanceBudgetStreamData
+        private budgetStreamData: IBudgetStreamData
     ) {}
 
     public async getBudgetStreams(_context: OperationContext): Promise<OperationResult<BudgetStream[]>> {
@@ -21,7 +21,7 @@ export class BudgetStreamController {
         input: CreateBudgetStreamRequest
     ): Promise<OperationResult<BudgetStream>> {
         // A missing category fails the insert's foreign key, which OperationHandler reports as a 400.
-        const budgetStream = FinanceEntityFactory.createBudgetStream(input);
+        const budgetStream = EntityFactory.createBudgetStream(input);
         const created = await this.budgetStreamData.insert(budgetStream);
         return Result.successCreated(created);
     }

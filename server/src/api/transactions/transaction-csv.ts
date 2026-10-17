@@ -1,7 +1,7 @@
 import { Transaction } from '@shared/finance/types';
 import { Uncategorized } from '@shared/finance/util';
 import { CsvColumn, CsvFile, CsvValue } from '@server/csv';
-import { FinanceEntityFactory } from '@server/data';
+import { EntityFactory } from '@server/data';
 import { TransactionExport } from './transaction-data';
 
 const columns: CsvColumn<TransactionExport>[] = [
@@ -109,7 +109,7 @@ export class TransactionCsv {
 
             rows.push({
                 fileId: values['Id'] ?? '',
-                transaction: FinanceEntityFactory.createTransaction({
+                transaction: EntityFactory.createTransaction({
                     accountId,
                     categoryId,
                     date: date.value,

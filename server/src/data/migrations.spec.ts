@@ -3,13 +3,13 @@ import path from 'path';
 import { PGlite } from '@electric-sql/pglite';
 import { CalendarPeriod } from '@shared/core/enum';
 import { AccountType, BalanceEntrySource, CategoryType } from '@shared/finance/enum';
-import { DatabaseClient, FinanceEntityFactory } from '@server/data';
+import { DatabaseClient, EntityFactory } from '@server/data';
 import { TestDatabaseUtil } from '@server/utility/testing';
-import { FinanceAccountData } from './../api/accounts';
-import { FinanceBudgetStreamData } from './../api/budget/budget-stream-data';
-import { FinanceCategoryData, FinanceCategoryGroupData } from './../api/categories';
-import { FinanceInstitutionData } from './../api/institutions';
-import { FinanceTransactionData } from './../api/transactions/transaction-data';
+import { AccountData } from './../api/accounts';
+import { BudgetStreamData } from './../api/budget/budget-stream-data';
+import { CategoryData, CategoryGroupData } from './../api/categories';
+import { InstitutionData } from './../api/institutions';
+import { TransactionData } from './../api/transactions/transaction-data';
 
 // Migrations that change data, not just the schema. Each test sets up data the way it was before the migration, then
 // runs the migration's SQL again.
@@ -57,13 +57,13 @@ describe('Data migrations', () => {
 
     describe('0007_uncategorized_state', () => {
         it("CAT-5.6 should make an Uncategorized category's transactions uncategorized and delete it", async () => {
-            const groups = new FinanceCategoryGroupData(dbClient);
-            const categories = new FinanceCategoryData(dbClient);
+            const groups = new CategoryGroupData(dbClient);
+            const categories = new CategoryData(dbClient);
             const group = await groups.insert(
-                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' })
+                EntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' })
             );
             const uncategorized = await categories.insert(
-                FinanceEntityFactory.createCategory({
+                EntityFactory.createCategory({
                     groupId: group.id!,
                     name: 'Uncategorized',
                     icon: '❓',
@@ -71,22 +71,22 @@ describe('Data migrations', () => {
                 })
             );
             const rent = await categories.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
+                EntityFactory.createCategory({ groupId: group.id!, name: 'Rent', icon: '🏠', isActive: true })
             );
-            const institution = await new FinanceInstitutionData(dbClient).insert(
-                FinanceEntityFactory.createInstitution({ name: 'Bank' })
+            const institution = await new InstitutionData(dbClient).insert(
+                EntityFactory.createInstitution({ name: 'Bank' })
             );
-            const account = await new FinanceAccountData(dbClient).insert(
-                FinanceEntityFactory.createAccount({
+            const account = await new AccountData(dbClient).insert(
+                EntityFactory.createAccount({
                     institutionId: institution.id!,
                     name: 'Checking',
                     type: AccountType.Checking
                 })
             );
-            const transactions = new FinanceTransactionData(dbClient);
+            const transactions = new TransactionData(dbClient);
             const transaction = (categoryId: string) =>
                 transactions.insert(
-                    FinanceEntityFactory.createTransaction({
+                    EntityFactory.createTransaction({
                         accountId: account.id!,
                         categoryId,
                         date: '2026-06-01',
@@ -109,20 +109,20 @@ describe('Data migrations', () => {
         });
 
         it('CAT-5.6 should keep an Uncategorized category that a budget stream uses', async () => {
-            const group = await new FinanceCategoryGroupData(dbClient).insert(
-                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' })
+            const group = await new CategoryGroupData(dbClient).insert(
+                EntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Misc' })
             );
-            const categories = new FinanceCategoryData(dbClient);
+            const categories = new CategoryData(dbClient);
             const uncategorized = await categories.insert(
-                FinanceEntityFactory.createCategory({
+                EntityFactory.createCategory({
                     groupId: group.id!,
                     name: 'uncategorized',
                     icon: '❓',
                     isActive: true
                 })
             );
-            await new FinanceBudgetStreamData(dbClient).insert(
-                FinanceEntityFactory.createBudgetStream({
+            await new BudgetStreamData(dbClient).insert(
+                EntityFactory.createBudgetStream({
                     categoryId: uncategorized.id!,
                     name: 'Buffer',
                     recurrence: CalendarPeriod.Monthly,

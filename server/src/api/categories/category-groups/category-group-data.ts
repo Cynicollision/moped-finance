@@ -6,7 +6,7 @@ import { IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { categoryGroupSchema } from './category-group-schema';
 
-export interface IFinanceCategoryGroupData {
+export interface ICategoryGroupData {
     retrieveAll(): Promise<CategoryGroup[]>;
     retrieveSingle(id: string): Promise<CategoryGroup | null>;
     insert(group: CategoryGroup): Promise<CategoryGroup>;
@@ -24,7 +24,7 @@ function mapRowToCategoryGroup(row: typeof categoryGroupSchema.$inferSelect): Ca
     };
 }
 
-export class FinanceCategoryGroupData implements IFinanceCategoryGroupData {
+export class CategoryGroupData implements ICategoryGroupData {
     private readonly db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {

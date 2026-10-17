@@ -2,21 +2,21 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
 import { registrationGuard } from './core/registration.guard';
 import { unsavedChangesGuard } from './core/unsaved-changes.guard';
-import { FinanceAccountDetailsComponent } from './finance/accounts/account-details.component';
-import { FinanceAddAccountComponent } from './finance/accounts/add-account.component';
-import { BalanceImportComponent } from './finance/accounts/balance-import.component';
-import { FinanceEditAccountComponent } from './finance/accounts/edit-account.component';
-import { FinanceBudgetComponent } from './finance/budget/budget.component';
-import { FinanceSpendingComponent } from './finance/spending/spending.component';
-import { FinanceInstitutionsComponent } from './finance/institutions/institutions.component';
-import { DashboardComponent } from './finance/dashboard/dashboard.component';
-import { FinanceCategoriesComponent } from './finance/categories/categories.component';
-import { ImportCategoriesComponent } from './finance/categories/import-categories.component';
-import { AddTransactionComponent } from './finance/transactions/add-transaction.component';
-import { ImportTransactionsComponent } from './finance/transactions/import-transactions.component';
-import { ViewTransactionComponent } from './finance/transactions/view-transaction.component';
-import { EditTransactionComponent } from './finance/transactions/edit-transaction.component';
-import { FinanceTransactionsComponent } from './finance/transactions/transactions.component';
+import { AccountDetailsComponent } from './accounts/account-details.component';
+import { AddAccountComponent } from './accounts/add-account.component';
+import { BalanceImportComponent } from './accounts/balance-import.component';
+import { EditAccountComponent } from './accounts/edit-account.component';
+import { BudgetComponent } from './budget/budget.component';
+import { SpendingComponent } from './spending/spending.component';
+import { InstitutionsComponent } from './institutions/institutions.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { CategoriesComponent } from './categories/categories.component';
+import { ImportCategoriesComponent } from './categories/import-categories.component';
+import { AddTransactionComponent } from './transactions/add-transaction.component';
+import { ImportTransactionsComponent } from './transactions/import-transactions.component';
+import { ViewTransactionComponent } from './transactions/view-transaction.component';
+import { EditTransactionComponent } from './transactions/edit-transaction.component';
+import { TransactionsComponent } from './transactions/transactions.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { ApiTokensComponent } from './settings/api-tokens.component';
@@ -46,14 +46,14 @@ export const routes: Routes = [
             { path: 'dashboard', component: DashboardComponent, title: 'Dashboard' },
             {
                 path: 'accounts/new',
-                component: FinanceAddAccountComponent,
+                component: AddAccountComponent,
                 title: 'Add Account',
                 canDeactivate: [unsavedChangesGuard]
             },
-            { path: 'accounts/:accountId', component: FinanceAccountDetailsComponent, title: 'Account Details' },
+            { path: 'accounts/:accountId', component: AccountDetailsComponent, title: 'Account Details' },
             {
                 path: 'accounts/:accountId/edit',
-                component: FinanceEditAccountComponent,
+                component: EditAccountComponent,
                 title: 'Edit Account',
                 canDeactivate: [unsavedChangesGuard]
             },
@@ -62,7 +62,7 @@ export const routes: Routes = [
                 component: BalanceImportComponent,
                 title: 'Import Balance History'
             },
-            { path: 'transactions', component: FinanceTransactionsComponent, title: 'Transactions' },
+            { path: 'transactions', component: TransactionsComponent, title: 'Transactions' },
             {
                 path: 'transactions/new',
                 component: AddTransactionComponent,
@@ -77,10 +77,10 @@ export const routes: Routes = [
                 title: 'Edit Transaction',
                 canDeactivate: [unsavedChangesGuard]
             },
-            { path: 'spending', component: FinanceSpendingComponent, title: 'Spending' },
+            { path: 'spending', component: SpendingComponent, title: 'Spending' },
             // Spending was called Cashflow (APP-1.1).
             { path: 'cashflow', redirectTo: 'spending' },
-            { path: 'budget', component: FinanceBudgetComponent, title: 'Budget' },
+            { path: 'budget', component: BudgetComponent, title: 'Budget' },
             { path: 'settings', component: SettingsComponent, title: 'Settings' },
             {
                 path: 'settings/profile',
@@ -92,10 +92,10 @@ export const routes: Routes = [
             { path: 'settings/dashboard', component: DashboardSettingsComponent, title: 'Dashboard Settings' },
             {
                 path: 'settings/institutions',
-                component: FinanceInstitutionsComponent,
+                component: InstitutionsComponent,
                 title: 'Institutions and Accounts'
             },
-            { path: 'settings/categories', component: FinanceCategoriesComponent, title: 'Categories' },
+            { path: 'settings/categories', component: CategoriesComponent, title: 'Categories' },
             {
                 path: 'settings/categories/import',
                 component: ImportCategoriesComponent,

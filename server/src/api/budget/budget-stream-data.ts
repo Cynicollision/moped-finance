@@ -10,7 +10,7 @@ import { budgetStreamSchema } from './budget-stream-schema';
 import { categoryGroupSchema } from './../categories/category-groups/category-group-schema';
 import { categorySchema } from './../categories/category-schema';
 
-export interface IFinanceBudgetStreamData {
+export interface IBudgetStreamData {
     retrieveAll(): Promise<BudgetStream[]>;
     retrieveSingle(id: string): Promise<BudgetStream | null>;
     insert(stream: BudgetStreamFields): Promise<BudgetStream>;
@@ -31,7 +31,7 @@ function mapRowToBudgetStream(row: typeof budgetStreamSchema.$inferSelect, categ
     };
 }
 
-export class FinanceBudgetStreamData implements IFinanceBudgetStreamData {
+export class BudgetStreamData implements IBudgetStreamData {
     private readonly db: NodePgDatabase;
 
     constructor(dbClient: IDatabaseClient) {

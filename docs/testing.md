@@ -14,7 +14,7 @@ Always run them with `npm test` (or `npm test -- <path>` for a subset). The scri
 The pattern, as used by every `server/src/**/*-routes.spec.ts`:
 
 1. `beforeAll`: `TestDatabaseUtil.createMockDatabase()` creates a PGlite database and applies `server/migrations/`. Then create a test user, construct the real `*Data` classes, build the router, and wrap it with `TestExpressUtil.createTestApp(router, '/path', userId)`. That wrapper sets `req.user`, standing in for the auth middleware.
-2. `beforeEach`: `TestDatabaseUtil.clearFinanceData(pglite)` and insert the rows the test needs, using the `FinanceEntityFactory` helpers.
+2. `beforeEach`: `TestDatabaseUtil.clearFinanceData(pglite)` and insert the rows the test needs, using the `EntityFactory` helpers.
 3. Tests: make requests with `supertest` and assert on the status and body.
 4. `afterAll`: `TestDatabaseUtil.destroyMockDatabase(pglite)`.
 

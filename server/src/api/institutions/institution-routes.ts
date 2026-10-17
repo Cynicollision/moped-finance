@@ -1,17 +1,17 @@
 import { Router } from 'express';
 import { IAppLogger } from '@server/logging';
 import { asOfDateQuerySchema, idParamsSchema, OperationDefinition, OperationHandler } from '@server/routing';
-import { IFinanceAccountData } from './../accounts';
+import { IAccountData } from './../accounts';
 import { InstitutionController } from './institution-controller';
-import { IFinanceInstitutionData } from './institution-data';
+import { IInstitutionData } from './institution-data';
 import { createInstitutionSchema, updateInstitutionSchema } from './institution-schema';
 
 const domain = 'Institution';
 
 export function createInstitutionRouter(
     logger: IAppLogger,
-    institutionsData: IFinanceInstitutionData,
-    accountData: IFinanceAccountData
+    institutionsData: IInstitutionData,
+    accountData: IAccountData
 ) {
     const router = Router();
     const controller = new InstitutionController(logger, institutionsData, accountData);

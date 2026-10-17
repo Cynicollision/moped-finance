@@ -26,9 +26,6 @@ Make `Cynicollision/moped-finance` public. Comes before the GHCR job below, sinc
 - [ ] **Tidy branches:** delete the merged `origin/claude/*` branches and turn on "Automatically delete head branches".
 - [ ] **Review GitHub settings:** require approval for Actions on fork PRs, secret scanning with push protection, Dependabot alerts, and private vulnerability reporting. Then make it public.
 
-### Naming
-- [ ] **Drop the leftover `Finance` prefix** from when this was one app of several: components (`FinanceAccountDetailsComponent`, `FinanceBudgetComponent`, ...) and server classes (`FinanceAccountData`, `FinanceEntityFactory`, `FinanceEntityIdPrefix`, ...), whose files are already named without it. Move the client's `app/finance/*` folders up to `app/*`, beside `settings/` and `login/`. `FinanceService`, `@shared/finance` and the `finance` database schema keep the name: there it marks the domain layer as opposed to `core`.
-
 ### Fixes
 - [ ] **Red menu entries** (APP-1.10, APP-2.4): the profile menu's Sign out and the records' ⋮ Delete show in the normal text colour, though APP-1.10 is marked Implemented. `.danger-item` in `styles.scss` sets `color` with the same specificity as Material's `.mat-mdc-menu-item` rule, and Material's menu styles load after the global ones, so they win (seen on Angular 21 and 22, 2026-10-17). Set the colour through `mat.menu-overrides` (`item-label-text-color`, `item-icon-color`) under `.danger-item`, and add a test that would catch it.
 

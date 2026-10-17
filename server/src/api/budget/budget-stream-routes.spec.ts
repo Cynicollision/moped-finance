@@ -4,21 +4,21 @@ import { PGlite } from '@electric-sql/pglite';
 import { CalendarPeriod } from '@shared/core/enum/calendar-period';
 import { CategoryType } from '@shared/finance/enum';
 import { BudgetStreamType } from '@shared/finance/enum/budget-stream-type';
-import { DatabaseClient, FinanceEntityFactory } from '@server/data';
+import { DatabaseClient, EntityFactory } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
-import { FinanceBudgetStreamData } from './budget-stream-data';
+import { BudgetStreamData } from './budget-stream-data';
 import { createBudgetStreamRouter } from './budget-stream-routes';
-import { FinanceCategoryGroupData } from './../categories/category-groups/category-group-data';
-import { FinanceCategoryData } from './../categories/category-data';
+import { CategoryGroupData } from './../categories/category-groups/category-group-data';
+import { CategoryData } from './../categories/category-data';
 
 describe('Budget Stream Routes', () => {
     let app: express.Express;
     let dbClient: DatabaseClient;
     let pglite: PGlite;
-    let budgetStreamData: FinanceBudgetStreamData;
-    let categoriesData: FinanceCategoryData;
-    let groupsData: FinanceCategoryGroupData;
+    let budgetStreamData: BudgetStreamData;
+    let categoriesData: CategoryData;
+    let groupsData: CategoryGroupData;
     let mockLogger: jest.Mocked<IAppLogger>;
     let testUserId: string;
     let testCategoryId: string;
@@ -31,9 +31,9 @@ describe('Budget Stream Routes', () => {
         const user = await TestDatabaseUtil.createTestUser(dbClient);
         testUserId = user.id;
 
-        budgetStreamData = new FinanceBudgetStreamData(dbClient);
-        categoriesData = new FinanceCategoryData(dbClient);
-        groupsData = new FinanceCategoryGroupData(dbClient);
+        budgetStreamData = new BudgetStreamData(dbClient);
+        categoriesData = new CategoryData(dbClient);
+        groupsData = new CategoryGroupData(dbClient);
         mockLogger = TestExpressUtil.createMockLogger();
 
         const router = createBudgetStreamRouter(mockLogger, budgetStreamData);
@@ -48,10 +48,10 @@ describe('Budget Stream Routes', () => {
         await TestDatabaseUtil.clearFinanceData(pglite);
 
         const group = await groupsData.insert(
-            FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'General' })
+            EntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'General' })
         );
         const category = await categoriesData.insert(
-            FinanceEntityFactory.createCategory({ groupId: group.id, name: 'Misc', icon: '⭐', isActive: true })
+            EntityFactory.createCategory({ groupId: group.id, name: 'Misc', icon: '⭐', isActive: true })
         );
         testCategoryId = category.id!;
     });
@@ -59,7 +59,7 @@ describe('Budget Stream Routes', () => {
     describe('GET /', () => {
         it('BUD-1.2 should return every budget stream', async () => {
             const stream1 = await budgetStreamData.insert(
-                FinanceEntityFactory.createBudgetStream({
+                EntityFactory.createBudgetStream({
                     categoryId: testCategoryId,
                     name: 'Utilities',
                     recurrence: CalendarPeriod.Monthly,
@@ -67,7 +67,7 @@ describe('Budget Stream Routes', () => {
                 })
             );
             const stream2 = await budgetStreamData.insert(
-                FinanceEntityFactory.createBudgetStream({
+                EntityFactory.createBudgetStream({
                     categoryId: testCategoryId,
                     name: 'Salary',
                     recurrence: CalendarPeriod.Monthly,
@@ -124,10 +124,10 @@ describe('Budget Stream Routes', () => {
     describe('type', () => {
         async function categoryOfType(categoryType: CategoryType, name: string): Promise<string> {
             const group = await groupsData.insert(
-                FinanceEntityFactory.createCategoryGroup({ type: categoryType, name: `${name} group` })
+                EntityFactory.createCategoryGroup({ type: categoryType, name: `${name} group` })
             );
             const category = await categoriesData.insert(
-                FinanceEntityFactory.createCategory({ groupId: group.id, name, icon: '⭐', isActive: true })
+                EntityFactory.createCategory({ groupId: group.id, name, icon: '⭐', isActive: true })
             );
             return category.id;
         }
@@ -157,7 +157,7 @@ describe('Budget Stream Routes', () => {
 
         it('BUD-1.1 should change with the category', async () => {
             const stream = await budgetStreamData.insert(
-                FinanceEntityFactory.createBudgetStream({
+                EntityFactory.createBudgetStream({
                     categoryId: testCategoryId,
                     name: 'Emergency fund',
                     recurrence: CalendarPeriod.Monthly,
@@ -174,7 +174,7 @@ describe('Budget Stream Routes', () => {
 
         it('CAT-1.18 should follow the category into a group of another type', async () => {
             const stream = await budgetStreamData.insert(
-                FinanceEntityFactory.createBudgetStream({
+                EntityFactory.createBudgetStream({
                     categoryId: testCategoryId,
                     name: 'Side job',
                     recurrence: CalendarPeriod.Monthly,
@@ -182,7 +182,7 @@ describe('Budget Stream Routes', () => {
                 })
             );
             const income = await groupsData.insert(
-                FinanceEntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Work' })
+                EntityFactory.createCategoryGroup({ type: CategoryType.Income, name: 'Work' })
             );
             const category = (await categoriesData.retrieveSingle(testCategoryId))!;
             await categoriesData.update({ ...category, groupId: income.id });
@@ -205,7 +205,7 @@ describe('Budget Stream Routes', () => {
     describe('PUT /:id', () => {
         it('BUD-1.4 should update a budget stream when valid', async () => {
             const stream = await budgetStreamData.insert(
-                FinanceEntityFactory.createBudgetStream({
+                EntityFactory.createBudgetStream({
                     categoryId: testCategoryId,
                     name: 'Utilities',
                     recurrence: CalendarPeriod.Monthly,
@@ -226,7 +226,7 @@ describe('Budget Stream Routes', () => {
 
         it('BUD-1.4 should change only the fields sent', async () => {
             const stream = await budgetStreamData.insert(
-                FinanceEntityFactory.createBudgetStream({
+                EntityFactory.createBudgetStream({
                     categoryId: testCategoryId,
                     name: 'Utilities',
                     recurrence: CalendarPeriod.Quarterly,
@@ -279,7 +279,7 @@ describe('Budget Stream Routes', () => {
     describe('DELETE /:id', () => {
         it('BUD-1.4 should delete a budget stream', async () => {
             const stream = await budgetStreamData.insert(
-                FinanceEntityFactory.createBudgetStream({
+                EntityFactory.createBudgetStream({
                     categoryId: testCategoryId,
                     name: 'Utilities',
                     recurrence: CalendarPeriod.Monthly,
