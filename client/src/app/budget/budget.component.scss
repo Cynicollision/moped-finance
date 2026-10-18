@@ -29,15 +29,23 @@ app-page-header {
     gap: 20px;
 }
 
-// The period switch, between the summary and the sections as on Spending (BUD-1.6).
+// The period switch, between the summary and the sections, the same pill as Spending's (BUD-1.6, CASH-1.1): 40px
+// high with its outline.
 .period-toggle {
     align-self: flex-start;
+    box-sizing: border-box;
+    height: 40px;
 
     @include mat.button-toggle-overrides(
         (
-            height: 40px
+            height: 38px,
+            divider-color: var(--mat-sys-outline)
         )
     );
+
+    mat-button-toggle {
+        min-width: 5.5rem;
+    }
 }
 
 .left-over {
@@ -48,6 +56,12 @@ app-page-header {
     .headline {
         font: var(--mat-sys-headline-medium);
     }
+}
+
+// The savings rate under Savings, as on Spending (CASH-1.4).
+.rate {
+    font: var(--mat-sys-body-small);
+    color: var(--text-muted);
 }
 
 .summary-figures {

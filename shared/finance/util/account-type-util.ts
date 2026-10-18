@@ -60,11 +60,17 @@ const groups: readonly AccountGroupInfo[] = [
     }
 ];
 
+// The accounts money is spent from. Money a Transfer category moves out of them is saved (CASH-1.3).
+const everydayTypes: readonly AccountType[] = [AccountType.Checking, AccountType.OtherCash, AccountType.CreditCard];
+
 const groupByType = new Map(groups.flatMap(info => info.types.map(type => [type, info] as const)));
 
 export class AccountTypeUtil {
     /** Every group in display order, with its Asset/Liability and its types (ACCT-1.2). */
     public static readonly groups = groups;
+
+    /** The everyday accounts, which money is spent from and saved out of (CASH-1.3). */
+    public static readonly everydayTypes = everydayTypes;
 
     /** The group a type belongs to. */
     public static groupOf(type: AccountType): AccountGroup {

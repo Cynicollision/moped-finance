@@ -3,6 +3,7 @@ import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
 import {
     SpendingAverage,
+    SpendingAverageMonths,
     SpendingTotal,
     TransactionImportResult,
     TransactionSearchOptions
@@ -246,10 +247,11 @@ export class TransactionController {
 
     public async getSpendingAverage(
         context: OperationContext,
-        asOfDate?: CalendarDate
+        asOfDate?: CalendarDate,
+        months?: SpendingAverageMonths
     ): Promise<OperationResult<SpendingAverage>> {
         const firstDate = await this.transactionData.retrieveFirstDate();
-        const window = Spending.averageWindow(asOfDate ?? DateTimeUtil.today(), firstDate);
+        const window = Spending.averageWindow(asOfDate ?? DateTimeUtil.today(), firstDate, months);
         const flows =
             window.months > 0 ? await this.transactionData.retrieveCategoryFlows(window.startDate, window.endDate) : [];
         return Result.success(Spending.average(flows, window));

@@ -22,7 +22,7 @@ import { CalendarDate } from '@shared/core/types';
 import { Transaction, TransactionSplitPart } from '@shared/finance/types';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
 import { CategoryType, TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
-import { Uncategorized } from '@shared/finance/util';
+import { AccountTypeUtil, Uncategorized } from '@shared/finance/util';
 import { DbTransaction, EntityFactory, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
@@ -53,6 +53,8 @@ export interface CategoryFlow {
     categoryType?: CategoryType;
     moneyIn: number;
     moneyOut: number;
+    /** The net of the category's transactions in everyday accounts, which a Transfer category's savings come from. */
+    everydayNet: number;
 }
 
 export interface ITransactionData {
@@ -123,6 +125,9 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
 
 // Spending leaves out hidden transactions and those in hidden accounts (CASH-1.2). Needs the account joined.
 const countedBySpending = and(eq(transactionSchema.isHidden, false), eq(accountSchema.isHidden, false));
+
+// Checking, cash and credit cards, which a Transfer category's savings are moved out of (CASH-1.3).
+const isEverydayAccount = inArray(accountSchema.type, [...AccountTypeUtil.everydayTypes]);
 
 // Sorting by name ignores case. Ties (same day, same merchant, ...) fall back to newest first, then id, so paging is stable.
 function getSearchOrder(sortKey: TransactionsSortKey, direction: SortDirection): SQL[] {
@@ -413,7 +418,8 @@ export class TransactionData implements ITransactionData {
                 categoryId: transactionSchema.categoryId,
                 categoryType: categoryGroupSchema.type,
                 moneyIn: sql`coalesce(sum(${amount}) filter (where ${amount} > 0), 0)`.mapWith(Number),
-                moneyOut: sql`coalesce(-sum(${amount}) filter (where ${amount} < 0), 0)`.mapWith(Number)
+                moneyOut: sql`coalesce(-sum(${amount}) filter (where ${amount} < 0), 0)`.mapWith(Number),
+                everydayNet: sql`coalesce(sum(${amount}) filter (where ${isEverydayAccount}), 0)`.mapWith(Number)
             })
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
@@ -426,7 +432,8 @@ export class TransactionData implements ITransactionData {
             categoryId: row.categoryId ?? '',
             categoryType: (row.categoryType as CategoryType | null) ?? undefined,
             moneyIn: row.moneyIn,
-            moneyOut: row.moneyOut
+            moneyOut: row.moneyOut,
+            everydayNet: row.everydayNet
         }));
     }
 

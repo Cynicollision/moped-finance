@@ -28,10 +28,11 @@ const typeLabels: Record<BudgetStreamType, string> = {
     [BudgetStreamType.Savings]: 'Savings'
 };
 
-// Which Spending totals an Income or Expense stream's category is averaged from.
-const incomeOrExpense: Partial<Record<BudgetStreamType, CategoryType>> = {
+// Which Spending totals a stream's category is averaged from: income, expenses or savings (CASH-1.3).
+const totalTypes: Record<BudgetStreamType, CategoryType> = {
     [BudgetStreamType.Income]: CategoryType.Income,
-    [BudgetStreamType.Expense]: CategoryType.Expense
+    [BudgetStreamType.Expense]: CategoryType.Expense,
+    [BudgetStreamType.Savings]: CategoryType.Transfer
 };
 
 const namePlaceholders: Record<BudgetStreamType, string> = {
@@ -171,7 +172,7 @@ export class BudgetFormModalComponent implements OnInit, HasUnsavedChanges {
             .subscribe(value => this.categoryId.set(value ?? ''));
     }
 
-    // The category's average month (Income and Expense by their net, Transfer by its money out) and its other
+    // The category's average month (Income and Expense by their net, Transfer by what it saved) and its other
     // streams, the one being edited left out (BUD-1.8).
     private insightFor(categoryId: string): CategoryInsight | undefined {
         const category = this.categories().find(c => c.id === categoryId);
@@ -182,12 +183,11 @@ export class BudgetFormModalComponent implements OnInit, HasUnsavedChanges {
         const insight: CategoryInsight = { name: category.name };
         const average = this.data.average;
         if (average && average.months > 0) {
-            const amounts =
-                this.data.type === BudgetStreamType.Savings
-                    ? average.transfers
-                    : average.totals.filter(t => t.type === incomeOrExpense[this.data.type]);
+            const total = average.totals.find(
+                t => t.type === totalTypes[this.data.type] && t.categoryId === categoryId
+            );
             insight.average = {
-                amount: amounts.find(a => a.categoryId === categoryId)?.amount ?? 0,
+                amount: total?.amount ?? 0,
                 over: average.months === 1 ? 'month' : `${average.months} months`
             };
         }

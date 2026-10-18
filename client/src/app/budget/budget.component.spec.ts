@@ -42,8 +42,7 @@ describe('BudgetComponent', () => {
         startDate: '2025-05-01',
         endDate: '2026-04-30',
         months: 12,
-        totals: [{ categoryId: 'rent', type: CategoryType.Expense, amount: 1500 }],
-        transfers: []
+        totals: [{ categoryId: 'rent', type: CategoryType.Expense, amount: 1500 }]
     };
 
     async function render(budgetStreams = streams, withCategories = categories) {
@@ -125,9 +124,9 @@ describe('BudgetComponent', () => {
         );
         expect(order).toEqual(['summary-card', 'period-toggle', 'section-card', 'section-card', 'section-card']);
         expect(Array.from(element.querySelectorAll('.period-toggle button')).map(b => b.textContent!.trim())).toEqual([
-            'Monthly',
-            'Quarterly',
-            'Yearly'
+            'Month',
+            'Quarter',
+            'Year'
         ]);
     });
 
