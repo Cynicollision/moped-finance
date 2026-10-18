@@ -159,11 +159,8 @@ describe('SpendingComponent', () => {
         return Object.assign(fixture, { financeService, isCompact, element: fixture.nativeElement as HTMLElement });
     }
 
-    /** The element's text, without the row's leading icons (CASH-1.1). */
     function text(element: Element | null): string {
-        const copy = element!.cloneNode(true) as Element;
-        copy.querySelectorAll('.control-icon').forEach(icon => icon.remove());
-        return copy.textContent!.replace(/\s+/g, ' ').trim();
+        return element!.textContent!.replace(/\s+/g, ' ').trim();
     }
 
     function budgeted(element: HTMLElement): string[] {
@@ -195,24 +192,24 @@ describe('SpendingComponent', () => {
         return element.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
     }
 
-    /** Opens a dropdown in the row (`.period-type`) and returns its options. */
-    async function dropdownOptions(
-        fixture: Awaited<ReturnType<typeof render>>,
-        dropdown: string
-    ): Promise<HTMLElement[]> {
-        fixture.element.querySelector<HTMLElement>(`${dropdown} .mat-mdc-select-trigger`)!.click();
-        await fixture.whenStable();
-        return Array.from(document.querySelectorAll<HTMLElement>('mat-option'));
+    /** The period type's toggles (CASH-1.1). */
+    function periodTypes(element: HTMLElement): HTMLButtonElement[] {
+        return Array.from(element.querySelectorAll<HTMLButtonElement>('.period-type button'));
     }
 
-    async function choose(fixture: Awaited<ReturnType<typeof render>>, dropdown: string, label: string) {
-        (await dropdownOptions(fixture, dropdown)).find(option => text(option) === label)!.click();
-        await fixture.whenStable();
+    /** The period type that's chosen (CASH-1.1). */
+    function chosenPeriodType(element: HTMLElement): string[] {
+        return periodTypes(element)
+            .filter(toggle => toggle.getAttribute('aria-checked') === 'true')
+            .map(text);
     }
 
-    /** Chooses a period type from the dropdown (CASH-1.1). */
-    function choosePeriodType(fixture: Awaited<ReturnType<typeof render>>, label: string) {
-        return choose(fixture, '.period-type', label);
+    /** Chooses a period type (CASH-1.1). */
+    async function choosePeriodType(fixture: Awaited<ReturnType<typeof render>>, label: string) {
+        periodTypes(fixture.element)
+            .find(toggle => text(toggle) === label)!
+            .click();
+        await fixture.whenStable();
     }
 
     it('CASH-1.4 should total income and expenses', async () => {
@@ -357,16 +354,11 @@ describe('SpendingComponent', () => {
         expect(text(element.querySelector('.period-button'))).toBe('December 2025 arrow_drop_down');
     });
 
-    it('CASH-1.1 should offer each kind of period in a dropdown', async () => {
-        const fixture = await render();
+    it('CASH-1.1 should offer each kind of period as a toggle', async () => {
+        const { element } = await render();
 
-        expect(text(fixture.element.querySelector('.period-type'))).toBe('Month');
-        expect((await dropdownOptions(fixture, '.period-type')).map(text)).toEqual([
-            'Month',
-            'Quarter',
-            'Year',
-            'Average'
-        ]);
+        expect(periodTypes(element).map(text)).toEqual(['Month', 'Quarter', 'Year', 'Average']);
+        expect(chosenPeriodType(element)).toEqual(['Month']);
     });
 
     it("CASH-1.1 should change the kind of period to the one holding today, or the one on screen's first day", async () => {
@@ -506,7 +498,7 @@ describe('SpendingComponent', () => {
 
             expect(financeService.fetchSpendingTotals).not.toHaveBeenCalled();
             expect(text(element.querySelector('.period-text'))).toBe('Average month, May 2025 to Apr 2026');
-            expect(text(element.querySelector('.period-type'))).toBe('Average');
+            expect(chosenPeriodType(element)).toEqual(['Average']);
         });
     });
 

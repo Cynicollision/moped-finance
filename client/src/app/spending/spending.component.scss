@@ -23,69 +23,36 @@ app-page-header {
     letter-spacing: 0.05em;
 }
 
-// The period type and the period, in one row between the summary and the sections (CASH-1.1): two pills of the same
-// height, outline and text, each with an icon. Each is sized for its longest value, so neither changes width with the
-// choice; on phones they share out the row's whole width.
+// The period type and the period, in one row between the summary and the sections (CASH-1.1): two outlined pills of
+// the same height and text. The period is sized for its longest value, so it doesn't change width with the choice. On
+// phones they fill the row, the period type's choices sharing out what the period leaves.
 .controls {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
     gap: 8px;
 }
 
-.control-select {
-    min-width: 0;
+// The period's height, outline included.
+.period-type {
+    flex: none;
+    box-sizing: border-box;
+    height: 40px;
 
-    @include mat.form-field-overrides(
+    @include mat.button-toggle-overrides(
         (
-            container-height: 40px,
-            container-vertical-padding: 8px,
-            outlined-container-shape: 20px
+            height: 38px,
+            divider-color: var(--mat-sys-outline)
         )
     );
 
-    // Sized by the row rather than the field's default width, with the choice centred. Material drops the left
-    // padding when there's a prefix icon; keep it, so the icon sits where the period button's does.
-    ::ng-deep {
-        .mat-mdc-text-field-wrapper {
-            padding-left: 16px;
-        }
-
-        .mat-mdc-form-field-infix {
-            width: auto;
-        }
-
-        .mat-mdc-select-value {
-            text-align: center;
-        }
+    mat-button-toggle {
+        min-width: 5.5rem;
     }
 }
 
-.period-type {
-    flex: 0 0 10.5rem;
-}
-
-// The leading icons: the size of a button's icon, and the same colour and inset in the dropdown, the button and the
-// average's text. Material pulls a button's leading icon into its padding; it stays at the padding here.
-.control-icon {
-    flex: none;
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
-    color: var(--mat-sys-on-surface-variant);
-}
-
-.control-select .control-icon {
-    padding: 0 8px 0 0;
-}
-
-// The text centred and the arrow at the end, as in the dropdowns.
+// The text centred and the arrow at the end.
 .period-button {
-    flex: 0 0 12.5rem;
-
-    .control-icon {
-        margin-left: 0;
-    }
+    flex: 0 0 10.5rem;
 
     ::ng-deep .mdc-button__label {
         flex: 1;
@@ -94,61 +61,52 @@ app-page-header {
 
     @include mat.button-overrides(
         (
+            outlined-container-height: 40px,
             outlined-outline-color: var(--mat-sys-outline),
             outlined-label-text-color: var(--mat-sys-on-surface),
-            outlined-label-text-font: var(--mat-sys-body-large-font),
-            outlined-label-text-size: var(--mat-sys-body-large-size),
-            outlined-label-text-weight: var(--mat-sys-body-large-weight),
             outlined-horizontal-padding: 16px
         )
     );
 }
 
-// Last in the row, so it can be as wide as its text.
+// The average month's window, which has nothing to pick (CASH-1.12): as wide as its text.
 .period-text {
     flex: 0 1 auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
     padding-left: 8px;
-    font: var(--mat-sys-body-large);
+    font: var(--mat-sys-label-large);
 }
 
-// Phones get smaller text and padding, and a short month ("Sep 2026"), so both fit one line.
+// Phones get a short month ("Sep 2026") and less padding, so both fit one line.
 @include bp.content-below(bp.$medium) {
-    .control-select {
-        @include mat.select-overrides(
-            (
-                trigger-text-size: var(--mat-sys-body-medium-size)
-            )
-        );
+    .period-type {
+        flex: 1 1 auto;
+        min-width: 0;
 
-        ::ng-deep .mat-mdc-text-field-wrapper {
-            padding: 0 10px;
+        mat-button-toggle {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        // Material's label padding would push longer labels off centre in a narrow toggle.
+        ::ng-deep .mat-button-toggle-label-content {
+            padding: 0 4px;
         }
     }
 
-    .period-type {
-        flex: 1 1 7rem;
-    }
-
-    .period-button,
-    .period-text {
-        flex: 1 1 8rem;
-    }
-
     .period-button {
+        flex: 0 0 6.75rem;
+
         @include mat.button-overrides(
             (
-                outlined-label-text-size: var(--mat-sys-body-medium-size),
-                outlined-horizontal-padding: 10px
+                outlined-horizontal-padding: 8px
             )
         );
     }
 
     .period-text {
-        justify-content: center;
-        font: var(--mat-sys-body-medium);
+        flex: 0 0 6.75rem;
+        padding-left: 0;
+        text-align: center;
     }
 }
 

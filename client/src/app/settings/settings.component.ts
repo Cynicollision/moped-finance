@@ -28,19 +28,19 @@ export class SettingsComponent {
         },
         {
             label: 'Appearance',
-            description: 'Dark, light, or matching your device',
+            description: 'Dark or light',
             route: '/settings/appearance',
             icon: 'palette'
         },
         {
             label: 'Dashboard',
-            description: 'How the Dashboard groups your accounts',
+            description: 'How the Dashboard shows your information',
             route: '/settings/dashboard',
             icon: 'dashboard'
         },
         {
             label: 'Institutions and Accounts',
-            description: 'Banks, brokerages and lenders, and every account at each, including hidden ones',
+            description: 'Banks, brokerages, lenders and their accounts',
             route: '/settings/institutions',
             icon: 'account_balance'
         },
@@ -58,7 +58,7 @@ export class SettingsComponent {
         },
         {
             label: 'API Tokens',
-            description: 'Let scripts and tools call the API without signing in',
+            description: 'Let scripts and tools call the API',
             route: '/settings/api-tokens',
             icon: 'key'
         }

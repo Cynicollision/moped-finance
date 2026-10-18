@@ -52,24 +52,21 @@
 
         <!-- The period, between the summary and the sections (CASH-1.1). -->
         <div class="controls">
-            <mat-form-field class="control-select period-type" appearance="outline" subscriptSizing="dynamic">
-                <mat-icon matPrefix class="control-icon">timelapse</mat-icon>
-                <mat-select
-                    [value]="selection().period"
-                    (selectionChange)="choosePeriodType($event.value)"
-                    aria-label="Period type"
-                >
-                    @for (type of periodTypes; track type.value) {
-                        <mat-option [value]="type.value">{{ type.label }}</mat-option>
-                    }
-                </mat-select>
-            </mat-form-field>
+            <mat-button-toggle-group
+                class="period-type"
+                [value]="selection().period"
+                (change)="choosePeriodType($event.value)"
+                hideSingleSelectionIndicator
+                aria-label="Period type"
+            >
+                @for (type of periodTypes; track type.value) {
+                    <mat-button-toggle [value]="type.value">{{ type.label }}</mat-button-toggle>
+                }
+            </mat-button-toggle-group>
 
             <!-- The average month has nothing to pick (CASH-1.12). -->
             @if (selection().period === 'average') {
-                <span class="period-text"
-                    ><mat-icon class="control-icon">calendar_month</mat-icon>{{ periodText() }}</span
-                >
+                <span class="period-text">{{ periodText() }}</span>
             } @else {
                 <button
                     mat-stroked-button
@@ -82,7 +79,6 @@
                     [attr.aria-expanded]="isPopoverOpen()"
                     [attr.aria-label]="periodLabel() + ', choose a ' + periodNoun()"
                 >
-                    <mat-icon class="control-icon">calendar_month</mat-icon>
                     {{ periodText() }}
                     <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
                 </button>

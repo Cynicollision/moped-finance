@@ -14,11 +14,10 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSelectModule } from '@angular/material/select';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
@@ -146,11 +145,10 @@ const periodNouns: Record<SpendingPeriodType, string> = {
         A11yModule,
         OverlayModule,
         MatButtonModule,
+        MatButtonToggleModule,
         MatCardModule,
-        MatFormFieldModule,
         MatIconModule,
         MatMenuModule,
-        MatSelectModule,
         PageHeaderComponent,
         CardSkeletonComponent,
         LoadErrorComponent,
