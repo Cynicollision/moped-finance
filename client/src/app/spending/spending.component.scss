@@ -23,9 +23,15 @@ app-page-header {
     letter-spacing: 0.05em;
 }
 
+<<<<<<< HEAD
 // The period type and the period, in one row between the summary and the sections (CASH-1.1): two outlined pills of
 // the same height and text. The period is sized for its longest value, so it doesn't change width with the choice. On
 // phones they fill the row, the period type's choices sharing out what the period leaves.
+=======
+// The period type and the period, in one row between the summary and the sections (CASH-1.1): two pills of the same
+// height, outline and text, each with an icon. Each is sized for its longest value, so neither changes width with the
+// choice; on phones they share out the row's whole width.
+>>>>>>> origin/main
 .controls {
     display: flex;
     align-items: center;
@@ -45,6 +51,7 @@ app-page-header {
         )
     );
 
+<<<<<<< HEAD
     mat-button-toggle {
         min-width: 5.5rem;
     }
@@ -54,6 +61,51 @@ app-page-header {
 .period-button {
     flex: 0 0 10.5rem;
 
+=======
+    // Sized by the row rather than the field's default width, with the choice centred. Material drops the left
+    // padding when there's a prefix icon; keep it, so the icon sits where the period button's does.
+    ::ng-deep {
+        .mat-mdc-text-field-wrapper {
+            padding-left: 16px;
+        }
+
+        .mat-mdc-form-field-infix {
+            width: auto;
+        }
+
+        .mat-mdc-select-value {
+            text-align: center;
+        }
+    }
+}
+
+.period-type {
+    flex: 0 0 10.5rem;
+}
+
+// The leading icons: the size of a button's icon, and the same colour and inset in the dropdown, the button and the
+// average's text. Material pulls a button's leading icon into its padding; it stays at the padding here.
+.control-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--mat-sys-on-surface-variant);
+}
+
+.control-select .control-icon {
+    padding: 0 8px 0 0;
+}
+
+// The text centred and the arrow at the end, as in the dropdowns.
+.period-button {
+    flex: 0 0 12.5rem;
+
+    .control-icon {
+        margin-left: 0;
+    }
+
+>>>>>>> origin/main
     ::ng-deep .mdc-button__label {
         flex: 1;
         text-align: center;
@@ -69,6 +121,7 @@ app-page-header {
     );
 }
 
+<<<<<<< HEAD
 // Phones get a short month ("Sep 2026") and less padding, so both fit one line.
 @include bp.content-below(bp.$medium) {
     .period-type {
@@ -89,12 +142,56 @@ app-page-header {
     .period-button {
         flex: 0 0 6.75rem;
 
+=======
+// Last in the row, so it can be as wide as its text.
+.period-text {
+    flex: 0 1 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 8px;
+    font: var(--mat-sys-body-large);
+}
+
+// Phones get smaller text and padding, and a short month ("Sep 2026"), so both fit one line.
+@include bp.content-below(bp.$medium) {
+    .control-select {
+        @include mat.select-overrides(
+            (
+                trigger-text-size: var(--mat-sys-body-medium-size)
+            )
+        );
+
+        ::ng-deep .mat-mdc-text-field-wrapper {
+            padding: 0 10px;
+        }
+    }
+
+    .period-type {
+        flex: 1 1 7rem;
+    }
+
+    .period-button,
+    .period-text {
+        flex: 1 1 8rem;
+    }
+
+    .period-button {
+>>>>>>> origin/main
         @include mat.button-overrides(
             (
                 outlined-horizontal-padding: 8px
             )
         );
     }
+<<<<<<< HEAD
+=======
+
+    .period-text {
+        justify-content: center;
+        font: var(--mat-sys-body-medium);
+    }
+>>>>>>> origin/main
 }
 
 // Left over, then each section's total, as on Budget (CASH-1.4, BUD-1.10).
