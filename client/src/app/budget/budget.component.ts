@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet, PercentPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -54,6 +54,12 @@ export interface BudgetSection {
     necessityParts?: NecessityPart[];
 }
 
+const periodLabels: Record<CalendarPeriod, string> = {
+    [CalendarPeriod.Monthly]: 'Month',
+    [CalendarPeriod.Quarterly]: 'Quarter',
+    [CalendarPeriod.Yearly]: 'Year'
+};
+
 const sectionText: Record<BudgetStreamType, Pick<BudgetSection, 'title' | 'empty' | 'tone'>> = {
     [BudgetStreamType.Income]: { title: 'Income', empty: 'No income planned yet.', tone: 'favourable' },
     [BudgetStreamType.Expense]: { title: 'Expenses', empty: 'No expenses planned yet.', tone: 'plain' },
@@ -71,6 +77,7 @@ function monthlyTotal(streams: BudgetStream[]): number {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         NgTemplateOutlet,
+        PercentPipe,
         MatCardModule,
         MatButtonModule,
         MatButtonToggleModule,
@@ -91,7 +98,10 @@ export class BudgetComponent {
     private notificationService = inject(NotificationService);
     private readonly today = inject(DateProviderService).today();
 
-    readonly periods = recurrenceOrder;
+    readonly BudgetStreamType = BudgetStreamType;
+
+    /** The period switch, worded as Spending's (BUD-1.6, CASH-1.1). */
+    readonly periods = recurrenceOrder.map(value => ({ value, label: periodLabels[value] }));
     // Narrow: the name and amount, with the category and recurrence under the name (BUD-1.2).
     readonly columns: ListColumn[] = [
         { key: 'name', label: 'Name', width: 'minmax(0, 1.25fr)', compact: 'primary' },
@@ -153,6 +163,12 @@ export class BudgetComponent {
     readonly leftOver = computed(() => {
         const [income, expenses, savings] = this.sections().map(section => section.monthly);
         return this.forPeriod(income - expenses - savings);
+    });
+
+    /** Planned savings as a share of planned income, 0 with no income (BUD-1.10). */
+    readonly savingsRate = computed(() => {
+        const [income, , savings] = this.sections().map(section => section.monthly);
+        return income > 0 ? savings / income : 0;
     });
 
     /** A monthly amount over the chosen period. */

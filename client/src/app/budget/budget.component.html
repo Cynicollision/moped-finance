@@ -19,6 +19,9 @@
                             [tone]="section.tone"
                             digits="1.0-0"
                         ></app-money>
+                        @if (section.type === BudgetStreamType.Savings) {
+                            <span class="rate">{{ savingsRate() | percent: '1.0-0' }} of income</span>
+                        }
                     </div>
                 }
             </div>
@@ -32,8 +35,8 @@
             hideSingleSelectionIndicator
             aria-label="Period"
         >
-            @for (p of periods; track p) {
-                <mat-button-toggle [value]="p">{{ p }}</mat-button-toggle>
+            @for (p of periods; track p.value) {
+                <mat-button-toggle [value]="p.value">{{ p.label }}</mat-button-toggle>
             }
         </mat-button-toggle-group>
 

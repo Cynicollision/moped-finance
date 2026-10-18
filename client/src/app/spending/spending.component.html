@@ -18,20 +18,17 @@
         <app-load-error [message]="error" (retry)="retry()"></app-load-error>
     } @else if (isLoaded()) {
         <mat-card class="summary-card" appearance="outlined">
-            <div class="saved">
-                <span class="label">Saved</span>
-                <div class="saved-figures">
-                    <app-money class="headline" [amount]="totalSavings()" tone="favourable" digits="1.0-0"></app-money>
-                    <span class="rate">{{ savingsRate() | percent: '1.0-0' }} of income</span>
-                </div>
-                @if (budgetedSavings() !== undefined) {
+            <div class="left-over">
+                <span class="label">Left over</span>
+                <app-money class="headline" [amount]="leftOver()" tone="favourable" digits="1.0-0"></app-money>
+                @if (budgetedLeftOver() !== undefined) {
                     <span class="budgeted"
-                        >of <app-money [amount]="budgetedSavings()!" digits="1.0-0"></app-money> budgeted</span
+                        >of <app-money [amount]="budgetedLeftOver()!" digits="1.0-0"></app-money> budgeted</span
                     >
                 }
             </div>
             <div class="summary-figures">
-                @for (section of sections(); track section.title) {
+                @for (section of sections(); track section.key) {
                     <div class="figure">
                         <span class="label">{{ section.title }}</span>
                         <app-money
@@ -40,6 +37,9 @@
                             [tone]="section.tone"
                             digits="1.0-0"
                         ></app-money>
+                        @if (section.key === 'savings') {
+                            <span class="rate">{{ savingsRate() | percent: '1.0-0' }} of income</span>
+                        }
                         @if (section.budget !== undefined) {
                             <span class="budgeted"
                                 >of <app-money [amount]="section.budget" digits="1.0-0"></app-money> budgeted</span
@@ -64,9 +64,25 @@
                 }
             </mat-button-toggle-group>
 
-            <!-- The average month has nothing to pick (CASH-1.12). -->
+            <!-- The average month's period is how many months it's over (CASH-1.12). -->
             @if (selection().period === 'average') {
-                <span class="period-text">{{ periodText() }}</span>
+                <button
+                    mat-stroked-button
+                    class="period-button"
+                    [matMenuTriggerFor]="averageMenu"
+                    [attr.aria-label]="periodLabel() + ', choose how many months'"
+                >
+                    {{ periodText() }}
+                    <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+                </button>
+                <mat-menu #averageMenu="matMenu">
+                    @for (option of averageOptions; track option.months) {
+                        <button mat-menu-item (click)="averageMonths.set(option.months)">
+                            <mat-icon>{{ option.months === averageMonths() ? 'check' : '' }}</mat-icon>
+                            <span>{{ option.label }}</span>
+                        </button>
+                    }
+                </mat-menu>
             } @else {
                 <button
                     mat-stroked-button
@@ -107,7 +123,7 @@
             }
         </div>
 
-        @for (section of sections(); track section.title) {
+        @for (section of sections(); track section.key) {
             <mat-card class="section-card" appearance="outlined">
                 <div class="section-header">
                     <h2>{{ section.title }}</h2>

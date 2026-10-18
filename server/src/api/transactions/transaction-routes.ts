@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import { SpendingAverageMonths } from '@shared/finance/contracts';
 import { SchemaUtil } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { idParamsSchema, OperationDefinition, OperationHandler, QueryField, singleFileUpload } from '@server/routing';
@@ -107,15 +108,19 @@ export function createTransactionRouter(
         });
     });
 
-    // GET /spending/average - Get the Average Month over the Past 12 Months
+    // GET /spending/average - Get the Average Month over the Past 3, 6 or 12 Months (12 by default)
     const spendingAverageQuerySchema = z.object({
-        asOfDate: QueryField.date().optional()
+        asOfDate: QueryField.date().optional(),
+        months: z
+            .enum(['3', '6', '12'])
+            .transform(value => Number(value) as SpendingAverageMonths)
+            .optional()
     });
 
     router.get('/spending/average', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'getSpendingAverage' };
         handler.execute(req, res, op, { query: spendingAverageQuerySchema }, (context, { query }) => {
-            return controller.getSpendingAverage(context, query.asOfDate);
+            return controller.getSpendingAverage(context, query.asOfDate, query.months);
         });
     });
 

@@ -20,10 +20,6 @@ Within a milestone, items are listed in the order to work through them (later it
 
 The core application with manual accounts. Done once the items below are, the image runs on the home server, and it passes testing on a phone over the LAN.
 
-### Spending periods and consistency with Budget
-- [ ] **More averages.** Decide whether Average (CASH-1.12, only the past 12 months today) needs more choices, such as This year (the average month so far) and All time, and what each does to the drill-down to Transactions (CASH-1.6). Average has its own entry in the period dropdown (CASH-1.1) and nothing to pick, so more choices would bring back the period button's picker for it, or become dropdown entries of their own. The server's `fetchSpendingAverage` works out only the past-12-months window.
-- [ ] **Make Spending and Budget look alike**: the same summary card layout, section headings and list columns where they show the same things (Saved vs Left over, the Essential / Discretionary headings of CASH-1.8 and BUD-1.7). The period controls already share a row between the summary and the sections (conventions.md, View controls), but Budget's Monthly / Quarterly / Yearly is still a button toggle beside Spending's dropdown pills; decide whether it becomes a pill dropdown too. Compare the two screens side by side at each breakpoint first, and write any shared pattern into conventions.md. `spending.component.*`, `budget.component.*`.
-
 ### Install as an app
 - [ ] APP-9.1, 9.2: web app manifest (name, icons, theme colours, start URL), and a service worker if browsers still need one to offer installation. Choose caching so a new version shows up after an update (APP-9.2), for example Angular's `@angular/service-worker` with its update checks, or no caching at all. Installing needs HTTPS (app.md Notes), so test with `USE_HTTPS` or on localhost.
 

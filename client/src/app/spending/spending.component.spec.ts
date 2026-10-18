@@ -58,16 +58,16 @@ describe('SpendingComponent', () => {
             ...created
         },
         {
-            id: 'card',
+            id: 'saving',
             groupId: 'transfers',
-            name: 'Card Payment',
-            icon: '💳',
+            name: 'Savings Transfer',
+            icon: '🔁',
             isActive: true,
             necessity: null,
             ...created
         }
     ];
-    // The period's totals as the server classifies them (CASH-1.3): transfers are left out.
+    // The period's totals as the server classifies them (CASH-1.3): income, expenses, and transfers as savings.
     const income = (categoryId: string, amount: number): SpendingTotal => ({
         categoryId,
         type: CategoryType.Income,
@@ -76,6 +76,11 @@ describe('SpendingComponent', () => {
     const expense = (categoryId: string, amount: number): SpendingTotal => ({
         categoryId,
         type: CategoryType.Expense,
+        amount
+    });
+    const saved = (categoryId: string, amount: number): SpendingTotal => ({
+        categoryId,
+        type: CategoryType.Transfer,
         amount
     });
     const totals: SpendingTotal[] = [
@@ -90,8 +95,7 @@ describe('SpendingComponent', () => {
         startDate: '2025-05-01',
         endDate: '2026-04-30',
         months: 12,
-        totals: [income('pay', 4100), expense('rent', 1500), expense('groceries', 425)],
-        transfers: []
+        totals: [income('pay', 4100), expense('rent', 1500), expense('groceries', 425)]
     };
 
     // A stream's type follows from its category's (BUD-1.1).
@@ -115,7 +119,7 @@ describe('SpendingComponent', () => {
         stream('groceries', 1200, CalendarPeriod.Quarterly),
         stream('utilities', 150),
         stream('dining', 100),
-        stream('card', 500)
+        stream('saving', 500)
     ];
 
     // Renders Spending once its categories, budget and the period's totals have loaded, with today 2026-05-17. The
@@ -167,12 +171,12 @@ describe('SpendingComponent', () => {
         return Array.from(element.querySelectorAll('.summary-card .budgeted')).map(text);
     }
 
-    /** Saved, the savings rate, then Income and Expenses, as the summary card shows them. */
+    /** Left over, Income, Expenses and Savings, then the savings rate, as the summary card shows them. */
     function summary(element: HTMLElement): string[] {
         return [
-            text(element.querySelector('.saved .headline')),
-            text(element.querySelector('.saved .rate')),
-            ...Array.from(element.querySelectorAll('.summary-figures .value')).map(text)
+            text(element.querySelector('.left-over .headline')),
+            ...Array.from(element.querySelectorAll('.summary-figures .value')).map(text),
+            text(element.querySelector('.summary-figures .rate'))
         ];
     }
 
@@ -212,33 +216,40 @@ describe('SpendingComponent', () => {
         await fixture.whenStable();
     }
 
-    it('CASH-1.4 should total income and expenses', async () => {
-        const { element } = await render();
+    it('CASH-1.4 should lead with what was left over after expenses and savings', async () => {
+        const { element } = await render([...totals, saved('saving', 600)]);
 
-        expect(summary(element)).toEqual(['$2,000', '50% of income', '$4,000', '$2,000']);
+        expect(summary(element)).toEqual(['$1,400', '$4,000', '$2,000', '$600', '15% of income']);
     });
 
-    it('CASH-1.4 should show negative savings signed and red, and expenses never red', async () => {
+    it('CASH-1.4 should show a negative left over signed and red, and expenses never red', async () => {
         const { element } = await render([income('pay', 1000), expense('rent', 1500)]);
 
-        expect(summary(element)).toEqual(['-$500', '-50% of income', '$1,000', '$1,500']);
+        expect(summary(element)).toEqual(['-$500', '$1,000', '$1,500', '$0', '0% of income']);
         const colours = Array.from(element.querySelectorAll('.summary-card :is(.headline, .value) span')).map(
             span => span.className
         );
-        expect(colours).toEqual(['money-negative', 'money-positive', '']);
+        expect(colours).toEqual(['money-negative', 'money-positive', '', 'money-positive']);
     });
 
     it('CASH-1.4 should show a savings rate of 0% when there is no income', async () => {
-        const { element } = await render([expense('rent', 1500)]);
+        const { element } = await render([expense('rent', 1500), saved('saving', 100)]);
 
-        expect(summary(element)[1]).toBe('0% of income');
+        expect(summary(element)[4]).toBe('0% of income');
     });
 
     it('CASH-1.5 should head each section with its total', async () => {
-        const { element } = await render();
+        const { element } = await render([...totals, saved('saving', 600)]);
 
         expect(text(section(element, 'Income').querySelector('.section-total'))).toBe('$4,000');
         expect(text(section(element, 'Expenses').querySelector('.section-total'))).toBe('$2,000');
+        expect(text(section(element, 'Savings').querySelector('.section-total'))).toBe('$600');
+    });
+
+    it('CASH-1.3 should list savings by transfer category', async () => {
+        const { element } = await render([...totals, saved('saving', 600)]);
+
+        expect(sectionRows(element, 'Savings')).toEqual(['🔁 Savings Transfer $600.00']);
     });
 
     it('CASH-1.3 should count uncategorized money in as income and money out as expenses', async () => {
@@ -264,7 +275,7 @@ describe('SpendingComponent', () => {
             '💡 Utilities $200.00',
             '🛒 Groceries -$20.00'
         ]);
-        expect(summary(element)[3]).toBe('$1,680');
+        expect(summary(element)[2]).toBe('$1,680');
     });
 
     it('CASH-1.5 should list amounts by category, largest first', async () => {
@@ -300,6 +311,7 @@ describe('SpendingComponent', () => {
 
         expect(text(section(element, 'Income').querySelector('.empty'))).toBe('No income in this period.');
         expect(text(section(element, 'Expenses').querySelector('.empty'))).toBe('No expenses in this period.');
+        expect(text(section(element, 'Savings').querySelector('.empty'))).toBe('No savings in this period.');
     });
 
     it('CASH-1.1 should offer every year from the oldest transaction to the newest, and the current year', async () => {
@@ -417,7 +429,7 @@ describe('SpendingComponent', () => {
 
         fixture.componentInstance.selection.set({ period: 'average', start: '2026-05-01' });
         await fixture.whenStable();
-        expect(text(element.querySelector('.period-text'))).toBe('Past 12 months');
+        expect(text(element.querySelector('.period-button'))).toBe('12 months arrow_drop_down');
     });
 
     it('CASH-1.1 should mark the period on screen in the picker', async () => {
@@ -440,22 +452,67 @@ describe('SpendingComponent', () => {
             return fixture;
         }
 
-        it('CASH-1.12 should show the average month from the dropdown, with nothing to pick', async () => {
+        /** The average's period: what it reads, and its accessible name. */
+        function averagePeriod(element: HTMLElement): string[] {
+            const period = element.querySelector('.period-button')!;
+            return [text(period), period.getAttribute('aria-label')!];
+        }
+
+        it('CASH-1.12 should show the average month over the past 12 months from the switch', async () => {
             const fixture = await render();
             const { element, financeService } = fixture;
 
             await choosePeriodType(fixture, 'Average');
 
-            expect(financeService.fetchSpendingAverage).toHaveBeenCalledWith('2026-05-17');
-            expect(text(element.querySelector('.period-text'))).toBe('Average month, May 2025 to Apr 2026');
-            expect(element.querySelector('.period-button')).toBeNull();
+            expect(financeService.fetchSpendingAverage).toHaveBeenCalledWith('2026-05-17', 12);
+            expect(averagePeriod(element)).toEqual([
+                'Past 12 months arrow_drop_down',
+                'Average month, May 2025 to Apr 2026, choose how many months'
+            ]);
+        });
+
+        it('CASH-1.12 should average the past 3 or 6 months instead from its menu', async () => {
+            const fixture = await renderAverage();
+            const { element, financeService } = fixture;
+
+            element.querySelector<HTMLButtonElement>('.period-button')!.click();
+            await fixture.whenStable();
+            const items = Array.from(document.querySelectorAll<HTMLElement>('.mat-mdc-menu-item'));
+            expect(items.map(item => text(item.querySelector('span')))).toEqual([
+                'Past 3 months',
+                'Past 6 months',
+                'Past 12 months'
+            ]);
+            expect(items.map(item => text(item.querySelector('mat-icon')))).toEqual(['', '', 'check']);
+            financeService.fetchSpendingAverage.mockResolvedValue({ ...average, startDate: '2026-02-01', months: 3 });
+            items[0].click();
+            await fixture.whenStable();
+
+            expect(financeService.fetchSpendingAverage).toHaveBeenLastCalledWith('2026-05-17', 3);
+            expect(averagePeriod(element)).toEqual([
+                'Past 3 months arrow_drop_down',
+                'Average month, Feb 2026 to Apr 2026, choose how many months'
+            ]);
+            document.querySelectorAll('.cdk-overlay-container').forEach(container => container.remove());
+        });
+
+        it('CASH-1.12 should say how many months there are when the history is shorter than asked for', async () => {
+            const { element } = await renderAverage({ startDate: '2026-03-01', months: 2 });
+
+            expect(averagePeriod(element)[0]).toBe('Past 2 months arrow_drop_down');
         });
 
         it('CASH-1.12 should compare each average month with the monthly budget', async () => {
-            const { element } = await renderAverage();
+            const { element } = await renderAverage({ totals: [...average.totals, saved('saving', 450)] });
 
-            expect(summary(element)).toEqual(['$2,175', '53% of income', '$4,100', '$1,925']);
-            expect(budgeted(element)).toEqual(['of $2,050 budgeted', 'of $4,200 budgeted', 'of $2,150 budgeted']);
+            expect(summary(element)).toEqual(['$1,725', '$4,100', '$1,925', '$450', '11% of income']);
+            expect(budgeted(element)).toEqual([
+                'of $1,550 budgeted',
+                'of $4,200 budgeted',
+                'of $2,150 budgeted',
+                'of $500 budgeted'
+            ]);
+            expect(sectionRows(element, 'Savings')).toEqual(['🔁 Savings Transfer Budget $500 $50 under $450.00']);
             expect(sectionRows(element, 'Income')).toEqual(['💼 Paycheck Budget $4,200 $100 under $4,100.00']);
             expect(sectionRows(element, 'Expenses')).toEqual([
                 '🏠 Rent Budget $1,500 on budget $1,500.00',
@@ -478,11 +535,14 @@ describe('SpendingComponent', () => {
 
         it('CASH-1.12 should name a one-month window by its month, and no window at all without history', async () => {
             const oneMonth = await renderAverage({ startDate: '2026-04-01', months: 1 });
-            expect(text(oneMonth.element.querySelector('.period-text'))).toBe('Average month, Apr 2026');
+            expect(averagePeriod(oneMonth.element)).toEqual([
+                'Past month arrow_drop_down',
+                'Average month, Apr 2026, choose how many months'
+            ]);
             TestBed.resetTestingModule();
 
             const none = await renderAverage({ startDate: '2026-05-01', months: 0, totals: [] });
-            expect(text(none.element.querySelector('.period-text'))).toBe('Average month');
+            expect(averagePeriod(none.element)[1]).toBe('Average month, choose how many months');
             expect(text(section(none.element, 'Income').querySelector('.section-total'))).toBe('$0');
         });
 
@@ -497,7 +557,9 @@ describe('SpendingComponent', () => {
             );
 
             expect(financeService.fetchSpendingTotals).not.toHaveBeenCalled();
-            expect(text(element.querySelector('.period-text'))).toBe('Average month, May 2025 to Apr 2026');
+            expect(element.querySelector('.period-button')!.getAttribute('aria-label')).toBe(
+                'Average month, May 2025 to Apr 2026, choose how many months'
+            );
             expect(chosenPeriodType(element)).toEqual(['Average']);
         });
     });
@@ -512,9 +574,10 @@ describe('SpendingComponent', () => {
             '💡 Utilities Budget $150 $50 over $200.00',
             '🍽️ Dining Budget $100 $100 under $0.00'
         ]);
-        // Under on income and over on an expense are the bad ones.
+        expect(sectionRows(element, 'Savings')).toEqual(['🔁 Savings Transfer Budget $500 $500 under $0.00']);
+        // Under on income or savings and over on an expense are the bad ones.
         const bad = Array.from(element.querySelectorAll('.difference.bad')).map(text);
-        expect(bad).toEqual(['$200 under', '$50 over']);
+        expect(bad).toEqual(['$200 under', '$50 over', '$500 under']);
         expect(text(section(element, 'Expenses').querySelector('.app-list-header'))).toBe(
             'Category Budget Difference Actual'
         );
@@ -549,10 +612,15 @@ describe('SpendingComponent', () => {
         expect(element.querySelector('.app-list-header')).toBeNull();
     });
 
-    it('CASH-1.11 should show what was budgeted under Saved, Income and Expenses', async () => {
+    it('CASH-1.11 should show what was budgeted under Left over, Income, Expenses and Savings', async () => {
         const { element } = await render(totals, undefined, undefined, budget);
 
-        expect(budgeted(element)).toEqual(['of $2,050 budgeted', 'of $4,200 budgeted', 'of $2,150 budgeted']);
+        expect(budgeted(element)).toEqual([
+            'of $1,550 budgeted',
+            'of $4,200 budgeted',
+            'of $2,150 budgeted',
+            'of $500 budgeted'
+        ]);
     });
 
     it('CASH-1.11 should show a budgeted total only for a type with streams', async () => {
@@ -580,7 +648,7 @@ describe('SpendingComponent', () => {
         const order = Array.from(element.querySelectorAll('.summary-card, .controls, .section-card')).map(e =>
             ['summary-card', 'controls', 'section-card'].find(name => e.classList.contains(name))
         );
-        expect(order).toEqual(['summary-card', 'controls', 'section-card', 'section-card']);
+        expect(order).toEqual(['summary-card', 'controls', 'section-card', 'section-card', 'section-card']);
         const controls = Array.from(element.querySelectorAll('.controls > *')).map(e =>
             ['period-type', 'period-button'].find(name => e.classList.contains(name))
         );

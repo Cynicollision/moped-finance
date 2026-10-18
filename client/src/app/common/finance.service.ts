@@ -6,6 +6,7 @@ import {
     BalanceImportResult,
     CategoryImportResult,
     SpendingAverage,
+    SpendingAverageMonths,
     SpendingTotal,
     DailyBalance,
     GetAccountBalanceHistoryOptions,
@@ -283,9 +284,11 @@ export class FinanceService {
         );
     }
 
-    /** The average month over the full months before `asOfDate`'s, at most 12 (BUD-1.8, CASH-1.12). */
-    fetchSpendingAverage(asOfDate: string): Promise<SpendingAverage> {
-        return this.api.load<SpendingAverage>(`${API_BASE_PATH}/transactions/spending/average?asOfDate=${asOfDate}`);
+    /** The average month over the full months before `asOfDate`'s: the last 12, or 3 or 6 (BUD-1.8, CASH-1.12). */
+    fetchSpendingAverage(asOfDate: string, months: SpendingAverageMonths = 12): Promise<SpendingAverage> {
+        return this.api.load<SpendingAverage>(
+            `${API_BASE_PATH}/transactions/spending/average?asOfDate=${asOfDate}&months=${months}`
+        );
     }
 
     private getTransactionUrlParams(options: TransactionSearchOptions): URLSearchParams {

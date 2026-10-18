@@ -69,13 +69,6 @@ app-page-header {
     );
 }
 
-// The average month's window, which has nothing to pick (CASH-1.12): as wide as its text.
-.period-text {
-    flex: 0 1 auto;
-    padding-left: 8px;
-    font: var(--mat-sys-label-large);
-}
-
 // Phones get a short month ("Sep 2026") and less padding, so both fit one line.
 @include bp.content-below(bp.$medium) {
     .period-type {
@@ -102,45 +95,27 @@ app-page-header {
             )
         );
     }
-
-    .period-text {
-        flex: 0 0 6.75rem;
-        padding-left: 0;
-        text-align: center;
-    }
 }
 
-// Saved and the rate, then each section's total (CASH-1.4).
+// Left over, then each section's total, as on Budget (CASH-1.4, BUD-1.10).
 .summary-card {
     padding: 20px;
     gap: 20px;
 }
 
-.saved {
+.left-over {
     display: flex;
     flex-direction: column;
     gap: 4px;
-}
-
-.saved-figures {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 4px 12px;
 
     .headline {
         font: var(--mat-sys-headline-medium);
-    }
-
-    .rate {
-        font: var(--mat-sys-body-large);
-        color: var(--text-muted);
     }
 }
 
 .summary-figures {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
 
     .figure {
@@ -184,7 +159,8 @@ app-page-header {
     color: var(--text-muted);
 }
 
-// A budgeted amount under an actual one (CASH-1.11).
+// The savings rate and a budgeted amount under an actual one (CASH-1.4, CASH-1.11).
+.rate,
 .budgeted {
     font: var(--mat-sys-body-small);
     color: var(--text-muted);

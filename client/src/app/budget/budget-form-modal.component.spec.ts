@@ -126,9 +126,9 @@ describe('BudgetFormModalComponent', () => {
             totals: [
                 { categoryId: 'pay', type: CategoryType.Income, amount: 4100.5 },
                 { categoryId: 'rent', type: CategoryType.Expense, amount: 1480.4 },
-                { categoryId: '', type: CategoryType.Expense, amount: 75 }
-            ],
-            transfers: [{ categoryId: 'savings', amount: 612.5 }]
+                { categoryId: '', type: CategoryType.Expense, amount: 75 },
+                { categoryId: 'savings', type: CategoryType.Transfer, amount: 612.5 }
+            ]
         });
         const rentStream = (id: string, amount: number, recurrence = CalendarPeriod.Monthly) =>
             ({ id, type: BudgetStreamType.Expense, name: id, categoryId: 'rent', recurrence, amount }) as BudgetStream;
@@ -154,7 +154,7 @@ describe('BudgetFormModalComponent', () => {
             ]);
         });
 
-        it('BUD-1.8 should average a transfer category by its money out, over the months there are', async () => {
+        it('BUD-1.8 should average a transfer category by what it saved, over the months there are', async () => {
             expect(await insightFor({ type: BudgetStreamType.Savings, average: average(3) }, 'savings')).toEqual([
                 "You've averaged $613 a month in Savings Transfer over the past 3 months."
             ]);

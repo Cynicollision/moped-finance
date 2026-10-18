@@ -110,7 +110,7 @@ describe('Transaction Routes', () => {
     }
 
     // A second account alongside Checking, with the given flags.
-    async function insertAccount(flags: { isHidden?: boolean }): Promise<string> {
+    async function insertAccount(flags: { isHidden?: boolean; type?: AccountType }): Promise<string> {
         const account = await accountsData.insert(
             EntityFactory.createAccount({
                 institutionId: testInstitutionId,
@@ -410,7 +410,7 @@ describe('Transaction Routes', () => {
             ]);
         });
 
-        it('CASH-1.3 should count income categories as income and leave out transfer categories', async () => {
+        it('CASH-1.3 should count income categories as income and leave out transfers within everyday accounts', async () => {
             const paycheckId = await insertCategory(CategoryType.Income, 'Paycheck');
             const cardPaymentId = await insertCategory(CategoryType.Transfer, 'Card Payment');
             await insertTransaction({ categoryId: paycheckId, amount: 4000 });
@@ -420,6 +420,27 @@ describe('Transaction Routes', () => {
 
             expect((await getJune()).body).toEqual([
                 { categoryId: paycheckId, type: CategoryType.Income, amount: 3850 }
+            ]);
+        });
+
+        it('CASH-1.3 should count a transfer category as savings by what it moved out of everyday accounts', async () => {
+            const savingsId = await insertCategory(CategoryType.Transfer, 'Savings Transfer');
+            const cardPaymentId = await insertCategory(CategoryType.Transfer, 'Card Payment');
+            const savingsAccountId = await insertAccount({});
+            const cardAccountId = await insertAccount({ type: AccountType.CreditCard });
+            // $500 saved, $100 of it brought back, and $200 moved between savings accounts.
+            await insertTransaction({ categoryId: savingsId, amount: -500 });
+            await insertTransaction({ categoryId: savingsId, accountId: savingsAccountId, amount: 500 });
+            await insertTransaction({ categoryId: savingsId, accountId: savingsAccountId, amount: -100 });
+            await insertTransaction({ categoryId: savingsId, amount: 100 });
+            await insertTransaction({ categoryId: savingsId, accountId: savingsAccountId, amount: -200 });
+            await insertTransaction({ categoryId: savingsId, accountId: savingsAccountId, amount: 200 });
+            // A card payment moves money between everyday accounts.
+            await insertTransaction({ categoryId: cardPaymentId, amount: -900 });
+            await insertTransaction({ categoryId: cardPaymentId, accountId: cardAccountId, amount: 900 });
+
+            expect((await getJune()).body).toEqual([
+                { categoryId: savingsId, type: CategoryType.Transfer, amount: 400 }
             ]);
         });
 
@@ -462,8 +483,8 @@ describe('Transaction Routes', () => {
     });
 
     describe('GET /spending/average', () => {
-        function getAverage(asOfDate = '2026-06-15'): request.Test {
-            return request(app).get(`/transactions/spending/average?asOfDate=${asOfDate}`);
+        function getAverage(query = ''): request.Test {
+            return request(app).get(`/transactions/spending/average?asOfDate=2026-06-15${query}`);
         }
 
         it('BUD-1.8 CASH-1.12 should average the 12 full months before the current one', async () => {
@@ -479,8 +500,7 @@ describe('Transaction Routes', () => {
                 startDate: '2025-06-01',
                 endDate: '2026-05-31',
                 months: 12,
-                totals: [{ categoryId: testCategoryId, type: CategoryType.Expense, amount: 30 }],
-                transfers: []
+                totals: [{ categoryId: testCategoryId, type: CategoryType.Expense, amount: 30 }]
             });
         });
 
@@ -493,8 +513,7 @@ describe('Transaction Routes', () => {
                 startDate: '2026-03-01',
                 endDate: '2026-05-31',
                 months: 3,
-                totals: [{ categoryId: testCategoryId, type: CategoryType.Expense, amount: 33.33 }],
-                transfers: []
+                totals: [{ categoryId: testCategoryId, type: CategoryType.Expense, amount: 33.33 }]
             });
         });
 
@@ -507,9 +526,38 @@ describe('Transaction Routes', () => {
                 startDate: '2026-06-01',
                 endDate: '2026-05-31',
                 months: 0,
-                totals: [],
-                transfers: []
+                totals: []
             });
+        });
+
+        it('CASH-1.12 should average the past 3 or 6 months when asked', async () => {
+            await insertTransaction({ date: '2025-12-31', amount: -600 });
+            await insertTransaction({ date: '2026-01-01', amount: -300 });
+            await insertTransaction({ date: '2026-03-01', amount: -60 });
+
+            const threeMonths = await getAverage('&months=3');
+            const sixMonths = await getAverage('&months=6');
+
+            expect(threeMonths.body).toEqual({
+                startDate: '2026-03-01',
+                endDate: '2026-05-31',
+                months: 3,
+                totals: [{ categoryId: testCategoryId, type: CategoryType.Expense, amount: 20 }]
+            });
+            expect(sixMonths.body).toEqual(
+                expect.objectContaining({
+                    startDate: '2025-12-01',
+                    months: 6,
+                    totals: [expect.objectContaining({ amount: 160 })]
+                })
+            );
+        });
+
+        it('CASH-1.12 should reject other numbers of months', async () => {
+            const response = await getAverage('&months=5');
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('months');
         });
 
         it('CASH-1.12 should leave hidden transactions out of the window and the averages', async () => {
@@ -524,7 +572,7 @@ describe('Transaction Routes', () => {
             ]);
         });
 
-        it('BUD-1.8 should average a transfer category by its money out only', async () => {
+        it('BUD-1.8 CASH-1.12 should average a transfer category by what it saved', async () => {
             const group = await groupsData.insert(
                 EntityFactory.createCategoryGroup({ type: CategoryType.Transfer, name: 'Transfers' })
             );
@@ -540,8 +588,9 @@ describe('Transaction Routes', () => {
             const response = await getAverage();
 
             expect(response.body.months).toBe(2);
-            expect(response.body.totals).toEqual([]);
-            expect(response.body.transfers).toEqual([{ categoryId: savings.id, amount: 500 }]);
+            expect(response.body.totals).toEqual([
+                { categoryId: savings.id, type: CategoryType.Transfer, amount: 500 }
+            ]);
         });
     });
 

@@ -21,6 +21,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { CalendarPeriod, SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
+import { SpendingAverageMonths, spendingAverageMonths } from '@shared/finance/contracts';
 import { BudgetStreamType, CategoryType, TransactionsSortKey } from '@shared/finance/enum';
 import { BudgetStreamUtil, Uncategorized } from '@shared/finance/util';
 import { PageHeaderComponent } from './../core/layout/page-header.component';
@@ -69,9 +70,14 @@ export interface BudgetDifference {
     isBad: boolean;
 }
 
+/** The section a row counts in (CASH-1.3). */
+type SectionKey = 'income' | 'expense' | 'savings';
+
 interface SpendingSection {
+    key: SectionKey;
     title: string;
-    isIncome: boolean;
+    /** Income and savings fall short under their budget, and expenses over it (CASH-1.10). */
+    underIsBad: boolean;
     rows: SpendingRow[];
     total: number;
     /** The period's budget for the section, when it has any streams (CASH-1.11). */
@@ -82,7 +88,7 @@ interface SpendingSection {
     parts?: NecessityPart[];
 }
 
-/** A calendar period (CASH-1.1), or the average month over the past 12 (CASH-1.12). */
+/** A calendar period (CASH-1.1), or the average month over the past 3, 6 or 12 (CASH-1.12). */
 export type SpendingPeriodType = CalendarPeriod | 'average';
 
 /** The period on screen: a month, quarter or year by its first day, or the average month (CASH-1.1, CASH-1.12). */
@@ -126,6 +132,18 @@ const budgetColumns: ListColumn[] = [
     { key: 'budget', label: 'Budget', width: '8rem', align: 'end', compact: 'secondary' },
     { key: 'difference', label: 'Difference', width: '8rem', align: 'end', compact: 'secondary' }
 ];
+
+// The section each kind of Spending total, and each kind of budget stream, counts in (CASH-1.3).
+const totalSections: Record<CategoryType, SectionKey> = {
+    [CategoryType.Income]: 'income',
+    [CategoryType.Expense]: 'expense',
+    [CategoryType.Transfer]: 'savings'
+};
+const streamSections: Record<BudgetStreamType, SectionKey> = {
+    [BudgetStreamType.Income]: 'income',
+    [BudgetStreamType.Expense]: 'expense',
+    [BudgetStreamType.Savings]: 'savings'
+};
 
 // What the picker calls each period type.
 const periodNouns: Record<SpendingPeriodType, string> = {
@@ -194,6 +212,9 @@ export class SpendingComponent {
         start: this.currentMonth
     });
     readonly viewMode = signal<SpendingViewMode>('category');
+    /** How many months the average month is over, chosen beside Average (CASH-1.12). */
+    readonly averageMonths = signal<SpendingAverageMonths>(12);
+    readonly averageOptions = spendingAverageMonths.map(months => ({ months, label: `Past ${months} months` }));
 
     readonly lookups = viewResource({
         loader: async () => {
@@ -228,15 +249,15 @@ export class SpendingComponent {
     // The period's totals: reloads when the period changes, keeping the old ones on screen meanwhile. They carry the
     // period and dates they're for, so the budgets and drill-downs beside them match until the new ones arrive.
     readonly totals = viewResource({
-        params: () => this.selection(),
-        loader: async ({ period, start }) => {
+        params: () => ({ ...this.selection(), months: this.averageMonths() }),
+        loader: async ({ period, start, months }) => {
             if (period === 'average') {
-                const { totals, ...window } = await this.financeService.fetchSpendingAverage(this.today);
-                return { period, totals, window };
+                const { totals, ...window } = await this.financeService.fetchSpendingAverage(this.today, months);
+                return { period, months, totals, window };
             }
             const { startDate, endDate } = CalendarDateUtil.getPeriod(period, start);
             const window = { startDate, endDate, months: BudgetStreamUtil.monthsIn(period) };
-            return { period, totals: await this.financeService.fetchSpendingTotals(period, start), window };
+            return { period, months, totals: await this.financeService.fetchSpendingTotals(period, start), window };
         }
     });
 
@@ -286,25 +307,30 @@ export class SpendingComponent {
 
     /** The period in full: "May 2026", "Q2 2026", "2026" or "Average month, May 2025 to Apr 2026". */
     readonly periodLabel = computed(() => this.labelFor(false));
-    /** As the row shows it, shorter on phones so the row fits: "Sep 2026", or "Past 12 months" for the average month. */
-    readonly periodText = computed(() => this.labelFor(this.isCompact()));
+    /** As the row shows it, shorter on phones so the row fits: "Sep 2026", or "12 months" for the average month. */
+    readonly periodText = computed(() => this.labelFor(this.isCompact(), true));
     readonly periodNoun = computed(() => periodNouns[this.selection().period]);
 
-    private labelFor(compact: boolean): string {
+    private labelFor(compact: boolean, short = false): string {
         const selection = this.selection();
         if (selection.period !== 'average') {
             return labelFor(selection.period, selection.start, compact);
         }
 
-        // The window is known once it has loaded (CASH-1.12). On phones the dropdown beside it already says Average.
+        // The months chosen, or as many as the history has once the window has loaded (CASH-1.12). On phones the
+        // switch beside it already says Average.
         const loaded = this.totals.value();
-        if (loaded?.period !== 'average' || loaded.window.months === 0) {
+        const window =
+            loaded?.period === 'average' && loaded.months === this.averageMonths() ? loaded.window : undefined;
+        const months = window?.months || this.averageMonths();
+        if (short) {
+            const count = months === 1 ? 'month' : `${months} months`;
+            return compact ? (months === 1 ? '1 month' : count) : `Past ${count}`;
+        }
+        if (!window || window.months === 0) {
             return 'Average month';
         }
-        const { startDate, endDate, months } = loaded.window;
-        if (compact) {
-            return months === 1 ? 'Past month' : `Past ${months} months`;
-        }
+        const { startDate, endDate } = window;
         const from = labelFor(CalendarPeriod.Monthly, startDate, true);
         const to = labelFor(CalendarPeriod.Monthly, endDate, true);
         return `Average month, ${from === to ? to : `${from} to ${to}`}`;
@@ -388,67 +414,70 @@ export class SpendingComponent {
     // The rows by category, which the summary's split always needs (CASH-1.8), and the rows the view shows.
     private readonly rows = computed(() => this.buildRows(this.viewMode() === 'group'));
 
-    private buildRows(byGroup: boolean): { income: SpendingRow[]; expense: SpendingRow[] } {
-        const income = new Map<string, SpendingRow>();
-        const expense = new Map<string, SpendingRow>();
+    private buildRows(byGroup: boolean): Record<SectionKey, SpendingRow[]> {
+        const rows: Record<SectionKey, Map<string, SpendingRow>> = {
+            income: new Map(),
+            expense: new Map(),
+            savings: new Map()
+        };
 
         // The row a category's amounts and budget go in, by category or by group, in the section the server or the
-        // stream puts it in. Uncategorized amounts come in both sections.
-        const rowFor = (categoryId: string, isIncome: boolean) => {
+        // stream puts it in. Uncategorized amounts come in both Income and Expenses.
+        const rowFor = (categoryId: string, section: SectionKey) => {
             const cat = categoryId ? this.categoryMap().get(categoryId) : undefined;
             const group = cat ? this.groupMap().get(cat.groupId) : undefined;
             const id = byGroup ? group?.id : cat?.id;
             const name = byGroup ? group?.name || 'Uncategorized' : cat ? categoryLabel(cat) : 'Uncategorized';
-            const rows = isIncome ? income : expense;
-            const necessity = isIncome || byGroup ? undefined : expenseNecessityOf(cat);
-            const row = rows.get(id ?? '') ?? { id, name, amount: 0, necessity };
-            rows.set(id ?? '', row);
+            const necessity = section === 'expense' && !byGroup ? expenseNecessityOf(cat) : undefined;
+            const row = rows[section].get(id ?? '') ?? { id, name, amount: 0, necessity };
+            rows[section].set(id ?? '', row);
             return row;
         };
 
-        // The server decides income or expense and leaves out transfers (CASH-1.3).
+        // The server decides income, expense or savings (CASH-1.3).
         for (const total of this.categoryTotals()) {
-            rowFor(total.categoryId, total.type === CategoryType.Income).amount += total.amount;
+            rowFor(total.categoryId, totalSections[total.type]).amount += total.amount;
         }
 
-        // A budgeted category shows even with nothing spent, so the rows add up to the budget (CASH-1.10). Savings
-        // streams aren't compared here (CASH Notes).
+        // A budgeted category shows even with nothing spent, so the rows add up to the budget (CASH-1.10).
         for (const stream of this.lookups.value()?.budgetStreams ?? []) {
-            if (stream.type !== BudgetStreamType.Savings) {
-                const row = rowFor(stream.categoryId, stream.type === BudgetStreamType.Income);
-                row.budget = (row.budget ?? 0) + BudgetStreamUtil.monthlyAmount(stream) * this.budgetMonths();
-            }
+            const row = rowFor(stream.categoryId, streamSections[stream.type]);
+            row.budget = (row.budget ?? 0) + BudgetStreamUtil.monthlyAmount(stream) * this.budgetMonths();
         }
 
         const largestFirst = (a: SpendingRow, b: SpendingRow) =>
             b.amount - a.amount || (b.budget ?? 0) - (a.budget ?? 0);
-        return {
-            income: [...income.values()].sort(largestFirst),
-            expense: [...expense.values()].sort(largestFirst)
-        };
+        const sorted = (section: SectionKey) => [...rows[section].values()].sort(largestFirst);
+        return { income: sorted('income'), expense: sorted('expense'), savings: sorted('savings') };
     }
 
     readonly hasBudget = computed(() =>
-        [...this.rows().income, ...this.rows().expense].some(row => row.budget !== undefined)
+        [...this.rows().income, ...this.rows().expense, ...this.rows().savings].some(row => row.budget !== undefined)
     );
 
     readonly totalIncome = computed(() => sumOf(this.rows().income, row => row.amount));
     readonly totalExpenses = computed(() => sumOf(this.rows().expense, row => row.amount));
-    readonly totalSavings = computed(() => this.totalIncome() - this.totalExpenses());
+    readonly totalSavings = computed(() => sumOf(this.rows().savings, row => row.amount));
+    /** Income less expenses and savings, as on Budget (CASH-1.4, BUD-1.10). */
+    readonly leftOver = computed(() => this.totalIncome() - this.totalExpenses() - this.totalSavings());
     readonly savingsRate = computed(() => (this.totalIncome() > 0 ? this.totalSavings() / this.totalIncome() : 0));
 
     private readonly budgetedIncome = computed(() => budgetOf(this.rows().income));
     private readonly budgetedExpenses = computed(() => budgetOf(this.rows().expense));
-    /** Budgeted income less budgeted expenses, when either has streams (CASH-1.11). */
-    readonly budgetedSavings = computed(() =>
-        this.hasBudget() ? (this.budgetedIncome() ?? 0) - (this.budgetedExpenses() ?? 0) : undefined
+    private readonly budgetedSavings = computed(() => budgetOf(this.rows().savings));
+    /** Budgeted income less budgeted expenses and savings, when there are any streams (CASH-1.11). */
+    readonly budgetedLeftOver = computed(() =>
+        this.hasBudget()
+            ? (this.budgetedIncome() ?? 0) - (this.budgetedExpenses() ?? 0) - (this.budgetedSavings() ?? 0)
+            : undefined
     );
 
-    // Income is green and expenses the ordinary colour (APP-6.1).
+    // Income and savings are green and expenses the ordinary colour (APP-6.1).
     readonly sections = computed<SpendingSection[]>(() => [
         {
+            key: 'income',
             title: 'Income',
-            isIncome: true,
+            underIsBad: true,
             rows: this.rows().income,
             total: this.totalIncome(),
             budget: this.budgetedIncome(),
@@ -456,8 +485,9 @@ export class SpendingComponent {
             empty: 'No income in this period.'
         },
         {
+            key: 'expense',
             title: 'Expenses',
-            isIncome: false,
+            underIsBad: false,
             rows: this.rows().expense,
             total: this.totalExpenses(),
             budget: this.budgetedExpenses(),
@@ -467,6 +497,16 @@ export class SpendingComponent {
                 this.viewMode() === 'category' && this.hasNecessities()
                     ? this.splitByNecessity().filter(part => part.rows.length > 0)
                     : undefined
+        },
+        {
+            key: 'savings',
+            title: 'Savings',
+            underIsBad: true,
+            rows: this.rows().savings,
+            total: this.totalSavings(),
+            budget: this.budgetedSavings(),
+            tone: 'favourable',
+            empty: 'No savings in this period.'
         }
     ]);
 
@@ -484,7 +524,7 @@ export class SpendingComponent {
         });
     }
 
-    /** How a row compares with its budget, in whole dollars; over on an expense, or under on income, is bad (CASH-1.10). */
+    /** How a row compares with its budget, in whole dollars; over on an expense, or under on income or savings, is bad (CASH-1.10). */
     difference(row: SpendingRow, section: SpendingSection): BudgetDifference | undefined {
         if (row.budget === undefined) {
             return undefined;
@@ -496,7 +536,7 @@ export class SpendingComponent {
         return {
             amount: Math.abs(over),
             text: over > 0 ? 'over' : 'under',
-            isBad: section.isIncome ? over < 0 : over > 0
+            isBad: section.underIsBad ? over < 0 : over > 0
         };
     }
 
