@@ -26,9 +26,6 @@ The core application with manual accounts. Done once the items below are, the im
 ### Demo mode
 - [ ] APP-4.2, 4.3: populate demo mode from `server/seed-data/`: `demo.interceptor.ts` answers everything but auth with an empty list. Needs the CSVs turned into client-side data (a build step or JSON) and in-browser create/edit/delete. Last of the features, so it covers the finished screens.
 
-### Data & deployment
-- [ ] Document backup and restore for the Postgres volume, including a backup before updates that add migrations (they only go forward). Include retention for `core.logs`, which grows without bound (errors are logged to the database).
-
 ### Release
 - [ ] **Deploy** the image to the home server following deployment.md, and replace its "not deployed yet" status and intended setup with the exact steps.
 - [ ] **Test on a phone** over the LAN: the main flows on a real device, and installing as an app (APP-9), which needs HTTPS through a proxy.

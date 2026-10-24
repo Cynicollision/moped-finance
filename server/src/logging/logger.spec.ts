@@ -3,7 +3,10 @@ import { ILogData } from './log-data';
 
 describe('AppLogger', () => {
     it('APP-5.1 should not reject when writing a log entry to the database fails', async () => {
-        const logData: ILogData = { create: jest.fn().mockRejectedValue(new Error('connection terminated')) };
+        const logData: ILogData = {
+            create: jest.fn().mockRejectedValue(new Error('connection terminated')),
+            deleteOlderThan: jest.fn()
+        };
         const logger = new AppLogger(logData, {
             error: LogBehavior.Database,
             warn: LogBehavior.Ignore,

@@ -17,7 +17,7 @@ import {
 } from '@server/auth';
 import { DatabaseClient } from '@server/data';
 import { buildHealthRouter } from '@server/health';
-import { AppLogger } from '@server/logging';
+import { AppLogger, LogData, LogRetention } from '@server/logging';
 import { buildErrorHandler, buildSecurityHeaders } from '@server/routing';
 
 // True when users reach the app over HTTPS, through a reverse proxy. Off by default: plain HTTP on the LAN.
@@ -101,16 +101,20 @@ function buildApp(sessionSecret: string, signInLimits: SignInLimits): express.Ex
 
 const PORT = process.env.PORT || 3000;
 let server: Server | undefined;
+let logRetention: LogRetention | undefined;
 
 // Bring the database schema up to date before accepting requests (APP-5.8). The migrations folder sits
 // next to this file: server/migrations in development, dist/server/migrations in the production image.
 // If migrating fails (including when the database isn't reachable yet), exit and let Docker's restart
 // policy try again.
 async function start(): Promise<void> {
-    // The sign-in limits from the environment (AUTH-10.7). A value out of range stops the server from starting.
+    // The sign-in limits (AUTH-10.7) and log retention (APP-5.10) from the environment. A value out of range stops the
+    // server from starting.
     let signInLimits: SignInLimits;
+    let logRetentionDays: number;
     try {
         signInLimits = SignInLimiter.limitsFromEnvironment(process.env);
+        logRetentionDays = LogRetention.retentionDaysFromEnvironment(process.env);
     } catch (error) {
         console.error(errorMessage(error));
         await dbClient.close().catch(() => undefined);
@@ -155,6 +159,10 @@ async function start(): Promise<void> {
             process.exit(1);
         }
         console.log(`Server running on port ${PORT}`);
+
+        // Delete old log entries now and once a day (APP-5.10).
+        logRetention = new LogRetention(new LogData(dbClient), logRetentionDays);
+        logRetention.start();
     });
 }
 
@@ -173,6 +181,7 @@ function shutdown(signal: NodeJS.Signals): void {
     }
     isShuttingDown = true;
     console.info(`${signal} received: shutting down.`);
+    logRetention?.stop();
 
     if (!server) {
         // Still migrating. Each migration runs in a transaction, so Postgres rolls back an unfinished one

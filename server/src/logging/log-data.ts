@@ -1,3 +1,4 @@
+import { lt } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { varchar, timestamp, text } from 'drizzle-orm/pg-core';
 import { LogEntry } from '@shared/core/types';
@@ -15,6 +16,7 @@ export const logSchema = coreSchema.table('logs', {
 
 export interface ILogData {
     create(log: LogEntry): Promise<void>;
+    deleteOlderThan(cutoff: Date): Promise<number>;
 }
 
 export class LogData implements ILogData {
@@ -32,5 +34,14 @@ export class LogData implements ILogData {
             context: log.context,
             message: log.message
         });
+    }
+
+    /** Deletes the entries created before `cutoff`, returning how many. */
+    public async deleteOlderThan(cutoff: Date): Promise<number> {
+        const deleted = await this.db
+            .delete(logSchema)
+            .where(lt(logSchema.createdAt, cutoff))
+            .returning({ id: logSchema.id });
+        return deleted.length;
     }
 }
