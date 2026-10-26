@@ -70,6 +70,30 @@ describe('ThemeService', () => {
         expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('Light');
     });
 
+    it("APP-9.1 should point the title bar's theme-color at the theme's scheme", async () => {
+        const metas = ['dark', 'light'].map(scheme => {
+            const meta = document.createElement('meta');
+            meta.name = 'theme-color';
+            meta.dataset['scheme'] = scheme;
+            document.head.append(meta);
+            return meta;
+        });
+        const media = () => metas.map(meta => meta.getAttribute('media'));
+
+        try {
+            const { service } = create();
+            expect(media()).toEqual(['all', 'not all']);
+
+            await service.save(AppTheme.Light);
+            expect(media()).toEqual(['not all', 'all']);
+
+            await service.save(AppTheme.System);
+            expect(media()).toEqual(['(prefers-color-scheme: dark)', '(prefers-color-scheme: light)']);
+        } finally {
+            metas.forEach(meta => meta.remove());
+        }
+    });
+
     it('SET-3.1 should put the previous theme back when storing fails', async () => {
         const { service } = create({ save: vi.fn().mockResolvedValue(undefined) });
 

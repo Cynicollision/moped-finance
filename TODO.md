@@ -20,9 +20,6 @@ Within a milestone, items are listed in the order to work through them (later it
 
 The core application with manual accounts. Done once the items below are, the image runs on the home server, and it passes testing on a phone over the LAN.
 
-### Install as an app
-- [ ] APP-9.1, 9.2: web app manifest (name, icons, theme colours, start URL), and a service worker if browsers still need one to offer installation. Choose caching so a new version shows up after an update (APP-9.2), for example Angular's `@angular/service-worker` with its update checks, or no caching at all. Installing needs HTTPS (app.md Notes), so test with `USE_HTTPS` or on localhost.
-
 ### Demo mode
 - [ ] APP-4.2, 4.3: populate demo mode from `server/seed-data/`: `demo.interceptor.ts` answers everything but auth with an empty list. Needs the CSVs turned into client-side data (a build step or JSON) and in-browser create/edit/delete. Last of the features, so it covers the finished screens.
 

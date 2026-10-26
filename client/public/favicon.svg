@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15.59 -9.34 539.67 539.67"><rect x="-15.59" y="-9.34" width="539.67" height="539.67" rx="107.93" fill="#ffffff" />
+    <defs>
+        <!-- Keeps a gap between the speed streak and the rear wheel -->
+        <mask id="streak-gap">
+            <rect width="512" height="512" fill="#fff" />
+            <circle cx="260" cy="225" r="62" fill="#000" />
+        </mask>
+    </defs>
+
+    <!-- Bars -->
+    <g fill="#757e8f">
+        <rect x="90" y="368" width="106" height="122" />
+        <rect x="231" y="289" width="106" height="201" />
+        <rect x="371" y="208" width="107" height="282" />
+    </g>
+
+    <!-- Speed streak -->
+    <path d="M213,204 Q118,292 6,352 Q142,344 262,256 Z" fill="#2250a5" mask="url(#streak-gap)" />
+
+    <!-- Wheels -->
+    <g fill="none" stroke="#303843" stroke-width="17">
+        <circle cx="260" cy="225" r="47" />
+        <circle cx="446" cy="133" r="48" />
+    </g>
+
+    <g fill="#2250a5">
+        <!-- Frame: steering column, floor, the fairing under the seat, and the arm to the rear hub -->
+        <path
+            d="M364,62 L358,86 L354,98 L350,120 L346,136 Q342,146 336,151 Q322,159 306,166 Q302,152 292,136
+               L220,170 Q238,160 254,159 Q276,161 290,168 Q306,177 314,191 L298,198 L256,222 Q248,230 254,233 Q260,236 268,231
+               L304,214 L336,198 L352,190 Q362,180 366,166 L376,140 L382,120 L386,98 L390,76 L390,62 Z"
+        />
+        <!-- Fork -->
+        <line x1="388" y1="86" x2="446" y2="134" stroke="#2250a5" stroke-width="16" stroke-linecap="round" />
+        <!-- Handlebar and headlight -->
+        <path
+            d="M316,64 Q310,62 309,56 L308,50 L336,36 Q344,33 349,38 L364,51 L367,52 L372,44 L384,33 Q389,29 392,34
+               L398,47 L404,60 Q404,66 396,68 L388,72 L362,72 L356,66 L344,56 L339,54 L333,56 L320,63 Z"
+        />
+    </g>
+
+    <!-- Seat -->
+    <path d="M210,150 L278,118 Q290,114 298,124 L302,131 Q302,134 298,135 L222,169 Q216,171 214,166 Z" fill="#303843" />
+</svg>

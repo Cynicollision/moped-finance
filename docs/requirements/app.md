@@ -87,8 +87,8 @@ Cross-cutting requirements for a self-hosted box that restarts and updates witho
 
 | ID | Requirement | Status |
 |---|---|---|
-| APP-9.1 | The app shall be installable as a progressive web app from a browser that offers it (for example Chrome's **Install** in the address bar or menu), named "Moped Finance" with its own icon and theme colours, and open in its own window at the Dashboard (APP-1.6). | Planned |
-| APP-9.2 | An installed app shall pick up a new version after the server is updated, at the latest the next time it's opened, without the user clearing anything. | Planned |
+| APP-9.1 | The app shall be installable as a progressive web app from a browser that offers it (for example Chrome's **Install** in the address bar or menu), named "Moped Finance" with its own icon and theme colours, and open in its own window at the Dashboard (APP-1.6). | Implemented |
+| APP-9.2 | An installed app shall pick up a new version after the server is updated, at the latest the next time it's opened, without the user clearing anything. | Implemented |
 
 ## APP-10 The owner can start over, or try the app with sample data
 
@@ -108,5 +108,5 @@ Commands run on the host, like the password reset (AUTH-12): whoever can run the
 ## Notes
 
 - **Debug date and the server.** In development builds the client uses 2026-05-17 as today, while the server uses the real date for anything it computes on its own (for example a spending request with no as-of date). That's fine while the client always sends an as-of date, as it does for accounts' balances, value history and spending. The server's date limit (APP-8.1) uses its real date, so in development a date between 2026-05-17 and the real today can still be imported or sent to the API, though the date pickers stop at 2026-05-17.
-- **Installing needs HTTPS (APP-9).** Browsers offer installation only to a site served over HTTPS, or from localhost. Over plain HTTP on a LAN, the default ([deployment.md](../deployment.md)), the app works in a tab but may not be installable; check the browsers' current rules when building it. Offline use isn't planned: the app needs its server.
+- **Installing needs HTTPS (APP-9).** Browsers offer installation only to a site served over HTTPS, or from localhost. Over plain HTTP on a LAN, the default ([deployment.md](../deployment.md)), the app works in a tab but isn't installable. There's no service worker: Chrome has offered **Install** from its menu without one since version 108 on Android and 112 on desktop, though its automatic install prompt still wants one. So nothing is cached beyond the browser's normal HTTP cache, where the server makes every file revalidate and the build's script and style names change with each version, and an update shows on the next load (APP-9.2). Offline use isn't planned: the app needs its server.
 - **No future dates (APP-8.1).** Decided 2026-10-07. The app records what has happened, and planning ahead is what Budget is for (BUD). Bank exports and sync never carry future dates, and allowing them would mean a future-dated balance entry could become the current balance, and the Transactions list would need a default End Date to hide them.
