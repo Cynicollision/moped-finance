@@ -72,6 +72,17 @@ export class ThemeService {
         if (root.getAttribute('data-theme') !== theme) {
             root.setAttribute('data-theme', theme);
         }
+        // The installed app's title bar (APP-9.1): index.html has a theme-color for each scheme
+        this.document.querySelectorAll('meta[name="theme-color"][data-scheme]').forEach(meta => {
+            const scheme = meta.getAttribute('data-scheme');
+            const media =
+                theme === AppTheme.System
+                    ? `(prefers-color-scheme: ${scheme})`
+                    : theme.toLowerCase() === scheme
+                      ? 'all'
+                      : 'not all';
+            meta.setAttribute('media', media);
+        });
         try {
             this.document.defaultView?.localStorage.setItem(THEME_STORAGE_KEY, theme);
         } catch {
