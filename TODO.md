@@ -19,7 +19,6 @@ Within a milestone, items are listed in the order to work through them (later it
 The core application with manual accounts. Done once the items below are; the image already runs on the home server and has passed testing on a phone over the LAN.
 
 ### Release
-- [ ] **Screenshots** in `README.md` (seed data, phone and desktop, light and dark), once Spending and Budget look the way they will.
 - [ ] **Tag `v0.1.0`** and publish its GitHub Release (development.md, Releases).
 
 ---

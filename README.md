@@ -4,6 +4,8 @@ A self-hosted, single-user personal finance app. It runs as a container on any D
 
 > **Status:** early and under active development. The first release, v0.1, covers manual accounts and runs as a container on a home server; bank sync is next. See the [roadmap](#roadmap).
 
+![The Dashboard in the dark theme: net worth over the past 30 days, and assets by group](docs/images/dashboard-dark.png)
+
 ## What it does
 
 - **Accounts**: institutions and their accounts, assets and liabilities in groups (cash, investments, retirement, real estate, ...), with balances entered by hand or kept up to date by transactions, balance history imported from CSV, and closed or hidden accounts.
