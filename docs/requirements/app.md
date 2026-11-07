@@ -103,7 +103,7 @@ Commands run on the host, like the password reset (AUTH-12): whoever can run the
 
 ## Known gaps
 
-- **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty.
+- **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty. Finishing it isn't scheduled (TODO.md, Unscheduled).
 
 ## Notes
 

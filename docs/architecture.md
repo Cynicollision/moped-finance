@@ -109,4 +109,4 @@ client/src/app/
 
 ## Production shape
 
-In production a single container runs the API and serves the built client from Express, next to a Postgres container. The Dockerfile copies Angular's `dist/moped-finance/browser/` to `server/dist/server/public/`, which Express serves as `public` next to the compiled `index.js`. In development (ts-node) the same code resolves to `server/public/`, which is gitignored and normally empty. See [deployment.md](deployment.md) for status.
+In production a single container runs the API and serves the built client from Express, next to a Postgres container. The Dockerfile copies Angular's `dist/moped-finance/browser/` to `server/dist/server/public/`, which Express serves as `public` next to the compiled `index.js`. In development (ts-node) the same code resolves to `server/public/`, which is gitignored and normally empty. See [deployment.md](deployment.md).

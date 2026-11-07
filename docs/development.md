@@ -111,7 +111,7 @@ See [testing.md](testing.md) for how the tests are set up.
 
 Releases follow the milestones in [TODO.md](../TODO.md): each one finished is a minor version (`v0.1.0`, `v0.2.0`, ...), and the one that finishes the last milestone is `v1.0.0`. A fix released between milestones is a patch version (`v0.1.1`).
 
-To release, tag the merge commit on `main` and publish the release with notes generated from the merged PRs:
+To release, set `version` in `client/package.json` and `server/package.json` (and their lockfiles) to the release's number in its last PR (`npm version 0.2.0 --no-git-tag-version` in each folder), then tag the merge commit on `main` and publish the release with notes generated from the merged PRs:
 
 ```bash
 gh release create v0.1.0 --target main --generate-notes

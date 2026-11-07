@@ -1551,26 +1551,6 @@ describe('Account Routes', () => {
         });
     });
 
-    describe('POST /accounts/:accountId/sync', () => {
-        it('should return sync stub success', async () => {
-            const acc1 = await accountData.insert(
-                EntityFactory.createAccount({
-                    institutionId: testInstitutionId,
-                    name: 'Checking Account',
-                    type: AccountType.Checking,
-                    balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
-                })
-            );
-
-            const response = await request(app).post(`/accounts/${acc1.id}/sync`);
-
-            expect(response.status).toBe(200);
-            expect(response.body.message).toContain('Sync account logic stub');
-        });
-    });
-
     describe('field rules and partial updates', () => {
         it('ACCT-1.5 should change only the fields sent', async () => {
             const account = await accountData.insert(

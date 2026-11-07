@@ -1,12 +1,12 @@
 # Deployment
 
-> **Status: not deployed yet.** The production image builds, creates its schema on an empty database, serves the client and answers `/health`, and its host commands work; CI checks this on every PR (the smoke test in `.github/workflows/ci.yml`) and publishes the image from `main`. It hasn't been run on the target host yet. This page describes the intended setup; fill in the exact steps once it has.
+> **Status: deployed.** The image runs on a Synology NAS (Container Manager) on the LAN, over plain HTTP and over HTTPS through the NAS's reverse proxy, and installs as an app on a phone. CI checks the image on every PR (the smoke test in `.github/workflows/ci.yml`): it builds, creates its schema on an empty database, serves the client and answers `/health`, and its host commands work. CI then publishes it from `main`.
 
 ## Target
 
 A Docker host on a private network (a NAS, home server or similar), reachable from the LAN only. No inbound internet access is assumed, so nothing may rely on webhooks.
 
-## Intended setup
+## Setup
 
 - **Image:** the root `Dockerfile` builds the client and server and produces one image. The API serves the built client, so there's one port (3000).
 - **Delivery:** CI's publish job pushes `ghcr.io/cynicollision/moped-finance` (public, `linux/amd64`) once the other jobs pass: `latest` and `sha-<commit>` for every push to `main`, and `0.1.0` and `0.1` for a release tag `v0.1.0`. The host pulls it; no sign-in is needed. To run something else, such as a release or an image built on the host (`docker build -t moped-finance .`), set `DOCKER_IMAGE`.

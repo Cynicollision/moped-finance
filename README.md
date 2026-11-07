@@ -2,7 +2,7 @@
 
 A self-hosted, single-user personal finance app. It runs on a home server (a NAS or any Docker host on your network) and keeps your accounts, transactions, budget and spending in your own Postgres database.
 
-> **Status:** early and under active development. The first release, v0.1 (manual accounts), is in progress and hasn't been deployed outside development yet. See the [roadmap](#roadmap).
+> **Status:** early and under active development. The first release, v0.1, covers manual accounts and runs on a home NAS; bank sync is next. See the [roadmap](#roadmap).
 
 ## What it does
 
@@ -20,18 +20,16 @@ Each milestone ends with a tagged release; the details are in [TODO.md](TODO.md)
 
 | Release | Milestone |
 |---|---|
-| v0.1 | **Initial release**: the core app with manual accounts, installable on a phone, with a demo mode |
-| v0.2 | Automatic categorization: rules, and learning from your transactions |
-| v0.3 | Tools: reports and a retirement tracker |
-| v0.4 | Real estate values from an online estimate |
-| v0.5 | Automated bank sync through [SimpleFIN Bridge](https://www.simplefin.org/) |
+| v0.1 | **Initial release**: the core app with manual accounts, installable on a phone |
+| v0.2 | Automated bank sync through [SimpleFIN Bridge](https://www.simplefin.org/), with automatic categorization: rules, and learning from your transactions |
+| v0.3 | Real estate values from an online estimate |
 
-Version 1.0 is the release that finishes the last of these.
+Version 1.0 is the release that finishes the last of these. Reports and other tools arrive along the way, as the features around them need them.
 
 ## Running it
 
 - **Development:** Node.js 24 and Docker. See [docs/development.md](docs/development.md).
-- **Self-hosting:** one Docker image plus Postgres, on a private network. See [docs/deployment.md](docs/deployment.md); it describes the intended setup, which hasn't been run on a real host yet.
+- **Self-hosting:** one Docker image plus Postgres, on a private network. See [docs/deployment.md](docs/deployment.md).
 
 Built with Angular, Node.js and Express, and PostgreSQL with Drizzle ORM.
 

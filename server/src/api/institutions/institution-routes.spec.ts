@@ -186,15 +186,4 @@ describe('Institution Routes', () => {
             });
         });
     });
-
-    describe('POST /institutions/:id/sync', () => {
-        xit('should return sync stub success', async () => {
-            const institution = await institutionsData.insert(EntityFactory.createInstitution({ name: 'Chase' }));
-
-            const response = await request(app).post(`/institutions/${institution.id}/sync`);
-
-            expect(response.status).toBe(201);
-            expect(response.body.message).toContain('Sync institution logic stub');
-        });
-    });
 });
