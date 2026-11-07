@@ -1,8 +1,8 @@
 # Moped Finance
 
-A self-hosted, single-user personal finance app. It runs on a home server (a NAS or any Docker host on your network) and keeps your accounts, transactions, budget and spending in your own Postgres database.
+A self-hosted, single-user personal finance app. It runs as a container on any Docker host on your home network and keeps your accounts, transactions, budget and spending in your own Postgres database.
 
-> **Status:** early and under active development. The first release, v0.1, covers manual accounts and runs on a home NAS; bank sync is next. See the [roadmap](#roadmap).
+> **Status:** early and under active development. The first release, v0.1, covers manual accounts and runs as a container on a home server; bank sync is next. See the [roadmap](#roadmap).
 
 ## What it does
 

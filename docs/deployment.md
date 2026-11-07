@@ -1,10 +1,10 @@
 # Deployment
 
-> **Status: deployed.** The image runs on a Synology NAS (Container Manager) on the LAN, over plain HTTP and over HTTPS through the NAS's reverse proxy, and installs as an app on a phone. CI checks the image on every PR (the smoke test in `.github/workflows/ci.yml`): it builds, creates its schema on an empty database, serves the client and answers `/health`, and its host commands work. CI then publishes it from `main`.
+> **Status: deployed.** The image runs as a container on a home server on the LAN, over plain HTTP and over HTTPS through a reverse proxy, and installs as an app on a phone. CI checks the image on every PR (the smoke test in `.github/workflows/ci.yml`): it builds, creates its schema on an empty database, serves the client and answers `/health`, and its host commands work. CI then publishes it from `main`.
 
 ## Target
 
-A Docker host on a private network (a NAS, home server or similar), reachable from the LAN only. No inbound internet access is assumed, so nothing may rely on webhooks.
+A Docker host on a private network, reachable from the LAN only. No inbound internet access is assumed, so nothing may rely on webhooks.
 
 ## Setup
 
@@ -49,7 +49,7 @@ docker exec moped-finance-db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB
 
 Sessions and the generated session secret are in the database, so after a restore devices are signed in as they were when the dump was made.
 
-**On a schedule:** keep dumps somewhere other than the database volume, ideally copied off the host. A script like this, run daily by the host's scheduler (cron, or Task Scheduler on a Synology NAS), keeps 30 days of them:
+**On a schedule:** keep dumps somewhere other than the database volume, ideally copied off the host. A script like this, run daily by the host's scheduler (cron or its equivalent), keeps 30 days of them:
 
 ```sh
 #!/bin/sh
@@ -61,7 +61,7 @@ mv "$file.partial" "$file"
 find . -name 'moped-finance-*.dump' -mtime +30 -delete
 ```
 
-The `.partial` name means a failed dump never replaces a good one or counts toward the 30 days. Point the NAS's backup tool (Hyper Backup, for example) at the backups folder to copy the dumps elsewhere. Now and then, restore a dump into a scratch database to check it, as in step 3 with another database name.
+The `.partial` name means a failed dump never replaces a good one or counts toward the 30 days. Point the host's backup tool at the backups folder to copy the dumps elsewhere. Now and then, restore a dump into a scratch database to check it, as in step 3 with another database name.
 
 ## HTTP or HTTPS
 
@@ -69,7 +69,7 @@ The app itself only speaks plain HTTP. Choose one of these:
 
 | | Plain HTTP on the LAN (default) | HTTPS through a reverse proxy |
 |---|---|---|
-| Reach it at | `http://<host>:3000` | `https://<name>` served by the proxy (the NAS's built-in reverse proxy, Caddy, Nginx Proxy Manager, …), which forwards to port 3000 |
+| Reach it at | `http://<host>:3000` | `https://<name>` served by the proxy (the host's built-in reverse proxy if it has one, Caddy, Nginx Proxy Manager, …), which forwards to port 3000 |
 | `USE_HTTPS` | `false` | `true` |
 | `TRUST_FIRST_PROXY` | `false` | `true` |
 
