@@ -104,7 +104,7 @@ Default categories (E = Essential, D = Discretionary):
 
 ## CAT-8 Transactions can be categorized and cleaned up automatically
 
-A rule is conditions and actions: when a transaction matches every condition, the rule's actions change it. The actions are **Set category** and **Rename merchant**; others, such as tags, can be added later without changing how rules work (decided 2026-11-07). How it's built is in [design/rules.md](../design/rules.md).
+A rule is conditions and actions: when a transaction matches every condition, the rule's actions change it. The actions are **Set category** and **Rename merchant**; others, such as tags, can be added later without changing how rules work (decided 2026-11-07). How it's built is in [v0.2-design.md](../v0.2-design.md#rules-and-learning) until v0.2 ships.
 
 | ID | Requirement | Status |
 |---|---|---|

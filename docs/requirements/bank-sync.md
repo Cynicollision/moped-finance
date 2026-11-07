@@ -2,7 +2,7 @@
 
 Bank sync keeps connected accounts' transactions and balances up to date from [SimpleFIN Bridge](https://beta-bridge.simplefin.org) (decided 2026-10-15). The user links their banks in Bridge, not in this app, and gives the app one connection that covers all of them. Bridge returns every **bank account** it holds for the user, grouped by **connection** (one sign-in at one bank). The user links each bank account to one of their accounts, creates a new account for it, or chooses not to sync it.
 
-Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), where the user connects, sees how syncing is going and links bank accounts; and the **Bank sync** section of Manage Account (ACCT-7.3), which links or unlinks one account. How it's built is in [design/bank-sync.md](../design/bank-sync.md).
+Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), where the user connects, sees how syncing is going and links bank accounts; and the **Bank sync** section of Manage Account (ACCT-7.3), which links or unlinks one account. How it's built is in [v0.2-design.md](../v0.2-design.md) until v0.2 ships.
 
 ## SYNC-1 The user can connect the app to SimpleFIN Bridge
 
@@ -45,7 +45,7 @@ Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), whe
 
 | ID | Requirement | Status |
 |---|---|---|
-| SYNC-4.1 | For each connected account, a sync shall add the bank's transactions it hasn't added before, recognized by the bank's transaction ID, dated on or after the account's **Sync transactions from** date (SYNC-2.4). Repeated syncs never duplicate a transaction. | Planned |
+| SYNC-4.1 | For each connected account, a sync shall add the bank's transactions it hasn't added before, recognized by the bank's transaction ID, dated on or after the account's **Sync transactions from** date (SYNC-2.4). Repeated syncs never duplicate a transaction, and one the user deleted is never added again (TXN-2.12). | Planned |
 | SYNC-4.2 | A synced transaction's **Date** shall be the day the bank says it happened, or failing that the day it posted, in the server's time zone (APP-5.6). **Amount** is the bank's (money in positive, APP-6.3), **Original Statement** the bank's description as given, and **Merchant** the bank's payee if it gives one, or else its description (trimmed, at most 255 characters), before rules (CAT-8.4). It doesn't adjust the balance (ACCT-5.5). | Planned |
 | SYNC-4.3 | New synced transactions shall be categorized by rules and learning (CAT-8.4, CAT-9) in the same sync; the rest are Uncategorized (CAT-5.5). | Planned |
 | SYNC-4.4 | When the bank changes a transaction sync added before, sync shall update its date, amount and original statement, unless it's split (TXN-4.8). It never changes the merchant, category, notes or Hide Transaction, and never deletes a transaction the bank stops returning. | Planned |
