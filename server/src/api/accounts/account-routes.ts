@@ -174,14 +174,6 @@ export function createAccountRouter(
         );
     });
 
-    // POST /:id/sync - Sync Account
-    router.post('/:id/sync', (req, res) => {
-        const op: OperationDefinition = { domain, operation: 'syncAccount' };
-        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
-            return controller.syncAccount(context, params.id);
-        });
-    });
-
     // GET /:id/export-balances - Export Balances
     router.get('/:id/export-balances', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'exportBalanceHistory' };

@@ -77,13 +77,5 @@ export function createInstitutionRouter(
         });
     });
 
-    // POST /:id/sync - Sync Institution
-    router.post('/:id/sync', (req, res) => {
-        const op: OperationDefinition = { domain, operation: 'syncInstitution' };
-        handler.execute(req, res, op, { params: idParamsSchema }, (context, { params }) => {
-            return controller.syncInstitution(context, params.id);
-        });
-    });
-
     return router;
 }

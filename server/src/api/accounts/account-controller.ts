@@ -177,14 +177,6 @@ export class AccountController {
         return Result.success(changes);
     }
 
-    public async syncAccount(
-        _context: OperationContext,
-        _accountId: string
-    ): Promise<OperationResult<{ message: string }>> {
-        // TODO: implement sync/synchronization logic
-        return Result.success({ message: 'Sync account logic stub' });
-    }
-
     public async exportBalanceHistory(context: OperationContext, accountId: string): Promise<OperationResult<string>> {
         const account = await this.accountData.retrieveSingle(accountId);
         if (!account) {

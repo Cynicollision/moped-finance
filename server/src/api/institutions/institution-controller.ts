@@ -81,12 +81,4 @@ export class InstitutionController {
 
         return Result.successDeleted();
     }
-
-    public async syncInstitution(
-        _context: OperationContext,
-        _institutionId: string
-    ): Promise<OperationResult<{ message: string }>> {
-        // TODO: implement sync logic
-        return Result.successCreated({ message: 'Sync institution logic stub' });
-    }
 }

@@ -118,11 +118,6 @@ describe('Auth Routes', () => {
                 defaultCategories: false
             });
 
-            if (response.status !== 200) {
-                console.log('REGISTER ERROR:', response.body);
-                console.log('LOGGER ERRORS:', mockLogger.error.mock.calls);
-            }
-
             expect(response.status).toBe(200);
             expect(response.body.username).toBe('newuser');
             expect(response.body).not.toHaveProperty('passwordHash');
