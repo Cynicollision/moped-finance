@@ -2,7 +2,7 @@
 
 A self-hosted, single-user personal finance app. It runs as a container on any Docker host on your home network and keeps your accounts, transactions, budget and spending in your own Postgres database.
 
-> **Status:** early and under active development. The first release, v0.1, covers manual accounts and runs as a container on a home server; bank sync is next. See the [roadmap](#roadmap).
+> **Status:** early and under active development. The first release, [v0.1.0](https://github.com/Cynicollision/moped-finance/releases/tag/v0.1.0), covers manual accounts; bank sync is next. See the [roadmap](#roadmap).
 
 ![The Dashboard in the dark theme: net worth over the past 30 days, and assets by group](docs/images/dashboard-dark.png)
 
@@ -22,7 +22,7 @@ Each milestone ends with a tagged release; the details are in [TODO.md](TODO.md)
 
 | Release | Milestone |
 |---|---|
-| v0.1 | **Initial release**: the core app with manual accounts, installable on a phone |
+| v0.1 | **Initial release** (released): the core app with manual accounts, installable on a phone |
 | v0.2 | Automated bank sync through [SimpleFIN Bridge](https://www.simplefin.org/), with automatic categorization: rules, and learning from your transactions |
 | v0.3 | Real estate values from an online estimate |
 

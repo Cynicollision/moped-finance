@@ -2,24 +2,14 @@
 
 Work items and ideas, grouped by release milestone. Delete an item once it's done (git history is the changelog).
 
-Each milestone ends with a release: a `vX.Y.0` tag and a GitHub Release (see [development.md](docs/development.md#releases)). Version 1.0 is the release that finishes the last milestone below; until then each one takes the next minor version.
+v0.1.0, the initial release with manual accounts, came out on 2026-11-07. Each milestone ends with a release: a `vX.Y.0` tag and a GitHub Release (see [development.md](docs/development.md#releases)). Version 1.0 is the release that finishes the last milestone below; until then each one takes the next minor version.
 
 | Milestone | Release | What it adds |
 |---|---|---|
-| [Initial release](#initial-release-v01) | v0.1 | The core app with manual accounts: every `Partial` and `Planned` requirement except the later milestones' and demo mode's, a public repository, and a deployed image |
 | [Bank sync and categorization](#bank-sync-and-categorization-v02) | v0.2 | Transactions and balances from SimpleFIN Bridge, with rules and learning that set categories on add, import and sync |
 | [Real estate values](#real-estate-values-v03) | v0.3 | Real Estate accounts' values from an online estimate |
 
 Within a milestone, items are listed in the order to work through them (later items build on earlier ones). Each is about a day's work or one Claude Code session, possibly several PRs. **Unscheduled** holds work that isn't part of a milestone yet: Tools, built when a feature needs them, and demo mode. **Ideas** at the end are unsorted thoughts, not yet committed to.
-
----
-
-## Initial release (v0.1)
-
-The core application with manual accounts. Done once the items below are; the image already runs on the home server and has passed testing on a phone over the LAN.
-
-### Release
-- [ ] **Tag `v0.1.0`** and publish its GitHub Release (development.md, Releases).
 
 ---
 
