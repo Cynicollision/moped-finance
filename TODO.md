@@ -9,31 +9,33 @@ v0.1.0, the initial release with manual accounts, came out on 2026-11-07. Each m
 | [Bank sync and categorization](#bank-sync-and-categorization-v02) | v0.2 | Transactions and balances from SimpleFIN Bridge, with rules and learning that set categories on add, import and sync |
 | [Real estate values](#real-estate-values-v03) | v0.3 | Real Estate accounts' values from an online estimate |
 
-Within a milestone, items are listed in the order to work through them (later items build on earlier ones). Each is about a day's work or one Claude Code session, possibly several PRs. **Unscheduled** holds work that isn't part of a milestone yet: Tools, built when a feature needs them, and demo mode. **Ideas** at the end are unsorted thoughts, not yet committed to.
+Within a milestone, items are listed in the order to work through them (later items build on earlier ones). Each is about a day's work or one Claude Code session, possibly several PRs. **Unscheduled** holds work that isn't part of a milestone yet: Tools, built when a feature needs them, bank sync's later additions, account details, and demo mode. **Ideas** at the end are unsorted thoughts, not yet committed to.
 
 ---
 
 ## Bank sync and categorization (v0.2)
 
-Bank sync first, then categorization, whose rules also apply to synced transactions. Constraints for bank sync:
-- **Provider: SimpleFIN Bridge** (decided 2026-10-15, replacing a Plaid-style link flow). It's a paid subscription (about $15 a year in 2026; check the current price), which the owner accepted. The user links banks in Bridge and pastes a one-time setup token into Settings → Bank Sync (SET-4.2), which the server exchanges for an access URL. One connection covers every bank, so INST-2's per-institution Connect, Reconnect and Disconnect need rewriting before building: for example, map each SimpleFIN account (and its `org`) to an institution and account on the first sync.
-- **Polling only.** The host isn't reachable from the internet, so no webhooks. Sync on a schedule and/or on demand. Scheduling: a built-in timer (no setup for self-hosters) as the main schedule, which Real estate values can reuse later, with the sync endpoints also callable by an external scheduler using a Read & write API token (AUTH-11).
-- [ ] **Design.** Write `docs/integrations/bank-sync.md` before coding: claiming the setup token and storing the access URL (it embeds credentials; decide whether to encrypt it at rest and with what key), polling within Bridge's rate limits and date ranges (`start-date`, `pending`), mapping SimpleFIN orgs/accounts to institutions/accounts, de-duplicating against CSV imports by transaction ID, and testing with Bridge's demo token. Rewrite INST-2 and ACCT-4 for the single connection.
-- [ ] **Connect and link.** INST-2.1 to 2.4, 2.6; ACCT-4.3 (connected derived from the link, replacing `is_manual`); ACCT-2.6's Manual/Connected; ACCT-5.5 (linking turns off `adjusts_balance` on the account's transactions).
-- [ ] **Combining histories.** INST-2.8 to 2.11: Combine / Use the bank's history / Keep my history only, with the preview counts and one database transaction.
-- [ ] **Sync.** INST-2.12, ACCT-4.1, 4.2; TXN-2.12, TXN-4.8 (synced transactions' read-only fields and splits); SET-4.1 (Bank Sync settings, schedule), SET-4.2 (setup token).
-- [ ] **Disconnect.** INST-2.5, 2.7; ACCT-4.4, 4.5; ACCT-1.5's read-only institution for connected accounts; ACCT-6.1's disconnect on close.
-- [ ] **Rules.** CAT-8.1 to 8.5, 8.7, CAT-5.5: Rules screen in Settings (SET-1.1), matching on statement, merchant and amount, first match wins, applied on add, import and sync, with "apply to existing Uncategorized".
-- [ ] **Learning.** CAT-9.1 to 9.4, CAT-8.6: Learn from my transactions, and View Transaction saying how a category was set.
+Requirements: [SYNC](docs/requirements/bank-sync.md), ACCT-4 and ACCT-7, CAT-8 and CAT-9. Designs: [bank-sync.md](docs/design/bank-sync.md) and [rules.md](docs/design/rules.md), written 2026-11-07 from the SimpleFIN spec before any code. Read both before starting an item, and correct them as the code proves them wrong. The deciding constraints:
+- **Provider: SimpleFIN Bridge** (decided 2026-10-15), a paid subscription (about $15 a year in 2026) the owner accepted. One connection covers every bank; accounts link to Bridge's bank accounts, not institutions to banks.
+- **Polling only, scheduled inside the server** (decided 2026-11-07): the host isn't reachable from the internet, and the server has to enforce Bridge's limit of about 24 requests a day anyway (SYNC-3.4). No external scheduler.
+
+- [ ] **Manage Account.** ACCT-7 (all but 7.3's bank sync section, which comes with linking), ACCT-1.5, 1.6, 2.2, 2.8, 6.1, 6.3; APP-2.4, 2.6. Replaces Edit Account (`account-form`) with the sectioned page and adds the Update balance dialog. Update `conventions.md`'s **Create and edit** rule (an account's Close and Delete live in Manage Account's last section, not the ⋮ menu) and the Edit Account mentions in APP-1.8, 1.9, 2.7 and 6.3. Needs no bank sync, so it goes first.
+- [ ] **SimpleFIN client and encryption key.** Claim Bridge's demo token and record its responses as fixtures (`server/src/api/bank-sync/test-data/`), then work through the design's **To confirm** list and fix the design and SYNC-4.2 to match. Build `simplefin-client.ts` (claim, fetch, Zod parsing of v1 and v2, credentials moved to a Basic header) and `SecretBox` with `ENCRYPTION_KEY` (startup check, `.env.example`, compose files, `deployment.md`).
+- [ ] **Connect.** SYNC-1, SYNC-3.3 to 3.7 (Sync now, the quota, the lock, the 90-day request, run history), and SYNC-2.1, 2.2, 2.6, 2.9's list of bank accounts: the `bank_sync_access`, `bank_connections`, `bank_accounts` and `sync_runs` tables, the Bank Sync page, and Bank Sync in SET-1.1's list. A sync at this stage stores the payload and the bank-account list, and writes nothing to accounts.
+- [ ] **Link.** SYNC-2.3 to 2.5, 2.7, 2.8, 2.10; ACCT-4.3 (drop `is_manual`), 4.5, 7.3; ACCT-1.3's pointer to Bank Sync, ACCT-2.6, ACCT-5.5, INST-1.12. Linking applies the latest stored payload's transactions (SYNC-4.1, 4.2, 4.6), so this item builds `sync-transform.ts` too.
+- [ ] **Sync writes.** SYNC-4.3 to 4.5, 4.7, 4.8; ACCT-4.1, 4.2, 4.4; TXN-2.12, TXN-4.8: each sync adds and updates transactions and records balances for every linked account, in one database transaction. Categorization is a no-op hook until Rules.
+- [ ] **Schedule and alerts.** SYNC-3.1, 3.2 (`SyncScheduler`, the `bankSyncAutomatic` setting) and SYNC-5 (the banner on the Dashboard and Bank Sync). Prune old `sync_runs` payloads on the log-retention timer.
+- [ ] **Rules.** CAT-8.1 to 8.5, 8.7, 8.8, CAT-5.5: the rules tables and `RuleEngine` (design/rules.md), the Rules page in Settings (SET-1.1), applied on add, import and sync, with Apply to existing.
+- [ ] **Learning.** CAT-9, CAT-8.6: Learn from my transactions, `category_source`, and View Transaction saying how a category or merchant was set.
 
 ---
 
 ## Real estate values (v0.3)
 
 - [ ] Keep Real Estate accounts' (ACCT-1.2) values up to date from an online estimate, such as Zillow's Zestimate, with the property's address entered on the account (only for Real Estate types). Write requirements first (ACCT, plus SET for any provider key), deciding:
-  - **Provider.** Zillow no longer offers a public Zestimate API, and scraping breaks its terms, so compare what's available then: property-data APIs with value estimates (for example RentCast or ATTOM) on price, free tier, rate limits, coverage and terms for personal use. A key would be entered in Settings, like SimpleFIN's setup token.
+  - **Provider.** Zillow no longer offers a public Zestimate API, and scraping breaks its terms, so compare what's available then: property-data APIs with value estimates (for example RentCast or ATTOM) on price, free tier, rate limits, coverage and terms for personal use. A key would be entered in Settings, like SimpleFIN's setup token, and stored encrypted with `ENCRYPTION_KEY` (design/bank-sync.md).
   - **How values land.** Probably a set balance entry (ACCT-5) per sync, on the estimate's date, so a value the user enters by hand still works as before. Decide how often (monthly is plenty), whether to backfill history the provider offers, and how the user turns it off or overrides it.
-  - **Polling only** (no webhooks, as for bank sync): a scheduled fetch, reusing bank sync's timer, and/or a sync-now action on Account Details.
+  - **Polling only** (no webhooks, as for bank sync): a scheduled fetch, reusing bank sync's scheduler (`SyncScheduler`), and/or a sync-now action on Account Details.
   - **Privacy.** The address goes to a third party; say so where it's entered.
 
 ---
@@ -45,8 +47,17 @@ Bank sync first, then categorization, whose rules also apply to synced transacti
 Features that analyse the data rather than record it: not a milestone of their own, but built when an existing or new feature needs them, and filed under that feature's milestone then. Not written up as requirements yet.
 - [ ] **Decide, then write requirements**, probably in a new domain file. What the Tools area is (a destination in the navigation, or a Settings-like hub), and:
   - **Reports**: which ones, for example spending trends over months and breakdowns by category or group, and how they relate to Spending (CASH) and the Dashboard chart.
+  - **Debt paydown and savings planners**, which would need interest rates and APYs (Account details below).
   - **Retirement tracker**, built on the Retirement account group (ACCT-1.2): for example progress toward a target balance, or contributions against the yearly limits. The group already gives retirement savings their own Dashboard total; decide what else is worth tracking. (Replaces the old Retirement flag and the goals feature of the app this one replaces.)
 - [ ] **Chart library.** Re-evaluate Chart.js against the chart types the reports need (trends over months, category breakdowns): compare it with alternatives such as ECharts on those chart types, touch interaction and bundle size. Chart.js stays until then (decided 2026-09-27).
+
+### Bank sync, later
+
+- [ ] **Pending transactions** (SYNC-6.1): show the bank's pending transactions and replace each when it posts. Left out of v0.2 because a pending transaction's ID may change when it posts (check what the demo token showed, design/bank-sync.md **To confirm**), which needs matching beyond the ID.
+
+### Account details
+
+- [ ] Optional details per account, such as a savings account's APY, a card's credit limit and APR, or a loan's interest rate. Undecided until a feature uses them (decided 2026-11-07), such as a debt paydown or savings planner under Tools. If built: a `details` jsonb column on `accounts`, checked by a schema per account group in shared code, so a new field needs no migration (as `core.settings` does). SimpleFIN doesn't supply any of these, though a card's limit could be worked out from `available-balance`.
 
 ### Demo mode
 
@@ -57,6 +68,8 @@ Waits indefinitely (decided 2026-11-07); the shell stays as it is until then.
 
 ## Ideas
 
+- Tags on transactions, set by hand or by a rule action (CAT-8's actions are child rows built to take new types; design/rules.md).
+- Match the two sides of a transfer between the user's accounts (a card payment appears in checking and on the card). Rules can categorize both as Transfer; pairing them, for example to show one as the other's counterpart or warn when one side is missing, is a separate feature.
 - TypeScript 7 (the native compiler) once Angular, typescript-eslint and ts-jest support it; on 2026-10-17 they all stopped below 7, so both packages stay on 6.0 (decided 2026-10-17).
 - Drizzle 1.0 (`drizzle-orm` and `drizzle-kit`) once it's out of release candidates; kit 1.0 drops `@esbuild-kit`, which clears the server's `esbuild` audit finding (development.md). Check its migration guide: the migrations folder format and the relational query API change.
 - Money is handled as JS floats (`Number(row.amount)`). That's fine for display: keep doing sums in SQL, as Spending does, and round at the edges. Revisit integer cents only if totals ever drift.

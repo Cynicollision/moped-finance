@@ -102,30 +102,33 @@ Default categories (E = Essential, D = Discretionary):
 | CAT-7.4 | A row's group shall be found by name, ignoring case. A group that doesn't exist shall be created with the row's type, spelled as the first row that names it, and only when at least one of its rows creates a category, so an import never leaves an empty group. A row whose group exists with a different type is an error ("Row 5: Group 'Food' is an Expense group, not Income."), as is a row giving a new group a different type from an earlier row ("Row 6: Group 'Pets' is an Expense group in row 2, not Income."). | Implemented |
 | CAT-7.5 | Every row shall be checked, including rows that will be skipped, with every problem in a row reported in one message: **Type** is required and one of the three types (any case); **Group** and **Name** are required, at most 100 characters; **Icon** is blank or one emoji (CAT-1.2); **Necessity** is blank or one of the two values (any case) on Expense rows, and must be blank on others; **IsActive** is true, false (any case) or blank (true). A second row with the same name as an earlier row is an error ("Row 6: Name 'Coffee' is already in row 3."). | Implemented |
 
-## CAT-8 Transactions can be categorized automatically
+## CAT-8 Transactions can be categorized and cleaned up automatically
+
+A rule is conditions and actions: when a transaction matches every condition, the rule's actions change it. The actions are **Set category** and **Rename merchant**; others, such as tags, can be added later without changing how rules work (decided 2026-11-07). How it's built is in [design/rules.md](../design/rules.md).
 
 | ID | Requirement | Status |
 |---|---|---|
-| CAT-8.1 | The user can define rules that give a transaction a category from its details. A rule has a name (required, at most 100 characters), the category it sets (an active category), and one or more criteria from: **Original Statement** (*contains* or *is exactly* a term), **Merchant** (*contains* or *is exactly* a term) and **Amount** (*greater than*, *less than* or *equal to* an amount, entered as a positive number beside a **Money out** / **Money in** switch as in TXN-2.13). | Planned |
-| CAT-8.2 | A rule shall match a transaction, in any account, only when every criterion it has matches. Text criteria ignore case. An Amount criterion matches only transactions in its direction, then compares their size, so "Money out, greater than 100" matches a $150 purchase but not a $150 deposit. | Planned |
-| CAT-8.3 | The Rules screen shall list the rules in order, showing each one's criteria and category, with add, edit, delete (after confirming) and reorder. When several rules match, the first in the list wins. | Planned |
-| CAT-8.4 | Rules shall be applied to a transaction that's added without a chosen category, imported with a blank category (TXN-3.4), or synced (INST-2). They never replace a category the user chose or that the import file gave. | Planned |
-| CAT-8.5 | Saving a rule shall offer to apply it to the existing Uncategorized transactions it matches, saying how many ("Apply to 12 uncategorized transactions"). | Planned |
-| CAT-8.6 | View Transaction shall say how an automatic category was set: "Categorized by rule *rule name*" or "Categorized by learning" (CAT-9). The note goes away once the user changes the category. | Planned |
-| CAT-8.7 | Rules and learning shall categorize only transactions that aren't split (TXN-4). | Planned |
+| CAT-8.1 | The user can define rules. A rule has a name (required, at most 100 characters, unique ignoring case), one or more conditions from: **Original Statement** (*contains* or *is exactly* a term), **Merchant** (*contains* or *is exactly* a term), **Amount** (*greater than*, *less than* or *equal to* an amount, entered as a positive number beside a **Money out** / **Money in** switch as in TXN-2.13) and **Account** (*is* one of the user's accounts); and one or more actions from: **Set category** (an active category) and **Rename merchant** (to a name, required, at most 255 characters). Each condition field and each action can appear once. | Planned |
+| CAT-8.2 | A rule shall match a transaction only when every condition it has matches. Text conditions ignore case. An Amount condition matches only transactions in its direction, then compares their size, so "Money out, greater than 100" matches a $150 purchase but not a $150 deposit. | Planned |
+| CAT-8.3 | The Rules screen shall list the rules in order, showing each one's conditions and actions, with add, edit, delete (after confirming) and drag to reorder. Rules apply in that order, each to the transaction as the rules above it left it, and the first rule to set a field wins: so a rule near the top that renames "SQ \*BLUE BOTTLE 1234" to "Blue Bottle" lets a rule below it match the merchant "Blue Bottle". | Planned |
+| CAT-8.4 | **Set category** shall apply to a transaction that's added without a chosen category, imported with a blank category (TXN-3.4), or synced (SYNC-4.3). **Rename merchant** shall apply to transactions that are imported or synced, not to a merchant typed in the form. Rules never replace a category the user chose or the import file gave. | Planned |
+| CAT-8.5 | Saving a rule shall offer to apply it to the existing transactions it matches, saying how many each action would change ("Categorize 12 uncategorized transactions", "Rename the merchant of 30 transactions"). Set category applies only to Uncategorized ones; Rename merchant to every match. | Planned |
+| CAT-8.6 | View Transaction shall say how an automatic category or merchant was set: "Categorized by rule *rule name*", "Categorized by learning" (CAT-9) or "Merchant renamed by rule *rule name*". Each note goes away once the user changes that field. | Planned |
+| CAT-8.7 | Rules and learning shall change only transactions that aren't split (TXN-4). | Planned |
+| CAT-8.8 | A category or account that a rule uses can't be deleted until the rule is changed or deleted; the delete confirmation (CAT-4.4, ACCT-1.6) shall name the rules, and the server shall refuse with "This category is used by a rule. Edit or delete the rule first." (or "account"). | Planned |
 
 ## CAT-9 The app can learn categories from the user's own transactions
 
 | ID | Requirement | Status |
 |---|---|---|
 | CAT-9.1 | The Rules screen shall have a **Learn from my transactions** switch, off by default. | Planned |
-| CAT-9.2 | While it's on, a transaction that CAT-8.4 would categorize shall first get the category the user most often gave transactions with the same merchant (ignoring case), or, if the merchant is blank, the same original statement. It's used only when at least 3 such transactions were categorized by the user (not by rules or learning) and at least 80% of them have that category. | Planned |
-| CAT-9.3 | Rules run after learning, and a matching rule replaces the learned category, so the user's own rules always win. | Planned |
+| CAT-9.2 | While it's on, a transaction that CAT-8.4 would categorize, and that no rule gave a category, shall get the category the user most often gave transactions with the same merchant (ignoring case, after rules renamed it), or, if the merchant is blank, the same original statement. It's used only when at least 3 such transactions were categorized by the user (not by rules or learning) and at least 80% of them have that category. | Planned |
+| CAT-9.3 | Learning runs after rules and only sets a category no rule set, so the user's own rules always win. | Planned |
 | CAT-9.4 | Learning shall run inside the app on the instance's own data; no transaction data is sent anywhere. | Planned |
 
 ## Known gaps
 
-- **No automatic categorization (CAT-8, CAT-9).** Every transaction's category is chosen by hand or given in the import file.
+- **No rules or learning (CAT-8, CAT-9).** Every transaction's category is chosen by hand or given in the import file.
 
 ## Notes
 

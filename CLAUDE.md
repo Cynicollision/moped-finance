@@ -9,6 +9,7 @@ Read the doc that fits the task before starting:
 - [docs/testing.md](docs/testing.md): server (Jest + PGlite) and client (Vitest) test patterns
 - [docs/deployment.md](docs/deployment.md): production status (not working yet)
 - [docs/requirements/](docs/requirements/README.md): requirements by domain, with stable IDs
+- [docs/design/](docs/design/): designs for features not built yet (bank sync, rules); read the one for the feature you're building, and correct it as the code proves it wrong
 
 @docs/conventions.md
 
