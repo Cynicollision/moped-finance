@@ -22,7 +22,7 @@ Read the doc that fits the task before starting:
 
 ## Backlog
 
-`TODO.md` is the backlog, sectioned by release milestone (Initial release, then the feature milestones toward 1.0), with Ideas last.
+`TODO.md` is the backlog, sectioned by release milestone toward 1.0, then Unscheduled, with Ideas last. The `/next` skill (`.claude/skills/next/`) runs a session's worth of it: candidates, questions, plan, then one PR at a time.
 
 - Delete an item once it's done; git history is the changelog.
 - When you notice a bug, a deviation from standard practice, or other follow-up work that's out of scope for the current change, add it to the right milestone instead of fixing it on the side. Include file paths and what's wrong.
