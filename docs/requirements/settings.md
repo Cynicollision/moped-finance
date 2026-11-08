@@ -6,7 +6,7 @@ Settings (`/settings`) is where the owner changes how the app works for them: a 
 
 | ID | Requirement | Status |
 |---|---|---|
-| SET-1.1 | The profile menu's **Settings** (APP-1.5) shall open Settings (`/settings`, page title "Settings"), listing these sections in this order, each with a one-line description and linking to its own page: **Profile** (SET-2), **Appearance** (SET-3), **Dashboard** (SET-5), **Institutions and Accounts** (INST-1), **Categories** (CAT-1), **Rules** (CAT-8), **Bank Sync** (SET-4), **Change Password** (AUTH-5.2) and **API Tokens** (AUTH-11). Sections that aren't built yet are left out. | Partial |
+| SET-1.1 | The profile menu's **Settings** (APP-1.5) shall open Settings (`/settings`, page title "Settings"), listing these sections in this order, each with a one-line description and linking to its own page: **Profile** (SET-2), **Appearance** (SET-3), **Dashboard** (SET-5), **Institutions and Accounts** (INST-1), **Categories** (CAT-1), **Rules** (CAT-8), **Bank Sync** (SYNC), **Change Password** (AUTH-5.2) and **API Tokens** (AUTH-11). Sections that aren't built yet are left out. | Partial |
 | SET-1.2 | Settings shall be stored with the instance, not in the browser, so every device sees the same ones and they survive restarts and upgrades. A setting the user has never changed has its default. | Implemented |
 
 ## SET-2 The user can manage their profile
@@ -23,12 +23,12 @@ Settings (`/settings`) is where the owner changes how the app works for them: a 
 
 ## SET-4 The user can control bank sync
 
-Bank sync uses [SimpleFIN Bridge](https://beta-bridge.simplefin.org) (decided 2026-10-15). The user links their banks in Bridge, not in this app, and gives the app one connection that covers all of them.
+The **Bank Sync** page's requirements are their own domain, [SYNC](bank-sync.md), since 2026-11-07.
 
 | ID | Requirement | Status |
 |---|---|---|
-| SET-4.1 | **Bank Sync** shall let the user turn scheduled sync (INST-2.1) on or off and choose how often it runs, and show when it last ran and whether it succeeded, with **Sync now** to sync on demand. The details are decided with the design (`TODO.md`, Automated bank sync). | Planned |
-| SET-4.2 | **Bank Sync** shall let the user connect by pasting a SimpleFIN **setup token**. The server shall exchange it for an access URL straight away and store that with the instance (SET-1.2); no screen or API shall show the access URL again. Once connected, the section shall say so, with a **Disconnect** button that, after confirming, removes the stored access URL. The connection is set in Settings only, not in the server's environment. | Planned |
+| SET-4.1 | **Bank Sync** shall let the user turn scheduled sync on or off and choose how often it runs, show when it last ran, and offer **Sync now**. | Retired (SYNC-3: a fixed schedule with an Automatic sync switch, Sync now and the last syncs) |
+| SET-4.2 | **Bank Sync** shall let the user connect by pasting a SimpleFIN **setup token** and disconnect. | Retired (SYNC-1) |
 
 ## SET-5 The user can choose how the Dashboard groups accounts
 
@@ -45,4 +45,3 @@ Bank sync uses [SimpleFIN Bridge](https://beta-bridge.simplefin.org) (decided 20
 - AUTH-8 held the Settings screen and Profile until 2026-09-27. They moved here because Settings also holds sections that aren't about authentication, such as Appearance.
 - **Some limits aren't settings** (decided 2026-10-15). The password rules are fixed (AUTH-9.1), and the sign-in protection limits (AUTH-10.7) are optional environment variables rather than a Settings page. Both have values that suit nearly everyone, which keeps Settings to what the owner changes day to day.
 - **How the theme shows before the app loads (SET-3.1).** The browser keeps a copy of the last theme it showed and applies it before anything draws (`public/theme.js`). A browser that has never opened the app, or whose site data was cleared, has no copy: it starts dark and switches once the stored setting loads after signing in.
-- **Why the SimpleFIN connection isn't an environment variable.** A setup token works once: the app has to exchange it for the access URL, which is the real credential. Pasting the token into Settings does that in one step; an environment variable would mean exchanging it by hand. Bridge can revoke the access URL at any time, after which the user connects again with a new token.

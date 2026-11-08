@@ -9,6 +9,7 @@ Read the doc that fits the task before starting:
 - [docs/testing.md](docs/testing.md): server (Jest + PGlite) and client (Vitest) test patterns
 - [docs/deployment.md](docs/deployment.md): production status (not working yet)
 - [docs/requirements/](docs/requirements/README.md): requirements by domain, with stable IDs
+- [docs/v0.2-design.md](docs/v0.2-design.md): how the milestone in progress is built (bank sync, rules). A milestone may have one such design doc while it's being built: read it before working on the milestone, correct it as the code proves it wrong, and fold what stays true into `architecture.md` when the milestone ships, deleting the doc
 
 @docs/conventions.md
 

@@ -2,7 +2,7 @@
 
 This folder is Moped Finance's requirements: what it does and what it's planned to do, as numbered requirements grouped by domain. It's also the feature backlog: every `Planned` or `Partial` sub-requirement is work to do. `TODO.md` orders that work into release milestones and sessions (by requirement ID) and holds the rest (technical work, tooling, security hardening, and decisions not yet written up as requirements).
 
-The first set was written by reading the running app and its code, so domains not yet revisited still mostly describe current behavior. Categories (`CAT`), Institutions (`INST`), Accounts (`ACCT`) and the Dashboard (`DASH`) have been reworked into the intended design. Every domain's open questions were decided on 2026-09-26 and written up as requirements, so what's left in each Known gaps is work, not decisions.
+The first set was written by reading the running app and its code, so domains not yet revisited still mostly describe current behavior. Categories (`CAT`), Institutions (`INST`), Accounts (`ACCT`), the Dashboard (`DASH`) and Bank Sync (`SYNC`, written 2026-11-07 before any code) have been reworked into the intended design. Every domain's open questions were decided on 2026-09-26 and written up as requirements, so what's left in each Known gaps is work, not decisions.
 
 ## Domains
 
@@ -10,9 +10,10 @@ The first set was written by reading the running app and its code, so domains no
 |---|---|---|
 | `APP` | Application shell, navigation, feedback, demo mode, installing as an app, wiping and sample data on the host | [app.md](app.md) |
 | `AUTH` | Registration, login, sessions, single owner, API tokens | [auth.md](auth.md) |
-| `SET` | Settings, profile, appearance, bank sync | [settings.md](settings.md) |
-| `INST` | Institutions, manual and connected, and the Settings page that lists them with their accounts | [institutions.md](institutions.md) |
+| `SET` | Settings, profile, appearance | [settings.md](settings.md) |
+| `INST` | Institutions and the Settings page that lists them with their accounts | [institutions.md](institutions.md) |
 | `ACCT` | Accounts, balances, balance-history import/export | [accounts.md](accounts.md) |
+| `SYNC` | Bank sync through SimpleFIN Bridge: connecting, linking bank accounts, the schedule and what a sync records | [bank-sync.md](bank-sync.md) |
 | `DASH` | Dashboard, net worth and value-history chart | [dashboard.md](dashboard.md) |
 | `CAT` | Categories and category groups | [categories.md](categories.md) |
 | `TXN` | Transactions, import/export | [transactions.md](transactions.md) |
@@ -69,7 +70,8 @@ Each domain file has an introduction, then one table per requirement, then up to
 | Type (account) | What kind of account it is: Checking, Credit Card, Mortgage, and so on (ACCT-1.2). Decides the group. |
 | Group (account) | `Cash`, `Investments`, `Retirement`, `Real Estate`, `Other Assets`, `Credit Cards`, `Loans`. Decided by the type; decides the account category. |
 | Category (account) | `Asset` or `Liability`. Determines which totals an account contributes to. |
-| Manual / connected | A connected institution has a bank connection; a connected account is linked to an account at it and gets its balances and transactions from sync. Everything else is manual (INST-2, ACCT-4). |
+| Manual / connected | A connected account is linked to a bank account and gets its balances and transactions from sync. Everything else is manual (ACCT-4, SYNC-2). |
+| Bank account / connection | A bank account is an account as SimpleFIN Bridge returns it, which the user can link to one of their accounts. A connection is one sign-in at one bank in Bridge, holding its bank accounts (SYNC). |
 | Balance history | Dated balance entries for an account, at most one per date. An account's current balance is its latest entry on or before today. |
 | Set / adjusted entry | A set balance entry is one the user entered or imported, or sync recorded; it's a checkpoint. An adjusted entry exists only because of transactions that adjust the balance (ACCT-5.1). |
 | Hidden account | Left out of everything but the Institutions and Accounts screen and its own details, past included (ACCT-1.9). |
