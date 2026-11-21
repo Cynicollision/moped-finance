@@ -7,3 +7,5 @@ export {
     type SimplefinMessage,
     type SimplefinTransaction
 } from './simplefin-response';
+export { simplefinClientFromEnvironment } from './simplefin-client-factory';
+export { FakeSimplefinClient } from './fake';

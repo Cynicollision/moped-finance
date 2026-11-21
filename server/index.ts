@@ -1,7 +1,13 @@
 import express, { Request, Response } from 'express';
 import { Server } from 'http';
 import path from 'path';
-import { buildFinanceRouter, CategoryData, CategoryGroupData, DefaultCategories } from '@server/api';
+import {
+    buildFinanceRouter,
+    CategoryData,
+    CategoryGroupData,
+    DefaultCategories,
+    simplefinClientFromEnvironment
+} from '@server/api';
 import {
     ApiTokenController,
     ApiTokenData,
@@ -109,15 +115,19 @@ let logRetention: LogRetention | undefined;
 // If migrating fails (including when the database isn't reachable yet), exit and let Docker's restart
 // policy try again.
 async function start(): Promise<void> {
-    // The sign-in limits (AUTH-10.7), log retention (APP-5.10) and encryption key (SYNC-1.2) from the environment. A
-    // value out of range, or a key that isn't 32 bytes, stops the server from starting. Bank sync doesn't use the key
-    // yet; an unset one is allowed.
+    // The sign-in limits (AUTH-10.7), log retention (APP-5.10), encryption key (SYNC-1.2) and fake Bridge
+    // (development only) from the environment. A value out of range, a key that isn't 32 bytes, or the fake in
+    // production stops the server from starting. Bank sync doesn't use the key or the client yet; an unset key is
+    // allowed.
     let signInLimits: SignInLimits;
     let logRetentionDays: number;
     try {
         signInLimits = SignInLimiter.limitsFromEnvironment(process.env);
         logRetentionDays = LogRetention.retentionDaysFromEnvironment(process.env);
         SecretBox.fromEnvironment(process.env);
+        if (simplefinClientFromEnvironment(process.env).usesFake) {
+            console.warn('SIMPLEFIN_FAKE is on: setup tokens starting "fake" connect to the fake SimpleFIN Bridge.');
+        }
     } catch (error) {
         console.error(errorMessage(error));
         await dbClient.close().catch(() => undefined);
