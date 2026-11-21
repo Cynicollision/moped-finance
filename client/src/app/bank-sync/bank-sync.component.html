@@ -1,0 +1,260 @@
+<div class="bank-sync-container">
+    <app-page-header
+        title="Bank Sync"
+        [crumbs]="[{ label: 'Settings', link: '/settings' }]"
+        [refreshing]="data.isRefreshing()"
+    >
+        @if (status(); as status) {
+            @if (status.keyConfigured && status.connected) {
+                <button
+                    mat-flat-button
+                    class="page-action"
+                    (click)="syncNow()"
+                    [disabled]="!canSync()"
+                    aria-label="Sync now"
+                >
+                    @if (syncing() || status.isRunning) {
+                        <mat-progress-spinner
+                            class="button-spinner"
+                            mode="indeterminate"
+                            diameter="18"
+                        ></mat-progress-spinner>
+                    } @else {
+                        <mat-icon>sync</mat-icon>
+                    }
+                    <span class="page-action-label">Sync now</span>
+                </button>
+                <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options">
+                    <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                    <button mat-menu-item class="danger-item" (click)="disconnect()">
+                        <mat-icon>link_off</mat-icon>
+                        <span>Disconnect</span>
+                    </button>
+                </mat-menu>
+            }
+        }
+    </app-page-header>
+
+    @if (data.error(); as error) {
+        <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
+    } @else if (data.value(); as view) {
+        @if (!view.status.keyConfigured) {
+            <!-- SYNC-1.2: without a key there's nothing else to offer. -->
+            <mat-card class="section-card" appearance="outlined">
+                <div class="notice no-key">
+                    <mat-icon class="notice-icon">key_off</mat-icon>
+                    <p>{{ wording.noKey }}</p>
+                </div>
+            </mat-card>
+        } @else if (!view.status.connected) {
+            <mat-card class="section-card" appearance="outlined">
+                <div class="section-body">
+                    <h2>Connect to SimpleFIN Bridge</h2>
+                    <p class="muted">
+                        Bank sync keeps your accounts' transactions and balances up to date from
+                        <a href="https://beta-bridge.simplefin.org" target="_blank" rel="noopener">SimpleFIN Bridge</a>.
+                        Connect your banks in Bridge, create a setup token there, and paste it here. Once connected, you
+                        choose which bank accounts sync into which of your accounts.
+                    </p>
+                    <app-setup-token-form (connected)="onConnected($event)"></app-setup-token-form>
+                </div>
+            </mat-card>
+        } @else {
+            @let status = view.status;
+            <mat-card class="section-card status-card" appearance="outlined">
+                <div class="section-body">
+                    <dl class="status-figures">
+                        <div>
+                            <dt>Connected</dt>
+                            <dd>{{ status.connectedAt | date: 'mediumDate' }}</dd>
+                        </div>
+                        <div>
+                            <dt>Last sync</dt>
+                            @if (status.lastRun; as run) {
+                                <dd>
+                                    {{ run.finishedAt ?? run.startedAt | date: 'medium' }} ·
+                                    <span
+                                        [class.failed]="run.status === SyncRunStatus.Failed"
+                                        [class.succeeded]="run.status === SyncRunStatus.Succeeded"
+                                        >{{ statusLabel(run) }}</span
+                                    >
+                                </dd>
+                            } @else {
+                                <dd>None yet</dd>
+                            }
+                        </div>
+                        <div>
+                            <dt>Syncs left today</dt>
+                            <dd>
+                                {{ status.quota.remaining }} of {{ status.quota.limit }}
+                                @if (status.quota.remaining === 0 && status.quota.availableAt) {
+                                    <!-- Within the next 24 hours, so possibly tomorrow: the day says which. -->
+                                    · Available again {{ status.quota.availableAt | date: 'MMM d, h:mm a' }}
+                                }
+                            </dd>
+                        </div>
+                    </dl>
+
+                    @if (status.isRunning) {
+                        <p class="muted">A sync is running.</p>
+                    }
+
+                    @if (status.lastRun; as run) {
+                        <!-- While paused, the notice below says why. -->
+                        @if (run.failure && !status.pausedReason) {
+                            <p class="run-failure">{{ run.failure }}</p>
+                        }
+                        <!-- Bridge's own words, as plain text (SYNC-5.2). -->
+                        @if (run.messages.length) {
+                            <ul class="bridge-messages" aria-label="Messages from SimpleFIN Bridge">
+                                @for (message of run.messages; track $index) {
+                                    <li>
+                                        <mat-icon>info</mat-icon>
+                                        <span>SimpleFIN Bridge: {{ message.text }}</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+
+                    @if (status.pausedReason; as reason) {
+                        <!-- SYNC-1.3 -->
+                        <div class="notice paused" role="status">
+                            <mat-icon class="notice-icon">pause_circle</mat-icon>
+                            <div class="notice-text">
+                                <p>{{ wording.paused[reason] }}</p>
+                                @if (reconnecting()) {
+                                    <app-setup-token-form
+                                        actionLabel="Connect again"
+                                        [cancellable]="true"
+                                        (connected)="onConnected($event)"
+                                        (cancelled)="reconnecting.set(false)"
+                                    ></app-setup-token-form>
+                                } @else {
+                                    <div class="notice-actions">
+                                        @if (reason === BankSyncPauseReason.Payment) {
+                                            <button
+                                                mat-flat-button
+                                                (click)="syncNow()"
+                                                [disabled]="
+                                                    syncing() || status.isRunning || status.quota.remaining === 0
+                                                "
+                                            >
+                                                @if (syncing()) {
+                                                    <mat-progress-spinner
+                                                        class="button-spinner"
+                                                        mode="indeterminate"
+                                                        diameter="18"
+                                                    ></mat-progress-spinner>
+                                                }
+                                                Try again
+                                            </button>
+                                        }
+                                        <button mat-stroked-button (click)="reconnecting.set(true)">
+                                            Connect again
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </mat-card>
+
+            <mat-card class="section-card" appearance="outlined">
+                <div class="section-header">
+                    <h2>Bank accounts</h2>
+                    @if (notSetUpCount() > 0) {
+                        <span class="badge">{{ notSetUpCount() }} not set up</span>
+                    }
+                </div>
+                @if (connectionGroups().length) {
+                    <app-list [columns]="accountColumns">
+                        @for (group of connectionGroups(); track group.id) {
+                            <div appListSubheader>
+                                <h3>{{ group.name }}</h3>
+                            </div>
+                            @for (account of group.accounts; track account.id) {
+                                <div
+                                    appListRow
+                                    [class.not-set-up]="
+                                        account.canLink && account.linkStatus === BankAccountLinkStatus.NotSetUp
+                                    "
+                                >
+                                    <span appListCell="name" class="account-name">{{ account.name }}</span>
+                                    <span appListCell="link" class="link-cell">
+                                        @if (!account.canLink) {
+                                            <span class="muted">{{ wording.notUsd }}</span>
+                                        } @else {
+                                            @switch (account.linkStatus) {
+                                                @case (BankAccountLinkStatus.Linked) {
+                                                    <span>{{ account.linkedAccount?.name }}</span>
+                                                }
+                                                @case (BankAccountLinkStatus.Ignored) {
+                                                    <span class="muted">Don't sync</span>
+                                                }
+                                                @default {
+                                                    <span class="not-set-up-label">Not set up</span>
+                                                }
+                                            }
+                                        }
+                                        @if (account.missingSince) {
+                                            <span class="missing"
+                                                >Missing from SimpleFIN since
+                                                {{ account.missingSince | date: 'mediumDate' }}</span
+                                            >
+                                        }
+                                    </span>
+                                    @if (account.canLink) {
+                                        <app-money appListCell="balance" [amount]="account.balance"></app-money>
+                                    } @else {
+                                        <!-- Only US dollars are formatted as money (APP-6); others show their code. -->
+                                        <span appListCell="balance"
+                                            >{{ account.balance | number: '1.2-2' }} {{ account.currency }}</span
+                                        >
+                                    }
+                                </div>
+                            }
+                        }
+                    </app-list>
+                } @else {
+                    <p class="empty">SimpleFIN Bridge hasn't returned any bank accounts yet.</p>
+                }
+            </mat-card>
+
+            <mat-card class="section-card" appearance="outlined">
+                <div class="section-header">
+                    <h2>Recent syncs</h2>
+                </div>
+                @if (runs().length) {
+                    <app-list [columns]="runColumns">
+                        @for (run of runs(); track run.id) {
+                            <div appListRow>
+                                <span appListCell="started">{{ run.startedAt | date: 'medium' }}</span>
+                                <span appListCell="trigger">{{ triggerLabel(run) }}</span>
+                                <span appListCell="result" class="result-cell">
+                                    <span
+                                        [class.failed]="run.status === SyncRunStatus.Failed"
+                                        [class.succeeded]="run.status === SyncRunStatus.Succeeded"
+                                        >{{ statusLabel(run) }}</span
+                                    >
+                                    @if (run.failure) {
+                                        <span class="muted run-failure-text">{{ run.failure }}</span>
+                                    }
+                                </span>
+                                <span appListCell="added">{{ run.transactionsAdded }} added</span>
+                            </div>
+                        }
+                    </app-list>
+                } @else {
+                    <p class="empty">No syncs yet.</p>
+                }
+            </mat-card>
+        }
+    } @else {
+        <app-card-skeleton [rows]="2"></app-card-skeleton>
+        <app-card-skeleton [rows]="4"></app-card-skeleton>
+    }
+</div>

@@ -38,7 +38,7 @@ The **Bank Sync** page's requirements are their own domain, [SYNC](bank-sync.md)
 
 ## Known gaps
 
-- **Rules and Bank Sync aren't built (SET-1.1).** The other sections exist.
+- **Rules isn't built (SET-1.1).** The other sections exist.
 
 ## Notes
 

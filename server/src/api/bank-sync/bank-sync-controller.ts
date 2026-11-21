@@ -1,4 +1,5 @@
-import { BankSyncPauseReason, SyncTrigger } from '@shared/finance/enum';
+import { BankSyncWording } from '@shared/finance/contracts';
+import { SyncTrigger } from '@shared/finance/enum';
 import { BankAccount, BankSyncStatus, SyncRun } from '@shared/finance/types';
 import { OperationResult, Result } from '@server/routing';
 import { DateTimeUtil, SecretBox } from '@server/utility';
@@ -12,21 +13,14 @@ import { SyncOutcome, SyncRunner } from './sync-runner';
 const runsListed = 10;
 
 export const BankSyncMessages = {
-    noKey: 'Bank sync needs an encryption key. Set ENCRYPTION_KEY on the server and restart it.',
+    noKey: BankSyncWording.noKey,
     notConnected: "Bank sync isn't connected.",
     running: 'A sync is already running.',
     tokenRefused:
         "SimpleFIN Bridge didn't accept this setup token. It may have been used already: if you didn't use it, disable it in Bridge, since someone else may have claimed it.",
     tokenInvalid: "That isn't a SimpleFIN setup token. Copy the whole token from SimpleFIN Bridge and paste it here.",
     claimFailed: "SimpleFIN Bridge couldn't be reached to claim the setup token. Try again in a few minutes.",
-    paused: {
-        [BankSyncPauseReason.Refused]:
-            'Syncing is paused because SimpleFIN Bridge refused the connection. Connect again with a new setup token.',
-        [BankSyncPauseReason.Payment]:
-            "SimpleFIN Bridge says your subscription needs payment. Once it's paid, choose Try again.",
-        [BankSyncPauseReason.Undecryptable]:
-            "Syncing is paused because the stored connection can't be decrypted: ENCRYPTION_KEY has changed. Connect again with a new setup token."
-    } satisfies Record<BankSyncPauseReason, string>,
+    paused: BankSyncWording.paused,
     overLimit: (availableAt: Date) =>
         `Bank sync has reached its limit for today. Available again at ${formatTime(availableAt)}.`
 };

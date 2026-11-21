@@ -1,0 +1,204 @@
+@use 'breakpoints' as bp;
+
+.bank-sync-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    @include bp.content-below(bp.$medium) {
+        gap: 16px;
+    }
+}
+
+// The container's gap already spaces the header.
+app-page-header {
+    margin-bottom: 0;
+}
+
+.section-card {
+    overflow: hidden;
+}
+
+.section-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 20px;
+
+    h2 {
+        margin: 0;
+        font: var(--mat-sys-title-medium);
+    }
+
+    p {
+        margin: 0;
+    }
+
+    a {
+        color: var(--color-link);
+    }
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border-color);
+
+    h2 {
+        margin: 0;
+        font: var(--mat-sys-title-medium);
+    }
+}
+
+.muted {
+    color: var(--text-muted);
+}
+
+.empty {
+    margin: 0;
+    padding: 24px 16px;
+    color: var(--text-muted);
+}
+
+.succeeded {
+    color: var(--color-positive);
+}
+
+.failed {
+    color: var(--color-negative);
+}
+
+// Connected, last sync and the limit (SYNC-3.3, SYNC-3.7).
+.status-figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 32px;
+    margin: 0;
+
+    dt {
+        font: var(--mat-sys-label-medium);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    dd {
+        margin: 4px 0 0;
+    }
+}
+
+.run-failure {
+    color: var(--color-negative);
+}
+
+.bridge-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    mat-icon {
+        flex: none;
+        color: var(--text-muted);
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+}
+
+// SYNC-1.2's message and SYNC-1.3's pause notices.
+.notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    p {
+        margin: 0;
+    }
+
+    &.no-key {
+        padding: 16px 20px;
+    }
+
+    &.paused {
+        padding: 12px 16px;
+        border-radius: 8px;
+        background-color: var(--mat-sys-error-container);
+        color: var(--mat-sys-on-error-container);
+    }
+}
+
+.notice-icon {
+    flex: none;
+}
+
+.notice-text {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.notice-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.badge {
+    padding: 2px 10px;
+    border-radius: 999px;
+    font: var(--mat-sys-label-medium);
+    background-color: var(--mat-sys-tertiary-container);
+    color: var(--mat-sys-on-tertiary-container);
+}
+
+// A bank account not set up yet stands out (SYNC-2.2).
+.app-list-row.not-set-up {
+    background-color: color-mix(in srgb, var(--mat-sys-tertiary) 10%, transparent);
+    box-shadow: inset 3px 0 0 var(--mat-sys-tertiary);
+}
+
+.account-name {
+    font-weight: 500;
+}
+
+.not-set-up-label {
+    color: var(--mat-sys-tertiary);
+    font-weight: 500;
+}
+
+// These hold sentences (SYNC-2.6, SYNC-2.9, a run's failure), so they wrap rather than end in an ellipsis like the
+// list's other cells.
+.app-list-row .link-cell,
+.app-list-row .result-cell {
+    min-width: 0;
+    white-space: normal;
+}
+
+.link-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+// A block, so the "·" the list puts before it on narrow screens stays on the line with the result.
+.result-cell .run-failure-text {
+    display: block;
+}
+
+.missing {
+    color: var(--color-negative);
+    font: var(--mat-sys-body-small);
+}
