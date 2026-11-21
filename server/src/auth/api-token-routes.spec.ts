@@ -4,6 +4,7 @@ import TestAgent from 'supertest/lib/agent';
 import { PGlite } from '@electric-sql/pglite';
 import { ApiTokenAccess } from '@shared/core/enum';
 import { buildFinanceRouter } from '@server/api';
+import { FakeSimplefinClient } from '@server/api/bank-sync';
 import { DatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { TestDatabaseUtil, TestExpressUtil } from '@server/utility/testing';
@@ -56,7 +57,13 @@ describe('API Tokens', () => {
                 new SignInLimiter()
             )
         );
-        app.use('/api', buildFinanceRouter(logger, dbClient, middleware));
+        app.use(
+            '/api',
+            buildFinanceRouter(logger, dbClient, middleware, {
+                client: new FakeSimplefinClient(),
+                secretBox: undefined
+            })
+        );
     });
 
     afterAll(async () => {

@@ -93,6 +93,8 @@ Its banks mirror the seed data's accounts, so a database loaded by `db:seed` has
 
 What Bridge says for `fake:attention` and `fake:warning` is made up until the live trial shows the real wording (M02 T10).
 
+Requests to the fake count against SYNC-3.4's limit of 20 in 24 hours like Bridge's, so a day of trying things can reach it. To start the count again in development, delete the runs: `docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DELETE FROM simplefin.sync_runs"'`.
+
 ## Client scripts
 
 Run these in `client/`.

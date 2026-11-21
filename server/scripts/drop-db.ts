@@ -14,8 +14,8 @@ const pool = new Pool(dbConfig);
     const client = await pool.connect();
     try {
         // `drizzle` holds the record of applied migrations; dropping it lets db:migrate start from scratch.
-        console.log('🗑️  Dropping core, finance and drizzle schemas...');
-        await client.query('DROP SCHEMA IF EXISTS core, finance, drizzle CASCADE;');
+        console.log('🗑️  Dropping core, finance, simplefin and drizzle schemas...');
+        await client.query('DROP SCHEMA IF EXISTS core, finance, simplefin, drizzle CASCADE;');
         console.log('✅ Schemas dropped.');
     } catch (err) {
         console.error('❌ Drop failed:', err);

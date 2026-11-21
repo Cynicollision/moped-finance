@@ -2,10 +2,12 @@ import express, { Request, Response } from 'express';
 import { Server } from 'http';
 import path from 'path';
 import {
+    BankSyncConfig,
     buildFinanceRouter,
     CategoryData,
     CategoryGroupData,
     DefaultCategories,
+    SimplefinData,
     simplefinClientFromEnvironment
 } from '@server/api';
 import {
@@ -36,7 +38,7 @@ const logger = AppLogger.fromEnvironment(dbClient);
 
 let isShuttingDown = false;
 
-function buildApp(sessionSecret: string, signInLimits: SignInLimits): express.Express {
+function buildApp(sessionSecret: string, signInLimits: SignInLimits, bankSync: BankSyncConfig): express.Express {
     const app = express();
 
     if (process.env.TRUST_FIRST_PROXY === 'true') {
@@ -88,7 +90,7 @@ function buildApp(sessionSecret: string, signInLimits: SignInLimits): express.Ex
     );
 
     // API module
-    const apiRouter = buildFinanceRouter(logger, dbClient, authMiddleware);
+    const apiRouter = buildFinanceRouter(logger, dbClient, authMiddleware, bankSync);
     app.use('/api', apiRouter);
     app.all('/api/{*path}', (req: Request, res: Response) => {
         res.status(404).send(`${req.originalUrl} not found.`);
@@ -115,19 +117,21 @@ let logRetention: LogRetention | undefined;
 // If migrating fails (including when the database isn't reachable yet), exit and let Docker's restart
 // policy try again.
 async function start(): Promise<void> {
-    // The sign-in limits (AUTH-10.7), log retention (APP-5.10), encryption key (SYNC-1.2) and fake Bridge
-    // (development only) from the environment. A value out of range, a key that isn't 32 bytes, or the fake in
-    // production stops the server from starting. Bank sync doesn't use the key or the client yet; an unset key is
-    // allowed.
+    // The sign-in limits (AUTH-10.7), log retention (APP-5.10), encryption key (SYNC-1.2) and SimpleFIN client, with
+    // the fake Bridge in development, from the environment. A value out of range, a key that isn't 32 bytes, or the
+    // fake in production stops the server from starting. An unset key is allowed: bank sync is then unavailable.
     let signInLimits: SignInLimits;
     let logRetentionDays: number;
+    let bankSync: BankSyncConfig;
     try {
         signInLimits = SignInLimiter.limitsFromEnvironment(process.env);
         logRetentionDays = LogRetention.retentionDaysFromEnvironment(process.env);
-        SecretBox.fromEnvironment(process.env);
-        if (simplefinClientFromEnvironment(process.env).usesFake) {
+        const secretBox = SecretBox.fromEnvironment(process.env);
+        const simplefin = simplefinClientFromEnvironment(process.env);
+        if (simplefin.usesFake) {
             console.warn('SIMPLEFIN_FAKE is on: setup tokens starting "fake" connect to the fake SimpleFIN Bridge.');
         }
+        bankSync = { client: simplefin.client, secretBox };
     } catch (error) {
         console.error(errorMessage(error));
         await dbClient.close().catch(() => undefined);
@@ -151,6 +155,18 @@ async function start(): Promise<void> {
         return;
     }
 
+    // A sync the last run of the server didn't finish would otherwise hold the lock (SYNC-3.5) for good.
+    try {
+        const interrupted = await new SimplefinData(dbClient).failInterruptedRuns();
+        if (interrupted > 0) {
+            console.warn(`Marked ${interrupted} bank sync left running by the last shutdown as failed.`);
+        }
+    } catch (error) {
+        console.error(`Could not check for interrupted bank syncs: ${errorMessage(error)}`);
+        await dbClient.close().catch(() => undefined);
+        process.exit(1);
+    }
+
     // SESSION_SECRET if set, otherwise one generated on first start and kept in the database, so sessions
     // survive restarts without any configuration (AUTH-3.7).
     let sessionSecret = process.env.SESSION_SECRET;
@@ -165,7 +181,7 @@ async function start(): Promise<void> {
     }
 
     // A listen error (port in use) arrives here rather than being thrown.
-    server = buildApp(sessionSecret, signInLimits).listen(PORT, async error => {
+    server = buildApp(sessionSecret, signInLimits, bankSync).listen(PORT, async error => {
         if (error) {
             console.error(`Could not listen on port ${PORT}: ${error.message}`);
             await dbClient.close().catch(() => undefined);

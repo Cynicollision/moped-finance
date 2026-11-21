@@ -9,3 +9,7 @@ export { TransactionDirection } from './transaction-direction';
 export { TransactionsSortKey } from './transactions-sort-key';
 export { TransactionsFilterKey } from './transactions-filter-key';
 export { ValueHistoryType } from './value-history-type';
+export { BankAccountLinkStatus } from './bank-account-link-status';
+export { BankSyncPauseReason } from './bank-sync-pause-reason';
+export { SyncRunStatus } from './sync-run-status';
+export { SyncTrigger } from './sync-trigger';

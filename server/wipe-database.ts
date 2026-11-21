@@ -31,6 +31,7 @@ async function wipeDatabase(dbClient: DatabaseClient): Promise<number> {
         console.log(`  - the user ${owner.username} (${owner.displayName}), their API tokens and settings`);
     }
     console.log('  - every institution, account, balance, category, budget item and transaction');
+    console.log('  - the bank sync connection, its bank accounts and its sync history');
     const answer = await readLine(`Type '${confirmation}' to continue: `);
     if (answer?.trim() !== confirmation) {
         console.log('Cancelled. Nothing was deleted.');
@@ -38,7 +39,7 @@ async function wipeDatabase(dbClient: DatabaseClient): Promise<number> {
     }
 
     // `drizzle` holds the record of applied migrations, so dropping it lets them run again from the start.
-    await dbClient.drizzle.execute(sql`DROP SCHEMA IF EXISTS core, finance, drizzle CASCADE`);
+    await dbClient.drizzle.execute(sql`DROP SCHEMA IF EXISTS core, finance, simplefin, drizzle CASCADE`);
     // Recreate the empty tables now, as the server does on startup (APP-5.8), so the running app keeps working.
     // The migrations sit next to this file: server/migrations in development, dist/server/migrations in the image.
     await dbClient.migrate(path.join(__dirname, 'migrations'));

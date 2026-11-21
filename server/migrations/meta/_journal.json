@@ -120,6 +120,13 @@
       "when": 1792148914062,
       "tag": "0016_single_user",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795296406115,
+      "tag": "0017_bank_sync_connect",
+      "breakpoints": true
     }
   ]
 }

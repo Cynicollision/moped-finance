@@ -29,7 +29,7 @@ server/
   src/auth/         login/register/session, auth middleware, users
   src/health/       GET /health (database ping), used by the Docker health check
   src/csv/          CSV reading/writing and cell parsing for imports and exports
-  src/data/         DatabaseClient, EntityId, entity factories, SchemaUtil, the core/finance pgSchemas
+  src/data/         DatabaseClient, EntityId, entity factories, SchemaUtil, the core/finance/simplefin pgSchemas
   src/routing/      OperationHandler, Result factory, request validation
   src/logging/      logger (console and/or core.logs table)
   src/utility/      DateTimeUtil, test helpers
@@ -54,10 +54,11 @@ Routers are wired up in `server/src/api/index.ts` under `/api/v1/<resource>` (`/
 
 ## Database
 
-One Postgres 16 database with two schemas:
+One Postgres 16 database with three schemas:
 
 - `core`: `users`, `logs`, `sessions`, `secrets` (the generated session secret), `api_tokens` (hashes only), `settings` (instance settings, SET-1.2: a JSON value per setting the user has changed; the types and defaults are in `settings-schema.ts`, so adding a setting needs no migration)
 - `finance`: `institutions`, `accounts`, `balance_history`, `category_groups`, `categories`, `transactions`, `budget_streams`
+- `simplefin`: bank sync's `access` (the sealed access URL), `connections`, `accounts` and `sync_runs`, whose foreign keys point into `finance` and never back; described in [M02-design.md](milestones/M02-design.md) until v0.2 ships
 
 Each instance has one owner (AUTH-7). `core.users` exists for login, and registration closes after the first user. Finance tables have no `user_id`: every signed-in request sees all finance data. `core.logs.user_id` records who performed an operation.
 

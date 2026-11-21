@@ -26,7 +26,7 @@ Sources: the [protocol](https://www.simplefin.org/protocol.html) (v2, still a dr
 
 Everything bank sync stores lives in a third Postgres schema, `simplefin` (a `pgSchema` next to `core` and `finance` in `database-schemas.ts`), and its foreign keys point only one way: from `simplefin` into `finance`, never back. The finance tables get no SimpleFIN columns. So:
 
-- Disconnecting (SYNC-1.4) empties the `simplefin` schema and leaves the user's own data as it was.
+- Disconnecting (SYNC-1.4) empties the `simplefin` schema and leaves the user's own data as it was. Runs keep their times without their payloads, so SYNC-3.4's limit still counts requests made before connecting again.
 - The tables are named after SimpleFIN's own model (connections, accounts, transactions), because that's what they hold. A second provider would have a different model and get its own schema; nothing in `finance` would change.
 - `finance.accounts.is_manual` is dropped. Connected (ACCT-4.3) means a `simplefin.accounts` row's `linked_account_id` is that account, which the account queries read with a join.
 
@@ -34,11 +34,11 @@ IDs come from `EntityId`, as everywhere else; SimpleFIN's own IDs are unique col
 
 | Table | What | Foreign keys into `finance` |
 |---|---|---|
-| `simplefin.access` | At most one row: `access_url` (sealed), `claimed_at`, `schedule_minute` (0 to 359, SYNC-3.1), `paused_reason` (null, `refused`, `undecryptable`; SYNC-1.3). | None |
-| `simplefin.connections` | One row per SimpleFIN connection: `conn_id` (unique), `name`, `org_id`, `org_url`, `last_seen_at`. | None |
-| `simplefin.accounts` | One row per SimpleFIN account: `connection_id`, `simplefin_id` (unique with `connection_id`), `name`, `currency`, `balance`, `balance_date`, `available_balance`, `last_seen_at` (SYNC-2.9), `is_ignored` (Don't sync), `sync_from` (SYNC-2.4). Linked is `linked_account_id` set; Not set up is neither linked nor ignored. | `linked_account_id` → `accounts`, unique (SYNC-2.5), `ON DELETE SET NULL` (SYNC-2.8) |
+| `simplefin.access` | At most one row: `access_url` (sealed), `claimed_at`, `schedule_minute` (0 to 359, SYNC-3.1), `paused_reason` (null, `refused`, `payment`, `undecryptable`; SYNC-1.3). | None |
+| `simplefin.connections` | One row per SimpleFIN connection: `simplefin_id` (Bridge's `conn_id`, unique), `name`, `org_id`, `org_url`. One left without bank accounts is deleted. | None |
+| `simplefin.accounts` | One row per SimpleFIN account: `connection_id`, `simplefin_id` (unique with `connection_id`), `name`, `currency`, `balance`, `balance_date`, `available_balance`, `missing_since` (SYNC-2.9: when the first sync that didn't return it ran, null while syncs return it), `is_ignored` (Don't sync), `sync_from` (SYNC-2.4). Linked is `linked_account_id` set; Not set up is neither linked nor ignored. A sync that doesn't return a bank account that's Not set up deletes it, since there's nothing to keep. | `linked_account_id` → `accounts`, unique (SYNC-2.5), `ON DELETE SET NULL` (SYNC-2.8) |
 | `simplefin.transactions` | One row per bank transaction sync has seen: `simplefin_account_id` (cascade), `simplefin_id` (unique with `simplefin_account_id`), and the bank's `date`, `amount` and `description` as last seen. | `transaction_id` → `transactions`, unique, `ON DELETE SET NULL` |
-| `simplefin.sync_runs` | One row per sync: `trigger` (`scheduled`, `manual`, `connect`), `started_at`, `requested_at` (set just before the request goes out, so a crash still counts it), `finished_at`, `status` (`running`, `succeeded`, `failed`, `skipped`), counts (accounts updated, transactions added and updated), `errors` (jsonb: Bridge's `errlist` and `errors`, and our own failure), `response` (jsonb, the parsed payload). | None |
+| `simplefin.sync_runs` | One row per sync: `trigger` (`scheduled`, `manual`, `connect`), `started_at`, `requested_at` (set just before the request goes out, so a crash still counts it), `finished_at`, `status` (`running`, `succeeded`, `failed`, `skipped`; a partial unique index allows one `running` row, which is the lock), counts (accounts updated, transactions added and updated), `failure` (our own short reason), `messages` (jsonb: Bridge's, as `SimplefinAccountSet.messages` has them), `response` (jsonb, the parsed payload). | None |
 
 What `simplefin.transactions` does:
 
@@ -77,10 +77,10 @@ The client's tests stub `fetch` with fixtures recorded from the demo token (v2 a
 
 `SyncRunner.run(trigger)`:
 
-1. **Lock.** `pg_try_advisory_lock` on a fixed key; if it's taken, refuse with "A sync is already running." (SYNC-3.5). The lock also holds against two servers, should there ever be more than one.
-2. **Quota.** If `SyncQuota` says no, a manual sync answers 429 with the time it frees up; a scheduled one records a `skipped` run (SYNC-3.4).
+1. **Lock.** Insert the run as `running` (`ON CONFLICT DO NOTHING` against `sync_runs_one_running_idx`); if nothing is inserted, one is running, so refuse with "A sync is already running." (SYNC-3.5). The database holds the lock, so it holds against two servers too, should there ever be more than one. On startup, `index.ts` fails any run a stopped server left `running` (`failInterruptedRuns`), and a run that throws is failed on the way out. An advisory lock would have had to hold a pooled connection through Bridge's request, and couldn't be tested: PGlite has one session, which Postgres gives the same advisory lock again.
+2. **Quota.** If `SyncQuota` says no, a manual sync deletes its run and answers 429 with the time it frees up; a scheduled one records a `skipped` run (SYNC-3.4).
 3. **Decrypt** the access URL; failing sets `paused_reason = 'undecryptable'` and stops.
-4. **Request.** Insert the run with `requested_at`, then `fetchAccounts` with `start-date` 44 days before now (SYNC-3.6; the demo token warns from 45 days) and `pending=1`, so the stored payloads show how each bank's pending transactions post (SYNC-6; pending ones are still never added, SYNC-4.7). Always the full window, rather than since the last sync: it's one request either way, it picks up corrections the bank makes later (SYNC-4.4), and a newly linked account can take its history from the latest payload (SYNC-2.10). A `SimplefinError` of kind `refused` (403) or `payment-required` (402) sets `paused_reason = 'refused'`; any other failure fails the run and waits for the next scheduled one.
+4. **Request.** Insert the run with `requested_at`, then `fetchAccounts` with `start-date` 44 days before now (SYNC-3.6; the demo token warns from 45 days) and `pending=1`, so the stored payloads show how each bank's pending transactions post (SYNC-6; pending ones are still never added, SYNC-4.7). Always the full window, rather than since the last sync: it's one request either way, it picks up corrections the bank makes later (SYNC-4.4), and a newly linked account can take its history from the latest payload (SYNC-2.10). A `SimplefinError` of kind `refused` (403) sets `paused_reason = 'refused'`, and `payment-required` (402) sets `'payment'`, which a manual sync (**Try again**) clears when Bridge accepts the access URL again, since paying doesn't need a new setup token (decided 2026-11-21); any other failure fails the run and waits for the next scheduled one.
 5. **Store** the parsed payload on the run.
 6. **Apply**, in one database transaction (SYNC-4.8):
    - Upsert `simplefin.connections` and `simplefin.accounts` from the payload, updating names, balances and `last_seen_at`. New accounts arrive Not set up.
@@ -90,7 +90,7 @@ The client's tests stub `fetch` with fixtures recorded from the demo token (v2 a
 
 **Linking** (SYNC-2.3, 2.4) runs step 6's per-account part against the latest stored payload for that one SimpleFIN account, in the same database transaction as the link and as turning off `adjusts_balance` on the account's existing transactions (ACCT-5.5), then backfills balances when the account had none (SYNC-4.6). It never calls Bridge.
 
-**Connecting** (SYNC-1.1) claims the token, seals and stores the access URL with a random `schedule_minute`, then runs a sync with trigger `connect` so the bank accounts can be listed.
+**Connecting** (SYNC-1.1) first checks the key, that no sync is running and the quota, so a setup token is never used up for a sync that can't run. Then it claims the token, seals and stores the access URL (a first connection gets a random `schedule_minute`; connecting again keeps it, unpauses, and keeps the bank accounts and their links), and runs a sync with trigger `connect` so the bank accounts can be listed. A failed first sync still leaves the connection stored; the status's last run says what happened.
 
 ## Scheduling
 
@@ -104,12 +104,12 @@ Under `/api/v1/bank-sync`, behind the usual auth; read-only tokens may only `GET
 
 | Endpoint | What |
 |---|---|
-| `GET /` | Status: key configured, connected, paused reason, Automatic sync, last run, quota (`remaining`, `availableAt`). |
+| `GET /` | `BankSyncStatus`: key configured, connected (and when), paused reason, whether a sync is running, the last finished run, quota (`limit`, `remaining`, `availableAt`). Automatic sync joins it in T7. |
 | `POST /connect` | `{ setupToken }`: claim, store, first sync. Also how Connect again works (SYNC-1.3), keeping links. |
-| `DELETE /` | Disconnect (SYNC-1.4). |
+| `DELETE /` | Disconnect (SYNC-1.4). 409 while a sync runs, 404 when not connected. |
 | `GET /accounts` | SimpleFIN accounts with their connection, link and last-seen date. |
 | `PUT /accounts/:id` | `{ action: 'link', accountId, syncFrom }`, `{ action: 'create', name, type, institutionId \| institutionName, isHidden }`, `{ action: 'ignore' }` or `{ action: 'unlink' }`. |
-| `POST /sync` | Sync now; returns the run. 429 over the limit, 409 while one runs. |
+| `POST /sync` | Sync now, and Try again while paused for payment; returns the run. 429 over the limit, 409 while one runs (`OperationStatus.Conflict`), 400 when not connected, without a key, or paused for another reason. |
 | `GET /runs` | The last 10 runs (SYNC-3.7). |
 
 Account Details gets the linked SimpleFIN account's ID, name and last sync with the account, for Manage Account's Bank sync section (ACCT-7.3), which links and unlinks through the same `PUT`.

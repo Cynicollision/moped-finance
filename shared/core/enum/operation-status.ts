@@ -10,5 +10,6 @@ export enum OperationStatus {
     NotFound = 'NotFound',
     Forbidden = 'Forbidden',
     Unauthorized = 'Unauthorized',
+    Conflict = 'Conflict',
     TooManyRequests = 'TooManyRequests'
 }
