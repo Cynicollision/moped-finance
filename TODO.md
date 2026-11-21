@@ -6,7 +6,7 @@ v0.1.0, the initial release with manual accounts, came out on 2026-11-07. Each m
 
 | Milestone | Release | What it adds | Status |
 |---|---|---|---|
-| M01 Manual accounts | v0.1 | Accounts, balances, transactions, categories, budget and spending, entered by hand or imported | Released 2026-11-07 |
+| [M01 Manual accounts](docs/milestones/M01-manual-accounts.md) | v0.1 | Accounts, balances, transactions, categories, budget and spending, entered by hand or imported | Released 2026-11-07 |
 | [M02 Bank sync and categorization](docs/milestones/M02-bank-sync-and-categorization.md) | v0.2 | Transactions and balances from SimpleFIN Bridge, with rules and learning that set categories on add, import and sync | Planned |
 | [M03 Real estate values](#m03-real-estate-values-v03) | v0.3 | Real Estate accounts' values from an online estimate | Not planned yet |
 
