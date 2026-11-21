@@ -1,8 +1,8 @@
-# v0.2 design: bank sync and rules
+# M02 design: bank sync and rules
 
-How the Bank sync and categorization milestone is built (requirements: [SYNC](requirements/bank-sync.md), ACCT-4, ACCT-7, CAT-8, CAT-9). Written 2026-11-07 from the SimpleFIN spec, before any code. Each session corrects it as the code proves it wrong; the first confirms the open points against Bridge's demo token ([To confirm](#to-confirm)).
+How the Bank sync and categorization milestone is built (requirements: [SYNC](../requirements/bank-sync.md), ACCT-4, ACCT-7, CAT-8, CAT-9). Written 2026-11-07 from the SimpleFIN spec, before any code. Each session corrects it as the code proves it wrong; the first confirms the open points against Bridge's demo token ([To confirm](#to-confirm)). The order of work, and how it went, is in the [milestone's file](M02-bank-sync-and-categorization.md).
 
-This doc is temporary. The milestone's last item moves what stays true into [architecture.md](architecture.md) and deletes it.
+This doc is temporary. The milestone's last task (T12) moves what stays true into [architecture.md](../architecture.md) and deletes it.
 
 ## SimpleFIN in brief
 
@@ -77,7 +77,7 @@ Tests use a fake `ISimplefinClient` returning fixtures recorded from the demo to
 1. **Lock.** `pg_try_advisory_lock` on a fixed key; if it's taken, refuse with "A sync is already running." (SYNC-3.5). The lock also holds against two servers, should there ever be more than one.
 2. **Quota.** If `SyncQuota` says no, a manual sync answers 429 with the time it frees up; a scheduled one records a `skipped` run (SYNC-3.4).
 3. **Decrypt** the access URL; failing sets `paused_reason = 'undecryptable'` and stops.
-4. **Request.** Insert the run with `requested_at`, then `fetchAccounts` with `start-date` 89 days before now (SYNC-3.6; one day's margin under Bridge's 90). Always the full window, rather than since the last sync: it's one request either way, it picks up corrections the bank makes later (SYNC-4.4), and a newly linked account can take its history from the latest payload (SYNC-2.10). 403 or 402 sets `paused_reason = 'refused'`; any other failure fails the run and waits for the next scheduled one.
+4. **Request.** Insert the run with `requested_at`, then `fetchAccounts` with `start-date` 89 days before now (SYNC-3.6; one day's margin under Bridge's 90) and `pending=1`, so the stored payloads show how each bank's pending transactions post (SYNC-6; pending ones are still never added, SYNC-4.7). Always the full window, rather than since the last sync: it's one request either way, it picks up corrections the bank makes later (SYNC-4.4), and a newly linked account can take its history from the latest payload (SYNC-2.10). 403 or 402 sets `paused_reason = 'refused'`; any other failure fails the run and waits for the next scheduled one.
 5. **Store** the parsed payload on the run.
 6. **Apply**, in one database transaction (SYNC-4.8):
    - Upsert `simplefin.connections` and `simplefin.accounts` from the payload, updating names, balances and `last_seen_at`. New accounts arrive Not set up.
@@ -141,6 +141,6 @@ With the demo token, before building on the shapes above:
 
 - Which version Bridge returns by default and with `version=2`, and whether `payee` still comes through (SYNC-4.2's merchant).
 - The sign of a credit card's and a loan's `balance`: Moped stores liabilities negative (APP-6.3). If Bridge reports them positive, flip by the account's Asset/Liability.
-- Whether pending transactions keep their ID when they post (decides SYNC-6.1's approach).
+- Whether pending transactions keep their ID when they post (decides SYNC-6.1's approach). The demo token may show it; the owner's banks settle it in the live trial (T10, T11).
 - What Bridge's quota warnings look like in `errors`, to show them (SYNC-5.1).
-- Whether the demo token can be claimed more than once (the protocol page and the guide disagree), for repeatable manual testing.
+- **Answered 2026-11-21:** a demo token can be claimed only once. Bridge's developer guide says so, but refreshing the guide's page gives a new demo token, so manual testing can claim as many as it needs. Demo access URLs have the usual limits.

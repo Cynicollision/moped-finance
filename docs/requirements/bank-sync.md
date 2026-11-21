@@ -2,7 +2,7 @@
 
 Bank sync keeps connected accounts' transactions and balances up to date from [SimpleFIN Bridge](https://beta-bridge.simplefin.org) (decided 2026-10-15). The user links their banks in Bridge, not in this app, and gives the app one connection that covers all of them. Bridge returns every **bank account** it holds for the user, grouped by **connection** (one sign-in at one bank). The user links each bank account to one of their accounts, creates a new account for it, or chooses not to sync it.
 
-Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), where the user connects, sees how syncing is going and links bank accounts; and the **Bank sync** section of Manage Account (ACCT-7.3), which links or unlinks one account. How it's built is in [v0.2-design.md](../v0.2-design.md) until v0.2 ships.
+Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), where the user connects, sees how syncing is going and links bank accounts; and the **Bank sync** section of Manage Account (ACCT-7.3), which links or unlinks one account. How it's built is in [M02-design.md](../milestones/M02-design.md) until v0.2 ships.
 
 ## SYNC-1 The user can connect the app to SimpleFIN Bridge
 
@@ -61,9 +61,9 @@ Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), whe
 | SYNC-5.1 | The Dashboard and **Bank Sync** shall show a banner, linking to Bank Sync, while: the last sync failed; Bridge reported a problem with a connection or bank account (for example a bank that needs signing in again in Bridge); syncing is paused (SYNC-1.3); there are bank accounts not set up (SYNC-2.2, "2 new bank accounts found"); or, while connected and with Automatic sync on, no sync has succeeded for 48 hours. It goes away once the cause is gone. | Planned |
 | SYNC-5.2 | Messages from Bridge shall be shown as Bridge wrote them, as plain text. | Planned |
 
-## SYNC-6 Pending transactions (later)
+## SYNC-6 Pending transactions
 
-Not part of v0.2 (decided 2026-11-07); `TODO.md` lists it under Unscheduled.
+Explored in M02 (decided 2026-11-21): syncs collect the bank's pending transactions without adding them (SYNC-4.7), and once the live trial shows how the owner's banks post them, M02 builds this if they can be matched reliably to their posted transactions, or leaves it for later ([M02, T11](../milestones/M02-bank-sync-and-categorization.md)). The rest of its sub-requirements are written then.
 
 | ID | Requirement | Status |
 |---|---|---|

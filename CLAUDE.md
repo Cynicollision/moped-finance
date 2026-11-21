@@ -9,7 +9,8 @@ Read the doc that fits the task before starting:
 - [docs/testing.md](docs/testing.md): server (Jest + PGlite) and client (Vitest) test patterns
 - [docs/deployment.md](docs/deployment.md): production status (not working yet)
 - [docs/requirements/](docs/requirements/README.md): requirements by domain, with stable IDs
-- [docs/v0.2-design.md](docs/v0.2-design.md): how the milestone in progress is built (bank sync, rules). A milestone may have one such design doc while it's being built: read it before working on the milestone, correct it as the code proves it wrong, and fold what stays true into `architecture.md` when the milestone ships, deleting the doc
+- [docs/milestones/](docs/milestones/README.md): one file per milestone (`M02-bank-sync-and-categorization.md`): the plan, its tasks in order, decisions, progress notes and the outcome. The current one is [M02](docs/milestones/M02-bank-sync-and-categorization.md)
+- [docs/milestones/M02-design.md](docs/milestones/M02-design.md): how the milestone in progress is built (bank sync, rules). A milestone may have one such design doc beside its file while it's being built: read it before working on the milestone, correct it as the code proves it wrong, and fold what stays true into `architecture.md` when the milestone ships, deleting the doc
 
 @docs/conventions.md
 
@@ -22,8 +23,8 @@ Read the doc that fits the task before starting:
 
 ## Backlog
 
-`TODO.md` is the backlog, sectioned by release milestone toward 1.0, then Unscheduled, with Ideas last. The `/next` skill (`.claude/skills/next/`) runs a session's worth of it: candidates, questions, plan, then one PR at a time.
+`TODO.md` is the high-level backlog: one line per milestone toward 1.0, items for milestones not planned yet, then Unscheduled, with Ideas last. The milestone being built has its own file in `docs/milestones/`, which holds its tasks; work for it goes there. The `/next` skill (`.claude/skills/next/`) runs a session's worth of either: candidates, questions, plan, then one PR at a time.
 
-- Delete an item once it's done; git history is the changelog.
-- When you notice a bug, a deviation from standard practice, or other follow-up work that's out of scope for the current change, add it to the right milestone instead of fixing it on the side. Include file paths and what's wrong.
+- Delete a `TODO.md` item once it's done; git history is the changelog. A milestone task is ticked instead, with a *Changed while doing it* note in the PR that finishes it, and the file keeps the record.
+- When you notice a bug, a deviation from standard practice, or other follow-up work that's out of scope for the current change, add it to the right milestone (its file's tasks, or its `TODO.md` section if it has no file yet) or to Unscheduled, instead of fixing it on the side. Include file paths and what's wrong.
 - Point at code by file and function or symbol name (`account-controller.ts`, `importBalanceHistory`), not line numbers, which go stale.
