@@ -38,6 +38,8 @@ services:
       - PGHOST=postgres
       - PORT=3000
       - TZ=${TZ:-UTC}
+      # For development only, so bank sync works without setting one: Base64 of "moped-finance-development-only!!".
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-bW9wZWQtZmluYW5jZS1kZXZlbG9wbWVudC1vbmx5ISE=}
     volumes:
       - ./server:/app/server
       - ./shared:/app/shared

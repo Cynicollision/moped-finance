@@ -1,0 +1,10 @@
+{
+    "errlist": [
+        {
+            "code": "gen.auth",
+            "msg": "Forbidden"
+        }
+    ],
+    "accounts": [],
+    "connections": []
+}

@@ -1,6 +1,6 @@
 # M02 design: bank sync and rules
 
-How the Bank sync and categorization milestone is built (requirements: [SYNC](../requirements/bank-sync.md), ACCT-4, ACCT-7, CAT-8, CAT-9). Written 2026-11-07 from the SimpleFIN spec, before any code. Each session corrects it as the code proves it wrong; the first confirms the open points against Bridge's demo token ([To confirm](#to-confirm)). The order of work, and how it went, is in the [milestone's file](M02-bank-sync-and-categorization.md).
+How the Bank sync and categorization milestone is built (requirements: [SYNC](../requirements/bank-sync.md), ACCT-4, ACCT-7, CAT-8, CAT-9). Written 2026-11-07 from the SimpleFIN spec, before any code. Each session corrects it as the code proves it wrong; the first checked it against Bridge's demo token ([What the demo token showed](#what-the-demo-token-showed)), and what only real banks can answer waits for the live trial ([To confirm](#to-confirm)). The order of work, and how it went, is in the [milestone's file](M02-bank-sync-and-categorization.md).
 
 This doc is temporary. The milestone's last task (T12) moves what stays true into [architecture.md](../architecture.md) and deletes it.
 
@@ -10,14 +10,14 @@ Sources: the [protocol](https://www.simplefin.org/protocol.html) (v2, still a dr
 
 - **Claiming.** A setup token is a Base64-encoded claim URL. `POST` to it (empty body) returns the access URL as the response body: `https://user:password@host/path`. A claim works once; a used or unknown token gets 403.
 - **Fetching.** `GET <access URL>/accounts?version=2&start-date=<unix>` with HTTP Basic auth from the URL's credentials. Other parameters: `end-date` (exclusive), `pending=1` (pending transactions, off by default), `account=<id>` (repeatable), `balances-only=1`.
-- **Response.** `errlist` (`{ code, msg, conn_id?, account_id? }`, codes `gen.*`, `con.*`, `act.*`), `connections` (`conn_id`, `name`, `org_id`, `org_url?`, `sfin_url`), `accounts` (`id`, `name`, `conn_id`, `currency`, `balance`, `available-balance?`, `balance-date`, `transactions?`, `extra?`). A transaction has `id`, `posted`, `amount`, `description`, `transacted_at?`, `pending?`, `extra?`. Amounts are numeric strings, positive for money in; timestamps are Unix seconds. v1 had an `org` object per account, `payee` and `memo` on transactions, and a plain `errors` list, which Bridge still uses for its own warnings.
+- **Response.** `errlist` (`{ code, msg, conn_id?, account_id? }`, codes `gen.*`, `con.*`, `act.*`), `connections` (`conn_id`, `name`, `org_id`, `org_url?`, `sfin_url`), `accounts` (`id`, `name`, `conn_id`, `currency`, `balance`, `available-balance?`, `balance-date`, `transactions?`, `extra?`). A transaction has `id`, `posted`, `amount`, `description`, `transacted_at?`, `pending?`, `extra?`, and Bridge adds `payee`, `memo` and `mcc`. Amounts are numeric strings, positive for money in; timestamps are Unix seconds. Bridge answers in v1 unless asked for `version=2`: an `org` object per account instead of `connections` and `conn_id`, and a plain `errors` list of strings instead of `errlist`. Both versions may carry `x-api-message`, a list of notes from Bridge.
 - **IDs.** An account ID is unique within its connection; a transaction ID is unique within its account and never reused there. Neither is promised to be stable, and nothing says whether a pending transaction keeps its ID when it posts.
-- **Bridge's limits.** About 24 requests a day, with separate allowances for all-accounts and per-account requests; going past the warning level disables the access URL. At most 90 days between `start-date` and `end-date`. History depth varies by bank. Bridge updates from banks about daily. 403 (revoked or wrong credentials) and 402 (payment required) are failures the user has to fix.
+- **Bridge's limits.** About 24 requests a day, with separate allowances for all-accounts and per-account requests; going past the warning level disables the access URL. At most 90 days between `start-date` and `end-date`, but more than 45 gets a warning in `errlist` ([what the demo token showed](#what-the-demo-token-showed)). History depth varies by bank. Bridge updates from banks about daily. 403 (revoked or wrong credentials) and 402 (payment required) are failures the user has to fix.
 
 ## Configuration
 
-- **`ENCRYPTION_KEY`**: 32 random bytes, Base64 (`openssl rand -base64 32`). Read and checked at startup like `LOG_RETENTION_DAYS` (`LogRetention.retentionDaysFromEnvironment`): unset means bank sync is unavailable (SYNC-1.2); set but not 32 bytes stops the server, naming the variable. Not tied to bank sync by name, so later credentials (a property-data API key for Real estate values) use it too. Goes in `.env.example`, both compose files and `deployment.md`.
-- **Encryption**: AES-256-GCM via `node:crypto`, a random 12-byte IV per value, stored as `v1.<iv>.<tag>.<ciphertext>` (Base64url) so the format can change later. A small `SecretBox` in `server/src/utility/` with `seal` and `open`; `open` failing (wrong key, tampering) is SYNC-1.3's "can't be decrypted". It protects backups and database dumps, not a compromised host, which has the key too.
+- **`ENCRYPTION_KEY`**: 32 random bytes, Base64 (`openssl rand -base64 32`). `SecretBox.fromEnvironment` reads it at startup in `index.ts`, beside the sign-in limits and log retention: unset means bank sync is unavailable (SYNC-1.2); set but not exactly 32 bytes of standard Base64 stops the server, naming the variable but not its value. Not tied to bank sync by name, so later credentials (a property-data API key for Real estate values) use it too. It's in `.env.example` and `deployment.md`; `docker-compose.yml` sets a fixed development key unless `.env` has one, and `docker-compose.prod.yml` passes it through from `.env` like every other variable.
+- **Encryption**: AES-256-GCM via `node:crypto`, a random 12-byte IV per value, stored as `v1.<iv>.<tag>.<ciphertext>` (Base64url) so the format can change later. `SecretBox` in `server/src/utility/secret-box.ts` has `seal` and `open`; `open` throws `SecretBoxError` for a wrong key, tampering or a value that isn't sealed, which is SYNC-1.3's "can't be decrypted". It protects backups and database dumps, not a compromised host, which has the key too.
 - **Time zone**: transaction and balance dates come from Unix timestamps through the server's `TZ` (APP-5.6), with a `DateTimeUtil` helper turning an instant into a `CalendarDate`.
 
 ## Data model
@@ -60,7 +60,8 @@ All in `server/src/api/bank-sync/`:
 
 | File | Job |
 |---|---|
-| `simplefin-client.ts` | The only code that talks to Bridge. `ISimplefinClient` with `claim(setupToken)` and `fetchAccounts(accessUrl, startDate)`. Uses `fetch`, which refuses URLs with credentials, so it moves them into an `Authorization: Basic` header. HTTPS only (a claim URL or access URL that isn't `https:` is refused), 60-second timeout, no retries. Parses the response with Zod, accepting v1 and v2 shapes, into our own `SimplefinAccountSet` type. Never logs URLs or bodies. |
+| `simplefin-client.ts` | The only code that talks to Bridge. `ISimplefinClient` with `claim(setupToken)` and `fetchAccounts(accessUrl, startDate)`, which always asks for `version=2` and `pending=1`. Uses `fetch`, which refuses URLs with credentials, so it moves them into an `Authorization: Basic` header. HTTPS only (a claim URL or access URL that isn't `https:` is refused before anything is sent), 60-second timeout, no retries, nothing logged. Every failure is a `SimplefinError` with a `kind` (`invalid-setup-token`, `invalid-access-url`, `refused` for 403, `payment-required` for 402, `timeout`, `unreachable`, `unexpected-response`) and a message that never holds a URL, token or body, so the runner can log and store it as it is; a refused fetch also carries Bridge's `errlist` (`gen.auth`). |
+| `simplefin-response.ts` | `parseAccountSet`: Zod schemas for v2 and v1 into our own `SimplefinAccountSet` (connections, accounts, transactions and Bridge's `messages`), or null for anything else. It's plain JSON, with timestamps left as Unix seconds and amounts as numbers, so a run can store it and linking can read it back; dates are worked out by the transform. v1's `org` becomes a connection (its `id`, else its `sfin-url`). `errlist`, `errors` and `x-api-message` all become `messages`, the last two without a code. |
 | `simplefin-schema.ts`, `simplefin-data.ts` | The tables above and their queries. |
 | `sync-quota.ts` | Counts `sync_runs.requested_at` in the last 24 hours against the cap of 20 (SYNC-3.4) and says when the next slot frees. |
 | `sync-runner.ts` | One sync, the pipeline below. Used by the routes and the scheduler. |
@@ -68,7 +69,7 @@ All in `server/src/api/bank-sync/`:
 | `sync-scheduler.ts` | The timer (SYNC-3.1, 3.2). |
 | `bank-sync-controller.ts`, `bank-sync-routes.ts` | The API. |
 
-Tests use a fake `ISimplefinClient` returning fixtures recorded from the demo token (v2 and v1 shaped) in `server/src/api/bank-sync/test-data/`. CI never calls Bridge.
+The client's tests stub `fetch` with fixtures recorded from the demo token (v2 and v1 shaped) in `server/src/api/bank-sync/test-data/`, whose README says what each one is; tests of everything above the client use the fake `ISimplefinClient` (T3). CI never calls Bridge.
 
 ## The sync pipeline
 
@@ -77,7 +78,7 @@ Tests use a fake `ISimplefinClient` returning fixtures recorded from the demo to
 1. **Lock.** `pg_try_advisory_lock` on a fixed key; if it's taken, refuse with "A sync is already running." (SYNC-3.5). The lock also holds against two servers, should there ever be more than one.
 2. **Quota.** If `SyncQuota` says no, a manual sync answers 429 with the time it frees up; a scheduled one records a `skipped` run (SYNC-3.4).
 3. **Decrypt** the access URL; failing sets `paused_reason = 'undecryptable'` and stops.
-4. **Request.** Insert the run with `requested_at`, then `fetchAccounts` with `start-date` 89 days before now (SYNC-3.6; one day's margin under Bridge's 90) and `pending=1`, so the stored payloads show how each bank's pending transactions post (SYNC-6; pending ones are still never added, SYNC-4.7). Always the full window, rather than since the last sync: it's one request either way, it picks up corrections the bank makes later (SYNC-4.4), and a newly linked account can take its history from the latest payload (SYNC-2.10). 403 or 402 sets `paused_reason = 'refused'`; any other failure fails the run and waits for the next scheduled one.
+4. **Request.** Insert the run with `requested_at`, then `fetchAccounts` with `start-date` 44 days before now (SYNC-3.6; the demo token warns from 45 days) and `pending=1`, so the stored payloads show how each bank's pending transactions post (SYNC-6; pending ones are still never added, SYNC-4.7). Always the full window, rather than since the last sync: it's one request either way, it picks up corrections the bank makes later (SYNC-4.4), and a newly linked account can take its history from the latest payload (SYNC-2.10). A `SimplefinError` of kind `refused` (403) or `payment-required` (402) sets `paused_reason = 'refused'`; any other failure fails the run and waits for the next scheduled one.
 5. **Store** the parsed payload on the run.
 6. **Apply**, in one database transaction (SYNC-4.8):
    - Upsert `simplefin.connections` and `simplefin.accounts` from the payload, updating names, balances and `last_seen_at`. New accounts arrive Not set up.
@@ -135,12 +136,24 @@ Conditions and actions are child rows rather than JSON so the categories and acc
 
 API: `/api/v1/rules` with list, create, update, delete, `PUT /order` (the full ordered list of IDs), `GET /:id/matches` (CAT-8.5's counts) and `POST /:id/apply`. The Rules screen (`/settings/rules`) is an `<app-list>` with drag to reorder, and the rule form is a full page, since a rule has any number of conditions and actions.
 
+## What the demo token showed
+
+Tried 2026-11-21 (T2) with two demo tokens, recorded in `server/src/api/bank-sync/test-data/`, and with `SimplefinClient` itself against Bridge:
+
+- **Versions.** Without `version`, Bridge answers in v1; with `version=2`, in v2. Both carry `payee` and `memo` on every transaction, so SYNC-4.2's merchant can come from `payee`. The client asks for v2 and still reads v1.
+- **The window.** A request reaching back more than 44 days gets a `gen.api` entry in `errlist` (in v1, a string in `errors`): "Requested date range exceeds recommended range of 45 days. In the future, this may be capped." At 44 days there's none, so syncs ask for 44 (SYNC-3.6, decided 2026-11-21). Without `start-date`, Bridge returns only transactions from yesterday on, with an `x-api-message` saying so.
+- **Claiming.** A claim answers 200 with the access URL as the body. Claiming again answers 403 "Forbidden (was it already claimed?)". Refreshing the developer guide gives a new demo token, so manual testing can claim as many as it needs; each demo access URL has Bridge's usual limits.
+- **Refused credentials.** 403 with a v2-shaped body: `errlist: [{ code: "gen.auth", msg: "Forbidden" }]` and no accounts.
+- **IDs.** The demo's transaction IDs are their timestamps, so the same ID appears in two accounts: transaction IDs are unique within an account only, as the protocol says. Account IDs contain spaces ("Demo Checking").
+- **Dates.** Every demo transaction has `transacted_at` equal to `posted`, and some are up to 2 days in the future, which the transform's skip after `latestRecordDate()` leaves for a later sync.
+- **Pending.** The demo returns no pending transactions, even with `pending=1`, so it can't show whether a pending transaction keeps its ID. The pending fixture is edited by hand, and `fake:pending` (T3) stands in until the live trial.
+- **Payee, description and memo.** In the demo, `payee` is a clean name ("John's Fishin Shack"), `description` a short label ("Fishing bait") and `memo` reads like a bank statement ("JOHNS FISHIN SHACK BAIT"). SYNC-4.2 keeps `description` as Original Statement; the live trial checks which field holds the statement at real banks.
+
 ## To confirm
 
-With the demo token, before building on the shapes above:
+What only the owner's real banks can answer, in the live trial (T10):
 
-- Which version Bridge returns by default and with `version=2`, and whether `payee` still comes through (SYNC-4.2's merchant).
 - The sign of a credit card's and a loan's `balance`: Moped stores liabilities negative (APP-6.3). If Bridge reports them positive, flip by the account's Asset/Liability.
-- Whether pending transactions keep their ID when they post (decides SYNC-6.1's approach). The demo token may show it; the owner's banks settle it in the live trial (T10, T11).
-- What Bridge's quota warnings look like in `errors`, to show them (SYNC-5.1).
-- **Answered 2026-11-21:** a demo token can be claimed only once. Bridge's developer guide says so, but refreshing the guide's page gives a new demo token, so manual testing can claim as many as it needs. Demo access URLs have the usual limits.
+- Whether `description` or `memo` holds the bank's statement text (SYNC-4.2's Original Statement), and whether `payee` is a usable merchant.
+- Whether pending transactions keep their ID when they post, and how their amounts change (decides SYNC-6.1's approach; T10 keeps the payloads, T11 studies them).
+- What Bridge's quota warnings look like, to show them (SYNC-5.1). Not tried on the demo, since that means going past the limit on purpose; the window warning suggests a `gen.api` entry in `errlist`, which SYNC-5.2 shows as Bridge wrote it either way.
