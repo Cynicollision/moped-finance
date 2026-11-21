@@ -1,0 +1,93 @@
+<div class="manage-container">
+    <app-page-header title="Manage Account" [crumbs]="crumbs()" [refreshing]="data.isRefreshing()"></app-page-header>
+
+    @if (data.error(); as error) {
+        <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
+    } @else if (accountData(); as account) {
+        <section class="manage-section" aria-labelledby="details-heading">
+            <h2 id="details-heading">Details</h2>
+            <app-account-form
+                mode="edit"
+                [account]="account"
+                [institutions]="institutions()"
+                [saving]="saving()"
+                (save)="onSave($event)"
+                (cancelled)="onCancel()"
+            >
+            </app-account-form>
+        </section>
+
+        <section class="manage-section" aria-labelledby="close-heading">
+            <h2 id="close-heading">Close or delete</h2>
+            <div class="section-card">
+                <div class="action-row">
+                    @if (account.closedOn) {
+                        <div class="action-text">
+                            <h3>Reopen account</h3>
+                            <p>
+                                Closed on {{ account.closedOn | date: 'mediumDate' }}. Reopening puts it back in the
+                                Dashboard's lists and the accounts offered for new transactions.
+                            </p>
+                        </div>
+                        <button
+                            mat-stroked-button
+                            type="button"
+                            [disabled]="running() !== null"
+                            (click)="reopenAccount()"
+                        >
+                            @if (running() === 'reopen') {
+                                <mat-progress-spinner
+                                    class="button-spinner"
+                                    mode="indeterminate"
+                                    diameter="18"
+                                ></mat-progress-spinner>
+                            }
+                            Reopen account
+                        </button>
+                    } @else {
+                        <div class="action-text">
+                            <h3>Close account</h3>
+                            <p>For an account you no longer have. Its past still counts in net worth and Spending.</p>
+                        </div>
+                        <button
+                            mat-stroked-button
+                            type="button"
+                            [disabled]="running() !== null"
+                            (click)="closeAccount()"
+                        >
+                            Close account
+                        </button>
+                    }
+                </div>
+                <mat-divider></mat-divider>
+                <div class="action-row">
+                    <div class="action-text">
+                        <h3>Delete account</h3>
+                        <p>Removes the account with all its balances and transactions. This can't be undone.</p>
+                    </div>
+                    <button
+                        mat-stroked-button
+                        type="button"
+                        class="danger-button"
+                        [disabled]="running() !== null"
+                        (click)="deleteAccount()"
+                    >
+                        @if (running() === 'delete') {
+                            <mat-progress-spinner
+                                class="button-spinner"
+                                mode="indeterminate"
+                                diameter="18"
+                            ></mat-progress-spinner>
+                        }
+                        Delete account
+                    </button>
+                </div>
+            </div>
+        </section>
+    } @else {
+        <div class="loading-cards">
+            <app-card-skeleton [rows]="4"></app-card-skeleton>
+            <app-card-skeleton [rows]="2"></app-card-skeleton>
+        </div>
+    }
+</div>

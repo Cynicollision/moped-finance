@@ -17,23 +17,16 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { AccountCategory, AccountType } from '@shared/finance/enum';
+import { AccountType } from '@shared/finance/enum';
 import { Account, AccountRequest, Institution } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
 import { DateProviderService } from './../core/date-provider.service';
-
-function isLiability(type: AccountType): boolean {
-    return AccountTypeUtil.categoryOf(type) === AccountCategory.Liability;
-}
+import { flipForLiability, isLiability } from './account-balance';
 
 /**
- * Converts between a stored balance and the amount the form shows, either way: a liability's balance is stored
- * negative and shown as the amount owed (APP-6.3). `|| 0` keeps nothing owed from becoming -0.
+ * An account's fields: Add Account's form, with its Starting Balance (ACCT-1.3, 2.2), and Manage Account's Details
+ * (ACCT-1.5, 7.2), whose balance is set in the Update balance dialog instead (ACCT-7.5).
  */
-function flipForLiability(type: AccountType, amount: number): number {
-    return (isLiability(type) ? -amount : amount) || 0;
-}
-
 @Component({
     selector: 'app-account-form',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -84,7 +77,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
             validators: [Validators.required]
         }),
         isHidden: new FormControl<boolean>(false, { nonNullable: true }),
-        // As of today, as the user reads it: a liability's balance is the amount owed, positive (APP-6.3).
+        // The starting balance as the user reads it: a liability's is the amount owed, positive (APP-6.3).
         balance: new FormControl<number | null>(null)
     });
 
@@ -98,21 +91,7 @@ export class AccountFormComponent implements OnInit, OnChanges {
         return `${AccountTypeUtil.groupOf(type)} · ${AccountTypeUtil.categoryOf(type)}`;
     });
 
-    /**
-     * A manual account's balance is set here (ACCT-2.2); a connected one's comes from its bank (ACCT-4.4), and a
-     * closed one's stays 0 until it's reopened (ACCT-6.3).
-     */
-    readonly showBalance = computed(() => {
-        const account = this.account();
-        return this.mode() === 'create' || (!!account?.isManual && !account.closedOn);
-    });
-
-    readonly balanceLabel = computed(() => {
-        if (isLiability(this.type())) {
-            return 'Amount owed';
-        }
-        return this.mode() === 'create' ? 'Starting Balance' : 'Balance';
-    });
+    readonly balanceLabel = computed(() => (isLiability(this.type()) ? 'Amount owed' : 'Starting Balance'));
 
     ngOnInit() {
         this.updateFormState();
@@ -127,17 +106,21 @@ export class AccountFormComponent implements OnInit, OnChanges {
     private updateFormState() {
         const account = this.account();
         if (account) {
-            this.accountForm.patchValue({
-                name: account.name,
-                institutionId: account.institutionId,
-                type: account.type,
-                isHidden: account.isHidden,
-                // Blank when there's no balance yet, as on Add Account.
-                balance: account.balanceDate ? flipForLiability(account.type, account.balance ?? 0) : null
-            });
+            this.reset(account);
         } else {
             this.accountForm.controls.institutionId.setValue(this.defaultInstitutionId() ?? '');
         }
+    }
+
+    /** Shows the account's saved fields, dropping any unsaved changes. */
+    reset(account: Account) {
+        this.accountForm.reset({
+            name: account.name,
+            institutionId: account.institutionId,
+            type: account.type,
+            isHidden: account.isHidden ?? false,
+            balance: null
+        });
     }
 
     hasUnsavedChanges(): boolean {
@@ -151,10 +134,8 @@ export class AccountFormComponent implements OnInit, OnChanges {
 
         const { balance, ...fields } = this.accountForm.getRawValue();
         const request: AccountRequest = fields;
-        // Recorded as of today (ACCT-2.2). A blank starting balance records nothing (ACCT-1.4); on Edit Account, only
-        // a changed balance does.
-        const balanceChanged = this.mode() === 'create' || this.accountForm.controls.balance.dirty;
-        if (this.showBalance() && balance !== null && balanceChanged) {
+        // Recorded as of today (ACCT-2.2). A blank starting balance records nothing (ACCT-1.4).
+        if (this.mode() === 'create' && balance !== null) {
             request.balanceEntry = {
                 date: this.dateProvider.today(),
                 balance: flipForLiability(fields.type, balance)

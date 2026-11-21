@@ -61,7 +61,11 @@ describe('app routes', () => {
         await harness.navigateByUrl('/dashboard');
         expect(title.getTitle()).toBe('Dashboard · Moped Finance');
 
-        await harness.navigateByUrl('/accounts/acc-1/edit');
-        expect(title.getTitle()).toBe('Edit Account · Moped Finance');
+        await harness.navigateByUrl('/accounts/acc-1/manage');
+        expect(title.getTitle()).toBe('Manage Account · Moped Finance');
+    });
+
+    it("ACCT-7.1 should send Edit Account's old URL to Manage Account", async () => {
+        expect(await urlAfterVisiting('/accounts/acc-1/edit')).toBe('/accounts/acc-1/manage');
     });
 });

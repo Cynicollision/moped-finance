@@ -9,15 +9,17 @@
                 <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #menu="matMenu">
-                <a mat-menu-item [routerLink]="['/accounts', account.id, 'edit']">
-                    <mat-icon>edit</mat-icon>
-                    <span>Edit Account</span>
-                </a>
-                <mat-divider></mat-divider>
                 <a mat-menu-item [routerLink]="['/transactions/new']" [queryParams]="{ accountId: account.id }">
                     <mat-icon>add</mat-icon>
                     <span>Add Transaction</span>
                 </a>
+                @if (canUpdateBalance()) {
+                    <button mat-menu-item (click)="updateBalance()">
+                        <mat-icon>edit</mat-icon>
+                        <span>Update Balance</span>
+                    </button>
+                }
+                <mat-divider></mat-divider>
                 <a mat-menu-item [routerLink]="['/transactions/import']" [queryParams]="{ accountId: account.id }">
                     <mat-icon>upload_file</mat-icon>
                     <span>Import Transactions</span>
@@ -36,21 +38,10 @@
                     <span>Download Balance History</span>
                 </button>
                 <mat-divider></mat-divider>
-                @if (account.closedOn) {
-                    <button mat-menu-item (click)="reopenAccount()">
-                        <mat-icon>unarchive</mat-icon>
-                        <span>Reopen Account</span>
-                    </button>
-                } @else {
-                    <button mat-menu-item (click)="closeAccount()">
-                        <mat-icon>archive</mat-icon>
-                        <span>Close Account</span>
-                    </button>
-                }
-                <button mat-menu-item class="danger-item" (click)="deleteAccount()">
-                    <mat-icon>delete</mat-icon>
-                    <span>Delete Account</span>
-                </button>
+                <a mat-menu-item [routerLink]="['/accounts', account.id, 'manage']">
+                    <mat-icon>settings</mat-icon>
+                    <span>Manage Account</span>
+                </a>
             </mat-menu>
         }
     </app-page-header>

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,12 +17,11 @@ import { CardSkeletonComponent } from './../core/loading/card-skeleton.component
 import { LoadErrorComponent } from './../core/loading/load-error.component';
 import { viewResource } from './../core/loading/view-resource';
 import { ModalService } from './../core/modal/modal.service';
-import { NotificationService } from './../core/notification.service';
 import { categoryLabel } from './../common/category-label';
 import { MoneyComponent } from './../common/money.component';
 import { ValueHistoryComponent } from './../common/value-history.component';
 import { FinanceService } from './../common/finance.service';
-import { CloseAccountDialogComponent, CloseAccountDialogData } from './close-account-dialog.component';
+import { UpdateBalanceDialogComponent, UpdateBalanceDialogData } from './update-balance-dialog.component';
 
 @Component({
     selector: 'app-account-details',
@@ -48,10 +47,8 @@ import { CloseAccountDialogComponent, CloseAccountDialogData } from './close-acc
 export class AccountDetailsComponent {
     private financeService = inject(FinanceService);
     private route = inject(ActivatedRoute);
-    private router = inject(Router);
     private dateProvider = inject(DateProviderService);
     private modalService = inject(ModalService);
-    private notificationService = inject(NotificationService);
 
     private readonly accountId = this.route.snapshot.paramMap.get('accountId') ?? undefined;
 
@@ -160,50 +157,28 @@ export class AccountDetailsComponent {
         }
     }
 
-    async closeAccount() {
+    /**
+     * Only an open manual account's balance is set by hand: a connected one's comes from its bank (ACCT-4.4), and a
+     * closed one's stays 0 until it's reopened (ACCT-6.3).
+     */
+    readonly canUpdateBalance = computed(() => {
+        const account = this.account();
+        return !!account?.isManual && !account.closedOn;
+    });
+
+    async updateBalance() {
         const account = this.account();
         if (!account) {
             return;
         }
 
-        const closed = await this.modalService.open<CloseAccountDialogComponent, CloseAccountDialogData, boolean>(
-            CloseAccountDialogComponent,
+        const updated = await this.modalService.open<UpdateBalanceDialogComponent, UpdateBalanceDialogData, boolean>(
+            UpdateBalanceDialogComponent,
             { account }
         );
-        if (closed) {
+        if (updated) {
             this.details.reload();
             this.balances.reload();
-        }
-    }
-
-    async reopenAccount() {
-        const account = this.account();
-        if (account && (await this.financeService.reopenAccount(account.id))) {
-            this.notificationService.success('Account reopened');
-            this.details.reload();
-        }
-    }
-
-    async deleteAccount() {
-        const account = this.account();
-        if (!account) {
-            return;
-        }
-
-        // Closing keeps the account's past in the totals, so an open, unhidden one is pointed there first.
-        const keepPast =
-            account.closedOn || account.isHidden
-                ? ''
-                : ' To keep its past in your net worth and Spending, close it instead.';
-        const confirmed = await this.modalService.confirm({
-            title: 'Delete Account',
-            message: `Delete ${account.name}, with its balance history and transactions? This can't be undone.${keepPast}`,
-            confirmLabel: 'Delete',
-            isWarn: true
-        });
-        if (confirmed && (await this.financeService.deleteAccount(account.id))) {
-            this.notificationService.success('Account deleted');
-            this.router.navigate(['/dashboard']);
         }
     }
 }
