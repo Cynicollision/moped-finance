@@ -73,64 +73,27 @@ describe('AccountFormComponent', () => {
         ]);
     });
 
-    it("ACCT-2.2 should show a manual account's current balance, with no date to choose", async () => {
-        const { form, element } = await renderEdit(account());
-
-        expect(labels(element)).toContain('Balance');
-        expect(element.querySelector('input[matdatepicker]')).toBeNull();
-        expect(form.accountForm.controls.balance.value).toBe(1200);
-    });
-
-    it("APP-6.3 should show a liability's balance as the Amount owed", async () => {
-        const { form, element } = await renderEdit(
-            account({ type: AccountType.CreditCard, group: AccountGroup.CreditCards, balance: -450.25 })
-        );
-
-        expect(labels(element)).toContain('Amount owed');
-        expect(form.accountForm.controls.balance.value).toBe(450.25);
-    });
-
-    it('ACCT-2.2 should leave the balance blank for an account with none yet', async () => {
-        const { form } = await renderEdit(account({ balance: 0, balanceDate: null }));
-
-        expect(form.accountForm.controls.balance.value).toBeNull();
-    });
-
-    it('ACCT-1.5 should save no balance when only other fields changed', async () => {
-        const { form, saved } = await renderEdit(account());
+    it('ACCT-1.5 ACCT-7.2 should leave the balance out of Details, saving only the fields', async () => {
+        const { form, element, saved } = await renderEdit(account());
 
         form.accountForm.controls.name.setValue('Joint Checking');
         form.accountForm.controls.name.markAsDirty();
         form.onSubmit();
 
+        expect(labels(element)).not.toContain('Balance');
+        expect(labels(element)).not.toContain('Starting Balance');
         expect(saved).toEqual([expect.not.objectContaining({ balanceEntry: expect.anything() })]);
         expect(saved[0].name).toBe('Joint Checking');
     });
 
-    it('ACCT-2.2 should save a changed balance as of today, signed as stored', async () => {
-        const { form, saved } = await renderEdit(
-            account({ type: AccountType.Mortgage, group: AccountGroup.Loans, balance: -200000 })
-        );
+    it('APP-2.7 should drop unsaved changes when reset to the saved account', async () => {
+        const { form } = await renderEdit(account());
 
-        form.accountForm.controls.balance.setValue(199000);
-        form.accountForm.controls.balance.markAsDirty();
-        form.onSubmit();
+        form.accountForm.controls.name.setValue('Joint Checking');
+        form.accountForm.controls.name.markAsDirty();
+        form.reset(account());
 
-        expect(saved[0].balanceEntry).toEqual({ date: '2026-05-17', balance: -199000 });
-    });
-
-    it("ACCT-4.4 should not offer a connected account's balance", async () => {
-        const { element } = await renderEdit(account({ isManual: false }));
-
-        expect(labels(element)).not.toContain('Balance');
-    });
-
-    it("ACCT-6.3 should not offer a closed account's balance", async () => {
-        const { element, form, saved } = await renderEdit(account({ balance: 0, closedOn: '2026-05-01' }));
-
-        form.onSubmit();
-
-        expect(labels(element)).not.toContain('Balance');
-        expect(saved).toEqual([expect.not.objectContaining({ balanceEntry: expect.anything() })]);
+        expect(form.hasUnsavedChanges()).toBe(false);
+        expect(form.accountForm.controls.name.value).toBe('Checking');
     });
 });

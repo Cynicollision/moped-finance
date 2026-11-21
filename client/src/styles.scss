@@ -108,13 +108,15 @@ mat-card.mat-mdc-card-outlined {
 }
 
 // A button for a destructive action (APP-2.4): as a text button, Delete in a dialog; as a filled button, the
-// confirm button of a destructive confirmation.
+// confirm button of a destructive confirmation; as an outlined button, Delete account on Manage Account (ACCT-7.4).
 .danger-button {
     @include mat.button-overrides(
         (
             filled-container-color: var(--mat-sys-error),
             filled-label-text-color: var(--mat-sys-on-error),
-            text-label-text-color: var(--mat-sys-error)
+            text-label-text-color: var(--mat-sys-error),
+            outlined-label-text-color: var(--mat-sys-error),
+            outlined-outline-color: var(--mat-sys-error)
         )
     );
 }

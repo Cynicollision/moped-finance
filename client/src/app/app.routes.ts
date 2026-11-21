@@ -5,7 +5,7 @@ import { unsavedChangesGuard } from './core/unsaved-changes.guard';
 import { AccountDetailsComponent } from './accounts/account-details.component';
 import { AddAccountComponent } from './accounts/add-account.component';
 import { BalanceImportComponent } from './accounts/balance-import.component';
-import { EditAccountComponent } from './accounts/edit-account.component';
+import { ManageAccountComponent } from './accounts/manage-account.component';
 import { BudgetComponent } from './budget/budget.component';
 import { SpendingComponent } from './spending/spending.component';
 import { InstitutionsComponent } from './institutions/institutions.component';
@@ -52,11 +52,13 @@ export const routes: Routes = [
             },
             { path: 'accounts/:accountId', component: AccountDetailsComponent, title: 'Account Details' },
             {
-                path: 'accounts/:accountId/edit',
-                component: EditAccountComponent,
-                title: 'Edit Account',
+                path: 'accounts/:accountId/manage',
+                component: ManageAccountComponent,
+                title: 'Manage Account',
                 canDeactivate: [unsavedChangesGuard]
             },
+            // Edit Account's old address (ACCT-7 replaced it).
+            { path: 'accounts/:accountId/edit', redirectTo: 'accounts/:accountId/manage' },
             {
                 path: 'accounts/:accountId/import-balances',
                 component: BalanceImportComponent,

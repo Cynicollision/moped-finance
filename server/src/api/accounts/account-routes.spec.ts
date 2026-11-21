@@ -649,6 +649,34 @@ describe('Account Routes', () => {
             expect(response.body).toEqual(expect.objectContaining({ balance: 42, balanceDate: '2026-05-17' }));
         });
 
+        it("ACCT-7.5 should record a balance sent on its own and keep the account's fields", async () => {
+            DateTimeUtil.setClock(new Date('2026-05-17T12:00:00Z'));
+            const account = await accountData.insert(
+                EntityFactory.createAccount({
+                    institutionId: testInstitutionId,
+                    name: 'Rainy Day',
+                    type: AccountType.Savings,
+                    isHidden: true
+                })
+            );
+
+            const response = await request(app)
+                .put(`/accounts/${account.id}`)
+                .send({ balanceEntry: { date: '2026-05-17', balance: 250 } });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual(
+                expect.objectContaining({
+                    name: 'Rainy Day',
+                    type: AccountType.Savings,
+                    institutionId: testInstitutionId,
+                    isHidden: true,
+                    balance: 250
+                })
+            );
+            expect(await balancesFor(account.id)).toEqual([['2026-05-17', 250]]);
+        });
+
         it('ACCT-5.7 should move the adjusted entries after a set balance by as much as it changed, up to the next set entry', async () => {
             const account = await insertAccount();
             const adjusted = BalanceEntrySource.Adjusted;
@@ -857,7 +885,7 @@ describe('Account Routes', () => {
             ]);
         });
 
-        it("ACCT-6.3 should refuse a closed account's balance on Edit Account, but save its other changes", async () => {
+        it("ACCT-6.3 should refuse a closed account's balance, but save its other changes", async () => {
             const account = await insertAccount();
             await request(app).post(`/accounts/${account.id}/close`).send({ closedOn: '2026-06-01' });
 

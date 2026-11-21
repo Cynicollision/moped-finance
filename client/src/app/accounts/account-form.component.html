@@ -30,14 +30,12 @@
         </mat-select>
         <mat-hint>{{ typeHint() }}</mat-hint>
     </mat-form-field>
-    @if (showBalance()) {
+    @if (mode() === 'create') {
         <mat-form-field appearance="outline" class="full-width">
             <mat-label>{{ balanceLabel() }}</mat-label>
             <span matTextPrefix>$&nbsp;</span>
             <input type="number" matInput formControlName="balance" />
-            <mat-hint>{{
-                mode() === 'create' ? 'As of today. Leave blank to import balance history instead.' : 'As of today'
-            }}</mat-hint>
+            <mat-hint>As of today. Leave blank to import balance history instead.</mat-hint>
         </mat-form-field>
     }
     <div class="hide-option">
@@ -53,7 +51,7 @@
             @if (saving()) {
                 <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
             }
-            {{ mode() === 'create' ? 'Save Account' : 'Save Changes' }}
+            {{ mode() === 'create' ? 'Save Account' : 'Save' }}
         </button>
     </div>
 </form>

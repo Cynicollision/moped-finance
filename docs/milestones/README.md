@@ -5,7 +5,7 @@ One file per milestone, numbered in order: `M02-bank-sync-and-categorization.md`
 | Milestone | Release | Status |
 |---|---|---|
 | [M01 — Manual accounts](M01-manual-accounts.md) | v0.1.0 | Released 2026-11-07 (written after the fact, and lighter than the rest) |
-| [M02 — Bank sync and categorization](M02-bank-sync-and-categorization.md) | v0.2.0 | Planned |
+| [M02 — Bank sync and categorization](M02-bank-sync-and-categorization.md) | v0.2.0 | In progress |
 
 ## How a milestone file works
 

@@ -1,0 +1,23 @@
+<app-modal-layout title="Update Balance">
+    <form id="update-balance-form" [formGroup]="form" (ngSubmit)="save()">
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ label }}</mat-label>
+            <span matTextPrefix>$&nbsp;</span>
+            <input type="number" matInput formControlName="balance" />
+            <mat-hint>As of today. Import balance history for earlier dates.</mat-hint>
+            @if (form.controls.balance.hasError('required')) {
+                <mat-error>{{ label }} is required</mat-error>
+            }
+        </mat-form-field>
+    </form>
+
+    <div modal-actions>
+        <button mat-button type="button" appModalCancel>Cancel</button>
+        <button mat-flat-button type="submit" form="update-balance-form" [disabled]="form.invalid || isSaving()">
+            @if (isSaving()) {
+                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+            }
+            Save
+        </button>
+    </div>
+</app-modal-layout>

@@ -131,8 +131,8 @@ export class FinanceService {
         return this.api.post<Account>(`${API_BASE_PATH}/accounts`, account);
     }
 
-    /** Saves an account's changes and, with `balanceEntry`, its balance on that date (ACCT-2.2). */
-    saveAccount(accountId: string, changes: AccountRequest): Promise<Account | undefined> {
+    /** Saves the account fields sent, leaving the rest, and with `balanceEntry` its balance on that date (ACCT-2.2). */
+    saveAccount(accountId: string, changes: Partial<AccountRequest>): Promise<Account | undefined> {
         return this.api.put<Account>(`${API_BASE_PATH}/accounts/${accountId}`, changes);
     }
 
