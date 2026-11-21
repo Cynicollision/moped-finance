@@ -198,6 +198,9 @@ export class OperationHandler {
             case OperationStatus.NotFound:
                 statusCode = 404;
                 break;
+            case OperationStatus.Conflict:
+                statusCode = 409;
+                break;
             case OperationStatus.TooManyRequests:
                 statusCode = 429;
                 break;

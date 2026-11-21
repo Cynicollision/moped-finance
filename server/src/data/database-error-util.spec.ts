@@ -43,7 +43,7 @@ describe('DatabaseErrorUtil', () => {
     it('should have a message for every unique constraint and index', async () => {
         const result = await pglite.query<{ name: string }>(`
             SELECT indexname AS name FROM pg_indexes
-            WHERE schemaname IN ('core', 'finance') AND indexdef LIKE 'CREATE UNIQUE INDEX%' AND indexname NOT LIKE '%_pkey'
+            WHERE schemaname IN ('core', 'finance', 'simplefin') AND indexdef LIKE 'CREATE UNIQUE INDEX%' AND indexname NOT LIKE '%_pkey'
         `);
         expect(result.rows.length).toBeGreaterThan(0);
 
@@ -59,7 +59,7 @@ describe('DatabaseErrorUtil', () => {
     it('should have a missing-reference message for every foreign key, and a still-referenced message for every ON DELETE RESTRICT key', async () => {
         const result = await pglite.query<{ name: string; delete_rule: string }>(`
             SELECT constraint_name AS name, delete_rule FROM information_schema.referential_constraints
-            WHERE constraint_schema IN ('core', 'finance')
+            WHERE constraint_schema IN ('core', 'finance', 'simplefin')
         `);
         expect(result.rows.length).toBeGreaterThan(0);
 

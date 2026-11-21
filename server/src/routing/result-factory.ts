@@ -101,6 +101,18 @@ export class Result {
         };
     }
 
+    public static conflict<T>(message: string, code = 'CONFLICT'): OperationResult<T> {
+        return {
+            success: false,
+            status: OperationStatus.Conflict,
+            timestamp: DateTimeUtil.getCurrentTimestamp(),
+            error: {
+                code,
+                message
+            }
+        };
+    }
+
     public static tooManyRequests<T>(message: string, code = 'TOO_MANY_REQUESTS'): OperationResult<T> {
         return {
             success: false,

@@ -56,6 +56,13 @@ export class TestDatabaseUtil {
         );
     }
 
+    /** Bank sync's tables (the `simplefin` schema). Clearing finance data empties `simplefin.accounts` too, by its link. */
+    public static async clearBankSyncData(pglite: PGlite): Promise<void> {
+        await pglite.exec(
+            'TRUNCATE simplefin.access, simplefin.connections, simplefin.accounts, simplefin.sync_runs CASCADE;'
+        );
+    }
+
     public static async clearCoreData(pglite: PGlite): Promise<void> {
         await pglite.exec(
             'DELETE FROM core.users; DELETE FROM core.sessions; DELETE FROM core.secrets; DELETE FROM core.settings;'

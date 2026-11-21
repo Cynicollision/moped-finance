@@ -2,17 +2,30 @@ import { Router } from 'express';
 import { AuthMiddleware } from '@server/auth';
 import { DatabaseClient } from '@server/data';
 import { IAppLogger } from '@server/logging';
+import { SecretBox } from '@server/utility';
 import { AccountData, BalanceHistoryData, createAccountRouter } from './accounts';
+import { BankSyncController, createBankSyncRouter, ISimplefinClient, SimplefinData } from './bank-sync';
 import { BudgetStreamData, createBudgetStreamRouter } from './budget';
 import { CategoryData, CategoryGroupData, createCategoryRouter } from './categories';
 import { InstitutionData, createInstitutionRouter } from './institutions';
 import { SettingsData, createSettingsRouter } from './settings';
 import { TransactionData, createTransactionRouter } from './transactions';
 
-export { simplefinClientFromEnvironment } from './bank-sync';
+export { SimplefinData, simplefinClientFromEnvironment } from './bank-sync';
 export { CategoryData, CategoryGroupData, DefaultCategories } from './categories';
 
-export function buildFinanceRouter(logger: IAppLogger, db: DatabaseClient, authMiddleware: AuthMiddleware): Router {
+/** What bank sync needs from the environment: Bridge's client and the `ENCRYPTION_KEY` box, if the key is set. */
+export interface BankSyncConfig {
+    client: ISimplefinClient;
+    secretBox: SecretBox | undefined;
+}
+
+export function buildFinanceRouter(
+    logger: IAppLogger,
+    db: DatabaseClient,
+    authMiddleware: AuthMiddleware,
+    bankSync: BankSyncConfig
+): Router {
     const router = Router();
 
     const accountData = new AccountData(db);
@@ -26,6 +39,10 @@ export function buildFinanceRouter(logger: IAppLogger, db: DatabaseClient, authM
 
     const accounts = createAccountRouter(logger, accountData, balanceHistoryData, transactionData);
     router.use('/v1/accounts', authMiddleware.resolveUser, authMiddleware.requireAuth, accounts);
+
+    const bankSyncController = new BankSyncController(new SimplefinData(db), bankSync.client, bankSync.secretBox);
+    const bankSyncRouter = createBankSyncRouter(logger, bankSyncController);
+    router.use('/v1/bank-sync', authMiddleware.resolveUser, authMiddleware.requireAuth, bankSyncRouter);
 
     const budgetStreams = createBudgetStreamRouter(logger, budgetStreamData);
     router.use('/v1/budget-streams', authMiddleware.resolveUser, authMiddleware.requireAuth, budgetStreams);

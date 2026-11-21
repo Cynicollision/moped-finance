@@ -3,4 +3,4 @@ export { DatabaseErrorUtil } from './database-error-util';
 export { CoreEntityIdPrefix, EntityFactory, FinanceEntityIdPrefix } from './entity-factory';
 export { EntityId } from './entity-id';
 export { SchemaUtil } from './schema-util';
-export { coreSchema, financeSchema } from './database-schemas';
+export { coreSchema, financeSchema, simplefinSchema } from './database-schemas';

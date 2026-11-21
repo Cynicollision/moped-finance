@@ -10,7 +10,13 @@ const uniqueViolationMessages: Record<string, string> = {
     institutions_name_unique_idx: 'An institution with that name already exists.',
     category_groups_name_unique_idx: 'A category group with that name already exists.',
     categories_name_unique_idx: 'A category with that name already exists.',
-    balance_history_account_id_date_unique: 'An account can only have one balance per date.'
+    balance_history_account_id_date_unique: 'An account can only have one balance per date.',
+    access_single_row_idx: 'Bank sync is already connected.',
+    connections_simplefin_id_unique: 'That SimpleFIN connection is already stored.',
+    accounts_connection_id_simplefin_id_unique: 'That bank account is already stored.',
+    // SYNC-2.5
+    accounts_linked_account_id_unique: 'This account is already linked to a bank account.',
+    sync_runs_one_running_idx: 'A sync is already running.'
 };
 
 // A foreign key fails in one of two directions, with the same constraint name:
@@ -43,6 +49,12 @@ const foreignKeyViolationMessages: Record<string, ForeignKeyMessages> = {
     },
     transactions_category_id_categories_id_fk: {
         missingReference: 'Category not found.'
+    },
+    accounts_connection_id_connections_id_fk: {
+        missingReference: 'SimpleFIN connection not found.'
+    },
+    accounts_linked_account_id_accounts_id_fk: {
+        missingReference: 'Account not found.'
     },
     budget_streams_category_id_categories_id_fk: {
         missingReference: 'Category not found.',
