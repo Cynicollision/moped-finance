@@ -62,6 +62,8 @@ All in `server/src/api/bank-sync/`:
 |---|---|
 | `simplefin-client.ts` | The only code that talks to Bridge. `ISimplefinClient` with `claim(setupToken)` and `fetchAccounts(accessUrl, startDate)`, which always asks for `version=2` and `pending=1`. Uses `fetch`, which refuses URLs with credentials, so it moves them into an `Authorization: Basic` header. HTTPS only (a claim URL or access URL that isn't `https:` is refused before anything is sent), 60-second timeout, no retries, nothing logged. Every failure is a `SimplefinError` with a `kind` (`invalid-setup-token`, `invalid-access-url`, `refused` for 403, `payment-required` for 402, `timeout`, `unreachable`, `unexpected-response`) and a message that never holds a URL, token or body, so the runner can log and store it as it is; a refused fetch also carries Bridge's `errlist` (`gen.auth`). |
 | `simplefin-response.ts` | `parseAccountSet`: Zod schemas for v2 and v1 into our own `SimplefinAccountSet` (connections, accounts, transactions and Bridge's `messages`), or null for anything else. It's plain JSON, with timestamps left as Unix seconds and amounts as numbers, so a run can store it and linking can read it back; dates are worked out by the transform. v1's `org` becomes a connection (its `id`, else its `sfin-url`). `errlist`, `errors` and `x-api-message` all become `messages`, the last two without a code. |
+| `simplefin-client-factory.ts` | `simplefinClientFromEnvironment`: the real client, or with `SIMPLEFIN_FAKE=true` a `DevelopmentSimplefinClient` that sends `fake` setup tokens and the access URLs they give to the fake and the rest to Bridge. Throws for the fake in production, so `index.ts` refuses to start. |
+| `fake/` | The fake Bridge ([development.md](../development.md#bank-sync-in-development)). `FakeBridge` is a `fetch` that answers claims and `GET /accounts` as Bridge does, building v2 or v1 JSON from made-up banks (`fake-banks.ts`) and a scenario (`fake-scenarios.ts`); `FakeSimplefinClient` is the real `SimplefinClient` over it, with a 5-second timeout. Stateless: a fake access URL is `https://<scenario>:<claimed at>@fake-bridge.simplefin.invalid/simplefin`, and the payload follows from that and `DateTimeUtil`'s clock. |
 | `simplefin-schema.ts`, `simplefin-data.ts` | The tables above and their queries. |
 | `sync-quota.ts` | Counts `sync_runs.requested_at` in the last 24 hours against the cap of 20 (SYNC-3.4) and says when the next slot frees. |
 | `sync-runner.ts` | One sync, the pipeline below. Used by the routes and the scheduler. |
@@ -69,7 +71,7 @@ All in `server/src/api/bank-sync/`:
 | `sync-scheduler.ts` | The timer (SYNC-3.1, 3.2). |
 | `bank-sync-controller.ts`, `bank-sync-routes.ts` | The API. |
 
-The client's tests stub `fetch` with fixtures recorded from the demo token (v2 and v1 shaped) in `server/src/api/bank-sync/test-data/`, whose README says what each one is; tests of everything above the client use the fake `ISimplefinClient` (T3). CI never calls Bridge.
+The client's tests stub `fetch` with fixtures recorded from the demo token (v2 and v1 shaped) in `server/src/api/bank-sync/test-data/`, whose README says what each one is; tests of everything above the client use `FakeSimplefinClient`, claiming `fake:<scenario>` tokens and moving the clock with `DateTimeUtil.setClock`. CI never calls Bridge.
 
 ## The sync pipeline
 

@@ -64,6 +64,35 @@ To change data rather than the schema, `npm run db:generate -- --custom --name <
 
 Don't edit a migration once it's merged: databases that already ran it won't run it again. Fix mistakes with a new migration. If `main` gained a migration while your branch had one, delete yours, merge `main`, and generate again, since migrations are numbered and applied in order.
 
+## Bank sync in development
+
+Bank sync (SYNC) talks to SimpleFIN Bridge, which needs a subscription and allows about 24 requests a day. Development uses stand-ins instead:
+
+| Stand-in | What it's for | How |
+|---|---|---|
+| The fake Bridge | Everyday development and trying things in the app: made-up banks whose transactions grow day by day, and a scenario for each fault bank sync has to handle | Connect with a setup token of `fake`, or `fake:<scenario>` from the list below |
+| Bridge's demo token | Checking the real client against Bridge itself, for a handful of requests | Copy the token from Bridge's [developer guide](https://beta-bridge.simplefin.org/info/developers); refresh the page for a new one, since each works once |
+| The recorded fixtures | Tests of `SimplefinClient` and its parsing; CI never calls Bridge | `server/src/api/bank-sync/test-data/` and its README |
+
+The fake is on when `SIMPLEFIN_FAKE=true`, which `docker-compose.yml` sets; the server logs a warning when it starts with it, and refuses to start with it in production (`NODE_ENV=production`). Other setup tokens still go to Bridge, so the demo token works alongside. The fake is `FakeSimplefinClient` (`server/src/api/bank-sync/fake/`): the real `SimplefinClient` with `FakeBridge` answering in place of the network, so every request goes through the real client's code. Tests use it too.
+
+Its banks mirror the seed data's accounts, so a database loaded by `db:seed` has accounts to link: Harbor Community Bank's Everyday Checking and High-Yield Savings, Summit Credit Union's Rewards Visa and Lakeside Home Loans' Mortgage. It also has Harbor's Holiday Fund, which the seed doesn't have, for **Create new account**, and Maple Leaf Trust's Chequing in Canadian dollars, which can't be linked (SYNC-2.6). Transactions are generated from a fixed seed for every day from 2025-01-01 to the server's today, so the same day always gives the same payload and each new day adds a few; move the clock with `DateTimeUtil.setClock` in tests. Card purchases post the morning after they happen. The fake stores nothing: a fake access URL holds its scenario and when it was claimed.
+
+| Setup token | What the fake does |
+|---|---|
+| `fake` | Healthy: every bank account, no messages |
+| `fake:v1` | Answers in v1, whatever the request asks |
+| `fake:corrections` | A few card purchases get a new amount, description and date 2 days after they post (SYNC-4.4) |
+| `fake:new-account` | Summit's Share Certificate appears for requests a minute or more after connecting (SYNC-2.2) |
+| `fake:missing` | High-Yield Savings disappears for requests a minute or more after connecting (SYNC-2.9) |
+| `fake:attention` | An `errlist` entry asking to sign in to Summit Credit Union again (SYNC-5.1) |
+| `fake:warning` | A quota warning in `errlist` (SYNC-5.1) |
+| `fake:refused` / `fake:payment` | Fetching answers 403 / 402 (SYNC-1.3) |
+| `fake:down` | Fetching never answers, so it times out after 5 seconds |
+| `fake:pending` | Card purchases are pending for 1 to 3 days before they post: most keep their ID, restaurant meals post under a new ID with the tip added, and fuel's $1 pre-authorization holds vanish without posting (SYNC-4.7, SYNC-6) |
+
+What Bridge says for `fake:attention` and `fake:warning` is made up until the live trial shows the real wording (M02 T10).
+
 ## Client scripts
 
 Run these in `client/`.

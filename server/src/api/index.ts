@@ -9,6 +9,7 @@ import { InstitutionData, createInstitutionRouter } from './institutions';
 import { SettingsData, createSettingsRouter } from './settings';
 import { TransactionData, createTransactionRouter } from './transactions';
 
+export { simplefinClientFromEnvironment } from './bank-sync';
 export { CategoryData, CategoryGroupData, DefaultCategories } from './categories';
 
 export function buildFinanceRouter(logger: IAppLogger, db: DatabaseClient, authMiddleware: AuthMiddleware): Router {
