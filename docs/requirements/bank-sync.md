@@ -33,8 +33,8 @@ Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), whe
 
 | ID | Requirement | Status |
 |---|---|---|
-| SYNC-3.1 | While connected, the server shall sync automatically 4 times a day, 6 hours apart, at a minute past the hour chosen at random when the user connects (for example 5:17, 11:17, 17:17 and 23:17). There's no setting for how often. **Bank Sync** shall offer **Automatic sync** (on by default) to pause it. | Planned |
-| SYNC-3.2 | The schedule shall survive restarts: a sync that came due while the server was down runs within a few minutes of it starting, and a restart never adds an extra sync. | Planned |
+| SYNC-3.1 | While connected, the server shall sync automatically 4 times a day, 6 hours apart, at a minute past the hour chosen at random when the user connects (for example 5:17, 11:17, 17:17 and 23:17). There's no setting for how often. **Bank Sync** shall offer **Automatic sync** (on by default) to pause it, and say when the next scheduled sync is. Sync now works either way. | Implemented |
+| SYNC-3.2 | The schedule shall survive restarts: a sync that came due while the server was down runs within a few minutes of it starting, and a restart never adds an extra sync. After a longer outage only the latest missed sync runs, and none runs for a time that came before connecting or that the server let pass with Automatic sync off. | Implemented |
 | SYNC-3.3 | **Bank Sync** shall offer **Sync now**. It's disabled while a sync is running, and while the limit in SYNC-3.4 is reached, with "Available again *day and time*" (such as "Nov 22, 5:50 PM", since it can be tomorrow). When it finishes, the screen says what the sync added, and how many transactions the bank's corrections updated (SYNC-4.4), if any ("Sync finished: 3 transactions added, 1 updated"). | Implemented |
 | SYNC-3.4 | The server shall send Bridge at most 20 account requests in any 24 hours, counting every request, whatever started it, and refuse a sync that would go over ("Bank sync has reached its limit for today. Available again at *time*."). A scheduled sync that would go over is skipped. Bridge allows 24 a day and disables access that goes beyond it, so the margin is deliberate. | Implemented |
 | SYNC-3.5 | Only one sync shall run at a time; one started while another is running is refused ("A sync is already running."). | Implemented |
@@ -58,8 +58,8 @@ Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), whe
 
 | ID | Requirement | Status |
 |---|---|---|
-| SYNC-5.1 | The Dashboard and **Bank Sync** shall show a banner, linking to Bank Sync, while: the last sync failed; Bridge reported a problem with a connection or bank account (for example a bank that needs signing in again in Bridge); syncing is paused (SYNC-1.3); there are bank accounts not set up (SYNC-2.2, "2 new bank accounts found"); or, while connected and with Automatic sync on, no sync has succeeded for 48 hours. It goes away once the cause is gone. | Planned |
-| SYNC-5.2 | Messages from the SimpleFIN server shall be shown as it wrote them, as plain text, labelled as SimpleFIN's ("SimpleFIN: *message*"). | Planned |
+| SYNC-5.1 | The Dashboard and **Bank Sync** shall show a banner, linking to Bank Sync, while: the last sync that wasn't skipped failed (said by the pause instead when it paused syncing); the latest sync carried any message from the SimpleFIN server, about a connection, a bank account or anything else, such as a bank that needs signing in again or a warning about its limits (decided 2026-11-22); syncing is paused (SYNC-1.3); there are US dollar bank accounts not set up (SYNC-2.2, "2 new bank accounts found"); or, while connected and with Automatic sync on, no sync has succeeded for 48 hours, counting from connecting if none has since ("No sync has succeeded since *date*."). It's one banner, "Bank sync needs attention", with a line for each cause that holds, most serious first (decided 2026-11-22). On Bank Sync it leaves out the pause, which the pause notice says with **Connect again** beside it (SYNC-1.3), and the link to itself. It goes away once the cause is gone. | Implemented |
+| SYNC-5.2 | Messages from the SimpleFIN server shall be shown as it wrote them, as plain text, labelled as SimpleFIN's ("SimpleFIN: *message*"). | Implemented |
 
 ## SYNC-6 Pending transactions
 

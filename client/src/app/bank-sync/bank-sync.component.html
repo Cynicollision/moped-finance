@@ -63,6 +63,7 @@
             </mat-card>
         } @else {
             @let status = view.status;
+            <app-bank-sync-banner [alerts]="bannerAlerts()"></app-bank-sync-banner>
             <mat-card class="section-card status-card" appearance="outlined">
                 <div class="section-body">
                     <dl class="status-figures">
@@ -100,23 +101,24 @@
                         <p class="muted">A sync is running.</p>
                     }
 
-                    @if (status.lastRun; as run) {
-                        <!-- While paused, the notice below says why. -->
-                        @if (run.failure && !status.pausedReason) {
-                            <p class="run-failure">{{ run.failure }}</p>
-                        }
-                        <!-- The SimpleFIN server's own words, as plain text (SYNC-5.2). -->
-                        @if (run.messages.length) {
-                            <ul class="server-messages" aria-label="Messages from SimpleFIN">
-                                @for (message of run.messages; track $index) {
-                                    <li>
-                                        <mat-icon>info</mat-icon>
-                                        <span>SimpleFIN: {{ message.text }}</span>
-                                    </li>
-                                }
-                            </ul>
-                        }
-                    }
+                    <div class="automatic">
+                        <mat-slide-toggle
+                            [checked]="status.automatic"
+                            [disabled]="savingAutomatic()"
+                            (change)="setAutomatic($event.checked)"
+                            >Automatic sync</mat-slide-toggle
+                        >
+                        <!-- SYNC-3.1: four times a day, 6 hours apart; there's no setting for how often. -->
+                        <span class="muted">
+                            @if (!status.automatic) {
+                                Off: only Sync now syncs.
+                            } @else if (status.nextScheduledAt) {
+                                Four times a day. Next {{ status.nextScheduledAt | date: 'MMM d, h:mm a' }}.
+                            } @else {
+                                Four times a day, once syncing resumes.
+                            }
+                        </span>
+                    </div>
 
                     @if (status.pausedReason; as reason) {
                         <!-- SYNC-1.3 -->

@@ -1,5 +1,11 @@
 @use 'breakpoints' as bp;
 
+// SYNC-5.1, when it shows: spaced from what follows like the page's cards.
+.bank-sync-banner:not(:empty) {
+    display: block;
+    margin-bottom: 1rem;
+}
+
 // DASH-1.8: no accounts yet.
 .empty-state {
     text-align: center;

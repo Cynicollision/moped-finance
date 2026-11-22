@@ -7,8 +7,11 @@ import {
     CategoryData,
     CategoryGroupData,
     DefaultCategories,
+    SettingsData,
     SimplefinData,
-    simplefinClientFromEnvironment
+    simplefinClientFromEnvironment,
+    SyncRunner,
+    SyncScheduler
 } from '@server/api';
 import {
     ApiTokenController,
@@ -111,6 +114,7 @@ function buildApp(sessionSecret: string, signInLimits: SignInLimits, bankSync: B
 const PORT = process.env.PORT || 3000;
 let server: Server | undefined;
 let logRetention: LogRetention | undefined;
+let syncScheduler: SyncScheduler | undefined;
 
 // Bring the database schema up to date before accepting requests (APP-5.8). The migrations folder sits
 // next to this file: server/migrations in development, dist/server/migrations in the production image.
@@ -192,6 +196,15 @@ async function start(): Promise<void> {
         // Delete old log entries now and once a day (APP-5.10).
         logRetention = new LogRetention(new LogData(dbClient), logRetentionDays);
         logRetention.start();
+
+        // The four daily bank syncs, catching up on one missed while the server was down (SYNC-3.1, SYNC-3.2).
+        const simplefinData = new SimplefinData(dbClient);
+        syncScheduler = new SyncScheduler(
+            simplefinData,
+            new SettingsData(dbClient),
+            new SyncRunner(simplefinData, bankSync.client, bankSync.secretBox)
+        );
+        syncScheduler.start();
     });
 }
 
@@ -211,6 +224,7 @@ function shutdown(signal: NodeJS.Signals): void {
     isShuttingDown = true;
     console.info(`${signal} received: shutting down.`);
     logRetention?.stop();
+    syncScheduler?.stop();
 
     if (!server) {
         // Still migrating. Each migration runs in a transaction, so Postgres rolls back an unfinished one

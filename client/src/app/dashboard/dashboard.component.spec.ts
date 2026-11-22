@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AccountGroupChange } from '@shared/finance/contracts';
-import { AccountGroup, AccountType } from '@shared/finance/enum';
-import { Account } from '@shared/finance/types';
+import { AccountGroup, AccountType, BankSyncAlertKind } from '@shared/finance/enum';
+import { Account, BankSyncAlert, BankSyncStatus } from '@shared/finance/types';
 import { AccountTypeUtil } from '@shared/finance/util';
+import { BankSyncService } from './../bank-sync/bank-sync.service';
 import { SettingsService } from './../settings/settings.service';
 import { FinanceService } from './../common/finance.service';
 import { DashboardComponent } from './dashboard.component';
@@ -11,6 +12,11 @@ import { DashboardComponent } from './dashboard.component';
 describe('DashboardComponent', () => {
     function settingsProvider(showRetirementGroup = true) {
         return { provide: SettingsService, useValue: { fetch: vi.fn().mockResolvedValue({ showRetirementGroup }) } };
+    }
+
+    function bankSyncProvider(alerts: BankSyncAlert[] = []) {
+        const status = { keyConfigured: true, connected: alerts.length > 0, alerts } as Partial<BankSyncStatus>;
+        return { provide: BankSyncService, useValue: { fetchStatus: vi.fn().mockResolvedValue(status) } };
     }
 
     function account(name: string, type: AccountType, balance: number): Account {
@@ -32,7 +38,8 @@ describe('DashboardComponent', () => {
     async function render(
         accounts: Account[],
         groupChanges: AccountGroupChange[] = [],
-        showRetirementGroup = true
+        showRetirementGroup = true,
+        bankSyncAlerts: BankSyncAlert[] = []
     ): Promise<HTMLElement> {
         const financeService = {
             fetchAllAccounts: vi.fn().mockResolvedValue(accounts),
@@ -44,7 +51,8 @@ describe('DashboardComponent', () => {
             providers: [
                 provideRouter([]),
                 { provide: FinanceService, useValue: financeService },
-                settingsProvider(showRetirementGroup)
+                settingsProvider(showRetirementGroup),
+                bankSyncProvider(bankSyncAlerts)
             ]
         });
 
@@ -125,7 +133,12 @@ describe('DashboardComponent', () => {
         };
         TestBed.configureTestingModule({
             imports: [DashboardComponent],
-            providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }, settingsProvider()]
+            providers: [
+                provideRouter([]),
+                { provide: FinanceService, useValue: financeService },
+                settingsProvider(),
+                bankSyncProvider()
+            ]
         });
 
         const fixture = TestBed.createComponent(DashboardComponent);
@@ -148,7 +161,12 @@ describe('DashboardComponent', () => {
         };
         TestBed.configureTestingModule({
             imports: [DashboardComponent],
-            providers: [provideRouter([]), { provide: FinanceService, useValue: financeService }, settingsProvider()]
+            providers: [
+                provideRouter([]),
+                { provide: FinanceService, useValue: financeService },
+                settingsProvider(),
+                bankSyncProvider()
+            ]
         });
         const fixture = TestBed.createComponent(DashboardComponent);
         await fixture.whenStable();
@@ -287,5 +305,22 @@ describe('DashboardComponent', () => {
         expect(Array.from(element.querySelectorAll('.section-title')).map(e => e.textContent!.trim())).toEqual([
             'Assets'
         ]);
+    });
+
+    it('SYNC-5.1 should show the bank sync banner, linking to Bank Sync, while there are alerts', async () => {
+        const element = await render([account('Checking', AccountType.Checking, 10)], [], true, [
+            { kind: BankSyncAlertKind.NewBankAccounts, count: 2 }
+        ]);
+
+        const banner = element.querySelector('.bank-sync-banner section')!;
+        expect(banner.textContent).toContain('Bank sync needs attention');
+        expect(banner.textContent).toContain('2 new bank accounts found');
+        expect(banner.querySelector('a')!.getAttribute('href')).toBe('/settings/bank-sync');
+    });
+
+    it('SYNC-5.1 should show no banner without alerts', async () => {
+        const element = await render([account('Checking', AccountType.Checking, 10)]);
+
+        expect(element.querySelector('.bank-sync-banner section')).toBeNull();
     });
 });

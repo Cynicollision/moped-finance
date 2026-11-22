@@ -54,7 +54,7 @@ Unlinking (SYNC-2.7) only clears `linked_account_id`, so the transaction rows st
 
 Other changes: `core.settings` gains `bankSyncAutomatic` (boolean, default true, SYNC-3.1) and `categorizationLearning` (default false, CAT-9.1). `DatabaseErrorUtil` gets messages for SYNC-2.5's unique keys. `drizzle.config.ts` already reads every `src/api/**/*-schema.ts`; `TestDatabaseUtil` needs to clear the new schema's tables.
 
-`sync_runs.response` keeps the latest successful payload, for SYNC-2.10, and prunes the others after 30 days on the log-retention timer. It holds what the database already holds, so it adds no new exposure, and keeping it means a transform bug can be fixed and re-run without spending Bridge's allowance.
+`sync_runs.response` keeps the latest successful payload, for SYNC-2.10, and clears the others once they're 30 days old: `SyncScheduler` prunes when it starts and after each slot, rather than `LogRetention`, so logging doesn't depend on bank sync. It holds what the database already holds, so it adds no new exposure, and keeping it means a transform bug can be fixed and re-run without spending Bridge's allowance.
 
 ## Code layout
 
@@ -71,7 +71,9 @@ All in `server/src/api/bank-sync/`:
 | `sync-runner.ts` | One sync, the pipeline below. Used by the routes and the scheduler. |
 | `sync-transform.ts` | `SyncTransform`, pure functions: a SimpleFIN account's posted transactions within a window to `SyncedTransaction`s (SYNC-4.2), the earliest date for SYNC-2.4's default, and the backfilled history (SYNC-4.6). |
 | `bank-account-link-data.ts` | Link, create, ignore and unlink, each in one database transaction, and `applyPayload`, which brings one linked account up to date from its bank account's payload (adding new transactions, applying corrections, recording the balance) and is what both linking and each sync call. |
-| `sync-scheduler.ts` | The timer (SYNC-3.1, 3.2). |
+| `sync-schedule.ts` | `SyncSchedule`, pure: the four daily slots and when the next sync runs, catch-up included (SYNC-3.1, 3.2). |
+| `sync-scheduler.ts` | `SyncScheduler`, the timer that runs each slot, and pruning old payloads. |
+| `bank-sync-alerts.ts` | `bankSyncAlerts`, pure: SYNC-5.1's banner lines from the status. |
 | `bank-sync-controller.ts`, `bank-sync-routes.ts` | The API. |
 
 The client's tests stub `fetch` with fixtures recorded from the demo token (v2 and v1 shaped) in `server/src/api/bank-sync/test-data/`, whose README says what each one is; tests of everything above the client use `FakeSimplefinClient`, claiming `fake:<scenario>` tokens and moving the clock with `DateTimeUtil.setClock`. CI never calls Bridge.
@@ -96,7 +98,11 @@ The client's tests stub `fetch` with fixtures recorded from the demo token (v2 a
 
 ## Scheduling
 
-`SyncScheduler` is built like `LogRetention`: started in `index.ts`, an unref'd timer, stopped on shutdown. The day has four slots, `schedule_minute` and every 6 hours after it, in the server's time zone. On start and after each run it sets a timer for the next slot. On start, if the last scheduled run started more than 6 hours ago (or there's been none since connecting), it runs 2 minutes after startup instead, which covers SYNC-3.2 without ever running twice for one slot. Each slot checks `bankSyncAutomatic` and that the access isn't paused.
+`SyncScheduler` is built like `LogRetention`: started in `index.ts` once the server listens, an unref'd timer, stopped on shutdown, and never rejecting (a failure goes to the console and it looks again in 15 minutes, as it does while not connected). The day has four slots, `schedule_minute` and every 6 hours after it, by the wall clock in the server's time zone (`DateTimeUtil.atMinuteOfDay`; on the day the clocks go forward, a slot in the skipped hour is an hour later).
+
+`SyncSchedule.plan` decides the next sync from the time, the schedule, when the access URL was claimed, when the latest scheduled run started (skipped ones included) and the latest slot this process has dealt with. Normally it's the next slot. If the latest slot passed after connecting with no scheduled run since it and this process didn't deal with it, it's a catch-up 2 minutes from now, unless the next slot is sooner (SYNC-3.2). A slot the database shows a run for is never run again, so restarts add nothing; a slot the process let pass with Automatic sync off isn't caught up either. (The first plan, "the last scheduled run started more than 6 hours ago", could have run a catch-up minutes before the next slot.) A timer that fires a moment early waits for its time.
+
+Each slot reads `bankSyncAutomatic` and, if it's on, calls `SyncRunner.run(SyncTrigger.Scheduled)`, which refuses while paused and records a `skipped` run at the limit. Then it prunes payloads and plans the next.
 
 With 4 scheduled runs, 16 of the 20 requests are left for Sync now and connecting.
 
@@ -106,7 +112,7 @@ Under `/api/v1/bank-sync`, behind the usual auth; read-only tokens may only `GET
 
 | Endpoint | What |
 |---|---|
-| `GET /` | `BankSyncStatus`: key configured, connected (and when, and the SimpleFIN server's `host`, read from the access URL, so never its credentials or path), paused reason, whether a sync is running, the last finished run, quota (`limit`, `remaining`, `availableAt`). Automatic sync joins it in T7. |
+| `GET /` | `BankSyncStatus`: key configured, connected (and when, and the SimpleFIN server's `host`, read from the access URL, so never its credentials or path), paused reason, whether a sync is running, the last finished run, quota (`limit`, `remaining`, `availableAt`), `automatic` (the `bankSyncAutomatic` setting), `nextScheduledAt` (the next slot, while connected, unpaused and automatic), and `alerts`: SYNC-5.1's banner lines, worked out by `bankSyncAlerts` so the Dashboard and Bank Sync read the same. Automatic sync is saved through `PUT /api/v1/settings`. |
 | `POST /connect` | `{ setupToken }`: claim, store, first sync. Also how Connect again works (SYNC-1.3), keeping links. |
 | `DELETE /` | Disconnect (SYNC-1.4). 409 while a sync runs, 404 when not connected. |
 | `GET /accounts` | SimpleFIN accounts with their connection, link and last-seen date. |

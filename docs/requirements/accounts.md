@@ -77,7 +77,7 @@ Every group has an "Other" type, so anything that doesn't fit a named type still
 
 | ID | Requirement | Status |
 |---|---|---|
-| ACCT-4.1 | A connected account's balance and transactions shall come from bank sync, which syncs every connected account together, on a schedule and on demand (SYNC-3). There's no sync for one account. | Partial |
+| ACCT-4.1 | A connected account's balance and transactions shall come from bank sync, which syncs every connected account together, on a schedule and on demand (SYNC-3). There's no sync for one account. | Implemented |
 | ACCT-4.2 | Each sync shall record the bank's balance as a set entry (ACCT-5.1) on the day of the bank's balance date, replacing any entry already on that date. | Implemented |
 | ACCT-4.3 | An account shall be connected while it's linked to a bank account (SYNC-2), and manual otherwise. The user doesn't choose this with a flag; the **Manual Account** checkbox is removed from the form. | Implemented |
 | ACCT-4.4 | A connected account shall not offer **Update balance** (ACCT-2.2) or **Adjust balance** on transactions (ACCT-5.5), because its balance comes from the bank; the server refuses either with "A connected account's balance comes from its bank." It can still import balance history, for example to backfill dates before it was connected. | Implemented |

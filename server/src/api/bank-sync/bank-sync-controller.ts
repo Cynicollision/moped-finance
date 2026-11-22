@@ -7,11 +7,14 @@ import { EntityFactory } from '@server/data';
 import { OperationResult, Result } from '@server/routing';
 import { DateTimeUtil, SecretBox } from '@server/utility';
 import { IAccountData } from './../accounts/account-data';
+import { ISettingsData } from './../settings/settings-data';
 import { IBankAccountLinkData, NewLinkedAccount } from './bank-account-link-data';
+import { bankSyncAlerts } from './bank-sync-alerts';
 import { ISimplefinClient, SimplefinError } from './simplefin-client';
 import { ISimplefinData } from './simplefin-data';
 import { BankAccountInput, ConnectInput } from './simplefin-schema';
 import { SyncQuota } from './sync-quota';
+import { SyncSchedule } from './sync-schedule';
 import { SyncOutcome, SyncRunner } from './sync-runner';
 import { SyncTransform } from './sync-transform';
 
@@ -52,7 +55,8 @@ export class BankSyncController {
         private readonly client: ISimplefinClient,
         private readonly secretBox: SecretBox | undefined,
         private readonly linkData: IBankAccountLinkData,
-        private readonly accountData: IAccountData
+        private readonly accountData: IAccountData,
+        private readonly settingsData: Pick<ISettingsData, 'retrieve'>
     ) {
         this.runner = new SyncRunner(data, client, secretBox);
         this.quota = new SyncQuota(data);
@@ -173,12 +177,31 @@ export class BankSyncController {
     }
 
     private async status(): Promise<BankSyncStatus> {
-        const [access, isRunning, lastRun, quota] = await Promise.all([
+        const [access, isRunning, lastRun, quota, settings] = await Promise.all([
             this.data.retrieveAccess(),
             this.data.isRunning(),
             this.data.retrieveLastFinishedRun(),
-            this.quota.check()
+            this.quota.check(),
+            this.settingsData.retrieve()
         ]);
+        const automatic = settings.bankSyncAutomatic;
+        let alerts: BankSyncStatus['alerts'] = [];
+        if (access && this.secretBox) {
+            const [lastAttempt, lastSucceededAt, newBankAccounts] = await Promise.all([
+                this.data.retrieveLastAttempt(),
+                this.data.retrieveLastSucceededAt(),
+                this.data.countNewBankAccounts()
+            ]);
+            alerts = bankSyncAlerts({
+                now: DateTimeUtil.now(),
+                connectedAt: access.claimedAt,
+                pausedReason: access.pausedReason,
+                automatic,
+                lastAttempt,
+                lastSucceededAt,
+                newBankAccounts
+            });
+        }
         return {
             keyConfigured: this.secretBox !== undefined,
             connected: access !== null,
@@ -187,7 +210,13 @@ export class BankSyncController {
             pausedReason: access?.pausedReason ?? null,
             isRunning,
             lastRun,
-            quota
+            quota,
+            automatic,
+            nextScheduledAt:
+                access && automatic && !access.pausedReason && this.secretBox
+                    ? SyncSchedule.nextSlot(DateTimeUtil.now(), access.scheduleMinute)
+                    : null,
+            alerts
         };
     }
 

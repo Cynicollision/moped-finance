@@ -16,12 +16,14 @@ export const settingsSchema = coreSchema.table('settings', {
 /** Each setting's type. A stored value that no longer fits is ignored in favour of the default. */
 export const settingFields = {
     theme: z.enum(AppTheme),
-    showRetirementGroup: z.boolean()
+    showRetirementGroup: z.boolean(),
+    bankSyncAutomatic: z.boolean()
 } satisfies { [K in keyof AppSettings]: z.ZodType<AppSettings[K]> };
 
 export const DEFAULT_SETTINGS: AppSettings = {
     theme: AppTheme.Dark,
-    showRetirementGroup: true
+    showRetirementGroup: true,
+    bankSyncAutomatic: true
 };
 
 // Defaults stay out of the schema: Zod 4 would fill them in for settings that aren't sent, overwriting stored ones.

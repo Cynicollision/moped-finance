@@ -7,6 +7,7 @@ import { BankSyncWording } from '@shared/finance/contracts';
 import {
     BankAccountAction,
     BankAccountLinkStatus,
+    BankSyncAlertKind,
     BankSyncPauseReason,
     CategoryType,
     SyncRunStatus,
@@ -21,6 +22,7 @@ import { TestDatabaseUtil, TestExpressUtil } from '@server/utility/testing';
 import { AccountData } from './../accounts/account-data';
 import { CategoryData, CategoryGroupData } from './../categories';
 import { InstitutionData } from './../institutions/institution-data';
+import { SettingsData } from './../settings/settings-data';
 import { TransactionData } from './../transactions/transaction-data';
 import { createTransactionRouter } from './../transactions/transaction-routes';
 import { BankAccountLinkData } from './bank-account-link-data';
@@ -110,7 +112,8 @@ describe('Bank Sync Routes', () => {
             client,
             box,
             new BankAccountLinkData(dbClient),
-            new AccountData(dbClient)
+            new AccountData(dbClient),
+            new SettingsData(dbClient)
         );
         return TestExpressUtil.createTestApp(createBankSyncRouter(logger, controller), '/bank-sync');
     }
@@ -130,6 +133,7 @@ describe('Bank Sync Routes', () => {
     beforeEach(async () => {
         await TestDatabaseUtil.clearBankSyncData(pglite);
         await TestDatabaseUtil.clearFinanceData(pglite);
+        await TestDatabaseUtil.clearCoreData(pglite);
         DateTimeUtil.setClock(morning);
         client = new TestClient();
         logger = TestExpressUtil.createMockLogger();
@@ -164,8 +168,107 @@ describe('Bank Sync Routes', () => {
             expect(await status()).toMatchObject({ keyConfigured: false, connected: false });
         });
 
+        it('SYNC-3.1 should say when the next scheduled sync is, unless Automatic sync is off or syncing is paused', async () => {
+            expect(await status()).toMatchObject({ automatic: true, nextScheduledAt: null });
+
+            await connect();
+            // 10:00, so with the first slot at 5:17 the next is 11:17.
+            await pglite.query('UPDATE simplefin.access SET schedule_minute = $1', [5 * 60 + 17]);
+            expect((await status()).nextScheduledAt).toBe(new Date(2026, 10, 21, 11, 17).toISOString());
+
+            await new SettingsData(dbClient).update({ bankSyncAutomatic: false });
+            expect(await status()).toMatchObject({ automatic: false, nextScheduledAt: null });
+
+            await new SettingsData(dbClient).update({ bankSyncAutomatic: true });
+            await data.setPausedReason(BankSyncPauseReason.Refused);
+            expect((await status()).nextScheduledAt).toBeNull();
+        });
+
         it('SYNC-3.4 should report the whole limit before any request', async () => {
             expect((await status()).quota).toEqual({ limit: 20, remaining: 20, availableAt: null });
+        });
+    });
+
+    describe('SYNC-5.1 the banner', () => {
+        const alerts = async () => (await status()).alerts;
+        const setUpAll = () => pglite.query('UPDATE simplefin.accounts SET is_ignored = true');
+
+        it('SYNC-5.1 should show nothing before connecting, or without an encryption key', async () => {
+            expect(await alerts()).toEqual([]);
+
+            await connect('fake:refused');
+            app = buildApp(undefined);
+            expect(await alerts()).toEqual([]);
+        });
+
+        it('SYNC-5.1 SYNC-2.2 should count the US dollar bank accounts not set up, until they are', async () => {
+            await connect();
+            const usd = (await bankAccounts()).filter(account => account.canLink);
+
+            expect(await alerts()).toEqual([{ kind: BankSyncAlertKind.NewBankAccounts, count: usd.length }]);
+
+            await setUpAll();
+            expect(await alerts()).toEqual([]);
+        });
+
+        it('SYNC-5.1 should say syncing is paused, without also saying the sync failed', async () => {
+            await connect('fake:refused');
+            await setUpAll();
+
+            const shown = await alerts();
+
+            expect(shown[0]).toEqual({ kind: BankSyncAlertKind.Paused, reason: BankSyncPauseReason.Refused });
+            expect(shown.map(alert => alert.kind)).not.toContain(BankSyncAlertKind.Failed);
+        });
+
+        it('SYNC-5.1 should say the last sync failed until one succeeds, ignoring skipped ones', async () => {
+            await connect();
+            await setUpAll();
+            client.failWith = 'timeout';
+            later(minute);
+            await syncNow();
+
+            expect(await alerts()).toEqual([{ kind: BankSyncAlertKind.Failed, failure: 'Bridge failed: timeout.' }]);
+
+            // A scheduled sync skipped at the limit says nothing new.
+            for (let i = 2; i < 20; i++) {
+                later(minute);
+                await syncNow();
+            }
+            later(minute);
+            await new SyncRunner(data, client, secretBox).run(SyncTrigger.Scheduled);
+            expect((await status()).lastRun?.status).toBe(SyncRunStatus.Skipped);
+            expect((await alerts()).map(alert => alert.kind)).toEqual([BankSyncAlertKind.Failed]);
+
+            DateTimeUtil.setClock(DateTimeUtil.addMilliseconds(morning, day));
+            client.failWith = null;
+            await syncNow();
+            expect(await alerts()).toEqual([]);
+        });
+
+        it("SYNC-5.1 SYNC-5.2 should give each of the latest sync's messages from SimpleFIN as it wrote them", async () => {
+            await connect('fake:attention');
+            await setUpAll();
+            const messages = (await status()).lastRun!.messages;
+
+            expect(messages.length).toBeGreaterThan(0);
+            expect(await alerts()).toEqual(
+                messages.map(message => ({ kind: BankSyncAlertKind.Message, text: message.text }))
+            );
+        });
+
+        it('SYNC-5.1 should say when no sync has succeeded for 48 hours, while Automatic sync is on', async () => {
+            await connect();
+            await setUpAll();
+            const finishedAt = (await status()).lastRun!.finishedAt;
+
+            later(48 * hour - minute);
+            expect(await alerts()).toEqual([]);
+            later(minute);
+            expect(await alerts()).toEqual([{ kind: BankSyncAlertKind.NoRecentSync, since: finishedAt }]);
+
+            await new SettingsData(dbClient).update({ bankSyncAutomatic: false });
+            expect(await status()).toMatchObject({ automatic: false, alerts: [] });
         });
     });
 

@@ -44,6 +44,15 @@ export class DateTimeUtil {
         return new Date(date.getTime() + milliseconds);
     }
 
+    /**
+     * The instant `minute` minutes into `day` in the server's time zone (APP-5.6), by the clock on the wall: on a day
+     * the clocks change, a time they skip lands an hour later.
+     */
+    public static atMinuteOfDay(day: CalendarDate, minute: number): Date {
+        const [year, month, date] = day.split('-').map(Number);
+        return new Date(year, month - 1, date, 0, minute);
+    }
+
     public static nowToISOSafeFilename(): string {
         return this.getCurrentTimestamp().substring(0, 19).replace('T', '_').replace(/:/g, '-');
     }

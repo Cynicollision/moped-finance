@@ -6,10 +6,12 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BankSyncWording } from '@shared/finance/contracts';
 import {
     BankAccountAction,
     BankAccountLinkStatus,
+    BankSyncAlertKind,
     BankSyncPauseReason,
     SyncRunStatus,
     SyncTrigger
@@ -23,7 +25,9 @@ import { LoadErrorComponent } from './../core/loading/load-error.component';
 import { viewResource } from './../core/loading/view-resource';
 import { ModalService } from './../core/modal/modal.service';
 import { NotificationService } from './../core/notification.service';
+import { SettingsService } from './../settings/settings.service';
 import { BankAccountSetupDialogComponent, BankAccountSetupDialogData } from './bank-account-setup-dialog.component';
+import { BankSyncBannerComponent } from './bank-sync-banner.component';
 import { BankSyncService } from './bank-sync.service';
 import { unlinkMessage } from './bank-sync-wording';
 import { SetupTokenFormComponent } from './setup-token-form.component';
@@ -68,7 +72,9 @@ const statusLabels: Record<SyncRunStatus, string> = {
         MatIconModule,
         MatMenuModule,
         MatProgressSpinnerModule,
+        MatSlideToggleModule,
         MoneyComponent,
+        BankSyncBannerComponent,
         PageHeaderComponent,
         ListModule,
         CardSkeletonComponent,
@@ -83,6 +89,7 @@ export class BankSyncComponent {
     private bankSyncService = inject(BankSyncService);
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
+    private settingsService = inject(SettingsService);
 
     readonly BankAccountAction = BankAccountAction;
     readonly BankAccountLinkStatus = BankAccountLinkStatus;
@@ -96,11 +103,18 @@ export class BankSyncComponent {
     readonly syncing = signal(false);
     /** Connect again's setup token field is open in the pause notice. */
     readonly reconnecting = signal(false);
+    /** The Automatic sync switch is waiting for the server. */
+    readonly savingAutomatic = signal(false);
     /** The bank account whose Don't sync or Unlink is waiting for the server. */
     readonly updatingId = signal<string | null>(null);
 
     readonly status = computed(() => this.data.value()?.status);
     readonly runs = computed(() => this.data.value()?.runs ?? []);
+
+    /** SYNC-5.1's banner, but for a pause, which the status card's notice says with what to do about it (SYNC-1.3). */
+    readonly bannerAlerts = computed(() =>
+        (this.status()?.alerts ?? []).filter(alert => alert.kind !== BankSyncAlertKind.Paused)
+    );
 
     readonly connectionGroups = computed<ConnectionGroup[]>(() => {
         const groups = new Map<string, ConnectionGroup>();
@@ -174,6 +188,18 @@ export class BankSyncComponent {
                 this.notificationService.error(run.failure ?? 'The sync failed.');
             }
         }
+        this.data.reload();
+    }
+
+    /** SYNC-3.1's Automatic sync, the `bankSyncAutomatic` setting. */
+    async setAutomatic(on: boolean): Promise<void> {
+        this.savingAutomatic.set(true);
+        const settings = await this.settingsService.save({ bankSyncAutomatic: on });
+        this.savingAutomatic.set(false);
+        if (settings) {
+            this.notificationService.success(on ? 'Automatic sync turned on' : 'Automatic sync turned off');
+        }
+        // On failure too, so the switch shows the stored value again.
         this.data.reload();
     }
 
