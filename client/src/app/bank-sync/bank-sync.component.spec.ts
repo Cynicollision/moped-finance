@@ -4,6 +4,7 @@ import { BankSyncWording } from '@shared/finance/contracts';
 import {
     BankAccountAction,
     BankAccountLinkStatus,
+    BankSyncAlertKind,
     BankSyncPauseReason,
     SyncRunStatus,
     SyncTrigger
@@ -11,6 +12,7 @@ import {
 import { BankAccount, BankSyncStatus, SyncRun } from '@shared/finance/types';
 import { ModalService } from './../core/modal/modal.service';
 import { NotificationService } from './../core/notification.service';
+import { SettingsService } from './../settings/settings.service';
 import { BankAccountSetupDialogComponent } from './bank-account-setup-dialog.component';
 import { BankSyncComponent, disconnectMessage } from './bank-sync.component';
 import { BankSyncService } from './bank-sync.service';
@@ -39,6 +41,9 @@ describe('BankSyncComponent', () => {
             isRunning: false,
             lastRun: run,
             quota: { limit: 20, remaining: 19, availableAt: null },
+            automatic: true,
+            nextScheduledAt: new Date(2026, 10, 21, 11, 17),
+            alerts: [],
             ...changes
         };
     }
@@ -99,20 +104,22 @@ describe('BankSyncComponent', () => {
         };
         const notificationService = { success: vi.fn(), error: vi.fn() };
         const modalService = { confirm: vi.fn().mockResolvedValue(true), open: vi.fn().mockResolvedValue(true) };
+        const settingsService = { save: vi.fn().mockResolvedValue({ bankSyncAutomatic: false }) };
         TestBed.configureTestingModule({
             imports: [BankSyncComponent],
             providers: [
                 provideRouter([]),
                 { provide: BankSyncService, useValue: bankSyncService },
                 { provide: NotificationService, useValue: notificationService },
-                { provide: ModalService, useValue: modalService }
+                { provide: ModalService, useValue: modalService },
+                { provide: SettingsService, useValue: settingsService }
             ]
         });
 
         const fixture = TestBed.createComponent(BankSyncComponent);
         await fixture.whenStable();
         const element = fixture.nativeElement as HTMLElement;
-        return { fixture, element, bankSyncService, notificationService, modalService };
+        return { fixture, element, bankSyncService, notificationService, modalService, settingsService };
     }
 
     function button(element: HTMLElement, label: string): HTMLButtonElement | undefined {
@@ -255,17 +262,52 @@ describe('BankSyncComponent', () => {
         expect(bankSyncService.sync).toHaveBeenCalled();
     });
 
-    it("SYNC-5.2 should show the SimpleFIN server's messages from the last sync as plain text, as SimpleFIN's", async () => {
-        const lastRun: SyncRun = {
-            ...run,
-            messages: [{ code: 'con.auth', text: '<b>Sign in</b> again', connectionId: 'c', accountId: null }]
-        };
-        const { element } = await render({ status: status({ lastRun }) });
+    it("SYNC-5.1 should show the banner with the status's alerts, without a link to itself", async () => {
+        const { element } = await render({
+            status: status({ alerts: [{ kind: BankSyncAlertKind.Message, text: 'Sign in to Summit again' }] })
+        });
 
-        const message = element.querySelector('.server-messages li')!;
-        expect(message.textContent).toContain('SimpleFIN: <b>Sign in</b> again');
-        expect(element.textContent).not.toContain('Bridge');
-        expect(message.querySelector('b')).toBeNull();
+        const banner = element.querySelector('app-bank-sync-banner')!;
+        expect(banner.textContent).toContain('SimpleFIN: Sign in to Summit again');
+        expect(banner.querySelector('a')).toBeNull();
+    });
+
+    it("SYNC-5.1 SYNC-1.3 should leave a pause to the status card's notice rather than the banner", async () => {
+        const { element } = await render({
+            status: status({
+                pausedReason: BankSyncPauseReason.Refused,
+                alerts: [
+                    { kind: BankSyncAlertKind.Paused, reason: BankSyncPauseReason.Refused },
+                    { kind: BankSyncAlertKind.Message, text: 'Forbidden' }
+                ]
+            })
+        });
+
+        const banner = element.querySelector('app-bank-sync-banner')!;
+        expect(banner.textContent).not.toContain(BankSyncWording.paused.refused);
+        expect(banner.textContent).toContain('SimpleFIN: Forbidden');
+        expect(element.querySelector('.notice.paused')!.textContent).toContain(BankSyncWording.paused.refused);
+    });
+
+    it('SYNC-3.1 should show Automatic sync with the next scheduled sync, and save the switch', async () => {
+        const { element, fixture, settingsService, bankSyncService, notificationService } = await render();
+
+        expect(element.querySelector('.automatic')!.textContent).toContain('Next Nov 21, 11:17 AM');
+        const toggle = element.querySelector<HTMLButtonElement>('.automatic button[role="switch"]')!;
+        expect(toggle.getAttribute('aria-checked')).toBe('true');
+
+        toggle.click();
+        await fixture.whenStable();
+
+        expect(settingsService.save).toHaveBeenCalledWith({ bankSyncAutomatic: false });
+        expect(notificationService.success).toHaveBeenCalledWith('Automatic sync turned off');
+        expect(bankSyncService.fetchStatus).toHaveBeenCalledTimes(2);
+    });
+
+    it('SYNC-3.1 should say only Sync now syncs while Automatic sync is off', async () => {
+        const { element } = await render({ status: status({ automatic: false, nextScheduledAt: null }) });
+
+        expect(element.querySelector('.automatic')!.textContent).toContain('Off: only Sync now syncs.');
     });
 
     it('SYNC-3.7 should list the recent syncs with how each started and its result', async () => {

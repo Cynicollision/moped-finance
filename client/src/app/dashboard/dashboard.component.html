@@ -1,5 +1,7 @@
 <app-page-header title="Dashboard" [refreshing]="isRefreshing()"></app-page-header>
 
+<app-bank-sync-banner class="bank-sync-banner" [alerts]="bankSyncAlerts()" [showLink]="true"></app-bank-sync-banner>
+
 @if (accountData.error(); as error) {
     <app-load-error [message]="error" (retry)="accountData.reload()"></app-load-error>
 } @else if (hasNoAccounts()) {

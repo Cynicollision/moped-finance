@@ -14,3 +14,4 @@ export { BankSyncPauseReason } from './bank-sync-pause-reason';
 export { SyncRunStatus } from './sync-run-status';
 export { SyncTrigger } from './sync-trigger';
 export { BankAccountAction } from './bank-account-action';
+export { BankSyncAlertKind } from './bank-sync-alert-kind';

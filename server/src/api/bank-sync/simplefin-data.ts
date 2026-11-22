@@ -1,5 +1,21 @@
 import { randomInt } from 'crypto';
-import { and, asc, desc, eq, gt, isNotNull, isNull, ne, notExists, notInArray, or, SQL, sql } from 'drizzle-orm';
+import {
+    and,
+    asc,
+    count,
+    desc,
+    eq,
+    gt,
+    isNotNull,
+    isNull,
+    lt,
+    ne,
+    notExists,
+    notInArray,
+    or,
+    SQL,
+    sql
+} from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { alias } from 'drizzle-orm/pg-core';
 import { BankAccountLinkStatus, BankSyncPauseReason, SyncRunStatus, SyncTrigger } from '@shared/finance/enum';
@@ -65,6 +81,17 @@ export interface ISimplefinData {
     retrieveRuns(limit: number): Promise<SyncRun[]>;
     /** The latest run that has finished. */
     retrieveLastFinishedRun(): Promise<SyncRun | null>;
+    /** The latest finished run that asked the SimpleFIN server, or tried to: one that wasn't skipped (SYNC-5.1). */
+    retrieveLastAttempt(): Promise<SyncRun | null>;
+    /** When the latest successful run finished (SYNC-5.1). */
+    retrieveLastSucceededAt(): Promise<Date | null>;
+    /** When the latest run with this trigger started, skipped ones included (SYNC-3.2). */
+    retrieveLastStartedAt(trigger: SyncTrigger): Promise<Date | null>;
+    /**
+     * Clears the payloads of runs started before `before`, except the latest successful run's, which linking reads
+     * (SYNC-2.10). Returns how many it cleared.
+     */
+    pruneResponses(before: Date): Promise<number>;
 
     /**
      * Saves what a sync returned and finishes its run as succeeded, all in one database transaction or nothing
@@ -76,6 +103,8 @@ export interface ISimplefinData {
     completeRun(runId: string, accountSet: SimplefinAccountSet, unpause: boolean): Promise<SyncRun>;
     /** Every bank account, with its connection and link (SYNC-2.1). */
     retrieveBankAccounts(): Promise<BankAccount[]>;
+    /** The US dollar bank accounts not set up yet (SYNC-2.2, SYNC-5.1). */
+    countNewBankAccounts(): Promise<number>;
     retrieveBankAccount(id: string): Promise<BankAccount | null>;
 }
 
@@ -274,6 +303,62 @@ export class SimplefinData implements ISimplefinData {
         return rows.length > 0 ? mapRowToRun(rows[0]) : null;
     }
 
+    public async retrieveLastAttempt(): Promise<SyncRun | null> {
+        const rows = await this.db
+            .select(runColumns)
+            .from(syncRunSchema)
+            .where(notInArray(syncRunSchema.status, [SyncRunStatus.Running, SyncRunStatus.Skipped]))
+            .orderBy(desc(syncRunSchema.startedAt), desc(syncRunSchema.id))
+            .limit(1);
+
+        return rows.length > 0 ? mapRowToRun(rows[0]) : null;
+    }
+
+    public async retrieveLastSucceededAt(): Promise<Date | null> {
+        const rows = await this.db
+            .select({ finishedAt: syncRunSchema.finishedAt })
+            .from(syncRunSchema)
+            .where(and(eq(syncRunSchema.status, SyncRunStatus.Succeeded), isNotNull(syncRunSchema.finishedAt)))
+            .orderBy(desc(syncRunSchema.finishedAt))
+            .limit(1);
+
+        return rows[0]?.finishedAt ?? null;
+    }
+
+    public async retrieveLastStartedAt(trigger: SyncTrigger): Promise<Date | null> {
+        const rows = await this.db
+            .select({ startedAt: syncRunSchema.startedAt })
+            .from(syncRunSchema)
+            .where(eq(syncRunSchema.trigger, trigger))
+            .orderBy(desc(syncRunSchema.startedAt))
+            .limit(1);
+
+        return rows[0]?.startedAt ?? null;
+    }
+
+    public async pruneResponses(before: Date): Promise<number> {
+        // The payload linking reads: the latest successful run's, as retrieveLatestPayload finds it.
+        const latest = this.db
+            .select({ id: syncRunSchema.id })
+            .from(syncRunSchema)
+            .where(and(eq(syncRunSchema.status, SyncRunStatus.Succeeded), isNotNull(syncRunSchema.response)))
+            .orderBy(desc(syncRunSchema.startedAt), desc(syncRunSchema.id))
+            .limit(1);
+        const rows = await this.db
+            .update(syncRunSchema)
+            .set({ response: null })
+            .where(
+                and(
+                    isNotNull(syncRunSchema.response),
+                    lt(syncRunSchema.startedAt, before),
+                    notInArray(syncRunSchema.id, latest)
+                )
+            )
+            .returning({ id: syncRunSchema.id });
+
+        return rows.length;
+    }
+
     public async completeRun(runId: string, accountSet: SimplefinAccountSet, unpause: boolean): Promise<SyncRun> {
         const now = DateTimeUtil.now();
 
@@ -396,6 +481,21 @@ export class SimplefinData implements ISimplefinData {
 
     public async retrieveBankAccounts(): Promise<BankAccount[]> {
         return this.queryBankAccounts();
+    }
+
+    public async countNewBankAccounts(): Promise<number> {
+        const [row] = await this.db
+            .select({ count: count() })
+            .from(simplefinAccountSchema)
+            .where(
+                and(
+                    isNull(simplefinAccountSchema.linkedAccountId),
+                    eq(simplefinAccountSchema.isIgnored, false),
+                    eq(simplefinAccountSchema.currency, linkableCurrency)
+                )
+            );
+
+        return row.count;
     }
 
     public async retrieveBankAccount(id: string): Promise<BankAccount | null> {

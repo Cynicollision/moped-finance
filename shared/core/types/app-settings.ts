@@ -6,4 +6,6 @@ export interface AppSettings {
     theme: AppTheme;
     /** The Dashboard lists Retirement as its own group; off folds it into Investments (SET-5.1). */
     showRetirementGroup: boolean;
+    /** Bank sync runs four times a day on its own; off pauses the schedule but not Sync now (SYNC-3.1). */
+    bankSyncAutomatic: boolean;
 }

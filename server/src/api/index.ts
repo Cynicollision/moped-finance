@@ -17,8 +17,9 @@ import { InstitutionData, createInstitutionRouter } from './institutions';
 import { SettingsData, createSettingsRouter } from './settings';
 import { TransactionData, createTransactionRouter } from './transactions';
 
-export { SimplefinData, simplefinClientFromEnvironment } from './bank-sync';
+export { SimplefinData, simplefinClientFromEnvironment, SyncRunner, SyncScheduler } from './bank-sync';
 export { CategoryData, CategoryGroupData, DefaultCategories } from './categories';
+export { SettingsData } from './settings';
 
 /** What bank sync needs from the environment: Bridge's client and the `ENCRYPTION_KEY` box, if the key is set. */
 export interface BankSyncConfig {
@@ -51,7 +52,8 @@ export function buildFinanceRouter(
         bankSync.client,
         bankSync.secretBox,
         new BankAccountLinkData(db),
-        accountData
+        accountData,
+        settingsData
     );
     const bankSyncRouter = createBankSyncRouter(logger, bankSyncController);
     router.use('/v1/bank-sync', authMiddleware.resolveUser, authMiddleware.requireAuth, bankSyncRouter);

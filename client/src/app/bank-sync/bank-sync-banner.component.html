@@ -1,0 +1,37 @@
+@if (alerts().length) {
+    <section class="bank-sync-banner" role="status" aria-labelledby="bank-sync-banner-title">
+        <mat-icon class="banner-icon">warning</mat-icon>
+        <div class="banner-body">
+            <h2 id="bank-sync-banner-title">Bank sync needs attention</h2>
+            <ul>
+                @for (alert of alerts(); track $index) {
+                    <li>
+                        @switch (alert.kind) {
+                            @case (BankSyncAlertKind.Paused) {
+                                {{ wording.paused[alert.reason] }}
+                            }
+                            @case (BankSyncAlertKind.Failed) {
+                                The last sync failed. {{ alert.failure }}
+                            }
+                            @case (BankSyncAlertKind.Message) {
+                                <!-- The SimpleFIN server's own words, as plain text (SYNC-5.2). -->
+                                SimpleFIN: {{ alert.text }}
+                            }
+                            @case (BankSyncAlertKind.NoRecentSync) {
+                                No sync has succeeded since {{ alert.since | date: 'MMM d, h:mm a' }}.
+                            }
+                            @case (BankSyncAlertKind.NewBankAccounts) {
+                                {{ newBankAccounts(alert.count) }}
+                            }
+                        }
+                    </li>
+                }
+            </ul>
+            @if (showLink()) {
+                <div class="banner-actions">
+                    <a mat-button routerLink="/settings/bank-sync">Open Bank Sync</a>
+                </div>
+            }
+        </div>
+    </section>
+}

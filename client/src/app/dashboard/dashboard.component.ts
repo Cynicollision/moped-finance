@@ -15,6 +15,8 @@ import { LoadErrorComponent } from './../core/loading/load-error.component';
 import { viewResource } from './../core/loading/view-resource';
 import { ValueHistoryComponent, TimeframeOptions } from './../common/value-history.component';
 import { ValuePeriodChangeComponent, ValuePeriodChange } from './../common/value-period-change.component';
+import { BankSyncBannerComponent } from './../bank-sync/bank-sync-banner.component';
+import { BankSyncService } from './../bank-sync/bank-sync.service';
 import { SettingsService } from './../settings/settings.service';
 import { FinanceService } from './../common/finance.service';
 
@@ -47,6 +49,7 @@ interface AccountSection {
         PageHeaderComponent,
         ValueHistoryComponent,
         ValuePeriodChangeComponent,
+        BankSyncBannerComponent,
         CardSkeletonComponent,
         LoadErrorComponent
     ],
@@ -56,6 +59,7 @@ interface AccountSection {
 export class DashboardComponent {
     private financeService = inject(FinanceService);
     private settingsService = inject(SettingsService);
+    private bankSyncService = inject(BankSyncService);
     readonly Math = Math;
 
     // View State for Chart Options
@@ -83,6 +87,10 @@ export class DashboardComponent {
             return { accounts, showRetirementGroup: settings.showRetirementGroup };
         }
     });
+    // Bank sync's banner (SYNC-5.1). If its status can't load, the Dashboard just goes without it.
+    private readonly bankSync = viewResource({ loader: () => this.bankSyncService.fetchStatus() });
+    readonly bankSyncAlerts = computed(() => this.bankSync.value()?.alerts ?? []);
+
     /** No accounts yet: the screen shows how to add one instead of an empty chart (DASH-1.8). */
     readonly hasNoAccounts = computed(() => this.accountData.value()?.accounts.length === 0);
 

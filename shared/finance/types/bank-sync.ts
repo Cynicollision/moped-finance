@@ -1,5 +1,5 @@
 import { CalendarDate } from './../../core/types';
-import { BankAccountLinkStatus, BankSyncPauseReason, SyncRunStatus, SyncTrigger } from './../enum';
+import { BankAccountLinkStatus, BankSyncAlertKind, BankSyncPauseReason, SyncRunStatus, SyncTrigger } from './../enum';
 
 /** Bank Sync's state (SYNC-1, SYNC-3). The access URL itself never leaves the server. */
 export interface BankSyncStatus {
@@ -14,7 +14,25 @@ export interface BankSyncStatus {
     isRunning: boolean;
     lastRun: SyncRun | null;
     quota: BankSyncQuota;
+    /** The `bankSyncAutomatic` setting: whether the four daily syncs run (SYNC-3.1). */
+    automatic: boolean;
+    /** The next of the four daily slots, while connected, not paused and with Automatic sync on (SYNC-3.1). */
+    nextScheduledAt: Date | null;
+    /** What the banner says, most serious first; empty when it doesn't show (SYNC-5.1). */
+    alerts: BankSyncAlert[];
 }
+
+/** One line of Bank Sync's banner (SYNC-5.1). */
+export type BankSyncAlert =
+    | { kind: BankSyncAlertKind.Paused; reason: BankSyncPauseReason }
+    /** The last sync that wasn't skipped failed, for a reason other than a pause. */
+    | { kind: BankSyncAlertKind.Failed; failure: string }
+    /** A message from the SimpleFIN server in the latest sync, as it wrote it (SYNC-5.2). */
+    | { kind: BankSyncAlertKind.Message; text: string }
+    /** No sync has succeeded for 48 hours: since the latest success, or since connecting. */
+    | { kind: BankSyncAlertKind.NoRecentSync; since: Date }
+    /** US dollar bank accounts not set up yet (SYNC-2.2). */
+    | { kind: BankSyncAlertKind.NewBankAccounts; count: number };
 
 /** Requests to Bridge left in the last 24 hours (SYNC-3.4). */
 export interface BankSyncQuota {
