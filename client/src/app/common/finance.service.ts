@@ -23,6 +23,7 @@ import {
     CloseAccountRequest,
     CategoryGroup,
     CategoryUsage,
+    ServerTransactionFields,
     Transaction,
     TransactionSplitPart,
     BudgetStream,
@@ -214,7 +215,7 @@ export class FinanceService {
 
     /** A new transaction isn't split; it's split afterwards (TXN-4.1). */
     createTransaction(
-        transaction: Omit<NewEntity<Transaction>, 'splitId' | 'isSynced'>
+        transaction: Omit<NewEntity<Transaction>, ServerTransactionFields>
     ): Promise<Transaction | undefined> {
         return this.api.post<Transaction>(`${API_BASE_PATH}/transactions`, transaction);
     }

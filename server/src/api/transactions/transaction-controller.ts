@@ -9,6 +9,7 @@ import {
     TransactionImportResult,
     TransactionSearchOptions
 } from '@shared/finance/contracts';
+import { CategorySource } from '@shared/finance/enum';
 import { Transaction } from '@shared/finance/types';
 import { TransactionSplit } from '@shared/finance/util';
 import { EntityFactory } from '@server/data';
@@ -17,6 +18,7 @@ import { OperationContext, OperationResult, Result } from '@server/routing';
 import { DateTimeUtil } from '@server/utility';
 import { IAccountData } from './../accounts/account-data';
 import { ICategoryData } from './../categories/category-data';
+import { IRuleData } from './../rules/rule-data';
 import { Spending } from './spending';
 import { TransactionCsv, TransactionCsvRow } from './transaction-csv';
 import { TransactionDuplicates } from './transaction-duplicates';
@@ -28,7 +30,8 @@ export class TransactionController {
         private logger: IAppLogger,
         private accountData: IAccountData,
         private categoryData: ICategoryData,
-        private transactionData: ITransactionData
+        private transactionData: ITransactionData,
+        private ruleData: IRuleData
     ) {}
 
     public async getTransaction(
@@ -47,11 +50,16 @@ export class TransactionController {
         input: CreateTransactionRequest
     ): Promise<OperationResult<Transaction>> {
         // A missing account or category fails the insert's foreign key, which OperationHandler reports as a 400.
-        const transaction = EntityFactory.createTransaction({
+        let transaction = EntityFactory.createTransaction({
             ...input,
             isHidden: input.isHidden ?? false,
             adjustsBalance: input.adjustsBalance ?? false
         });
+        // Without a chosen category, rules may give it one, but never rename the merchant typed (CAT-8.4).
+        if (!transaction.categoryId) {
+            const rules = await this.ruleData.loadEngine();
+            transaction = rules.apply(transaction, { renameMerchant: false });
+        }
 
         const refusal = await this.checkAdjustment(null, transaction);
         if (refusal) {
@@ -86,7 +94,7 @@ export class TransactionController {
             return Result.userErrorNotFound();
         }
 
-        const transaction = { ...current, ...changes };
+        const transaction = { ...current, ...changes, ...ruleNotesAfter(current, changes) };
         // The bank's fields stay the bank's while the account is connected (TXN-2.12).
         if (current.isSynced && bankFieldsChanged(current, transaction)) {
             return Result.userError(BankSyncWording.syncedFields);
@@ -339,9 +347,13 @@ export class TransactionController {
                 : Result.userError(`Nothing was imported. ${summary}`, 'INVALID_IMPORT', result);
         }
 
-        // Rows already in the app are skipped, so importing a file twice, or overlapping files, adds nothing twice.
+        // Rows already in the app are skipped, so importing a file twice, or overlapping files, adds nothing twice. The
+        // rest go through the rules, in the dry run too so its counts are the import's (CAT-8.4, TXN-3.4).
         const duplicates = await this.findDuplicates(rows);
-        const transactions = rows.filter((_, index) => !duplicates.has(index)).map(row => row.transaction);
+        const rules = await this.ruleData.loadEngine();
+        const transactions = rows
+            .filter((_, index) => !duplicates.has(index))
+            .map(row => rules.apply(row.transaction, { renameMerchant: true }));
         const report = {
             failedRowMessages,
             isValidToImport,
@@ -365,6 +377,26 @@ export class TransactionController {
             resultMessage: `Imported ${transactions.length} transactions.`
         });
     }
+}
+
+/**
+ * Who gave an edited transaction its category and merchant (CAT-8.6): once the user changes the category it's theirs,
+ * or nobody's when they leave it Uncategorized, and once they change the merchant no rule renamed it. The form sends
+ * every field, so only a changed value counts.
+ */
+function ruleNotesAfter(
+    current: Transaction,
+    changes: UpdateTransactionRequest
+): Partial<Pick<Transaction, 'categorySource' | 'categoryRuleId' | 'merchantRuleId'>> {
+    const notes: Partial<Pick<Transaction, 'categorySource' | 'categoryRuleId' | 'merchantRuleId'>> = {};
+    if (changes.categoryId !== undefined && changes.categoryId !== current.categoryId) {
+        notes.categorySource = changes.categoryId ? CategorySource.User : null;
+        notes.categoryRuleId = '';
+    }
+    if (changes.merchant !== undefined && changes.merchant !== current.merchant) {
+        notes.merchantRuleId = '';
+    }
+    return notes;
 }
 
 /** Whether an edit changes the fields a synced transaction takes from its bank (TXN-2.12). */

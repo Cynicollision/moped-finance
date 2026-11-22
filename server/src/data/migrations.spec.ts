@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { PGlite } from '@electric-sql/pglite';
 import { CalendarPeriod } from '@shared/core/enum';
-import { AccountType, BalanceEntrySource, CategoryType } from '@shared/finance/enum';
+import { AccountType, BalanceEntrySource, CategorySource, CategoryType } from '@shared/finance/enum';
 import { DatabaseClient, EntityFactory } from '@server/data';
 import { TestDatabaseUtil } from '@server/utility/testing';
 import { AccountData } from './../api/accounts';
@@ -232,6 +232,35 @@ describe('Data migrations', () => {
                 const entries = await before.query<{ source: string }>('SELECT source FROM finance.balance_history');
                 expect(accounts.rows.map(row => row.is_manual)).toEqual([true, true]);
                 expect(entries.rows.map(row => row.source)).toEqual([BalanceEntrySource.Set]);
+            } finally {
+                await TestDatabaseUtil.destroyMockDatabase(before);
+            }
+        });
+    });
+    describe('0019_rules', () => {
+        it('CAT-8.6 should give the categories transactions already have to the user', async () => {
+            const before = await databaseBefore('0019_rules');
+            try {
+                await before.exec(`
+                    INSERT INTO finance.institutions (id, name) VALUES ('IN1', 'Bank');
+                    INSERT INTO finance.accounts (id, institution_id, name, account_type)
+                        VALUES ('AC1', 'IN1', 'Checking', 'Checking');
+                    INSERT INTO finance.category_groups (id, category_type, name) VALUES ('CTG1', '${CategoryType.Expense}', 'Food');
+                    INSERT INTO finance.categories (id, group_id, name) VALUES ('CT1', 'CTG1', 'Groceries');
+                    INSERT INTO finance.transactions (id, account_id, category_id, date, amount, merchant)
+                        VALUES ('categorized', 'AC1', 'CT1', '2026-05-01', -10, 'Store'),
+                               ('uncategorized', 'AC1', NULL, '2026-05-01', -10, 'Store');
+                `);
+
+                await runMigration('0019_rules', before);
+
+                const result = await before.query<{ id: string; category_source: string | null }>(
+                    'SELECT id, category_source FROM finance.transactions ORDER BY id'
+                );
+                expect(result.rows).toEqual([
+                    { id: 'categorized', category_source: CategorySource.User },
+                    { id: 'uncategorized', category_source: null }
+                ]);
             } finally {
                 await TestDatabaseUtil.destroyMockDatabase(before);
             }

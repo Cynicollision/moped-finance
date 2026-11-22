@@ -9,9 +9,14 @@ import {
     BankAccountLinkStatus,
     BankSyncAlertKind,
     BankSyncPauseReason,
+    CategorySource,
     CategoryType,
+    RuleActionType,
+    RuleConditionField,
+    RuleOperator,
     SyncRunStatus,
     SyncTrigger,
+    TransactionDirection,
     TransactionsFilterKey
 } from '@shared/finance/enum';
 import { AccountType } from '@shared/finance/enum';
@@ -22,6 +27,7 @@ import { TestDatabaseUtil, TestExpressUtil } from '@server/utility/testing';
 import { AccountData } from './../accounts/account-data';
 import { CategoryData, CategoryGroupData } from './../categories';
 import { InstitutionData } from './../institutions/institution-data';
+import { RuleData } from './../rules';
 import { SettingsData } from './../settings/settings-data';
 import { TransactionData } from './../transactions/transaction-data';
 import { createTransactionRouter } from './../transactions/transaction-routes';
@@ -999,7 +1005,8 @@ describe('Bank Sync Routes', () => {
                     logger,
                     new AccountData(dbClient),
                     new CategoryData(dbClient),
-                    new TransactionData(dbClient)
+                    new TransactionData(dbClient),
+                    new RuleData(dbClient)
                 ),
                 '/transactions'
             );
@@ -1060,6 +1067,68 @@ describe('Bank Sync Routes', () => {
             }
             return ids;
         }
+
+        it('SYNC-4.3 CAT-8.4 should categorize and rename what the rules match, on linking and on each sync', async () => {
+            const group = await new CategoryGroupData(dbClient).insert(
+                EntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Shopping' })
+            );
+            const card = await new CategoryData(dbClient).insert(
+                EntityFactory.createCategory({ groupId: group.id!, name: 'Card spending', icon: '', isActive: true })
+            );
+            const rules = new RuleData(dbClient);
+            const purchases = await rules.insert(
+                EntityFactory.createRule({
+                    name: 'Card purchases',
+                    conditions: [
+                        { field: RuleConditionField.Account, accountId },
+                        {
+                            field: RuleConditionField.Amount,
+                            operator: RuleOperator.GreaterThan,
+                            direction: TransactionDirection.Out,
+                            amount: 0
+                        }
+                    ],
+                    actions: [{ type: RuleActionType.SetCategory, categoryId: card.id! }]
+                })
+            );
+            const payments = await rules.insert(
+                EntityFactory.createRule({
+                    name: 'Card payments',
+                    conditions: [
+                        {
+                            field: RuleConditionField.Amount,
+                            operator: RuleOperator.GreaterThan,
+                            direction: TransactionDirection.In,
+                            amount: 0
+                        }
+                    ],
+                    actions: [{ type: RuleActionType.RenameMerchant, merchant: 'Card payment' }]
+                })
+            );
+            const transactionData = new TransactionData(dbClient);
+            const expectRulesApplied = async () => {
+                const transactions = await transactionData.search({ includeHidden: true }, accountId);
+                expect(transactions.some(t => t.amount > 0)).toBe(true);
+                for (const t of transactions) {
+                    expect(t).toMatchObject(
+                        t.amount < 0
+                            ? { categoryId: card.id, categorySource: CategorySource.Rule, categoryRuleId: purchases.id }
+                            : { categoryId: '', merchant: 'Card payment', merchantRuleId: payments.id }
+                    );
+                }
+                return transactions.length;
+            };
+            await connect();
+
+            await linkFromEarliest();
+            const linked = await expectRulesApplied();
+            later(day);
+            later(day);
+            const synced = await syncNow();
+
+            expect(synced.body.transactionsAdded).toBeGreaterThan(0);
+            expect(await expectRulesApplied()).toBe(linked + synced.body.transactionsAdded);
+        });
 
         it("SYNC-4.1 SYNC-4.5 ACCT-4.1 ACCT-4.2 should add each day's transactions once, and record the bank's balance", async () => {
             await connect();

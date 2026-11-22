@@ -1,6 +1,6 @@
 import { eq, and, count, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { CategoryNecessity } from '@shared/finance/enum';
+import { CategoryNecessity, CategorySource } from '@shared/finance/enum';
 import { Category, CategoryGroup, CategoryUsage } from '@shared/finance/types';
 import { DbTransaction, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
@@ -109,15 +109,19 @@ export class CategoryData implements ICategoryData {
     }
 
     public async delete(id: string, moveToId: string | null = null): Promise<boolean> {
-        // Without a target, the transactions' foreign key (ON DELETE SET NULL) leaves them Uncategorized. A budget stream
-        // fails the delete's foreign key, which rolls the move back too (CAT-4.5).
+        // The user chose where the transactions go, so the category is theirs, or none when they're left Uncategorized
+        // (CAT-8.6). A budget stream or rule using the category fails the delete's foreign key, which rolls the move back
+        // too (CAT-4.5, CAT-8.8).
         return this.db.transaction(async tx => {
-            if (moveToId) {
-                await tx
-                    .update(transactionSchema)
-                    .set({ categoryId: moveToId, updatedAt: DateTimeUtil.now() })
-                    .where(eq(transactionSchema.categoryId, id));
-            }
+            await tx
+                .update(transactionSchema)
+                .set({
+                    categoryId: moveToId,
+                    categorySource: moveToId ? CategorySource.User : null,
+                    categoryRuleId: null,
+                    updatedAt: DateTimeUtil.now()
+                })
+                .where(eq(transactionSchema.categoryId, id));
 
             const result = await tx
                 .delete(categorySchema)

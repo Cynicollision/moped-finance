@@ -52,7 +52,7 @@ export class TestDatabaseUtil {
 
     public static async clearFinanceData(pglite: PGlite): Promise<void> {
         await pglite.exec(
-            'TRUNCATE finance.institutions, finance.accounts, finance.category_groups, finance.categories, finance.transactions, finance.budget_streams, finance.balance_history CASCADE;'
+            'TRUNCATE finance.institutions, finance.accounts, finance.category_groups, finance.categories, finance.transactions, finance.budget_streams, finance.balance_history, finance.rules, finance.rule_conditions, finance.rule_actions CASCADE;'
         );
     }
 

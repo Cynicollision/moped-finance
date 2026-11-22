@@ -23,6 +23,7 @@ import { BankAccount, SyncRun } from '@shared/finance/types';
 import { DbTransaction, EntityId, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
+import { loadRuleEngine } from './../rules/rule-data';
 import { applyPayload } from './bank-account-link-data';
 import {
     simplefinAccessSchema,
@@ -445,6 +446,7 @@ export class SimplefinData implements ISimplefinData {
                         eq(simplefinAccountSchema.currency, linkableCurrency)
                     )
                 );
+            const rules = await loadRuleEngine(tx);
             let accountsUpdated = 0;
             let transactionsAdded = 0;
             let transactionsUpdated = 0;
@@ -458,7 +460,8 @@ export class SimplefinData implements ISimplefinData {
                     bankAccount.id,
                     bankAccount.linkedAccountId!,
                     bankAccount.syncFrom,
-                    payload
+                    payload,
+                    rules
                 );
                 accountsUpdated++;
                 transactionsAdded += added.length;

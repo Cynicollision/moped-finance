@@ -8,6 +8,7 @@ import { IAppLogger } from '@server/logging';
 import { idParamsSchema, OperationDefinition, OperationHandler, QueryField, singleFileUpload } from '@server/routing';
 import { IAccountData } from './../accounts/account-data';
 import { ICategoryData } from './../categories/category-data';
+import { IRuleData } from './../rules/rule-data';
 import { TransactionController } from './transaction-controller';
 import { ITransactionData } from './transaction-data';
 import { createTransactionSchema, splitTransactionSchema, updateTransactionSchema } from './transaction-schema';
@@ -65,10 +66,11 @@ export function createTransactionRouter(
     logger: IAppLogger,
     accountData: IAccountData,
     categoryData: ICategoryData,
-    transactionsData: ITransactionData
+    transactionsData: ITransactionData,
+    ruleData: IRuleData
 ) {
     const router = Router();
-    const controller = new TransactionController(logger, accountData, categoryData, transactionsData);
+    const controller = new TransactionController(logger, accountData, categoryData, transactionsData, ruleData);
     const handler = new OperationHandler(logger);
 
     // GET / - Search Transactions

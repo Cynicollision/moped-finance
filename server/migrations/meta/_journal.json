@@ -134,6 +134,13 @@
       "when": 1795344755879,
       "tag": "0018_bank_account_links",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795366842540,
+      "tag": "0019_rules",
+      "breakpoints": true
     }
   ]
 }

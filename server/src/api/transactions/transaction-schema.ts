@@ -1,10 +1,12 @@
-import { varchar, timestamp, numeric, boolean, text, date, index, integer } from 'drizzle-orm/pg-core';
+import { varchar, timestamp, numeric, boolean, text, date, index, integer, check } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
+import { CategorySource } from '@shared/finance/enum';
 import { TransactionSplit } from '@shared/finance/util';
 import { financeSchema, SchemaUtil } from '@server/data';
 import { accountSchema } from './../accounts/account-schema';
 import { categorySchema } from './../categories/category-schema';
+import { ruleSchema } from './../rules/rule-schema';
 
 export const transactionSchema = financeSchema.table(
     'transactions',
@@ -30,9 +32,22 @@ export const transactionSchema = financeSchema.table(
         // The parts of a split transaction share a split ID, and are in order by position (TXN-4). Both are null for a
         // transaction that isn't split.
         splitId: varchar('split_id', { length: 50 }),
-        splitPosition: integer('split_position')
+        splitPosition: integer('split_position'),
+        // Who gave it its category, null while it's Uncategorized, and the rule that set the category or renamed the
+        // merchant until the user changes that field (CAT-8.6, CAT-9.2). Deleting the rule forgets it.
+        categorySource: varchar('category_source', { length: 20 }),
+        categoryRuleId: varchar('category_rule_id', { length: 50 }).references(() => ruleSchema.id, {
+            onDelete: 'set null'
+        }),
+        merchantRuleId: varchar('merchant_rule_id', { length: 50 }).references(() => ruleSchema.id, {
+            onDelete: 'set null'
+        })
     },
     table => [
+        check(
+            'transactions_category_source_check',
+            SchemaUtil.isOneOf(table.categorySource, Object.values(CategorySource))
+        ),
         index('transactions_date_idx').on(table.date),
         index('transactions_account_id_date_idx').on(table.accountId, table.date),
         index('transactions_category_id_idx').on(table.categoryId),

@@ -6,9 +6,10 @@ import {
     Category,
     CategoryGroup,
     Institution,
+    Rule,
     Transaction
 } from '@shared/finance/types';
-import { BalanceEntrySource } from '@shared/finance/enum';
+import { BalanceEntrySource, CategorySource } from '@shared/finance/enum';
 import { AccountTypeUtil } from '@shared/finance/util';
 import { DateTimeUtil } from '@server/utility';
 import { EntityId } from './entity-id';
@@ -27,8 +28,14 @@ export enum FinanceEntityIdPrefix {
     Institution = 'IN',
     Category = 'CT',
     CategoryGroup = 'CTG',
-    BudgetStream = 'BS'
+    BudgetStream = 'BS',
+    Rule = 'RL',
+    RuleCondition = 'RLC',
+    RuleAction = 'RLA'
 }
+
+type TransactionDefaults =
+    'adjustsBalance' | 'splitId' | 'isSynced' | 'categorySource' | 'categoryRuleId' | 'merchantRuleId';
 
 export class EntityFactory {
     private static createEntity<T extends { id: string; createdAt: Date; updatedAt: Date }>(
@@ -63,15 +70,20 @@ export class EntityFactory {
         });
     }
 
-    /** Not split unless given a split ID (TXN-4). */
+    /**
+     * Not split unless given a split ID (TXN-4). Its category is the user's, or none while it's Uncategorized, unless told
+     * a rule set it (CAT-8.6).
+     */
     public static createTransaction(
-        transaction: Omit<NewEntity<Transaction>, 'adjustsBalance' | 'splitId' | 'isSynced'> &
-            Partial<Pick<Transaction, 'adjustsBalance' | 'splitId' | 'isSynced'>>
+        transaction: Omit<NewEntity<Transaction>, TransactionDefaults> & Partial<Pick<Transaction, TransactionDefaults>>
     ): Transaction {
         return EntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, {
             adjustsBalance: false,
             splitId: '',
             isSynced: false,
+            categorySource: transaction.categoryId ? CategorySource.User : null,
+            categoryRuleId: '',
+            merchantRuleId: '',
             ...transaction
         });
     }
@@ -96,6 +108,11 @@ export class EntityFactory {
 
     public static createCategoryGroup(group: NewEntity<CategoryGroup>): CategoryGroup {
         return EntityFactory.createEntity<CategoryGroup>(FinanceEntityIdPrefix.CategoryGroup, group);
+    }
+
+    /** Saving it puts it at the end of the list (CAT-8.3), which sets its position. */
+    public static createRule(rule: Omit<NewEntity<Rule>, 'position'>): Rule {
+        return EntityFactory.createEntity<Rule>(FinanceEntityIdPrefix.Rule, { ...rule, position: 0 });
     }
 
     public static createBudgetStream(stream: NewEntity<BudgetStreamFields>): BudgetStreamFields {
