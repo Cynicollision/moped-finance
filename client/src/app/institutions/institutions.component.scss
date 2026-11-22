@@ -90,6 +90,16 @@
     opacity: 0.55;
 }
 
+// A connected account (INST-1.12).
+.synced-label {
+    margin-left: 0.5rem;
+    color: var(--color-positive);
+
+    mat-icon {
+        vertical-align: -2px;
+    }
+}
+
 .closed-label {
     margin-left: 0.5rem;
     padding: 0 0.4rem;

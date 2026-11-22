@@ -1,0 +1,49 @@
+<app-modal-layout title="Link to Bank Account">
+    <form id="link-bank-account-form" [formGroup]="form" (ngSubmit)="save()">
+        <p class="explanation">
+            {{ account.name }} keeps its transactions and balance history. Bank transactions from the day you choose are
+            added, and its balance comes from the bank from then on.
+        </p>
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Bank account</mat-label>
+            <mat-select formControlName="bankAccountId">
+                <mat-select-trigger>{{ bankAccountName(form.controls.bankAccountId.value) }}</mat-select-trigger>
+                @for (connection of connections; track connection.id) {
+                    <mat-optgroup [label]="connection.name">
+                        @for (bankAccount of connection.bankAccounts; track bankAccount.id) {
+                            <mat-option [value]="bankAccount.id">
+                                {{ bankAccount.name }}
+                                <app-money class="option-detail" [amount]="bankAccount.balance"></app-money>
+                            </mat-option>
+                        }
+                    </mat-optgroup>
+                }
+            </mat-select>
+            @if (form.controls.bankAccountId.hasError('required')) {
+                <mat-error>Bank account is required</mat-error>
+            }
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Sync transactions from</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="syncFrom" />
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-hint>Bank transactions before this day aren't added.</mat-hint>
+            @if (form.controls.syncFrom.hasError('matDatepickerParse')) {
+                <mat-error>Enter a valid date</mat-error>
+            } @else if (form.controls.syncFrom.hasError('required')) {
+                <mat-error>Sync transactions from is required</mat-error>
+            }
+        </mat-form-field>
+    </form>
+
+    <div modal-actions>
+        <button mat-button type="button" appModalCancel>Cancel</button>
+        <button mat-flat-button type="submit" form="link-bank-account-form" [disabled]="!canSave()">
+            @if (isSaving()) {
+                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+            }
+            Link
+        </button>
+    </div>
+</app-modal-layout>

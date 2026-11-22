@@ -12,3 +12,19 @@
         color: var(--text-muted);
     }
 }
+
+.bank-sync-pointer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1rem;
+    color: var(--text-muted);
+
+    mat-icon {
+        flex: none;
+    }
+
+    a {
+        color: var(--color-link);
+    }
+}

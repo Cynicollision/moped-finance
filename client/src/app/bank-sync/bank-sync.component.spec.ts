@@ -1,10 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { BankSyncWording } from '@shared/finance/contracts';
-import { BankAccountLinkStatus, BankSyncPauseReason, SyncRunStatus, SyncTrigger } from '@shared/finance/enum';
+import {
+    BankAccountAction,
+    BankAccountLinkStatus,
+    BankSyncPauseReason,
+    SyncRunStatus,
+    SyncTrigger
+} from '@shared/finance/enum';
 import { BankAccount, BankSyncStatus, SyncRun } from '@shared/finance/types';
 import { ModalService } from './../core/modal/modal.service';
 import { NotificationService } from './../core/notification.service';
+import { BankAccountSetupDialogComponent } from './bank-account-setup-dialog.component';
 import { BankSyncComponent, disconnectMessage } from './bank-sync.component';
 import { BankSyncService } from './bank-sync.service';
 
@@ -27,6 +34,7 @@ describe('BankSyncComponent', () => {
             keyConfigured: true,
             connected: true,
             connectedAt: new Date(2026, 10, 21, 9, 0),
+            host: 'bridge.example.org',
             pausedReason: null,
             isRunning: false,
             lastRun: run,
@@ -86,10 +94,11 @@ describe('BankSyncComponent', () => {
             fetchRuns: vi.fn().mockResolvedValue(options.runs ?? [run]),
             connect: vi.fn().mockResolvedValue(status()),
             sync: vi.fn().mockResolvedValue({ ...run, id: 'run-2', trigger: SyncTrigger.Manual, transactionsAdded: 3 }),
-            disconnect: vi.fn().mockResolvedValue(true)
+            disconnect: vi.fn().mockResolvedValue(true),
+            updateBankAccount: vi.fn().mockResolvedValue({ bankAccount: accounts[0], transactionsAdded: 0 })
         };
         const notificationService = { success: vi.fn(), error: vi.fn() };
-        const modalService = { confirm: vi.fn().mockResolvedValue(true) };
+        const modalService = { confirm: vi.fn().mockResolvedValue(true), open: vi.fn().mockResolvedValue(true) };
         TestBed.configureTestingModule({
             imports: [BankSyncComponent],
             providers: [
@@ -197,13 +206,13 @@ describe('BankSyncComponent', () => {
         bankSyncService.sync.mockResolvedValue({
             ...run,
             status: SyncRunStatus.Failed,
-            failure: "SimpleFIN Bridge didn't answer in time."
+            failure: "The SimpleFIN server didn't answer in time."
         });
 
         button(element, 'Sync now')!.click();
         await fixture.whenStable();
 
-        expect(notificationService.error).toHaveBeenCalledWith("SimpleFIN Bridge didn't answer in time.");
+        expect(notificationService.error).toHaveBeenCalledWith("The SimpleFIN server didn't answer in time.");
     });
 
     it('SYNC-3.3 should disable Sync now while a sync is running', async () => {
@@ -246,15 +255,16 @@ describe('BankSyncComponent', () => {
         expect(bankSyncService.sync).toHaveBeenCalled();
     });
 
-    it("SYNC-5.2 should show Bridge's messages from the last sync as plain text", async () => {
+    it("SYNC-5.2 should show the SimpleFIN server's messages from the last sync as plain text, as SimpleFIN's", async () => {
         const lastRun: SyncRun = {
             ...run,
             messages: [{ code: 'con.auth', text: '<b>Sign in</b> again', connectionId: 'c', accountId: null }]
         };
         const { element } = await render({ status: status({ lastRun }) });
 
-        const message = element.querySelector('.bridge-messages li')!;
-        expect(message.textContent).toContain('<b>Sign in</b> again');
+        const message = element.querySelector('.server-messages li')!;
+        expect(message.textContent).toContain('SimpleFIN: <b>Sign in</b> again');
+        expect(element.textContent).not.toContain('Bridge');
         expect(message.querySelector('b')).toBeNull();
     });
 
@@ -264,13 +274,112 @@ describe('BankSyncComponent', () => {
             id: 'run-0',
             trigger: SyncTrigger.Scheduled,
             status: SyncRunStatus.Failed,
-            failure: 'SimpleFIN Bridge refused the access URL (403).'
+            failure: 'The SimpleFIN server refused the access URL (403).'
         };
         const { element } = await render({ runs: [run, failed] });
 
         const rows = [...element.querySelectorAll('[appListCell="trigger"]')].map(e => e.textContent!.trim());
         expect(rows).toEqual(['Connecting', 'Scheduled']);
-        expect(element.textContent).toContain('SimpleFIN Bridge refused the access URL (403).');
+        expect(element.textContent).toContain('The SimpleFIN server refused the access URL (403).');
+    });
+
+    it('SYNC-1.1 should link the connect text to simplefin.org and never name Bridge', async () => {
+        const { element } = await render({ status: status({ connected: false, connectedAt: null, lastRun: null }) });
+
+        expect(element.querySelector('h2')!.textContent).toContain('Connect to SimpleFIN');
+        expect(element.querySelector<HTMLAnchorElement>('a[href*="simplefin.org"]')!.href).toBe(
+            'https://www.simplefin.org/'
+        );
+        expect(element.textContent).not.toContain('Bridge');
+    });
+
+    it('SYNC-3.7 should give the last sync its result beside the label, and where it is connected at the end', async () => {
+        const { element } = await render();
+
+        const label = element.querySelector('.status-figures dt')!;
+        expect(label.textContent).toContain('Last sync');
+        expect(label.querySelector('.run-status')!.textContent).toBe('Succeeded');
+        expect(element.querySelector('.status-figures')!.textContent).not.toContain('Connected');
+        expect(element.querySelector('.connected-line')!.textContent!.replace(/\s+/g, ' ').trim()).toBe(
+            'Connected to bridge.example.org since Nov 21, 2026'
+        );
+    });
+
+    it('SYNC-2.1 should offer Set up only on Not set up rows and a menu on every US dollar row', async () => {
+        const { element } = await render();
+
+        const setUp = [...element.querySelectorAll('button')].filter(b => b.textContent?.trim() === 'Set up');
+        expect(setUp.map(b => b.getAttribute('aria-label'))).toEqual(['Set up Holiday Fund']);
+        const menus = [...element.querySelectorAll('button[aria-label^="Actions for"]')].map(b =>
+            b.getAttribute('aria-label')
+        );
+        expect(menus).toEqual([
+            'Actions for Holiday Fund',
+            'Actions for Everyday Checking',
+            'Actions for High-Yield Savings'
+        ]);
+    });
+
+    it('SYNC-2.1 should open the set-up dialog, with the choice made when it comes from the menu', async () => {
+        const { fixture, element, modalService, bankSyncService } = await render();
+
+        button(element, 'Set up Holiday Fund')!.click();
+        await fixture.whenStable();
+        expect(modalService.open).toHaveBeenCalledWith(BankAccountSetupDialogComponent, {
+            bankAccount: accounts[1],
+            choice: undefined
+        });
+        expect(bankSyncService.fetchStatus).toHaveBeenCalledTimes(2);
+
+        await fixture.componentInstance.setUp(accounts[2], BankAccountAction.Create);
+        expect(modalService.open).toHaveBeenLastCalledWith(BankAccountSetupDialogComponent, {
+            bankAccount: accounts[2],
+            choice: BankAccountAction.Create
+        });
+    });
+
+    it("SYNC-2.2 should mark a bank account Don't sync without asking", async () => {
+        const { fixture, bankSyncService, modalService, notificationService } = await render();
+
+        await fixture.componentInstance.dontSync(accounts[1]);
+
+        expect(modalService.confirm).not.toHaveBeenCalled();
+        expect(bankSyncService.updateBankAccount).toHaveBeenCalledWith('ba-holiday', {
+            action: BankAccountAction.Ignore
+        });
+        expect(notificationService.success).toHaveBeenCalledWith("Bank account set to Don't sync");
+    });
+
+    it("SYNC-2.2 SYNC-2.7 should ask as Unlink does before Don't sync on a linked bank account", async () => {
+        const { fixture, bankSyncService, modalService } = await render();
+        modalService.confirm.mockResolvedValue(false);
+
+        await fixture.componentInstance.dontSync(accounts[0]);
+
+        expect(modalService.confirm).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: 'Unlink Checking? It becomes manual and keeps its balance history and transactions.'
+            })
+        );
+        expect(bankSyncService.updateBankAccount).not.toHaveBeenCalled();
+    });
+
+    it('SYNC-2.7 should unlink after confirming', async () => {
+        const { fixture, bankSyncService, modalService, notificationService } = await render();
+
+        await fixture.componentInstance.unlink(accounts[0]);
+
+        expect(modalService.confirm).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: 'Unlink Account',
+                message: 'Unlink Checking? It becomes manual and keeps its balance history and transactions.',
+                confirmLabel: 'Unlink'
+            })
+        );
+        expect(bankSyncService.updateBankAccount).toHaveBeenCalledWith('ba-checking', {
+            action: BankAccountAction.Unlink
+        });
+        expect(notificationService.success).toHaveBeenCalledWith('Account unlinked');
     });
 
     it('SYNC-1.4 should disconnect after confirming', async () => {

@@ -187,6 +187,16 @@ describe('Bank Sync Routes', () => {
             expect(stored.rows[0].schedule_minute).toBeLessThan(360);
         });
 
+        it("SYNC-1.1 should give the status the SimpleFIN server's host, without its credentials", async () => {
+            const response = await connect();
+
+            const accessUrl = new URL(client.accessUrls[0]);
+            expect(response.body.host).toBe(accessUrl.host);
+            expect((await status()).host).toBe(accessUrl.host);
+            expect(accessUrl.password).not.toBe('');
+            expect(JSON.stringify(response.body)).not.toContain(accessUrl.password);
+        });
+
         it('SYNC-1.1 SYNC-3.6 should ask Bridge for the last 44 days', async () => {
             await connect();
 
@@ -1008,17 +1018,23 @@ describe('Bank Sync Routes', () => {
         it('SYNC-1.1 should never put the access URL in a response, a log entry or a stored run', async () => {
             const bodies: string[] = [];
             const record = (response: request.Response) => bodies.push(response.text);
+            // A status may say which host it's connected to (its `host`), and nothing more of the access URL.
+            const recordStatus = (response: request.Response) => {
+                const { host, ...rest } = response.body as BankSyncStatus;
+                expect(client.accessUrls.map(url => new URL(url).host)).toContain(host);
+                bodies.push(JSON.stringify(rest));
+            };
 
-            record(await connect());
+            recordStatus(await connect());
             record(await syncNow());
             client.failWith = 'refused';
             record(await syncNow());
             record(await syncNow());
             client.failWith = null;
-            record(await connect('fake:payment'));
+            recordStatus(await connect('fake:payment'));
             record(await syncNow());
-            record(await connect());
-            record(await request(app).get('/bank-sync'));
+            recordStatus(await connect());
+            recordStatus(await request(app).get('/bank-sync'));
             record(await request(app).get('/bank-sync/accounts'));
             record(await request(app).get('/bank-sync/runs'));
 

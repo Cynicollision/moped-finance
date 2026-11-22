@@ -3,7 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { AccountType } from '@shared/finance/enum';
-import { Institution } from '@shared/finance/types';
+import { BankSyncStatus, Institution } from '@shared/finance/types';
+import { BankSyncService } from './../bank-sync/bank-sync.service';
 import { DateProviderService } from './../core/date-provider.service';
 import { AuthService } from './../core/auth.service';
 import { ModalService } from './../core/modal/modal.service';
@@ -18,13 +19,18 @@ describe('AddAccountComponent', () => {
         return { id, name, createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1) } as Institution;
     }
 
-    async function render(institutions: Institution[], institutionId: string | null = null) {
+    async function render(institutions: Institution[], institutionId: string | null = null, bankSyncConnected = false) {
         const financeService = {
             fetchInstitutions: vi.fn().mockResolvedValue(institutions),
             createAccount: vi.fn().mockResolvedValue({ id: 'new-account' })
         };
         const modalService = { open: vi.fn().mockResolvedValue(true) };
         const notificationService = { success: vi.fn() };
+        const bankSyncService = {
+            fetchStatus: vi
+                .fn()
+                .mockResolvedValue({ keyConfigured: true, connected: bankSyncConnected } as BankSyncStatus)
+        };
         TestBed.configureTestingModule({
             imports: [AddAccountComponent],
             providers: [
@@ -34,6 +40,7 @@ describe('AddAccountComponent', () => {
                     useValue: { snapshot: { queryParamMap: convertToParamMap(institutionId ? { institutionId } : {}) } }
                 },
                 { provide: FinanceService, useValue: financeService },
+                { provide: BankSyncService, useValue: bankSyncService },
                 { provide: ModalService, useValue: modalService },
                 { provide: NotificationService, useValue: notificationService },
                 { provide: AuthService, useValue: { currentUser: signal(null) } },
@@ -67,6 +74,22 @@ describe('AddAccountComponent', () => {
         expect(element.querySelector('app-account-form')).not.toBeNull();
         expect(element.textContent).not.toMatch(/connect|coming soon/i);
         expect(labels(element)).toEqual(['Account Name', 'Institution', 'Type', 'Starting Balance', 'Hide Account']);
+    });
+
+    it('ACCT-1.3 should point to Bank Sync while bank sync is connected', async () => {
+        const { element } = await render([institution('inst-1', 'First Bank')], null, true);
+
+        const pointer = element.querySelector('.bank-sync-pointer')!;
+        expect(pointer.querySelector('span')!.textContent!.replace(/\s+/g, ' ').trim()).toBe(
+            'Syncing this account from your bank? Set it up in Bank Sync instead.'
+        );
+        expect(pointer.querySelector('a')!.getAttribute('href')).toBe('/settings/bank-sync');
+    });
+
+    it("ACCT-1.3 should not point to Bank Sync while it isn't connected", async () => {
+        const { element } = await render([institution('inst-1', 'First Bank')]);
+
+        expect(element.querySelector('.bank-sync-pointer')).toBeNull();
     });
 
     it('ACCT-1.4 should start with a blank Starting Balance', async () => {

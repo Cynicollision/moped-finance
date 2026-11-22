@@ -68,12 +68,12 @@ export class SimplefinClient implements ISimplefinClient {
 
         const response = await this.send('claim', claimUrl, { method: 'POST' });
         if (response.status === 403) {
-            throw new SimplefinError('refused', 'SimpleFIN Bridge refused the setup token (403).');
+            throw new SimplefinError('refused', 'The SimpleFIN server refused the setup token (403).');
         }
         if (!response.ok) {
             throw new SimplefinError(
                 'unexpected-response',
-                `SimpleFIN Bridge answered the claim with ${response.status}.`
+                `The SimpleFIN server answered the claim with ${response.status}.`
             );
         }
 
@@ -81,7 +81,7 @@ export class SimplefinClient implements ISimplefinClient {
         if (!splitAccessUrl(accessUrl)) {
             throw new SimplefinError(
                 'unexpected-response',
-                'SimpleFIN Bridge answered the claim without an access URL.'
+                'The SimpleFIN server answered the claim without an access URL.'
             );
         }
         return accessUrl;
@@ -105,21 +105,27 @@ export class SimplefinClient implements ISimplefinClient {
         });
         if (response.status === 403) {
             const body = parseAccountSet(await this.readJson(response).catch(() => null));
-            throw new SimplefinError('refused', 'SimpleFIN Bridge refused the access URL (403).', body?.messages);
+            throw new SimplefinError('refused', 'The SimpleFIN server refused the access URL (403).', body?.messages);
         }
         if (response.status === 402) {
-            throw new SimplefinError('payment-required', 'SimpleFIN Bridge needs payment (402).');
+            throw new SimplefinError(
+                'payment-required',
+                'The SimpleFIN server says the subscription needs payment (402).'
+            );
         }
         if (!response.ok) {
             throw new SimplefinError(
                 'unexpected-response',
-                `SimpleFIN Bridge answered the accounts request with ${response.status}.`
+                `The SimpleFIN server answered the accounts request with ${response.status}.`
             );
         }
 
         const accounts = parseAccountSet(await this.readJson(response));
         if (!accounts) {
-            throw new SimplefinError('unexpected-response', 'SimpleFIN Bridge sent accounts in a shape we can’t read.');
+            throw new SimplefinError(
+                'unexpected-response',
+                'The SimpleFIN server sent accounts in a shape we can’t read.'
+            );
         }
         return accounts;
     }
@@ -132,14 +138,14 @@ export class SimplefinClient implements ISimplefinClient {
             if ((error as Error | undefined)?.name === 'TimeoutError') {
                 throw new SimplefinError(
                     'timeout',
-                    `SimpleFIN Bridge didn't answer the ${what} within ${this.timeoutMs / 1000}s.`
+                    `The SimpleFIN server didn't answer the ${what} within ${this.timeoutMs / 1000}s.`
                 );
             }
             // fetch's own messages ("fetch failed") don't include the URL, but its cause can, so only its code is kept.
             const code = (error as { cause?: { code?: unknown } } | undefined)?.cause?.code;
             throw new SimplefinError(
                 'unreachable',
-                `Couldn't reach SimpleFIN Bridge for the ${what}${typeof code === 'string' ? ` (${code})` : ''}.`
+                `Couldn't reach the SimpleFIN server for the ${what}${typeof code === 'string' ? ` (${code})` : ''}.`
             );
         }
     }
@@ -148,7 +154,10 @@ export class SimplefinClient implements ISimplefinClient {
         try {
             return await response.text();
         } catch {
-            throw new SimplefinError('unexpected-response', `SimpleFIN Bridge's answer to the ${what} was cut off.`);
+            throw new SimplefinError(
+                'unexpected-response',
+                `The SimpleFIN server's answer to the ${what} was cut off.`
+            );
         }
     }
 
@@ -157,7 +166,7 @@ export class SimplefinClient implements ISimplefinClient {
         try {
             return JSON.parse(text);
         } catch {
-            throw new SimplefinError('unexpected-response', 'SimpleFIN Bridge sent accounts that aren’t JSON.');
+            throw new SimplefinError('unexpected-response', 'The SimpleFIN server sent accounts that aren’t JSON.');
         }
     }
 }

@@ -21,7 +21,7 @@ Screens, all pages of Settings: **Institutions and Accounts** (`/settings/instit
 | INST-1.9 | An institution that still has accounts cannot be deleted. The dialog's **Delete** button shall be disabled, with the note "To delete this institution, first delete its N accounts." ("1 account" for one), and the server shall reject the request with the same rule. | Implemented |
 | INST-1.10 | The Institutions and Accounts screen's header shall have a menu (⋮) with **Add Institution**, which opens the Add Institution dialog (INST-1.4), and **Add Account**, which opens Add Account (ACCT-1.3), in addition to the per-card menus (INST-1.7) and the empty-state button (INST-1.3). The header has no button of its own. | Implemented |
 | INST-1.11 | Institution names shall be unique, ignoring case. Saving a duplicate shall be rejected with "An institution with that name already exists." (Numbered INST-1.10 before 2026-09-26, which duplicated the ID above.) | Implemented |
-| INST-1.12 | A connected account (ACCT-4.3) shall be marked in its institution's card with a sync icon and "Synced". | Planned |
+| INST-1.12 | A connected account (ACCT-4.3) shall be marked in its institution's card with a sync icon and "Synced". | Implemented |
 
 ## INST-2 The user can have institution data kept up to date automatically
 

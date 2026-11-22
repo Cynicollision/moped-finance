@@ -71,7 +71,7 @@ app-page-header {
     color: var(--color-negative);
 }
 
-// Connected, last sync and the limit (SYNC-3.3, SYNC-3.7).
+// The last sync with its result beside the label, and the limit (SYNC-3.3, SYNC-3.7).
 .status-figures {
     display: flex;
     flex-wrap: wrap;
@@ -88,13 +88,21 @@ app-page-header {
     dd {
         margin: 4px 0 0;
     }
+
+    // Read as a word beside the label, not shouted like it.
+    .run-status {
+        margin-left: 6px;
+        text-transform: none;
+        letter-spacing: normal;
+        font-weight: 500;
+    }
 }
 
 .run-failure {
     color: var(--color-negative);
 }
 
-.bridge-messages {
+.server-messages {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -181,7 +189,8 @@ app-page-header {
 }
 
 // These hold sentences (SYNC-2.6, SYNC-2.9, a run's failure), so they wrap rather than end in an ellipsis like the
-// list's other cells.
+// list's other cells. A bank account's name wraps too, so Set up beside it on a phone doesn't cut it short.
+.app-list-row .account-name,
 .app-list-row .link-cell,
 .app-list-row .result-cell {
     min-width: 0;
@@ -201,4 +210,20 @@ app-page-header {
 .missing {
     color: var(--color-negative);
     font: var(--mat-sys-body-small);
+}
+
+.row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+// Where the page is connected to, at its foot.
+.connected-line {
+    margin: 0;
+    padding: 0 4px;
+    color: var(--text-muted);
+    font: var(--mat-sys-body-small);
+    overflow-wrap: anywhere;
 }
