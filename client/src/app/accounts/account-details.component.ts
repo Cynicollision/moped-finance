@@ -20,6 +20,7 @@ import { ModalService } from './../core/modal/modal.service';
 import { categoryLabel } from './../common/category-label';
 import { MoneyComponent } from './../common/money.component';
 import { ValueHistoryComponent } from './../common/value-history.component';
+import { BankSyncService } from './../bank-sync/bank-sync.service';
 import { FinanceService } from './../common/finance.service';
 import { UpdateBalanceDialogComponent, UpdateBalanceDialogData } from './update-balance-dialog.component';
 
@@ -46,6 +47,7 @@ import { UpdateBalanceDialogComponent, UpdateBalanceDialogData } from './update-
 })
 export class AccountDetailsComponent {
     private financeService = inject(FinanceService);
+    private bankSyncService = inject(BankSyncService);
     private route = inject(ActivatedRoute);
     private dateProvider = inject(DateProviderService);
     private modalService = inject(ModalService);
@@ -70,7 +72,11 @@ export class AccountDetailsComponent {
                 this.financeService.fetchInstitutions(),
                 this.financeService.fetchAccountRecentTransactions(accountId)
             ]);
-            return { account, categories, institutions, transactions };
+            // A connected account shows when it last synced (ACCT-2.6), which its bank account knows.
+            const bankAccount = account.isManual
+                ? undefined
+                : (await this.bankSyncService.fetchAccounts()).find(b => b.linkedAccount?.id === account.id);
+            return { account, categories, institutions, transactions, bankAccount };
         }
     });
 
@@ -85,6 +91,7 @@ export class AccountDetailsComponent {
     });
 
     readonly account = computed(() => this.details.value()?.account);
+    readonly bankAccount = computed(() => this.details.value()?.bankAccount);
     readonly transactions = computed<Transaction[]>(() => this.details.value()?.transactions ?? []);
     private readonly categoryMap = computed(
         () => new Map((this.details.value()?.categories ?? []).map(c => [c.id, c]))

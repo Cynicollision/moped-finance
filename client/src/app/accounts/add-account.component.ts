@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { AccountRequest } from '@shared/finance/types';
 import { PageHeaderComponent } from './../core/layout/page-header.component';
 import { CardSkeletonComponent } from './../core/loading/card-skeleton.component';
@@ -10,6 +11,7 @@ import { ModalService } from './../core/modal/modal.service';
 import { NotificationService } from './../core/notification.service';
 import { HasUnsavedChanges } from './../core/unsaved-changes';
 import { InstitutionDialogComponent, InstitutionDialogData } from './../institutions/institution-dialog.component';
+import { BankSyncService } from './../bank-sync/bank-sync.service';
 import { FinanceService } from './../common/finance.service';
 import { AccountFormComponent } from './account-form.component';
 
@@ -17,12 +19,21 @@ import { AccountFormComponent } from './account-form.component';
 @Component({
     selector: 'app-add-account',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MatButtonModule, AccountFormComponent, PageHeaderComponent, CardSkeletonComponent, LoadErrorComponent],
+    imports: [
+        MatButtonModule,
+        MatIconModule,
+        RouterLink,
+        AccountFormComponent,
+        PageHeaderComponent,
+        CardSkeletonComponent,
+        LoadErrorComponent
+    ],
     templateUrl: './add-account.component.html',
     styleUrl: './add-account.component.scss'
 })
 export class AddAccountComponent implements HasUnsavedChanges {
     private financeService = inject(FinanceService);
+    private bankSyncService = inject(BankSyncService);
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
     private route = inject(ActivatedRoute);
@@ -37,6 +48,8 @@ export class AddAccountComponent implements HasUnsavedChanges {
                 a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
             )
     });
+    /** While bank sync is connected, the form points to Bank Sync (ACCT-1.3); if it fails to load, it just doesn't. */
+    readonly bankSync = viewResource({ loader: () => this.bankSyncService.fetchStatus() });
     readonly institutionId = this.route.snapshot.queryParamMap.get('institutionId');
     readonly saving = signal(false);
 

@@ -49,6 +49,10 @@
         margin: 0;
         color: var(--text-muted);
     }
+
+    .warning-text {
+        color: var(--mat-sys-error);
+    }
 }
 
 .loading-cards {

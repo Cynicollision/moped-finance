@@ -80,6 +80,12 @@
                                             </a>
                                             <span class="account-type"
                                                 >{{ account.type }}
+                                                @if (!account.isManual) {
+                                                    <span class="synced-label">
+                                                        <mat-icon inline aria-hidden="true">sync</mat-icon>
+                                                        Synced
+                                                    </span>
+                                                }
                                                 @if (account.closedOn) {
                                                     <span class="closed-label">Closed</span>
                                                 }

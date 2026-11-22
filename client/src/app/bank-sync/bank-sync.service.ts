@@ -1,5 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { ConnectBankSyncRequest } from '@shared/finance/contracts';
+import { CalendarDate } from '@shared/core/types';
+import {
+    BankAccountLinkDefaults,
+    BankAccountRequest,
+    BankAccountResult,
+    ConnectBankSyncRequest
+} from '@shared/finance/contracts';
 import { BankAccount, BankSyncStatus, SyncRun } from '@shared/finance/types';
 import { ApiService } from './../core/api.service';
 
@@ -36,6 +42,20 @@ export class BankSyncService {
     /** Sync now, and Try again while paused for payment (SYNC-3.3, SYNC-1.3). */
     sync(): Promise<SyncRun | undefined> {
         return this.api.post<SyncRun>(`${basePath}/sync`, {});
+    }
+
+    /** Link to an account, Create new account, Don't sync or Unlink (SYNC-2). */
+    updateBankAccount(id: string, request: BankAccountRequest): Promise<BankAccountResult | undefined> {
+        return this.api.put<BankAccountResult>(`${basePath}/accounts/${encodeURIComponent(id)}`, request);
+    }
+
+    /** What Link to an account suggests for Sync transactions from (SYNC-2.4). */
+    async fetchSyncFromDefault(id: string, accountId: string): Promise<CalendarDate | undefined> {
+        const defaults = await this.api.get<BankAccountLinkDefaults>(
+            `${basePath}/accounts/${encodeURIComponent(id)}/link-defaults`,
+            { accountId }
+        );
+        return defaults?.syncFrom;
     }
 
     /** SYNC-1.4. */

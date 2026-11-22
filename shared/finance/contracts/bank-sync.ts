@@ -40,7 +40,10 @@ export interface BankAccountLinkDefaults {
     syncFrom: CalendarDate;
 }
 
-/** SimpleFIN Bridge allows about 24 account requests a day; the server keeps under this many (SYNC-3.4). */
+/**
+ * SimpleFIN Bridge allows about 24 account requests a day; the server keeps under this many, which is cautious for any
+ * other SimpleFIN server too (SYNC-3.4).
+ */
 export const BANK_SYNC_DAILY_REQUEST_LIMIT = 20;
 
 /** How far back each sync asks for transactions (SYNC-3.6). */
@@ -53,9 +56,9 @@ export const BankSyncWording = {
     /** SYNC-1.3: why syncing is paused, for each reason. */
     paused: {
         [BankSyncPauseReason.Refused]:
-            'Syncing is paused because SimpleFIN Bridge refused the connection. Connect again with a new setup token.',
+            'Syncing is paused because your SimpleFIN server refused the connection. Connect again with a new setup token.',
         [BankSyncPauseReason.Payment]:
-            "SimpleFIN Bridge says your subscription needs payment. Once it's paid, choose Try again.",
+            "Your SimpleFIN server says your subscription needs payment. Once it's paid, choose Try again.",
         [BankSyncPauseReason.Undecryptable]:
             "Syncing is paused because the stored connection can't be decrypted: ENCRYPTION_KEY has changed. Connect again with a new setup token."
     } satisfies Record<BankSyncPauseReason, string>,

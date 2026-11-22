@@ -76,6 +76,20 @@
                     <span class="value">{{ account.type }}</span>
                 </div>
                 <div class="summary-item">
+                    <span class="label">Bank sync</span>
+                    @if (account.isManual) {
+                        <span class="value">Manual</span>
+                    } @else {
+                        <span class="value connected-status">
+                            <mat-icon inline aria-hidden="true">sync</mat-icon>
+                            Connected
+                        </span>
+                        @if (bankAccount()?.lastSyncedAt; as lastSyncedAt) {
+                            <span class="detail">Last synced {{ lastSyncedAt | date: 'medium' }}</span>
+                        }
+                    }
+                </div>
+                <div class="summary-item">
                     <span class="label">Balance as of</span>
                     <span class="value">{{
                         account.balanceDate ? (account.balanceDate | date: 'mediumDate') : 'No balance yet'

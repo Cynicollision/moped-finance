@@ -23,9 +23,10 @@ export const BankSyncMessages = {
     notConnected: "Bank sync isn't connected.",
     running: 'A sync is already running.',
     tokenRefused:
-        "SimpleFIN Bridge didn't accept this setup token. It may have been used already: if you didn't use it, disable it in Bridge, since someone else may have claimed it.",
-    tokenInvalid: "That isn't a SimpleFIN setup token. Copy the whole token from SimpleFIN Bridge and paste it here.",
-    claimFailed: "SimpleFIN Bridge couldn't be reached to claim the setup token. Try again in a few minutes.",
+        "Your SimpleFIN server didn't accept this setup token. It may have been used already: if you didn't use it, disable it on your SimpleFIN server, since someone else may have claimed it.",
+    tokenInvalid:
+        "That isn't a SimpleFIN setup token. Copy the whole token from your SimpleFIN server and paste it here.",
+    claimFailed: "Your SimpleFIN server couldn't be reached to claim the setup token. Try again in a few minutes.",
     paused: BankSyncWording.paused,
     bankAccountNotFound: 'Bank account not found.',
     accountNotFound: 'Account not found.',
@@ -182,11 +183,28 @@ export class BankSyncController {
             keyConfigured: this.secretBox !== undefined,
             connected: access !== null,
             connectedAt: access?.claimedAt ?? null,
+            host: access ? this.hostOf(access.sealedAccessUrl) : null,
             pausedReason: access?.pausedReason ?? null,
             isRunning,
             lastRun,
             quota
         };
+    }
+
+    /**
+     * The SimpleFIN server's host, from the access URL, for "Connected to *host*": only the host and port, never the
+     * credentials or path. Null when the access URL can't be opened (SYNC-1.3's changed key).
+     */
+    private hostOf(sealedAccessUrl: string): string | null {
+        if (!this.secretBox) {
+            return null;
+        }
+        try {
+            return new URL(this.secretBox.open(sealedAccessUrl)).host;
+        } catch {
+            // A SecretBoxError, or a stored value that isn't a URL: either way there's no host to show.
+            return null;
+        }
     }
 
     /** Why the bank account can't be linked, or have an account created for it, now. */

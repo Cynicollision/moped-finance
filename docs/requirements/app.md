@@ -103,7 +103,7 @@ Commands run on the host, like the password reset (AUTH-12): whoever can run the
 
 ## Known gaps
 
-- **The Rules page and Bank Sync's dialogs aren't built (APP-2.6; CAT-8, SYNC-2).**
+- **The Rules page isn't built (APP-2.6; CAT-8).**
 - **Demo mode is a shell (APP-4.3).** Every request other than auth returns an empty list, so the finance screens render empty. Finishing it isn't scheduled (TODO.md, Unscheduled).
 
 ## Notes

@@ -17,6 +17,71 @@
             </app-account-form>
         </section>
 
+        <section class="manage-section" aria-labelledby="sync-heading">
+            <h2 id="sync-heading">Bank sync</h2>
+            <div class="section-card">
+                <div class="action-row">
+                    @if (linkedBankAccount(); as bankAccount) {
+                        <div class="action-text">
+                            <h3>Connected</h3>
+                            <p>{{ bankAccount.connectionName }} · {{ bankAccount.name }}</p>
+                            <p>
+                                @if (bankAccount.lastSyncedAt) {
+                                    Last synced {{ bankAccount.lastSyncedAt | date: 'medium' }}
+                                } @else {
+                                    Not synced yet
+                                }
+                            </p>
+                            @if (bankAccount.missingSince) {
+                                <p class="warning-text">
+                                    Missing from SimpleFIN since {{ bankAccount.missingSince | date: 'mediumDate' }}
+                                </p>
+                            }
+                        </div>
+                        <button
+                            mat-stroked-button
+                            type="button"
+                            [disabled]="running() !== null"
+                            (click)="unlinkBankAccount()"
+                        >
+                            @if (running() === 'unlink') {
+                                <mat-progress-spinner
+                                    class="button-spinner"
+                                    mode="indeterminate"
+                                    diameter="18"
+                                ></mat-progress-spinner>
+                            }
+                            Unlink
+                        </button>
+                    } @else if (!bankSyncConnected()) {
+                        <div class="action-text">
+                            <p>Bank sync isn't set up.</p>
+                        </div>
+                        <a mat-stroked-button routerLink="/settings/bank-sync">Bank Sync</a>
+                    } @else {
+                        <div class="action-text">
+                            <p>Manual: you keep its balance up to date.</p>
+                            @if (account.closedOn) {
+                                <p>Reopen this account to link it.</p>
+                            } @else if (!linkableBankAccounts().length) {
+                                <p>Every bank account from SimpleFIN is linked to another account already.</p>
+                            }
+                        </div>
+                        @if (!account.closedOn && linkableBankAccounts().length) {
+                            <button
+                                mat-stroked-button
+                                type="button"
+                                [disabled]="running() !== null"
+                                (click)="linkBankAccount()"
+                            >
+                                Link to bank account
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+        </section>
+
         <section class="manage-section" aria-labelledby="close-heading">
             <h2 id="close-heading">Close or delete</h2>
             <div class="section-card">

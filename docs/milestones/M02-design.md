@@ -8,6 +8,8 @@ This doc is temporary. The milestone's last task (T12) moves what stays true int
 
 Sources: the [protocol](https://www.simplefin.org/protocol.html) (v2, still a draft) and Bridge's [developer guide](https://beta-bridge.simplefin.org/info/developers).
 
+The app speaks the protocol, not Bridge: the setup token carries its claim URL and the claim returns the access URL, so any SimpleFIN server works. Bridge is the one the owner uses and the one its limits are set by, but nothing on screen names it; the wording says "SimpleFIN" or "your SimpleFIN server" (decided 2026-11-22).
+
 - **Claiming.** A setup token is a Base64-encoded claim URL. `POST` to it (empty body) returns the access URL as the response body: `https://user:password@host/path`. A claim works once; a used or unknown token gets 403.
 - **Fetching.** `GET <access URL>/accounts?version=2&start-date=<unix>` with HTTP Basic auth from the URL's credentials. Other parameters: `end-date` (exclusive), `pending=1` (pending transactions, off by default), `account=<id>` (repeatable), `balances-only=1`.
 - **Response.** `errlist` (`{ code, msg, conn_id?, account_id? }`, codes `gen.*`, `con.*`, `act.*`), `connections` (`conn_id`, `name`, `org_id`, `org_url?`, `sfin_url`), `accounts` (`id`, `name`, `conn_id`, `currency`, `balance`, `available-balance?`, `balance-date`, `transactions?`, `extra?`). A transaction has `id`, `posted`, `amount`, `description`, `transacted_at?`, `pending?`, `extra?`, and Bridge adds `payee`, `memo` and `mcc`. Amounts are numeric strings, positive for money in; timestamps are Unix seconds. Bridge answers in v1 unless asked for `version=2`: an `org` object per account instead of `connections` and `conn_id`, and a plain `errors` list of strings instead of `errlist`. Both versions may carry `x-api-message`, a list of notes from Bridge.
@@ -105,7 +107,7 @@ Under `/api/v1/bank-sync`, behind the usual auth; read-only tokens may only `GET
 
 | Endpoint | What |
 |---|---|
-| `GET /` | `BankSyncStatus`: key configured, connected (and when), paused reason, whether a sync is running, the last finished run, quota (`limit`, `remaining`, `availableAt`). Automatic sync joins it in T7. |
+| `GET /` | `BankSyncStatus`: key configured, connected (and when, and the SimpleFIN server's `host`, read from the access URL, so never its credentials or path), paused reason, whether a sync is running, the last finished run, quota (`limit`, `remaining`, `availableAt`). Automatic sync joins it in T7. |
 | `POST /connect` | `{ setupToken }`: claim, store, first sync. Also how Connect again works (SYNC-1.3), keeping links. |
 | `DELETE /` | Disconnect (SYNC-1.4). 409 while a sync runs, 404 when not connected. |
 | `GET /accounts` | SimpleFIN accounts with their connection, link and last-seen date. |
@@ -118,8 +120,8 @@ Under `/api/v1/bank-sync`, behind the usual auth; read-only tokens may only `GET
 
 ## Security
 
-- The access URL never leaves the server: not in responses, logs, errors or the run payload (the client never puts it there).
-- Bridge's messages are shown as plain text (SYNC-5.2) and never mixed with ours; our own failures are logged in full and stored on the run as a short reason.
+- The access URL never leaves the server: not in responses, logs, errors or the run payload (the client never puts it there). Only its host is shown, on Bank Sync's "Connected to *host*" line, through the status's `host`.
+- The SimpleFIN server's messages are shown as plain text, labelled "SimpleFIN:" (SYNC-5.2), and never mixed with ours; our own failures are logged in full and stored on the run as a short reason.
 - The claim posts to a URL the owner pasted, so it's limited to `https:`; that's the only request the server makes to a user-supplied address.
 
 ## Rules and learning

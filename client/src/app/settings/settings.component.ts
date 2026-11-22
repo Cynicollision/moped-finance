@@ -52,7 +52,7 @@ export class SettingsComponent {
         },
         {
             label: 'Bank Sync',
-            description: 'Keep accounts up to date from SimpleFIN Bridge',
+            description: 'Keep accounts up to date from SimpleFIN',
             route: '/settings/bank-sync',
             icon: 'sync'
         },

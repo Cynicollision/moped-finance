@@ -46,6 +46,17 @@
             vertical-align: -2px;
             color: var(--text-muted);
         }
+
+        .connected-status mat-icon {
+            vertical-align: -2px;
+            color: var(--color-positive);
+        }
+
+        // When a connected account last synced (ACCT-2.6).
+        .detail {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
     }
 }
 

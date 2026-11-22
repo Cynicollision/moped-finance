@@ -8,6 +8,8 @@ export interface BankSyncStatus {
     connected: boolean;
     /** When the current setup token was claimed. */
     connectedAt: Date | null;
+    /** The SimpleFIN server's host (no credentials), for "Connected to *host*"; null if not connected or unreadable. */
+    host: string | null;
     pausedReason: BankSyncPauseReason | null;
     isRunning: boolean;
     lastRun: SyncRun | null;

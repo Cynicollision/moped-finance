@@ -11,6 +11,16 @@
         <app-load-error [message]="error" (retry)="institutions.reload()"></app-load-error>
     } @else if (institutions.value(); as institutions) {
         @if (institutions.length > 0) {
+            <!-- Accounts from the bank are set up in Bank Sync, so the form never connects one (ACCT-1.3). -->
+            @if (bankSync.value()?.connected) {
+                <p class="bank-sync-pointer">
+                    <mat-icon aria-hidden="true">sync</mat-icon>
+                    <span
+                        >Syncing this account from your bank? Set it up in
+                        <a routerLink="/settings/bank-sync">Bank Sync</a> instead.</span
+                    >
+                </p>
+            }
             <app-account-form
                 mode="create"
                 [institutions]="institutions"

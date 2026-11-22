@@ -51,12 +51,12 @@
         } @else if (!view.status.connected) {
             <mat-card class="section-card" appearance="outlined">
                 <div class="section-body">
-                    <h2>Connect to SimpleFIN Bridge</h2>
+                    <h2>Connect to SimpleFIN</h2>
                     <p class="muted">
-                        Bank sync keeps your accounts' transactions and balances up to date from
-                        <a href="https://beta-bridge.simplefin.org" target="_blank" rel="noopener">SimpleFIN Bridge</a>.
-                        Connect your banks in Bridge, create a setup token there, and paste it here. Once connected, you
-                        choose which bank accounts sync into which of your accounts.
+                        Bank sync keeps your accounts' transactions and balances up to date from a
+                        <a href="https://www.simplefin.org" target="_blank" rel="noopener">SimpleFIN</a> server. Connect
+                        your banks there, create a setup token, and paste it here. Once connected, you choose which bank
+                        accounts sync into which of your accounts.
                     </p>
                     <app-setup-token-form (connected)="onConnected($event)"></app-setup-token-form>
                 </div>
@@ -67,20 +67,19 @@
                 <div class="section-body">
                     <dl class="status-figures">
                         <div>
-                            <dt>Connected</dt>
-                            <dd>{{ status.connectedAt | date: 'mediumDate' }}</dd>
-                        </div>
-                        <div>
-                            <dt>Last sync</dt>
-                            @if (status.lastRun; as run) {
-                                <dd>
-                                    {{ run.finishedAt ?? run.startedAt | date: 'medium' }} ·
+                            <dt>
+                                Last sync
+                                @if (status.lastRun; as run) {
                                     <span
+                                        class="run-status"
                                         [class.failed]="run.status === SyncRunStatus.Failed"
                                         [class.succeeded]="run.status === SyncRunStatus.Succeeded"
                                         >{{ statusLabel(run) }}</span
                                     >
-                                </dd>
+                                }
+                            </dt>
+                            @if (status.lastRun; as run) {
+                                <dd>{{ run.finishedAt ?? run.startedAt | date: 'medium' }}</dd>
                             } @else {
                                 <dd>None yet</dd>
                             }
@@ -106,13 +105,13 @@
                         @if (run.failure && !status.pausedReason) {
                             <p class="run-failure">{{ run.failure }}</p>
                         }
-                        <!-- Bridge's own words, as plain text (SYNC-5.2). -->
+                        <!-- The SimpleFIN server's own words, as plain text (SYNC-5.2). -->
                         @if (run.messages.length) {
-                            <ul class="bridge-messages" aria-label="Messages from SimpleFIN Bridge">
+                            <ul class="server-messages" aria-label="Messages from SimpleFIN">
                                 @for (message of run.messages; track $index) {
                                     <li>
                                         <mat-icon>info</mat-icon>
-                                        <span>SimpleFIN Bridge: {{ message.text }}</span>
+                                        <span>SimpleFIN: {{ message.text }}</span>
                                     </li>
                                 }
                             </ul>
@@ -215,12 +214,71 @@
                                             >{{ account.balance | number: '1.2-2' }} {{ account.currency }}</span
                                         >
                                     }
+                                    <span appListCell="actions" class="row-actions">
+                                        <!-- Only US dollar accounts have link actions (SYNC-2.6). -->
+                                        @if (account.canLink) {
+                                            @if (account.linkStatus === BankAccountLinkStatus.NotSetUp) {
+                                                <button
+                                                    mat-stroked-button
+                                                    type="button"
+                                                    [disabled]="updatingId() !== null"
+                                                    (click)="setUp(account)"
+                                                    [attr.aria-label]="'Set up ' + account.name"
+                                                >
+                                                    Set up
+                                                </button>
+                                            }
+                                            <button
+                                                mat-icon-button
+                                                type="button"
+                                                [matMenuTriggerFor]="bankAccountMenu"
+                                                [matMenuTriggerData]="{ account }"
+                                                [disabled]="updatingId() !== null"
+                                                [attr.aria-label]="'Actions for ' + account.name"
+                                            >
+                                                @if (updatingId() === account.id) {
+                                                    <mat-progress-spinner
+                                                        class="button-spinner"
+                                                        mode="indeterminate"
+                                                        diameter="18"
+                                                    ></mat-progress-spinner>
+                                                } @else {
+                                                    <mat-icon>more_vert</mat-icon>
+                                                }
+                                            </button>
+                                        }
+                                    </span>
                                 </div>
                             }
                         }
                     </app-list>
+                    <mat-menu #bankAccountMenu="matMenu">
+                        <ng-template matMenuContent let-account="account">
+                            @if (account.linkStatus === BankAccountLinkStatus.Linked) {
+                                <button mat-menu-item (click)="unlink(account)">
+                                    <mat-icon>link_off</mat-icon>
+                                    <span>Unlink</span>
+                                </button>
+                            } @else {
+                                <button mat-menu-item (click)="setUp(account, BankAccountAction.Link)">
+                                    <mat-icon>link</mat-icon>
+                                    <span>Link to an account</span>
+                                </button>
+                                <button mat-menu-item (click)="setUp(account, BankAccountAction.Create)">
+                                    <mat-icon>add</mat-icon>
+                                    <span>Create new account</span>
+                                </button>
+                            }
+                            @if (account.linkStatus !== BankAccountLinkStatus.Ignored) {
+                                <button mat-menu-item (click)="dontSync(account)">
+                                    <mat-icon>sync_disabled</mat-icon>
+                                    <span>Don't sync</span>
+                                </button>
+                            }
+                        </ng-template>
+                    </mat-menu>
                 } @else {
-                    <p class="empty">SimpleFIN Bridge hasn't returned any bank accounts yet.</p>
+                    <p class="empty">SimpleFIN hasn't returned any bank accounts yet.</p>
                 }
             </mat-card>
 
@@ -252,6 +310,14 @@
                     <p class="empty">No syncs yet.</p>
                 }
             </mat-card>
+
+            <p class="connected-line">
+                Connected
+                @if (status.host) {
+                    to {{ status.host }}
+                }
+                since {{ status.connectedAt | date: 'mediumDate' }}
+            </p>
         }
     } @else {
         <app-card-skeleton [rows]="2"></app-card-skeleton>

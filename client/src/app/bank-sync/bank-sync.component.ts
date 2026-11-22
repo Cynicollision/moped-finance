@@ -7,7 +7,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BankSyncWording } from '@shared/finance/contracts';
-import { BankAccountLinkStatus, BankSyncPauseReason, SyncRunStatus, SyncTrigger } from '@shared/finance/enum';
+import {
+    BankAccountAction,
+    BankAccountLinkStatus,
+    BankSyncPauseReason,
+    SyncRunStatus,
+    SyncTrigger
+} from '@shared/finance/enum';
 import { BankAccount, BankSyncStatus, SyncRun } from '@shared/finance/types';
 import { MoneyComponent } from './../common/money.component';
 import { PageHeaderComponent } from './../core/layout/page-header.component';
@@ -17,7 +23,9 @@ import { LoadErrorComponent } from './../core/loading/load-error.component';
 import { viewResource } from './../core/loading/view-resource';
 import { ModalService } from './../core/modal/modal.service';
 import { NotificationService } from './../core/notification.service';
+import { BankAccountSetupDialogComponent, BankAccountSetupDialogData } from './bank-account-setup-dialog.component';
 import { BankSyncService } from './bank-sync.service';
+import { unlinkMessage } from './bank-sync-wording';
 import { SetupTokenFormComponent } from './setup-token-form.component';
 
 interface BankSyncView {
@@ -47,8 +55,8 @@ const statusLabels: Record<SyncRunStatus, string> = {
     [SyncRunStatus.Skipped]: 'Skipped'
 };
 
-// The Bank Sync page of Settings (SYNC-1, SYNC-2.1, SYNC-3.3, SYNC-3.7): connecting with a setup token, how syncing
-// is going, the bank accounts from the latest sync and the last syncs. Linking them comes with M02 T5.
+// The Bank Sync page of Settings (SYNC-1, SYNC-2, SYNC-3.3, SYNC-3.7): connecting with a setup token, how syncing
+// is going, the bank accounts from the latest sync with what each syncs into, and the last syncs.
 @Component({
     selector: 'app-bank-sync',
     imports: [
@@ -76,6 +84,7 @@ export class BankSyncComponent {
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
 
+    readonly BankAccountAction = BankAccountAction;
     readonly BankAccountLinkStatus = BankAccountLinkStatus;
     readonly SyncRunStatus = SyncRunStatus;
     readonly BankSyncPauseReason = BankSyncPauseReason;
@@ -87,6 +96,8 @@ export class BankSyncComponent {
     readonly syncing = signal(false);
     /** Connect again's setup token field is open in the pause notice. */
     readonly reconnecting = signal(false);
+    /** The bank account whose Don't sync or Unlink is waiting for the server. */
+    readonly updatingId = signal<string | null>(null);
 
     readonly status = computed(() => this.data.value()?.status);
     readonly runs = computed(() => this.data.value()?.runs ?? []);
@@ -132,7 +143,9 @@ export class BankSyncComponent {
     readonly accountColumns: ListColumn[] = [
         { key: 'name', label: 'Bank account', width: 'minmax(0, 2fr)', compact: 'primary' },
         { key: 'link', label: 'Syncs into', width: 'minmax(0, 2fr)', compact: 'secondary' },
-        { key: 'balance', label: 'Balance', width: '10rem', align: 'end', compact: 'trailing' }
+        { key: 'balance', label: 'Balance', width: '10rem', align: 'end', compact: 'trailing' },
+        // Set up and the ⋮ menu (SYNC-2.1); on phones they sit after the balance.
+        { key: 'actions', label: '', width: '9rem', align: 'end', compact: 'trailing' }
     ];
 
     readonly runColumns: ListColumn[] = [
@@ -192,6 +205,60 @@ export class BankSyncComponent {
         if (confirmed && (await this.bankSyncService.disconnect())) {
             this.notificationService.success('Bank sync disconnected');
             this.reconnecting.set(false);
+            this.data.reload();
+        }
+    }
+
+    /** Set up (no choice yet), or Link to an account or Create new account from a row's menu (SYNC-2.1). */
+    async setUp(bankAccount: BankAccount, choice?: BankAccountAction.Link | BankAccountAction.Create): Promise<void> {
+        const changed = await this.modalService.open<
+            BankAccountSetupDialogComponent,
+            BankAccountSetupDialogData,
+            boolean
+        >(BankAccountSetupDialogComponent, { bankAccount, choice });
+        if (changed) {
+            this.data.reload();
+        }
+    }
+
+    /**
+     * Don't sync, straight away (SYNC-2.2). A linked bank account is unlinked first, so that asks as Unlink does
+     * (SYNC-2.7).
+     */
+    async dontSync(bankAccount: BankAccount): Promise<void> {
+        if (bankAccount.linkedAccount && !(await this.confirmUnlink(bankAccount.linkedAccount.name))) {
+            return;
+        }
+        await this.update(bankAccount, BankAccountAction.Ignore, "Bank account set to Don't sync");
+    }
+
+    /** SYNC-2.7. */
+    async unlink(bankAccount: BankAccount): Promise<void> {
+        if (!bankAccount.linkedAccount || !(await this.confirmUnlink(bankAccount.linkedAccount.name))) {
+            return;
+        }
+        await this.update(bankAccount, BankAccountAction.Unlink, 'Account unlinked');
+    }
+
+    private async confirmUnlink(accountName: string): Promise<boolean> {
+        const confirmed = await this.modalService.confirm({
+            title: 'Unlink Account',
+            message: unlinkMessage(accountName),
+            confirmLabel: 'Unlink'
+        });
+        return confirmed === true;
+    }
+
+    private async update(
+        bankAccount: BankAccount,
+        action: BankAccountAction.Ignore | BankAccountAction.Unlink,
+        done: string
+    ): Promise<void> {
+        this.updatingId.set(bankAccount.id);
+        const result = await this.bankSyncService.updateBankAccount(bankAccount.id, { action });
+        this.updatingId.set(null);
+        if (result) {
+            this.notificationService.success(done);
             this.data.reload();
         }
     }
