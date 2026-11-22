@@ -1,0 +1,98 @@
+<app-page-header title="Rules" [crumbs]="[{ label: 'Settings', link: '/settings' }]" [refreshing]="data.isRefreshing()">
+    <a mat-flat-button class="page-action" routerLink="/settings/rules/new" aria-label="New rule">
+        <mat-icon>add</mat-icon>
+        <span class="page-action-label">New rule</span>
+    </a>
+</app-page-header>
+
+<p class="intro">
+    Rules categorize and rename the transactions they match as they're added, imported or synced. They apply in this
+    order, and the first rule to set a field wins.
+</p>
+
+@if (data.error(); as error) {
+    <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
+} @else if (data.value()) {
+    @if (rows().length === 0) {
+        <p class="empty-state">No rules yet.</p>
+    } @else {
+        <app-list [columns]="columns">
+            <div
+                class="rule-rows"
+                cdkDropList
+                cdkDropListLockAxis="y"
+                [cdkDropListData]="rules()"
+                [cdkDropListDisabled]="busy()"
+                (cdkDropListDropped)="drop($event)"
+            >
+                @for (row of rows(); track row.rule.id; let i = $index; let last = $last) {
+                    <div appListRow class="rule-row" cdkDrag [cdkDragData]="row.rule" cdkDragPreviewContainer="parent">
+                        <span appListCell="handle" class="handle-cell">
+                            <mat-icon class="drag-handle" cdkDragHandle [attr.aria-label]="'Drag ' + row.rule.name"
+                                >drag_indicator</mat-icon
+                            >
+                        </span>
+                        <a appListCell="name" class="rule-name" [routerLink]="['/settings/rules', row.rule.id]">{{
+                            row.rule.name
+                        }}</a>
+                        <span appListCell="conditions" class="rule-text">
+                            @for (condition of row.conditions; track $index) {
+                                <span class="rule-line">{{ condition }}</span>
+                            }
+                        </span>
+                        <span appListCell="actions" class="rule-text">
+                            @for (action of row.actions; track $index) {
+                                <span class="rule-line" [class.skipped]="action.skipped">
+                                    {{ action.text }}
+                                    @if (action.skipped) {
+                                        <span class="skipped-note">Inactive category, skipped</span>
+                                    }
+                                </span>
+                            }
+                        </span>
+                        <span appListCell="menu">
+                            <button
+                                mat-icon-button
+                                type="button"
+                                [matMenuTriggerFor]="ruleMenu"
+                                [matMenuTriggerData]="{ rule: row.rule, index: i, last }"
+                                [disabled]="busy()"
+                                [attr.aria-label]="'Actions for ' + row.rule.name"
+                            >
+                                <mat-icon>more_vert</mat-icon>
+                            </button>
+                        </span>
+                    </div>
+                }
+            </div>
+        </app-list>
+        <mat-menu #ruleMenu="matMenu" xPosition="before">
+            <ng-template matMenuContent let-rule="rule" let-index="index" let-last="last">
+                <a mat-menu-item [routerLink]="['/settings/rules', rule.id]">
+                    <mat-icon>edit</mat-icon>
+                    <span>Edit</span>
+                </a>
+                <button mat-menu-item (click)="applyToExisting(rule)">
+                    <mat-icon>playlist_add_check</mat-icon>
+                    <span>Apply to existing</span>
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item [disabled]="index === 0" (click)="move(index, index - 1)">
+                    <mat-icon>arrow_upward</mat-icon>
+                    <span>Move up</span>
+                </button>
+                <button mat-menu-item [disabled]="last" (click)="move(index, index + 1)">
+                    <mat-icon>arrow_downward</mat-icon>
+                    <span>Move down</span>
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item class="danger-item" (click)="delete(rule)">
+                    <mat-icon>delete</mat-icon>
+                    <span>Delete</span>
+                </button>
+            </ng-template>
+        </mat-menu>
+    }
+} @else {
+    <app-card-skeleton [rows]="4"></app-card-skeleton>
+}

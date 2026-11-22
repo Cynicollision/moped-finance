@@ -16,6 +16,8 @@ import { HasUnsavedChanges } from './../core/unsaved-changes';
 import { FinanceService } from './../common/finance.service';
 import { BankSyncService } from './../bank-sync/bank-sync.service';
 import { unlinkMessage } from './../bank-sync/bank-sync-wording';
+import { RuleUsageNoticeComponent, RuleUsageNoticeData } from './../rules/rule-usage-notice.component';
+import { rulesUsing } from './../rules/rule-wording';
 import {
     LinkBankAccountDialogComponent,
     LinkBankAccountDialogData
@@ -218,6 +220,24 @@ export class ManageAccountComponent implements HasUnsavedChanges {
     async deleteAccount() {
         const account = await this.readyToAct();
         if (!account) {
+            return;
+        }
+
+        // An account a rule's condition names can't be deleted, so the notice names the rules instead (CAT-8.8).
+        const rules = await this.financeService.getRules();
+        if (!rules) {
+            return;
+        }
+        const usedBy = rulesUsing(rules, { accountId: account.id });
+        if (usedBy.length > 0) {
+            const choice = await this.modalService.open<RuleUsageNoticeComponent, RuleUsageNoticeData, 'rules'>(
+                RuleUsageNoticeComponent,
+                { title: 'Delete Account', name: account.name, rules: usedBy },
+                { size: 'small' }
+            );
+            if (choice === 'rules') {
+                this.router.navigate(['/settings/rules']);
+            }
             return;
         }
 

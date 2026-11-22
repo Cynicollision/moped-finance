@@ -1,0 +1,18 @@
+<app-modal-layout title="Apply to Existing Transactions">
+    <p class="intro">{{ data.rule.name }} matches transactions you already have. Applying it will:</p>
+    <ul class="changes">
+        @for (line of lines; track line) {
+            <li>{{ line }}</li>
+        }
+    </ul>
+
+    <div modal-actions>
+        <button mat-button type="button" appModalCancel>Not now</button>
+        <button mat-flat-button type="button" [disabled]="applying()" (click)="apply()">
+            @if (applying()) {
+                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+            }
+            Apply
+        </button>
+    </div>
+</app-modal-layout>

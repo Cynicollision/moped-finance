@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TitleCasePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -20,6 +21,8 @@ import { NotificationService } from './../core/notification.service';
 import { HasUnsavedChanges } from './../core/unsaved-changes';
 import { categoryLabel } from './../common/category-label';
 import { FinanceService } from './../common/finance.service';
+import { RuleUsageNoticeComponent, RuleUsageNoticeData } from './../rules/rule-usage-notice.component';
+import { rulesUsing } from './../rules/rule-wording';
 import {
     CategoryDeleteChoice,
     CategoryDeleteModalComponent,
@@ -65,6 +68,7 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
     private financeService = inject(FinanceService);
     private modalService = inject(ModalService);
     private notificationService = inject(NotificationService);
+    private router = inject(Router);
     private dialogRef = inject<MatDialogRef<CategoryFormModalComponent, boolean>>(MatDialogRef);
     readonly data = inject<CategoryFormModalData>(MAT_DIALOG_DATA);
 
@@ -149,6 +153,25 @@ export class CategoryFormModalComponent implements OnInit, HasUnsavedChanges {
         const category = this.data.category;
         const usage = this.usage.value();
         if (!category || !usage || !this.canDelete()) {
+            return;
+        }
+
+        // A category a rule sets can't be deleted, so the notice names the rules instead of confirming (CAT-8.8).
+        const rules = await this.financeService.getRules();
+        if (!rules) {
+            return;
+        }
+        const usedBy = rulesUsing(rules, { categoryId: category.id });
+        if (usedBy.length > 0) {
+            const choice = await this.modalService.open<RuleUsageNoticeComponent, RuleUsageNoticeData, 'rules'>(
+                RuleUsageNoticeComponent,
+                { title: 'Delete Category', name: categoryLabel(category), rules: usedBy },
+                { size: 'small' }
+            );
+            if (choice === 'rules') {
+                this.dialogRef.close(false);
+                this.router.navigate(['/settings/rules']);
+            }
             return;
         }
 

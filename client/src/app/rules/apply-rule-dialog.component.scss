@@ -1,0 +1,12 @@
+.intro {
+    margin: 0 0 8px;
+}
+
+.changes {
+    margin: 0;
+    padding-left: 1.5rem;
+
+    li + li {
+        margin-top: 4px;
+    }
+}

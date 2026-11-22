@@ -196,6 +196,30 @@ describe('FinanceService', () => {
         expect(await moved).toBe(true);
     });
 
+    it('CAT-8.3 CAT-8.5 should reorder rules with every ID, and count and apply a rule by its ID', async () => {
+        const { finance, http } = setup();
+
+        const reordered = finance.reorderRules(['b', 'a']);
+        const order = http.expectOne(r => r.method === 'PUT' && r.url === '/api/v1/rules/order');
+        expect(order.request.body).toEqual({ ids: ['b', 'a'] });
+        order.flush([]);
+        expect(await reordered).toEqual([]);
+
+        const matches = finance.getRuleMatches('a');
+        http.expectOne(r => r.method === 'GET' && r.url === '/api/v1/rules/a/matches').flush({
+            categorizeCount: 2,
+            renameCount: 0
+        });
+        expect(await matches).toEqual({ categorizeCount: 2, renameCount: 0 });
+
+        const applied = finance.applyRule('a');
+        http.expectOne(r => r.method === 'POST' && r.url === '/api/v1/rules/a/apply').flush({
+            categorizeCount: 2,
+            renameCount: 0
+        });
+        expect(await applied).toEqual({ categorizeCount: 2, renameCount: 0 });
+    });
+
     it('APP-2.9 should throw from a load, while an action reports its failure and resolves to undefined', async () => {
         const { finance, http, notificationService } = setup();
 

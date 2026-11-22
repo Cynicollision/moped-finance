@@ -1,0 +1,239 @@
+<div class="container">
+    <app-page-header [title]="title()" [crumbs]="crumbs">
+        @if (isEditing) {
+            <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="More options" [disabled]="!rule()">
+                <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+                <button mat-menu-item class="danger-item" [disabled]="deleting()" (click)="delete()">
+                    <mat-icon>delete</mat-icon>
+                    <span>Delete</span>
+                </button>
+            </mat-menu>
+        }
+    </app-page-header>
+
+    @if (data.error(); as error) {
+        <app-load-error [message]="error" (retry)="data.reload()"></app-load-error>
+    } @else if (data.value()) {
+        <form id="rule-form" class="rule-form" [formGroup]="form" (ngSubmit)="save()">
+            <mat-form-field appearance="outline" class="name-field">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" [maxlength]="nameMaxLength" />
+                @if (form.controls.name.hasError('required')) {
+                    <mat-error>Name is required</mat-error>
+                }
+            </mat-form-field>
+
+            <section class="part" aria-labelledby="conditions-heading">
+                <h2 id="conditions-heading">When a transaction matches all of these</h2>
+                <div class="items" formArrayName="conditions">
+                    @for (condition of form.controls.conditions.controls; track condition; let i = $index) {
+                        <div class="item" [formGroupName]="i">
+                            <div class="item-header">
+                                <span class="item-label">{{ fieldLabels[condition.controls.field.value] }}</span>
+                                <button
+                                    mat-icon-button
+                                    type="button"
+                                    [disabled]="form.controls.conditions.length === 1"
+                                    (click)="removeCondition(i)"
+                                    [attr.aria-label]="'Remove ' + fieldLabels[condition.controls.field.value]"
+                                >
+                                    <mat-icon>close</mat-icon>
+                                </button>
+                            </div>
+                            @switch (condition.controls.field.value) {
+                                @case (Field.Amount) {
+                                    <!-- A positive amount beside its direction, as in the transaction form (TXN-2.13). -->
+                                    <mat-button-toggle-group
+                                        class="direction-toggle"
+                                        formControlName="direction"
+                                        aria-label="Money out or money in"
+                                        hideSingleSelectionIndicator
+                                    >
+                                        <mat-button-toggle [value]="Direction.Out">Money out</mat-button-toggle>
+                                        <mat-button-toggle [value]="Direction.In">Money in</mat-button-toggle>
+                                    </mat-button-toggle-group>
+                                    <div class="item-fields">
+                                        <mat-form-field appearance="outline" class="operator-field">
+                                            <mat-label>Is</mat-label>
+                                            <mat-select formControlName="operator">
+                                                @for (operator of amountOperators; track operator[0]) {
+                                                    <mat-option [value]="operator[0]">{{ operator[1] }}</mat-option>
+                                                }
+                                            </mat-select>
+                                        </mat-form-field>
+                                        <mat-form-field appearance="outline" class="value-field">
+                                            <mat-label>Amount</mat-label>
+                                            <span matTextPrefix>$&nbsp;</span>
+                                            <input
+                                                type="number"
+                                                matInput
+                                                formControlName="amount"
+                                                min="0"
+                                                step="0.01"
+                                            />
+                                            @if (condition.controls.amount.hasError('required')) {
+                                                <mat-error>Amount is required</mat-error>
+                                            } @else if (condition.controls.amount.hasError('min')) {
+                                                <mat-error>Amount must be more than 0</mat-error>
+                                            }
+                                        </mat-form-field>
+                                    </div>
+                                }
+                                @case (Field.Account) {
+                                    <mat-form-field appearance="outline" class="value-field">
+                                        <mat-label>Is</mat-label>
+                                        <mat-select formControlName="accountId">
+                                            <mat-select-trigger>{{
+                                                accountName(condition.controls.accountId.value)
+                                            }}</mat-select-trigger>
+                                            @for (account of accountOptions(); track account.id) {
+                                                <mat-option [value]="account.id">
+                                                    {{ account.name }}
+                                                    @if (isClosedOrHidden(account)) {
+                                                        <span class="option-detail">{{
+                                                            account.closedOn ? 'Closed' : 'Hidden'
+                                                        }}</span>
+                                                    }
+                                                </mat-option>
+                                            }
+                                        </mat-select>
+                                        @if (condition.controls.accountId.hasError('required')) {
+                                            <mat-error>Account is required</mat-error>
+                                        }
+                                    </mat-form-field>
+                                }
+                                @default {
+                                    <div class="item-fields">
+                                        <mat-form-field appearance="outline" class="operator-field">
+                                            <mat-label>Match</mat-label>
+                                            <mat-select formControlName="operator">
+                                                @for (operator of textOperators; track operator[0]) {
+                                                    <mat-option [value]="operator[0]">{{ operator[1] }}</mat-option>
+                                                }
+                                            </mat-select>
+                                        </mat-form-field>
+                                        <mat-form-field appearance="outline" class="value-field">
+                                            <mat-label>Text</mat-label>
+                                            <input matInput formControlName="text" maxlength="255" />
+                                            @if (
+                                                condition.controls.text.hasError('required') ||
+                                                condition.controls.text.hasError('blank')
+                                            ) {
+                                                <mat-error>Text is required</mat-error>
+                                            }
+                                        </mat-form-field>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+                @if (unusedFields().length) {
+                    <button mat-button type="button" class="add-button" [matMenuTriggerFor]="fieldMenu">
+                        <mat-icon>add</mat-icon>
+                        Add condition
+                    </button>
+                    <mat-menu #fieldMenu="matMenu">
+                        @for (field of unusedFields(); track field) {
+                            <button mat-menu-item type="button" (click)="addCondition(field)">
+                                {{ fieldLabels[field] }}
+                            </button>
+                        }
+                    </mat-menu>
+                }
+            </section>
+
+            <section class="part" aria-labelledby="actions-heading">
+                <h2 id="actions-heading">Then</h2>
+                <div class="items" formArrayName="actions">
+                    @for (action of form.controls.actions.controls; track action; let i = $index) {
+                        <div class="item" [formGroupName]="i">
+                            <div class="item-header">
+                                <span class="item-label">{{ actionLabels[action.controls.type.value] }}</span>
+                                <button
+                                    mat-icon-button
+                                    type="button"
+                                    [disabled]="form.controls.actions.length === 1"
+                                    (click)="removeAction(i)"
+                                    [attr.aria-label]="'Remove ' + actionLabels[action.controls.type.value]"
+                                >
+                                    <mat-icon>close</mat-icon>
+                                </button>
+                            </div>
+                            @if (action.controls.type.value === ActionType.SetCategory) {
+                                <mat-form-field appearance="outline" class="value-field">
+                                    <mat-label>Category</mat-label>
+                                    <input
+                                        type="text"
+                                        matInput
+                                        formControlName="categoryId"
+                                        [matAutocomplete]="autoCategory"
+                                    />
+                                    <mat-autocomplete #autoCategory="matAutocomplete" [displayWith]="displayCategory">
+                                        @for (c of categoryOptions(action.controls.categoryId.value); track c.id) {
+                                            <mat-option [value]="c.id">{{ c.icon }} {{ c.name }}</mat-option>
+                                        }
+                                    </mat-autocomplete>
+                                    @if (isInactiveCategory(action.controls.categoryId.value)) {
+                                        <mat-hint class="inactive-hint"
+                                            >This category is inactive, so the rule skips it. Choose an active
+                                            one.</mat-hint
+                                        >
+                                    }
+                                    @if (action.controls.categoryId.hasError('required')) {
+                                        <mat-error>Category is required</mat-error>
+                                    } @else if (action.controls.categoryId.hasError('unknownCategory')) {
+                                        <mat-error>Choose a category from the list</mat-error>
+                                    }
+                                </mat-form-field>
+                            } @else {
+                                <mat-form-field appearance="outline" class="value-field">
+                                    <mat-label>New merchant name</mat-label>
+                                    <input matInput formControlName="merchant" maxlength="255" />
+                                    @if (
+                                        action.controls.merchant.hasError('required') ||
+                                        action.controls.merchant.hasError('blank')
+                                    ) {
+                                        <mat-error>Name is required</mat-error>
+                                    }
+                                </mat-form-field>
+                                <p class="item-hint">For imported and synced transactions, not ones added by hand.</p>
+                            }
+                        </div>
+                    }
+                </div>
+                @if (unusedActions().length) {
+                    <button mat-button type="button" class="add-button" [matMenuTriggerFor]="actionMenu">
+                        <mat-icon>add</mat-icon>
+                        Add action
+                    </button>
+                    <mat-menu #actionMenu="matMenu">
+                        @for (type of unusedActions(); track type) {
+                            <button mat-menu-item type="button" (click)="addAction(type)">
+                                {{ actionLabels[type] }}
+                            </button>
+                        }
+                    </mat-menu>
+                }
+            </section>
+
+            <div class="form-actions">
+                <button mat-button type="button" (click)="cancel()">Cancel</button>
+                <button mat-flat-button type="submit" [disabled]="saving()">
+                    @if (saving()) {
+                        <mat-progress-spinner
+                            class="button-spinner"
+                            mode="indeterminate"
+                            diameter="18"
+                        ></mat-progress-spinner>
+                    }
+                    Save
+                </button>
+            </div>
+        </form>
+    } @else {
+        <app-card-skeleton [rows]="5"></app-card-skeleton>
+    }
+</div>

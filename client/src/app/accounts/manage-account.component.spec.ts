@@ -7,9 +7,11 @@ import {
     AccountGroup,
     AccountType,
     BankAccountAction,
-    BankAccountLinkStatus
+    BankAccountLinkStatus,
+    RuleActionType,
+    RuleConditionField
 } from '@shared/finance/enum';
-import { Account, BankAccount, BankSyncStatus, Institution } from '@shared/finance/types';
+import { Account, BankAccount, BankSyncStatus, Institution, Rule } from '@shared/finance/types';
 import { BankSyncService } from './../bank-sync/bank-sync.service';
 import { LinkBankAccountDialogComponent } from './../bank-sync/link-bank-account-dialog.component';
 import { AuthService } from './../core/auth.service';
@@ -17,6 +19,7 @@ import { DateProviderService } from './../core/date-provider.service';
 import { ModalService } from './../core/modal/modal.service';
 import { NotificationService } from './../core/notification.service';
 import { FinanceService } from './../common/finance.service';
+import { RuleUsageNoticeComponent } from './../rules/rule-usage-notice.component';
 import { AccountFormComponent } from './account-form.component';
 import { CloseAccountDialogComponent } from './close-account-dialog.component';
 import { ManageAccountComponent } from './manage-account.component';
@@ -95,7 +98,8 @@ describe('ManageAccountComponent', () => {
             fetchInstitutions: vi.fn().mockResolvedValue(institutions),
             saveAccount: vi.fn().mockResolvedValue(accounts[0]),
             reopenAccount: vi.fn().mockResolvedValue(accounts[0]),
-            deleteAccount: vi.fn().mockResolvedValue(true)
+            deleteAccount: vi.fn().mockResolvedValue(true),
+            getRules: vi.fn().mockResolvedValue([] as Rule[])
         };
         const modalService = {
             open: vi.fn().mockResolvedValue(true),
@@ -238,6 +242,33 @@ describe('ManageAccountComponent', () => {
         expect(financeService.deleteAccount).toHaveBeenCalledWith('acc-1');
         expect(notificationService.success).toHaveBeenCalledWith('Account deleted');
         expect(navigate).toHaveBeenCalledWith(['/dashboard']);
+    });
+
+    it('CAT-8.8 should name the rules whose condition is the account instead of deleting it', async () => {
+        const { click, modalService, financeService, navigate } = await render(account());
+        financeService.getRules.mockResolvedValue([
+            {
+                id: 'rule-1',
+                createdAt: new Date(2026, 0, 1),
+                updatedAt: new Date(2026, 0, 1),
+                name: 'Checking fees',
+                position: 0,
+                conditions: [{ field: RuleConditionField.Account, accountId: 'acc-1' }],
+                actions: [{ type: RuleActionType.RenameMerchant, merchant: 'First Bank' }]
+            }
+        ] as Rule[]);
+        modalService.open.mockResolvedValue('rules');
+
+        await click('Delete account');
+
+        expect(modalService.open).toHaveBeenCalledWith(
+            RuleUsageNoticeComponent,
+            { title: 'Delete Account', name: 'Checking', rules: [expect.objectContaining({ name: 'Checking fees' })] },
+            { size: 'small' }
+        );
+        expect(modalService.confirm).not.toHaveBeenCalled();
+        expect(financeService.deleteAccount).not.toHaveBeenCalled();
+        expect(navigate).toHaveBeenCalledWith(['/settings/rules']);
     });
 
     it('ACCT-1.6 should not point a closed account to closing', async () => {

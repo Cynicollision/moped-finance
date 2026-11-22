@@ -1,10 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { CategoryNecessity, CategoryType } from '@shared/finance/enum';
-import { Category, CategoryGroup, CategoryUsage } from '@shared/finance/types';
+import {
+    CategoryNecessity,
+    CategoryType,
+    RuleActionType,
+    RuleConditionField,
+    RuleOperator
+} from '@shared/finance/enum';
+import { Category, CategoryGroup, CategoryUsage, Rule } from '@shared/finance/types';
 import { ModalService } from './../core/modal/modal.service';
 import { NotificationService } from './../core/notification.service';
 import { FinanceService } from './../common/finance.service';
+import { RuleUsageNoticeComponent } from './../rules/rule-usage-notice.component';
 import { CategoryDeleteModalComponent } from './category-delete-modal.component';
 import { CategoryFormModalComponent, CategoryFormModalData } from './category-form-modal.component';
 
@@ -25,7 +33,8 @@ describe('CategoryFormModalComponent', () => {
             createCategory: vi.fn().mockResolvedValue({ id: 'new' }),
             saveCategory: vi.fn().mockResolvedValue({ id: 'cat' }),
             fetchCategoryUsage: vi.fn().mockResolvedValue(usage),
-            deleteCategory: vi.fn().mockResolvedValue(true)
+            deleteCategory: vi.fn().mockResolvedValue(true),
+            getRules: vi.fn().mockResolvedValue([] as Rule[])
         };
         const dialogRef = { close: vi.fn() };
         const notificationService = { success: vi.fn() };
@@ -41,7 +50,8 @@ describe('CategoryFormModalComponent', () => {
                 { provide: MatDialogRef, useValue: dialogRef },
                 { provide: FinanceService, useValue: financeService },
                 { provide: NotificationService, useValue: notificationService },
-                { provide: ModalService, useValue: modalService }
+                { provide: ModalService, useValue: modalService },
+                provideRouter([])
             ]
         });
 
@@ -230,6 +240,47 @@ describe('CategoryFormModalComponent', () => {
 
             expect(financeService.deleteCategory).not.toHaveBeenCalled();
             expect(dialogRef.close).not.toHaveBeenCalled();
+        });
+
+        it('CAT-8.8 should name the rules that set the category instead of deleting it', async () => {
+            const { element, fixture, financeService, modalService, dialogRef } = await render(
+                { category: rent, groups, categories: [rent, mortgage] },
+                { transactionCount: 3, budgetStreamCount: 0 }
+            );
+            const rule = (id: string, name: string, categoryId: string): Rule => ({
+                id,
+                createdAt: new Date(2026, 0, 1),
+                updatedAt: new Date(2026, 0, 1),
+                name,
+                position: 0,
+                conditions: [{ field: RuleConditionField.Merchant, operator: RuleOperator.Contains, text: name }],
+                actions: [{ type: RuleActionType.SetCategory, categoryId }]
+            });
+            financeService.getRules.mockResolvedValue([
+                rule('r1', 'Landlord', 'rent'),
+                rule('r2', 'Mortgage', 'mortgage'),
+                rule('r3', 'Rent', 'rent')
+            ]);
+            modalService.open.mockResolvedValue('rules');
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            button(element, 'Delete')!.click();
+            await fixture.whenStable();
+
+            expect(modalService.open).toHaveBeenCalledWith(
+                RuleUsageNoticeComponent,
+                {
+                    title: 'Delete Category',
+                    name: '🏠 Rent',
+                    rules: [expect.objectContaining({ name: 'Landlord' }), expect.objectContaining({ name: 'Rent' })]
+                },
+                { size: 'small' }
+            );
+            expect(modalService.confirm).not.toHaveBeenCalled();
+            expect(financeService.deleteCategory).not.toHaveBeenCalled();
+            // Rules closes this dialog and opens the Rules screen.
+            expect(dialogRef.close).toHaveBeenCalledWith(false);
+            expect(navigate).toHaveBeenCalledWith(['/settings/rules']);
         });
 
         it('CAT-4.4 should stay open when the server refuses the delete', async () => {

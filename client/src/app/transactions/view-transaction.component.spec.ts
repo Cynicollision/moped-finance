@@ -135,6 +135,29 @@ describe('ViewTransactionComponent', () => {
         expect(element.querySelector('app-transaction-form')).not.toBeNull();
     });
 
+    it('CAT-8.9 should offer Create rule from the merchant, or the original statement without one', async () => {
+        const menuLink = async (fixture: Awaited<ReturnType<typeof render>>['fixture']) => {
+            (fixture.nativeElement as HTMLElement)
+                .querySelector<HTMLButtonElement>('button[aria-label="More options"]')!
+                .click();
+            await fixture.whenStable();
+            return Array.from(document.querySelectorAll<HTMLAnchorElement>('a.mat-mdc-menu-item')).find(a =>
+                a.textContent!.includes('Create rule')
+            );
+        };
+
+        const { fixture } = await render();
+        expect((await menuLink(fixture))!.getAttribute('href')).toBe('/settings/rules/new?merchant=Corner%20Shop');
+        TestBed.resetTestingModule();
+
+        const fromStatement = await render(
+            vi.fn().mockResolvedValue({ ...transaction, merchant: ' ', originalStatement: 'POS 1234 KIOSK' })
+        );
+        expect((await menuLink(fromStatement.fixture))!.getAttribute('href')).toBe(
+            '/settings/rules/new?statement=POS%201234%20KIOSK'
+        );
+    });
+
     it('TXN-2.3 should open Edit Transaction from the menu', async () => {
         const { fixture, navigate } = await render();
 
@@ -218,7 +241,7 @@ describe('ViewTransactionComponent', () => {
             modalService.open = vi.fn().mockResolvedValue([transaction, { ...transaction, id: 't2' }]);
 
             await openMenu(fixture);
-            expect(menuItems()).toEqual(['Edit', 'Split', 'Delete']);
+            expect(menuItems()).toEqual(['Edit', 'Split', 'Create rule', 'Delete']);
             document.querySelectorAll<HTMLButtonElement>('.mat-mdc-menu-item')[1].click();
             await fixture.whenStable();
 
@@ -233,7 +256,7 @@ describe('ViewTransactionComponent', () => {
             expect(financeService.fetchTransactionSplit).toHaveBeenCalledWith('t1');
             expect(element.textContent).toContain('Split into 3 parts');
             await openMenu(fixture);
-            expect(menuItems()).toEqual(['Edit', 'Edit split', 'Unsplit', 'Delete']);
+            expect(menuItems()).toEqual(['Edit', 'Edit split', 'Unsplit', 'Create rule', 'Delete']);
         });
 
         it('TXN-4.5 should open the first part when the split is edited without this one', async () => {
