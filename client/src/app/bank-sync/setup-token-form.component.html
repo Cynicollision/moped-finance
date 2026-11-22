@@ -1,0 +1,18 @@
+<form class="setup-token-form" [formGroup]="form" (ngSubmit)="connect()">
+    <mat-form-field appearance="outline" class="token-field">
+        <mat-label>Setup token</mat-label>
+        <input matInput formControlName="setupToken" autocomplete="off" spellcheck="false" />
+        <mat-hint>From SimpleFIN Bridge. It works once.</mat-hint>
+    </mat-form-field>
+    <div class="form-actions">
+        @if (cancellable()) {
+            <button mat-button type="button" (click)="cancelled.emit()" [disabled]="connecting()">Cancel</button>
+        }
+        <button mat-flat-button type="submit" [disabled]="form.invalid || connecting()">
+            @if (connecting()) {
+                <mat-progress-spinner class="button-spinner" mode="indeterminate" diameter="18"></mat-progress-spinner>
+            }
+            {{ actionLabel() }}
+        </button>
+    </div>
+</form>

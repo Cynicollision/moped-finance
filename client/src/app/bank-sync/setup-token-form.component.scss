@@ -1,0 +1,35 @@
+@use 'breakpoints' as bp;
+
+.setup-token-form {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem 1rem;
+}
+
+.token-field {
+    flex: 1;
+    max-width: 32rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.5rem;
+    // Lines the buttons up with the field's outline rather than its hint.
+    padding-top: 0.5rem;
+}
+
+@include bp.content-below(bp.$medium) {
+    .setup-token-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .token-field {
+        max-width: none;
+    }
+
+    .form-actions {
+        justify-content: flex-end;
+        padding-top: 0;
+    }
+}

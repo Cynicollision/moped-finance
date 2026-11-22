@@ -51,6 +51,12 @@ export class SettingsComponent {
             icon: 'category'
         },
         {
+            label: 'Bank Sync',
+            description: 'Keep accounts up to date from SimpleFIN Bridge',
+            route: '/settings/bank-sync',
+            icon: 'sync'
+        },
+        {
             label: 'Change Password',
             description: 'The password you sign in with',
             route: '/settings/change-password',

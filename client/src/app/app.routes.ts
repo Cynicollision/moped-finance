@@ -6,6 +6,7 @@ import { AccountDetailsComponent } from './accounts/account-details.component';
 import { AddAccountComponent } from './accounts/add-account.component';
 import { BalanceImportComponent } from './accounts/balance-import.component';
 import { ManageAccountComponent } from './accounts/manage-account.component';
+import { BankSyncComponent } from './bank-sync/bank-sync.component';
 import { BudgetComponent } from './budget/budget.component';
 import { SpendingComponent } from './spending/spending.component';
 import { InstitutionsComponent } from './institutions/institutions.component';
@@ -103,6 +104,7 @@ export const routes: Routes = [
                 component: ImportCategoriesComponent,
                 title: 'Import Categories'
             },
+            { path: 'settings/bank-sync', component: BankSyncComponent, title: 'Bank Sync' },
             {
                 path: 'settings/change-password',
                 component: ChangePasswordComponent,
