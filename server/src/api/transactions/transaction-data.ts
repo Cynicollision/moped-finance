@@ -151,7 +151,7 @@ function escapeLikePattern(value: string): string {
 
 const bulkInsertChunkSize = 1000;
 
-function mapTransactionToRow(transaction: Transaction): typeof transactionSchema.$inferInsert {
+export function mapTransactionToRow(transaction: Transaction): typeof transactionSchema.$inferInsert {
     return {
         id: transaction.id,
         accountId: transaction.accountId,

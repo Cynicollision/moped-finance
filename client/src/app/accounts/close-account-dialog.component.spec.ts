@@ -18,6 +18,7 @@ describe('CloseAccountDialogComponent', () => {
         type: AccountType.Savings,
         group: AccountGroup.Cash,
         category: AccountCategory.Asset,
+        isManual: true,
         balance: 500,
         balanceDate: '2026-05-10'
     };

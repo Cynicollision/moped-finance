@@ -18,8 +18,6 @@ export const accountSchema = financeSchema.table(
         // The group and Asset/Liability follow from the type (AccountTypeUtil), so they aren't stored.
         type: varchar('account_type', { length: 50 }).notNull(),
         isHidden: boolean('is_hidden').notNull().default(false),
-        // Manual until linked to a bank connection (ACCT-4.3), which doesn't exist yet, so every account is manual.
-        isManual: boolean('is_manual').notNull().default(true),
         // The day it was closed (ACCT-6.1), or null while it's open. Set and cleared only by closing and reopening.
         closedOn: date('closed_on', { mode: 'string' })
     },

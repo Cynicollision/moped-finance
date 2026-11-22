@@ -153,8 +153,7 @@ export class SampleData {
                 institutionId,
                 name: row.values['Name'],
                 type: row.values['Type'] as AccountType,
-                isHidden: this.valueOf(accountsFile, row, CsvValue.boolean('IsHidden', row.values['IsHidden'])),
-                isManual: true
+                isHidden: this.valueOf(accountsFile, row, CsvValue.boolean('IsHidden', row.values['IsHidden']))
             });
             accounts.push(account);
             accountIds.set(account.name.toLowerCase(), account.id);

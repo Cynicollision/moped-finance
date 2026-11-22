@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { IAppLogger } from '@server/logging';
-import { OperationDefinition, OperationHandler } from '@server/routing';
+import { idParamsSchema, OperationDefinition, OperationHandler } from '@server/routing';
 import { BankSyncController } from './bank-sync-controller';
-import { connectSchema } from './simplefin-schema';
+import { bankAccountRequestSchema, connectSchema, linkDefaultsQuerySchema } from './simplefin-schema';
 
 const domain = 'BankSync';
 
@@ -33,6 +33,24 @@ export function createBankSyncRouter(logger: IAppLogger, controller: BankSyncCon
     router.get('/accounts', (req, res) => {
         const op: OperationDefinition = { domain, operation: 'retrieveAccounts' };
         handler.execute(req, res, op, () => controller.retrieveAccounts());
+    });
+
+    // PUT /accounts/:id - Link a bank account, create an account for it, ignore it or unlink it
+    router.put('/accounts/:id', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'updateBankAccount' };
+        const schemas = { params: idParamsSchema, body: bankAccountRequestSchema };
+        handler.execute(req, res, op, schemas, (_context, { params, body }) =>
+            controller.updateBankAccount(params.id, body)
+        );
+    });
+
+    // GET /accounts/:id/link-defaults?accountId= - What Link to an account suggests
+    router.get('/accounts/:id/link-defaults', (req, res) => {
+        const op: OperationDefinition = { domain, operation: 'getLinkDefaults' };
+        const schemas = { params: idParamsSchema, query: linkDefaultsQuerySchema };
+        handler.execute(req, res, op, schemas, (_context, { params, query }) =>
+            controller.getLinkDefaults(params.id, query.accountId)
+        );
     });
 
     // POST /sync - Sync now

@@ -51,9 +51,8 @@ export class AccountController {
         input: CreateAccountRequest
     ): Promise<OperationResult<Account>> {
         const { balanceEntry, ...fields } = input;
-        // Accounts are manual until they're linked to a bank connection (ACCT-1.3, ACCT-4.3).
         // A missing institution fails the insert's foreign key, which OperationHandler reports as a 400.
-        const account = EntityFactory.createAccount({ ...fields, isManual: true });
+        const account = EntityFactory.createAccount(fields);
 
         const created = await this.accountData.insert(account, balanceEntry);
         return Result.successCreated(created);

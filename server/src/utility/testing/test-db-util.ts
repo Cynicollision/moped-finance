@@ -59,8 +59,25 @@ export class TestDatabaseUtil {
     /** Bank sync's tables (the `simplefin` schema). Clearing finance data empties `simplefin.accounts` too, by its link. */
     public static async clearBankSyncData(pglite: PGlite): Promise<void> {
         await pglite.exec(
-            'TRUNCATE simplefin.access, simplefin.connections, simplefin.accounts, simplefin.sync_runs CASCADE;'
+            'TRUNCATE simplefin.access, simplefin.connections, simplefin.accounts, simplefin.transactions, simplefin.sync_runs CASCADE;'
         );
+    }
+
+    /**
+     * Links the account to a made-up bank account, which makes it connected (ACCT-4.3), for tests of what a connected
+     * account refuses. Returns the bank account's ID.
+     */
+    public static async linkToBankAccount(pglite: PGlite, accountId: string): Promise<string> {
+        await pglite.query(
+            "INSERT INTO simplefin.connections (id, simplefin_id, name) VALUES ('test-connection', 'CON-TEST', 'Test Bank') ON CONFLICT DO NOTHING"
+        );
+        const id = `test-bank-account-${accountId}`;
+        await pglite.query(
+            `INSERT INTO simplefin.accounts (id, connection_id, simplefin_id, name, currency, balance, balance_date, linked_account_id, sync_from)
+             VALUES ($1, 'test-connection', $1, 'Test Checking', 'USD', 0, now(), $2, '2026-01-01')`,
+            [id, accountId]
+        );
+        return id;
     }
 
     public static async clearCoreData(pglite: PGlite): Promise<void> {

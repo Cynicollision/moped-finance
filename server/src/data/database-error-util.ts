@@ -16,7 +16,9 @@ const uniqueViolationMessages: Record<string, string> = {
     accounts_connection_id_simplefin_id_unique: 'That bank account is already stored.',
     // SYNC-2.5
     accounts_linked_account_id_unique: 'This account is already linked to a bank account.',
-    sync_runs_one_running_idx: 'A sync is already running.'
+    sync_runs_one_running_idx: 'A sync is already running.',
+    transactions_simplefin_account_id_simplefin_id_unique: 'That bank transaction is already stored.',
+    transactions_transaction_id_unique: 'That transaction is already matched to a bank transaction.'
 };
 
 // A foreign key fails in one of two directions, with the same constraint name:
@@ -55,6 +57,12 @@ const foreignKeyViolationMessages: Record<string, ForeignKeyMessages> = {
     },
     accounts_linked_account_id_accounts_id_fk: {
         missingReference: 'Account not found.'
+    },
+    transactions_simplefin_account_id_accounts_id_fk: {
+        missingReference: 'Bank account not found.'
+    },
+    transactions_transaction_id_transactions_id_fk: {
+        missingReference: 'Transaction not found.'
     },
     budget_streams_category_id_categories_id_fk: {
         missingReference: 'Category not found.',

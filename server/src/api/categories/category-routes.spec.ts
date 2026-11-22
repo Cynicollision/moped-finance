@@ -530,7 +530,6 @@ describe('Category Routes', () => {
                     name: 'Checking',
                     type: AccountType.Checking,
                     isHidden: false,
-                    isManual: true,
                     balance: 0
                 })
             );

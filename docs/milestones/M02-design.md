@@ -28,7 +28,7 @@ Everything bank sync stores lives in a third Postgres schema, `simplefin` (a `pg
 
 - Disconnecting (SYNC-1.4) empties the `simplefin` schema and leaves the user's own data as it was. Runs keep their times without their payloads, so SYNC-3.4's limit still counts requests made before connecting again.
 - The tables are named after SimpleFIN's own model (connections, accounts, transactions), because that's what they hold. A second provider would have a different model and get its own schema; nothing in `finance` would change.
-- `finance.accounts.is_manual` is dropped. Connected (ACCT-4.3) means a `simplefin.accounts` row's `linked_account_id` is that account, which the account queries read with a join.
+- `finance.accounts.is_manual` is dropped. Connected (ACCT-4.3) means a `simplefin.accounts` row's `linked_account_id` is that account, which the account queries read with an `EXISTS` subquery: the one place `finance` code reads `simplefin`. Closing an account clears its link, and deleting one also deletes the `simplefin.transactions` rows of its transactions (SYNC-2.8).
 
 IDs come from `EntityId`, as everywhere else; SimpleFIN's own IDs are unique columns beside them.
 
@@ -67,7 +67,8 @@ All in `server/src/api/bank-sync/`:
 | `simplefin-schema.ts`, `simplefin-data.ts` | The tables above and their queries. |
 | `sync-quota.ts` | Counts `sync_runs.requested_at` in the last 24 hours against the cap of 20 (SYNC-3.4) and says when the next slot frees. |
 | `sync-runner.ts` | One sync, the pipeline below. Used by the routes and the scheduler. |
-| `sync-transform.ts` | Pure functions: a SimpleFIN account's transactions to new and changed Moped transactions, the balance entry, and the backfilled history (SYNC-4.6). Most of the unit tests go here. |
+| `sync-transform.ts` | `SyncTransform`, pure functions: a SimpleFIN account's posted transactions within a window to `SyncedTransaction`s (SYNC-4.2), the earliest date for SYNC-2.4's default, and the backfilled history (SYNC-4.6). |
+| `bank-account-link-data.ts` | Link, create, ignore and unlink, each in one database transaction, and `addSyncedTransactions`, which adds the transactions `simplefin.transactions` doesn't know for this account and records them; T6's sync uses it too. |
 | `sync-scheduler.ts` | The timer (SYNC-3.1, 3.2). |
 | `bank-sync-controller.ts`, `bank-sync-routes.ts` | The API. |
 
@@ -83,12 +84,12 @@ The client's tests stub `fetch` with fixtures recorded from the demo token (v2 a
 4. **Request.** Insert the run with `requested_at`, then `fetchAccounts` with `start-date` 44 days before now (SYNC-3.6; the demo token warns from 45 days) and `pending=1`, so the stored payloads show how each bank's pending transactions post (SYNC-6; pending ones are still never added, SYNC-4.7). Always the full window, rather than since the last sync: it's one request either way, it picks up corrections the bank makes later (SYNC-4.4), and a newly linked account can take its history from the latest payload (SYNC-2.10). A `SimplefinError` of kind `refused` (403) sets `paused_reason = 'refused'`, and `payment-required` (402) sets `'payment'`, which a manual sync (**Try again**) clears when Bridge accepts the access URL again, since paying doesn't need a new setup token (decided 2026-11-21); any other failure fails the run and waits for the next scheduled one.
 5. **Store** the parsed payload on the run.
 6. **Apply**, in one database transaction (SYNC-4.8):
-   - Upsert `simplefin.connections` and `simplefin.accounts` from the payload, updating names, balances and `last_seen_at`. New accounts arrive Not set up.
+   - Upsert `simplefin.connections` and `simplefin.accounts` from the payload, updating names and balances and clearing `missing_since` (SYNC-2.9). New accounts arrive Not set up.
    - For each linked account that's open and in USD: transform its transactions (skip pending ones and any with `posted` 0; date from `transacted_at`, else `posted`; skip dates before `sync_from` or after `DateTimeUtil.latestRecordDate()`), then look each up in `simplefin.transactions`. A new one goes through the rules and learning ([below](#rules-and-learning)), is inserted in `finance.transactions` with `adjusts_balance` false, and gets its mapping row. A known one updates its mapping row; when the bank changed its date, amount or description and its transaction still exists and isn't split, those fields are updated on the transaction too (SYNC-4.4). A known one whose transaction was deleted is left alone.
    - Record the balance as a set entry on `balance-date`'s day (ACCT-4.2), through the existing balance-history code so ACCT-5.7's shifting still applies.
 7. **Finish** the run with its status, counts and Bridge's messages, and release the lock.
 
-**Linking** (SYNC-2.3, 2.4) runs step 6's per-account part against the latest stored payload for that one SimpleFIN account, in the same database transaction as the link and as turning off `adjusts_balance` on the account's existing transactions (ACCT-5.5), then backfills balances when the account had none (SYNC-4.6). It never calls Bridge.
+**Linking** (SYNC-2.3, 2.4) runs against the latest stored payload for that one bank account and never calls the SimpleFIN server, in one database transaction: set the link (only if it isn't linked, so two requests can't both win), turn off `adjusts_balance` on the account's existing transactions (ACCT-5.5), add the payload's transactions from `sync_from` (`addSyncedTransactions`), and record the bank's balance as a set entry, or for an account without balances backfill its history (SYNC-4.6). A transaction `simplefin.transactions` maps to another account (the bank account was linked there before) is added again and its row moves to the new one; one mapped to nothing (deleted) isn't. Corrections to known transactions (SYNC-4.4) are T6's. **Create new account** does the same in the transaction that creates the account, and the institution when no institution has the connection's name ignoring case, with `sync_from` the earliest date the bank returned.
 
 **Connecting** (SYNC-1.1) first checks the key, that no sync is running and the quota, so a setup token is never used up for a sync that can't run. Then it claims the token, seals and stores the access URL (a first connection gets a random `schedule_minute`; connecting again keeps it, unpauses, and keeps the bank accounts and their links), and runs a sync with trigger `connect` so the bank accounts can be listed. A failed first sync still leaves the connection stored; the status's last run says what happened.
 
@@ -108,11 +109,12 @@ Under `/api/v1/bank-sync`, behind the usual auth; read-only tokens may only `GET
 | `POST /connect` | `{ setupToken }`: claim, store, first sync. Also how Connect again works (SYNC-1.3), keeping links. |
 | `DELETE /` | Disconnect (SYNC-1.4). 409 while a sync runs, 404 when not connected. |
 | `GET /accounts` | SimpleFIN accounts with their connection, link and last-seen date. |
-| `PUT /accounts/:id` | `{ action: 'link', accountId, syncFrom }`, `{ action: 'create', name, type, institutionId \| institutionName, isHidden }`, `{ action: 'ignore' }` or `{ action: 'unlink' }`. |
+| `PUT /accounts/:id` | `{ action: 'link', accountId, syncFrom? }`, `{ action: 'create', name, type, institutionId \| institutionName, isHidden? }`, `{ action: 'ignore' }` or `{ action: 'unlink' }` (`BankAccountRequest`). Returns the bank account and how many transactions it added. 409 while a sync runs, for link and create. |
+| `GET /accounts/:id/link-defaults?accountId=` | SYNC-2.4's default **Sync transactions from** for that account. |
 | `POST /sync` | Sync now, and Try again while paused for payment; returns the run. 429 over the limit, 409 while one runs (`OperationStatus.Conflict`), 400 when not connected, without a key, or paused for another reason. |
 | `GET /runs` | The last 10 runs (SYNC-3.7). |
 
-Account Details gets the linked SimpleFIN account's ID, name and last sync with the account, for Manage Account's Bank sync section (ACCT-7.3), which links and unlinks through the same `PUT`.
+`Account` says only whether it's manual (`isManual`, derived from the link). Manage Account's Bank sync section (ACCT-7.3) and Account Details' last sync (ACCT-2.6) read the linked bank account from `GET /accounts`, which gives each one's link, `syncFrom` and `lastSyncedAt` (when the latest successful sync that returned it finished), and link and unlink through the same `PUT`.
 
 ## Security
 

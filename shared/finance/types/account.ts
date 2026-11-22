@@ -7,8 +7,6 @@ export interface AccountFields {
     name: string;
     type: AccountType;
     isHidden?: boolean;
-    /** Set by the server: accounts are manual until they're linked to a bank (ACCT-4.3). Ignored in requests. */
-    isManual?: boolean;
 }
 
 /** A balance to record for a manual account, as a set entry replacing any on that date (ACCT-2.2). Signed as stored. */
@@ -28,6 +26,8 @@ export type Account = Entity &
         group: AccountGroup;
         /** Derived from the type (ACCT-1.2); not stored, and ignored in requests. */
         category: AccountCategory;
+        /** False while it's linked to a bank account, which makes it connected (ACCT-4.3); not stored. */
+        isManual: boolean;
         /** The current balance (ACCT-2.1): the latest entry on or before the as-of date, or 0 if none. */
         balance?: number;
         /** The date of that entry ("Balance as of", ACCT-2.6), or null if there's none. */

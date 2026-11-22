@@ -132,8 +132,7 @@ describe('Account Routes', () => {
                     name: 'Checking',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
             const acc2 = await accountData.insert(
@@ -142,8 +141,7 @@ describe('Account Routes', () => {
                     name: 'Savings',
                     type: AccountType.Savings,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
 
@@ -203,8 +201,7 @@ describe('Account Routes', () => {
                     name: 'Checking',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
             const loan = await accountData.insert(
@@ -395,8 +392,7 @@ describe('Account Routes', () => {
                     name: 'Checking',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
 
@@ -447,8 +443,7 @@ describe('Account Routes', () => {
                 name: 'New Account',
                 institutionId: testInstitutionId,
                 type: AccountType.Checking,
-                isHidden: false,
-                isManual: true
+                isHidden: false
             };
 
             const response = await request(app).post('/accounts').send(payload);
@@ -573,8 +568,7 @@ describe('Account Routes', () => {
                     name: 'Old Checking',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
 
@@ -597,8 +591,7 @@ describe('Account Routes', () => {
                 name: 'Updated Checking',
                 institutionId: testInstitutionId,
                 type: AccountType.Checking,
-                isHidden: false,
-                isManual: true
+                isHidden: false
             };
 
             const response = await request(app).put('/accounts/missing-acc').send(payload);
@@ -734,14 +727,8 @@ describe('Account Routes', () => {
         });
 
         it("ACCT-4.4 should refuse a connected account's balance", async () => {
-            const account = await accountData.insert(
-                EntityFactory.createAccount({
-                    institutionId: testInstitutionId,
-                    name: 'Synced',
-                    type: AccountType.Checking,
-                    isManual: false
-                })
-            );
+            const account = await insertAccount('Synced');
+            await TestDatabaseUtil.linkToBankAccount(pglite, account.id);
 
             const response = await request(app)
                 .put(`/accounts/${account.id}`)
@@ -920,8 +907,7 @@ describe('Account Routes', () => {
                     name: 'Checking',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
             await importBalances(acc1.id!, 'Date,Balance\n2026-06-01,1');
@@ -965,8 +951,7 @@ describe('Account Routes', () => {
                     name: 'Checking Account',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
             await balanceHistoryData.insertBulk(
@@ -990,8 +975,7 @@ describe('Account Routes', () => {
                     name: 'Checking Account',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
             await balanceHistoryData.insertBulk(
@@ -1146,8 +1130,7 @@ describe('Account Routes', () => {
                     name: 'Checking Account',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
 
@@ -1243,8 +1226,7 @@ describe('Account Routes', () => {
                     name: 'Checking',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
 
@@ -1329,8 +1311,7 @@ describe('Account Routes', () => {
                     name: 'Checking',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
 
@@ -1354,8 +1335,7 @@ describe('Account Routes', () => {
                     name: 'Checking',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
 
@@ -1410,8 +1390,7 @@ describe('Account Routes', () => {
                     name: 'Checking',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
 
@@ -1436,8 +1415,7 @@ describe('Account Routes', () => {
                     name: 'Checking',
                     type: AccountType.Checking,
                     balance: 1000.0,
-                    isHidden: false,
-                    isManual: false
+                    isHidden: false
                 })
             );
 

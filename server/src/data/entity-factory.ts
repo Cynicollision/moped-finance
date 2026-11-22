@@ -43,10 +43,11 @@ export class EntityFactory {
         } as unknown as T;
     }
 
-    /** Adds the group and Asset/Liability that the type decides (ACCT-1.2). */
-    public static createAccount(account: Omit<NewEntity<Account>, 'group' | 'category'>): Account {
+    /** Adds the group and Asset/Liability that the type decides (ACCT-1.2). Manual until it's linked (ACCT-4.3). */
+    public static createAccount(account: Omit<NewEntity<Account>, 'group' | 'category' | 'isManual'>): Account {
         return EntityFactory.createEntity<Account>(FinanceEntityIdPrefix.Account, {
             ...account,
+            isManual: true,
             group: AccountTypeUtil.groupOf(account.type),
             category: AccountTypeUtil.categoryOf(account.type)
         });

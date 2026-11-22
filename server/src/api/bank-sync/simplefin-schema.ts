@@ -14,12 +14,13 @@ import {
     varchar
 } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
-import { BankSyncPauseReason, SyncRunStatus, SyncTrigger } from '@shared/finance/enum';
+import { BankAccountAction, BankSyncPauseReason, SyncRunStatus, SyncTrigger } from '@shared/finance/enum';
 import { SchemaUtil, simplefinSchema } from '@server/data';
-import { accountSchema } from './../accounts/account-schema';
+import { accountSchema, createAccountSchema } from './../accounts/account-schema';
+import { transactionSchema } from './../transactions/transaction-schema';
 import { SimplefinAccountSet, SimplefinMessage } from './simplefin-response';
 
-// The connection to SimpleFIN Bridge: at most one row (SYNC-1.1).
+// The connection to the SimpleFIN server: at most one row (SYNC-1.1).
 export const simplefinAccessSchema = simplefinSchema.table(
     'access',
     {
@@ -82,6 +83,30 @@ export const simplefinAccountSchema = simplefinSchema.table(
     ]
 );
 
+// One bank transaction sync has seen (SYNC-4.1), as the bank last described it, and the transaction it added. A null
+// transaction_id means the user deleted that transaction, so it's never added again (TXN-2.12).
+export const simplefinTransactionSchema = simplefinSchema.table(
+    'transactions',
+    {
+        id: varchar('id', { length: 50 }).primaryKey(),
+        simplefinAccountId: varchar('simplefin_account_id', { length: 50 })
+            .notNull()
+            .references(() => simplefinAccountSchema.id, { onDelete: 'cascade' }),
+        // Unique within its bank account only.
+        simplefinId: varchar('simplefin_id', { length: 255 }).notNull(),
+        date: date('date', { mode: 'string' }).notNull(),
+        amount: numeric('amount', { precision: 12, scale: 2, mode: 'number' }).notNull(),
+        description: text('description').notNull(),
+        transactionId: varchar('transaction_id', { length: 50 }).references(() => transactionSchema.id, {
+            onDelete: 'set null'
+        })
+    },
+    table => [
+        unique('transactions_simplefin_account_id_simplefin_id_unique').on(table.simplefinAccountId, table.simplefinId),
+        unique('transactions_transaction_id_unique').on(table.transactionId)
+    ]
+);
+
 // One sync (SYNC-3.7), and the requests to Bridge that SYNC-3.4's limit counts.
 export const syncRunSchema = simplefinSchema.table(
     'sync_runs',
@@ -121,3 +146,34 @@ export const connectSchema = z.object({
 });
 
 export type ConnectInput = z.output<typeof connectSchema>;
+
+const id = z.string().min(1).max(50);
+
+// SYNC-2: PUT /accounts/:id
+export const bankAccountRequestSchema = z.discriminatedUnion('action', [
+    z.object({
+        action: z.literal(BankAccountAction.Link),
+        accountId: id,
+        syncFrom: SchemaUtil.recordDate().optional()
+    }),
+    createAccountSchema
+        .pick({ name: true, type: true, isHidden: true })
+        .extend({
+            action: z.literal(BankAccountAction.Create),
+            institutionId: id.optional(),
+            institutionName: z.string().trim().min(1).max(100).optional()
+        })
+        .refine(input => (input.institutionId === undefined) !== (input.institutionName === undefined), {
+            message: 'Give an institution, or a name for a new one',
+            path: ['institutionId']
+        }),
+    z.object({ action: z.literal(BankAccountAction.Ignore) }),
+    z.object({ action: z.literal(BankAccountAction.Unlink) })
+]);
+
+// SYNC-2.4: GET /accounts/:id/link-defaults
+export const linkDefaultsQuerySchema = z.object({
+    accountId: id
+});
+
+export type BankAccountInput = z.output<typeof bankAccountRequestSchema>;

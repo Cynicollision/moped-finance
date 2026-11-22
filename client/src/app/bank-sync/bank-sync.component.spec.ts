@@ -49,6 +49,8 @@ describe('BankSyncComponent', () => {
             linkStatus: BankAccountLinkStatus.NotSetUp,
             linkedAccount: null,
             missingSince: null,
+            lastSyncedAt: null,
+            syncFrom: null,
             ...changes
         };
     }
