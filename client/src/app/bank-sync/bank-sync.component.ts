@@ -265,7 +265,10 @@ export class BankSyncComponent {
 
     private describeAdded(run: SyncRun): string {
         const added = run.transactionsAdded;
-        return `Sync finished: ${added} ${added === 1 ? 'transaction' : 'transactions'} added`;
+        const updated = run.transactionsUpdated;
+        const done = `Sync finished: ${added} ${added === 1 ? 'transaction' : 'transactions'} added`;
+        // The bank's corrections to transactions added before (SYNC-4.4).
+        return updated > 0 ? `${done}, ${updated} updated` : done;
     }
 
     private async load(): Promise<BankSyncView> {

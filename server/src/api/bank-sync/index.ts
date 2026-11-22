@@ -1,4 +1,4 @@
-export { addSyncedTransactions, BankAccountLinkData, type IBankAccountLinkData } from './bank-account-link-data';
+export { applyPayload, BankAccountLinkData, type IBankAccountLinkData } from './bank-account-link-data';
 export { BankSyncController, BankSyncMessages } from './bank-sync-controller';
 export { createBankSyncRouter } from './bank-sync-routes';
 export { type ISimplefinClient, SimplefinClient, SimplefinError, type SimplefinErrorKind } from './simplefin-client';

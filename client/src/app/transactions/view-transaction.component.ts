@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { map } from 'rxjs';
+import { BankSyncWording } from '@shared/finance/contracts';
 import { Transaction } from '@shared/finance/types';
 import { PageHeaderComponent } from './../core/layout/page-header.component';
 import { CardSkeletonComponent } from './../core/loading/card-skeleton.component';
@@ -116,10 +117,14 @@ export class ViewTransactionComponent {
 
         // Deleting a part deletes its whole split (TXN-4.7).
         const others = Math.max(this.splitParts().length - 1, 0);
-        const message =
+        const question =
             others > 0
-                ? `Delete this transaction and its ${others === 1 ? 'other part' : `${others} other parts`}? This can't be undone.`
-                : "Delete this transaction? This can't be undone.";
+                ? `Delete this transaction and its ${others === 1 ? 'other part' : `${others} other parts`}?`
+                : 'Delete this transaction?';
+        // A synced one could be hidden instead, since sync remembers a deleted one and never adds it again (TXN-2.12).
+        const message = this.transaction()?.isSynced
+            ? `${question} ${BankSyncWording.syncedDelete}`
+            : `${question} This can't be undone.`;
         const confirmDelete = await this.modalService.confirm({
             title: 'Delete Transaction',
             message,

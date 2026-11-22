@@ -21,6 +21,7 @@ describe('SplitTransactionModalComponent', () => {
         isHidden: false,
         adjustsBalance: false,
         splitId: '',
+        isSynced: false,
         createdAt: new Date(2026, 0, 1),
         updatedAt: new Date(2026, 0, 1)
     };

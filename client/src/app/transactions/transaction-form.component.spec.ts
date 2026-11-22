@@ -20,6 +20,7 @@ describe('TransactionFormComponent', () => {
         isHidden: false,
         adjustsBalance: false,
         splitId: '',
+        isSynced: false,
         createdAt: new Date(2026, 0, 1),
         updatedAt: new Date(2026, 0, 1)
     };
@@ -350,11 +351,52 @@ describe('TransactionFormComponent', () => {
                 true,
                 true
             ]);
-            expect(element.querySelector('.split-note')!.textContent).toContain('Change its amount with Edit split.');
+            expect(element.querySelector('.form-note')!.textContent).toContain('Change its amount with Edit split.');
 
             controls.merchant.setValue('Renamed');
             fixture.componentInstance.onSave();
             expect(saved[0]).toMatchObject({ amount: -70, categoryId: 'food', merchant: 'Renamed' });
+        });
+    });
+
+    describe('synced transactions (TXN-2.12)', () => {
+        const synced: Transaction = { ...transaction, isSynced: true };
+
+        it("TXN-2.12 should make a synced transaction's bank fields read-only, saying why", async () => {
+            const { fixture, element, saved } = await render('edit', synced);
+            const controls = fixture.componentInstance.transactionForm.controls;
+
+            expect(
+                [
+                    controls.date,
+                    controls.amount,
+                    controls.direction,
+                    controls.accountId,
+                    controls.originalStatement
+                ].map(c => c.disabled)
+            ).toEqual([true, true, true, true, true]);
+            expect(
+                [controls.merchant, controls.category, controls.notes, controls.isHidden].map(c => c.enabled)
+            ).toEqual([true, true, true, true]);
+            expect(element.querySelector('.form-note')!.textContent).toContain(
+                'Added by bank sync: the date, amount, account and original statement come from your bank.'
+            );
+
+            controls.merchant.setValue('Renamed');
+            fixture.componentInstance.onSave();
+            expect(saved[0]).toMatchObject({
+                date: synced.date,
+                amount: synced.amount,
+                accountId: synced.accountId,
+                merchant: 'Renamed'
+            });
+        });
+
+        it('TXN-2.12 should leave a manual transaction editable', async () => {
+            const { fixture, element } = await render('edit', transaction);
+
+            expect(fixture.componentInstance.transactionForm.controls.date.enabled).toBe(true);
+            expect(element.querySelector('.form-note')).toBeNull();
         });
     });
 });

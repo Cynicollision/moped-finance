@@ -65,12 +65,13 @@ export class EntityFactory {
 
     /** Not split unless given a split ID (TXN-4). */
     public static createTransaction(
-        transaction: Omit<NewEntity<Transaction>, 'adjustsBalance' | 'splitId'> &
-            Partial<Pick<Transaction, 'adjustsBalance' | 'splitId'>>
+        transaction: Omit<NewEntity<Transaction>, 'adjustsBalance' | 'splitId' | 'isSynced'> &
+            Partial<Pick<Transaction, 'adjustsBalance' | 'splitId' | 'isSynced'>>
     ): Transaction {
         return EntityFactory.createEntity<Transaction>(FinanceEntityIdPrefix.Transaction, {
             adjustsBalance: false,
             splitId: '',
+            isSynced: false,
             ...transaction
         });
     }

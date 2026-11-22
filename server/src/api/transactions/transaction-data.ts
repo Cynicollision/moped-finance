@@ -13,10 +13,12 @@ import {
     lte,
     min,
     ne,
+    or,
     sql,
     SQL
 } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { alias, QueryBuilder } from 'drizzle-orm/pg-core';
 import { SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { Transaction, TransactionSplitPart } from '@shared/finance/types';
@@ -27,6 +29,7 @@ import { DbTransaction, EntityFactory, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
 import { applyAdjustment, undoAdjustment } from './../accounts/balance-history-data';
+import { simplefinAccountSchema, simplefinTransactionSchema } from './../bank-sync/simplefin-schema';
 import { categoryGroupSchema } from './../categories/category-groups/category-group-schema';
 import { categorySchema } from './../categories/category-schema';
 import { TransactionMatchFields } from './transaction-duplicates';
@@ -105,7 +108,9 @@ export interface ITransactionData {
     delete(id: string): Promise<boolean>;
 }
 
-function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transaction {
+type TransactionRow = typeof transactionSchema.$inferSelect;
+
+function mapRowToTransaction(row: TransactionRow, isSynced = false): Transaction {
     return {
         id: row.id,
         createdAt: row.createdAt,
@@ -119,9 +124,33 @@ function mapRowToTransaction(row: typeof transactionSchema.$inferSelect): Transa
         notes: row.notes ?? '',
         isHidden: row.isHidden,
         adjustsBalance: row.adjustsBalance,
-        splitId: row.splitId ?? ''
+        splitId: row.splitId ?? '',
+        isSynced
     };
 }
+
+// Aliased, since Drizzle names columns by table alone and both schemas have transactions and accounts tables. The
+// synced transaction is the one bank sync recorded, which for a split is its first part (TXN-4.8).
+const syncMapping = alias(simplefinTransactionSchema, 'sync_mapping');
+const syncBankAccount = alias(simplefinAccountSchema, 'sync_bank_account');
+const syncedTransaction = alias(transactionSchema, 'synced_transaction');
+
+/**
+ * Added by bank sync while its account is connected (TXN-2.12): `simplefin.transactions` maps the transaction, or a part
+ * of its split, to a bank account linked to its account. Besides an account's connected flag, the one place the
+ * transactions read bank sync's tables. Needs `transactions` in the query.
+ */
+const isSyncedField = sql<boolean>`EXISTS (${new QueryBuilder()
+    .select({ id: syncMapping.id })
+    .from(syncMapping)
+    .innerJoin(syncBankAccount, eq(syncBankAccount.id, syncMapping.simplefinAccountId))
+    .innerJoin(syncedTransaction, eq(syncedTransaction.id, syncMapping.transactionId))
+    .where(
+        and(
+            eq(syncBankAccount.linkedAccountId, transactionSchema.accountId),
+            or(eq(syncedTransaction.id, transactionSchema.id), eq(syncedTransaction.splitId, transactionSchema.splitId))
+        )
+    )})`;
 
 // Spending leaves out hidden transactions and those in hidden accounts (CASH-1.2). Needs the account joined.
 const countedBySpending = and(eq(transactionSchema.isHidden, false), eq(accountSchema.isHidden, false));
@@ -202,6 +231,16 @@ async function moveAdjustment(tx: DbTransaction, before: Transaction | null, aft
     if (apply) {
         await applyAdjustment(tx, apply.accountId, apply.date, apply.amount);
     }
+}
+
+/** The transactions matching `where`, with whether each is synced, in split order. */
+async function selectTransactions(db: NodePgDatabase | DbTransaction, where: SQL): Promise<Transaction[]> {
+    const rows = await db
+        .select({ transaction: transactionSchema, isSynced: isSyncedField })
+        .from(transactionSchema)
+        .where(where)
+        .orderBy(asc(transactionSchema.splitPosition), asc(transactionSchema.id));
+    return rows.map(row => mapRowToTransaction(row.transaction, row.isSynced));
 }
 
 export class TransactionData implements ITransactionData {
@@ -311,7 +350,8 @@ export class TransactionData implements ITransactionData {
         // Left join: a transaction whose category was deleted is uncategorized, not gone.
         const query = this.db
             .select({
-                transaction: transactionSchema
+                transaction: transactionSchema,
+                isSynced: isSyncedField
             })
             .from(transactionSchema)
             .innerJoin(accountSchema, eq(accountSchema.id, transactionSchema.accountId))
@@ -334,7 +374,7 @@ export class TransactionData implements ITransactionData {
         }
 
         const rows = await query;
-        return rows.map(row => mapRowToTransaction(row.transaction));
+        return rows.map(row => mapRowToTransaction(row.transaction, row.isSynced));
     }
 
     public async retrieveMerchants(): Promise<string[]> {
@@ -393,22 +433,12 @@ export class TransactionData implements ITransactionData {
     }
 
     public async retrieveSingle(id: string): Promise<Transaction | null> {
-        const rows = await this.db.select().from(transactionSchema).where(eq(transactionSchema.id, id));
-
-        if (rows.length === 0) {
-            return null;
-        }
-
-        return mapRowToTransaction(rows[0]);
+        const [transaction] = await selectTransactions(this.db, eq(transactionSchema.id, id));
+        return transaction ?? null;
     }
 
     public async retrieveSplit(splitId: string): Promise<Transaction[]> {
-        const rows = await this.db
-            .select()
-            .from(transactionSchema)
-            .where(eq(transactionSchema.splitId, splitId))
-            .orderBy(asc(transactionSchema.splitPosition), asc(transactionSchema.id));
-        return rows.map(mapRowToTransaction);
+        return selectTransactions(this.db, eq(transactionSchema.splitId, splitId));
     }
 
     public async retrieveCategoryFlows(startDate: CalendarDate, endDate: CalendarDate): Promise<CategoryFlow[]> {
@@ -535,7 +565,8 @@ export class TransactionData implements ITransactionData {
                     await moveAdjustment(tx, mapRowToTransaction(other), mapRowToTransaction(changed));
                 }
             }
-            return updated;
+            const [saved] = await selectTransactions(tx, eq(transactionSchema.id, updated.id!));
+            return saved;
         });
     }
 
@@ -585,12 +616,7 @@ export class TransactionData implements ITransactionData {
                 }
             }
 
-            const rows = await tx
-                .select()
-                .from(transactionSchema)
-                .where(eq(transactionSchema.splitId, splitId))
-                .orderBy(asc(transactionSchema.splitPosition));
-            return rows.map(mapRowToTransaction);
+            return selectTransactions(tx, eq(transactionSchema.splitId, splitId));
         });
     }
 
@@ -599,7 +625,7 @@ export class TransactionData implements ITransactionData {
         return this.db.transaction(async tx => {
             const [transaction] = await tx.select().from(transactionSchema).where(eq(transactionSchema.id, id));
             if (!transaction?.splitId) {
-                return transaction ? mapRowToTransaction(transaction) : null;
+                return transaction ? ((await selectTransactions(tx, eq(transactionSchema.id, id)))[0] ?? null) : null;
             }
 
             const parts = await tx
@@ -628,8 +654,9 @@ export class TransactionData implements ITransactionData {
                     updatedAt: DateTimeUtil.now()
                 })
                 .where(eq(transactionSchema.id, first.id))
-                .returning();
-            return mapRowToTransaction(merged);
+                .returning({ id: transactionSchema.id });
+            const [unsplit] = await selectTransactions(tx, eq(transactionSchema.id, merged.id));
+            return unsplit;
         });
     }
 
