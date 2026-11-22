@@ -2,6 +2,7 @@ import { CalendarPeriod } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { CalendarDateUtil } from '@shared/core/util';
 import {
+    BankSyncWording,
     SpendingAverage,
     SpendingAverageMonths,
     SpendingTotal,
@@ -86,6 +87,10 @@ export class TransactionController {
         }
 
         const transaction = { ...current, ...changes };
+        // The bank's fields stay the bank's while the account is connected (TXN-2.12).
+        if (current.isSynced && bankFieldsChanged(current, transaction)) {
+            return Result.userError(BankSyncWording.syncedFields);
+        }
         // A part's amount changes with the others, so they keep adding up (TXN-4.7).
         if (current.splitId && transaction.amount !== current.amount) {
             return Result.userError("Change a split transaction's amounts with Edit split.");
@@ -360,4 +365,14 @@ export class TransactionController {
             resultMessage: `Imported ${transactions.length} transactions.`
         });
     }
+}
+
+/** Whether an edit changes the fields a synced transaction takes from its bank (TXN-2.12). */
+function bankFieldsChanged(current: Transaction, changed: Transaction): boolean {
+    return (
+        changed.date !== current.date ||
+        changed.amount !== current.amount ||
+        changed.accountId !== current.accountId ||
+        changed.originalStatement !== current.originalStatement
+    );
 }

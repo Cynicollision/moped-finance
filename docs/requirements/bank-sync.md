@@ -26,7 +26,7 @@ Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), whe
 | SYNC-2.6 | Only bank accounts in US dollars can be linked. Others are listed with "Only accounts in US dollars can be synced." and no link actions. | Implemented |
 | SYNC-2.7 | **Unlink**, here or on Manage Account (ACCT-4.5), shall after confirming ("Unlink *account*? It becomes manual and keeps its balance history and transactions.", **Cancel** / **Unlink**) make the account manual, keeping its balance history and transactions, set the bank account back to **Not set up**, and say "Account unlinked". Linking the same bank account again never adds a transaction twice (SYNC-4.1). | Implemented |
 | SYNC-2.8 | Closing a connected account (ACCT-6.1) shall unlink it, and deleting one (ACCT-1.6) shall too. Either way its bank account goes back to **Not set up**. Reopening an account doesn't link it again. Deleting an account also forgets the bank transactions sync added to it, so linking its bank account to another account adds them there. | Implemented |
-| SYNC-2.9 | A linked bank account that the latest sync didn't return shall be shown as "Missing from SimpleFIN since *date*"; its account keeps its link, but nothing syncs into it until the SimpleFIN server returns the bank account again. One marked **Don't sync** is kept the same way; one not set up yet is dropped from the list, and comes back as new if Bridge returns it again. | Partial |
+| SYNC-2.9 | A linked bank account that the latest sync didn't return shall be shown as "Missing from SimpleFIN since *date*"; its account keeps its link, but nothing syncs into it until the SimpleFIN server returns the bank account again. One marked **Don't sync** is kept the same way; one not set up yet is dropped from the list, and comes back as new if Bridge returns it again. | Implemented |
 | SYNC-2.10 | Linking, creating and unlinking shall work from the bank accounts the latest sync returned, without asking Bridge again, so they never count against Bridge's limits (SYNC-3.4). | Implemented |
 
 ## SYNC-3 Sync runs on a schedule and on demand, within Bridge's limits
@@ -35,7 +35,7 @@ Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), whe
 |---|---|---|
 | SYNC-3.1 | While connected, the server shall sync automatically 4 times a day, 6 hours apart, at a minute past the hour chosen at random when the user connects (for example 5:17, 11:17, 17:17 and 23:17). There's no setting for how often. **Bank Sync** shall offer **Automatic sync** (on by default) to pause it. | Planned |
 | SYNC-3.2 | The schedule shall survive restarts: a sync that came due while the server was down runs within a few minutes of it starting, and a restart never adds an extra sync. | Planned |
-| SYNC-3.3 | **Bank Sync** shall offer **Sync now**. It's disabled while a sync is running, and while the limit in SYNC-3.4 is reached, with "Available again *day and time*" (such as "Nov 22, 5:50 PM", since it can be tomorrow). When it finishes, the screen says what the sync added. | Implemented |
+| SYNC-3.3 | **Bank Sync** shall offer **Sync now**. It's disabled while a sync is running, and while the limit in SYNC-3.4 is reached, with "Available again *day and time*" (such as "Nov 22, 5:50 PM", since it can be tomorrow). When it finishes, the screen says what the sync added, and how many transactions the bank's corrections updated (SYNC-4.4), if any ("Sync finished: 3 transactions added, 1 updated"). | Implemented |
 | SYNC-3.4 | The server shall send Bridge at most 20 account requests in any 24 hours, counting every request, whatever started it, and refuse a sync that would go over ("Bank sync has reached its limit for today. Available again at *time*."). A scheduled sync that would go over is skipped. Bridge allows 24 a day and disables access that goes beyond it, so the margin is deliberate. | Implemented |
 | SYNC-3.5 | Only one sync shall run at a time; one started while another is running is refused ("A sync is already running."). | Implemented |
 | SYNC-3.6 | Each sync shall be one request for every bank account, asking for the last 44 days of transactions, the longest window Bridge accepts without a warning (decided 2026-11-21: Bridge allows 90 days, but warns about more than 45 and says it may cap them). | Implemented |
@@ -45,14 +45,14 @@ Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), whe
 
 | ID | Requirement | Status |
 |---|---|---|
-| SYNC-4.1 | For each connected account, a sync shall add the bank's transactions it hasn't added before, recognized by the bank's transaction ID, dated on or after the account's **Sync transactions from** date (SYNC-2.4). Repeated syncs never duplicate a transaction, and one the user deleted is never added again (TXN-2.12). | Partial |
-| SYNC-4.2 | A synced transaction's **Date** shall be the day the bank says it happened, or failing that the day it posted, in the server's time zone (APP-5.6). **Amount** is the bank's (money in positive, APP-6.3), **Original Statement** the bank's description as given, and **Merchant** the bank's payee if it gives one, or else its description (trimmed, at most 255 characters), or "Unknown" when it gives neither, before rules (CAT-8.4). It doesn't adjust the balance (ACCT-5.5). | Partial |
+| SYNC-4.1 | For each connected account, a sync shall add the bank's transactions it hasn't added before, recognized by the bank's transaction ID, dated on or after the account's **Sync transactions from** date (SYNC-2.4). Repeated syncs never duplicate a transaction, and one the user deleted is never added again (TXN-2.12). | Implemented |
+| SYNC-4.2 | A synced transaction's **Date** shall be the day the bank says it happened, or failing that the day it posted, in the server's time zone (APP-5.6). **Amount** is the bank's (money in positive, APP-6.3), **Original Statement** the bank's description as given, and **Merchant** the bank's payee if it gives one, or else its description (trimmed, at most 255 characters), or "Unknown" when it gives neither, before rules (CAT-8.4). It doesn't adjust the balance (ACCT-5.5). | Implemented |
 | SYNC-4.3 | New synced transactions shall be categorized by rules and learning (CAT-8.4, CAT-9) in the same sync; the rest are Uncategorized (CAT-5.5). | Planned |
-| SYNC-4.4 | When the bank changes a transaction sync added before, sync shall update its date, amount and original statement, unless it's split (TXN-4.8). It never changes the merchant, category, notes or Hide Transaction, and never deletes a transaction the bank stops returning. | Planned |
-| SYNC-4.5 | Each sync shall record each connected account's balance as in ACCT-4.2. | Planned |
+| SYNC-4.4 | When the bank changes the date, amount or description of a transaction sync added before, from what it said last time, sync shall update the transaction's date, amount and original statement, unless it's split (TXN-4.8). It never changes the merchant, category, notes or Hide Transaction, and never deletes a transaction the bank stops returning. | Implemented |
+| SYNC-4.5 | Each sync shall record each connected account's balance as in ACCT-4.2. | Implemented |
 | SYNC-4.6 | When an account with no balance entries is linked or created (SYNC-2.3, SYNC-2.4), its balance history shall be filled in backward from the bank's balance through the transactions just added: a set entry (ACCT-5.1) at the end of each day with transactions, and one on the day before the earliest, so its chart covers the days the bank returned. | Implemented |
-| SYNC-4.7 | Pending transactions shall not be added; a transaction is added once it has posted. | Planned |
-| SYNC-4.8 | Everything one sync changes shall be saved in one database transaction, or nothing. | Planned |
+| SYNC-4.7 | Pending transactions shall not be added; a transaction is added once it has posted. | Implemented |
+| SYNC-4.8 | Everything one sync changes shall be saved in one database transaction, or nothing. | Implemented |
 
 ## SYNC-5 The user hears about sync problems
 
@@ -71,7 +71,7 @@ Explored in M02 (decided 2026-11-21): syncs collect the bank's pending transacti
 
 ## Known gaps
 
-- **Syncs don't write into linked accounts yet (SYNC-4.1, 4.2)**: only linking and creating add transactions, from the latest sync. Each sync adding and updating them comes with T6.
+- **Synced transactions arrive Uncategorized (SYNC-4.3)**: rules and learning come with M02's T8a and T9.
 
 ## Notes
 

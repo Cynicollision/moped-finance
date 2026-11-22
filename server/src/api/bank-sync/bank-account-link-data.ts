@@ -207,10 +207,34 @@ async function linkInTransaction(
     if (!payload) {
         return 0;
     }
+    const { added } = await applyPayload(tx, bankAccountId, accountId, syncFrom, payload);
+    return added.length;
+}
 
+/** What applying a bank account's transactions and balance did. */
+export interface PayloadResult {
+    /** The transactions it added. */
+    added: SyncedTransaction[];
+    /** How many transactions it changed with the bank's corrections (SYNC-4.4). */
+    updated: number;
+}
+
+/**
+ * Brings a linked account up to date with its bank account as a sync returned it, in the caller's database
+ * transaction: adds the posted transactions from `syncFrom` it hasn't seen (SYNC-4.1), applies the bank's corrections
+ * to those it has (SYNC-4.4), and records the bank's balance (ACCT-4.2), or for an account without balances fills in
+ * its history (SYNC-4.6). Linking and every sync do this.
+ */
+export async function applyPayload(
+    tx: DbTransaction,
+    bankAccountId: string,
+    accountId: string,
+    syncFrom: CalendarDate | null,
+    payload: SimplefinAccount
+): Promise<PayloadResult> {
     const latestDate = DateTimeUtil.latestRecordDate();
     const synced = SyncTransform.transactions(payload, { from: syncFrom, to: latestDate });
-    const added = await addSyncedTransactions(tx, bankAccountId, accountId, synced);
+    const result = await writeSyncedTransactions(tx, bankAccountId, accountId, synced);
 
     const balanceDate = minDate(SyncTransform.toCalendarDate(payload.balanceDate), latestDate);
     const [entry] = await tx
@@ -220,49 +244,42 @@ async function linkInTransaction(
         .limit(1);
     const entries = entry
         ? [{ date: balanceDate, balance: payload.balance }]
-        : SyncTransform.backfill(payload.balance, balanceDate, added);
+        : SyncTransform.backfill(payload.balance, balanceDate, result.added);
     for (const balanceEntry of entries) {
         await writeSetEntry(tx, accountId, balanceEntry);
     }
 
-    return added.length;
+    return result;
+}
+
+/** What `simplefin.transactions` knows about a bank transaction, and the transaction it became. */
+interface SeenTransaction {
+    /** Null once the user deleted it (TXN-2.12). */
+    transactionId: string | null;
+    accountId: string | null;
+    isSplit: boolean;
+    /** The bank's date, amount and description as last seen. */
+    date: CalendarDate;
+    amount: number;
+    description: string;
 }
 
 /**
- * Adds the bank transactions sync hasn't added to this account before (SYNC-4.1), Uncategorized and not adjusting
- * the balance (SYNC-4.2), and records them in `simplefin.transactions`. One the user deleted (a row without a
- * transaction) is never added again (TXN-2.12). One added to another account, before the bank account was linked
- * here, is added here too, and its row moves to the new transaction. Returns the ones it added.
+ * Writes a bank account's transactions into the account, recording each in `simplefin.transactions`:
+ *
+ * - One it hasn't seen is added, not adjusting the balance (SYNC-4.2), with the category `categorize` gives it. So is
+ *   one added to another account before the bank account was linked here, whose row moves to the new transaction.
+ * - One the user deleted (a row without a transaction) is never added again (TXN-2.12).
+ * - One already in this account whose date, amount or description the bank changed since it was last seen gets the
+ *   change, unless it's split (SYNC-4.4). Its merchant, category, notes and Hide Transaction stay the user's.
  */
-export async function addSyncedTransactions(
+export async function writeSyncedTransactions(
     tx: DbTransaction,
     bankAccountId: string,
     accountId: string,
     synced: SyncedTransaction[]
-): Promise<SyncedTransaction[]> {
-    // Both tables are called transactions, which Drizzle's join types can't tell apart without an alias.
-    const added = alias(transactionSchema, 'added_transaction');
-    const seen = new Map<string, { transactionId: string | null; accountId: string | null }>();
-    for (let i = 0; i < synced.length; i += chunkSize) {
-        const ids = synced.slice(i, i + chunkSize).map(t => t.simplefinId);
-        const rows = await tx
-            .select({
-                simplefinId: simplefinTransactionSchema.simplefinId,
-                transactionId: simplefinTransactionSchema.transactionId,
-                accountId: added.accountId
-            })
-            .from(simplefinTransactionSchema)
-            .leftJoin(added, eq(simplefinTransactionSchema.transactionId, added.id))
-            .where(
-                and(
-                    eq(simplefinTransactionSchema.simplefinAccountId, bankAccountId),
-                    inArray(simplefinTransactionSchema.simplefinId, ids)
-                )
-            );
-        for (const row of rows) {
-            seen.set(row.simplefinId, { transactionId: row.transactionId, accountId: row.accountId });
-        }
-    }
+): Promise<PayloadResult> {
+    const seen = await retrieveSeen(tx, bankAccountId, synced);
 
     const toAdd = synced.filter(t => {
         const known = seen.get(t.simplefinId);
@@ -273,7 +290,7 @@ export async function addSyncedTransactions(
         synced: t,
         transaction: EntityFactory.createTransaction({
             accountId,
-            categoryId: '',
+            categoryId: categorize(t),
             date: t.date,
             amount: t.amount,
             merchant: t.merchant,
@@ -310,7 +327,100 @@ export async function addSyncedTransactions(
             });
     }
 
-    return toAdd;
+    // Banks correct few transactions, so these are written one at a time.
+    const adding = new Set(toAdd.map(t => t.simplefinId));
+    let updated = 0;
+    for (const t of synced) {
+        const known = seen.get(t.simplefinId);
+        if (!known || adding.has(t.simplefinId) || !bankChanged(known, t)) {
+            continue;
+        }
+        await tx
+            .update(simplefinTransactionSchema)
+            .set({ date: t.date, amount: t.amount, description: t.originalStatement })
+            .where(
+                and(
+                    eq(simplefinTransactionSchema.simplefinAccountId, bankAccountId),
+                    eq(simplefinTransactionSchema.simplefinId, t.simplefinId)
+                )
+            );
+        // Deleted, or split into parts that are the user's (TXN-4.8): only the row remembers the bank's change.
+        if (known.transactionId === null || known.isSplit) {
+            continue;
+        }
+        await tx
+            .update(transactionSchema)
+            .set({
+                date: t.date,
+                amount: t.amount.toString(),
+                originalStatement: t.originalStatement || null,
+                updatedAt: DateTimeUtil.now()
+            })
+            .where(eq(transactionSchema.id, known.transactionId));
+        updated++;
+    }
+
+    return { added: toAdd, updated };
+}
+
+/** What `simplefin.transactions` knows about these bank transactions, by the bank's ID. */
+async function retrieveSeen(
+    tx: DbTransaction,
+    bankAccountId: string,
+    synced: SyncedTransaction[]
+): Promise<Map<string, SeenTransaction>> {
+    // Both tables are called transactions, which Drizzle's join types can't tell apart without an alias.
+    const added = alias(transactionSchema, 'added_transaction');
+    const seen = new Map<string, SeenTransaction>();
+    for (let i = 0; i < synced.length; i += chunkSize) {
+        const ids = synced.slice(i, i + chunkSize).map(t => t.simplefinId);
+        const rows = await tx
+            .select({
+                simplefinId: simplefinTransactionSchema.simplefinId,
+                transactionId: simplefinTransactionSchema.transactionId,
+                date: simplefinTransactionSchema.date,
+                amount: simplefinTransactionSchema.amount,
+                description: simplefinTransactionSchema.description,
+                accountId: added.accountId,
+                splitId: added.splitId
+            })
+            .from(simplefinTransactionSchema)
+            .leftJoin(added, eq(simplefinTransactionSchema.transactionId, added.id))
+            .where(
+                and(
+                    eq(simplefinTransactionSchema.simplefinAccountId, bankAccountId),
+                    inArray(simplefinTransactionSchema.simplefinId, ids)
+                )
+            );
+        for (const row of rows) {
+            seen.set(row.simplefinId, {
+                transactionId: row.transactionId,
+                accountId: row.accountId,
+                isSplit: row.splitId !== null,
+                date: row.date,
+                amount: Number(row.amount),
+                description: row.description
+            });
+        }
+    }
+    return seen;
+}
+
+/** Whether the bank changed what it says about a transaction since it was last seen (SYNC-4.4). */
+function bankChanged(known: SeenTransaction, t: SyncedTransaction): boolean {
+    return (
+        known.date !== t.date ||
+        Math.round(known.amount * 100) !== Math.round(t.amount * 100) ||
+        known.description !== t.originalStatement
+    );
+}
+
+/**
+ * The category a new synced transaction gets: none, so it's Uncategorized (CAT-5.5), until rules and learning (CAT-8.4,
+ * CAT-9) set it here (SYNC-4.3).
+ */
+function categorize(_transaction: SyncedTransaction): string {
+    return '';
 }
 
 function minDate(a: CalendarDate, b: CalendarDate): CalendarDate {

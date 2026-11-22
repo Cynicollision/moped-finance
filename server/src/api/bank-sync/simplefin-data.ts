@@ -4,16 +4,17 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { alias } from 'drizzle-orm/pg-core';
 import { BankAccountLinkStatus, BankSyncPauseReason, SyncRunStatus, SyncTrigger } from '@shared/finance/enum';
 import { BankAccount, SyncRun } from '@shared/finance/types';
-import { EntityId, IDatabaseClient } from '@server/data';
+import { DbTransaction, EntityId, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './../accounts/account-schema';
+import { applyPayload } from './bank-account-link-data';
 import {
     simplefinAccessSchema,
     simplefinAccountSchema,
     simplefinConnectionSchema,
     syncRunSchema
 } from './simplefin-schema';
-import { SimplefinAccountSet, SimplefinMessage } from './simplefin-response';
+import { SimplefinAccount, SimplefinAccountSet, SimplefinMessage } from './simplefin-response';
 
 /** The stored connection to the SimpleFIN server. `accessUrl` is still sealed. */
 export interface SimplefinAccess {
@@ -29,6 +30,9 @@ export interface SyncRunResult {
     failure?: string;
     messages?: SimplefinMessage[];
     response?: SimplefinAccountSet;
+    accountsUpdated?: number;
+    transactionsAdded?: number;
+    transactionsUpdated?: number;
 }
 
 export interface ISimplefinData {
@@ -63,11 +67,13 @@ export interface ISimplefinData {
     retrieveLastFinishedRun(): Promise<SyncRun | null>;
 
     /**
-     * Brings the connections and bank accounts up to date with what a sync returned, together or not at all. New bank
+     * Saves what a sync returned and finishes its run as succeeded, all in one database transaction or nothing
+     * (SYNC-4.8): brings the connections and bank accounts up to date, writes each linked account's transactions and
+     * balance (SYNC-4.1 to 4.5), unpauses syncing if `unpause`, and stores the payload and counts on the run. New bank
      * accounts arrive Not set up. One that isn't returned is marked missing (SYNC-2.9) if it's linked or ignored, and
      * otherwise removed, with any connection left without bank accounts.
      */
-    applyAccountSet(accountSet: SimplefinAccountSet): Promise<void>;
+    completeRun(runId: string, accountSet: SimplefinAccountSet, unpause: boolean): Promise<SyncRun>;
     /** Every bank account, with its connection and link (SYNC-2.1). */
     retrieveBankAccounts(): Promise<BankAccount[]>;
     retrieveBankAccount(id: string): Promise<BankAccount | null>;
@@ -112,6 +118,25 @@ function mapRowToRun(row: RunRow): SyncRun {
 const linkableCurrency = 'USD';
 
 const fromUnixSeconds = (seconds: number) => new Date(seconds * 1000);
+
+async function finishRunIn(db: NodePgDatabase | DbTransaction, runId: string, result: SyncRunResult) {
+    const rows = await db
+        .update(syncRunSchema)
+        .set({
+            status: result.status,
+            finishedAt: DateTimeUtil.now(),
+            failure: result.failure ?? null,
+            messages: result.messages ?? [],
+            response: result.response ?? null,
+            accountsUpdated: result.accountsUpdated ?? 0,
+            transactionsAdded: result.transactionsAdded ?? 0,
+            transactionsUpdated: result.transactionsUpdated ?? 0
+        })
+        .where(eq(syncRunSchema.id, runId))
+        .returning(runColumns);
+
+    return mapRowToRun(rows[0]);
+}
 
 export class SimplefinData implements ISimplefinData {
     private readonly db: NodePgDatabase;
@@ -188,19 +213,7 @@ export class SimplefinData implements ISimplefinData {
     }
 
     public async finishRun(runId: string, result: SyncRunResult): Promise<SyncRun> {
-        const rows = await this.db
-            .update(syncRunSchema)
-            .set({
-                status: result.status,
-                finishedAt: DateTimeUtil.now(),
-                failure: result.failure ?? null,
-                messages: result.messages ?? [],
-                response: result.response ?? null
-            })
-            .where(eq(syncRunSchema.id, runId))
-            .returning(runColumns);
-
-        return mapRowToRun(rows[0]);
+        return finishRunIn(this.db, runId, result);
     }
 
     public async deleteRun(runId: string): Promise<void> {
@@ -261,10 +274,10 @@ export class SimplefinData implements ISimplefinData {
         return rows.length > 0 ? mapRowToRun(rows[0]) : null;
     }
 
-    public async applyAccountSet(accountSet: SimplefinAccountSet): Promise<void> {
+    public async completeRun(runId: string, accountSet: SimplefinAccountSet, unpause: boolean): Promise<SyncRun> {
         const now = DateTimeUtil.now();
 
-        await this.db.transaction(async tx => {
+        return await this.db.transaction(async tx => {
             // Bridge's connection ID to ours.
             const connectionIds = new Map<string, string>();
             for (const connection of accountSet.connections) {
@@ -285,7 +298,8 @@ export class SimplefinData implements ISimplefinData {
                 connectionIds.set(connection.id, rows[0].id);
             }
 
-            const returnedIds: string[] = [];
+            // Our bank account ID to what the sync returned for it.
+            const returned = new Map<string, SimplefinAccount>();
             for (const account of accountSet.accounts) {
                 const connectionId = connectionIds.get(account.connectionId);
                 if (!connectionId) {
@@ -308,9 +322,10 @@ export class SimplefinData implements ISimplefinData {
                         set: fields
                     })
                     .returning({ id: simplefinAccountSchema.id });
-                returnedIds.push(rows[0].id);
+                returned.set(rows[0].id, account);
             }
 
+            const returnedIds = [...returned.keys()];
             const notReturned = returnedIds.length > 0 ? notInArray(simplefinAccountSchema.id, returnedIds) : undefined;
             const isSetUp = or(isNotNull(simplefinAccountSchema.linkedAccountId), simplefinAccountSchema.isIgnored);
 
@@ -330,6 +345,52 @@ export class SimplefinData implements ISimplefinData {
                             .where(eq(simplefinAccountSchema.connectionId, simplefinConnectionSchema.id))
                     )
                 );
+
+            // Every linked bank account the sync returned writes into its account; a missing one waits (SYNC-2.9).
+            const linked = await tx
+                .select({
+                    id: simplefinAccountSchema.id,
+                    linkedAccountId: simplefinAccountSchema.linkedAccountId,
+                    syncFrom: simplefinAccountSchema.syncFrom
+                })
+                .from(simplefinAccountSchema)
+                .where(
+                    and(
+                        isNotNull(simplefinAccountSchema.linkedAccountId),
+                        eq(simplefinAccountSchema.currency, linkableCurrency)
+                    )
+                );
+            let accountsUpdated = 0;
+            let transactionsAdded = 0;
+            let transactionsUpdated = 0;
+            for (const bankAccount of linked) {
+                const payload = returned.get(bankAccount.id);
+                if (!payload) {
+                    continue;
+                }
+                const { added, updated } = await applyPayload(
+                    tx,
+                    bankAccount.id,
+                    bankAccount.linkedAccountId!,
+                    bankAccount.syncFrom,
+                    payload
+                );
+                accountsUpdated++;
+                transactionsAdded += added.length;
+                transactionsUpdated += updated;
+            }
+
+            if (unpause) {
+                await tx.update(simplefinAccessSchema).set({ pausedReason: null });
+            }
+            return await finishRunIn(tx, runId, {
+                status: SyncRunStatus.Succeeded,
+                messages: accountSet.messages,
+                response: accountSet,
+                accountsUpdated,
+                transactionsAdded,
+                transactionsUpdated
+            });
         });
     }
 

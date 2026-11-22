@@ -19,8 +19,9 @@ export type SyncOutcome =
     | { kind: 'over-limit'; availableAt: Date };
 
 /**
- * One sync (M02-design.md's pipeline): lock, check the limit, open the access URL, ask Bridge for the last 44 days
- * with pending transactions, and store the payload and the bank accounts. It writes nothing to `finance` yet.
+ * One sync (M02-design.md's pipeline): lock, check the limit, open the access URL, ask the SimpleFIN server for the
+ * last 44 days with pending transactions, then save the bank accounts, each linked account's transactions and balance,
+ * and the finished run together (SYNC-4.8).
  */
 export class SyncRunner {
     private readonly quota: SyncQuota;
@@ -105,15 +106,9 @@ export class SyncRunner {
                 return await finish({ status: SyncRunStatus.Failed, failure: error.message, messages: error.messages });
             }
 
-            await this.data.applyAccountSet(accountSet);
-            if (reason) {
-                await this.data.setPausedReason(null);
-            }
-            return await finish({
-                status: SyncRunStatus.Succeeded,
-                messages: accountSet.messages,
-                response: accountSet
-            });
+            const finished = await this.data.completeRun(run.id, accountSet, reason !== null);
+            done = true;
+            return { kind: 'ran', run: finished };
         } finally {
             // Anything thrown above (the database failing) still frees the lock for the next sync. If this fails too, the
             // error above is the one to report, and the next start fails the run (failInterruptedRuns).

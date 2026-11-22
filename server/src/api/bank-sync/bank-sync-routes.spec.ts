@@ -3,12 +3,15 @@ import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
 import { CalendarDateUtil } from '@shared/core/util';
+import { BankSyncWording } from '@shared/finance/contracts';
 import {
     BankAccountAction,
     BankAccountLinkStatus,
     BankSyncPauseReason,
+    CategoryType,
     SyncRunStatus,
-    SyncTrigger
+    SyncTrigger,
+    TransactionsFilterKey
 } from '@shared/finance/enum';
 import { AccountType } from '@shared/finance/enum';
 import { BankAccount, BankSyncStatus, SyncRun } from '@shared/finance/types';
@@ -16,8 +19,10 @@ import { DatabaseClient, EntityFactory } from '@server/data';
 import { DateTimeUtil, SecretBox } from '@server/utility';
 import { TestDatabaseUtil, TestExpressUtil } from '@server/utility/testing';
 import { AccountData } from './../accounts/account-data';
+import { CategoryData, CategoryGroupData } from './../categories';
 import { InstitutionData } from './../institutions/institution-data';
 import { TransactionData } from './../transactions/transaction-data';
+import { createTransactionRouter } from './../transactions/transaction-routes';
 import { BankAccountLinkData } from './bank-account-link-data';
 import { BankSyncController, BankSyncMessages } from './bank-sync-controller';
 import { createBankSyncRouter } from './bank-sync-routes';
@@ -867,6 +872,435 @@ describe('Bank Sync Routes', () => {
             await running;
             expect(response.status).toBe(409);
             expect(await transactionsOf(accountId)).toEqual([]);
+        });
+    });
+
+    describe('SYNC-4 syncing into linked accounts', () => {
+        let accountId: string;
+        let transactionsApp: express.Express;
+
+        beforeEach(async () => {
+            const institution = await new InstitutionData(dbClient).insert(
+                EntityFactory.createInstitution({ name: 'Summit Credit Union' })
+            );
+            const account = await new AccountData(dbClient).insert(
+                EntityFactory.createAccount({
+                    institutionId: institution.id,
+                    name: 'Visa',
+                    type: AccountType.CreditCard
+                })
+            );
+            accountId = account.id!;
+            transactionsApp = TestExpressUtil.createTestApp(
+                createTransactionRouter(
+                    logger,
+                    new AccountData(dbClient),
+                    new CategoryData(dbClient),
+                    new TransactionData(dbClient)
+                ),
+                '/transactions'
+            );
+        });
+
+        const bankAccountId = async (simplefinId: string) =>
+            (
+                await pglite.query<{ id: string }>('SELECT id FROM simplefin.accounts WHERE simplefin_id = $1', [
+                    simplefinId
+                ])
+            ).rows[0].id;
+
+        /** Links the bank account to the account from its earliest transaction, as Link to an account would. */
+        async function linkFromEarliest(simplefinId: string = fakeAccountIds.visa): Promise<string> {
+            const id = await bankAccountId(simplefinId);
+            const defaults = await request(app).get(`/bank-sync/accounts/${id}/link-defaults?accountId=${accountId}`);
+            const response = await request(app)
+                .put(`/bank-sync/accounts/${id}`)
+                .send({ action: BankAccountAction.Link, accountId, syncFrom: defaults.body.syncFrom });
+            expect(response.status).toBe(200);
+            return defaults.body.syncFrom;
+        }
+
+        /** The account's transactions with the bank ID sync recorded for each. */
+        async function syncedTransactions() {
+            const result = await pglite.query<{
+                id: string;
+                simplefin_id: string;
+                date: string;
+                amount: string;
+                merchant: string;
+                original_statement: string;
+                notes: string | null;
+                split_id: string | null;
+            }>(
+                `SELECT t.id, st.simplefin_id, to_char(t.date, 'YYYY-MM-DD') AS date, t.amount, t.merchant,
+                        t.original_statement, t.notes, t.split_id
+                 FROM finance.transactions t
+                 LEFT JOIN simplefin.transactions st ON st.transaction_id = t.id
+                 WHERE t.account_id = $1 ORDER BY t.date, t.id`,
+                [accountId]
+            );
+            return result.rows;
+        }
+
+        /** Every posted bank transaction the stored payloads have held for the bank account, by ID. */
+        async function postedEver(simplefinId: string, syncFrom: string): Promise<Set<string>> {
+            const runs = await pglite.query<{ response: SimplefinAccountSet }>(
+                "SELECT response FROM simplefin.sync_runs WHERE status = 'succeeded' AND response IS NOT NULL"
+            );
+            const ids = new Set<string>();
+            for (const run of runs.rows) {
+                const payload = run.response.accounts.find(a => a.id === simplefinId);
+                const posted = payload
+                    ? SyncTransform.transactions(payload, { from: syncFrom, to: DateTimeUtil.latestRecordDate() })
+                    : [];
+                posted.forEach(t => ids.add(t.simplefinId));
+            }
+            return ids;
+        }
+
+        it("SYNC-4.1 SYNC-4.5 ACCT-4.1 ACCT-4.2 should add each day's transactions once, and record the bank's balance", async () => {
+            await connect();
+            const syncFrom = await linkFromEarliest();
+            const linked = (await syncedTransactions()).length;
+
+            let added = 0;
+            for (let i = 0; i < 3; i++) {
+                later(day);
+                const first = await syncNow();
+                const second = await syncNow();
+
+                expect(first.body).toMatchObject({ status: SyncRunStatus.Succeeded, accountsUpdated: 1 });
+                expect(second.body.transactionsAdded).toBe(0);
+                added += first.body.transactionsAdded;
+            }
+
+            const transactions = await syncedTransactions();
+            expect(added).toBeGreaterThan(0);
+            expect(transactions).toHaveLength(linked + added);
+            expect(new Set(transactions.map(t => t.simplefin_id))).toEqual(
+                await postedEver(fakeAccountIds.visa, syncFrom)
+            );
+            // ACCT-4.2: a set entry at the bank's balance, on its date.
+            const bankAccount = (await bankAccounts()).find(a => a.name === 'Rewards Visa')!;
+            const account = await new AccountData(dbClient).retrieveSingle(accountId);
+            expect(account?.balance).toBe(bankAccount.balance);
+            expect(account?.balanceDate).toBe(
+                SyncTransform.toCalendarDate(new Date(bankAccount.balanceDate).getTime() / 1000)
+            );
+        });
+
+        it('SYNC-4.7 should add no pending transaction, and each one once it posts', async () => {
+            await connect('fake:pending');
+            const syncFrom = await linkFromEarliest();
+            const pendingIds = async () => {
+                const runs = await pglite.query<{ response: SimplefinAccountSet }>(
+                    "SELECT response FROM simplefin.sync_runs WHERE status = 'succeeded' AND response IS NOT NULL"
+                );
+                return new Set(
+                    runs.rows.flatMap(run =>
+                        run.response.accounts.flatMap(a => a.transactions.filter(t => t.pending).map(t => t.id))
+                    )
+                );
+            };
+            const pendingAtFirst = await pendingIds();
+
+            for (let i = 0; i < 4; i++) {
+                later(day);
+                await syncNow();
+            }
+
+            const transactions = await syncedTransactions();
+            const added = new Set(transactions.map(t => t.simplefin_id));
+            expect(pendingAtFirst.size).toBeGreaterThan(0);
+            expect(added.size).toBe(transactions.length);
+            expect(added).toEqual(await postedEver(fakeAccountIds.visa, syncFrom));
+            // Pending under one ID and posted under another: only the posted one is added.
+            const posted = await postedEver(fakeAccountIds.visa, syncFrom);
+            expect([...pendingAtFirst].filter(id => added.has(id) && !posted.has(id))).toEqual([]);
+            expect([...(await pendingIds())].some(id => id.startsWith('PND-') && added.has(id))).toBe(false);
+        });
+
+        /**
+         * The account's transactions the fake bank will have corrected 3 days from now (it corrects a purchase 2 days
+         * after it posts), with the bank's corrected version of each.
+         */
+        async function aboutToBeCorrected() {
+            const now = DateTimeUtil.now();
+            DateTimeUtil.setClock(DateTimeUtil.addMilliseconds(now, 3 * day));
+            const future = await new FakeSimplefinClient().fetchAccounts(
+                client.accessUrls[0],
+                DateTimeUtil.addMilliseconds(DateTimeUtil.now(), -44 * day)
+            );
+            DateTimeUtil.setClock(now);
+            const corrected = future.accounts
+                .find(a => a.id === fakeAccountIds.visa)!
+                .transactions.filter(t => t.description.endsWith(' ADJ'));
+            const transactions = (await syncedTransactions()).filter(
+                t => !t.original_statement.endsWith(' ADJ') && corrected.some(c => c.id === t.simplefin_id)
+            );
+            expect(transactions.length).toBeGreaterThan(0);
+            return transactions.map(t => ({ transaction: t, bank: corrected.find(c => c.id === t.simplefin_id)! }));
+        }
+
+        it("SYNC-4.4 should apply the bank's corrections to the date, amount and statement only", async () => {
+            await connect('fake:corrections');
+            await linkFromEarliest();
+            const [{ transaction: edited, bank }] = await aboutToBeCorrected();
+            const group = await new CategoryGroupData(dbClient).insert(
+                EntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Food' })
+            );
+            const category = await new CategoryData(dbClient).insert(
+                EntityFactory.createCategory({ groupId: group.id!, name: 'Dining', icon: '🍽️', isActive: true })
+            );
+            const save = await request(transactionsApp)
+                .put(`/transactions/${edited.id}`)
+                .send({ merchant: 'My cafe', categoryId: category.id, notes: 'Lunch', isHidden: true });
+            expect(save.status).toBe(200);
+
+            later(3 * day);
+            const run = await syncNow();
+
+            const after = (await syncedTransactions()).find(t => t.id === edited.id)!;
+            expect(run.body.transactionsUpdated).toBeGreaterThanOrEqual(1);
+            expect(after).toMatchObject({
+                date: SyncTransform.toCalendarDate(bank.transactedAt || bank.posted),
+                amount: bank.amount.toFixed(2),
+                original_statement: bank.description,
+                merchant: 'My cafe',
+                notes: 'Lunch'
+            });
+            expect(after.date).not.toBe(edited.date);
+            expect(after.amount).not.toBe(edited.amount);
+            const row = await pglite.query<{ category_id: string; is_hidden: boolean }>(
+                'SELECT category_id, is_hidden FROM finance.transactions WHERE id = $1',
+                [edited.id]
+            );
+            expect(row.rows[0]).toEqual({ category_id: category.id, is_hidden: true });
+        });
+
+        it('SYNC-4.4 TXN-4.8 should leave a split transaction alone when the bank corrects it', async () => {
+            await connect('fake:corrections');
+            await linkFromEarliest();
+            const [{ transaction: split }] = await aboutToBeCorrected();
+            const amount = Number(split.amount);
+            const half = Math.round((amount / 2) * 100) / 100;
+            const parts = await request(transactionsApp)
+                .put(`/transactions/${split.id}/split`)
+                .send({
+                    parts: [
+                        { id: split.id, amount: half, categoryId: '', merchant: split.merchant, notes: '' },
+                        { amount: Math.round((amount - half) * 100) / 100, categoryId: '', merchant: 'Tip', notes: '' }
+                    ]
+                });
+            expect(parts.status).toBe(200);
+            const splitId = parts.body[0].splitId;
+            const before = (await syncedTransactions()).filter(t => t.split_id === splitId);
+
+            later(3 * day);
+            await syncNow();
+
+            expect((await syncedTransactions()).filter(t => t.split_id === splitId)).toEqual(before);
+        });
+
+        it('SYNC-4.4 should not delete a transaction the bank stops returning', async () => {
+            await connect();
+            await linkFromEarliest();
+            const before = await syncedTransactions();
+
+            // Past the 44-day window, the earliest transactions are no longer returned.
+            later(10 * day);
+            await syncNow();
+
+            const after = await syncedTransactions();
+            expect(after.map(t => t.id)).toEqual(expect.arrayContaining(before.map(t => t.id)));
+        });
+
+        it('TXN-2.12 SYNC-4.1 should never add a deleted synced transaction again', async () => {
+            await connect();
+            await linkFromEarliest();
+            const [deleted] = await syncedTransactions();
+            expect((await request(transactionsApp).delete(`/transactions/${deleted.id}`)).status).toBe(204);
+
+            later(day);
+            await syncNow();
+
+            const after = await syncedTransactions();
+            expect(after.some(t => t.simplefin_id === deleted.simplefin_id)).toBe(false);
+        });
+
+        it('SYNC-2.9 should sync nothing into an account whose bank account is missing', async () => {
+            await connect('fake:missing');
+            await linkFromEarliest(fakeAccountIds.savings);
+            const before = await syncedTransactions();
+
+            later(day);
+            const run = await syncNow();
+            later(day);
+            await syncNow();
+
+            expect(run.body.accountsUpdated).toBe(0);
+            expect(await syncedTransactions()).toEqual(before);
+        });
+
+        it('SYNC-4.8 should change nothing when the database fails part way through a sync', async () => {
+            await connect();
+            await linkFromEarliest();
+            const transactionsBefore = await syncedTransactions();
+            const bankBefore = await bankAccounts();
+            const balancesBefore = (await pglite.query('SELECT * FROM finance.balance_history ORDER BY date')).rows;
+            later(3 * day);
+            // A trigger stands in for any database failure after the bank accounts and some transactions are written.
+            await pglite.exec(`
+                CREATE FUNCTION finance.reject_balance() RETURNS trigger AS $$
+                BEGIN RAISE EXCEPTION 'boom'; END $$ LANGUAGE plpgsql;
+                CREATE TRIGGER reject_balance BEFORE INSERT OR UPDATE ON finance.balance_history
+                    FOR EACH ROW EXECUTE FUNCTION finance.reject_balance();
+            `);
+
+            try {
+                const response = await syncNow();
+
+                expect(response.status).toBe(500);
+                const run = (await status()).lastRun!;
+                expect(run).toMatchObject({
+                    status: SyncRunStatus.Failed,
+                    failure: 'An unexpected error stopped this sync.',
+                    transactionsAdded: 0
+                });
+                expect(await syncedTransactions()).toEqual(transactionsBefore);
+                expect((await bankAccounts()).map(a => a.balance)).toEqual(bankBefore.map(a => a.balance));
+                expect((await pglite.query('SELECT * FROM finance.balance_history ORDER BY date')).rows).toEqual(
+                    balancesBefore
+                );
+                const stored = await pglite.query<{ response: unknown }>(
+                    'SELECT response FROM simplefin.sync_runs WHERE id = $1',
+                    [run.id]
+                );
+                expect(stored.rows[0].response).toBeNull();
+            } finally {
+                await pglite.exec(
+                    'DROP TRIGGER reject_balance ON finance.balance_history; DROP FUNCTION finance.reject_balance();'
+                );
+            }
+        });
+
+        describe('TXN-2.12 synced transactions', () => {
+            it('TXN-2.12 should mark a synced transaction while its account is connected', async () => {
+                await connect();
+                await linkFromEarliest();
+                const [synced] = await syncedTransactions();
+
+                const response = await request(transactionsApp).get(`/transactions/${synced.id}`);
+                const list = await request(transactionsApp)
+                    .get('/transactions')
+                    .query({ filters: JSON.stringify([{ key: TransactionsFilterKey.AccountId, value: accountId }]) });
+
+                expect(response.body.isSynced).toBe(true);
+                expect(list.body.length).toBeGreaterThan(0);
+                expect(list.body.every((t: { isSynced: boolean }) => t.isSynced)).toBe(true);
+                // One the user added to the connected account isn't the bank's.
+                const own = await new TransactionData(dbClient).insert(
+                    EntityFactory.createTransaction({
+                        accountId,
+                        categoryId: '',
+                        date: synced.date,
+                        amount: -5,
+                        merchant: 'Cash',
+                        originalStatement: '',
+                        notes: '',
+                        isHidden: false
+                    })
+                );
+                expect((await request(transactionsApp).get(`/transactions/${own.id}`)).body.isSynced).toBe(false);
+
+                await request(app)
+                    .put(`/bank-sync/accounts/${await bankAccountId(fakeAccountIds.visa)}`)
+                    .send({ action: BankAccountAction.Unlink });
+                const unlinked = await request(transactionsApp).get(`/transactions/${synced.id}`);
+                expect(unlinked.body.isSynced).toBe(false);
+            });
+
+            it("TXN-2.12 should refuse to change a synced transaction's date, amount, account or statement", async () => {
+                await connect();
+                await linkFromEarliest();
+                const [synced] = await syncedTransactions();
+                const other = await new AccountData(dbClient).insert(
+                    EntityFactory.createAccount({
+                        institutionId: (await new AccountData(dbClient).retrieveSingle(accountId))!.institutionId,
+                        name: 'Other',
+                        type: AccountType.Checking
+                    })
+                );
+
+                for (const change of [
+                    { date: CalendarDateUtil.addDays(synced.date, -1) },
+                    { amount: Number(synced.amount) - 1 },
+                    { accountId: other.id },
+                    { originalStatement: 'Changed' }
+                ]) {
+                    const response = await request(transactionsApp).put(`/transactions/${synced.id}`).send(change);
+                    expect(response.status).toBe(400);
+                    expect(response.body.message).toBe(BankSyncWording.syncedFields);
+                }
+
+                // The same values, as the form sends them, and the user's own fields, are fine.
+                const response = await request(transactionsApp)
+                    .put(`/transactions/${synced.id}`)
+                    .send({
+                        date: synced.date,
+                        amount: Number(synced.amount),
+                        accountId,
+                        originalStatement: synced.original_statement,
+                        merchant: 'Renamed',
+                        notes: 'Mine'
+                    });
+                expect(response.status).toBe(200);
+                expect(response.body).toMatchObject({ merchant: 'Renamed', notes: 'Mine', isSynced: true });
+            });
+
+            it('TXN-2.12 TXN-4.8 should mark every part of a synced split, and let its parts change', async () => {
+                await connect();
+                await linkFromEarliest();
+                const [synced] = await syncedTransactions();
+                const amount = Number(synced.amount);
+                const half = Math.round((amount / 2) * 100) / 100;
+
+                const split = await request(transactionsApp)
+                    .put(`/transactions/${synced.id}/split`)
+                    .send({
+                        parts: [
+                            { id: synced.id, amount: half, categoryId: '', merchant: synced.merchant, notes: '' },
+                            {
+                                amount: Math.round((amount - half) * 100) / 100,
+                                categoryId: '',
+                                merchant: 'B',
+                                notes: ''
+                            }
+                        ]
+                    });
+
+                expect(split.status).toBe(200);
+                expect(split.body.map((t: { isSynced: boolean }) => t.isSynced)).toEqual([true, true]);
+                const part = await request(transactionsApp)
+                    .put(`/transactions/${split.body[1].id}`)
+                    .send({ date: CalendarDateUtil.addDays(synced.date, -1) });
+                expect(part.status).toBe(400);
+            });
+
+            it("TXN-2.12 should let an unlinked account's synced transactions be edited", async () => {
+                await connect();
+                await linkFromEarliest();
+                const [synced] = await syncedTransactions();
+                await request(app)
+                    .put(`/bank-sync/accounts/${await bankAccountId(fakeAccountIds.visa)}`)
+                    .send({ action: BankAccountAction.Unlink });
+
+                const response = await request(transactionsApp)
+                    .put(`/transactions/${synced.id}`)
+                    .send({ amount: Number(synced.amount) - 1 });
+
+                expect(response.status).toBe(200);
+            });
         });
     });
 

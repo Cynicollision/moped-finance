@@ -84,10 +84,17 @@
                 </div>
             }
         } @else {
+            @if (isSynced()) {
+                <p class="form-note">{{ syncedNote }}</p>
+            }
             @if (isSplit()) {
-                <p class="split-note">
-                    This is one part of a split transaction. Change its amount with Edit split. A new account, original
-                    statement, date, hidden or adjust balance setting applies to every part.
+                <p class="form-note">
+                    This is one part of a split transaction. Change its amount with Edit split.
+                    @if (isSynced()) {
+                        A hidden setting applies to every part.
+                    } @else {
+                        A new account, original statement, date, hidden or adjust balance setting applies to every part.
+                    }
                 </p>
             }
 

@@ -66,5 +66,9 @@ export const BankSyncWording = {
     notUsd: 'Only accounts in US dollars can be synced.',
     /** SYNC-2.5. */
     bankAccountLinked: 'That bank account is already linked to another account.',
-    accountLinked: 'This account is already linked to a bank account.'
+    accountLinked: 'This account is already linked to a bank account.',
+    /** TXN-2.12: Edit Transaction's note on a synced transaction, and the server's refusal to change those fields. */
+    syncedFields: 'Added by bank sync: the date, amount, account and original statement come from your bank.',
+    /** TXN-2.12: what Delete adds for a synced transaction. */
+    syncedDelete: "Bank sync won't add it again. To keep it out of Spending and budgets, hide it instead."
 };

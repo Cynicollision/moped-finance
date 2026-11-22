@@ -26,6 +26,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { CalendarDateUtil } from '@shared/core/util';
+import { BankSyncWording } from '@shared/finance/contracts';
 import { TransactionDirection } from '@shared/finance/enum';
 import { Category, Transaction } from '@shared/finance/types';
 import { TransactionSplit, Uncategorized } from '@shared/finance/util';
@@ -80,6 +81,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     private dateProvider = inject(DateProviderService);
     readonly Uncategorized = Uncategorized;
     readonly Direction = TransactionDirection;
+    readonly syncedNote = BankSyncWording.syncedFields;
     /** Transactions record what has happened, so the date stops at today (APP-8.1). */
     readonly latestDate = this.dateProvider.now();
 
@@ -131,6 +133,8 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     private readonly categoryMap = computed(() => new Map(this.categories().map(c => [c.id, c])));
     /** One part of a split, whose amount changes only with Edit split (TXN-4.7). */
     readonly isSplit = computed(() => !!this.transaction()?.splitId);
+    /** Added by bank sync, so its date, amount, account and original statement are the bank's (TXN-2.12). */
+    readonly isSynced = computed(() => !!this.transaction()?.isSynced);
     /** What the split's parts add up to. */
     readonly splitTotal = computed(() => TransactionSplit.total(this.splitParts().map(part => part.amount)));
 
@@ -191,12 +195,18 @@ export class TransactionFormComponent implements OnInit, OnChanges {
         if (mode === 'readonly') {
             this.transactionForm.disable();
         } else {
-            // All fields stay editable in edit mode, including bank-provided ones (amount, merchant, account), except
-            // a part's amount, which changes with the others in Edit split (TXN-4.7).
+            // Every field is editable except a part's amount, which changes with the others in Edit split (TXN-4.7),
+            // and a synced transaction's bank fields (TXN-2.12).
             this.transactionForm.enable();
-            if (this.isSplit()) {
-                this.transactionForm.controls.amount.disable();
-                this.transactionForm.controls.direction.disable();
+            const controls = this.transactionForm.controls;
+            if (this.isSplit() || this.isSynced()) {
+                controls.amount.disable();
+                controls.direction.disable();
+            }
+            if (this.isSynced()) {
+                controls.date.disable();
+                controls.accountId.disable();
+                controls.originalStatement.disable();
             }
         }
     }

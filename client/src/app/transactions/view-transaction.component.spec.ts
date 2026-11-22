@@ -24,6 +24,7 @@ describe('ViewTransactionComponent', () => {
         isHidden: false,
         adjustsBalance: false,
         splitId: '',
+        isSynced: false,
         createdAt: new Date(2026, 0, 1),
         updatedAt: new Date(2026, 0, 1)
     };
@@ -154,6 +155,19 @@ describe('ViewTransactionComponent', () => {
         expect(financeService.deleteTransaction).toHaveBeenCalledWith('t1');
         expect(notificationService.success).toHaveBeenCalledWith('Transaction deleted');
         expect(navigate).toHaveBeenCalledWith(['/transactions']);
+    });
+
+    it('TXN-2.12 TXN-2.4 should say a deleted synced transaction stays deleted, and offer hiding instead', async () => {
+        const { fixture, modalService } = await render(vi.fn().mockResolvedValue({ ...transaction, isSynced: true }));
+
+        await chooseFromMenu(fixture, 'Delete');
+
+        expect(modalService.confirm).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message:
+                    "Delete this transaction? Bank sync won't add it again. To keep it out of Spending and budgets, hide it instead."
+            })
+        );
     });
 
     it('TXN-2.4 should keep the transaction when the confirmation is cancelled', async () => {

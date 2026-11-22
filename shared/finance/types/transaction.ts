@@ -16,6 +16,11 @@ export type Transaction = Entity & {
      * split.
      */
     splitId: string;
+    /**
+     * Added by bank sync, and its account still connected (TXN-2.12): its date, amount, account and original statement
+     * come from the bank. True for every part of a synced transaction's split. Not stored.
+     */
+    isSynced: boolean;
 };
 
 /** One part of a split, as the split dialog sends it. Without an `id` it's a new part. */
