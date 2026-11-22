@@ -2,7 +2,14 @@ import { randomBytes } from 'crypto';
 import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
-import { BankAccountLinkStatus, BankSyncPauseReason, SyncRunStatus, SyncTrigger } from '@shared/finance/enum';
+import { CalendarDateUtil } from '@shared/core/util';
+import {
+    BankAccountAction,
+    BankAccountLinkStatus,
+    BankSyncPauseReason,
+    SyncRunStatus,
+    SyncTrigger
+} from '@shared/finance/enum';
 import { AccountType } from '@shared/finance/enum';
 import { BankAccount, BankSyncStatus, SyncRun } from '@shared/finance/types';
 import { DatabaseClient, EntityFactory } from '@server/data';
@@ -10,6 +17,8 @@ import { DateTimeUtil, SecretBox } from '@server/utility';
 import { TestDatabaseUtil, TestExpressUtil } from '@server/utility/testing';
 import { AccountData } from './../accounts/account-data';
 import { InstitutionData } from './../institutions/institution-data';
+import { TransactionData } from './../transactions/transaction-data';
+import { BankAccountLinkData } from './bank-account-link-data';
 import { BankSyncController, BankSyncMessages } from './bank-sync-controller';
 import { createBankSyncRouter } from './bank-sync-routes';
 import { fakeAccountIds, fakeChangeDelaySeconds, FakeSimplefinClient } from './fake';
@@ -17,6 +26,7 @@ import { ISimplefinClient, SimplefinError, SimplefinErrorKind } from './simplefi
 import { SimplefinData } from './simplefin-data';
 import { SimplefinAccountSet } from './simplefin-response';
 import { SyncRunner } from './sync-runner';
+import { SyncTransform } from './sync-transform';
 
 const minute = 60_000;
 const hour = 60 * minute;
@@ -90,7 +100,13 @@ describe('Bank Sync Routes', () => {
     let app: express.Express;
 
     function buildApp(box: SecretBox | undefined): express.Express {
-        const controller = new BankSyncController(data, client, box);
+        const controller = new BankSyncController(
+            data,
+            client,
+            box,
+            new BankAccountLinkData(dbClient),
+            new AccountData(dbClient)
+        );
         return TestExpressUtil.createTestApp(createBankSyncRouter(logger, controller), '/bank-sync');
     }
 
@@ -447,6 +463,400 @@ describe('Bank Sync Routes', () => {
             expect(response.body).toMatchObject({ status: SyncRunStatus.Failed });
             expect((await status()).pausedReason).toBe(BankSyncPauseReason.Undecryptable);
             expect(client.fetches).toHaveLength(1);
+        });
+    });
+
+    describe('PUT /bank-sync/accounts/:id', () => {
+        let institutionId: string;
+        const accountData = () => new AccountData(dbClient);
+
+        beforeEach(async () => {
+            const institution = await new InstitutionData(dbClient).insert(
+                EntityFactory.createInstitution({ name: 'Harbor Community Bank' })
+            );
+            institutionId = institution.id!;
+        });
+
+        const bankAccountId = async (name: string) => (await bankAccounts()).find(a => a.name === name)!.id;
+        const bankAccount = async (id: string) => (await bankAccounts()).find(a => a.id === id)!;
+        const update = (id: string, body: object) => request(app).put(`/bank-sync/accounts/${id}`).send(body);
+        const link = (id: string, accountId: string, syncFrom?: string) =>
+            update(id, { action: BankAccountAction.Link, accountId, syncFrom });
+        const linkDefaults = (id: string, accountId: string) =>
+            request(app).get(`/bank-sync/accounts/${id}/link-defaults?accountId=${accountId}`);
+
+        async function insertAccount(name = 'Checking') {
+            const account = await accountData().insert(
+                EntityFactory.createAccount({ institutionId, name, type: AccountType.Checking })
+            );
+            return account.id;
+        }
+
+        async function transactionsOf(accountId: string) {
+            const result = await pglite.query<{
+                id: string;
+                date: string;
+                amount: string;
+                merchant: string;
+                original_statement: string;
+                category_id: string | null;
+                adjusts_balance: boolean;
+            }>(
+                `SELECT id, to_char(date, 'YYYY-MM-DD') AS date, amount, merchant, original_statement, category_id,
+                        adjusts_balance
+                 FROM finance.transactions WHERE account_id = $1 ORDER BY date, id`,
+                [accountId]
+            );
+            return result.rows;
+        }
+
+        async function balancesOf(accountId: string): Promise<[string, number][]> {
+            const result = await pglite.query<{ date: string; balance: string }>(
+                `SELECT to_char(date, 'YYYY-MM-DD') AS date, balance FROM finance.balance_history
+                 WHERE account_id = $1 ORDER BY date`,
+                [accountId]
+            );
+            return result.rows.map(row => [row.date, Number(row.balance)]);
+        }
+
+        /** The dates of the bank account's posted transactions in the latest sync, oldest first. */
+        async function postedDates(simplefinId: string): Promise<string[]> {
+            const result = await pglite.query<{ response: SimplefinAccountSet }>(
+                `SELECT response FROM simplefin.sync_runs WHERE status = 'succeeded'
+                 ORDER BY started_at DESC LIMIT 1`
+            );
+            const payload = result.rows[0].response.accounts.find(a => a.id === simplefinId)!;
+            return SyncTransform.transactions(payload, { from: null, to: DateTimeUtil.latestRecordDate() }).map(
+                t => t.date
+            );
+        }
+
+        it('SYNC-2.4 SYNC-4.1 SYNC-4.2 ACCT-4.3 should link, adding the bank transactions from the chosen day', async () => {
+            await connect();
+            const accountId = await insertAccount();
+            const id = await bankAccountId('Everyday Checking');
+            const dates = await postedDates(fakeAccountIds.checking);
+            const syncFrom = dates[Math.floor(dates.length / 2)];
+            const expected = dates.filter(date => date >= syncFrom).length;
+            const fetches = client.fetches.length;
+
+            const response = await link(id, accountId, syncFrom);
+
+            expect(response.status).toBe(200);
+            expect(response.body.transactionsAdded).toBe(expected);
+            expect(response.body.bankAccount).toMatchObject({
+                linkStatus: BankAccountLinkStatus.Linked,
+                linkedAccount: { id: accountId, name: 'Checking' },
+                syncFrom
+            });
+            const added = await transactionsOf(accountId);
+            expect(added).toHaveLength(expected);
+            expect(added.every(t => t.date >= syncFrom && t.category_id === null && !t.adjusts_balance)).toBe(true);
+            expect(added.every(t => t.merchant.length > 0 && t.original_statement.length > 0)).toBe(true);
+            expect((await accountData().retrieveSingle(accountId))?.isManual).toBe(false);
+            // SYNC-2.10: from the latest sync, without asking the SimpleFIN server.
+            expect(client.fetches).toHaveLength(fetches);
+        });
+
+        it("SYNC-2.4 ACCT-5.5 should start after the account's latest transaction by default, and stop adjusting", async () => {
+            await connect();
+            const accountId = await insertAccount();
+            const id = await bankAccountId('Everyday Checking');
+            const dates = await postedDates(fakeAccountIds.checking);
+            const latest = dates[dates.length - 10];
+            await new TransactionData(dbClient).insert(
+                EntityFactory.createTransaction({
+                    accountId,
+                    categoryId: '',
+                    date: latest,
+                    amount: -40,
+                    merchant: 'Imported',
+                    originalStatement: '',
+                    notes: '',
+                    isHidden: false,
+                    adjustsBalance: true
+                })
+            );
+            const balancesBefore = await balancesOf(accountId);
+            const dayAfter = CalendarDateUtil.addDays(latest, 1);
+
+            const defaults = await linkDefaults(id, accountId);
+            const response = await link(id, accountId);
+
+            expect(defaults.body).toEqual({ syncFrom: dayAfter });
+            expect(response.body.bankAccount.syncFrom).toBe(dayAfter);
+            expect(response.body.transactionsAdded).toBe(dates.filter(date => date >= dayAfter).length);
+            const transactions = await transactionsOf(accountId);
+            expect(transactions.filter(t => t.merchant === 'Imported').map(t => t.adjusts_balance)).toEqual([false]);
+            expect(transactions.filter(t => t.merchant !== 'Imported').every(t => t.date >= dayAfter)).toBe(true);
+            // The entries the imported transaction made stay, and the bank's balance is recorded (ACCT-4.2).
+            expect(await balancesOf(accountId)).toEqual(expect.arrayContaining(balancesBefore));
+            expect((await accountData().retrieveSingle(accountId))?.balance).toBe((await bankAccount(id)).balance);
+        });
+
+        it('SYNC-2.4 should start from the earliest bank transaction for an account without transactions', async () => {
+            await connect();
+            const accountId = await insertAccount();
+            const id = await bankAccountId('Everyday Checking');
+
+            const defaults = await linkDefaults(id, accountId);
+
+            expect(defaults.body).toEqual({ syncFrom: (await postedDates(fakeAccountIds.checking))[0] });
+        });
+
+        it('SYNC-4.6 should fill in the history of an account without balances from the bank balance', async () => {
+            await connect();
+            const accountId = await insertAccount();
+            const id = await bankAccountId('Everyday Checking');
+            const dates = await postedDates(fakeAccountIds.checking);
+
+            await link(id, accountId);
+
+            const balances = await balancesOf(accountId);
+            const bankBalance = (await bankAccount(id)).balance;
+            expect(balances[0][0]).toBe(CalendarDateUtil.addDays(dates[0], -1));
+            expect(balances[balances.length - 1][1]).toBe(bankBalance);
+            expect((await accountData().retrieveSingle(accountId))?.balance).toBe(bankBalance);
+            // Each day's balance is the one before plus that day's transactions.
+            const transactions = await transactionsOf(accountId);
+            for (let i = 1; i < balances.length; i++) {
+                const [date, balance] = balances[i];
+                const dayTotal = transactions
+                    .filter(t => t.date === date)
+                    .reduce((sum, t) => sum + Number(t.amount), 0);
+                expect(balance).toBeCloseTo(balances[i - 1][1] + dayTotal, 2);
+            }
+        });
+
+        it('SYNC-2.7 SYNC-4.1 should unlink, keeping the history, and add nothing twice when linked again', async () => {
+            await connect();
+            const accountId = await insertAccount();
+            const id = await bankAccountId('Everyday Checking');
+            const first = await link(id, accountId);
+            const count = (await transactionsOf(accountId)).length;
+
+            const unlinked = await update(id, { action: BankAccountAction.Unlink });
+
+            expect(unlinked.status).toBe(200);
+            expect(unlinked.body.bankAccount).toMatchObject({
+                linkStatus: BankAccountLinkStatus.NotSetUp,
+                linkedAccount: null,
+                syncFrom: null
+            });
+            expect((await accountData().retrieveSingle(accountId))?.isManual).toBe(true);
+            expect(await transactionsOf(accountId)).toHaveLength(count);
+
+            const again = await link(id, accountId, (await postedDates(fakeAccountIds.checking))[0]);
+
+            expect(first.body.transactionsAdded).toBe(count);
+            expect(again.body.transactionsAdded).toBe(0);
+            expect(await transactionsOf(accountId)).toHaveLength(count);
+        });
+
+        it('TXN-2.12 should not add a synced transaction the user deleted again', async () => {
+            await connect();
+            const accountId = await insertAccount();
+            const id = await bankAccountId('Everyday Checking');
+            await link(id, accountId);
+            const [deleted] = await transactionsOf(accountId);
+            await new TransactionData(dbClient).delete(deleted.id);
+            await update(id, { action: BankAccountAction.Unlink });
+
+            const again = await link(id, accountId, (await postedDates(fakeAccountIds.checking))[0]);
+
+            expect(again.body.transactionsAdded).toBe(0);
+        });
+
+        it('SYNC-4.1 should add transactions added to another account before to the account linked now', async () => {
+            await connect();
+            const firstId = await insertAccount('First');
+            const secondId = await insertAccount('Second');
+            const id = await bankAccountId('Everyday Checking');
+            const first = await link(id, firstId);
+            await update(id, { action: BankAccountAction.Unlink });
+
+            const second = await link(id, secondId);
+
+            expect(second.body.transactionsAdded).toBe(first.body.transactionsAdded);
+            expect(await transactionsOf(firstId)).toHaveLength(first.body.transactionsAdded);
+        });
+
+        it('SYNC-2.3 SYNC-4.6 should create a connected account with everything the bank returned', async () => {
+            await connect();
+            const id = await bankAccountId('Holiday Fund');
+            const dates = await postedDates(fakeAccountIds.holidayFund);
+
+            const response = await update(id, {
+                action: BankAccountAction.Create,
+                name: 'Holiday Fund',
+                type: AccountType.Savings,
+                institutionName: 'harbor community bank',
+                isHidden: true
+            });
+
+            expect(response.status).toBe(200);
+            const accountId = response.body.bankAccount.linkedAccount.id;
+            const account = await accountData().retrieveSingle(accountId);
+            expect(account).toMatchObject({
+                name: 'Holiday Fund',
+                type: AccountType.Savings,
+                institutionId,
+                isHidden: true,
+                isManual: false
+            });
+            expect(response.body.transactionsAdded).toBe(dates.length);
+            expect(response.body.bankAccount.syncFrom).toBe(dates[0]);
+            expect(account?.balance).toBe((await bankAccount(id)).balance);
+            expect((await balancesOf(accountId))[0][0]).toBe(CalendarDateUtil.addDays(dates[0], -1));
+        });
+
+        it('SYNC-2.3 should create the institution when none has the name', async () => {
+            await connect();
+
+            const response = await update(await bankAccountId('Rewards Visa'), {
+                action: BankAccountAction.Create,
+                name: 'Rewards Visa',
+                type: AccountType.CreditCard,
+                institutionName: 'Summit Credit Union'
+            });
+
+            expect(response.status).toBe(200);
+            const account = await accountData().retrieveSingle(response.body.bankAccount.linkedAccount.id);
+            const institution = await new InstitutionData(dbClient).retrieveSingle(account!.institutionId);
+            expect(institution?.name).toBe('Summit Credit Union');
+            expect(account?.isHidden).toBe(false);
+        });
+
+        it('SYNC-2.3 should refuse an account without a type or an institution, creating nothing', async () => {
+            await connect();
+            const id = await bankAccountId('Holiday Fund');
+            const create = (fields: object) =>
+                update(id, { action: BankAccountAction.Create, name: 'Fund', ...fields });
+
+            const noType = await create({ institutionId });
+            const noInstitution = await create({ type: AccountType.Savings });
+            const missing = await create({ type: AccountType.Savings, institutionId: 'no-such-institution' });
+
+            expect([noType.status, noInstitution.status, missing.status]).toEqual([400, 400, 400]);
+            expect(missing.body.message).toBe('Institution not found.');
+            expect((await bankAccount(id)).linkStatus).toBe(BankAccountLinkStatus.NotSetUp);
+            expect(await accountData().retrieveAll()).toEqual([]);
+        });
+
+        it('SYNC-2.5 should refuse a bank account linked to another account, and an account linked to another', async () => {
+            await connect();
+            const checkingId = await insertAccount('Checking');
+            const otherId = await insertAccount('Other');
+            const checking = await bankAccountId('Everyday Checking');
+            const savings = await bankAccountId('High-Yield Savings');
+            await link(checking, checkingId);
+
+            const bankAccountTaken = await link(checking, otherId);
+            const accountTaken = await link(savings, checkingId);
+
+            expect(bankAccountTaken.status).toBe(400);
+            expect(bankAccountTaken.body.message).toBe(BankSyncMessages.bankAccountLinked);
+            expect(accountTaken.status).toBe(400);
+            expect(accountTaken.body.message).toBe(BankSyncMessages.accountLinked);
+            expect(await transactionsOf(otherId)).toEqual([]);
+            expect((await bankAccount(savings)).linkStatus).toBe(BankAccountLinkStatus.NotSetUp);
+        });
+
+        it('SYNC-2.6 should refuse to link a bank account not in US dollars', async () => {
+            await connect();
+
+            const response = await link(await bankAccountId('Chequing'), await insertAccount());
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toBe(BankSyncMessages.notUsd);
+        });
+
+        it('SYNC-2.4 should refuse a closed account, a missing one and a missing bank account', async () => {
+            await connect();
+            const id = await bankAccountId('Everyday Checking');
+            const closedId = await insertAccount();
+            await accountData().close(closedId, '2026-11-01');
+
+            const closed = await link(id, closedId);
+            const missing = await link(id, 'no-such-account');
+            const missingBankAccount = await link('no-such-bank-account', closedId);
+
+            expect(closed.body.message).toBe(BankSyncMessages.accountClosed);
+            expect(missing.body.message).toBe(BankSyncMessages.accountNotFound);
+            expect(missingBankAccount.status).toBe(404);
+        });
+
+        it("SYNC-2.2 should remember Don't sync, which unlinks a linked bank account", async () => {
+            await connect();
+            const accountId = await insertAccount();
+            const id = await bankAccountId('Everyday Checking');
+            await link(id, accountId);
+
+            const ignored = await update(id, { action: BankAccountAction.Ignore });
+            await syncNow();
+
+            expect(ignored.body.bankAccount).toMatchObject({
+                linkStatus: BankAccountLinkStatus.Ignored,
+                linkedAccount: null
+            });
+            expect((await bankAccount(id)).linkStatus).toBe(BankAccountLinkStatus.Ignored);
+            expect((await accountData().retrieveSingle(accountId))?.isManual).toBe(true);
+
+            const notSetUp = await update(id, { action: BankAccountAction.Unlink });
+            expect(notSetUp.body.bankAccount.linkStatus).toBe(BankAccountLinkStatus.NotSetUp);
+        });
+
+        it('SYNC-2.8 should unlink an account that is closed, and not link it again when reopened', async () => {
+            await connect();
+            const accountId = await insertAccount();
+            const id = await bankAccountId('Everyday Checking');
+            await link(id, accountId);
+
+            await accountData().close(accountId, DateTimeUtil.today());
+            await accountData().reopen(accountId);
+
+            expect((await bankAccount(id)).linkStatus).toBe(BankAccountLinkStatus.NotSetUp);
+            expect((await accountData().retrieveSingle(accountId))?.isManual).toBe(true);
+        });
+
+        it('SYNC-2.8 should unlink a deleted account, so its bank account can bring the transactions elsewhere', async () => {
+            await connect();
+            const deletedId = await insertAccount('Old');
+            const id = await bankAccountId('Everyday Checking');
+            const first = await link(id, deletedId);
+
+            await accountData().delete(deletedId);
+            const newId = await insertAccount('New');
+            const again = await link(id, newId);
+
+            expect(again.status).toBe(200);
+            expect(again.body.transactionsAdded).toBe(first.body.transactionsAdded);
+        });
+
+        it('ACCT-2.6 ACCT-7.3 should say when a bank account last synced', async () => {
+            await connect();
+            later(hour);
+            await syncNow();
+
+            expect(new Date((await bankAccount(await bankAccountId('Everyday Checking'))).lastSyncedAt!)).toEqual(
+                DateTimeUtil.now()
+            );
+        });
+
+        it('SYNC-3.5 should refuse to link while a sync is running', async () => {
+            await connect();
+            const accountId = await insertAccount();
+            const id = await bankAccountId('Everyday Checking');
+            const held = client.hold();
+            const running = syncNow().then(response => response);
+            await held.entered;
+
+            const response = await link(id, accountId);
+
+            held.release();
+            await running;
+            expect(response.status).toBe(409);
+            expect(await transactionsOf(accountId)).toEqual([]);
         });
     });
 

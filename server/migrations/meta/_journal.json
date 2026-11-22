@@ -127,6 +127,13 @@
       "when": 1795296406115,
       "tag": "0017_bank_sync_connect",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795344755879,
+      "tag": "0018_bank_account_links",
+      "breakpoints": true
     }
   ]
 }

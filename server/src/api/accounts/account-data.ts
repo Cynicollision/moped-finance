@@ -1,4 +1,4 @@
-import { and, asc, eq, desc, gt, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, desc, gt, inArray, lte, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { PgColumn } from 'drizzle-orm/pg-core';
 import { CalendarDate } from '@shared/core/types';
@@ -10,6 +10,7 @@ import { DateTimeUtil } from '@server/utility';
 import { accountSchema } from './account-schema';
 import { writeSetEntry } from './balance-history-data';
 import { balanceHistorySchema } from './balance-history-schema';
+import { simplefinAccountSchema, simplefinTransactionSchema } from './../bank-sync/simplefin-schema';
 import { transactionSchema } from './../transactions/transaction-schema';
 
 /** Accounts come with their balance as of a date: their latest entry on or before it (ACCT-2.1). Default: today. */
@@ -21,9 +22,10 @@ export interface IAccountData {
     insert(account: Account, balanceEntry?: AccountBalanceEntry): Promise<Account>;
     /** Updates the account and, if given, records its balance as a set entry (ACCT-2.2), together or not at all. */
     update(account: Account, balanceEntry?: AccountBalanceEntry): Promise<Account | null>;
+    /** Deletes the account with its history and transactions, unlinking it from its bank account (SYNC-2.8). */
     delete(id: string): Promise<boolean>;
     /**
-     * Closes the account on the date (ACCT-6.1): removes its balance entries after it and, unless the balance then is
+     * Closes the account on the date (ACCT-6.1): unlinks it from its bank account (SYNC-2.8), removes its balance entries after it and, unless the balance then is
      * already 0, records a set entry of 0 on it, together or not at all. Returns false if there's no such account.
      */
     close(id: string, closedOn: CalendarDate): Promise<boolean>;
@@ -31,11 +33,14 @@ export interface IAccountData {
     reopen(id: string): Promise<boolean>;
 }
 
-function mapRowToAccount(
-    row: typeof accountSchema.$inferSelect,
-    balance: number | string,
-    balanceDate: CalendarDate | null
-): Account {
+interface AccountRow {
+    account: typeof accountSchema.$inferSelect;
+    balance: number | string;
+    balanceDate: CalendarDate | null;
+    isConnected: boolean;
+}
+
+function mapRowToAccount({ account: row, balance, balanceDate, isConnected }: AccountRow): Account {
     const type = row.type as AccountType;
     return {
         id: row.id,
@@ -47,7 +52,7 @@ function mapRowToAccount(
         group: AccountTypeUtil.groupOf(type),
         category: AccountTypeUtil.categoryOf(type),
         isHidden: row.isHidden,
-        isManual: row.isManual,
+        isManual: !isConnected,
         balance: Number(balance),
         balanceDate,
         closedOn: row.closedOn
@@ -80,6 +85,17 @@ export class AccountData implements IAccountData {
         };
     }
 
+    // Connected while a bank account is linked to it (ACCT-4.3). Bank sync's tables point into finance, not back, so
+    // this is the only place the accounts read them.
+    private isConnectedField() {
+        return {
+            isConnected: sql<boolean>`EXISTS (${this.db
+                .select({ id: simplefinAccountSchema.id })
+                .from(simplefinAccountSchema)
+                .where(eq(simplefinAccountSchema.linkedAccountId, accountSchema.id))})`
+        };
+    }
+
     // By name, ignoring case (INST-1.1, DASH-2.1).
     private byName() {
         return asc(sql`lower(${accountSchema.name})`);
@@ -89,32 +105,35 @@ export class AccountData implements IAccountData {
         const rows = await this.db
             .select({
                 account: accountSchema,
-                ...this.latestBalanceFields(asOfDate)
+                ...this.latestBalanceFields(asOfDate),
+                ...this.isConnectedField()
             })
             .from(accountSchema)
             .orderBy(this.byName());
 
-        return rows.map(row => mapRowToAccount(row.account, row.balance, row.balanceDate));
+        return rows.map(mapRowToAccount);
     }
 
     public async retrieveByInstitutionId(institutionId: string, asOfDate = DateTimeUtil.today()): Promise<Account[]> {
         const rows = await this.db
             .select({
                 account: accountSchema,
-                ...this.latestBalanceFields(asOfDate)
+                ...this.latestBalanceFields(asOfDate),
+                ...this.isConnectedField()
             })
             .from(accountSchema)
             .where(eq(accountSchema.institutionId, institutionId))
             .orderBy(this.byName());
 
-        return rows.map(row => mapRowToAccount(row.account, row.balance, row.balanceDate));
+        return rows.map(mapRowToAccount);
     }
 
     public async retrieveSingle(accountId: string, asOfDate = DateTimeUtil.today()): Promise<Account | null> {
         const rows = await this.db
             .select({
                 account: accountSchema,
-                ...this.latestBalanceFields(asOfDate)
+                ...this.latestBalanceFields(asOfDate),
+                ...this.isConnectedField()
             })
             .from(accountSchema)
             .where(eq(accountSchema.id, accountId));
@@ -123,7 +142,7 @@ export class AccountData implements IAccountData {
             return null;
         }
 
-        return mapRowToAccount(rows[0].account, rows[0].balance, rows[0].balanceDate);
+        return mapRowToAccount(rows[0]);
     }
 
     public async insert(account: Account, balanceEntry?: AccountBalanceEntry): Promise<Account> {
@@ -133,8 +152,7 @@ export class AccountData implements IAccountData {
                 institutionId: account.institutionId,
                 name: account.name,
                 type: account.type,
-                isHidden: account.isHidden,
-                isManual: account.isManual
+                isHidden: account.isHidden
             });
             if (balanceEntry) {
                 await writeSetEntry(tx, account.id, balanceEntry);
@@ -153,7 +171,6 @@ export class AccountData implements IAccountData {
                     name: account.name,
                     type: account.type,
                     isHidden: account.isHidden,
-                    isManual: account.isManual,
                     updatedAt: DateTimeUtil.now()
                 })
                 .where(eq(accountSchema.id, account.id))
@@ -168,12 +185,28 @@ export class AccountData implements IAccountData {
     }
 
     public async delete(id: string): Promise<boolean> {
-        const result = await this.db
-            .delete(accountSchema)
-            .where(eq(accountSchema.id, id))
-            .returning({ id: accountSchema.id });
+        return this.db.transaction(async tx => {
+            // Bank sync forgets the transactions it added here, rather than remembering them as deleted one by one
+            // (TXN-2.12), so linking its bank account to another account adds them there (SYNC-2.8). The link itself
+            // goes with the account (ON DELETE SET NULL).
+            await tx
+                .delete(simplefinTransactionSchema)
+                .where(
+                    inArray(
+                        simplefinTransactionSchema.transactionId,
+                        tx
+                            .select({ id: transactionSchema.id })
+                            .from(transactionSchema)
+                            .where(eq(transactionSchema.accountId, id))
+                    )
+                );
+            const result = await tx
+                .delete(accountSchema)
+                .where(eq(accountSchema.id, id))
+                .returning({ id: accountSchema.id });
 
-        return result.length > 0;
+            return result.length > 0;
+        });
     }
 
     public async close(id: string, closedOn: CalendarDate): Promise<boolean> {
@@ -186,6 +219,12 @@ export class AccountData implements IAccountData {
             if (rows.length === 0) {
                 return false;
             }
+
+            // A closed account no longer syncs, and reopening it doesn't link it again (SYNC-2.8).
+            await tx
+                .update(simplefinAccountSchema)
+                .set({ linkedAccountId: null, syncFrom: null })
+                .where(eq(simplefinAccountSchema.linkedAccountId, id));
 
             // The account held nothing after it closed. Transactions after that no longer adjust the balance, since
             // their entries are gone (ACCT-6.1).

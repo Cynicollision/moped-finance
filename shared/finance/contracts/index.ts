@@ -8,5 +8,10 @@ export type { TransactionSearchOptions, TransactionSearchFilterItem } from './tr
 export type { TransactionImportResult } from './transaction-import-result';
 export type { TotalValueHistory, TotalValueHistoryOptions } from './total-value-history';
 export type { AccountGroupChange } from './account-group-change';
-export type { ConnectBankSyncRequest } from './bank-sync';
+export type {
+    BankAccountLinkDefaults,
+    BankAccountRequest,
+    BankAccountResult,
+    ConnectBankSyncRequest
+} from './bank-sync';
 export { BANK_SYNC_DAILY_REQUEST_LIMIT, BANK_SYNC_WINDOW_DAYS, BankSyncWording } from './bank-sync';

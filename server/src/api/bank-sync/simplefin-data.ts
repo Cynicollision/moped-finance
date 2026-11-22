@@ -1,5 +1,5 @@
 import { randomInt } from 'crypto';
-import { and, asc, desc, eq, gt, isNotNull, isNull, ne, notExists, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNotNull, isNull, ne, notExists, notInArray, or, SQL, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { alias } from 'drizzle-orm/pg-core';
 import { BankAccountLinkStatus, BankSyncPauseReason, SyncRunStatus, SyncTrigger } from '@shared/finance/enum';
@@ -15,7 +15,7 @@ import {
 } from './simplefin-schema';
 import { SimplefinAccountSet, SimplefinMessage } from './simplefin-response';
 
-/** The stored connection to Bridge. `accessUrl` is still sealed. */
+/** The stored connection to the SimpleFIN server. `accessUrl` is still sealed. */
 export interface SimplefinAccess {
     sealedAccessUrl: string;
     claimedAt: Date;
@@ -70,6 +70,7 @@ export interface ISimplefinData {
     applyAccountSet(accountSet: SimplefinAccountSet): Promise<void>;
     /** Every bank account, with its connection and link (SYNC-2.1). */
     retrieveBankAccounts(): Promise<BankAccount[]>;
+    retrieveBankAccount(id: string): Promise<BankAccount | null>;
 }
 
 const runColumns = {
@@ -333,6 +334,15 @@ export class SimplefinData implements ISimplefinData {
     }
 
     public async retrieveBankAccounts(): Promise<BankAccount[]> {
+        return this.queryBankAccounts();
+    }
+
+    public async retrieveBankAccount(id: string): Promise<BankAccount | null> {
+        const [bankAccount] = await this.queryBankAccounts(eq(simplefinAccountSchema.id, id));
+        return bankAccount ?? null;
+    }
+
+    private async queryBankAccounts(where?: SQL): Promise<BankAccount[]> {
         // Both tables are called accounts, which Drizzle's join types can't tell apart without an alias.
         const linkedAccount = alias(accountSchema, 'linked_account');
         const rows = await this.db
@@ -347,7 +357,8 @@ export class SimplefinData implements ISimplefinData {
                     balanceDate: simplefinAccountSchema.balanceDate,
                     missingSince: simplefinAccountSchema.missingSince,
                     isIgnored: simplefinAccountSchema.isIgnored,
-                    linkedAccountId: simplefinAccountSchema.linkedAccountId
+                    linkedAccountId: simplefinAccountSchema.linkedAccountId,
+                    syncFrom: simplefinAccountSchema.syncFrom
                 },
                 connectionName: simplefinConnectionSchema.name,
                 linkedAccountName: linkedAccount.name
@@ -355,7 +366,18 @@ export class SimplefinData implements ISimplefinData {
             .from(simplefinAccountSchema)
             .innerJoin(simplefinConnectionSchema, eq(simplefinAccountSchema.connectionId, simplefinConnectionSchema.id))
             .leftJoin(linkedAccount, eq(simplefinAccountSchema.linkedAccountId, linkedAccount.id))
+            .where(where)
             .orderBy(asc(simplefinConnectionSchema.name), asc(simplefinAccountSchema.name));
+
+        // A bank account last synced with the latest successful sync that returned it: the latest of all, unless it's
+        // missing since (SYNC-2.9).
+        const succeeded = await this.db
+            .select({ finishedAt: syncRunSchema.finishedAt })
+            .from(syncRunSchema)
+            .where(and(eq(syncRunSchema.status, SyncRunStatus.Succeeded), isNotNull(syncRunSchema.finishedAt)))
+            .orderBy(desc(syncRunSchema.finishedAt));
+        const lastSyncedBefore = (missingSince: Date | null) =>
+            succeeded.find(run => !missingSince || run.finishedAt! < missingSince)?.finishedAt ?? null;
 
         return rows.map(({ account, connectionName, linkedAccountName }) => {
             const linkStatus = account.linkedAccountId
@@ -378,7 +400,9 @@ export class SimplefinData implements ISimplefinData {
                     account.linkedAccountId && linkedAccountName !== null
                         ? { id: account.linkedAccountId, name: linkedAccountName }
                         : null,
-                missingSince: account.missingSince
+                missingSince: account.missingSince,
+                lastSyncedAt: lastSyncedBefore(account.missingSince),
+                syncFrom: account.linkedAccountId ? account.syncFrom : null
             };
         });
     }

@@ -21,6 +21,7 @@ describe('DashboardComponent', () => {
             type,
             group: AccountTypeUtil.groupOf(type),
             category: AccountTypeUtil.categoryOf(type),
+            isManual: true,
             balance,
             createdAt: new Date(2026, 0, 1),
             updatedAt: new Date(2026, 0, 1)

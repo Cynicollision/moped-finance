@@ -71,11 +71,12 @@ describe('Transaction Routes', () => {
                 name: 'Checking',
                 type: AccountType.Checking,
                 isHidden: false,
-                isManual: false,
                 balance: 0
             })
         );
         testAccountId = account.id!;
+        // Connected, so its balance comes from the bank (ACCT-4.4); tests of balances use a manual account.
+        await TestDatabaseUtil.linkToBankAccount(pglite, testAccountId);
 
         const group = await groupsData.insert(
             EntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Food' })
@@ -117,7 +118,6 @@ describe('Transaction Routes', () => {
                 name: 'Savings',
                 type: AccountType.Savings,
                 isHidden: false,
-                isManual: false,
                 balance: 0,
                 ...flags
             })
@@ -1112,7 +1112,6 @@ describe('Transaction Routes', () => {
                         name: 'Wallet',
                         type: AccountType.Checking,
                         isHidden: false,
-                        isManual: true,
                         balance: 0
                     })
                 );
@@ -1403,7 +1402,6 @@ describe('Transaction Routes', () => {
                     name: 'Wallet',
                     type: AccountType.Checking,
                     isHidden: false,
-                    isManual: true,
                     balance: 0
                 })
             );
@@ -1512,7 +1510,6 @@ describe('Transaction Routes', () => {
         it('ACCT-5.3 should undo and reapply a change of amount, date or account', async () => {
             await seedBalances(history);
             const otherId = await insertAccount({});
-            await accountsData.update({ ...(await accountsData.retrieveSingle(otherId))!, isManual: true });
             const created = await postAdjusting();
 
             await request(app).put(`/transactions/${created.id}`).send({ amount: -70, date: '2026-05-12' });

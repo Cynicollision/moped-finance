@@ -4,7 +4,13 @@ import { DatabaseClient } from '@server/data';
 import { IAppLogger } from '@server/logging';
 import { SecretBox } from '@server/utility';
 import { AccountData, BalanceHistoryData, createAccountRouter } from './accounts';
-import { BankSyncController, createBankSyncRouter, ISimplefinClient, SimplefinData } from './bank-sync';
+import {
+    BankAccountLinkData,
+    BankSyncController,
+    createBankSyncRouter,
+    ISimplefinClient,
+    SimplefinData
+} from './bank-sync';
 import { BudgetStreamData, createBudgetStreamRouter } from './budget';
 import { CategoryData, CategoryGroupData, createCategoryRouter } from './categories';
 import { InstitutionData, createInstitutionRouter } from './institutions';
@@ -40,7 +46,13 @@ export function buildFinanceRouter(
     const accounts = createAccountRouter(logger, accountData, balanceHistoryData, transactionData);
     router.use('/v1/accounts', authMiddleware.resolveUser, authMiddleware.requireAuth, accounts);
 
-    const bankSyncController = new BankSyncController(new SimplefinData(db), bankSync.client, bankSync.secretBox);
+    const bankSyncController = new BankSyncController(
+        new SimplefinData(db),
+        bankSync.client,
+        bankSync.secretBox,
+        new BankAccountLinkData(db),
+        accountData
+    );
     const bankSyncRouter = createBankSyncRouter(logger, bankSyncController);
     router.use('/v1/bank-sync', authMiddleware.resolveUser, authMiddleware.requireAuth, bankSyncRouter);
 

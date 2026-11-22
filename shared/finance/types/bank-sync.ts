@@ -1,3 +1,4 @@
+import { CalendarDate } from './../../core/types';
 import { BankAccountLinkStatus, BankSyncPauseReason, SyncRunStatus, SyncTrigger } from './../enum';
 
 /** Bank Sync's state (SYNC-1, SYNC-3). The access URL itself never leaves the server. */
@@ -65,4 +66,8 @@ export interface BankAccount {
     linkedAccount: { id: string; name: string } | null;
     /** Set while syncs don't return it (SYNC-2.9): when the first one that didn't ran. */
     missingSince: Date | null;
+    /** When the latest successful sync that returned it finished (ACCT-2.6, ACCT-7.3). */
+    lastSyncedAt: Date | null;
+    /** The first day a linked bank account takes transactions from (SYNC-2.4); null unless linked. */
+    syncFrom: CalendarDate | null;
 }
