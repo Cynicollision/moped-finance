@@ -5,7 +5,11 @@ import { SortDirection } from '@shared/core/enum';
 import {
     AccountType,
     BalanceEntrySource,
+    CategorySource,
     CategoryType,
+    RuleActionType,
+    RuleConditionField,
+    RuleOperator,
     TransactionsFilterKey,
     TransactionsSortKey
 } from '@shared/finance/enum';
@@ -18,6 +22,7 @@ import { TestExpressUtil, TestDatabaseUtil } from '@server/utility/testing';
 import { AccountData, BalanceHistoryData } from './../accounts';
 import { CategoryData, CategoryGroupData } from './../categories';
 import { InstitutionData } from './../institutions';
+import { RuleData } from './../rules';
 import { createTransactionRouter } from './transaction-routes';
 import { TransactionData } from './transaction-data';
 
@@ -52,7 +57,13 @@ describe('Transaction Routes', () => {
         institutionsData = new InstitutionData(dbClient);
         mockLogger = TestExpressUtil.createMockLogger();
 
-        const router = createTransactionRouter(mockLogger, accountsData, categoriesData, transactionsData);
+        const router = createTransactionRouter(
+            mockLogger,
+            accountsData,
+            categoriesData,
+            transactionsData,
+            new RuleData(dbClient)
+        );
         app = TestExpressUtil.createTestApp(router, '/transactions', testUserId);
     });
 
@@ -2032,6 +2043,191 @@ describe('Transaction Routes', () => {
             await request(app).delete(`/transactions/${second.id}`).expect(204);
 
             expect(await countTransactions()).toBe(1);
+        });
+    });
+
+    describe('rules (CAT-8)', () => {
+        let rulesData: RuleData;
+        let ruleId: string;
+        let coffee: string;
+
+        beforeAll(() => {
+            rulesData = new RuleData(dbClient);
+        });
+
+        beforeEach(async () => {
+            const group = await groupsData.insert(
+                EntityFactory.createCategoryGroup({ type: CategoryType.Expense, name: 'Going Out' })
+            );
+            const category = await categoriesData.insert(
+                EntityFactory.createCategory({ groupId: group.id!, name: 'Coffee', icon: '', isActive: true })
+            );
+            coffee = category.id!;
+            const rule = await rulesData.insert(
+                EntityFactory.createRule({
+                    name: 'Blue Bottle',
+                    conditions: [
+                        {
+                            field: RuleConditionField.OriginalStatement,
+                            operator: RuleOperator.Contains,
+                            text: 'blue bottle'
+                        }
+                    ],
+                    actions: [
+                        { type: RuleActionType.SetCategory, categoryId: coffee },
+                        { type: RuleActionType.RenameMerchant, merchant: 'Blue Bottle' }
+                    ]
+                })
+            );
+            ruleId = rule.id!;
+        });
+
+        const purchase = {
+            date: '2026-06-06',
+            amount: -4.5,
+            merchant: 'SQ *BLUE BOTTLE',
+            originalStatement: 'SQ *BLUE BOTTLE 1234'
+        };
+
+        it('CAT-8.4 should categorize a new transaction without a category, keeping the merchant typed', async () => {
+            const response = await request(app)
+                .post('/transactions')
+                .send({ ...purchase, accountId: testAccountId });
+
+            expect(response.status).toBe(201);
+            expect(response.body).toMatchObject({
+                categoryId: coffee,
+                categorySource: CategorySource.Rule,
+                categoryRuleId: ruleId,
+                merchant: 'SQ *BLUE BOTTLE',
+                merchantRuleId: ''
+            });
+            expect(await transactionsData.retrieveSingle(response.body.id)).toMatchObject({ categoryRuleId: ruleId });
+        });
+
+        it('CAT-8.4 should keep the category chosen for a new transaction', async () => {
+            const response = await request(app)
+                .post('/transactions')
+                .send({ ...purchase, accountId: testAccountId, categoryId: testCategoryId });
+
+            expect(response.body).toMatchObject({
+                categoryId: testCategoryId,
+                categorySource: CategorySource.User,
+                categoryRuleId: ''
+            });
+        });
+
+        it('CAT-5.5 should leave a new transaction no rule matches Uncategorized', async () => {
+            const response = await request(app)
+                .post('/transactions')
+                .send({ ...purchase, originalStatement: 'PAYROLL', accountId: testAccountId });
+
+            expect(response.body).toMatchObject({ categoryId: '', categorySource: null, categoryRuleId: '' });
+        });
+
+        it("CAT-8.4 TXN-3.4 should categorize every imported row that would be Uncategorized and rename every match's merchant", async () => {
+            const rows =
+                '2026-06-01,Checking,SQ *BLUE BOTTLE,,-4.50,SQ *BLUE BOTTLE 1,,false\n' +
+                '2026-06-02,Checking,SQ *BLUE BOTTLE,Uncategorized,-4.50,SQ *BLUE BOTTLE 2,,false\n' +
+                '2026-06-03,Checking,SQ *BLUE BOTTLE,Cofee,-4.50,SQ *BLUE BOTTLE 3,,false\n' +
+                '2026-06-04,Checking,SQ *BLUE BOTTLE,Groceries,-4.50,SQ *BLUE BOTTLE 4,,false\n' +
+                '2026-06-05,Checking,Payroll,,1000,PAYROLL,,false\n';
+
+            const dryRun = await importCsv(rows, '?dryRun=true');
+            const imported = await importCsv(rows);
+
+            expect(dryRun.body).toMatchObject({ createdCount: 5, uncategorizedCount: 1 });
+            expect(imported.status).toBe(201);
+            expect(imported.body).toMatchObject({ createdCount: 5, uncategorizedCount: 1 });
+            const transactions = await transactionsData.search({
+                sortKey: TransactionsSortKey.Date,
+                sortDirection: SortDirection.Asc
+            });
+            expect(
+                transactions.map(t => [t.merchant, t.categoryId, t.categorySource, t.categoryRuleId, t.merchantRuleId])
+            ).toEqual([
+                ['Blue Bottle', coffee, CategorySource.Rule, ruleId, ruleId],
+                ['Blue Bottle', coffee, CategorySource.Rule, ruleId, ruleId],
+                ['Blue Bottle', coffee, CategorySource.Rule, ruleId, ruleId],
+                ['Blue Bottle', testCategoryId, CategorySource.User, '', ruleId],
+                ['Payroll', '', null, '', '']
+            ]);
+        });
+
+        describe('editing (CAT-8.6)', () => {
+            // Categorized by the rule on create, and its merchant renamed by Apply to existing.
+            async function changedByRule(): Promise<Transaction> {
+                const created = await request(app)
+                    .post('/transactions')
+                    .send({ ...purchase, accountId: testAccountId });
+                const rule = await rulesData.retrieveSingle(ruleId);
+                await rulesData.apply(rule!, { categorize: [], rename: [created.body.id] });
+                return (await transactionsData.retrieveSingle(created.body.id))!;
+            }
+
+            it("CAT-8.6 should keep the rules' notes when the form sends the fields unchanged", async () => {
+                const transaction = await changedByRule();
+
+                const response = await request(app)
+                    .put(`/transactions/${transaction.id}`)
+                    .send({ categoryId: coffee, merchant: 'Blue Bottle', notes: 'latte' });
+
+                expect(response.body).toMatchObject({
+                    categorySource: CategorySource.Rule,
+                    categoryRuleId: ruleId,
+                    merchantRuleId: ruleId,
+                    notes: 'latte'
+                });
+            });
+
+            it("CAT-8.6 should make a changed category the user's and forget the rule that renamed a changed merchant", async () => {
+                const transaction = await changedByRule();
+
+                const response = await request(app)
+                    .put(`/transactions/${transaction.id}`)
+                    .send({ categoryId: testCategoryId, merchant: 'Blue Bottle Coffee' });
+
+                expect(response.body).toMatchObject({
+                    categoryId: testCategoryId,
+                    categorySource: CategorySource.User,
+                    categoryRuleId: '',
+                    merchantRuleId: ''
+                });
+            });
+
+            it('CAT-8.6 should give a transaction made Uncategorized no category source', async () => {
+                const transaction = await changedByRule();
+
+                const response = await request(app).put(`/transactions/${transaction.id}`).send({ categoryId: '' });
+
+                expect(response.body).toMatchObject({
+                    categoryId: '',
+                    categorySource: null,
+                    categoryRuleId: '',
+                    merchantRuleId: ruleId
+                });
+            });
+
+            it("CAT-8.6 should make a split's parts the user's", async () => {
+                const transaction = await changedByRule();
+
+                const response = await request(app)
+                    .put(`/transactions/${transaction.id}/split`)
+                    .send({
+                        parts: [
+                            { id: transaction.id, amount: -3, categoryId: coffee, merchant: 'Blue Bottle' },
+                            { amount: -1.5, categoryId: '', merchant: 'Blue Bottle' }
+                        ]
+                    });
+
+                expect(response.status).toBe(200);
+                expect(
+                    response.body.map((t: Transaction) => [t.categorySource, t.categoryRuleId, t.merchantRuleId])
+                ).toEqual([
+                    [CategorySource.User, '', ''],
+                    [null, '', '']
+                ]);
+            });
         });
     });
 });

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NewEntity } from '@shared/core/types';
-import { Transaction } from '@shared/finance/types';
+import { ServerTransactionFields, Transaction } from '@shared/finance/types';
 import { PageHeaderComponent } from './../core/layout/page-header.component';
 import { NotificationService } from './../core/notification.service';
 import { HasUnsavedChanges } from './../core/unsaved-changes';
@@ -32,7 +32,7 @@ export class AddTransactionComponent implements HasUnsavedChanges {
     }
 
     async onSave(transaction: Partial<Transaction>) {
-        const newTransaction: Omit<NewEntity<Transaction>, 'splitId' | 'isSynced'> = {
+        const newTransaction: Omit<NewEntity<Transaction>, ServerTransactionFields> = {
             accountId: transaction.accountId!,
             categoryId: transaction.categoryId || '',
             date: transaction.date!,

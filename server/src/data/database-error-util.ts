@@ -18,7 +18,11 @@ const uniqueViolationMessages: Record<string, string> = {
     accounts_linked_account_id_unique: 'This account is already linked to a bank account.',
     sync_runs_one_running_idx: 'A sync is already running.',
     transactions_simplefin_account_id_simplefin_id_unique: 'That bank transaction is already stored.',
-    transactions_transaction_id_unique: 'That transaction is already matched to a bank transaction.'
+    transactions_transaction_id_unique: 'That transaction is already matched to a bank transaction.',
+    rules_name_unique_idx: 'A rule with that name already exists.',
+    // CAT-8.1
+    rule_conditions_rule_id_field_unique: 'Each condition field can appear once in a rule.',
+    rule_actions_rule_id_type_unique: 'Each action can appear once in a rule.'
 };
 
 // A foreign key fails in one of two directions, with the same constraint name:
@@ -63,6 +67,27 @@ const foreignKeyViolationMessages: Record<string, ForeignKeyMessages> = {
     },
     transactions_transaction_id_transactions_id_fk: {
         missingReference: 'Transaction not found.'
+    },
+    // CAT-8.8
+    rule_conditions_account_id_accounts_id_fk: {
+        missingReference: 'Account not found.',
+        stillReferenced: 'This account is used by a rule. Edit or delete the rule first.'
+    },
+    rule_actions_category_id_categories_id_fk: {
+        missingReference: 'Category not found.',
+        stillReferenced: 'This category is used by a rule. Edit or delete the rule first.'
+    },
+    rule_conditions_rule_id_rules_id_fk: {
+        missingReference: 'Rule not found.'
+    },
+    rule_actions_rule_id_rules_id_fk: {
+        missingReference: 'Rule not found.'
+    },
+    transactions_category_rule_id_rules_id_fk: {
+        missingReference: 'Rule not found.'
+    },
+    transactions_merchant_rule_id_rules_id_fk: {
+        missingReference: 'Rule not found.'
     },
     budget_streams_category_id_categories_id_fk: {
         missingReference: 'Category not found.',

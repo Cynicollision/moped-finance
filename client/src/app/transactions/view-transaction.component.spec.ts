@@ -25,6 +25,9 @@ describe('ViewTransactionComponent', () => {
         adjustsBalance: false,
         splitId: '',
         isSynced: false,
+        categorySource: null,
+        categoryRuleId: '',
+        merchantRuleId: '',
         createdAt: new Date(2026, 0, 1),
         updatedAt: new Date(2026, 0, 1)
     };

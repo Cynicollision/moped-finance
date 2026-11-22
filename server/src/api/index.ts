@@ -14,6 +14,7 @@ import {
 import { BudgetStreamData, createBudgetStreamRouter } from './budget';
 import { CategoryData, CategoryGroupData, createCategoryRouter } from './categories';
 import { InstitutionData, createInstitutionRouter } from './institutions';
+import { RuleData, createRuleRouter } from './rules';
 import { SettingsData, createSettingsRouter } from './settings';
 import { TransactionData, createTransactionRouter } from './transactions';
 
@@ -41,6 +42,7 @@ export function buildFinanceRouter(
     const categoryGroupData = new CategoryGroupData(db);
     const categoryData = new CategoryData(db);
     const institutionData = new InstitutionData(db);
+    const ruleData = new RuleData(db);
     const transactionData = new TransactionData(db);
     const settingsData = new SettingsData(db);
 
@@ -67,10 +69,13 @@ export function buildFinanceRouter(
     const institutions = createInstitutionRouter(logger, institutionData, accountData);
     router.use('/v1/institutions', authMiddleware.resolveUser, authMiddleware.requireAuth, institutions);
 
+    const rules = createRuleRouter(logger, ruleData, categoryData);
+    router.use('/v1/rules', authMiddleware.resolveUser, authMiddleware.requireAuth, rules);
+
     const settings = createSettingsRouter(logger, settingsData);
     router.use('/v1/settings', authMiddleware.resolveUser, authMiddleware.requireAuth, settings);
 
-    const transactions = createTransactionRouter(logger, accountData, categoryData, transactionData);
+    const transactions = createTransactionRouter(logger, accountData, categoryData, transactionData, ruleData);
     router.use('/v1/transactions', authMiddleware.resolveUser, authMiddleware.requireAuth, transactions);
 
     return router;

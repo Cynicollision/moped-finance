@@ -47,7 +47,7 @@ Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), whe
 |---|---|---|
 | SYNC-4.1 | For each connected account, a sync shall add the bank's transactions it hasn't added before, recognized by the bank's transaction ID, dated on or after the account's **Sync transactions from** date (SYNC-2.4). Repeated syncs never duplicate a transaction, and one the user deleted is never added again (TXN-2.12). | Implemented |
 | SYNC-4.2 | A synced transaction's **Date** shall be the day the bank says it happened, or failing that the day it posted, in the server's time zone (APP-5.6). **Amount** is the bank's (money in positive, APP-6.3), **Original Statement** the bank's description as given, and **Merchant** the bank's payee if it gives one, or else its description (trimmed, at most 255 characters), or "Unknown" when it gives neither, before rules (CAT-8.4). It doesn't adjust the balance (ACCT-5.5). | Implemented |
-| SYNC-4.3 | New synced transactions shall be categorized by rules and learning (CAT-8.4, CAT-9) in the same sync; the rest are Uncategorized (CAT-5.5). | Planned |
+| SYNC-4.3 | New synced transactions shall be categorized by rules and learning (CAT-8.4, CAT-9) in the same sync; the rest are Uncategorized (CAT-5.5). | Partial |
 | SYNC-4.4 | When the bank changes the date, amount or description of a transaction sync added before, from what it said last time, sync shall update the transaction's date, amount and original statement, unless it's split (TXN-4.8). It never changes the merchant, category, notes or Hide Transaction, and never deletes a transaction the bank stops returning. | Implemented |
 | SYNC-4.5 | Each sync shall record each connected account's balance as in ACCT-4.2. | Implemented |
 | SYNC-4.6 | When an account with no balance entries is linked or created (SYNC-2.3, SYNC-2.4), its balance history shall be filled in backward from the bank's balance through the transactions just added: a set entry (ACCT-5.1) at the end of each day with transactions, and one on the day before the earliest, so its chart covers the days the bank returned. | Implemented |
@@ -71,7 +71,7 @@ Explored in M02 (decided 2026-11-21): syncs collect the bank's pending transacti
 
 ## Known gaps
 
-- **Synced transactions arrive Uncategorized (SYNC-4.3)**: rules and learning come with M02's T8a and T9.
+- **Synced transactions are categorized by rules only (SYNC-4.3)**: learning comes with M02's T9.
 
 ## Notes
 

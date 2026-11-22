@@ -23,7 +23,13 @@ import { SortDirection } from '@shared/core/enum';
 import { CalendarDate } from '@shared/core/types';
 import { Transaction, TransactionSplitPart } from '@shared/finance/types';
 import { TransactionSearchOptions } from '@shared/finance/contracts';
-import { CategoryType, TransactionDirection, TransactionsFilterKey, TransactionsSortKey } from '@shared/finance/enum';
+import {
+    CategorySource,
+    CategoryType,
+    TransactionDirection,
+    TransactionsFilterKey,
+    TransactionsSortKey
+} from '@shared/finance/enum';
 import { AccountTypeUtil, Uncategorized } from '@shared/finance/util';
 import { DbTransaction, EntityFactory, IDatabaseClient } from '@server/data';
 import { DateTimeUtil } from '@server/utility';
@@ -125,7 +131,10 @@ function mapRowToTransaction(row: TransactionRow, isSynced = false): Transaction
         isHidden: row.isHidden,
         adjustsBalance: row.adjustsBalance,
         splitId: row.splitId ?? '',
-        isSynced
+        isSynced,
+        categorySource: (row.categorySource as CategorySource | null) ?? null,
+        categoryRuleId: row.categoryRuleId ?? '',
+        merchantRuleId: row.merchantRuleId ?? ''
     };
 }
 
@@ -192,7 +201,10 @@ export function mapTransactionToRow(transaction: Transaction): typeof transactio
         notes: transaction.notes || null,
         isHidden: transaction.isHidden,
         adjustsBalance: transaction.adjustsBalance,
-        splitId: transaction.splitId || null
+        splitId: transaction.splitId || null,
+        categorySource: transaction.categoryId ? transaction.categorySource : null,
+        categoryRuleId: transaction.categoryRuleId || null,
+        merchantRuleId: transaction.merchantRuleId || null
     };
 }
 
@@ -534,6 +546,9 @@ export class TransactionData implements ITransactionData {
                     notes: transaction.notes || null,
                     isHidden: transaction.isHidden,
                     adjustsBalance: transaction.adjustsBalance,
+                    categorySource: transaction.categoryId ? transaction.categorySource : null,
+                    categoryRuleId: transaction.categoryRuleId || null,
+                    merchantRuleId: transaction.merchantRuleId || null,
                     updatedAt: DateTimeUtil.now()
                 })
                 .where(eq(transactionSchema.id, transaction.id!))
@@ -593,10 +608,14 @@ export class TransactionData implements ITransactionData {
             }
 
             for (const [position, part] of parts.entries()) {
+                // The user gives each part its category and merchant, so rules no longer explain them (CAT-8.6).
                 const fields = {
                     amount: part.amount.toString(),
                     categoryId: part.categoryId || null,
+                    categorySource: part.categoryId ? CategorySource.User : null,
+                    categoryRuleId: null,
                     merchant: part.merchant,
+                    merchantRuleId: null,
                     notes: part.notes || null,
                     splitId,
                     splitPosition: position

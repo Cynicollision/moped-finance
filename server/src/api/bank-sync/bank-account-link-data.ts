@@ -10,6 +10,8 @@ import { accountSchema } from './../accounts/account-schema';
 import { writeSetEntry } from './../accounts/balance-history-data';
 import { balanceHistorySchema } from './../accounts/balance-history-schema';
 import { institutionSchema } from './../institutions/institution-schema';
+import { loadRuleEngine } from './../rules/rule-data';
+import { RuleEngine } from './../rules/rule-engine';
 import { mapTransactionToRow } from './../transactions/transaction-data';
 import { transactionSchema } from './../transactions/transaction-schema';
 import {
@@ -207,7 +209,7 @@ async function linkInTransaction(
     if (!payload) {
         return 0;
     }
-    const { added } = await applyPayload(tx, bankAccountId, accountId, syncFrom, payload);
+    const { added } = await applyPayload(tx, bankAccountId, accountId, syncFrom, payload, await loadRuleEngine(tx));
     return added.length;
 }
 
@@ -223,18 +225,19 @@ export interface PayloadResult {
  * Brings a linked account up to date with its bank account as a sync returned it, in the caller's database
  * transaction: adds the posted transactions from `syncFrom` it hasn't seen (SYNC-4.1), applies the bank's corrections
  * to those it has (SYNC-4.4), and records the bank's balance (ACCT-4.2), or for an account without balances fills in
- * its history (SYNC-4.6). Linking and every sync do this.
+ * its history (SYNC-4.6). Linking and every sync do this, with the rules loaded once in the same database transaction.
  */
 export async function applyPayload(
     tx: DbTransaction,
     bankAccountId: string,
     accountId: string,
     syncFrom: CalendarDate | null,
-    payload: SimplefinAccount
+    payload: SimplefinAccount,
+    rules: RuleEngine
 ): Promise<PayloadResult> {
     const latestDate = DateTimeUtil.latestRecordDate();
     const synced = SyncTransform.transactions(payload, { from: syncFrom, to: latestDate });
-    const result = await writeSyncedTransactions(tx, bankAccountId, accountId, synced);
+    const result = await writeSyncedTransactions(tx, bankAccountId, accountId, synced, rules);
 
     const balanceDate = minDate(SyncTransform.toCalendarDate(payload.balanceDate), latestDate);
     const [entry] = await tx
@@ -267,7 +270,7 @@ interface SeenTransaction {
 /**
  * Writes a bank account's transactions into the account, recording each in `simplefin.transactions`:
  *
- * - One it hasn't seen is added, not adjusting the balance (SYNC-4.2), with the category `categorize` gives it. So is
+ * - One it hasn't seen is added, not adjusting the balance (SYNC-4.2), as the rules leave it (SYNC-4.3). So is
  *   one added to another account before the bank account was linked here, whose row moves to the new transaction.
  * - One the user deleted (a row without a transaction) is never added again (TXN-2.12).
  * - One already in this account whose date, amount or description the bank changed since it was last seen gets the
@@ -277,7 +280,8 @@ export async function writeSyncedTransactions(
     tx: DbTransaction,
     bankAccountId: string,
     accountId: string,
-    synced: SyncedTransaction[]
+    synced: SyncedTransaction[],
+    rules: RuleEngine
 ): Promise<PayloadResult> {
     const seen = await retrieveSeen(tx, bankAccountId, synced);
 
@@ -286,18 +290,22 @@ export async function writeSyncedTransactions(
         return !known || (known.transactionId !== null && known.accountId !== accountId);
     });
 
+    // Rules categorize them and rename their merchants (SYNC-4.3, CAT-8.4); the rest are Uncategorized (CAT-5.5).
     const pairs = toAdd.map(t => ({
         synced: t,
-        transaction: EntityFactory.createTransaction({
-            accountId,
-            categoryId: categorize(t),
-            date: t.date,
-            amount: t.amount,
-            merchant: t.merchant,
-            originalStatement: t.originalStatement,
-            notes: '',
-            isHidden: false
-        })
+        transaction: rules.apply(
+            EntityFactory.createTransaction({
+                accountId,
+                categoryId: '',
+                date: t.date,
+                amount: t.amount,
+                merchant: t.merchant,
+                originalStatement: t.originalStatement,
+                notes: '',
+                isHidden: false
+            }),
+            { renameMerchant: true }
+        )
     }));
 
     for (let i = 0; i < pairs.length; i += chunkSize) {
@@ -413,14 +421,6 @@ function bankChanged(known: SeenTransaction, t: SyncedTransaction): boolean {
         Math.round(known.amount * 100) !== Math.round(t.amount * 100) ||
         known.description !== t.originalStatement
     );
-}
-
-/**
- * The category a new synced transaction gets: none, so it's Uncategorized (CAT-5.5), until rules and learning (CAT-8.4,
- * CAT-9) set it here (SYNC-4.3).
- */
-function categorize(_transaction: SyncedTransaction): string {
-    return '';
 }
 
 function minDate(a: CalendarDate, b: CalendarDate): CalendarDate {
