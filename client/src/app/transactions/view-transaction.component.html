@@ -20,6 +20,13 @@
                     <span>Unsplit</span>
                 </button>
             }
+            @if (createRuleQuery(); as query) {
+                <!-- A rule for transactions like this one, filled in from it (CAT-8.9). -->
+                <a mat-menu-item routerLink="/settings/rules/new" [queryParams]="query">
+                    <mat-icon>rule</mat-icon>
+                    <span>Create rule</span>
+                </a>
+            }
             <button mat-menu-item class="danger-item" (click)="deleteTransaction()">
                 <mat-icon>delete</mat-icon>
                 <span>Delete</span>

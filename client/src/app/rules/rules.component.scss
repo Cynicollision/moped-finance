@@ -1,0 +1,93 @@
+@use 'breakpoints' as bp;
+
+.intro {
+    max-width: 720px;
+    margin: 0 0 16px;
+    color: var(--text-muted);
+}
+
+.empty-state {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+// The rows sit in the drop list rather than straight after the header, so the line between them is drawn here.
+.rule-rows > .app-list-row {
+    border-top: 1px solid var(--border-color);
+}
+
+.rule-row {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    background-color: var(--bg-card);
+}
+
+.rule-name {
+    color: var(--color-link);
+    font-weight: 500;
+    text-decoration: none;
+    white-space: normal;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+// A condition or action per line, wrapping rather than ending in an ellipsis, so the whole rule reads (CAT-8.3).
+.rule-text {
+    display: flex;
+    flex-direction: column;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+// A Set category the rules skip, since its category is inactive (CAT-8.1).
+.rule-line.skipped {
+    color: var(--text-muted);
+}
+
+.skipped-note {
+    display: block;
+    color: var(--color-negative);
+    font: var(--mat-sys-body-small);
+}
+
+.handle-cell {
+    display: flex;
+}
+
+.drag-handle {
+    color: var(--text-muted);
+    cursor: grab;
+    touch-action: none;
+}
+
+// While dragging: the row under the pointer floats over the list, and an empty space shows where it will go.
+.cdk-drag-preview {
+    box-shadow: var(--mat-sys-level3);
+}
+
+.cdk-drag-placeholder {
+    opacity: 0.3;
+}
+
+.cdk-drag-animating,
+.rule-rows.cdk-drop-list-dragging .rule-row:not(.cdk-drag-placeholder) {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+// Narrow: the name, then the conditions, then the actions, each on its own lines, with the handle and menu at the
+// end. The list's usual two lines would put the conditions and actions side by side, too narrow to read.
+@include bp.content-below(bp.$expanded) {
+    .app-list .app-list-row.rule-row {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-areas:
+            'name handle menu'
+            'conditions handle menu'
+            'actions handle menu';
+    }
+
+    .rule-row .rule-text.app-list-cell::before {
+        content: none;
+    }
+}

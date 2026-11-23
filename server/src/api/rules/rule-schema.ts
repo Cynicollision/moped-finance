@@ -112,14 +112,16 @@ export const createRuleSchema = createInsertSchema(ruleSchema, {
 })
     .pick({ name: true })
     .extend({
-        // One or more of each, each condition field and each action once (CAT-8.1).
+        // One or more of each, each condition field and each action once (CAT-8.1), which also caps how many.
         conditions: z
             .array(conditionSchema)
             .min(1)
+            .max(Object.values(RuleConditionField).length)
             .refine(conditions => isEachOnce(conditions.map(c => c.field)), 'Each condition field can appear once'),
         actions: z
             .array(actionSchema)
             .min(1)
+            .max(Object.values(RuleActionType).length)
             .refine(actions => isEachOnce(actions.map(a => a.type)), 'Each action can appear once')
     });
 

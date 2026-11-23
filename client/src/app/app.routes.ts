@@ -20,6 +20,8 @@ import { EditTransactionComponent } from './transactions/edit-transaction.compon
 import { TransactionsComponent } from './transactions/transactions.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
+import { RuleFormComponent } from './rules/rule-form.component';
+import { RulesComponent } from './rules/rules.component';
 import { ApiTokensComponent } from './settings/api-tokens.component';
 import { AppearanceComponent } from './settings/appearance.component';
 import { ChangePasswordComponent } from './settings/change-password.component';
@@ -103,6 +105,19 @@ export const routes: Routes = [
                 path: 'settings/categories/import',
                 component: ImportCategoriesComponent,
                 title: 'Import Categories'
+            },
+            { path: 'settings/rules', component: RulesComponent, title: 'Rules' },
+            {
+                path: 'settings/rules/new',
+                component: RuleFormComponent,
+                title: 'New Rule',
+                canDeactivate: [unsavedChangesGuard]
+            },
+            {
+                path: 'settings/rules/:ruleId',
+                component: RuleFormComponent,
+                title: 'Edit Rule',
+                canDeactivate: [unsavedChangesGuard]
             },
             { path: 'settings/bank-sync', component: BankSyncComponent, title: 'Bank Sync' },
             {

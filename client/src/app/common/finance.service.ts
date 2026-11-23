@@ -24,6 +24,9 @@ import {
     CategoryGroup,
     CategoryUsage,
     ServerTransactionFields,
+    Rule,
+    RuleMatches,
+    RuleRequest,
     Transaction,
     TransactionSplitPart,
     BudgetStream,
@@ -116,6 +119,48 @@ export class FinanceService {
 
     getExportCategoriesUrl(): string {
         return `${API_BASE_PATH}/categories/export`;
+    }
+
+    // Rules (CAT-8)
+    fetchRules(): Promise<Rule[]> {
+        return this.api.load<Rule[]>(`${API_BASE_PATH}/rules`);
+    }
+
+    /** The rules, in order, for an action that needs them (a delete checking what uses a record, CAT-8.8). */
+    getRules(): Promise<Rule[] | undefined> {
+        return this.api.get<Rule[]>(`${API_BASE_PATH}/rules`);
+    }
+
+    fetchRule(id: string): Promise<Rule> {
+        return this.api.load<Rule>(`${API_BASE_PATH}/rules/${id}`);
+    }
+
+    /** Adds a rule at the end of the list. */
+    createRule(rule: RuleRequest): Promise<Rule | undefined> {
+        return this.api.post<Rule>(`${API_BASE_PATH}/rules`, rule);
+    }
+
+    saveRule(id: string, rule: Partial<RuleRequest>): Promise<Rule | undefined> {
+        return this.api.put<Rule>(`${API_BASE_PATH}/rules/${id}`, rule);
+    }
+
+    deleteRule(id: string): Promise<boolean> {
+        return this.api.delete(`${API_BASE_PATH}/rules/${id}`);
+    }
+
+    /** Puts the rules in a new order, given every rule's ID (CAT-8.3); resolves to the rules in that order. */
+    reorderRules(ids: string[]): Promise<Rule[] | undefined> {
+        return this.api.put<Rule[]>(`${API_BASE_PATH}/rules/order`, { ids });
+    }
+
+    /** What applying the rule to existing transactions would change (CAT-8.5). */
+    getRuleMatches(id: string): Promise<RuleMatches | undefined> {
+        return this.api.get<RuleMatches>(`${API_BASE_PATH}/rules/${id}/matches`);
+    }
+
+    /** Applies the rule to existing transactions; resolves to what it changed (CAT-8.5). */
+    applyRule(id: string): Promise<RuleMatches | undefined> {
+        return this.api.post<RuleMatches>(`${API_BASE_PATH}/rules/${id}/apply`, {});
     }
 
     // Accounts, with their balance as of the app's today (ACCT-2.1).

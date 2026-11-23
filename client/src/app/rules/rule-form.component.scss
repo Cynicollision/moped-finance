@@ -1,0 +1,112 @@
+@use 'breakpoints' as bp;
+
+.container {
+    max-width: 720px;
+}
+
+.rule-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    padding: 2rem;
+
+    @include bp.content-below(bp.$medium) {
+        padding: 1rem;
+    }
+}
+
+mat-form-field {
+    width: 100%;
+}
+
+.part {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+
+    h2 {
+        margin: 8px 0 0;
+        font: var(--mat-sys-title-medium);
+    }
+}
+
+.items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.item {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 16px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.item-label {
+    font: var(--mat-sys-title-small);
+}
+
+.item-fields {
+    display: flex;
+    gap: 12px;
+
+    @include bp.content-below(bp.$medium) {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+.operator-field {
+    flex: 0 0 11rem;
+
+    @include bp.content-below(bp.$medium) {
+        flex-basis: auto;
+    }
+}
+
+.value-field {
+    flex: 1;
+    min-width: 0;
+}
+
+.direction-toggle {
+    align-self: flex-start;
+    margin-bottom: 12px;
+}
+
+.item-hint {
+    margin: -8px 0 12px;
+    color: var(--text-muted);
+    font: var(--mat-sys-body-small);
+}
+
+.inactive-hint {
+    color: var(--color-negative);
+}
+
+.option-detail {
+    margin-left: 8px;
+    color: var(--text-muted);
+    font: var(--mat-sys-body-small);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-color);
+}

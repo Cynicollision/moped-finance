@@ -51,6 +51,12 @@ export class SettingsComponent {
             icon: 'category'
         },
         {
+            label: 'Rules',
+            description: 'Categorize and rename transactions automatically',
+            route: '/settings/rules',
+            icon: 'rule'
+        },
+        {
             label: 'Bank Sync',
             description: 'Keep accounts up to date from SimpleFIN',
             route: '/settings/bank-sync',

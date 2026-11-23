@@ -94,10 +94,10 @@ client/src/app/
   core/import/  the CSV import flow shared by the import screens (choose, validate, confirm)
   common/     what the screens share: FinanceService (the finance API), the value-history chart, the money
               display, category labels and choices
-  accounts/, bank-sync/, budget/, categories/, dashboard/, institutions/, spending/, transactions/
+  accounts/, bank-sync/, budget/, categories/, dashboard/, institutions/, rules/, spending/, transactions/
               one folder per screen area
   settings/   the Settings list, Profile, Dashboard settings, API Tokens and SettingsService (Institutions
-              and Accounts, Categories and Bank Sync have their own folders)
+              and Accounts, Categories, Rules and Bank Sync have their own folders)
   login/, register/
 ```
 

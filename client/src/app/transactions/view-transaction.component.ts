@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -21,6 +21,7 @@ import { NotificationService } from './../core/notification.service';
     selector: 'app-view-transaction',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        RouterLink,
         MatButtonModule,
         MatIconModule,
         MatMenuModule,
@@ -55,6 +56,16 @@ export class ViewTransactionComponent {
     readonly transaction = computed(() => this.data.value()?.transaction ?? null);
     readonly splitParts = computed(() => this.data.value()?.splitParts ?? []);
     readonly isSplit = computed(() => !!this.transaction()?.splitId);
+    /**
+     * What Create rule fills the rule form in from (CAT-8.9): the merchant, or the original statement when it has no
+     * merchant; nothing when it has neither.
+     */
+    readonly createRuleQuery = computed(() => {
+        const transaction = this.transaction();
+        const merchant = transaction?.merchant?.trim();
+        const statement = transaction?.originalStatement?.trim();
+        return merchant ? { merchant } : statement ? { statement } : undefined;
+    });
 
     onEdit() {
         const id = this.transactionId();

@@ -1,0 +1,14 @@
+<app-modal-layout [title]="data.title">
+    <p class="used-by">{{ usedBy }}</p>
+    <ul class="rules">
+        @for (rule of data.rules; track rule.id) {
+            <li>{{ rule.name }}</li>
+        }
+    </ul>
+    <p class="instruction">{{ instruction }}</p>
+
+    <div modal-actions>
+        <button mat-button type="button" (click)="openRules()">Rules</button>
+        <button mat-flat-button type="button" appModalCancel>OK</button>
+    </div>
+</app-modal-layout>
