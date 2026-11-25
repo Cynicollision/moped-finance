@@ -16,7 +16,7 @@ Read the doc that fits the task before starting:
 
 ## Workflow
 
-Where the workflow's pieces live (the user-level `/next` skill reads this list):
+Where the workflow's pieces live:
 
 - **Backlog**: [docs/planning/backlog.md](docs/planning/backlog.md)
 - **Milestones**: [docs/planning/milestones/](docs/planning/milestones/); the current one is the one [the roadmap](docs/planning/roadmap.md) marks in progress
@@ -34,7 +34,7 @@ Rules for every change:
 
 ## Backlog
 
-Planning lives in `docs/planning/`. `roadmap.md` has one line per milestone toward 1.0. `backlog.md` holds the work outside the milestone being built: items for milestones not planned yet, then Unscheduled, with Ideas last. The milestone being built has its own file in `milestones/`, which holds its tasks; work for it goes there. The `/next` skill (user-level, in `~/.claude/skills/next/`) runs a session's worth of either: candidates, questions, plan, then one PR at a time.
+Planning lives in `docs/planning/`. `roadmap.md` has one line per milestone toward 1.0. `backlog.md` holds the work outside the milestone being built: items for milestones not planned yet, then Unscheduled, with Ideas last. The milestone being built has its own file in `milestones/`, which holds its tasks; work for it goes there.
 
 - Delete a backlog item once it's done; git history is the changelog. A milestone task is ticked instead, with a *Changed while doing it* note in the PR that finishes it, and the file keeps the record.
 - When you notice a bug, a deviation from standard practice, or other follow-up work that's out of scope for the current change, add it to the right milestone (its file's tasks, or its backlog section if it has no file yet) or to the backlog's Unscheduled, instead of fixing it on the side. Include file paths and what's wrong.
