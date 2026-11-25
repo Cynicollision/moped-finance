@@ -33,6 +33,14 @@ The container runs whatever is in your working tree, so switching branches switc
 
 **Debugging the API:** the container exposes the Node inspector on :9229. In VS Code, use the "Attach to Node.js (Docker)" launch configuration.
 
+## Trying a change in the app
+
+For anything the browser shows, try the change in the running app as well as its tests. Claude uses the desktop app's built-in browser:
+
+- Check for a tab already signed in to the app first.
+- Otherwise make sure the API is up (`docker compose ps`; `docker compose up -d` if not), and start the client with `preview_start`, using the `client` configuration in `.claude/launch.json` if there is one (otherwise `npm start` in `client/` serves http://localhost:4200).
+- The user signs in in the browser pane; Claude never types the password.
+
 ## Database scripts
 
 Run these inside the API container (`docker compose exec api npm run <script>`), except `db:generate`, which doesn't need a database and runs anywhere.
