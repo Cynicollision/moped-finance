@@ -23,7 +23,7 @@ In:
 
 Out (and where it goes instead):
 
-- Account details such as APY, credit limit or interest rate. The backlog, Unscheduled.
+- Account details such as APY, credit limit or interest rate. The backlog, Parked.
 - Matching the two sides of a transfer, and tags as a rule action. The backlog, Ideas.
 - Any provider but SimpleFIN Bridge, and any bank account not in US dollars (SYNC-2.6 lists them, unlinkable).
 - Webhooks or an external scheduler: polling inside the server only (decided 2026-11-07).
@@ -117,7 +117,7 @@ Each task is about one session and ends in a merged PR with green checks.
 
 - [ ] **T11 — Pending transactions: explore, then build or defer.** SYNC-6, and SYNC-4.7 and TXN-2.12, which change if it's built. Decision 9's gate.
   - **Explore** (T11a: docs and a local script only). Go through the trial's payloads bank by bank (the demo token has no pending transactions): does a pending transaction keep its ID when it posts; if not, what identifies it (same account and amount within a few days, a description that starts the same); how often the amount changes and by how much; how long transactions stay pending; how many vanish without posting. Write the findings into SYNC-6's Notes and a pending section with the matching rule into `M02-design.md`. Write SYNC-6's remaining sub-requirements, deciding: where pending transactions show (the Transactions list and Account Details, marked **Pending**) and where they don't (Spending and budgets; they never adjust a balance, which comes from the bank anyway); whether rules and learning categorize them, and whether a category or notes the user gives one carry over to its posted transaction; what happens to one that vanishes; and the new wording of SYNC-4.7 and TXN-2.12.
-  - **Decide**, with the owner. Build if the matching rule, run over the trial's payloads by the local script, pairs every posted transaction with its pending one or finds it new, with nothing doubled and nothing lost. Otherwise mark SYNC-6 for later with the reason, put a pending item back in the backlog's Unscheduled, and record it in Changes to the plan.
+  - **Decide**, with the owner. Build if the matching rule, run over the trial's payloads by the local script, pairs every posted transaction with its pending one or finds it new, with nothing doubled and nothing lost. Otherwise mark SYNC-6 for later with the reason, put a pending item in the backlog's Parked, saying what it waits for, and record it in Changes to the plan.
   - **Build** (T11b, if decided): the pending mark on transactions and in `simplefin.transactions`, the matching in `sync-transform.ts`, and the screens. The fake gains a scenario for each pattern the trial found.
   *Done when:* either SYNC-6 is built, with tests for every pattern found and a few days on the owner's server in which every pending transaction was replaced once by its posted one; or the findings and the reason for waiting are in SYNC-6 and the backlog.
 

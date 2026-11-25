@@ -34,8 +34,8 @@ Rules for every change:
 
 ## Backlog
 
-Planning lives in `docs/planning/`. `roadmap.md` has one line per milestone toward 1.0. `backlog.md` holds the work outside the milestone being built: items for milestones not planned yet, then Unscheduled, with Ideas last. The milestone being built has its own file in `milestones/`, which holds its tasks; work for it goes there.
+Planning lives in `docs/planning/`. `roadmap.md` has one line per milestone toward 1.0. `backlog.md` holds the work outside the milestone being built: an Inbox of things found but not sorted yet, items for milestones not planned yet, then Anytime, Parked and Ideas (its introduction says what each is for). The milestone being built has its own file in `milestones/`, which holds its tasks; work for it goes there.
 
 - Delete a backlog item once it's done; git history is the changelog. A milestone task is ticked instead, with a *Changed while doing it* note in the PR that finishes it, and the file keeps the record.
-- When you notice a bug, a deviation from standard practice, or other follow-up work that's out of scope for the current change, add it to the right milestone (its file's tasks, or its backlog section if it has no file yet) or to the backlog's Unscheduled, instead of fixing it on the side. Include file paths and what's wrong.
+- When you notice a bug, a deviation from standard practice, or other follow-up work that's out of scope for the current change, add it to the right milestone (its file's tasks, or its backlog section if it has no file yet) or to the backlog's Inbox, instead of fixing it on the side. Include file paths and what's wrong, and where you found it. Only the owner moves items out of the Inbox.
 - Point at code by file and function or symbol name (`account-controller.ts`, `importBalanceHistory`), not line numbers, which go stale.
