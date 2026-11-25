@@ -18,7 +18,7 @@ A self-hosted, single-user personal finance app. It runs as a container on any D
 
 ## Roadmap
 
-Each milestone ends with a tagged release; the details are in [TODO.md](TODO.md).
+Each milestone ends with a tagged release; the details are in the [roadmap](docs/planning/roadmap.md).
 
 | Release | Milestone |
 |---|---|
@@ -43,7 +43,7 @@ Built with Angular, Node.js and Express, and PostgreSQL with Drizzle ORM.
 - [Deployment](docs/deployment.md)
 - [Code conventions](docs/conventions.md)
 - [Requirements](docs/requirements/README.md): what the app does and will do, by domain
-- [Backlog](TODO.md)
+- [Roadmap](docs/planning/roadmap.md) and [backlog](docs/planning/backlog.md)
 
 ## Licence
 
