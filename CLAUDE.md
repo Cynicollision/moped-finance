@@ -16,7 +16,7 @@ Read the doc that fits the task before starting:
 
 ## Workflow
 
-Where the workflow's pieces live (the user-level `/next` skill reads this list):
+Where the workflow's pieces live:
 
 - **Backlog**: [TODO.md](TODO.md)
 - **Milestones**: [docs/milestones/](docs/milestones/README.md); the current one is the one `TODO.md`'s table marks in progress
@@ -34,7 +34,7 @@ Rules for every change:
 
 ## Backlog
 
-`TODO.md` is the high-level backlog: one line per milestone toward 1.0, items for milestones not planned yet, then Unscheduled, with Ideas last. The milestone being built has its own file in `docs/milestones/`, which holds its tasks; work for it goes there. The `/next` skill (user-level, in `~/.claude/skills/next/`) runs a session's worth of either: candidates, questions, plan, then one PR at a time.
+`TODO.md` is the high-level backlog: one line per milestone toward 1.0, items for milestones not planned yet, then Unscheduled, with Ideas last. The milestone being built has its own file in `docs/milestones/`, which holds its tasks; work for it goes there.
 
 - Delete a `TODO.md` item once it's done; git history is the changelog. A milestone task is ticked instead, with a *Changed while doing it* note in the PR that finishes it, and the file keeps the record.
 - When you notice a bug, a deviation from standard practice, or other follow-up work that's out of scope for the current change, add it to the right milestone (its file's tasks, or its `TODO.md` section if it has no file yet) or to Unscheduled, instead of fixing it on the side. Include file paths and what's wrong.
