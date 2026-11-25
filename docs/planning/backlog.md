@@ -1,16 +1,8 @@
-# TODO / Backlog
+# Backlog
 
-High-level backlog: the release milestones toward 1.0, then work not scheduled yet, then ideas. Delete an item once it's done (git history is the changelog).
+Work outside the milestone being built: milestones not planned yet, then work not scheduled yet, then ideas. Delete an item once it's done (git history is the changelog). The milestones in order are in the [roadmap](roadmap.md).
 
-v0.1.0, the initial release with manual accounts, came out on 2026-11-07. Each milestone ends with a release: a `vX.Y.0` tag and a GitHub Release (see [development.md](docs/development.md#releases)). Version 1.0 is the release that finishes the last milestone below; until then each one takes the next minor version.
-
-| Milestone | Release | What it adds | Status |
-|---|---|---|---|
-| [M01 Manual accounts](docs/milestones/M01-manual-accounts.md) | v0.1 | Accounts, balances, transactions, categories, budget and spending, entered by hand or imported | Released 2026-11-07 |
-| [M02 Bank sync and categorization](docs/milestones/M02-bank-sync-and-categorization.md) | v0.2 | Transactions and balances from SimpleFIN Bridge, with rules and learning that set categories on add, import and sync | In progress |
-| [M03 Real estate values](#m03-real-estate-values-v03) | v0.3 | Real Estate accounts' values from an online estimate | Not planned yet |
-
-A milestone being built has its own file in [docs/milestones/](docs/milestones/README.md), with its tasks in order, the decisions behind them, progress notes and, at the end, its outcome. Work for it goes there, not here. A milestone not planned yet is a section below with the items and questions known so far, until a planning session writes its file. **Unscheduled** holds work that isn't part of a milestone yet: Tools, built when a feature needs them, account details, and demo mode. **Ideas** at the end are unsorted thoughts, not yet committed to.
+A milestone being built has its own file in [milestones/](milestones/), with its tasks in order, the decisions behind them, progress notes and, at the end, its outcome. Work for it goes there, not here. A milestone not planned yet is a section below with the items and questions known so far, until a planning session writes its file. **Unscheduled** holds work that isn't part of a milestone yet: Tools, built when a feature needs them, account details, and demo mode. **Ideas** at the end are unsorted thoughts, not yet committed to.
 
 ---
 

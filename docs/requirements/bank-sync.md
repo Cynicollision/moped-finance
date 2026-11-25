@@ -2,7 +2,7 @@
 
 Bank sync keeps connected accounts' transactions and balances up to date from a [SimpleFIN](https://www.simplefin.org) server, such as SimpleFIN Bridge (decided 2026-10-15). The app speaks the SimpleFIN protocol, so it works with any SimpleFIN server, and nothing on screen names Bridge: the wording says "SimpleFIN" or "your SimpleFIN server" (decided 2026-11-22). The user links their banks on their SimpleFIN server, not in this app, and gives the app one connection that covers all of them. The server returns every **bank account** it holds for the user, grouped by **connection** (one sign-in at one bank). The user links each bank account to one of their accounts, creates a new account for it, or chooses not to sync it.
 
-Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), where the user connects, sees how syncing is going and links bank accounts; and the **Bank sync** section of Manage Account (ACCT-7.3), which links or unlinks one account. How it's built is in [M02-design.md](../milestones/M02-design.md) until v0.2 ships.
+Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), where the user connects, sees how syncing is going and links bank accounts; and the **Bank sync** section of Manage Account (ACCT-7.3), which links or unlinks one account. How it's built is in [M02-design.md](../planning/milestones/M02-design.md) until v0.2 ships.
 
 ## SYNC-1 The user can connect the app to a SimpleFIN server
 
@@ -63,7 +63,7 @@ Screens: **Bank Sync** (`/settings/bank-sync`, a page of Settings, SET-1.1), whe
 
 ## SYNC-6 Pending transactions
 
-Explored in M02 (decided 2026-11-21): syncs collect the bank's pending transactions without adding them (SYNC-4.7), and once the live trial shows how the owner's banks post them, M02 builds this if they can be matched reliably to their posted transactions, or leaves it for later ([M02, T11](../milestones/M02-bank-sync-and-categorization.md)). The rest of its sub-requirements are written then.
+Explored in M02 (decided 2026-11-21): syncs collect the bank's pending transactions without adding them (SYNC-4.7), and once the live trial shows how the owner's banks post them, M02 builds this if they can be matched reliably to their posted transactions, or leaves it for later ([M02, T11](../planning/milestones/M02-bank-sync-and-categorization.md)). The rest of its sub-requirements are written then.
 
 | ID | Requirement | Status |
 |---|---|---|

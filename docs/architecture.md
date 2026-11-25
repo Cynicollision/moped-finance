@@ -58,7 +58,7 @@ One Postgres 16 database with three schemas:
 
 - `core`: `users`, `logs`, `sessions`, `secrets` (the generated session secret), `api_tokens` (hashes only), `settings` (instance settings, SET-1.2: a JSON value per setting the user has changed; the types and defaults are in `settings-schema.ts`, so adding a setting needs no migration)
 - `finance`: `institutions`, `accounts`, `balance_history`, `category_groups`, `categories`, `transactions`, `budget_streams`
-- `simplefin`: bank sync's `access` (the sealed access URL), `connections`, `accounts` and `sync_runs`, whose foreign keys point into `finance` and never back; described in [M02-design.md](milestones/M02-design.md) until v0.2 ships
+- `simplefin`: bank sync's `access` (the sealed access URL), `connections`, `accounts` and `sync_runs`, whose foreign keys point into `finance` and never back; described in [M02-design.md](planning/milestones/M02-design.md) until v0.2 ships
 
 Each instance has one owner (AUTH-7). `core.users` exists for login, and registration closes after the first user. Finance tables have no `user_id`: every signed-in request sees all finance data. `core.logs.user_id` records who performed an operation.
 
